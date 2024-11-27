@@ -1,0 +1,176 @@
+<div class="row">
+    <div class="col-xl-3 col-lg-3 col-md-3 col-sm-12">
+        <form id="frm-filter-hris-absentee_report" class="m-form" method="post">
+        <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <div class="m-portlet m-portlet--head-sm mb-2" data-portlet="true" id="m_portlet_tools-absentee_report">
+                <div class="m-portlet__head">
+                    <div class="m-portlet__head-caption">
+                        <div class="m-portlet__head-title">
+                        <span class="m-portlet__head-icon">
+                            <i class="fa fa-filter"></i>
+                        </span>
+                            <h3 class="m-portlet__head-text">Filter Options</h3>
+                        </div>
+                    </div>
+                    <div class="m-portlet__head-tools">
+                        <ul class="m-portlet__nav">
+                            <li class="m-portlet__nav-item">
+                                <a href="javascript:void(0);"  data-portlet-tool="toggle" class="m-portlet__nav-link m-portlet__nav-link--icon">
+                                    <i class="la la-angle-down"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="m-portlet__body">
+                    <div id="tempFilterByAbsenteeReport" class="row">
+                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                            <div class="form-group has-success">
+                                <label class="m--font-bolder">FILTER BY</label>
+                                <div class="m-checkbox-inline">
+                                    <label class="m-checkbox">
+                                        <input type="radio" id="ranged_filter" name="filter_by" value="date_range" data-validation="required" v-model="filter_by" />
+                                        DATE RANGE<span></span>
+                                    </label>
+                                    <label class="m-checkbox">
+                                        <input type="radio" id="monthly_filter" name="filter_by" value="month" data-validation="required" v-model="filter_by" />
+                                        MONTH<span></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <template v-if="filter_by === 'date_range'">
+                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 m-animate-fade-in">
+                            <div class="form-group m-form__group" id="filter-by-date-range">
+                                <label class="m--font-bolder required" for="date-range">SELECT DATE RANGE</label>
+                                <div class="input-group" id="date-picker">
+                                    <input type="text" class="form-control m-input" readonly=""
+                                        placeholder="MMM DD, YYYY - MMM DD, YYYY"
+                                        id="date-range"
+                                        name="date_range" data-validation="required" />
+                                    <span class="input-group-addon">
+                                        <i class="la la-calendar-check-o"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        </template>
+                        <template v-else>
+                            <div class="form-group col-xl-7 col-lg-7 col-md-7 col-sm-12 m-animate-fade-in">
+                                <label for="" class="required m--font-bolder">MONTH</label>
+                                <select class="form-control" name="filter_month" data-validation="required">
+                                    <option></option>
+                                </select>
+                            </div>
+                            <div class="form-group col-xl-5 col-lg-5 col-md-5 col-sm-12 pl-0 m-animate-fade-in">
+                                <label for="" class="required m--font-bolder">YEAR</label>
+                                <select class="form-control" name="filter_year" data-validation="required">
+                                    <option></option>
+                                </select>
+                            </div>
+                        </template>
+                        
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                            <div class="form-group m-form__group">
+                                <label for="company" class="m--font-bolder required">COMPANY</label>
+                                <select name="company" id="company" class="form-control"  data-validation="required">
+                                    <option></option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                            <div class="form-group m-form__group">
+                                <label for="payroll_group">
+                                    PAYROLL GROUP <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">(Optional)</span>
+                                </label>
+                                <select class="form-control" id="payroll_group" name="payroll_group[]" multiple></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                            <div class="form-group m-form__group">
+                                <label for="employee" class="m--font-bolder">Employee <small>( Optional )</small></label>
+                                <select id="employee" class="form-control" name="employee[]" multiple>
+                                    <option></option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="absentReportActions">
+                    <div class="m-portlet__foot text-right" v-if="has_actions">
+                        <button type="button" 
+                            class="btn btn-warning m-btn btnAdvance_search m-btn--sm mr-1 text-white" 
+                            onclick="resetFilterAbsenteeReport(this)">
+                            <span>
+                                <i class="fa fa-refresh"></i>
+                                <span>Reset Filter</span>
+                            </span>
+                        </button>
+                        <button type="button" class="m-btn btn btn-success btnAdvance_search btn-submit" onclick="submitAbsentFilterForm(this)">Search</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col">
+        
+        <div class="m-portlet m-portlet--bordered m-portlet--rounded">
+            <div id="filteredAbsenteeReport" class="m-portlet__body">
+                <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll table-responsive">
+                    <table class="table table-striped table-bordered" id="table-absentee_report" width="100%"></table>
+                </div>
+                <div class="row">
+                    <div class="col-7 col-md-7 col-lg-7 col-sm-12">
+                        <div class="alert alert-danger m-alert m-alert--air m-alert--outline mb-0 mt-3" role="alert">
+                            <strong>Note!</strong> The Absentee attendance record/s listed are verified time sheet reference data.					  	
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAbsenteePreview" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div id="modalAbsenteeContainer" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel"><i class="la la-trash mr-2"></i>Absentee Attedance Preview</h5>
+                <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-9 col-md-9 col-lg-9 col-sm-12">
+                        <h4 v-text="row.employee_name">&nbsp;</h4>
+                        <p v-text="row.position">&nbsp;</p>
+                    </div>
+                    <div class="col-3 col-md-3 col-lg-3 col-sm-12">
+                        <h6>Last Verified Date</h6>
+                        <p v-text="dateFormatted(row.max_date)">&nbsp;</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 col-md-6 col-lg-6 col-sm-12" v-for="log in attlogs">
+                        <div class="m-alert m-alert--outline alert text-center" :class="backgroundClass(log)" role="alert">
+                            <p>{{log}}</p>
+                            <p class="m--regular-font-size-lg2 m--font-boldest mb-0">{{getLoaReference(row.emp_id, log)}}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12 col-md-12 col-lg-12 col-sm-12">
+                        <h6>Total Accumulated Absentee Attendance Record/s: <span class="m--regular-font-size-lg5 ml-3" v-text="row.absentee_total">0</span></h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

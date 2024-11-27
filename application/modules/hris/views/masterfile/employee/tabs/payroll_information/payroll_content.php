@@ -1,0 +1,1933 @@
+<form id="frmEditPayrollData" class="m-form m-form--fit m-form--label-align-right" method="POST" action="<?php echo site_url("hris/masterfile/update_employee_payroll_data"); ?>">
+    <div id="frmEditPayrollData-container" class="m-portlet__body">
+        <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+        <input type="hidden" name="id" value="<?php echo $data->id; ?>">
+        <div class="row m--margin-bottom-10">
+            <div class="col-5 col-md-5 col-lg-5 col-xl-5 col-sm-12">
+                <div class="form-group m-form__group row">
+                    <label class="col-5 col-md-5 col-lg-5 col-xl-5 col-sm-12 col-form-label">Payroll Type:</label>
+                    <div class="col-7 col-md-7 col-lg-7 col-xl-7 col-sm-12">
+                        <select class="form-control m-input" name="payroll_type"
+                                placeholder="Select an option" id="payroll_type" data-validation="required"
+                                v-model="vmpayinfo.payroll_type">
+                            <option value=""></option>
+                            <?php foreach ($payroll_types as $payroll_type): ?>
+                                <option value="<?= strtolower($payroll_type->name) ?>">
+                                    <?= $payroll_type->name ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <input type="hidden" id="payroll_type_desc" name="payroll_type_desc" v-model="edited_content.payroll_type" />
+                    </div>
+                </div>
+            </div>
+            <div class="col-5 col-md-5 col-lg-5 col-xl-5 col-sm-12">
+                <div class="form-group m-form__group row">
+                    <label for="position" class="col-5 col-md-5 col-lg-5 col-xl-5 col-sm-12 col-form-label">Basic rate:</label>
+                    <div class="col-7 col-md-7 col-lg-7 col-xl-7 col-sm-12">
+                        <input type="text" name="basic_rate" v-model="vmpayinfo.basic_rate"
+                            autocomplete="off" class="form-control m-input" data-validation="required"/>
+                    </div>
+                </div>
+            </div>
+            <div class="col-2 col-md-2 col-lg-2 col-xl-2 col-sm-12 text-right">
+                <div class="form-group m-form__group">
+                    <a class="btn btn-warning m-btn m-btn--icon m-btn--icon-only m-btn--pill text-white btnView" 
+                        @click="forApprovalModal()" v-if="forApprovalCtr > 0">
+                        <i class="fa flaticon-bell"></i>
+                    </a>
+                    <a class="btn btn-info m-btn m-btn--icon m-btn--icon-only m-btn--pill text-white btnView" 
+                        @click="scrollToBottom()" v-if="psInfoCtr > 0">
+                        <i class="fa flaticon-clipboard"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="row m--margin-bottom-10">
+            <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+                <div class="form-group m-form__group row">
+                    <label class="col-5 col-md-5 col-lg-5 col-xl-5 col-sm-12 col-form-label">Payout Schedule:</label>
+                    <div class="col-7 col-md-7 col-lg-7 col-xl-7 col-sm-12">
+                        <select class="form-control m-input" name="payout_sched"
+                                id="payout_sched"
+                                placeholder="Select an option" data-validation="required"
+                                v-model="vmpayinfo.payout_sched">
+                            <option value=""></option>
+                            <?php foreach ($payout_scheds as $payout_sched): ?>
+                                <option value="<?= $payout_sched->id ?>"><?= $payout_sched->name ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <input type="hidden" id="payout_sched_desc" name="payout_sched_desc" v-model="edited_content.payout_sched" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="m-portlet__foot m-portlet__foot--fit m-portlet__no-border">
+        <div class="m-form__actions">
+            <div class="row">
+                <div class="col-12 text-right" id="saveAndApproveAction">
+                    <template v-if="approving_authority">
+                        <button type="submit" class="btn btnSave btn-success m-btn m-btn--air m-btn--custom btn-submit">
+                            <i class="la la-thumbs-up mr-2"></i>Save and Approve
+                        </button>
+                    </template>
+                    <template v-else>
+                        <button type="submit" class="btn btnSave btn-primary m-btn m-btn--air m-btn--custom btn-submit">
+                            <i class="la la-check mr-2"></i>Save
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<form id="frmEditBankData" class="m-form m-form--fit m-form--label-align-right" method="POST" action="<?php echo site_url("hris/masterfile/update_employee_bank_information"); ?>">
+    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x m-0"></div>
+    <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+    <input type="hidden" name="id" value="<?php echo $data->id; ?>">
+    <div id="frmEditBankData-container" class="m-portlet__body">
+        <div class="row m--margin-bottom-25">
+            <div class="col-10 ml-auto"><h3 class="m-form__header m-form__section">Bank Information</h3></div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+                <div class="form-group m-form__group row">
+                    <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Bank Name: </label>
+                    <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
+                        <input type="text" id="bank_name" name="bank_name" class="form-control m-input" autocomplete="off" data-validation="required" v-model="row.bank_name"/>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+                <div class="form-group m-form__group row">
+                    <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">ATM INFO: </label>
+                    <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
+                        <input type="text" id="atm_info" name="atm_info" class="form-control m-input" autocomplete="off" data-validation="required" v-model="row.atm_info"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="m-portlet__foot m-portlet__foot--fit m-portlet__no-border">
+        <div class="m-form__actions">
+            <div class="row">
+                <div class="col-12 text-right" id="saveAndApproveAction">
+                    <button type="submit" class="btn btnSave btn-primary m-btn m-btn--air m-btn--custom btn-submit">
+                        <i class="la la-check mr-2"></i>Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x mt-0"></div>
+</form>
+
+<div class="m-form m-form--fit">
+    <div class="m-portlet__body pt-0">
+        <div class="form-group m-form__group row mb-0 pb-0">  
+            <div class="col-12 ml-auto">
+                <h4 class="m-form__header m-form__section">Allowances</h4>
+            </div>
+        </div>
+        <div class="form-group m-form__group row">
+            <div class="col-md-12">
+                <div class="row align-items-center">
+                    <div class="col-xl-8 order-2 order-xl-1">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <button class="btn btn-sm btn-success btnNew" 
+                                    data-toggle="modal" data-target="#mdl-newAllowance">
+                                    <i class="fa fa-plus"></i> <span>New</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-4 order-1 order-xl-2 m--align-right">
+                        <div class="m-input-icon m-input-icon--left" style="border: 1px solid #c3c3c3;">
+                            <input type="text" class="form-control m-input m-input--solid" placeholder="Search..." id="generalSearchAllowances">
+                            <span class="m-input-icon__icon m-input-icon__icon--left">
+                                <span>
+                                    <i class="la la-search"></i>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll table-responsive">
+                    <table id="tbl-allowances" class="table display table-bordered table-striped dataTable no-footer"
+                           width="100%">
+                        <thead>
+                        <th>Name</th>
+                        <th>Amount</th>
+                        <th>Active</th>
+                        <th>Action</th>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x"></div>
+        <div class="form-group m-form__group row mb-0 pb-0">
+            <div class="col-12 ml-auto">
+                <h4 class="m-form__header m-form__section">Benefits</h4>
+            </div>
+        </div>
+        <div class="form-group m-form__group row">
+            <div class="col-12 col-md-12">
+                <div class="row align-items-center">
+                    <div class="col-xl-8 order-2 order-xl-1">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <button class='btn btn-sm btn-success btnNew' 
+                                    data-toggle='modal' 
+                                    data-target='#mdl-newBenefit'>
+                                    <i class='fa fa-plus'></i> <span>New</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-4 order-1 order-xl-2 m--align-right">
+                        <div class="m-input-icon m-input-icon--left" style="border: 1px solid #c3c3c3;">
+                            <input type="text" class="form-control m-input m-input--solid" placeholder="Search..." id="generalSearchBenefits">
+                            <span class="m-input-icon__icon m-input-icon__icon--left">
+                                <span>
+                                    <i class="la la-search"></i>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll table-responsive">
+                    <table id="tbl-benefits" class="table display table-bordered table-striped dataTable no-footer" width="100%">
+                        <thead>
+                            <th>Name</th>
+                            <th>Amount</th>
+                            <th>Action</th>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x"></div>
+        <div class="form-group m-form__group row">
+            <div class="col-12 ml-auto">
+                <h4 class="m-form__header m-form__section">Deductions</h4>
+            </div>
+        </div>
+        <div class="form-group m-form__group row">
+            <div class="col-md-12">
+                <div class="row align-items-center">
+                    <div class="col-xl-8 order-2 order-xl-1">
+                        <button class='btn btn-sm btn-success btnNew' data-toggle='modal' data-target='#mdl-newLoan'><i class='fa fa-plus'></i> <span>New</span></button>
+                    </div>
+                    <div class="col-xl-4 order-1 order-xl-2 m--align-right">
+                        <div class="m-input-icon m-input-icon--left" style="border: 1px solid #c3c3c3;">
+                            <input type="text" class="form-control m-input m-input--solid" placeholder="Search..." id="generalSearchLoans">
+                            <span class="m-input-icon__icon m-input-icon__icon--left">
+                                <span>
+                                    <i class="la la-search"></i>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
+                    <table id="tbl-loans" class="table display table-bordered table-striped dataTable no-footer"
+                           width="100%">
+                        <thead>
+                        <th>Loan Name</th>
+                        <th>Loaned Amount</th>
+                        <th>Amt. Pd.</th>
+                        <th>Bal.</th>
+                        <th>
+                            <span data-toggle="m-tooltip"
+                                  data-placement="top"
+                                  data-original-title="DEDUCTION TYPE"
+                                  data-skin="dark">
+                                TYPE
+                            </span>
+                        </th>
+                        <th>
+                            <span data-toggle="m-tooltip"
+                                  data-placement="top"
+                                  data-original-title="PERCENTAGE VALUE OR FIXED AMOUNT VALUE"
+                                  data-skin="dark">
+                                VALUE
+                            </span>
+                        </th>
+                        <th>Status</th>
+                        <th>Action</th>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x"></div>
+
+        <div class="form-group m-form__group row mb-0 pb-0">
+            <div class="col-12 col-md-12">
+                <h4 id="payroll_info-history" class="m-form__header m-form__section">History <small>Payroll Information</small></h4>
+            </div>
+        </div>
+        <div class="form-group m-form__group row">
+            <div class="col-12 col-md-12">
+                <div class="row align-items-center">
+                    <div class="col-xl-8 order-2 order-xl-1">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">&nbsp;</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-4 order-1 order-xl-2 m--align-right">
+                        <div class="m-input-icon m-input-icon--left" style="border: 1px solid #c3c3c3;">
+                            <input type="text" class="form-control m-input m-input--solid" placeholder="Search..." id="generalSearchHistory">
+                            <span class="m-input-icon__icon m-input-icon__icon--left">
+                                <span>
+                                    <i class="la la-search"></i>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
+                    <table id="tbl-payroll_history" class="table display table-bordered table-striped dataTable no-footer"
+                           width="100%">
+                        <thead>
+                            <th>Logs</th>
+                            <th>Action</th>
+                            <th>Last Edited By</th>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="mdl-newAllowance" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <form id="frm-newAllowance" action="<?php echo site_url("hris/masterfile/save_employee_allowance");?>">
+        <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+        <input type="hidden" name="emp_id" value="<?php echo $data->id; ?>">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="la la-plus mr-2"></i>New Allowance</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">
+                            ×
+                        </span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="allowance" class="form-control-label">
+                            Allowance :
+                        </label>
+                        <select name="allowance_id" id="allowance_id" class="form-control"> 
+                        </select>
+                    </div>
+                    <div class="form-group">
+						<div class="row">
+							<label class="form-control-label col-6">
+								Rate*
+							</label>
+						</div>
+                      
+						<div class="row">
+							<div class="col-12">
+								<input type="number" name="rate" class="form-control"/>
+							</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-submit btnSave"><i class="la la-check mr-2"></i>Save</button>
+                    <button class="btn btn-danger" data-dismiss="modal"><i class="la la-times mr-2"></i>Close</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="mdl-newBenefit" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <form id="frm-newBenefit" action="<?php echo site_url("hris/masterfile/save_employee_benefit");?>">
+        <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+        <input type="hidden" name="emp_id" value="<?php echo $data->id; ?>">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="la la-plus mr-2"></i>New Benefit</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">
+                            ×
+                        </span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="allowance" class="form-control-label">
+                            Benefit :
+                        </label>
+                        <select name="benefit_id" id="benefit_id" class="form-control"> 
+                        </select>
+                    </div>
+                    <div class="form-group">
+						<div class="row">
+							<label class="form-control-label col-6">
+								Rate*
+							</label>
+						</div>
+                      
+						<div class="row">
+							<div class="col-12">
+								<input type="number" name="rate" class="form-control"/>
+							</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-submit btnSave"><i class="la la-check mr-2"></i>Save</button>
+                    <button class="btn btn-danger" data-dismiss="modal"><i class="la la-times mr-2"></i>Close</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="mdl-newLoan" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <form id="frm-newLoan" action="<?php echo site_url("hris/masterfile/save_employee_loan"); ?>">
+            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <input type="hidden" name="emp_id" value="<?php echo $data->id; ?>">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="la la-plus mr-2"></i>New Loan</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">
+                            ×
+                        </span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="form-group col-xl-8 col-lg-8 col-md-8 col-sm-12">
+                            <label for="allowance" class="form-control-label required">Loan</label>
+                            <select name="loan_id" id="loan_id" class="form-control"
+                                    data-validation="required">
+                                <option></option>
+                            </select>
+                        </div>
+
+                        <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 form-group">
+                            <label for="required" class="required">Amount</label>
+                            <input type="text" name="amount" autocomplete="off" class="form-control text-right"
+                                   data-validation="required">
+                        </div>
+                    </div>
+
+                    <div id="hasReferenceLoans">
+                        <div class="row m--hide m-animate-fade-in-up" v-if="hasrefs === true">
+                            <div class="col-xl-8 col-lg-8 col-md-8 col-sm-12 form-group">
+                                <input type="hidden" name="reference" v-model="reference" />
+                                <label for="required" class="">CA Reference #</label>
+                                <select name="reference_id" id="ca_reference" class="form-control m--hide">
+                                    <option></option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 row">
+                        <div class="form-group col-xl-8 col-lg-8 col-md-8 col-sm-12">
+                            <label class="form-control-label required">Deduction Type</label>
+                            <div class="m-radio-inline mt-2">
+                                <label class="m-radio mb-0">
+                                    <input type="radio" name="deduction_type" value="1">
+                                    Fix amount<span></span>
+                                </label>
+                                <label class="m-radio mb-0">
+                                    <input type="radio" name="deduction_type" value="0" checked>
+                                    Percentage<span></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 form-group">
+                            <label for="required" class="required" id="deduct_type_value_label">Value</label>
+                            <input type="text" name="deduct_type_value" value="20" data-validation="required"
+                                   autocomplete="off" class="form-control text-right">
+                        </div>
+                    </div>
+
+                    <div class="mt-4 row">
+                        <div class="col-xl-5 col-lg-5 col-md-5 col-sm-12 form-group">
+                            <label for="required">DN Reference #</label>
+                            <input type="text" name="debit_note" autocomplete="off" class="form-control" maxlength="12" />
+                        </div>
+                        <div class="form-group col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                            <label class="form-control-label">Remarks</label>
+                            <textarea name="remarks" cols="20" rows="5" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-submit btnSave"><i class="la la-check mr-2"></i>Save</button>
+                    <button class="btn btn-danger" data-dismiss="modal"><i class="la la-times mr-2"></i>Close</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="mdl-removeAllowance" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <form id="frm-removeAllowance" action="<?php echo site_url("hris/masterfile/remove_employee_allowance");?>">
+        <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+        <input type="hidden" name="emp_id" value="<?php echo $data->id; ?>">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="la la-trash mr-2"></i>Remove Allowance</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">
+                            ×
+                        </span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group m-form__group row">
+                        <label class="col-12 col-form-label form-control-label">
+                            <b>Removing</b> this data will delete it permanently. Do you wish to proceed?
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-submit btnSave"><i class="la la-check mr-2"></i>Save</button>
+                    <button class="btn btn-default" data-dismiss="modal"><i class="la la-times mr-2"></i>Close</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="mdl-removeBenefit" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <form id="frm-removeBenefit" action="">
+        <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+        <input type="hidden" name="emp_id" value="<?php echo $data->id; ?>">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="la la-trash mr-2"></i>Remove Benefits</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">
+                            ×
+                        </span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group m-form__group row">
+                        <label class="col-12 col-form-label form-control-label">
+                            <b>Removing</b> this data will delete it permanently. Do you wish to proceed?
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-submit btnSave"><i class="la la-check mr-2"></i>Save</button>
+                    <button class="btn btn-default" data-dismiss="modal"><i class="la la-times mr-2"></i>Close</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="mdl-removeLoan" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <form id="frm-removeLoan" action="<?php echo site_url("hris/masterfile/remove_employee_loan");?>">
+        <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+        <input type="hidden" name="emp_id" value="<?php echo $data->id; ?>">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="la la-archive mr-2"></i>Archive Loan</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">
+                            ×
+                        </span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group m-form__group row">
+                        <label class="col-12 col-form-label form-control-label">
+                            <b>Archiving</b> this data will remove it from table. Do you wish to proceed?
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-submit btnSave">Save</button>
+                    <button class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="forApprovalModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">For Approval</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">
+                        ×
+                    </span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div id="mass_btn" class="col-md-12 row align-items-center m-0">
+                        <button type="button" id="approve" class="btn btn-success btn-sm btnView mr-1" onclick="massAction(1)" title="Mass Approve" disabled><i class="la la-thumbs-up"></i></button>
+                        <button type="button" id="disapprove" class="btn btn-danger btn-sm btnView mr-2" onclick="massAction(2)" title="Mass Disapprove" disabled><i class="la la-thumbs-down"></i></button>                        
+                        <i class="flaticon-questions-circular-button" 
+                            title="Click to mass Approve or Disapprove" 
+                            data-bs-toggle="tooltip" 
+                            data-bs-dimiss="click" 
+                            data-bs-placement="bottom">
+                        </i>
+                    </div>
+                </div>
+                <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll"> 
+                    <table id="tbl-approval_history" class="table display table-bordered table-striped dataTable no-footer" width="100%">
+                        <colgroup>
+                            <col width="2%">
+                            <col width="*">
+                            <col width="20%">
+                            <col width="15%">
+                            <col width="20%">
+                            <col width="8%">
+                        </colgroup>
+                        <thead>
+                            <th></th>
+                            <th>Description</th>
+                            <th>Value</th>
+                            <th>Status</th>
+                            <th>Created By</th>
+                            <th>Action</th>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="change_payroll_info">
+<?php
+    $this->load->view("payroll/employee_profile/modals/edit_employee_allowance");
+    $this->load->view("payroll/employee_profile/modals/edit_employee_loan");
+    $this->load->view("payroll/employee_profile/modals/loan_payment_history_modal");
+    $this->load->view("payroll/employee_profile/modals/edit_employee_benefits");
+?>
+
+<script>
+$(document).ready(function(){
+    if(screen.width > 560 && screen.width < 1920){
+        $("#frmEditPayrollData-container label").addClass("text-right");
+        $("div label").addClass("text-right");
+    }
+});
+    const editEmployeeAllowanceModal = $("#edit-employee-allowance-modal");
+    const addEmployeeLoan = $("#mdl-newLoan");
+    const editEmployeeLoan = $("#edit-employee-loan");
+    const loanPaymentHistoryModal = $("#loan-payment-history-modal");
+    const editEmployeeBenefitsModal = $("#edit-employee-benefits-modal");
+
+    const modalForApproval = $("#forApprovalModal");
+
+    const loansDropdown = <?php echo json_encode($loans_dropdown); ?>;
+    let loansCAReference = <?php echo json_encode($loans_ca_reference); ?>;
+    
+     // update payroll basic pay and type *** etc
+    $.validate({
+        form: '#frmEditPayrollData',
+        lang: 'en',
+        onSuccess: function (form) {
+            let formData = $(form).serialize();
+            const approvingAuthority = typeof _tempContentData.approving_authority !== "undefined" && _tempContentData.approving_authority ? 
+                _tempContentData.approving_authority: false;
+
+            formData += "&approving_authority="+approvingAuthority;
+
+            $.ajax({
+                /*** url: form[0].action, ***/
+                url: $(form).attr("action"),
+                type: "POST",
+                data: formData,
+                /*** data: $("#frmEditPayrollData").find("input,select").serialize(), ***/
+                beforeSend: function () {
+                    $(form).find(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                },
+                success: function (data) {
+                    if (data.status) {
+                        toastr.success(data.response, "Notice", 5000);
+                        $("#change_payroll_info").val(0);
+                        $("#payroll_information i").remove();
+                    } else {
+                        toastr.error(data.response, "Notice", 5000);
+                    }
+                    $(form).find(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    if(data.for_approval){  
+                        toastr.info(data.approval_notification, "For Approval", 5000); 
+                        $("#change_payroll_info").val(0);
+                        $("#payroll_information i").remove();
+                    }
+
+                    dtHistoryPayrollInfo.ajax.reload();
+                }
+            });
+            return false;
+        },
+    });
+
+    var generalSearchAllowances = null;
+    var dtAllowance = $("#tbl-allowances").DataTable({
+        dom: 'frtlip',
+        serverSide: true,
+        processing: true,
+        autoWidth: false,
+        searching: false,
+        width: "100%",
+        ajax: {
+            url: baseUrl("hris/masterfile/get_employee_allowance"),
+            type: "post",
+            dataType: "json",
+            global: false,
+            data: function(d){
+                d.csrf_token = _csrf_hash, 
+                d.emp_id = <?php echo $data->id; ?>,
+                d.search['value'] = generalSearchAllowances
+            }
+        },
+        columns: [
+            {
+                width: "*",
+                data: "allowance_name",
+                render: function (data) {
+                    return `<span>${data}</span>`;
+                }
+            },
+            {
+                width: "15%",
+                data: "rate",
+                className: "text-right",
+                render: function (data, type, row) {
+                    return `<span>${parseFloat(data).toFixed(2)} / ${row.frequency}</span>`;
+                }
+            },
+            {
+                width: "15%",
+                data: "is_active",
+                className: "text-center",
+                orderable: false,
+                render: function (data, type, row) {
+                    if (parseInt(data) === 1) {
+                        return `<span class="m-badge m-badge--success m-badge--wide m--font-boldest">YES</span>`;
+                    } else {
+                        return `<span class="m-badge m-badge--danger m-badge--wide m--font-boldest">NO</span>`;
+                    }
+                }
+            },
+            {
+                width: "12%",
+                data: null,
+                className: "text-center",
+                orderable: false,
+                render: function (data, type, row, meta) {
+                    let btnStr = ``;
+                    if (_currentActions.includes('edit')) {
+                        btnStr += ` <button class="btn btn-sm btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill m-btn--hover-primary"
+                                            onclick="openEditEmployeeAllowanceModal(${row.id}, '${row.allowance_name}', ${row.rate}, '${row.frequency}', '${row.is_active}')">
+                                        <i class="fa fa-pencil"></i>
+                                    </button>`;
+                    }
+
+                    if (_currentActions.includes('delete')) {
+                        btnStr += ` <button class="btn btn-sm btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill m-btn--hover-danger"
+                                            onclick="remove_allowance(${row.id})">
+                                        <i class="fa fa-archive"></i>
+                                    </button>`;
+                    }
+
+                    return btnStr;
+                }
+            },
+        ],
+    });
+
+    $('#generalSearchAllowances').donetyping(function (callback) {
+        generalSearchAllowances = $(this).val();
+        dtAllowance.ajax.reload();
+    });
+
+    function openEditEmployeeBenefitModal(id, rate, benefit_id) {
+        console.log(id);
+        $("#id", editEmployeeBenefitsModal).val(id);
+        $("input[name='rate']", editEmployeeBenefitsModal).val(rate);
+        $("#update_benefit_id", editEmployeeBenefitsModal).val(benefit_id);
+        editEmployeeBenefitsModal.modal("show");
+    }
+
+    function openEditEmployeeAllowanceModal(id, allowance_name, amount, frequency, is_active) {
+        console.log(is_active);
+        $("#id", editEmployeeAllowanceModal).val(id);
+        $("input[name='rate']", editEmployeeAllowanceModal).val(amount);
+        $("#allowance-name", editEmployeeAllowanceModal).val(allowance_name);
+        $("input[name='frequency'][value='" + frequency + "']", editEmployeeAllowanceModal).prop('checked', true);
+        $("input[name='is_active']", editEmployeeAllowanceModal).val(is_active).prop('checked', (parseInt(is_active) === 1));
+        editEmployeeAllowanceModal.modal("show");
+    }
+
+    var generalSearchBenefits = null;
+    var dtBenefits = $("#tbl-benefits").DataTable({
+        dom: 'frtlip',
+        serverSide: true,
+        processing: true,
+        autoWidth: false,
+        searching: false,
+        width: "100%",
+        ajax: {
+            url: baseUrl("hris/masterfile/get_employee_benefits"),
+            type: "post",
+            dataType: "json",
+            global: false,
+            data: function(d){
+                d.csrf_token = _csrf_hash, 
+                d.emp_id = <?php echo $data->id; ?>, 
+                d.search['value'] = generalSearchBenefits 
+            }
+        },
+        columns: [
+            {data: "benefit_name", width: "*"},
+            {data: "rate", className: "text-right", width: "15%"},
+            {data: null, className: "text-center", orderable: false, width: "8%", 
+                render: function (data, type, row) {
+                    let btn = ``;
+                    if (_currentActions.includes("edit")) {
+                        btn += ` <button title="Edit"
+                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
+                                onclick="openEditEmployeeBenefitModal(${row.id}, '${row.rate}', '${row.benefit_id}')">
+                        <i class="fa fa-pencil"></i>
+                        </button>`;
+                    }
+                    if (_currentActions.includes("archive")) {
+                            btn += ` <button title="Archive"
+                                             class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-danger" onclick="remove_benefit(${row.id})">
+                                         <i class="fa fa-archive"></i>
+                                     </button>`;
+                        }
+                    return btn;
+                }
+            },
+        ],
+    });
+
+    $('#generalSearchBenefits').donetyping(function (callback) {
+        generalSearchBenefits = $(this).val();
+        dtBenefits.ajax.reload();
+    });
+
+    var loan_search_val = '';
+    var dtLoans = $("#tbl-loans").DataTable({
+        dom: 'frtlip',
+        serverSide: true,
+        processing: true,
+        autoWidth: false,
+        ordering: false,
+        searching: false,
+        width: "100%",
+        ajax: {
+            url: baseUrl("hris/masterfile/get_employee_loans"),
+            type: "post",
+            dataType: "json",
+            global: false,
+            data: function (d) {d.csrf_token = _csrf_hash, d.emp_id = <?php echo $data->id; ?>, d.search['value'] = loan_search_val }
+        },
+        columns: [
+                {
+                    data: "loan_name",
+                    width: "*",
+                    render: function (data, type, row) {
+                        var ref, dnRefs = ``;
+                        if(row.reference === '' || row.reference === null){ ref = ``; }
+                        else{ ref = `<p class='m-0'><small><span class="m--font-bolder">Reference:</span> ${row.reference}</small></p>`; }
+                        if(typeof row.debit_note != "undefined" && row.debit_note){
+                            dnRefs = `<span class='m--font-primary m--font-boldest m--margin-left-15 m--regular-font-size-lg1'>${row.debit_note}</span>`;
+                        }
+
+                        let tempHtml = `<p class="mb-1 m--font-bolder">${data} ${dnRefs}</p>`+ref+`
+                        <p class='m-0'><small><span class="m--font-bolder">Created By:</span> ${row.created_by}</small></p>
+                        <p class='m-0'><small><span class="m--font-bolder">Created Date:</span> ${row.created_at}</small></p>`;
+
+                        return tempHtml;
+                    }
+                },
+                {
+                    data: "amount",
+                    className: "text-right",
+                    width: "15%",
+                    render: function (data) {
+                        return `<span class="m--font-boldest">
+                                    ${parseFloat(data).toLocaleString('en-US', {maximumFractionDigits: 2})}
+                                </span>`;
+                    }
+                },
+                {
+                    data: "total_amount_paid",
+                    className: "text-right m--padding-right-30",
+                    width: "10%",
+                    render: function (data) {
+                        return `<span class="m--font-boldest">
+                                    ${parseFloat(data).toLocaleString('en-US', {maximumFractionDigits: 2})}
+                                </span>`;
+                    }
+                },
+                {
+                    data: null,
+                    className: "text-right m--padding-right-30",
+                    width: "10%",
+                    render: function (data, type, row) {
+                        const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                        return `<span class="m--font-boldest">
+                                    ${parseFloat(balance).toLocaleString('en-US', {maximumFractionDigits: 2})}
+                                </span>`;
+                    }
+                },
+                {
+                    data: "deduction_type",
+                    width: "13%",
+                    render: function (data, type, row) {
+                        return parseInt(data) === 0 ? "Percentage" : "Fix Amount";
+                    }
+                },
+                {
+                    data: null,
+                    width: "8%",
+                    render: function (data, type, row) {
+                        if (parseInt(row.deduction_type) === 0) {
+                            return parseFloat(row.percentage).toLocaleString('en-US', {maximumFractionDigits: 2}) + "" + "%";
+                        } else {
+                            return parseFloat(row.fixed_deduction_amt).toLocaleString('en-US', {maximumFractionDigits: 2});
+                        }
+                    }
+                },
+                {
+                    data: "active",
+                    className: "text-center",
+                    width: "10%",
+                    render: function (data, type, row) {
+                        let tempStatus = parseInt(data);
+                        let badgeColor = "m-badge--warning";
+                        let badgeText = "Suspended";
+                        if(row.paid == 1 && tempStatus !== 2){ tempStatus = 2; }
+
+                        const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                        if(balance <= 0){ tempStatus = 2; }
+
+                        switch (tempStatus) {
+                            case 1:
+                                badgeColor = "m-badge--info";
+                                badgeText = "Active";
+                                break;
+                            case 2:
+                                badgeColor = "m-badge--success";
+                                badgeText = "Paid";
+                                break;
+                            default:
+                                badgeColor = "m-badge--warning";
+                                badgeText = "Suspended";
+                                break;
+                        }
+                        return `<span class="m-badge m-badge--wide m--font-bolder ${badgeColor}">${badgeText}</span>`;
+                    }
+                },
+                {
+                    width: "7%",
+                    data: null,
+                    className: "text-center",
+                    orderable: false,
+                    render: function (data, type, row) {
+                        let btn = ``;
+                        let ctrActions = 0;
+                        let listActions = ``;
+                        const isPaid = parseInt(row.paid);
+
+                        let tempIsPaid = false;
+                        const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                        if(balance <= 0){ tempIsPaid = true; }
+
+                        if (_currentActions.includes("edit") && (isPaid !== 1 && tempIsPaid === false)) {
+                            btn += `<button title="Edit"
+                                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
+                                    onclick="openEditEmployeeLoanModal(${row.id})">
+                            <i class="fa fa-pencil"></i>
+                            </button> `;
+                            listActions += `<li class="m-nav__item">
+                                <a href="javascript:void(0)" class="m-nav__link"
+                                onclick="openEditEmployeeLoanModal(${row.id})">
+                                    <i class="m-nav__link-icon flaticon-coins"></i>
+                                    <span class="m-nav__link-text">EDIT LOAN</span>
+                                </a>
+                            </li>`;
+                            ctrActions++;
+                        }
+
+                        if (_currentActions.includes("view")) {
+                            btn += `<button title="View payment history"
+                                             class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
+                                             onclick="openLoanPaymentHistoryModal(${row.id})">
+                                        <i class="fa fa-list-ol"></i>
+                                     </button> `;
+                            listActions += `<li class="m-nav__item">
+                                <a href="javascript:void(0)" class="m-nav__link"
+                                onclick="openLoanPaymentHistoryModal(${row.id})">
+                                    <i class="m-nav__link-icon flaticon-list"></i>
+                                    <span class="m-nav__link-text">PAYMENT HISTORY</span>
+                                </a>
+                            </li>`;
+                            ctrActions++;
+                        }
+
+                        if (_currentActions.includes("archive")) {
+                            btn += `<button title="Archive"
+                                        onclick="remove_loan(${row.id})"
+                                             class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-danger">
+                                         <i class="fa fa-archive"></i>
+                                     </button> `;
+                            listActions += `<li class="m-nav__item">
+                                <a href="javascript:void(0)" class="m-nav__link"
+                                onclick="remove_loan(${row.id})">
+                                    <i class="m-nav__link-icon flaticon-interface-2"></i>
+                                    <span class="m-nav__link-text">ARCHIVE LOAN</span>
+                                </a>
+                            </li>`;
+                            ctrActions++;
+                        }
+
+                        const _tempAction = `<div class="m-dropdown m-dropdown--inline m-dropdown--align-right m-dropdown--large"
+                                data-dropdown-toggle="click" aria-expanded="true">
+                            <a href="#" class="m-dropdown__toggle btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill"
+                                data-toggle="m-tooltip" data-original-title="More Options" data-skin="dark"
+                                data-delay='{"show": 500}'>
+                                <i class="fa fa-ellipsis-v"></i>
+                            </a>
+                            <div class="m-dropdown__wrapper">
+                                <span class="m-dropdown__arrow m-dropdown__arrow--right"></span>
+                                <div class="m-dropdown__inner">
+                                    <div class="m-dropdown__body">
+                                        <div class="m-dropdown__content">
+                                            <ul class="m-nav">
+                                                <li class="m-nav__section m-nav__section--first">
+                                                    <span class="m-nav__section-text">OPTIONS</span>
+                                                </li>
+                                                ${listActions}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+
+                        if(ctrActions > 1){ btn = _tempAction; }
+                        if(ctrActions == 0){ btn = '--'; }
+                        return btn;
+                    }
+                },
+            ],
+            initComplete: function () {
+                $('#generalSearchLoans').donetyping(function(callback) {
+                    loan_search_val = $(this).val();
+                    dtLoans.ajax.reload();
+                });
+            }, drawCallback: function(){
+                setTimeout(getCAReferences(), 750);
+            }
+    });
+
+    function openEditEmployeeLoanModal(id) {
+        $.ajax({
+            url: baseUrl(`hris/masterfile/get_employee_loan/${id}`),
+            type: "GET",
+            dataType: "JSON",
+            beforeSend: function(){
+                $("#frm-edit-employee-loan").trigger('reset');
+                $("input[name='active']", editEmployeeLoan).prop("checked", false);
+            },
+            success: function (response) {
+                $("#frm-edit-employee-loan").attr("action", baseUrl(`hris/masterfile/update_employee_loan/${response.id}`));
+                if(typeof response.loan_id != "undefined" && response.loan_id){
+                    $("#loan_id-edit").val(response.loan_id).trigger("change");
+                }
+
+                const caHasReference = response.has_ref != 0 || response.reference != '' && response.reference != null;
+                vmEditLoanRefs.hasrefs = caHasReference;
+                vmEditLoanRefs.reference = response.reference;
+                vmEditLoanRefs.reference_id = response.reference_id;
+                if(caHasReference){
+                    setTimeout(function(){ vmEditLoanRefs.setReferenceCA(); }, 250);
+                }
+
+                const deduction_type = parseInt(response.deduction_type);
+
+                const amount = parseFloat(response.amount).toLocaleString('en-US', {maximumFractionDigits: 2});
+                $("input[name='amount']", editEmployeeLoan)
+                    .maskMoney({
+                        prefix: '',
+                        allowNegative: true,
+                        thousands: ',',
+                        decimal: '.',
+                        affixesStay: false
+                    })
+                    .val(amount);
+
+
+                const deduct_type_value = parseFloat(deduction_type === 0 ? response.percentage : response.fixed_deduction_amt).toLocaleString('en-US', {maximumFractionDigits: 2});
+                $("input[name='deduct_type_value']", editEmployeeLoan)
+                    .maskMoney({
+                        prefix: '',
+                        allowNegative: true,
+                        thousands: ',',
+                        decimal: '.',
+                        affixesStay: false
+                    })
+                    .val(deduct_type_value);
+
+                $("input[name='deduction_type'][value='" + response.deduction_type + "']", editEmployeeLoan).attr('checked', true);
+                $("input[name='active'][value='" + response.active + "']", editEmployeeLoan).attr('checked', true);
+                $("#for_remarks").text(response.remarks);
+                if(typeof response.debit_note != "undefined" && response.debit_note){
+                    $("#debit_note", editEmployeeLoan).val(response.debit_note);
+                }
+                editEmployeeLoan.modal("show");
+            }
+        });
+    }
+
+    $.validate({
+        form: "#frm-edit-employee-loan",
+        lang: 'en',
+        scrollToTopOnError: false,
+        onSuccess: function (form) {
+            const url = $(form).attr("action");
+            const formData = new FormData(form[0]);
+            formData.append("csrf_token", _csrf_hash);
+
+            $.ajax({
+                url,
+                type: "POST",
+                dataType: "JSON",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response) {
+                        if (response.success) {
+                            const toast = response.toast;
+                            toastr[toast](response.message, response.title, {timeOut: 10000});
+                            dtLoans.ajax.reload();
+                        }
+                    }
+
+                    vmEditLoanRefs.hasrefs = false;
+                    vmEditLoanRefs.reference = null;
+                    vmEditLoanRefs.reference_id = 0;
+
+                    editEmployeeLoan.modal("hide");
+                }
+            });
+
+            return false;
+        }
+    });
+
+    $("#allowance_id").select2({
+        width: "100%",
+        placeholder: "Select option",
+        dropdownParent: $("#mdl-newAllowance"),
+        ajax: {
+            url: baseUrl("hris/masterfile/get_allowance_collection/")+<?php echo $data->id; ?>,
+            dataType: "json",
+            delay: 500,
+            global: false,
+            processResults: function (data) {
+            return data;
+            }
+        }
+    });
+
+    $("#benefit_id").select2({
+        width: "100%",
+        placeholder: "Select option",
+        dropdownParent: $("#mdl-newBenefit"),
+        ajax: {
+            url: baseUrl("hris/masterfile/get_benefit_collection/")+<?php echo $data->id; ?>,
+            dataType: "json",
+            delay: 500,
+            global: false,
+            processResults: function (data) {
+            return data;
+            }
+        }
+    });
+
+    $("#update_benefit_id").select2({
+        width: "100%",
+        placeholder: "Select option",
+        dropdownParent: $("#edit-employee-benefits-modal"),
+        ajax: {
+            url: baseUrl("hris/masterfile/get_benefit_collection/")+<?php echo $data->id; ?>,
+            dataType: "json",
+            delay: 500,
+            global: false,
+            processResults: function (data) {
+            return data;
+            }
+        }
+    });
+
+    const vmNewLoanRefs = new Vue({
+        el: "#hasReferenceLoans",
+        data: { hasrefs: false, reference: null },
+        methods: {
+            setReferenceCA: function(){
+                const _this = this;
+                const { $el } = _this;
+                const { results } = loansCAReference;
+
+                const currentElement = $($el);
+                _this.reference = null;
+
+                const caRefs = currentElement.find("#ca_reference");
+                if(typeof caRefs != "undefined" && caRefs.length == 1){
+                    if(caRefs.hasClass("select2-hidden-accessible") == true){ caRefs.select2("destroy"); }
+
+                    caRefs.select2({
+                        width: "100%",
+                        placeholder: "Select option",
+                        dropdownParent: addEmployeeLoan,
+                        data: results,
+                        escapeMarkup: function (markup) { return markup; }, 
+                        templateResult: function (data) { return data.html; }, 
+                        templateSelection: function (data) { return data.text; }
+                    }).on('select2:select', function(e){
+                        const data = e.params.data;
+                        _this.reference = data.refnum;
+                    });
+
+                    currentElement.find(".row.m--hide").removeClass("m--hide");
+                }
+            }
+        }
+    });
+
+    const vmEditLoanRefs = new Vue({
+        el: "#hasReferenceLoansEdit",
+        data: { hasrefs: false, reference: null, reference_id: 0 },
+        methods: {
+            setReferenceCA: function(){
+                const _this = this;
+                const { $el, reference, reference_id } = _this;
+                const { results } = loansCAReference;
+                const currentElement = $($el);
+
+                const caRefs = currentElement.find("#ca_reference");
+                if(typeof caRefs != "undefined" && caRefs.length == 1){
+                    if(caRefs.hasClass("select2-hidden-accessible") == true){ 
+                        caRefs.empty().select2("destroy"); 
+                        console.log("destroyed");
+                    }
+
+                    caRefs.select2().empty();
+                    caRefs.select2({
+                        width: "100%",
+                        placeholder: "Select option",
+                        dropdownParent: editEmployeeLoan,
+                        data: results,
+                        escapeMarkup: function (markup) { return markup; }, 
+                        templateResult: function (data) { return data.html; }, 
+                        templateSelection: function (data) { return data.text; }
+                    }).on('select2:select', function(e){
+                        const data = e.params.data;
+                        _this.reference = data.refnum;
+                    });
+
+                    if(reference_id){ caRefs.val(reference_id).trigger("change"); }
+                    currentElement.find(".row.m--hide").removeClass("m--hide");
+                }
+
+            }
+        }
+    });
+    
+    $("#loan_id").select2({
+        width: "100%",
+        placeholder: "Select option",
+        dropdownParent: addEmployeeLoan,
+        data: loansDropdown.results,
+    }).on("select2:select", function(e){
+        const { data } = e.params;
+        vmNewLoanRefs.hasrefs = parseInt(data.has_ref) == 1;
+        setTimeout(function(){
+            vmNewLoanRefs.setReferenceCA();
+        }, 250);
+    });
+
+    $("#loan_id-edit").select2({
+        width: "100%",
+        placeholder: "Select option",
+        dropdownParent: editEmployeeLoan,
+        data: loansDropdown.results,
+    }).on("select2:select", function(e){
+        const { data } = e.params;
+        vmEditLoanRefs.hasrefs = parseInt(data.has_ref) == 1;
+        setTimeout(function(){
+            vmEditLoanRefs.setReferenceCA();
+        }, 250);
+    });
+
+    $.validate({
+        form: '#frm-newAllowance',
+        lang: 'en',
+        onSuccess: function (form) {
+            $.ajax({
+                url: form[0].action,
+                type: "POST",
+                data: $("#frm-newAllowance").find("input,select").serialize(),
+                beforeSend: function () {
+                    $(form).find(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                },
+                success: function (data) {
+                    if (data.status) {
+                        toastr.success(data.response, "Notice", 5000);
+                    } else {
+                        toastr.error(data.response, "Notice", 5000);
+                    }
+                    $("#mdl-newAllowance").modal("hide");
+                    dtAllowance.ajax.reload();
+                    $(form).find(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    dtHistoryPayrollInfo.ajax.reload();
+                }
+            });
+            return false;
+        },
+    });
+
+    $.validate({
+        form: '#frm-edit-allowance',
+        lang: 'en',
+        onSuccess: function (form) {
+            /*** const formData = new FormData($(form)[0]); ***/
+            const approvingAuthority = typeof _tempContentData.approving_authority !== "undefined" && _tempContentData.approving_authority ? 
+            _tempContentData.approving_authority: false;
+
+            const checkbox = $(form).find("input[type='checkbox'][name='is_active']").is(":checked");
+            const isActiveState = checkbox === true ? 1: 0;
+
+            const formData = new FormData($(form)[0]);
+            formData.append("approving_authority", approvingAuthority);
+            formData.set("is_active", isActiveState);
+
+            $.ajax({
+                url: baseUrl("hris/masterfile/update_employee_allowance"),
+                type: "POST",
+                dataType: "JSON",
+                data: formData,
+                processData: false,
+                contentType: false,
+                beforeSend: function () {
+                    $(".btn-submit", form).addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                },
+                success: function (response) {
+                    dtAllowance.ajax.reload();
+                    editEmployeeAllowanceModal.modal("hide");
+                    toastr[response.toast](response.message, response.title, 10000);
+                    $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    if(response.for_approval){  toastr.info(response.approval_notification, "For Approval", 5000); }
+                    dtHistoryPayrollInfo.ajax.reload();
+                }
+            });
+            return false;
+        },
+    });
+
+    $.validate({
+        form: '#frm-edit-benefits',
+        lang: 'en',
+        onSuccess: function (form) {
+            const formData = new FormData($(form)[0]);
+            $.ajax({
+                url: baseUrl("hris/masterfile/update_employee_benefits"),
+                type: "POST",
+                dataType: "JSON",
+                data: formData,
+                processData: false,
+                contentType: false,
+                beforeSend: function () {
+                    $(".btn-submit", form).addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                },
+                success: function (response) {
+                    dtBenefits.ajax.reload();
+                    editEmployeeBenefitsModal.modal("hide");
+                    toastr[response.toast](response.message, response.title, 10000);
+                    $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                }
+            });
+            return false;
+        },
+    });
+
+    function remove_allowance(id) {
+        $("#mdl-removeAllowance").modal("show");
+        $.validate({
+            form: '#frm-removeAllowance',
+            lang: 'en',
+            onSuccess: function (form) {
+                $.ajax({
+                    url: form[0].action + '/' + id,
+                    type: "POST",
+                    data: $("#frm-removeAllowance").find("input").serialize(),
+                    beforeSend: function () {
+                        $(".btn-submit", form).addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    },
+                    success: function (data) {
+                        if (data.status) {
+                            toastr.success(data.response, "Notice", 5000);
+                        } else {
+                            toastr.error(data.response, "Notice", 5000);
+                        }
+                        $("#mdl-removeAllowance").modal("hide");
+                        dtAllowance.ajax.reload();
+                        $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                        dtHistoryPayrollInfo.ajax.reload();
+                    }
+                });
+                return false;
+            },
+        });
+    }
+    
+    $.validate({
+        form: '#frm-newBenefit',
+        lang: 'en',
+        onSuccess: function (form) {
+            $.ajax({
+                url: form[0].action,
+                type: "POST",
+                data: $("#frm-newBenefit").find("input,select").serialize(),
+                beforeSend: function () {
+                    $(".btn-submit", form).addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                },
+                success: function (data) {
+                    if (data.status) {
+                        toastr.success(data.response, "Notice", 5000);
+                    } else {
+                        toastr.error(data.response, "Notice", 5000);
+                    }
+                    $("#mdl-newBenefit").modal("hide");
+                    dtBenefits.ajax.reload();
+                    $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                }
+            });
+            return false;
+        },
+    });
+    
+    $.validate({
+        form: '#frm-newLoan',
+        lang: 'en',
+        onSuccess: function (form) {
+            const formData = $(form).serialize();
+
+            $.ajax({
+                url: form[0].action,
+                type: "POST",
+                data: formData,
+                beforeSend: function () {
+                    $(".btn-submit", form).addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                },
+                success: function (data) {
+                    if (data.status) { toastr.success(data.response, "Notice", 5000); } 
+                    else { toastr.error(data.response, "Notice", 5000); }
+                    vmNewLoanRefs.hasrefs = false;
+                    vmNewLoanRefs.reference = null;
+                    
+                    dtLoans.ajax.reload();
+
+                    $("#mdl-newLoan").modal("hide");
+                    $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                }
+            });
+            return false;
+        },
+    });
+
+    function remove_allowance(id){
+            $("#mdl-removeAllowance").modal("show");
+            $.validate({
+            form: '#frm-removeAllowance',
+            lang: 'en',
+            onSuccess: function (form) {
+                $.ajax({
+                    url: form[0].action+'/'+id,
+                    type: "POST",
+                    data: $("#frm-removeAllowance").find("input").serialize(),
+                    beforeSend: function () {
+                        $(".btn-submit", form).addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    },
+                    success: function (data) {
+                        if (data.status) {
+                            toastr.success(data.response, "Notice", 5000);
+                        } else {
+                            toastr.error(data.response, "Notice", 5000);
+                        }
+                        $("#mdl-removeAllowance").modal("hide");
+                        dtAllowance.ajax.reload();
+                        $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                        dtHistoryPayrollInfo.ajax.reload();
+                    }
+                });
+                return false;
+            },
+        });
+    }
+
+    function remove_benefit(id){
+            $("#mdl-removeBenefit").modal("show");
+            $.validate({
+            form: '#frm-removeBenefit',
+            lang: 'en',
+            onSuccess: function (form) {
+                $.ajax({
+                    url: baseUrl("hris/masterfile/remove_employee_benefit/")+id,
+                    type: "POST",
+                    data: $("#frm-removeBenefit").find("input").serialize(),
+                    beforeSend: function () {
+                        $(".btn-submit", form).addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    },
+                    success: function (data) {
+                        if (data.status) {
+                            toastr.success(data.response, "Notice", 5000);
+                        } else {
+                            toastr.error(data.response, "Notice", 5000);
+                        }
+                        $("#mdl-removeBenefit").modal("hide");
+                        dtBenefits.ajax.reload();
+                        $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    }
+                });
+                return false;
+            },
+        });
+    }
+
+    function remove_loan(id){
+            $("#mdl-removeLoan").modal("show");
+            $.validate({
+            form: '#frm-removeLoan',
+            lang: 'en',
+            onSuccess: function (form) {
+                $.ajax({
+                    url: form[0].action+'/'+id,
+                    type: "POST",
+                    data: $("#frm-newLoan").find("input,select").serialize(),
+                    beforeSend: function () {
+                        $(".btn-submit", form).addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    },
+                    success: function (data) {
+                        if (data.status) {
+                            toastr.success(data.response, "Notice", 5000);
+                        } else {
+                            toastr.error(data.response, "Notice", 5000);
+                        }
+                        $("#mdl-removeLoan").modal("hide");
+                        dtLoans.ajax.reload();
+                        $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    }
+                });
+                return false;
+            },
+        });
+    }
+
+    var generalSearchHistory = null;
+    var dtHistoryPayrollInfo = $("#tbl-payroll_history").DataTable({
+        dom: 'frtlip',
+        serverSide: true,
+        processing: true,
+        autoWidth: false,
+        ordering: false,
+        searching: false,
+        ajax: {
+            url: "<?php echo base_url("hris/masterfile/get_history_payroll_information"); ?>",
+            type: "post",
+            dataType: "json",
+            global: false,
+            data: function (d) {
+                d.csrf_token = _csrf_hash; 
+                d.emp_id = <?php echo $data->id; ?>;
+                d.search["value"] = generalSearchHistory;
+            }
+        },
+        columns: [{
+                data: "log_message",
+                width: "*",
+            },{
+                data: "user_action",
+                width: "15%",
+            },{
+                data: "employee_name",
+                width: "25%",
+                render: function (data, meta, row) { 
+                    const html = `<p class='mb-0'>${data}</p>
+                    <small><span class='m--font-boldest'>${row.created_at_formatted}</span></small>`;
+                    return html; 
+                }
+            },
+
+        ],
+        initComplete: function (_settings, json) {
+            if(typeof vmPayInfo != "undefined"){ vmPayInfo.psInfoCtr = json.recordsTotal; }
+            $('#generalSearchHistory').donetyping(function(callback) {
+                generalSearchHistory = $(this).val();
+                dtHistoryPayrollInfo.ajax.reload();
+            });
+        }
+    });
+    
+    function openLoanPaymentHistoryModal(id) {
+        loanPaymentHistoryModal.attr("data-id", id);
+        loanPaymentHistoryModal.modal("show");
+    }
+
+    loanPaymentHistoryModal.on("show.bs.modal", function () {
+        const id = $(this).attr("data-id");
+        $("table", this)
+            .DataTable({
+                dom: "frtlp",
+                serverSide: false,
+                destroy: true,
+                ajax: {
+                    url: baseUrl(`hris/masterfile/get_employee_loan_payment_history/${id}`),
+                    type: "GET",
+                    dataType: "JSON"
+                },
+                autoWidth: false,
+                columns: [
+                    {
+                        data: null,
+                        render: function (data, type, row) {
+                            return `<span class="m--font-boldest">${moment(data.date_start).format("MMM. DD, YYYY")}</span>`
+                                + " - " + `<span class="m--font-boldest">${moment(data.date_end).format("MMM. DD, YYYY")}</span>`;
+                        }
+                    },
+                    {
+                        width: "30%",
+                        data: null,
+                        render: function (data, type, row) {
+                            return `<div class="m--font-bolder">${row.firstname} ${row.lastname}</div>
+                                    <div class="m--regular-font-size-sm1 text-muted">${moment(row.posted_at).format("lll")}</div>`;
+                        }
+                    },
+                    {
+                        width: "25%",
+                        data: "amount_due",
+                        className: "text-right",
+                        render: function (data, type, row) {
+                            return `<span class="m--font-boldest">
+                                        ${parseFloat(data).toLocaleString("en-US", {maximumFractionDigits: 2})}
+                                    </span>`;
+                        }
+                    },
+                ],
+                footerCallback: function (row, data, start, end, display) {
+                    const api = this.api();
+                    const total = api
+                        .column(2)
+                        .data()
+                        .reduce(function (a, b) {
+                            return parseFloat(a) + parseFloat(b);
+                        }, 0);
+
+                    $(api.column(2).footer()).html(
+                        `<span class="m--font-boldest m--regular-font-size-lg1">
+                            ${parseFloat(total).toLocaleString("en-US", {maximumFractionDigits: 2})}
+                        </span>`
+                    );
+                }
+            });
+    });
+
+    const getCAReferences = function(){
+        $.ajax({
+            url: baseUrl("hris/masterfile/get_ca_reference/<?php echo $data->id; ?>"),
+            dataType: "json",
+            global: true,
+            success: function(json){
+                loansCAReference.results = [];
+                $.each(json.results, function(k, v){ loansCAReference.results.push(v); });
+            }
+        });
+    }
+
+    const approvalPayrollData = function(id, description, value, type){
+        if(id && description && value && type){
+            const nType = parseInt(type);
+            let approvalDesc = 'cancel';
+            switch(nType){
+                case 1: approvalDesc = 'approve'; break;
+                case 2: approvalDesc = 'disapprove'; break;
+                case 3: approvalDesc = 'cancel'; break;
+                default: approvalDesc = 'cancel'; break;
+            }
+
+            const tempTitle = approvalDesc.substr(0,1).toUpperCase() + approvalDesc.substr(1);
+
+            Swal.fire({
+                title: tempTitle+'?',
+                html: "Are you sure you want to "+approvalDesc+" this <strong class='m--font-danger'>`"+description+"`</strong> with value of <strong class='m--font-dark'>`"+value+"`</strong>?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, '+tempTitle+' it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: siteUrl("hris/masterfile/approval_updated_payroll_data/"+nType),
+                        type: "post",
+                        data: { csrf_token: _csrf_hash, id: id },
+                        dataType: "json",
+                        success: function(json){
+                            if(json.response){ 
+                                toastr.success(json.toastr_msg, "For Approval");
+                                dtForApproval.clear().rows.add(json.data).draw();
+                            }else{ toastr.error(json.toastr_msg, "For Approval"); }
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    const dtForApproval = $("#tbl-approval_history").DataTable({
+        dom: "frtlp",
+        order: [[4, 'desc']],
+        columns: [
+            { title: '<input type="checkbox" id="selectAll">', data: 'id', orderable: false,
+                render: function(data, _type, row){
+                    var tempData = JSON.stringify(row);
+
+                    var html = '';
+                    html = `<input type="checkbox" value="${row.id}" data-row='${tempData}'>`;
+                    return html;
+                }
+            },
+            { data: "field_description" },
+            { data: "table_value"},
+            { data: "is_approved", className: "text-center", 
+                orderable: false, 
+                render: function(data){
+                let _status = "Pending";
+                switch(data){
+                    case "1": _status = "Approved"; break;
+                    case "2": _status = "Disapproved"; break;
+                    case "3": _status = "Cancelled"; break;
+                    default: _status = "Pending"; break;
+                }
+                return _status;
+            }},
+            { data: "created_by_name",
+                render: function(data, _type, row){
+                    const _tempDate = moment(new Date(row.created_at), "YYYY-MM-DD H:i:s").format("LLL");
+                    const _html = `<p class='mb-0'>${data}</p><p class='mb-0'><small><span class="m--font-boldest">${_tempDate}</span></small></p>`;
+                    return _html;
+                }
+            },
+            { data: "is_owner", className: "text-center", 
+                orderable: false, 
+                render: function(data, _type, row){
+                const isOwner = parseInt(data);
+                const rawData = JSON.stringify(row);
+                
+                let _actionCtr = 0;
+                let _html = '';
+
+                const approvingAuthority = typeof _tempContentData.approving_authority !== "undefined" && _tempContentData.approving_authority ? 
+                _tempContentData.approving_authority: false;
+                
+                if(approvingAuthority){
+                    _html += `<button id="approve_payroll_data_${row.id}" class="btn btn-sm btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill m-btn--hover-success" onclick="approvalPayrollData(${row.id}, '${row.field_description}', '${row.table_value}', '1')">
+                            <i class="la la-thumbs-up"></i>
+                        </button>
+                        <button id="disapprove_payroll_data_${row.id}" class="btn btn-sm btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill m-btn--hover-danger" onclick="approvalPayrollData(${row.id}, '${row.field_description}', '${row.table_value}', '2')">
+                            <i class="la la-thumbs-down"></i>
+                        </button>`;
+                }else{
+                    if(isOwner){
+                        _html += `<button id="cancel_payroll_data_${row.id}" class="btn btn-sm btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill m-btn--hover-warning" onclick="approvalPayrollData(${row.id}, '${row.field_description}', '${row.table_value}', '3')">
+                            <i class="la la-trash"></i>
+                        </button>`;
+                        _actionCtr++;
+                    }else{
+                        _html += `---`;
+                    }
+                }
+
+                return _html;
+            }}
+        ], drawCallback: function(settings){
+            var api = new $.fn.dataTable.Api( settings );
+            const isModalShown = modalForApproval.hasClass("show");
+            if(isModalShown){
+                const dataLength = api.data().length;
+                if(dataLength === 0){ 
+                    modalForApproval.modal("hide"); 
+                    vmPayInfo.forApprovalCtr = 0;
+                }
+            }
+        }
+    });
+
+    const vmSaveAction = new Vue({
+        el: "#saveAndApproveAction",
+        data: { approving_authority: false }
+    });
+
+    const vmSaveEditAllowanceAction = new Vue({
+        el: "#editAllowanceApprovalOption",
+        data: { approving_authority: false }
+    });
+
+    jQuery(document).ready(function(){
+        if(typeof _tempContentData.for_approval_history !== "undefined" && _tempContentData.for_approval_history.length > 0){
+            vmPayInfo.forApprovalCtr = _tempContentData.for_approval_history.length;
+            dtForApproval.clear().rows.add(_tempContentData.for_approval_history).draw();
+        }
+
+        if(typeof _tempContentData.approving_authority !== "undefined" && _tempContentData.approving_authority){
+            vmSaveAction.approving_authority = _tempContentData.approving_authority;
+            vmSaveEditAllowanceAction.approving_authority = _tempContentData.approving_authority;
+        }
+    });
+
+    $("#tbl-approval_history").on("click", "tbody input[type='checkbox']", function () {
+        const allCheckboxes = $("#tbl-approval_history tbody input[type='checkbox']").length;
+        const checkedCheckboxes = $("#tbl-approval_history tbody input[type='checkbox']:checked").length;
+        const checked = allCheckboxes <= checkedCheckboxes;
+        $('#selectAll').prop('checked', checked);
+
+        if(checkedCheckboxes > 1){
+            $("#mass_btn button").prop('disabled', false);
+        }else{
+            $("#mass_btn button").prop('disabled', true);
+        }
+    });
+
+    $("#selectAll").click(function () {
+        $('#tbl-approval_history tbody input[type="checkbox"]').prop('checked', this.checked);
+
+        const checkedCheckboxes = $("#tbl-approval_history tbody input[type='checkbox']:checked").length;
+        if(checkedCheckboxes > 1){
+            $("#mass_btn button").prop('disabled', false);
+        }else{
+            $("#mass_btn button").prop('disabled', true);
+        }
+
+    });
+
+    function massAction(type){
+        let tempData = [];
+        const checkedCheckboxes = $("#tbl-approval_history tbody input[type='checkbox']:checked").length;
+        tempData = []; // resets array
+
+        console.log(checkedCheckboxes);
+
+        if(tempData && type){
+            const nType = parseInt(type);
+            let approvalDesc = 'cancel';
+            switch(nType){
+                case 1: approvalDesc = 'approve'; break;
+                case 2: approvalDesc = 'disapprove'; break;
+                case 3: approvalDesc = 'cancel'; break;
+                default: approvalDesc = 'cancel'; break;
+            }
+
+            const tempTitle = approvalDesc.substr(0,1).toUpperCase() + approvalDesc.substr(1);
+
+            var html = '';
+            html += `Are you sure you want to ${approvalDesc} the following changes: \n`;
+
+            html += '<ul class="mt-3 text-left">';
+            $("#tbl-approval_history tbody input[type='checkbox']:checked").each(function(e){
+                var val = $(this).val();
+                var row = $(this).data('row');
+
+                var description = (row.field_description == 'Rate') ? 'Allowance Rate' : row.field_description;
+                html += "<li><strong class='m--font-danger'>`"+ description +"`</strong> with value of <strong class='m--font-dark'>`"+ row.table_value +"`</strong></li>";
+
+                tempData.push(val);
+            });
+            html += '</ul>';
+
+            Swal.fire({
+                title: tempTitle+'?',
+                html: html,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, '+tempTitle+' it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: siteUrl("hris/masterfile/approval_updated_payroll_data/"+nType),
+                        type: "post",
+                        data: { csrf_token: _csrf_hash, id: tempData },
+                        dataType: "json",
+                        success: function(json){
+                            if(json.response){ 
+                                toastr.success(json.toastr_msg, "For Approval");
+                                dtForApproval.clear().rows.add(json.data).draw();
+                            }else{ toastr.error(json.toastr_msg, "For Approval"); }
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    $.validate({
+        form: "#frmEditBankData",
+        lang: "en",
+        scrollToTopOnError: false,
+        onSuccess: function(form){
+            let formData = $(form).serialize();
+            
+            $.ajax({
+                url: $(form).attr("action"),
+                type: "POST",
+                data: formData,
+                beforeSend: function () {
+                    $(form).find(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                },
+                success: function (data) {
+                    if (data.state) {
+                        toastr.success(data.msg, "Notice", 5000);
+                    } else {
+                        toastr.error(data.msg, "Notice", 5000);
+                    }
+                    $(form).find(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                }
+            });
+
+            return false;
+        }
+    });
+</script>

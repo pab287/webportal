@@ -1,0 +1,174 @@
+#toast-container .toast {
+  border: 1px solid #d2d6de;
+}
+button.btn.btnChange {
+  /*** position: absolute;
+    top: 10px;
+    right: 25px; ***/
+  position: absolute;
+  margin: auto;
+  top: 25px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.fileupload-buttonbar span.btn.btn-success.fileinput-button {
+  text-transform: none !important;
+}
+#alt_images {
+  text-align: center;
+  margin-top: 10px;
+}
+p.form-control {
+  margin: 0;
+}
+/*** 092618 assetdetail_update2 ***/
+.hide-bullets {
+  list-style: none;
+  margin-left: -40px;
+  margin-top: 20px;
+}
+.slide-content > img {
+  margin: auto;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  opacity: 1;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+#img_btm {
+  height: 137px !important;
+  width: auto !important;
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  border: 1px solid #f7f7f7;
+  -webkit-box-shadow: 6px 5px 10px -3px rgba(69, 69, 69, 1);
+  -moz-box-shadow: 6px 5px 10px -3px rgba(69, 69, 69, 1);
+  box-shadow: 6px 5px 10px -3px rgba(69, 69, 69, 1);
+}
+#img_prim {
+  min-height: auto !important;
+  max-height: 450px !important;
+  width: auto !important;
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  border: 1px solid #f7f7f7;
+  -webkit-box-shadow: 6px 5px 10px -3px rgba(69, 69, 69, 1);
+  -moz-box-shadow: 6px 5px 10px -3px rgba(69, 69, 69, 1);
+  box-shadow: 6px 5px 10px -3px rgba(69, 69, 69, 1);
+}
+#img_primary {
+  min-height: auto !important;
+  max-height: 480px !important;
+  max-width: 100% !important;
+  min-width: 50% !important;
+}
+#img_acct_slip {
+  min-height: auto !important;
+  max-height: 450px !important;
+  width: auto !important;
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  border: 1px solid #f7f7f7;
+  -webkit-box-shadow: 6px 5px 10px -3px rgba(69, 69, 69, 1);
+  -moz-box-shadow: 6px 5px 10px -3px rgba(69, 69, 69, 1);
+  box-shadow: 6px 5px 10px -3px rgba(69, 69, 69, 1);
+}
+img.img-listing {
+  box-shadow: 6px 5px 10px -3px rgba(69, 69, 69, 1);
+}
+.err {
+  border: #ff0004 solid 1px;
+}
+
+.error {
+  border: #ff0004 solid 1px !important;
+  border-radius: 4px !important;
+  background-color: #f7f7f7;
+  outline: 0;
+  background-image: -webkit-linear-gradient(top, white 50%, #eeeeee 100%);
+  background-image: -o-linear-gradient(top, white 50%, #eeeeee 100%);
+  background-image: linear-gradient(to bottom, white 50%, #eeeeee 100%);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#FFFFFFFF', endColorstr='#FFEEEEEE', GradientType=0);
+}
+.error:focus {
+  border: 1px solid #5897fb;
+}
+.error span:nth-child(2) {
+  background-color: #ddd;
+  border: none;
+  border-left: 1px solid #ff0004;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+#alt_images img {
+  margin: 0px 5px;
+}
+section.content {
+  margin-bottom: 65px;
+}
+::-webkit-input-placeholder {
+  text-transform: uppercase;
+}
+:-moz-placeholder {
+  text-transform: uppercase;
+}
+::-moz-placeholder {
+  text-transform: uppercase;
+}
+:-ms-input-placeholder {
+  text-transform: uppercase;
+}
+.temp-input-field {
+  height: auto;
+}
+
+form input,
+form textarea,
+form select {
+  text-transform: uppercase;
+}
+.modal-dialog.modal-xl {
+  width: 1024px;
+}
+.keep-open.btn-group ul.dropdown-menu label {
+  width: 180px;
+  font-size: 1.22rem;
+}
+.query-builder .form-control {
+  text-transform: uppercase;
+}
+p.barcoded-date_purchased {
+  margin: 5px 0 15px 0;
+  font-size: 12px;
+  font-weight: bold;
+}
+.print_scale-barcode_print.is_component p.barcoded_asset {
+  font-family: barcode;
+  font-size: 1.22rem;
+}
+p.barcoded_asset {
+	font-family: barcode;
+	font-size: 1.52rem;
+	margin-top: 25px;
+	margin-bottom: 25px;
+}
+.print_scale-barcode_print .row {
+  margin-bottom: 5px;
+}
+.print_scale-barcode_print {
+  margin: 25px 0px;
+}
+.form_barcode_print .modal-body {
+  overflow-y: scroll;
+  max-height: 600px;
+  overflow-x: hidden;
+}

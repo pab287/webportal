@@ -1,0 +1,117 @@
+@page { 
+    margin: 10mm 0 10mm 0;
+}
+@media print{
+    .printable-row_content{
+        page-break-inside: avoid
+    }
+    .line--amount_due{
+        font-size: 18px;
+    }
+    /*** .row:not(:first-child), .row:not(:last-child) {
+        page-break-after: always;
+    } ***/
+
+    .printable-width-1 {
+        flex: 0 0 8.33333%;
+        max-width: 8.33333%;
+    }
+    .printable-width-2 {
+        flex: 0 0 16.66667%;
+        max-width: 16.66667%;
+    }
+
+    .printable-width-3{
+        flex: 0 0 25%;
+        max-width: 25%;
+    }
+    .printable-width-4{
+        flex: 0 0 33.33333%;
+        max-width: 33.33333%;
+    }
+    .printable-width-5{
+        flex: 0 0 41.66667%;
+        max-width: 41.66667%;
+    }
+    .printable-width-5--5{
+        flex: 0 0 43.66667%;
+        max-width: 43.66667%;
+    }
+    .printable-width-6{
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    .printable-width-7{
+        flex: 0 0 58.33333%;
+        max-width: 58.33333%;
+    }
+    .printable-width-8{
+        flex: 0 0 66.66667%;
+        max-width: 66.66667%;
+    }
+    .printable-width-9{
+        flex: 0 0 75%;
+        max-width: 75%;
+    }
+    .printable-width-10{
+        flex: 0 0 83.33333%;
+        max-width: 83.33333%;
+    }
+    .printable-width-11{
+        flex: 0 0 91.66667%;
+        max-width: 91.66667%;
+    }
+    .printable-width-12{
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    #header--company_title--center .custom_header-address-top--center{
+        font-size: 14px;
+    }
+}
+
+body {
+    margin:0;
+    padding:0;
+}
+#append_printable-container p{ 
+    font-size: 16px;
+    text-transform: uppercase;
+}
+.header-deduction{
+    border-bottom: 1px dashed #000000;
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+}
+.line--amount_due{
+    border-bottom: 1px solid #000000;
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+}
+.custom_header-title--center{
+    text-align: center;
+    position: relative;
+    top: 30px;
+}
+.custom_footer-signature{
+    border-top: 1px solid #000000;
+    width: 75%;
+}
+#footer-signature{
+    margin-top: 30px;
+}
+
+#footer-signature .printable-signatories{
+    margin-top: 60px;
+}
+#header--company_title--center{
+    text-align: center;
+}
+#header--company_title--center .custom_header-address-top--center{
+    font-size: 14px;
+}
+
+#append_printable-container > #font-size-header--column p {
+    font-size: 12px !important;
+}

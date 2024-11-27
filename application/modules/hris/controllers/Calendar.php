@@ -1,0 +1,122 @@
+<?php defined('BASEPATH') OR exit('No direct script access allowed');
+
+    class Calendar extends MY_Controller
+    {
+        function __construct()
+        {
+            parent::__construct();
+            $this->authenticate->setModuleAccess("hris");
+            $this->authenticate->doRedirect();
+
+            $this->load->model("Holiday_model", "holiday");
+            $this->load->model("Employee_model", "employee");
+            $this->load->model("ams/Utilities_model", "utilities");
+            $this->load->model('Company_model', 'company');
+            $this->load->model('Department_model', 'department');
+            date_default_timezone_set('Asia/Manila');
+        }
+
+        public function holidays()
+        {
+            $this->core_layout->addJs("vendors/custom/fullcalendar/fullcalendar.bundle.js", true);
+            $this->core_layout->addCss("vendors/custom/fullcalendar/fullcalendar.bundle.css", true);
+            $this->core_layout->addJs("js/hris/calendar/calendar_of_holidays_script.js", true);
+            $this->core_layout->addCss("css/hris/calendar.css", true);
+
+            $data['years'] = $this->holiday->getYearsOfExistingHolidays();
+            $this->core_layout->setPrivilegeName("hris_cal_of_holidays");
+            $this->load->view("core/templates/header");
+            $this->load->view("masterfile/calendar/calendar_of_holidays/index", $data, FALSE);
+            $this->load->view("core/templates/footer");
+        }
+
+        public function probationary()
+        {
+            $this->core_layout->setPrivilegeName("hris_cal_of_probationary");
+            $this->core_layout->addJs("vendors/custom/fullcalendar/fullcalendar.bundle.js", true);
+            $this->core_layout->addJs("js/hris/calendar/calendar_of_probationary_script.js", true);
+            $this->core_layout->addCss("vendors/custom/fullcalendar/fullcalendar.bundle.css", true);
+            $this->core_layout->addCss("css/hris/calendar.css", true);
+
+            $this->load->view("core/templates/header");
+            $this->load->view("masterfile/calendar/calendar_of_probationary_employees/index");
+            $this->load->view("core/templates/footer");
+        }
+
+        function open_edit_modal()
+        {
+            $data = array();
+            $formData = $this->input->post('formData');
+            $data['html'] = $this->utilities->openModal();
+
+            echo json_encode($data);
+        }
+
+        function open_confirm_modal()
+        {
+            $data = $this->utilities->openModal();
+            echo $data;
+        }
+
+
+        public function get_holidays($classification = null)
+        {
+            $data = $this->holiday->getHolidays($classification);
+            echo json_encode($data);
+        }
+
+        public function get_holidays_tabular()
+        {
+            $data = $this->holiday->getHolidaysTabular();
+            echo json_encode($data);
+        }
+
+        public function save_holiday()
+        {
+            $data = $this->holiday->saveHoliday();
+            echo json_encode($data);
+        }
+
+        public function update_holiday()
+        {
+            $data = $this->holiday->updateHoliday();
+            echo json_encode($data);
+        }
+
+        public function delete_holiday($holiday_id)
+        {
+            $data = $this->holiday->deleteHoliday($holiday_id);
+            echo json_encode($data);
+        }
+
+        public function get_years_of_existing_holidays()
+        {
+            $data = $this->holiday->getYearsOfExistingHolidays();
+            echo json_encode($data);
+        }
+
+        public function get_calendar_of_probationary_employees()
+        {
+            $data = $this->employee->getCalendarOfProbationaryEmployees();
+            echo json_encode($data);
+        }
+
+        public function add_probee_evaluation() {
+            $data = $this->employee->addProbeeEvaluation();
+            echo json_encode($data);
+        }
+
+        public function get_holiday_classification() {
+            echo json_encode($this->holiday->getHolidayClassification());
+        }
+
+        public function get_company(){
+            $data = $this->company->getCompany();
+            echo json_encode($data);
+        }
+
+        public function get_department(){
+            $data = $this->department->getDepartment();
+            echo json_encode($data);
+        }
+    }

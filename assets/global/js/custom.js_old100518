@@ -1,0 +1,45 @@
+jQuery(document).ready(function($){
+	toastrInit();
+	inputSetCursorPosition();
+});
+var toastrInit = function(){
+	if(typeof toastr !== "undefined"){
+		toastr.options = {
+		  "closeButton": false,
+		  "debug": true,
+		  "newestOnTop": true,
+		  "progressBar": true,
+		  "positionClass": "toast-top-right",
+		  "preventDuplicates": true,
+		  "onclick": null,
+		  "showDuration": "300",
+		  "hideDuration": "1000",
+		  "timeOut": "5000",
+		  "extendedTimeOut": "1000",
+		  "showEasing": "swing",
+		  "hideEasing": "linear",
+		  "showMethod": "fadeIn",
+		  "hideMethod": "fadeOut"
+		}
+		return toastr.options;
+	}else{
+		return false;
+	}
+}
+
+var inputSetCursorPosition = function(){
+	$.fn.setCursorPosition = function (pos) {
+		this.each(function (index, elem) {
+			if (elem.setSelectionRange) {
+				elem.setSelectionRange(pos, pos);
+			} else if (elem.createTextRange) {
+				var range = elem.createTextRange();
+				range.collapse(true);
+				range.moveEnd('character', pos);
+				range.moveStart('character', pos);
+				range.select();
+			}
+		});
+		return this;
+	};	
+}

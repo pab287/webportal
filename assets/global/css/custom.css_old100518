@@ -1,0 +1,3 @@
+#toast-container .toast {
+    border: 1px solid #D2D6DE;
+}

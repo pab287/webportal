@@ -1,0 +1,544 @@
+var search_val = "";
+var query_builder = "";
+var tblBillings = $("#table-billing").DataTable({
+   dom: '<"toolbar">rtlip',
+   serverSide: true, 
+   processing: true,
+   aaSorting: [],
+   ajax: {
+        url: baseUrl("eforms/billing/get_billing_collection/"),
+        type: "post",
+        global: false,
+        dataType: "json",
+        data: function(d){
+           d.csrf_token = _csrf_hash,
+           d.search['value'] = search_val,
+           d.query_builder = query_builder
+       }
+   },
+   searching: true,
+   columns: [
+       { data: "checkbox"},
+       { data: "ref_no", render: function (data) {
+            return "<strong style='color: #525252;'>"+data+"</strong>";
+          }
+        },
+       { data: "accountno"},
+       { data: "name", orderable: false},
+       { data: "meterno"},
+       { data: "billing_period", orderable: false, className: "text-center"},
+       { data: "due_date", className: "text-center"},
+       { data: "total_charges", className: "text-right", render: function (data) {
+              return "<strong style='color: #525252;'>"+numberWithCommas(data)+"</strong>";
+            }
+        },
+       { data: "status", className: "text-center", render: function (data) {
+              return renderStatusDue(data)
+          }
+       },
+       { data: "print_count", width: "8%", className: "text-center", render: function (data) {
+              return renderStatusPrint(data)
+            }
+        },
+       { data: null, width: "5%", className: "text-center"},
+
+   ],
+   columnDefs: [
+        {
+          orderable: false,
+          className: 'select-checkbox',
+          targets:   0
+        },
+        {
+            data: null,
+            defaultContent: "",
+            targets: -1,
+            orderable: false,
+          
+            render: function ( data, type, row, meta ) { return itemDatatableActions(row); },
+        }, {
+
+        }
+   ],
+   select: {
+    style:    'os',
+    selector: 'td:first-child'
+   },
+   buttons: [
+       { 
+           extend: 'csv',
+           exportOptions: {
+               columns: "thead th:not(.notExport)"
+           }
+       }, { 
+           extend: 'excel',
+           exportOptions: {
+               columns: "thead th:not(.notExport)"
+           }
+       }, { 
+           extend: 'pdf',
+           exportOptions: {
+               columns: "thead th:not(.notExport)"
+           }
+       }
+   ]
+});
+
+function numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function renderStatusDue(data) {
+  switch (data) {
+      case "Paid":
+          return '<div class="m-badge text-white m-badge--primary m-badge--wide" role="alert"><strong>Paid</strong></div>';
+          break;
+      case "Overdue":
+          return '<div class="m-badge m-badge--danger m-badge--wide" role="alert"><strong>Overdue</strong></div>';
+          break;
+      case "Today due":
+          return '<div class="m-badge text-white m-badge--warning m-badge--wide" role="alert"><strong>Today due</strong></div>';
+          break;
+      case "On going":
+          return '<div class="m-badge text-white m-badge--accent m-badge--wide" role="alert"><strong>On going</strong></div>';
+          break;
+      default:
+          return '';
+          break;
+  }
+}
+
+function renderStatusPrint(data) {
+  if(data > 0){
+    return '<div class="m-badge m-badge--success m-badge--wide" role="alert"><strong>Printed</strong></div>';
+  } else {
+    return '<div class="m-badge m-badge--default m-badge--wide" role="alert"><strong>Not Printed</strong></div>';
+  }
+}
+
+function itemDatatableActions(row){
+	if(row){
+    var tempHtml = "---";
+    var tempActions = [];
+    var currentActions = ["edit", "delete"];
+    $.each(currentActions, function(index, value){
+        tempActions.push(value);
+    });
+
+    tempHtml = `<div class="dropdown">
+            <a href="#" class="btn m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" data-toggle="dropdown"> 
+                <i class="la la-ellipsis-h"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right">`;
+        $.each(tempActions, function(ii, vv){
+          
+            switch(vv){
+                case "edit":
+                  var action_name = "", icon_name = "";
+                  if(row.status!='Paid' && row.status!='Archive'){
+                    action_name = "Edit";
+                    icon_name = "la	la-edit";
+                  } else {
+                    action_name = "View";
+                    icon_name = "la	la-eye";
+                  }
+                  tempHtml += `<a class="dropdown-item " data-toggle='modal' data-target='#m_viewBill' href="javascript:void(0);" id='viewBill' data-id='`+row.id+`'><i class="`+icon_name+`"></i> `+action_name+`</a>`;
+                  tempHtml += `<a class="dropdown-item" id="tbl-print" onclick="tblprint(`+row.id+`);" href="javascript:void(0);" data-id=''><i class="la la-print"></i> Print</a>`;
+                break;
+                case "delete":
+                  if(row.status!='Paid' && row.status!='Archive'){
+                    tempHtml += `<a class="dropdown-item " style="color: #FF8383;" href="javascript:void(0);" onclick='modalArchive(`+ row.id +`,`+ row.reading_id +`,`+`\"` + row.ref_no + `\")'><i class="la la-trash" style="color: #FF8383;"></i> Archive</a>`;
+                  }
+                break;
+            }
+        });
+    tempHtml += `</div></div>`;
+    return tempHtml;
+	}else{ return false; }
+}
+
+Inputmask.extendAliases({
+  pesos: {
+            prefix: "₱ ",
+            groupSeparator: ".",
+            alias: "numeric",
+            placeholder: "0",
+            autoGroup: !0,
+            digits: 2,
+            digitsOptional: !1,
+            clearMaskOnLostFocus: !1
+        }
+});
+
+$("input[name=total_charges]").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
+
+$('#generalSearch').donetyping(function(callback) {
+    search_val = $(this).val();
+    tblBillings.ajax.reload();
+});
+
+$("#ExportExcel").on("click", function() {
+  tblBillings.button( '.buttons-excel' ).trigger();
+  saveExportLogs('Billing - Export Excel');
+});
+
+$("#ExportCSV").on("click", function() {
+  tblBillings.button( '.buttons-csv' ).trigger();
+  saveExportLogs('Billing - Export CSV');
+});
+
+$("#ExportPDF").on("click", function() {
+  tblBillings.button( '.buttons-pdf' ).trigger();
+  saveExportLogs('Billing - Export PDF');
+});
+
+function saveExportLogs(export_){
+  $.ajax({
+      url: baseUrl("eforms/billing/save_export_logs"),
+      type: 'post',
+      data: { csrf_token: _csrf_hash, export_: export_ },
+      success: function (data) {
+          
+      }
+  });
+}
+
+$('#table-billing').on("click","#viewBill",function(){
+  $('#frmUpdateBill').trigger("reset");
+  var selectedBill_id = $(this).attr("data-id");
+
+  var data_row = $("#table-billing").DataTable().rows($(this).parents('tr')).data();
+  $.ajax({
+      url: baseUrl("eforms/billing/get_bill_data"),
+      type: 'post',
+      data: {csrf_token: _csrf_hash, id: selectedBill_id},
+      success: function(response){ 
+
+          if(response.billdata.print_count >= response.limit){
+            $(".btnPrint").hide();
+          }else{
+            $(".btnPrint").show();
+          }
+
+          if(response.billdata.is_paid == '1' || response.billdata.status != '1'){
+            $(".btnUpdate").hide();
+            $('.billing_from').css('pointer-events', 'none');
+            $('.billing_to').css('pointer-events', 'none');
+            $('.due_date').css('pointer-events', 'none');
+          }else{
+            $(".btnUpdate").show();
+            $('.billing_from').css("pointer-events", "");
+            $('.billing_to').css("pointer-events", "");
+            $('.due_date').css("pointer-events", "");
+          }
+          var final_charge = response.billdata.total_charges;
+          // var final_charge = 0;
+          // if(response.billdata.is_paid == '1'){
+          //   final_charge = response.billdata.total_charges;
+          // }else{
+          //   final_charge = "0.00";
+          // }
+          $("#m_viewBill .account_id").val(response.billdata.accountno);
+          $("#m_viewBill .reading_id").val(response.billdata.reading_refno);
+          $("#m_viewBill .customer_name").val(response.billdata.firstname +" "+response.billdata.lastname);
+          $("#m_viewBill .meter_no").val(response.billdata.meterno);
+          $("#m_viewBill .block_no").val(response.billdata.block);
+          $("#m_viewBill .lot_no").val(response.billdata.lot);
+          $("#m_viewBill .billing_address").val(response.billdata.street+", "+response.billdata.brgy+", "+response.billdata.city+", "+response.billdata.province);
+          $("#m_viewBill .previous").val(response.billdata.previous);
+          $("#m_viewBill .current").val(response.billdata.current);
+          $("#m_viewBill .usage").val(response.billdata.usage);
+          $("#m_viewBill .rate").val(response.billdata.rate);
+          $("#m_viewBill .total_charges").val(data_row[0].total_charges);
+          $("#m_viewBill .btnPrint").attr("data-id",response.billdata.id);
+          $("#m_viewBill input[name=id]").val(response.billdata.id);
+          $("#m_viewBill #ref_no").val(response.billdata.ref_no);
+          $('#m_viewBill .billing_from').datepicker("setDate", response.billdata.billing_from);
+          $('#m_viewBill .billing_to').datepicker("setDate", response.billdata.billing_to);
+          $('#m_viewBill .due_date').datepicker("setDate", response.billdata.due_date);
+      },
+      error: function(data){
+        $('#m_viewBill').modal('hide');
+        toastr.error("Please check your internet connection.", "Connection error");
+      }
+  });
+});
+
+$('.billing_from').datepicker({
+  format: 'yyyy/mm/dd',
+  todayHighlight: true,
+  autoclose: true,
+  orientation: "bottom left",
+  templates: {
+    leftArrow: '<i class="la la-angle-left"></i>',
+    rightArrow: '<i class="la la-angle-right"></i>'
+  }
+});
+
+$('.billing_to').datepicker({
+  format: 'yyyy/mm/dd',
+  todayHighlight: true,
+  autoclose: true,
+  orientation: "bottom left",
+  templates: {
+    leftArrow: '<i class="la la-angle-left"></i>',
+    rightArrow: '<i class="la la-angle-right"></i>'
+  }
+});
+
+$('.due_date').datepicker({
+  format: 'yyyy/mm/dd',
+  todayHighlight: true,
+  autoclose: true,
+  orientation: "bottom left",
+  templates: {
+    leftArrow: '<i class="la la-angle-left"></i>',
+    rightArrow: '<i class="la la-angle-right"></i>'
+  }
+});
+
+jQuery(document).on("click", ".btnPrint", function () {
+    var bill_id = document.getElementById('bill_id').value;
+    win = window.open(baseUrl("eforms/billing/print_bill") + "/" + bill_id, "_blank");
+    window.onbeforeunload = recordPrintCount(bill_id);
+});
+
+function modalArchive(id,reading_id,name){
+  const temp = `<p>Are you sure you wan't to archive <strong class='m--font-boldest'>${name}</strong>?</p>`;
+  $('#m_archived').modal('show');
+  $('#archive_text').empty().html(temp);
+  $("#m_archived input[name=id]").val(id);
+  $("#m_archived input[name=reading_id]").val(reading_id);
+  $("#m_archived input[name=archive_ref_no]").val(name);
+}
+
+function archiveBill(){
+  var bill_id = document.getElementById('archive_id').value;
+  var reading_id = document.getElementById('reading_id').value;
+  var ref_no = document.getElementById('archive_ref_no').value;
+  $.ajax({
+      url: baseUrl("eforms/billing/archive_bill"),
+      type: 'post',
+      data: { csrf_token: _csrf_hash, id: bill_id, reading_id:reading_id, ref_no:ref_no },
+      success: function (data) {
+        if(data.status){
+            $('#m_archived').modal('hide');
+            tblBillings.ajax.reload();
+        }
+      },
+      error: function(data){
+        toastr.error("Please check your internet connection.", "Connection error");
+      }
+  });
+}
+
+function recordPrintCount(id){
+  $.ajax({
+      url: baseUrl("eforms/billing/count_print"),
+      type: "POST",
+      data: {id: id,csrf_token: _csrf_hash},
+      success: function(data){
+        
+      }
+  });
+}
+
+$.validate({
+    form : '#frmUpdateBill',
+    lang: 'en',
+    onSuccess : function(form) {
+        $.ajax({
+          url : $(form).attr("action"),
+          type: "POST",
+          data: $('#frmUpdateBill').serialize(),
+          dataType: "JSON",
+          success: function(data){
+            if(data.status == true){
+              toastr.success(data.msg, "Notification");
+              tblBillings.ajax.reload();
+              $("#m_viewBill").modal("hide");
+            }else{
+              toastr.warning(data.msg, "Notification");
+            }
+          },
+          error: function(data){
+            toastr.error("Please check your internet connection.", "Connection error");
+          }
+      });
+      return false;
+    },
+  });
+  
+  $(".massPrint").on("click",function(){
+   var c = tblBillings.rows( { selected: true } ).data().pluck('id').toArray();
+    
+    $.ajax({
+      url: baseUrl("eforms/billing/mass_bill_print"),
+      type: "POST",
+      data:{ids: c,csrf_token: _csrf_hash},
+      success: function(response){
+        var w = window.open("about:blank");
+                  w.document.open();
+                  w.document.write(response.html);
+                  w.document.close();
+                  w.print();
+                  w.close();
+                  
+        // refresh table
+        tblBillings.ajax.reload();
+      },
+      error: function(data){
+        toastr.error("Please check your internet connection.", "Connection error");
+      }
+    });
+  });
+
+  $("#singlePrint").on("click", function(){
+    var billsArr = [];
+    
+    var bill_id = $("#bill_id").val();
+    
+    billsArr.push(bill_id);
+    $.ajax({
+      url: baseUrl("eforms/billing/mass_bill_print"),
+      type: "POST",
+      data:{ids: billsArr,csrf_token: _csrf_hash},
+      success: function(response){
+        var w = window.open("about:blank");
+                  w.document.open();
+                  w.document.write(response.html);
+                  w.document.close();
+                  w.print();
+                  w.close();
+      },
+      error: function(data){
+        toastr.error("Please check your internet connection.", "Connection error");
+      }
+    });
+  });
+
+  function tblprint(bill_id) {
+    var billsArr = [];
+    billsArr.push(bill_id);
+
+    $.ajax({
+      url: baseUrl("eforms/billing/mass_bill_print"),
+      type: "POST",
+      data:{ids: billsArr,csrf_token: _csrf_hash},
+      success: function(response){
+        var w = window.open("about:blank");
+                  w.document.open();
+                  w.document.write(response.html);
+                  w.document.close();
+                  w.print();
+                  w.close();
+      },
+      error: function(data){
+        toastr.error("Please check your internet connection.", "Connection error");
+      }
+    });
+  }
+
+  $(document).ready(function () {
+    $('#query-builder').queryBuilder({
+        'bt-tooltip-errors': { delay: 100 },
+        filters: [
+            { id: 'b.id', label: 'ID #', type: 'integer' },
+            { id: 'b.ref_no', label: 'Reference No.', type: 'string' },
+            { id: 'a.accountno', label: 'Account No.', type: 'string' },
+            { id: 'a.firstname', label: 'First Name', type: 'string' },
+            { id: 'a.middlename', label: 'Middle Name', type: 'string' },
+            { id: 'a.lastname', label: 'Last Name', type: 'string' },
+            { id: 'a.meterno', label: 'Meter No.', type: 'string' },
+            { id: 'b.billing_from', label: 'Billing Date', type: 'string' },
+            { id: 'b.due_date', label: 'Date Due', type: 'string' },
+            { id: 'b.total_charges', label: 'Total Charges', type: 'string' },
+            {
+                id: 'due',
+                label: 'Status',
+                type: 'integer',
+                input: 'select',
+                plugin: 'select2',
+                plugin_config: {
+                    placeholder: 'Select. .',
+                    width: '150%',
+                    data: [
+                        {
+                            id: "1",
+                            text: "Paid"
+                        }, {
+                            id: "2",
+                            text: "Overdue"
+                        }, {
+                            id: "3",
+                            text: "On going"
+                        }, {
+                            id: "4",
+                            text: "Today due"
+                        }, {
+                            id: "5",
+                            text: "Archive"
+                        }
+                    ]
+                },
+                operators: ['equal', 'not_equal']
+            },
+        ],
+    });
+
+    $("#query-builder_group_0").addClass("col-12");
+});
+
+$('#query-builder-btn').on('click', function () {
+    var result = $('#query-builder').queryBuilder('getSQL');
+
+    if (!$.isEmptyObject(result)) {
+
+        var myarr = result.sql.split(" ");
+        var selected = myarr[0];
+        var operator = myarr[1];
+        var value = myarr[2];
+        var date = getCurrentDate();
+
+        if(selected == 'due' && !result.sql.includes('AND')){
+
+          if(value == 1){ // paid
+              query_builder = {sql:"b.is_paid "+operator+" '1'"};
+          } else if(value == 2){ // overdue
+              query_builder = {sql:"b.is_paid = '0' AND ( b.due_date < \'"+date+"\' ) AND ( b.status = '1' )"};
+          } else if(value == 3){ // on going
+              query_builder = {sql:"b.is_paid = '0' AND ( b.due_date > \'"+date+"\' ) AND ( b.status = '1' )"};
+          } else if(value == 4){ // today due
+              query_builder = {sql:"b.is_paid = '0' AND ( b.due_date = \'"+date+"\' ) AND ( b.status = '1' )"};
+          } else { // archive
+              query_builder = {sql:"b.status = '0'"};
+          }
+
+        } else if (result.sql.includes('due') && result.sql.includes('AND')) {
+            query_builder = '';
+            alert("Cannot join group the Status");
+        } else {
+            query_builder = result;
+        }
+        
+        if(query_builder != ''){
+          tblBillings.ajax.reload();
+          $("#modal-query-builder").modal("hide");
+        }
+    }
+});
+  
+function clear_query_builder() {
+  $('#query-builder').queryBuilder('reset');
+  query_builder = null;
+  tblBillings.ajax.reload();
+}
+
+function getCurrentDate(){
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+    return yyyy+ '/' + mm + '/' + dd;
+}
+ 

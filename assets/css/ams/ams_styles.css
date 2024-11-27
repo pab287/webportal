@@ -1,0 +1,109 @@
+.input-auto-height {
+    height: auto;
+}
+
+.m-form__group > label {
+    font-weight: 500;
+    color: grey;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.m-form__help {
+    text-transform: none;
+    font-size: 12px;
+    color: #a3a3a3;
+}
+
+.primary-image-container {
+    position: relative;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    overflow: hidden;
+    height: 350px;
+    margin-bottom: 32px;
+    /*background-color: #f6f6f6;*/
+}
+
+.images-preview-container {
+    justify-content: center;
+    padding: 0 24px 12px 24px;
+}
+
+.images-preview-container__wrapper {
+    margin-right: 12px;
+    margin-bottom: 24px;
+}
+
+.images-preview-container__wrapper > a[data-lightbox] {
+    border: 1px solid #ececec;
+    padding: 4px;
+}
+
+.images-preview-container__image {
+    width: 120px;
+    height: 120px;
+    overflow: hidden;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: relative;
+}
+
+.images-preview-container__image__actions {
+    margin-top: 4px;
+    justify-content: center;
+}
+
+input:read-only {
+    background-color: #f9f9f9 !important;
+}
+
+.set-primary.selected {
+    background: #34bfa3 !important;
+}
+
+.set-primary.selected i {
+    color: #ffffff !important;
+}
+
+.table-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: #e8e8e8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.normal-case {
+    text-transform: none !important;
+}
+
+.more-emphasis {
+    font-weight: 400;
+}
+
+.less-emphasis {
+    color: grey;
+}
+
+.custom-btn-link {
+    color: #9d9d9d;
+    text-decoration: none !important;
+    transition: color 150ms ease-in-out;
+}
+
+.custom-btn-link:hover {
+    color: #000eac;
+}

@@ -1,0 +1,2158 @@
+var search_val = "";
+let company = [], _companies = [], _payoutSchedule = [], _incentiveType = [];
+let employee = [];
+let date_from = "";
+let date_to = "";
+let isCollapsedPortlet = true;
+let tempRangeDates = {
+    min_date: moment().startOf('month').format("MM/DD/YYYY"),
+    max_date: moment().endOf('month').format("MM/DD/YYYY"),
+};
+let showPosted = "_all";
+let psEmployeeGroup = [];
+let noContAcctNo = [];
+let globalPrintableSignatory = [];
+let globalCoverageDate = null;
+let globalIncentiveType = null;
+
+const _tblPayrollSheet = $("#table-payroll-sheet");
+const _tblAbsenteeReport = $("#table-absentee_report");
+
+const cbSelectAll = $("#cb-select-all");
+const manageCustomAdjustmentsModal = $("#manage-custom-adjustments-modal");
+const manageCreatedAdjustmentsModal = $("#manage-created-adjustments-modal");
+const manageCustomRateAdjustmentsModal = $("#manage-custom-rate-adjustments-modal");
+const confirmDeleteCreatedAdjustmentModal = $("#modal-confirm-delete-created-adjustment");
+const confirmDeleteCustomAdjustmentModal = $("#modal-confirm-delete-custom-adjustment");
+const confirmApprovalCreatedAdjustmentModal = $("#modal-confirm-approval-created-adjustment");
+const psNotificationModal = $("#modal-ps--notification");
+const psSignatoryModal = $("#modal-ps--signatory");
+const psResetSignatoryModal = $("#modal-ps--reset-signatory");
+const confirmPayrollPosting = $("#confirm-payroll-posting");
+const confirmUndoPostingModal = $("#confirm-undo-posting");
+const viewTimesheetModal = $("#view-timesheet-modal");
+const _tblPortletPS = $("#m_portlet_tools-payroll_sheet").mPortlet();
+
+let dtEmployeeTimesheet = null;
+let selectedCompany = null;
+var dtCreatedAdjustments;
+var _globalFooterHtml = null;
+let _tempLastRow = [];
+
+var globalGrandTotal = {};
+const exportOptions = {
+    columns: [1, 2, 3, 4, 5, 6, 7]
+};
+
+$('body').tooltip({
+    selector: '[data-toggle="m-tooltip"]'
+});
+
+$("#ExportExcel").on("click", function () {
+    tblPayrollSheet.button('.buttons-excel').trigger();
+});
+
+$("#ExportCSV").on("click", function () {
+    tblPayrollSheet.button('.buttons-csv').trigger();
+});
+
+$("#ExportPDF").on("click", function () {
+    tblPayrollSheet.button('.buttons-pdf').trigger();
+});
+
+$("#PrintSheet").on("click", function () {
+    tblPayrollSheet.button('.buttons-print').trigger();
+});
+
+
+$('#generalSearch').donetyping(function (callback) {
+    search_val = $(this).val();
+    tblPayrollSheet.ajax.reload();
+});
+
+$("#reload_dtTbl").on("click", function () {
+    tblPayrollSheet.ajax.reload();
+});
+
+if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){ _companies = _tempContentData.company; }
+if(typeof _tempContentData.payout_schedule !== "undefined" && _tempContentData.payout_schedule.length > 0){ _payoutSchedule = _tempContentData.payout_schedule; }
+if(typeof _tempContentData.incentive_type !== "undefined" && _tempContentData.incentive_type.length > 0){ _incentiveType = _tempContentData.incentive_type; }
+var select2Employees = function () {
+    $("#employees")
+        .select2({
+            placeholder: 'Select an option',
+            width: '100%',
+            ajax: {
+                url: baseUrl("payroll/select_employee"),
+                dataType: "json",
+                delay: 250,
+                global: false,
+                processResults: function (data) {
+                    return data;
+                }
+            }
+        });
+}
+
+var select2IncentiveType = function () {
+    $("#incentive_type")
+        .select2({
+            placeholder: 'Select an option',
+            width: '100%',
+            data: _incentiveType,
+            allowClear: true,
+        }).on("select2:select", function (e) {
+            const data = e.params.data;
+            const tempCount = Object.keys(data).length;
+            vmFormFilter.has_coverage_date = tempCount > 0 ? true : false;
+            vmFormFilter.row = Object.assign({}, data);
+            vmFormFilter.setIncentiveType();
+        }).on("select2:unselect", function (e) {
+            vmFormFilter.has_coverage_date = false;
+            vmFormFilter.row = Object.assign({});
+            vmFormFilter.setIncentiveType();
+        });
+}
+
+//select2Employees();
+
+var vmFormFilter = new Vue({
+    el: "#temp-selector",
+    data: { row: {}, has_coverage_date: false },
+    methods: {
+        getDateRange: function (from, to) {
+            const tempRange = moment(from).format("MM/DD/YYYY") + "-" + moment(to).format("MM/DD/YYYY");
+            return tempRange;
+        }, setIncentiveType: function () {
+            const _this = this;
+            const currentRow = _this.row;
+            let incentiveType = null;
+            if (typeof currentRow.name !== "undefined" && currentRow.name) {
+                const tempName = currentRow.name;
+                incentiveType = tempName.replace(/_/g, " ");
+            }
+            globalIncentiveType = incentiveType;
+            return incentiveType;
+        }
+    }
+});
+
+var resetFilter = function (event) {
+    const form = $(event).closest("form");
+    if (typeof form !== "undefined" && form.length == 1) {
+        const select2 = form.find("#employees, #payroll_group");
+        if (typeof select2 !== "undefined" && select2.length > 0) {
+            $.each(select2, function (i, v) {
+                const multi = $(v)[0].multiple;
+                if (multi) {
+                    $(v).val([])
+                        .trigger("change")
+                        .prop("disabled", false);
+                } else {
+                    $(v).val("")
+                        .trigger("change");
+                }
+            });
+        }
+        psEmployeeGroup = [];
+    }
+}
+
+
+$("#payroll_group").select2({
+    placeholder: 'Select an option',
+    width: '100%',
+    ajax: {
+        url: baseUrl("payroll/select_payroll_group"),
+        dataType: "json",
+        type: 'get',
+        delay: 250,
+        global: false,
+        data: function (params) {
+            params.company_id = $("form#frm-filter select#company").val();
+            return params;
+        },
+        processResults: function (data) {
+            return data;
+        }
+    }
+}).on("select2:select", function (e) {
+    const _this = this;
+    const tempVal = $(_this).val();
+    const data = e.params.data;
+    let employees = [];
+    if (typeof data.employees == "object" && typeof data.employees !== "undefined") { employees = data.employees; }
+    if (tempVal.length > 1) {
+        $.ajax({
+            url: baseUrl("payroll/get_payroll_group_multiple"),
+            type: "post",
+            dataType: "json",
+            data: { group_id: tempVal, [_csrf_token]: _csrf_hash },
+            success: function (json) {
+                if (json.response) {
+                    const tempData = json.data;
+                    if (typeof tempData == "object" && typeof tempData !== "undefined") {
+                        const tempEmployeeSelector = $("form#frm-filter select#employees");
+                        if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
+                            tempEmployeeSelector.empty();
+                            $.each(tempData, function (ii, vv) {
+                                var tempOption = new Option(vv.text, vv.id, true, true);
+                                tempEmployeeSelector.append(tempOption);
+                            });
+                            tempEmployeeSelector.prop("disabled", true);
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        if (typeof employees == "object" && typeof employees !== "undefined") {
+            const tempEmployeeSelector = $("form#frm-filter select#employees");
+            if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
+                tempEmployeeSelector.empty();
+                $.each(employees, function (ii, vv) {
+                    var tempOption = new Option(vv.text, vv.id, true, true);
+                    tempEmployeeSelector.append(tempOption);
+                });
+                tempEmployeeSelector.prop("disabled", true);
+            }
+        }
+    }
+    if (typeof data.text !== "undefined" && data.text) {
+        const tempEmpGroup = data.text;
+        let tempIsInArray = $.inArray(tempEmpGroup, psEmployeeGroup);
+        if (tempIsInArray == -1) {
+            psEmployeeGroup.push(tempEmpGroup);
+        }
+    }
+
+}).on("select2:unselect", function (e) {
+    const _this = this;
+    const tempValUnselected = $(_this).val();
+    const data = e.params.data;
+    if (tempValUnselected.length == 0) {
+        const tempEmployeeSelector = $("form#frm-filter select#employees");
+        if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
+            tempEmployeeSelector.prop("disabled", false);
+        }
+    } else {
+        $.ajax({
+            url: baseUrl("payroll/get_payroll_group_multiple"),
+            type: "post",
+            dataType: "json",
+            data: { group_id: tempValUnselected, [_csrf_token]: _csrf_hash },
+            success: function (json) {
+                if (json.response) {
+                    const tempData = json.data;
+                    if (typeof tempData == "object" && typeof tempData !== "undefined") {
+                        const tempEmployeeSelector = $("form#frm-filter select#employees");
+                        if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
+                            tempEmployeeSelector.empty();
+                            $.each(tempData, function (ii, vv) {
+                                var tempOption = new Option(vv.text, vv.id, true, true);
+                                tempEmployeeSelector.append(tempOption);
+                            });
+                            tempEmployeeSelector.prop("disabled", true);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    if (typeof data.text !== "undefined" && data.text) {
+        const tempEmpGroup = data.text;
+        let tempIsInArray = $.inArray(tempEmpGroup, psEmployeeGroup);
+        if (tempIsInArray !== -1) {
+            const index = psEmployeeGroup.indexOf(tempEmpGroup);
+            if (index > -1) { psEmployeeGroup.splice(index, 1); }
+        }
+    }
+});
+
+$("#company")
+    .select2({
+        placeholder: 'Select an option',
+        width: '100%',
+        data: _companies,
+        allowClear: true,
+    })
+    .on("select2:select", function (data) {
+        selectedCompany = data.params.data;
+        $(data.target).validate();
+    });
+
+var setPayDate = function (tempStartDate = null) {
+    $('#pay-date').find("input").val("");
+    $('#pay-date')
+        .datepicker("destroy")
+        .datepicker({
+            todayHighlight: true,
+            orientation: "bottom left",
+            templates: {
+                leftArrow: '<i class="la la-angle-left"></i>',
+                rightArrow: '<i class="la la-angle-right"></i>'
+            },
+            autoclose: true,
+            format: 'M.dd, yyyy',
+            startDate: tempStartDate,
+        }).on('changeDate', function (e) {
+            const currentTarget = $(e.target);
+            const currentDate = e.date;
+            if (typeof currentDate !== "undefined" && currentDate) {
+                const currentDay = moment(currentDate).format("DD");
+                const cMomentDate = moment(currentDate, 'YYYY-MM-DD');
+                if (typeof currentDay !== "undefined") {
+                    if (parseInt(currentDay) > 15) {
+                        let dateFrom = moment(currentDate)
+                            .startOf('month')
+                            .format('MM/DD/YYYY');
+                        let dateTo = moment(currentDate)
+                            .endOf('month')
+                            .format('MM/DD/YYYY');
+                        tempRangeDates.min_date = dateFrom;
+                        tempRangeDates.max_date = dateTo;
+                    } else {
+                        let dateFrom = moment(currentDate)
+                            .subtract(1, 'months')
+                            .startOf('month')
+                            .format('MM/DD/YYYY');
+                        let dateTo = moment(currentDate)
+                            .endOf('month')
+                            .format('MM/DD/YYYY');
+                        tempRangeDates.min_date = dateFrom;
+                        tempRangeDates.max_date = dateTo;
+                    }
+                    generateDateTimePicker(tempRangeDates.min_date, tempRangeDates.max_date)
+                }
+
+            }
+            currentTarget.find("input").validate();
+        });
+}
+
+
+setPayDate();
+
+var generateDateTimePicker = function (min = null, max = null) {
+    $("#date-range").val("");
+    $("#date-picker")
+        .daterangepicker({
+            minDate: min,
+            maxDate: max,
+            buttonClasses: 'm-btn btn',
+            applyClass: 'btn-primary',
+            cancelClass: 'btn-secondary',
+            locale: {
+                format: 'MM/DD/YYYY'
+            }
+        }).on('apply.daterangepicker', function (ev, picker) {
+            $("#date-range")
+                .val(picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY'))
+                .validate();
+        });
+}
+generateDateTimePicker(tempRangeDates.min_date, tempRangeDates.max_date);
+
+function search() {
+    employee = $("#employees").val();
+    Boolean($("#company").val()) ? company.push($("#company").val()) : $("#company").val();
+    Boolean($("#company").text()) ? company.push($("#company").text()) : $("#company").text();
+    date_from = $("#date-from").val();
+    date_to = $("#date-to").val();
+
+    tblPayrollSheet.ajax.reload();
+}
+
+function payroll_post() {
+    $.validate({
+        form: '#frm-add',
+        lang: 'en',
+        onSuccess: function (form) {
+            $.ajax({
+                url: baseUrl("payroll/payroll_sheet/save"),
+                type: "POST",
+                dataType: "json",
+                data: $("#frm-add").find("input, select").serialize(),
+                beforeSend: function () {
+                    $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                },
+                success: function (data) {
+                    if (data.state) {
+                        toastr.success(data.toastr_msg, "Successfully saved!", 5000);
+                        $("#modal-add").modal("hide");
+                        $('#frm-add')[0].reset();
+                        $('#employee').text("");
+                        tblAllowance.ajax.reload();
+                    } else {
+                        toastr.error(data.toastr_msg, "Error!", 5000);
+                    }
+                    $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                }
+            });
+            return false;
+        },
+    });
+}
+
+const form = $("#frm-filter");
+
+let dtPayrollSheet = _tblPayrollSheet
+    .DataTable({
+        dom: 'rtlp',
+        serverSide: false,
+        destroy: true,
+        autoWidth: false,
+        ordering: false,
+        buttons: [
+            {
+                extend: 'print',
+                text: 'PRINT',
+                footer: true,
+                title: function () {
+                    let tempPayDate = '';
+                    let tempPayrollGroup = "";
+                    const pay_date = $("input[name='pay_date']").val();
+                    if (pay_date) {
+                        tempPayDate = moment(pay_date).format("MM/DD/YYYY");
+                    }
+                    if (typeof psEmployeeGroup !== "undefined" && typeof psEmployeeGroup == "object" && psEmployeeGroup.length > 0) {
+                        tempPayrollGroup += psEmployeeGroup.join(" | ");
+                    }
+
+                    let newPayrollGroup = "";
+                    if (tempPayrollGroup) {
+                        newPayrollGroup = `<div class="m--regular-font-size-sm1 mt-1">PAYROLL GROUP: <span style='font-weight: 600;'>${tempPayrollGroup}</span></div>`;
+                    }
+
+                    let incentiveType = "";
+                    if (globalIncentiveType) {
+                        incentiveType = "| " + globalIncentiveType.toUpperCase();
+                    }
+                    return `<div class="text-center m--regular-font-size-lg2">${selectedCompany.description}</div>
+                            <div class="text-center m--regular-font-size-sm1 text-muted">${selectedCompany.company_address}</div>
+                            <div class="m--regular-font-size-lg1">PAYROLL SHEET - INCENTIVE ${incentiveType}</div>
+                            <div class="m--regular-font-size-sm1 mt-2">PAY DATE: ${tempPayDate}</div>
+                            <div class="m--regular-font-size-sm1 mt-1">PAY COVERAGE: ${globalCoverageDate}</div>
+                            ${newPayrollGroup}`;
+                },
+                exportOptions: {
+                    stripHtml: false,
+                    columns: exportOptions.columns,
+                },
+                customize: function (win) {
+                    var css = `@page { size: landscape; margin: 0.5cm; } 
+                        .dt-print-view table { font-size: 12px; width: 100%; } 
+                        .dt-print-view table.dataTable tfoot tr:first-child th{ border-top: 1px solid #000000; }
+                        .dt-print-view table.dataTable tfoot tr:first-child th{ border-bottom: 4px double #000000; }`,
+                        head = win.document.head || win.document.getElementsByTagName('head')[0],
+                        body = win.document.body || win.document.getElementsByTagName('body')[0],
+                        style = win.document.createElement('style'),
+                        tempDiv2 = win.document.createElement('div');
+                    $(body).addClass("custom--dt-print-view");
+                    style.type = 'text/css';
+                    style.media = 'print';
+
+                    if (style.styleSheet) {
+                        style.styleSheet.cssText = css;
+                    } else {
+                        style.appendChild(win.document.createTextNode(css));
+                    }
+
+                    const arrString = ['ol.css', 'summernote.min.css', 'style.bundle.css', 'daterangepicker.css', 'lightbox.css'];
+                    const tempDocument = win.document;
+                    const tempx = $(tempDocument).find("link");
+                    if (typeof tempx !== "undefined" && tempx.length > 0) {
+                        $.each(tempx, function (i, v) {
+                            if (typeof v !== "undefined") {
+                                const tempHref = $(v).attr("href");
+                                const strIndexes = tempHref.split("/");
+                                const lastString = strIndexes[strIndexes.length - 1];
+                                if (arrString.includes(lastString) == true) {
+                                    $(v).remove();
+                                }
+                            }
+                        });
+                    }
+
+                    head.appendChild(style);
+                    win.document.title = "Payroll Sheet Printable Page";
+
+                    var tempTable = win.document.getElementsByClassName('dataTable')[0];
+
+                    $(tempTable).removeClass("table-bordered");
+                    $(tempTable).find("thead tr:first-child > th:first-child").empty().text("#");
+                    var tempTHead = $(tempTable).find("thead th:not(:first-child)");
+                    tempTHead
+                        .removeClass("text-right")
+                        .addClass("text-center");
+                    $(tempTable).find("tfoot th:first-child").addClass("m--font-boldest");
+                    var tempTableTfoot = win.document.getElementsByTagName('tfoot')[0];
+                    console.log(_globalFooterHtml);
+                    tempTableTfoot.innerHTML = _globalFooterHtml;
+                    $(tempTableTfoot).find("tr th:first-child").removeClass("text-center");
+                    $(tempTableTfoot).find("tr th:last-child").remove();
+
+                    let signatoryCells = ``;
+                    if (globalPrintableSignatory.length > 0) {
+                        $.each(globalPrintableSignatory, function (i, v) {
+                            let tempLabel = v.label;
+                            tempLabel = tempLabel.toUpperCase();
+
+                            let tempValue = v.value;
+                            tempValue = tempValue ? tempValue.toUpperCase() : tempValue;
+
+                            if (tempLabel && v.is_active == true) {
+                                let tempCell = `<div style='display: inline-block; position: relative; width: 25%; margin-top: 30px;'>
+                                <p style='font-weight: bold; margin-left: 10px;'>${tempLabel}:</p>
+                                <p style='font-weight: 600; margin-left: 10px; margin-right: 50px; margin-top: 50px; padding-top: 10px; border-top: 1px solid #000000;'>${tempValue}</p>
+                                </div>`;
+                                signatoryCells += tempCell;
+                            }
+                        });
+                    }
+                    if (signatoryCells) {
+                        tempDiv2.innerHTML = `<table width='100%' style='margin-top: 60px;'>
+                        <tbody>
+                            <tr>
+                                <td width='100%'>${signatoryCells}</td>
+                            </tr>
+                        </tbody>
+                        </table>`;
+                        body.appendChild(tempDiv2);
+                    }
+                    //# change name of column headers when printing
+                    $(win.document.body).find("th span#adjustment").text('ADJ');
+                    // end of function
+                }
+            }, {
+                extend: 'excel',
+                exportOptions,
+                footer: true,
+                customize: function (xlsx) {
+                    const sheet = xlsx.xl.worksheets['sheet1.xml'];
+                    const sheetData = sheet.getElementsByTagName('sheetData')[0];
+                    let lastRow = $('row:nth-last-child(2) c', sheet);
+
+                    let tempPre = [];
+                    let tempDatax = [];
+                    let tempData = [];
+
+                    $.each(lastRow, function (i, v) {
+                        let _value = "empty";
+                        let tempCell = { key: v, value: _value };
+                        tempDatax.push(tempCell);
+                    });
+
+                    let tempRowIndex = $('row', sheet).length;
+                    tempRowIndex += 1;
+
+                    let tempRowx = Addrow(tempRowIndex, tempDatax);
+                    sheetData.appendChild(tempRowx);
+
+                    lastRow = $('row:last c', sheet);
+                    let lastRowCols = $('row:nth-last-child(2) c', sheet);
+                    $('row:nth-last-child(2)', sheet).remove();
+                    $('row:last', sheet).remove();
+
+                    let numrows = $('row', sheet).length;
+
+                    lastRow.each(function (index) {
+                        var attr = $(this).attr('r');
+                        var pre = attr.substring(0, 1);
+                        tempPre.push(pre);
+                        var ind = parseInt(attr.substring(1, attr.length));
+                        ind = ind + numrows;
+                        $(this).attr("r", pre + ind);
+                    });
+
+                    let tempRowCols = [];
+                    $.each(lastRowCols, function (i, v) {
+                        let textContent = v.textContent;
+                        if (i > 1) {
+                            tempRowCols.push(textContent);
+                        }
+                    });
+
+                    let tempx = 0;
+                    $.each(tempPre, function (i, v) {
+                        let _value = "";
+                        if (i > 1 && i !== 4) {
+                            _value = tempRowCols[tempx];
+                            _value = $.trim(_value);
+                            tempx++;
+                        } else if (i == 0) {
+                            _value = "GRAND TOTAL";
+                        }
+
+                        let tempCell = { key: v, value: _value };
+                        console.log(tempCell);
+                        tempData.push(tempCell);
+                    });
+
+                    numrows = $('row', sheet).length;
+                    tempRowIndex = numrows > 0 ? numrows + 1 : numrows;
+
+                    let mergeCells = $('mergeCells', sheet);
+                    mergeCells[0].appendChild(_createNode(sheet, 'mergeCell', {
+                        attr: {
+                            ref: 'A' + tempRowIndex + ':' + 'C' + tempRowIndex,
+                        },
+                    }));
+
+                    const newRowData = Addrow(tempRowIndex, tempData);
+                    sheetData.appendChild(newRowData);
+                    $('row:last c', sheet).attr("s", "2");
+
+                    function Addrow(index, data) {
+                        var row = sheet.createElement('row');
+                        row.setAttribute("r", index);
+                        for (i = 0; i < data.length; i++) {
+                            var key = data[i].key;
+                            var value = data[i].value;
+
+                            var c = sheet.createElement('c');
+                            c.setAttribute("t", "inlineStr");
+                            c.setAttribute("s", "2");
+                            c.setAttribute("r", key + index);
+
+                            var is = sheet.createElement('is');
+                            var t = sheet.createElement('t');
+                            var text = sheet.createTextNode(value)
+
+                            t.appendChild(text);
+                            is.appendChild(t);
+                            c.appendChild(is);
+                            row.appendChild(c);
+                        }
+                        return row;
+                    }
+
+                    function _createNode(doc, nodeName, opts) {
+                        var tempNode = doc.createElement(nodeName);
+                        if (opts) {
+                            if (opts.attr) { $(tempNode).attr(opts.attr); }
+                            if (opts.children) {
+                                $.each(opts.children, function (key, value) {
+                                    tempNode.appendChild(value);
+                                });
+                            }
+                            if (opts.text !== null && opts.text !== undefined) { tempNode.appendChild(doc.createTextNode(opts.text)); }
+                        }
+                        return tempNode;
+                    }
+                }
+            }
+        ],
+        ajax: {
+            url: baseUrl("payroll/get_payroll_sheet_incentive"),
+            type: "POST",
+            data: function (d) {
+                d.csrf_token = _csrf_hash;
+                d.date_range = $("input[name='date_range']", form).val();
+                d.employees = $("#employees", form).val();
+                d.company = $("#company", form).val();
+                d.payout_schedule = $("#payout_schedule", form).val();
+                d.pay_date = $("input[name='pay_date']", form).val();
+                d.show_posted = showPosted;
+                return d;
+            },
+            dataType: "JSON",
+        },
+        pageLength: 10,
+        columns: [
+            {
+                data: null,
+                width: "3%",
+                orderable: false,
+                className: "text-center",
+                render: function (_data, _type, row) {
+                    const lockPosting = parseInt(row.printed_payslip) == 1;
+                    if (parseInt(row.posted) === 0) {
+                        return `<label class="m-checkbox m-checkbox--bold m-checkbox--state-brand table-cb">
+                                <input type="checkbox" name="selected[]" value="${row.id}" checked /><span></span>
+                            </label>`;
+                    }
+                    if (lockPosting) {
+                        return `<i class="fa fa-lock"></i>`;
+                    }
+                    return `<i class="fa fa-check m--font-primary"></i>`;
+                }
+            },
+            {
+                data: 'id',
+                width: "3%",
+                orderable: false,
+                visible: false,
+                className: "text-center",
+                render: function (data, type, row, meta) {
+                    return meta.row + meta.settings._iDisplayStart + 1;
+                }
+            },
+            {
+                data: "lastname",
+                render: function (data, type, row) {
+                    const mi = row.middlename.toLowerCase() !== "n/a" && row.middlename !== "" && row.middlename.toLowerCase() !== "none" ? row.middlename.substring(0, 1) + ". " : "";
+                    const suffix = row.suffix.toLowerCase() !== "n/a" && row.suffix !== "" && row.suffix.toLowerCase() !== "none" ? row.suffix : "";
+                    const complete_name = data + ", " + row.firstname + " " + suffix + " " + mi;
+                    return `<span class="m--font-bolder">${complete_name}</span><br><small>` + row.position + `</small>`;
+                }
+            },
+            {
+                data: "no_of_days",
+                width: "5%",
+                className: "text-center",
+                render: function (data) {
+                    return numberFormat(data);
+                }
+            },
+            {
+                data: "basic_rate",
+                width: "8%",
+                className: "text-right",
+                render: function (data) {
+                    return numberFormat(data);
+                }
+            },
+            {
+                data: "custom_adjustments", // adjustment
+                width: "8%",
+                orderable: false,
+                className: "text-right",
+                render: function (data, type, row) {
+                    if (!data) {
+                        return `---`;
+                    }
+
+                    let template = ``;
+                    const custom_adjustments = data.split(",");
+                    custom_adjustments.forEach((row, i) => {
+                        const custom_adjustment = row.split("||");
+                        const marginClass = i > 0 ? "mt-1" : "";
+                        const adj_type = parseInt(custom_adjustment[2]);
+                        const adjTypeClass = adj_type === 0 ? "m--font-danger" : "";
+
+                        template += `<div class="mb-0 m--regular-font-size-sm1 m--font-bolder ${marginClass}">
+                            <span>${custom_adjustment[0]}</span>
+                            <span> - </span>
+                            <span class="m--font-boldest ${adjTypeClass}">${numberFormat(custom_adjustment[1])}</span>
+                        </div>`;
+                    });
+
+                    return template;
+                }
+            }, {
+                data: "gross_pay", // gross pay
+                width: "8%",
+                className: "text-right",
+                render: function (data) {
+                    return numberFormat(data);
+                }
+            }, {
+                data: "net_pay", // net pay
+                className: "text-right",
+                width: "8%",
+                render: function (data) {
+                    const tempHtml = "&#8369;&nbsp;&nbsp;" + numberFormat(data);
+                    return tempHtml;
+                }
+            }, {
+                data: null,
+                width: "2%",
+                orderable: false,
+                className: "text-center",
+                render: function (data, type, row) {
+                    const mi = row.middlename.toLowerCase() !== "n/a" && row.middlename !== "" && row.middlename.toLowerCase() !== "none" ? row.middlename.substring(0, 1) + ". " : "";
+                    const suffix = row.suffix.toLowerCase() !== "n/a" && row.suffix !== "" && row.suffix.toLowerCase() !== "none" ? row.suffix : "";
+                    const complete_name = row.firstname + " " + mi + " " + " " + row.lastname + " " + suffix;
+
+                    const lockPosting = parseInt(row.printed_payslip) == 1;
+
+                    let btnUndoPosting = ``;
+                    let btnAdjustments = ``;
+                    let btnViewTimesheet = ``;
+
+                    if (parseInt(row.is_bonus) === 0) {
+                        btnViewTimesheet = `<li class="m-nav__item">
+                            <a href="javascript:void(0)" class="m-nav__link"
+                            onclick="viewTimesheet(${row.emp_id}, '${complete_name}')">
+                            <i class="m-nav__link-icon fa fa fa-clock-o"></i>
+                            <span class="m-nav__link-text">VIEW TIMESHEET</span>
+                            </a>
+                        </li>`;
+                    }
+
+
+                    if (_currentActions.includes('undo_posting') && parseInt(row.posted) === 1) {
+                        btnUndoPosting = `<li class="m-nav__separator m-nav__separator--fit"></li>
+                        <li class="m-nav__item">
+                            <a href="javascript:void(0)" class="m-nav__link"
+                            onclick="confirmUndoPosting('${complete_name}', ${row.id})">
+                            <i class="m-nav__link-icon fa fa-undo"></i>
+                            <span class="m-nav__link-text">UNDO POSTING</span>
+                            </a>
+                        </li>`;
+                    }
+
+                    if (parseInt(row.posted) === 0) {
+                        btnAdjustments += `<li class="m-nav__item">
+                            <a href="javascript:void(0)" class="m-nav__link"
+                            onclick="openManageCustomAdjustmentsModal(${row.id}, ${row.posted})">
+                                <i class="m-nav__link-icon fa fa-money"></i>
+                                <span class="m-nav__link-text">MANAGE CUSTOM ADJUSTMENTS</span>
+                            </a>
+                        </li>`;
+                    }
+
+                    let _tempAction = `<div class="m-dropdown m-dropdown--inline m-dropdown--align-right m-dropdown--large"
+                            data-dropdown-toggle="click" aria-expanded="true">
+                        <a href="#" class="m-dropdown__toggle btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill"
+                            data-toggle="m-tooltip" data-original-title="More Options" data-skin="dark"
+                            data-delay='{"show": 500}'>
+                            <i class="fa fa-ellipsis-v"></i>
+                        </a>
+                        <div class="m-dropdown__wrapper">
+                            <span class="m-dropdown__arrow m-dropdown__arrow--right"></span>
+                            <div class="m-dropdown__inner">
+                                <div class="m-dropdown__body">
+                                    <div class="m-dropdown__content">
+                                        <ul class="m-nav">
+                                            <li class="m-nav__section m-nav__section--first">
+                                                <span class="m-nav__section-text">OPTIONS</span>
+                                            </li>
+                                            ${btnAdjustments}
+                                            ${btnViewTimesheet}
+                                            ${btnUndoPosting}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+
+                    if (lockPosting) {
+                        btnUndoPosting = ``; btnAdjustments = ``;
+                        if (parseInt(row.is_bonus) === 0) {
+                            _tempAction = `<a href="javascript:void(0)" 
+                                class="m-portlet__nav-link btn m-btn--icon m-btn--icon-only btn-sm" 
+                                data-toggle="m-tooltip" data-original-title="View Time Sheet" data-skin="dark"
+                                data-delay='{"show": 500}'
+                                onclick="viewTimesheet(${row.emp_id}, '${complete_name}')">
+                                <i class="fa fa-clock-o"></i>
+                            </a>`;
+                        } else {
+                            _tempAction = ``;
+                        }
+                    }
+
+                    return _tempAction;
+                }
+            }
+        ],
+        order: [[1, "asc"]],
+        createdRow: function (row, data, dataIndex) {
+            const lockPosting = parseInt(data.printed_payslip) == 1;
+            if (lockPosting) {
+                $(row).addClass("m--lock_posting");
+            }
+        },
+        drawCallback: function (settings) {
+            var api = this.api();
+            var tempFooter = $(settings.nTableWrapper).find("tfoot");
+            console.log(tempFooter);
+            if (typeof tempFooter !== "undefined") { _globalFooterHtml = tempFooter[0].innerHTML; }
+        },
+        footerCallback: function (row, data, start, end, display) {
+            globalGrandTotal = Object.assign({});
+
+            var api = this.api(), data;
+            // Remove the formatting to get integer data for summation
+            var intVal = function (i) {
+                return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
+            };
+
+            totalBasic = api
+                .column(4)
+                .data()
+                .reduce(function (a, b) {
+                    return intVal(a) + intVal(b);
+                }, 0);
+
+            totalGross = api
+                .column(6)
+                .data()
+                .reduce(function (a, b) {
+                    return intVal(a) + intVal(b);
+                }, 0);
+
+            totalNetpay = api
+                .column(7)
+                .data()
+                .reduce(function (a, b) {
+                    return intVal(a) + intVal(b);
+                }, 0);
+
+            const _tempFooterData = {
+                basic: numberFormat(totalBasic),
+                gross: numberFormat(totalGross),
+                net: numberFormat(totalNetpay),
+            }
+
+            globalGrandTotal = Object.assign({}, _tempFooterData);
+
+            $(api.column(4).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalBasic) + "</span>");
+            $(api.column(6).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalGross) + "</span>");
+            $(api.column(7).footer()).html("<span class='m--font-boldest'>&#8369;&nbsp;&nbsp;" + numberFormat(totalNetpay) + "</span>");
+        }
+    });
+
+function confirmUndoPosting(emp_name, payroll_sheet_id) {
+    $(".modal-body p", confirmUndoPostingModal).html(`Are you sure to undone posting the payroll sheet of
+                                                        <span class="m--font-boldest">${emp_name}</span>?`);
+    let url = $("form", confirmUndoPostingModal).data("url");
+    url += "/" + payroll_sheet_id;
+    $("form").attr("data-employee", emp_name);
+    $("form", confirmUndoPostingModal).attr("action", url);
+
+    confirmUndoPostingModal.modal("show");
+}
+
+$.validate({
+    form: '#frm-undo-posting',
+    lang: 'en',
+    scrollToTopOnError: false,
+    onSuccess: function (form) {
+        const url = form.attr("action");
+        const employee = form.attr("data-employee");
+        $.ajax({
+            url,
+            type: "POST",
+            dataType: "JSON",
+            data: {
+                employee,
+                csrf_token: _csrf_hash
+            },
+            success: function (response) {
+                toastr[response.toast](response.message, response.title, { timeOut: 10000 });
+                dtPayrollSheet.ajax.reload(null, false);
+                confirmUndoPostingModal.modal("hide");
+            }
+        });
+        return false;
+    }
+});
+
+function formatNumber(value, decimals = 2) {
+    return parseFloat(value).toLocaleString("en-US", { maximumFractionDigits: decimals });
+}
+
+$.validate({
+    form: '#frm-filter',
+    lang: 'en',
+    scrollToTopOnError: false,
+    onSuccess: function (form) {
+        const date_range = $("input[name='date_range']", form).val();
+        const bonus_code = $("input#bonus-code", form).val();
+        const employees = $("#employees", form).val();
+        const company = $("#company", form).val();
+        const payout_schedule = $("#payout_schedule", form).val();
+        const pay_date = $("input[name='pay_date']", form).val();
+
+        $.ajax({
+            url: baseUrl("payroll/generate_payroll_sheet_incentive"),
+            type: "POST",
+            data: {
+                csrf_token: _csrf_hash,
+                date_range,
+                employees,
+                company,
+                payout_schedule,
+                pay_date,
+                bonus_code
+            },
+            dataType: "JSON",
+            success: function (response) {
+                showPosted = "_all";
+                _globalFooterAdjustments = { sss: 0, sss_prov: 0, phic: 0, hdmf: 0, tax: 0, total_loans: 0 };
+                _dtRowSSS = []; _dtRowSSS_PROV = []; _dtRowPHIC = []; _dtRowHDMF = []; _dtRowTAX = []; _dtRowLOAN = [];
+                $("input.show_posted_record[value='_all']").prop("checked", true);
+
+                let absenteeCounter = 0;
+                let tempAbsenteeData = [];
+                if (typeof response.undertime_records !== "undefined" && response.undertime_records.length > 0) {
+                    absenteeCounter = response.undertime_records.length;
+                    tempAbsenteeData = response.undertime_records;
+                }
+
+                dtPayrollSheet.ajax.reload(function () {
+                    if (typeof response.data !== "undefined" && response.data.length > 0) {
+                        globalCoverageDate = response.coverage_date;
+
+                        noContAcctNo = [];
+                        $.each(response.data, function (i, v) {
+                            if (typeof v.no_cont_acctno !== "undefined" && v.no_cont_acctno.length > 0) {
+                                const tempData = { id: v.id, no_acct: v.no_cont_acctno };
+                                noContAcctNo.push(tempData);
+                            }
+                        });
+                        if (noContAcctNo.length > 0) {
+                            $.ajax({
+                                url: siteUrl("payroll/generate_employees_no_cont_acct"),
+                                dataType: "json",
+                                type: "post",
+                                data: { [_csrf_token]: _csrf_hash, employee_account: noContAcctNo },
+                                success: function (json) {
+                                    let tempCount = 0;
+                                    let tempRows = {};
+                                    if (json.response) {
+                                        tempCount = json.count;
+                                        tempRows = Object.assign({}, json.data);
+                                    }
+                                    vmPsNotification.count = tempCount;
+                                    if (vmPsNotification.notification_clicked == true) {
+                                        vmPsNotification.notification_clicked = false;
+                                    }
+                                    vmPsNotificationModal.count = tempCount;
+                                    vmPsNotificationModal.rows = Object.assign({}, tempRows);
+                                }
+                            });
+                        }
+                    }
+                    setTimeout(function () {
+                        const rowCount = dtPayrollSheet.rows().count();
+                        if (rowCount > 0 && isCollapsedPortlet == true) { isCollapsedPortlet = _tblPortletPS.expand(); }
+                    }, 500);
+
+                    if (typeof selectedCompany.id !== "undefined" && selectedCompany.id !== null && selectedCompany.id) {
+                        const currentSelectCompanyId = selectedCompany.id;
+                        $.ajax({
+                            url: siteUrl("payroll/get_current_signatory_by_company_and_type/" + currentSelectCompanyId + "/1"),
+                            dataType: "json",
+                            success: function (json) {
+                                let tempRow = Object.assign({});
+                                let ctr = 0;
+                                if (json.response) {
+                                    tempRow = Object.assign({}, json.data);
+                                    ctr = json.count;
+                                }
+                                vmTempSignatory.row = Object.assign({}, tempRow);
+                                vmTempSignatory.count = ctr;
+                                vmTempSignatory.$mount();
+
+                                vmPortletSignatories.row = Object.assign({}, tempRow);
+                                vmPortletSignatories.count = ctr;
+
+                                vmResetSignatories.row = Object.assign({}, tempRow);
+                                vmResetSignatories.count = ctr;
+                            }
+                        });
+                    }
+                }, true);
+
+                vmPsNotification.absentee_count = absenteeCounter;
+                if (absenteeCounter > 0) {
+                    dtAbsenteeReport.clear();
+                    $.each(tempAbsenteeData, function (k, v) {
+                        v.id = k + 1;
+                        dtAbsenteeReport.row.add(v);
+                    });
+                    dtAbsenteeReport.draw();
+                }
+            }
+        });
+        return false;
+    }
+});
+
+$("#payout_schedule")
+    .select2({
+        placeholder: "Select an option",
+        width: "100%",
+        data: _payoutSchedule,
+        allowClear: true,
+    });
+
+var vmPayrollParameterSettings = new Vue({
+    el: "#payroll_parameter-container",
+    data: {
+        active_tax_status: false,
+        fixed_tax_monthly_income: 0,
+        fixed_tax_monthly_income_switch: 0,
+        ftmi_prop_switch: false,
+        sss_contribution_basis: "basic_rate",
+        admin_access: false,
+    },
+    watch: {
+        fixed_tax_monthly_income_switch: function (value) {
+            const _this = this;
+            _this.ftmi_prop_switch = parseInt(value) == 1;
+        }
+    },
+    methods: {
+        propSwitch: function (e) {
+            const _this = this;
+            let isChecked = e.target.checked;
+            _this.ftmi_prop_switch = isChecked;
+            return _this;
+        },
+        validateTaxSettings: function () {
+            $.validate({
+                form: "#frm-payroll-settings",
+                lang: "en",
+                scrollToTopOnError: false,
+                onSuccess: function (form) {
+                    const tempUrl = form[0].action;
+                    const formData = new FormData(form[0]);
+                    formData.append('csrf_token', _csrf_hash);
+
+                    $.ajax({
+                        url: tempUrl,
+                        type: "POST",
+                        dataType: "JSON",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (json) {
+                            if (json.response) {
+                                toastr.success(json.taostr_msg, "Payroll Parameters", { timeOut: 5000 });
+                            }
+                        }
+                    });
+                    return false;
+                }
+            });
+        },
+        validateSssContributionSettings: function () {
+            $.validate({
+                form: "#frm-update-sss_contribution_basis",
+                lang: "en",
+                scrollToTopOnError: false,
+                onSuccess: function (form) {
+                    const tempUrl = form[0].action;
+                    const formData = new FormData(form[0]);
+                    formData.append('csrf_token', _csrf_hash);
+                    $.ajax({
+                        url: tempUrl,
+                        type: "POST",
+                        dataType: "JSON",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (json) {
+                            if (json.response) {
+                                toastr.success(json.taostr_msg, "Payroll Parameters", { timeOut: 5000 });
+                            }
+                        }
+                    });
+                    return false;
+                }
+            });
+        }
+    }
+});
+
+var vmPsNotification = new Vue({
+    el: "#ps--notification",
+    data: { count: 0, notification_clicked: false, absentee_count: 0 },
+    methods: {
+        showModalNotification: function (e) {
+            const _this = this;
+            if (_this.notification_clicked == false) {
+                _this.notification_clicked = true;
+            }
+            psNotificationModal.modal("show");
+        }
+    }
+});
+
+var vmPsNotificationModal = new Vue({
+    el: "#tempPsNotificationContent",
+    data: { count: 0, rows: {} },
+});
+
+$("#payroll-parameters-modal")
+    .on("show.bs.modal", function () {
+        const modal = $(this);
+        $.ajax({
+            url: baseUrl(`payroll/get_remittance_parameters`),
+            dataType: "JSON",
+            type: "GET",
+            beforeSend: function () {
+            },
+            success: function (response) {
+                const remittancesContainer = $("#remittances-container", modal);
+                let isActiveTaxStatus = false;
+                remittancesContainer.empty();
+
+                response.forEach((item) => {
+                    if (item.remittance_code == "TAX" && item.status == "1") { isActiveTaxStatus = true; }
+                    const template = `
+                        <div class="form-group row">
+                            <input type="hidden" name="id[]" value="${item.id}">
+                            <label class="col col-form-label">
+                                <span class="m--regular-font-size-lg1 m--font-boldest">
+                                    ${item.remittance_name}
+                                </span>
+                            </label>
+                            <div class="col-3 text-right">
+                                <span class="m-switch m-switch--outline m-switch--icon m-switch--success">
+                                    <label class="mb-0">
+                                        <input type="checkbox" name="status_${item.id}"  value="${item.status}"
+                                               ${parseInt(item.status) === 1 ? "checked" : ""}>
+                                        <span></span>
+                                    </label>
+                                </span>
+                            </div>
+                        </div>`;
+                    remittancesContainer.append(template);
+                });
+
+                vmPayrollParameterSettings.active_tax_status = isActiveTaxStatus;
+                setTimeout(function () {
+                    vmPayrollParameterSettings.validateTaxSettings();
+                }, 500);
+            }
+        });
+
+        $.ajax({
+            url: baseUrl(`payroll/get_payroll_settings`),
+            dataType: "JSON",
+            type: "GET",
+            beforeSend: function () {
+            },
+            success: function (json) {
+                vmPayrollParameterSettings.admin_access = typeof json.admin_access !== "undefined" ? json.admin_access : false;
+                if (json.response) {
+                    const settingsProp = ["fixed_tax_monthly_income", "fixed_tax_monthly_income_switch", "sss_contribution_basis"];
+                    const tempData = json.data;
+                    $.each(tempData, function (i, v) {
+                        if (settingsProp.includes(v.setting_name)) {
+                            vmPayrollParameterSettings[v.setting_name] = v.setting_value;
+                        }
+                    });
+                    setTimeout(function () {
+                        vmPayrollParameterSettings.validateTaxSettings();
+                        vmPayrollParameterSettings.validateSssContributionSettings();
+                    }, 500);
+                }
+
+            },
+        });
+
+        $.ajax({
+            url: baseUrl(`payroll/get_pay_rate_settings`),
+            dataType: "JSON",
+            type: "GET",
+            beforeSend: function () {
+            },
+            success: function (response) {
+                const payRateSettingTable = $("#pay-rate-setting-container table tbody", modal);
+                payRateSettingTable.empty();
+
+                response.forEach((item, idx) => {
+                    const template = `<tr>
+                                            <td>${item.particulars}</td>
+                                            <td width="15%" class="text-right" style="vertical-align: top;">
+                                                <input type="text" size="3" value="${item.regular_rate}"
+                                                       name="regular_rate_${idx}"
+                                                       class="text-right" disabled>
+                                            </td>
+                                            <td width="15%" class="text-right" style="vertical-align: top;">
+                                                <input type="text" size="3" value="${item.night_diff_rate}"
+                                                       name="night_diff_rate_${idx}"
+                                                       class="text-right" disabled>
+                                            </td>
+                                            <td width="15%" class="text-right" style="vertical-align: top;">
+                                                <input type="text" size="3" value="${item.ot_rate}"
+                                                       name="ot_rate_${idx}"
+                                                       class="text-right" disabled>
+                                            </td>
+                                            <td width="15%" class="text-right" style="vertical-align: top;">
+                                                <input type="text" size="3" value="${item.ot_night_diff_rate}"
+                                                       name="ot_night_diff_rate_${idx}"
+                                                       class="text-right" disabled>
+                                            </td>
+                                            <td width="8%" class="text-center">
+                                                <button type="button" class="btn btn-default m-btn m-btn--icon m-btn--hover-primary
+                                                                             m-btn--icon-only m-btn--pill btn-sm edit"
+                                                        onclick="editRow(${item.id}, ${idx})"
+                                                        data-toggle="m-tooltip" data-original-title="Edit"
+                                                        data-skin="dark">
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+
+                                                <button type="button" class="btn btn-default m-btn m-btn--icon m-btn--hover-success
+                                                                             m-btn--icon-only m-btn--pill btn-sm save m--hide"
+                                                        onclick="saveChanges(${item.id}, ${idx})"
+                                                        data-toggle="m-tooltip" data-original-title="Save Changes"
+                                                        data-skin="dark">
+                                                    <i class="fa fa-check"></i>
+                                                </button>
+                                            </td>
+                                      </tr>`;
+                    payRateSettingTable.append(template);
+                });
+            }
+        });
+    });
+
+function editRow(id, index) {
+    const row = $("#pay-rate-setting-container table tbody").find(`tr:eq(${index})`);
+    const firstEl = $('input[type="text"]', row).eq(0);
+    setTimeout(function () {
+        firstEl.focus();
+    }, 10);
+    $('input[type="text"]', row).prop("disabled", false);
+    $(".edit", row).addClass("m--hide");
+    $(".save", row).removeClass("m--hide");
+}
+
+function saveChanges(id, index) {
+    const regular_rate = $("input[name='regular_rate" + "_" + index + "']").val();
+    const night_diff_rate = $("input[name='night_diff_rate" + "_" + index + "']").val();
+    const ot_rate = $("input[name='ot_rate" + "_" + index + "']").val();
+    const ot_night_diff_rate = $("input[name='ot_night_diff_rate" + "_" + index + "']").val();
+
+    const row = $("#pay-rate-setting-container table tbody").find(`tr:eq(${index})`);
+
+    $.ajax({
+        url: baseUrl(`payroll/update_pay_rate_setting`),
+        type: "POST",
+        dataType: "JSON",
+        global: false,
+        data: {
+            csrf_token: _csrf_hash,
+            id,
+            regular_rate,
+            night_diff_rate,
+            ot_rate,
+            ot_night_diff_rate,
+        },
+        success: function (response) {
+            $('input[type="text"]', row).prop("disabled", true);
+            $(".edit", row).removeClass("m--hide");
+            $(".save", row).addClass("m--hide");
+
+            if (response) {
+                toastr.success("Pay rate successfully updated.", "Changes was saved.", { timeOut: 10000 });
+            }
+        }
+    });
+}
+
+cbSelectAll.on('change', function (e) {
+    const checkedValue = e.target.checked;
+    // select all in current page only
+    $('tbody input[type=\'checkbox\']', _tblPayrollSheet).prop('checked', checkedValue);
+
+    dtPayrollSheet.draw(false);
+});
+
+_tblPayrollSheet
+    .on('change', 'tbody input[type=\'checkbox\']', function () {
+        checkCbSelectAll();
+    });
+
+_tblPayrollSheet
+    .on('draw.dt', function () {
+        const pageInfo = dtPayrollSheet.page.info();
+        checkCbSelectAll();
+    });
+
+function checkCbSelectAll() {
+    const cbCount = $('tbody input[type=\'checkbox\']', _tblPayrollSheet).length;
+    const checkedCbCount = $('tbody input[type=\'checkbox\']:checked', _tblPayrollSheet).length;
+
+    if (parseInt(checkedCbCount) >= 1) {
+        $('#btn-verify').removeAttr('disabled');
+    } else {
+        $('#btn-verify').attr('disabled', 'true');
+    }
+
+    cbSelectAll.prop('checked', (parseInt(cbCount) === parseInt(checkedCbCount) && parseInt(checkedCbCount) >= 1));
+}
+
+function openManageCustomRateAdjustmentsModal(payroll_sheet_id, complete_name) {
+    $("form", manageCustomRateAdjustmentsModal).attr("data-ps_id", payroll_sheet_id);
+    $("form #display_name", manageCustomRateAdjustmentsModal).text(complete_name);
+    manageCustomRateAdjustmentsModal.modal("show");
+}
+
+manageCustomRateAdjustmentsModal.on("show.bs.modal", function () {
+    const payroll_sheet_id = $(this).attr("data-ps_id");
+    dtRateAdjustments = $("table", this).DataTable({
+        dom: "rtlp",
+        serverSide: false,
+        autoWidth: false,
+        destroy: true,
+        ajax: {
+            url: baseUrl(`payroll/get_payroll_sheet_custom_rate_adjustments/${payroll_sheet_id}`),
+            type: "GET",
+            dataType: "JSON"
+        },
+    });
+});
+
+function openManageCustomAdjustmentsModal(payroll_sheet_id, posted) {
+    $("form", manageCustomAdjustmentsModal).attr("data-posted", posted);
+    $("form :input", manageCustomAdjustmentsModal).prop("disabled", (parseInt(posted) === 1));
+
+    $("input[name='payroll_sheet_id']", manageCustomAdjustmentsModal).val(payroll_sheet_id);
+    $("input[name='amount']").maskMoney({ thousands: ',', decimal: '.', allowNegative: true });
+    manageCustomAdjustmentsModal.modal("show");
+}
+
+init();
+let dtCustomAdjustments = null;
+
+manageCustomAdjustmentsModal.on("show.bs.modal", function () {
+    const form = $("form", this);
+    const payroll_sheet_id = $("input[name='payroll_sheet_id']", form).val();
+    const posted = form.attr("data-posted");
+
+    dtCustomAdjustments = $("table", this).DataTable({
+        dom: "rtlp",
+        serverSide: false,
+        autoWidth: false,
+        destroy: true,
+        ajax: {
+            url: baseUrl(`payroll/get_payroll_sheet_custom_adjustments/${payroll_sheet_id}`),
+            type: "GET",
+            dataType: "JSON"
+        },
+        columns: [
+            {
+                data: "particulars",
+                render: function (data, type, row) {
+                    return `<p class="m--font-bolder mb-0">${data}</p>
+                            <p class="m--regular-font-size-sm1 mb-0 mt-1 text-muted">${row.description}</p>`;
+                }
+            },
+            {
+                width: "20%",
+                className: "text-right pr-5",
+                data: "amount",
+                render: function (data, type, row) {
+                    const style = parseInt(row.cadj_type) === 0 ? "m--font-danger" : "";
+                    return `<span class="${style} m--font-boldest">${parseFloat(data).toLocaleString("en-US", { maximumFractionDigits: 2 })}</span>`;
+                }
+            },
+            {
+                width: "28%",
+                data: "created_at",
+                render: function (data, type, row) {
+                    return `<p class="mb-0 m--font-bolder">${row._created_by}</p>
+                            <p class="mb-0 text-muted">${data}</p>`;
+                }
+            },
+            {
+                width: "15%",
+                className: "text-center",
+                data: null,
+                orderable: false,
+                render: function (data, type, row) {
+                    let buttons = ``;
+
+                    if (parseInt(posted) === 1) {
+                        return `---`;
+                    }
+
+                    if (_currentActions.includes("edit")) {
+                        buttons += ` <button type="button"
+                                            class="btn btn-default btn-sm m-btn m-btn--icon m-btn--icon-only
+                                                   m-btn--hover-primary
+                                                   m-btn--pill"
+                                            onclick="editCustomAdjustment(${row.id})">
+                                        <i class="fa fa-pencil"></i>
+                                     </button>`;
+                    }
+
+                    if (_currentActions.includes("delete")) {
+                        buttons += ` <button type="button"
+                                            class="btn btn-default btn-sm m-btn m-btn--icon m-btn--icon-only
+                                                   m-btn--hover-danger
+                                                   m-btn--pill"
+                                            onclick="openDeleteCustomAdjustmentConfirmation(${row.id})">
+                                        <i class="fa fa-trash-o"></i>
+                                     </button>`;
+                    }
+                    return buttons;
+                }
+            },
+        ],
+        order: [[2, "DESC"]]
+    });
+});
+
+function editCustomAdjustment(cadj_id) {
+    $.ajax({
+        url: baseUrl(`payroll/get_custom_adjustment/${cadj_id}`),
+        type: "GET",
+        dataType: "JSON",
+        global: false,
+        success: function (response) {
+            $("input[name='id']", manageCustomAdjustmentsModal).val(cadj_id);
+            $("input[name='particulars']", manageCustomAdjustmentsModal).val(response.particulars);
+            $("input[name='amount']", manageCustomAdjustmentsModal).val((parseInt(response.cadj_type) === 0 ? "-" : "") + response.amount);
+            $("textarea[name='description']", manageCustomAdjustmentsModal).val(response.description);
+            $("form", manageCustomAdjustmentsModal).attr("data-mode", "edit");
+            $(".btnSave", manageCustomAdjustmentsModal).html("Save Changes");
+        }
+    });
+}
+
+function openApprovalCreatedAdjustmentConfirmation(adj_id, type = 'approve') {
+    var tempStatus = 0;
+    switch (type) {
+        case 'approve': tempStatus = 1; break;
+        case 'disapprove': tempStatus = 2; break;
+        case 'undo_approve': type = 'undo approve'; tempStatus = 4; break;
+        case 'undo_disapprove': type = 'undo disapprove'; tempStatus = 3; break;
+        default: tempStatus = 0; break;
+    }
+
+    $("form #temp_status", confirmApprovalCreatedAdjustmentModal).text(type);
+    $("form #adj_id", confirmApprovalCreatedAdjustmentModal).val(adj_id);
+    $("form #adj_status", confirmApprovalCreatedAdjustmentModal).val(tempStatus);
+    confirmApprovalCreatedAdjustmentModal.modal("show");
+}
+
+function openDeleteCustomAdjustmentConfirmation(cadj_id) {
+    $("form", confirmDeleteCustomAdjustmentModal).attr('data-id', cadj_id);
+    confirmDeleteCustomAdjustmentModal.modal("show");
+}
+
+function init() {
+    $('input[name="particulars"]')
+        .autocomplete('dispose')
+        .autocomplete({
+            serviceUrl: baseUrl(`payroll/get_custom_adjustment_particulars`),
+            ajaxSettings: {
+                global: false
+            },
+            showNoSuggestionNotice: true,
+        });
+}
+
+$.validate({
+    form: $("#frm-approval-created-adjustments"),
+    lang: "en",
+    scrollToTopOnError: false,
+    onSuccess: function (form) {
+        const type = $(form).attr("data-type");
+        $.ajax({
+            url: baseUrl(`payroll/created_approval_adjustments`),
+            type: "POST",
+            data: $(form).serialize(),
+            dataType: "JSON",
+            success: function (response) {
+                init();
+                if (response.success == true) {
+                    resetManageCreatedAdjustmentsForm('add');
+                    dtCreatedAdjustments.ajax.reload();
+                    /*** dtPayrollSheet.ajax.reload(); ***/
+                    setTimeout(function () {
+                        tempRegeneratePayroll();
+                    }, 500);
+                    confirmApprovalCreatedAdjustmentModal.modal("hide");
+                }
+                if (response) {
+                    toastr[response.toast](response.message, response.title, { timeOut: 10000 });
+                }
+            }
+        });
+
+        return false;
+    }
+});
+
+$.validate({
+    form: $("#frm-manage-custom-adjustments"),
+    lang: "en",
+    scrollToTopOnError: false,
+    onSuccess: function (form) {
+        const mode = $(form).attr("data-mode");
+        $.ajax({
+            url: baseUrl(`payroll/manage_custom_adjustments/${mode}`),
+            type: "POST",
+            data: $(form).serialize(),
+            dataType: "JSON",
+            success: function (response) {
+                init();
+                resetManageCustomAdjustmentsForm(mode);
+                dtCustomAdjustments.ajax.reload();
+                /*** dtPayrollSheet.ajax.reload(); ***/
+                setTimeout(function () {
+                    tempRegeneratePayroll();
+                }, 500);
+                if (response) {
+                    toastr[response.toast](response.message, response.title, { timeOut: 10000 });
+                }
+            }
+        });
+
+        return false;
+    }
+});
+
+$.validate({
+    form: $("#frm-confirm-delete-custom-adjustment"),
+    lang: "en",
+    scrollToTopOnError: false,
+    onSuccess: function (form) {
+        const id = $(form).attr("data-id");
+        $.ajax({
+            url: baseUrl(`payroll/delete_custom_adjustments/${id}`),
+            type: "GET",
+            dataType: "JSON",
+            success: function (response) {
+                if (response) {
+                    toastr[response.toast](response.message, response.title, { timeOut: 10000 });
+                    resetManageCustomAdjustmentsForm('add');
+                }
+
+                dtCustomAdjustments.ajax.reload();
+                /*** dtPayrollSheet.ajax.reload(); ***/
+                setTimeout(function () {
+                    tempRegeneratePayroll();
+                }, 500);
+                $("#modal-confirm-delete-custom-adjustment").modal("hide");
+            }
+        });
+        return false;
+    }
+});
+
+function resetManageCustomAdjustmentsForm(mode = 'edit') {
+    if (mode === 'edit') { $("input[name='id']", manageCustomAdjustmentsModal).val(""); }
+    manageCustomAdjustmentsModal.find("form").attr("data-mode", mode);
+
+    $("input[name='particulars']", manageCustomAdjustmentsModal).val("");
+    $("input[name='amount']", manageCustomAdjustmentsModal).val("");
+    $("textarea[name='description']", manageCustomAdjustmentsModal).val("");
+    $(".btnSave", manageCustomAdjustmentsModal).html("Save");
+}
+
+$(document)
+    .on('show.bs.modal', '.modal', function () {
+        var zIndex = 1040 + (10 * $('.modal:visible').length);
+        $(this).css('z-index', zIndex - 1);
+
+        setTimeout(function () {
+            $('.modal-backdrop').not('.modal-stack').css('z-index', zIndex - 2).addClass('modal-stack');
+        }, 0);
+    });
+
+function viewTimesheet(emp_id, employee_name) {
+    viewTimesheetModal.attr("data-emp_id", emp_id);
+    viewTimesheetModal.attr("data-employee_name", employee_name);
+    viewTimesheetModal.modal("show");
+}
+
+let global_print_key = [];
+
+viewTimesheetModal.on("show.bs.modal", function () {
+    const emp_id = $(this).attr("data-emp_id");
+    dtEmployeeTimesheet = $("table", this).DataTable({
+        dom: 'rtlp',
+        serverSide: false,
+        autoWidth: false,
+        paging: false,
+        pagination: false,
+        destroy: true,
+        ajax: {
+            url: baseUrl(`payroll/get_employee_timesheet`),
+            type: "POST",
+            dataType: "JSON",
+            data: function (d) {
+                d.csrf_token = _csrf_hash;
+                d.emp_id = emp_id;
+                d.date_range = $('input[name="date_range"]', form).val();
+            }
+        },
+        columns: [
+            {
+                data: 'date',
+                render: function (data, type, row, meta) {
+                    //display indication if employee is absent, if date is holiday and if employee has overtime
+                    let if_holiday;
+                    let overtime = " <em class='fa fa-clock-o ml-1' style='color:#5867dd;'></em>";
+                    let holiday = " <em class='fa fa-flag ml-1' style='color:#ffb822;'>";
+                    let absent = " <em class='fa fa-times-rectangle ml-1' style='color:#5c5d62;'>";
+                    if (row.id == null && row.is_holiday == null && row.weekday != 'sunday') {
+                        if_holiday = moment(data).format("MM/DD/YYYY") + absent
+                    } else {
+                        if (row.is_holiday == 1 && row.total_accredited_ot_hrs > 0) {
+                            if_holiday = moment(data).format("MM/DD/YYYY") + holiday + overtime;
+                        } else if (row.is_holiday == 1) {
+                            if_holiday = moment(data).format("MM/DD/YYYY") + holiday;
+                        } else if (row.total_accredited_ot_hrs > 0) {
+                            if_holiday = moment(data).format("MM/DD/YYYY") + overtime;
+                        } else {
+                            if_holiday = moment(data).format("MM/DD/YYYY");
+                        }
+                    }
+
+                    return if_holiday;
+                },
+                width: "12%",
+            },
+            {
+                data: 'weekday',
+                orderable: false,
+                render: function (data) {
+                    return data ? data.substring(0, 3) : null;
+                },
+
+                width: "8%",
+            },
+            {
+                data: "am_in",
+
+                width: "10%",
+                render: function (data) {
+                    if (!data) {
+                        return `<style='background-color: green;'>`;
+                    }
+
+                    return moment(data, "hh:mm:ss").format("hh:mm A");
+                }
+            },
+            {
+                data: "am_out",
+
+                width: "10%",
+                render: function (data) {
+                    if (!data) {
+                        return ``;
+                    }
+
+                    return moment(data, "hh:mm:ss").format("hh:mm A");
+                }
+            },
+            {
+                data: "pm_in",
+
+                width: "10%",
+                render: function (data) {
+                    if (!data) {
+                        return ``;
+                    }
+
+                    return moment(data, "hh:mm:ss").format("hh:mm A");
+                }
+            },
+            {
+                data: "pm_out",
+
+                width: "10%",
+                render: function (data) {
+                    if (!data) {
+                        return ``;
+                    }
+
+                    return moment(data, "hh:mm:ss").format("hh:mm A");
+                }
+            },
+            {
+                data: "total_late",
+
+                width: "10%",
+                render: function (data, type, row) {
+                    if (parseFloat(row.total_time_rendered) <= 0) {
+                        return 0;
+                    }
+
+                    if (parseInt(data) > 0) {
+                        return `<span class="m--font-danger m--font-boldest">${data}</span>`;
+                    }
+
+                    return data;
+                }
+            },
+            {
+                data: "total_ut",
+
+                width: "10%",
+                render: function (data, type, row) {
+                    if (parseFloat(row.total_time_rendered) <= 0) {
+                        return 0;
+                    }
+
+                    if (parseInt(data) > 0) {
+                        return `<span class="m--font-danger m--font-boldest">${data}</span>`;
+                    }
+
+                    return data;
+                }
+            },
+            {
+                data: "total_time_rendered",
+
+                width: "12%",
+                render: function (data, type, row) {
+                    if (data && parseFloat(data) > 0) {
+                        const hrs = parseFloat(data) / 60;
+                        return hrs.toLocaleString("en-US", { maximumFractionDigits: 2 });
+                    }
+
+                    return data;
+                }
+            },
+            {
+                data: "total_accredited_ot_hrs",
+
+                width: "8%",
+                render: function (data, type, row) {
+                    if (data && parseFloat(data) > 0) {
+                        const total_accredited_ot_hrs = parseFloat(data);
+                        return total_accredited_ot_hrs.toFixed(2);
+                    }
+                    return data;
+                }
+            },
+            {
+                data: "total_accredited_ndiff_ot_hrs",
+
+                width: "8%",
+                render: function (data, type, row) {
+                    if (data && parseFloat(data) > 0) {
+                        const total_accredited_ndiff_ot_hrs = parseFloat(data);
+                        return total_accredited_ndiff_ot_hrs.toFixed(2);
+                    }
+                    return data;
+                }
+            },
+        ],
+        buttons: [
+            {
+                extend: 'print',
+                text: 'PRINT',
+                title: function () {
+                    const date_range = ($("input[name='date_range']").val()).split("-");
+                    return `<div class="m--regular-font-size-lg4">
+                                <span class="m--font-boldest" style='text-transform: uppercase;'>${viewTimesheetModal.attr("data-employee_name")}</span> |
+                                DATED: <span class="m--font-boldest">${date_range[0]}</span> - <span class="m--font-boldest">${date_range[1]}</span><br>
+                                <p><span class="m--font-bolder">LEGEND</span></p>
+                                <p><em class='fa fa-flag' style='color:#ffb822;'></em><span class="m--font-bold"> Holiday</span>&nbsp;&nbsp;&nbsp;
+                                <em class='fa fa-times-rectangle' style='color:#5c5d62;'></em><span class="m--font-bold"> Absent</span>&nbsp;&nbsp;&nbsp;
+                                <em class='fa fa-clock-o' style='color:#5867dd;'></em><span class="m--font-bold"> Overtime</span></p>
+                            </div>`;
+                },
+                exportOptions: {
+                    stripHtml: false,
+                },
+            }
+        ],
+        lengthMenu: [[15, 30, 50, -1], [15, 30, 50, "All"]]
+    });
+});
+
+let selectedPayrollSheet = [];
+
+function confirmPosting() {
+    var checkedCount = 0;
+    selectedPayrollSheet = [];
+    dtPayrollSheet.column(0).nodes().to$().each(function (index) {
+        const cb = $("input[type='checkbox']", this);
+        const checked = cb.prop("checked");
+        if (checked == true) { selectedPayrollSheet.push(cb.val()); checkedCount++; }
+    });
+
+    if (checkedCount > 0) {
+        confirmPayrollPosting.modal("show");
+    } else {
+        toastr.warning("No confirmed payroll sheet data available!", "Payroll Sheet Posting");
+    }
+}
+
+function postPayrollSheet() {
+    $.ajax({
+        url: baseUrl(`payroll/post_payroll_sheet`),
+        type: "POST",
+        dataType: "JSON",
+        data: {
+            csrf_token: _csrf_hash,
+            selected: selectedPayrollSheet
+        },
+        success: function (response) {
+            if (response) {
+                toastr[response.toast](response.message, response.title, { timeOut: 10000 });
+            }
+
+            dtPayrollSheet.ajax.reload(null, false);
+            confirmPayrollPosting.modal("hide");
+        }
+    });
+}
+
+function printTimesheet(el) {
+    $("i", el).removeClass();
+    $("i", el).addClass("fa fa-spinner fa-spin");
+    $("i", el).css({ right: 0, left: 0 });
+
+    setTimeout(() => {
+        dtEmployeeTimesheet.button(".buttons-print").trigger();
+        $("i", el).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
+        $("i", el).css({ top: "50%", left: "50%" });
+    }, 150);
+}
+
+function printPayrollSheet(el) {
+    $("i", el).removeClass();
+    $("i", el).addClass("fa fa-spinner fa-spin");
+    $("i", el).css({ right: 0, left: 0 });
+
+    setTimeout(() => {
+        dtPayrollSheet.button(".buttons-print").trigger();
+        $("i", el).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
+        $("i", el).css({ top: "50%", left: "50%" });
+    }, 150);
+}
+
+function exportExcelPayrollSheet(el) {
+    $("i", el).removeClass();
+    $("i", el).addClass("fa fa-spinner fa-spin");
+    $("i", el).css({ right: 0, left: 0 });
+
+    setTimeout(() => {
+        dtPayrollSheet.button(".buttons-excel").trigger();
+        $("i", el).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
+        $("i", el).css({ top: "50%", left: "50%" });
+    }, 150);
+}
+
+function tempRegeneratePayroll() {
+    $("#frm-filter").submit();
+}
+
+_tblPortletPS.on('afterExpand', function (portlet) {
+    setTimeout(function () { isCollapsedPortlet = true; }, 500);
+});
+_tblPortletPS.on('afterCollapse', function (portlet) {
+    setTimeout(function () { isCollapsedPortlet = false; }, 500);
+});
+
+function toggleParameterModal() {
+    setTimeout(function () { $("#payroll-parameters-modal").modal("show"); }, 500);
+}
+
+$(document).on("change", "input.show_posted_record", function (e) {
+    showPosted = e.target.value;
+    dtPayrollSheet.ajax.reload();
+});
+
+$(document).ready(function (e) {
+    select2Employees();
+    select2IncentiveType();
+});
+
+var vmPortletSignatories = new Vue({
+    el: "#portlet--signatories",
+    data: { row: {}, count: 0 },
+    methods: {
+        openModalSignatory: function () {
+            return psSignatoryModal.modal("show");
+        },
+        resetModalSignatory: function () {
+            return psResetSignatoryModal.modal("show");
+        }
+    }
+});
+
+var vmResetSignatories = new Vue({
+    el: "#reset-signatory--content",
+    data: { row: {}, count: 0 },
+    methods: {
+        validateFields: function () {
+            const _this = this;
+            const currentElement = _this.$el;
+            const tempForm = $(currentElement).find("form#resetPrintableSignatories");
+            if (typeof tempForm !== "undefined") {
+                $.validate({
+                    form: tempForm,
+                    lang: 'en',
+                    onSuccess: function (form) {
+                        const tempUrl = form[0].action;
+                        const tempType = form[0].method;
+                        const formData = $(form[0]).serialize();
+
+                        $.ajax({
+                            url: tempUrl,
+                            type: tempType,
+                            dataType: "json",
+                            data: formData,
+                            beforeSend: function () {
+                                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            },
+                            success: function (json) {
+                                let tempRow = Object.assign({});
+                                let ctr = 0;
+
+                                if (json.response) {
+                                    tempRow = Object.assign({}, json.data);
+                                    ctr = json.count;
+                                }
+                                vmTempSignatory.row = Object.assign({}, tempRow);
+                                vmTempSignatory.count = ctr;
+                                vmTempSignatory.$mount();
+
+                                vmPortletSignatories.row = Object.assign({}, tempRow);
+                                vmPortletSignatories.count = ctr;
+
+                                _this.row = Object.assign({}, tempRow);
+                                _this.count = ctr;
+                                const currentModal = $(currentElement).closest(".modal");
+                                currentModal.modal("hide");
+
+                                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            }
+                        });
+                        return false;
+                    },
+
+                });
+            }
+        }
+    }, mounted: function () {
+        const _this = this;
+        _this.validateFields();
+    }
+});
+
+var vmTempSignatory = new Vue({
+    el: "#signatory--content",
+    data: { row: {}, count: 0 },
+    methods: {
+        setGlobalSignatories: function () {
+            const _this = this;
+            const currentRow = _this.row;
+            globalPrintableSignatory = [];
+            if (typeof currentRow.meta_field !== "undefined" && typeof currentRow.meta_field == "object") {
+                $.each(currentRow.meta_field, function (i, v) {
+                    const tempData = { label: v.label, value: v.value, is_active: v.is_active };
+                    globalPrintableSignatory.push(tempData);
+                });
+            }
+            return globalPrintableSignatory;
+        },
+        activeSignatory: function (e) {
+            const currentTarget = e.target;
+            const formGroup = $(currentTarget).closest(".form-group.m-form__group.row");
+            if (typeof formGroup !== "undefined" && formGroup.length == 1) {
+                let isChecked = $(currentTarget).is(":checked");
+                const select2Container = formGroup.find(".select2--value");
+                if (typeof select2Container !== "undefined" && select2Container.length == 1) {
+                    if (isChecked) {
+                        if (select2Container.is(":disabled") == true) {
+                            select2Container.prop("disabled", false);
+                        }
+                    } else {
+                        if (select2Container.is(":disabled") == false) {
+                            select2Container.prop("disabled", true);
+                        }
+                    }
+                }
+            }
+        }, setModalSelect2: function () {
+            const _this = this;
+            const _currentElement = _this.$el;
+            const psModalSignatory = $(_currentElement)
+                .closest("#modal-ps--signatory");
+            if (typeof psModalSignatory !== "undefined" && psModalSignatory.length == 1) {
+                initSelect2Employee(psModalSignatory);
+            }
+        }, validateFields: function () {
+            const _this = this;
+            const currentElement = _this.$el;
+            const tempForm = $(currentElement).find("form#updatePrintableSignatories");
+            if (typeof tempForm !== "undefined") {
+                $.validate({
+                    form: tempForm,
+                    lang: 'en',
+                    onSuccess: function (form) {
+                        const tempUrl = form[0].action;
+                        const tempType = form[0].method;
+                        const formData = $(form[0]).serialize();
+
+                        $.ajax({
+                            url: tempUrl,
+                            type: tempType,
+                            dataType: "json",
+                            data: formData,
+                            beforeSend: function () {
+                                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            },
+                            success: function (json) {
+                                const currentModal = $(currentElement).closest(".modal");
+                                if (json.response) {
+                                    const currentData = json.data;
+                                    if (Object.keys(currentData).length > 0) {
+                                        const metaFields = currentData.meta_field;
+                                        const ctr = metaFields.length;
+
+                                        _this.row = Object.assign({}, currentData);
+                                        _this.count = ctr;
+                                        _this.setGlobalSignatories();
+
+                                        vmPortletSignatories.row = Object.assign({}, currentData);
+                                        vmPortletSignatories.count = ctr;
+
+                                        vmResetSignatories.row = Object.assign({}, currentData);
+                                        vmResetSignatories.count = ctr;
+
+                                        if (typeof currentModal !== "undefined" && currentModal.length == 1) {
+                                            currentModal.modal("hide");
+                                        }
+                                    }
+                                } else {
+                                    toastr.error("Payroll Signatory", json.toastr_msg);
+                                }
+                                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            }
+                        });
+                        return false;
+                    },
+
+                });
+            }
+        }
+    }, mounted: function () {
+        const _this = this;
+        setTimeout(function () {
+            _this.setModalSelect2();
+            _this.setGlobalSignatories();
+            _this.validateFields();
+        }, 500);
+    }
+});
+
+var initSelect2Employee = function (tempModal, portlet) {
+    if (typeof tempModal !== "undefined" && tempModal.length == 1) {
+        let tempSelector = tempModal.find("select.select2--value");
+        if (typeof portlet !== "undefined") { tempSelector = portlet.find("select.select2--value"); }
+        if (typeof tempSelector !== "undefined") {
+            tempSelector.select2({
+                tags: true,
+                allowClear: true,
+                placeholder: 'Select an option',
+                width: '100%',
+                dropdownParent: tempModal,
+                ajax: {
+                    url: baseUrl("payroll/select_employee"),
+                    dataType: "json",
+                    delay: 250,
+                    global: false,
+                    processResults: function (data) {
+                        let tempData = [];
+                        $.each(data.results, function (i, v) {
+                            const dd = { id: v.text, text: v.text };
+                            tempData.push(dd);
+                        });
+                        return { results: tempData };
+                    }
+                }
+            });
+        }
+    }
+}

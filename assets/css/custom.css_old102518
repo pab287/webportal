@@ -1,0 +1,28 @@
+
+/***== 
+	THIS IS A CUSTOM STYLE SHEET FILE 
+==***/
+
+.display-none{display: none;}
+.m-aside-left.m-aside-left--skin-blue{background-color: #233e6b;}
+input[type="search"] {border: 1px solid #cdcdcd;}
+table.table td{font-weight: 400;}
+.quick-action-link{font-size: 1em;color: #000000;}
+.quick-action-link:hover{color: #5867dd;text-decoration: none;}
+.modal-extra-lg{max-width: 80%;}
+.m-grid-404--root{ min-height: 780px; }
+body.error404 .m-error-6 .m-error_container .m-error_subtitle > h1{ font-size: 7rem; }
+body.error404 .m-grid__item.m-grid__item--fluid.m-grid.m-grid--ver-desktop.m-grid--desktop.m-body{
+	background-image: url('../../assets/img/page/bg_404.jpg');
+	background-size: cover;
+	background-position: 50px -120px;
+}
+th.dt-column-center, td.dt-column-center { text-align: center; }
+/*** .m-widget14__sync_data, .m-widget15__legends,.m-widget16__active_device { margin: 15px 15px 0px; } ***/
+.m--margin-bottom-10{ margin-bottom: 10px; }
+.toolbar {
+    display: inline-block;
+    float: left;
+    position: relative;
+}
+.m-subheader { padding-top: 0px; }

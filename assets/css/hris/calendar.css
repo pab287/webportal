@@ -1,0 +1,69 @@
+.fc-unthemed .fc-event .fc-content,
+.fc-unthemed .fc-event-dot .fc-content {
+    overflow: inherit;
+    white-space: normal;
+    cursor: pointer;
+}
+
+.fc-unthemed .fc-event .fc-title,
+.fc-unthemed .fc-event-dot .fc-title {
+    font-weight: 600;
+}
+
+.contrast .fc-title {
+    color: #ffffff !important;
+}
+
+.fc-unthemed .fc-event.fc-start.m-fc-event--darker .fc-content:before,
+.fc-unthemed .fc-event-dot.fc-start.m-fc-event--darker .fc-content:before {
+    background-color: #5d5d5d;
+}
+
+/* .evaluation-color-legends__item__color {
+    width: 25px;
+    height: 25px;
+    margin-right: 8px;
+    border-radius: 50%;
+} */
+
+.evaluation-color-legends__item__color--first-evaluation {
+    font-weight: 600;
+    color: #5d5d5d;
+    background-color: #FFEB3B;
+}
+
+.evaluation-color-legends__item__color--second-evaluation {
+    font-weight: 600;
+    color: #ffffff !important;
+    background-color: #03A9F4;
+}
+
+.evaluation-color-legends__item__color--final-evaluation {
+    font-weight: 600;
+    color: #ffffff !important;
+    background-color: #BDBDBD;
+}
+
+.evaluation-color-legends__item__color--fail-empty_eval-discontinue {
+    font-weight: 600;
+    color: #ffffff !important;
+    background-color: #F44336;
+}
+
+
+.evaluation-color-legends__item__color--exceeds-first-evaluation {
+    font-weight: 600;
+    background-color: #FFC107;
+}
+
+.evaluation-color-legends__item__color--exceeds-second-evaluation {
+    font-weight: 600;
+    color: #ffffff !important;
+    background-color: #2962FF;
+}
+
+.evaluation-color-legends__item__color--pass-regularize {
+    font-weight: 600;
+    color: #ffffff !important;
+    background-color: #4CAF50;
+}

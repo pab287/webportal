@@ -1,0 +1,362 @@
+var getUrlParameter = function getUrlParameter(sParam) {
+    var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+        sURLVariables = sPageURL.split('&'),
+        sParameterName,
+        i;
+    for (i = 0; i < sURLVariables.length; i++) {
+        sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] === sParam) {
+            return sParameterName[1] === undefined ? true : sParameterName[1];
+        }
+    }
+};
+param_id = getUrlParameter('id');
+let search_val = "";
+let query_builder = "";
+
+let tbl = $("#table-tickets-archive").DataTable({
+    dom: '<"toolbar">frtlip',
+    serverSide: true,
+    processing: true,
+    ajax: {
+        url: baseUrl("ticket/ticket/ticket_archive_masterfile"),
+        type: "post",
+        global: false,
+        dataType: "json",
+        data: function (d) {
+            d.csrf_token = _csrf_hash;
+            d.search['value'] = search_val;
+            d.query_builder = query_builder;
+        }
+    },
+    searching: false,
+    order: [[1, 'desc']],
+    columns: [
+        {data: null, defaultContent: '-', className: "d-flex justify-content-center"},
+        {data: "reference_no"},
+        {data: "category"},
+        {data: "sub_category"},
+        {data: "priority"},
+        {data: "status"},
+        {data: "requested_date"},
+        {data: "days_overdue"},
+        {data: "requestor"},
+        {data: "performed_by"},
+        {data: null, width: "10%", className: "text-center"},
+    ],
+    columnDefs: [
+        {
+            targets: [0],
+            defaultContent: "",
+            orderable: false,
+            render: function(data, type, row, meta){
+                return itemDatatableCheckbox(row.id);
+            }
+        },
+        {
+            targets: [5], width: "15%",
+        },
+        {
+            targets: [6],
+            orderable: false
+        },
+        {
+            data: null,
+            defaultContent: "",
+            targets: -1,
+            orderable: false,
+            render: function (data, type, row, meta) {
+                return itemDatatableActions(row.id, row.status);
+            },
+        }
+    ]
+});
+
+function formatCalendarDate(data) {
+    if (data == "0000-00-00 00:00:00") {
+        return "";
+    } else {
+        return moment(data).format("MM/DD/YYYY");
+    }
+
+}
+
+function itemDatatableCheckbox(id){
+    let _actionButton = "";
+        _actionButton += "<label class='m-checkbox'><input type='checkbox' class='form-control' value='"+id+"'><span></span></label>";
+        return _actionButton;
+}
+
+function itemDatatableActions($id, $status) {
+    let _actionButton = "";
+        _actionButton += " <button " +
+            "   type='button' " +
+            "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnRestore' " +
+            "   onclick='restoreA(" + $id + ")'" +
+            "   data-toggle='m-tooltip' data-placement='bottom' title='' data-delay='{\"show\": 200, \"hide\": 0}'" +
+            "   data-original-title='Restore Ticket'" +
+            "   data-skin='dark'>" +
+            "   <i class='la la-reply'></i>" +
+            "</button>"
+        return _actionButton;
+}
+
+function renderStatusHtml(data) {
+    switch (data) {
+        case "Inprogress":
+            return '<div class="m-badge m-badge--success m-badge--wide" role="alert"><strong>Inprogress</strong></div>';
+            break;
+        case "Confirmed":
+            return '<div class="m-badge m-badge--success m-badge--wide" role="alert"><strong>Resolved</strong></div>';
+            break;
+        case "Closed":
+            return '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>Completed</strong></div>';
+            break;
+        case "Open":
+            return '<div class="m-badge text-white m-badge--warning m-badge--wide" role="alert"><strong>Open</strong></div>';
+            break;
+        case "Onhold":
+            return '<div class="m-badge m-badge--warning m-badge--wide" role="alert"><strong>Onhold</strong></div>';
+            break;
+        default:
+            return '<div class="m-badge m-badge--default m-badge--wide" role="alert"><strong>Cancelled</strong></div>';
+            break;
+    }
+}
+
+//custom global search init
+$('#generalSearch').donetyping(function (callback) {
+    search_val = $(this).val();
+    tbl.ajax.reload();
+    console.log(search_val);
+});
+
+//refresh datatable 
+$("#reload_dtTbl").on("click", function () {
+    tbl.ajax.reload();
+});
+
+function restoreA($id) {
+    $("#frm-restore-ticket").attr("action", baseUrl("ticket/ticket/restore_ticket/" + $id));
+    $("#restore-ticket-confirmation-modal").modal("show");
+}
+
+function processRestoreCategory(formElement) {
+    const form = $(formElement);
+    const url = form.attr("action");
+    $.ajax({
+        url,
+        type: 'GET',
+        dataType: "json",
+        success: function (response) {
+            if (response) {
+                $("#restore-ticket-confirmation-modal").modal("hide");
+                toastr.success("Ticket restored successfully.", "Ticket Removed.", 5000);
+                tbl.ajax.reload();
+            } else {
+                toastr.error("An error occurred while restoring ticket.", "Error", 5000);
+            }
+        },
+    });
+}
+
+$("#delete_modal").hide();
+
+$("#ExportExcel").on("click", function (e) {
+    e.preventDefault();
+    tbl.button('.buttons-excel').trigger();
+});
+
+$("#ExportCSV").on("click", function (e) {
+    e.preventDefault();
+    tbl.button('.buttons-csv').trigger();
+});
+
+$("#ExportPDF").on("click", function (e) {
+    e.preventDefault();
+    tbl.button('.buttons-pdf').trigger();
+});
+
+$("select#category").select2({
+    width: "100%",
+    placeholder: "Select an option",
+    ajax: {
+        url: baseUrl("ticket/ticket/get_category_collection/") + 'category',
+        dataType: "json",
+        delay: 250,
+        processResults: function (data) {
+            return data;
+        }
+    }
+});
+
+$(document).ready(function () {
+    $("form").attr('autocomplete','off');
+    $('#query-builder').queryBuilder({
+        'bt-tooltip-errors': { delay: 100 },
+        filters: [
+            // { id: 'dept.description', label: 'Department', type: 'string', operators: ['contains', 'equal', 'not_equal'] },
+            {
+                id: 'a.created_dt',
+                label: 'Date Requested',
+                type: 'date',
+                plugin: 'datepicker',
+                plugin_config: { format: 'yyyy-mm-dd'},
+                operators: ['equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'between', 'not_between']
+            }, 
+            {
+                id: 'status',
+                label: 'Status',
+                type: 'string',
+                input: 'select',
+                plugin: 'select2',
+                plugin_config: {
+                    placeholder: 'Select. .',
+                    width: '200%',
+                    ajax: {
+                        url: baseUrl("ticket/ticket/get_category_collection/") + 'status',
+                        dataType: "json",
+                        delay: 250,
+                        processResults: function (data) {
+                            return data;
+                        }
+                    }
+                },
+                operators: ['equal', 'not_equal']
+            },
+            {
+                id: 'category',
+                label: 'Category',
+                type: 'string',
+                input: 'select',
+                plugin: 'select2',
+                plugin_config: {
+                    placeholder: 'Select. .',
+                    width: '200%',
+                    ajax: {
+                        url: baseUrl("ticket/ticket/get_category_collection/") + 'category',
+                        dataType: "json",
+                        delay: 250,
+                        processResults: function (data) {
+                            return data;
+                        }
+                    }
+                },
+                operators: ['equal', 'not_equal']
+            },
+            {
+                id: 'sub_category',
+                label: 'Sub Category',
+                type: 'string',
+                input: 'select',
+                plugin: 'select2',
+                plugin_config: {
+                    placeholder: 'Select. .',
+                    width: '200%',
+                    ajax: {
+                        url: baseUrl("ticket/ticket/get_category_collection/") + 'sub-category',
+                        dataType: "json",
+                        delay: 250,
+                        processResults: function (data) {
+                            return data;
+                        }
+                    }
+                },
+                operators: ['equal', 'not_equal']
+            },
+            { id: 'reference_no', label: 'Reference No', type: 'string', operators: ['contains','equal', 'not_equal'] },
+            { id: 'requestor', field: 'CONCAT(b.firstname, " ",b.lastname) ', label: 'Requested By', type: 'string', operators: ['contains'] },
+            { id: 'performed_by', field: 'CONCAT(c.firstname, " ", c.lastname) ', label: 'Performed By', type: 'string', operators: ['contains'] },
+            { id: 'Priority', label: 'Priority', type: 'string', operators: ['contains','equal', 'not_equal'] },
+            { id: 'message', label: 'Issue', type: 'string', operators: ['contains'] },
+        ]
+    });
+    $("#query-builder_group_0").addClass("col-12");
+});
+
+$("#select-all-archived-page")
+    .on("click", function (e) {
+        const c_boxes = $("#table-tickets-archive tbody").find("input[type='checkbox']");
+        const check = this.checked;
+        c_boxes.prop('checked', check);
+        enableButtons();
+    });
+
+$("#table-tickets-archive tbody").on("click", "input[type='checkbox']", function () {
+    const tbody = $("#table-tickets-archive tbody");
+    const c_boxesNotChecked = tbody.find("input[type='checkbox']").not(':checked');
+    $("#select-all-archived-page").prop('checked', (c_boxesNotChecked.length <= 0));
+    enableButtons();
+});
+
+function enableButtons() {
+    const ids = getCheckboxSelections();
+    $(".btn-restore-multiple").attr("disabled", !(!!ids));
+}
+
+function getCheckboxSelections() {
+    const checked = $("#table-tickets-archive tbody").find("input[type='checkbox']:checked");
+    let selected = [];
+    $.each(checked, function (key, el) {
+        selected.push($(el).val());
+    });
+
+    const selectedIds = selected.join(',');
+    return selectedIds;
+}
+
+function confirmRestoreSelections() {
+    const ids = getCheckboxSelections();
+    $("#frm-confirm-restore-multiple .multiple_id").val(ids);
+    $("#confirm-restore-multiple").modal("show");
+}
+
+function filterArchivedAssets() {
+    tbl.ajax.reload();
+}
+
+$("#frm-confirm-restore-multiple").on("submit", function (e) {
+    e.preventDefault();
+    const form = $(this);
+    const formData = new FormData(this);
+
+    $.ajax({
+        url: form.attr("action"),
+        type: "POST",
+        dataType: "JSON",
+        contentType: false,
+        processData: false,
+        data: formData,
+        success: function (response) {
+            console.log(response);
+            if (response.success) {
+                toastr.success(response.message, "Successfully restored.", 5000);
+                search_val = "";
+                $("#generalSearch").val(search_val);
+                filterArchivedAssets();
+                $("#confirm-restore-multiple").modal("hide");
+                form.resetForm();
+                enableButtons();
+                $(".btn-restore-multiple").attr("disabled", true);
+            } else {
+                toastr.error(response.message, "Error", 5000);
+            }
+        }
+    });
+});
+
+$('#query-builder-btn').on('click', function () {
+    var result = $('#query-builder').queryBuilder('getSQL');
+    console.log(result);
+    if (!$.isEmptyObject(result)) {
+        query_builder = result;
+        tbl.ajax.reload();
+        $("#modal-query-builder").modal("hide");
+    }
+});
+
+function clear_query_builder() {
+    $('#query-builder').queryBuilder('reset');
+    query_builder = null;
+    tbl.ajax.reload();
+}

@@ -1,0 +1,515 @@
+<style type="text/css">
+    .company-logo {
+        border-radius: 0 !important;
+        width: 80px;
+    }
+
+    tbody > tr > td[data-label] {
+        word-break: break-word;
+    }
+
+    @supports (-moz-appearance:none) { 
+        
+    }
+    .moz-text-center{
+      align: center;
+    }
+
+    #mobile-search{
+        display: none;
+    }
+
+    #to-print{
+        display: none
+    }
+
+    .search-with-dropdown-container .search-with-dropdown-suggestion-list, .search-with-mobile-dropdown-container .search-with-mobile-dropdown-suggestion-list{
+            z-index: 40;
+        }
+
+    @media screen and (max-width: 520px){
+        #mobile-search{
+            display: block !important;
+            margin-top: 1rem !important;
+        }
+        #web-search{
+            display: none !important;
+        }
+
+        .mobile-view{
+            position: relative;
+        }
+    }
+
+    table tbody tr.highlight td { font-weight: 600; }
+    table tbody tr.highlight { background-color: #F2F3F88F; }
+</style>
+<?php
+    $name = $this->core_layout->getDisplayName(
+        array("lastname" => $data->main->lastname,
+            "firstname" => $data->main->firstname,
+            "middlename" => $data->main->middlename,
+            "suffix" => $data->main->suffix));
+    $path = "uploads/files/images/employee_files/empcode_" . $data->main->id . "/" . $data->main->pic_filename;
+    $avatar = base_url($path);
+    if (!file_exists(realpath($path))) {
+        $avatar = base_url("assets/images/profile/no_image.jpg");
+    }
+    $timestamp = date('M-d-Y h:i:s a');
+?>
+
+<div class="m-content">
+    <div class="row">
+        <div class="col-lg-10 offset-lg-1 col-xl-3 offset-xl-0">
+            <div class="m-portlet">
+                <div class="m-portlet__body">
+                    <div id="left_pane-card" class="m-card-profile">
+                    <input type="hidden" id="employee_id" value="<?= $data->main->id?>">
+                        <div class="m-card-profile__title m--hide">Title Profile</div>
+                        <div class="m-card-profile__pic m-card-user__pic">
+                            <div class="m-card-profile__pic-wrapper position-relative">
+                                <img id="image--holder" src="<?= $avatar ?>" alt="<?= $data->main->firstname ?>">
+                            </div>
+                            <div class="m-card-profile__details">
+                                <span class="m-card-profile__name">
+                                    <?= $name["display_name_1"] ?>
+                                </span>
+                            </div>
+                            
+                            <div class="rating">
+                                <div id="performance-rating"></div>
+                                <div id="performance-rating-description" style="margin-top: 4px;"
+                                     class="text-muted m--font-boldest m--regular-font-size-sm2"></div>
+                                <div id="performance-rating-rehire" style="margin-top: 4px;"
+                                class="text-muted m--font-boldest m--regular-font-size-sm2"></div>
+                                <div id="performance-rating-remarks" style="margin-top: 4px;"
+                                class="text-muted m--font-boldest m--regular-font-size-sm2"></div>
+                            </div>
+
+                            <div class=" mt-3 moz-text-center">
+                                <!-- <div class="flex-shrink-1 flex-grow-0">
+                                    <img class="company-logo pt-1" src="<? /*= base_url($data->company_logo) */ ?>"
+                                         alt="">
+                                </div> -->
+                                <div class="d-flex flex-shrink-1 flex-grow-1 pl-4 flex-column">
+                                    <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                        <div class="col-xl-6">
+                                            <span>ID No.</span>
+                                        </div>
+                                        <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
+                                            <span class="m--font-bolder"><?= $data->main->idno ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                        <div class="col-xl-6">
+                                            <span>Biometric No.</span>
+                                        </div>
+                                        <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
+                                            <span class="m--font-bolder"><?= $data->main->biometricno ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                        <div class="col-xl-6">
+                                            <span>Position:</span>
+                                        </div>
+                                        <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
+                                            <span class="m--font-bolder"><?= str_replace('/','/ ',$data->main->position) ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                        <div class="col-xl-6">
+                                            <span>Status:</span>
+                                        </div>
+                                        <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
+                                            <span class="m--font-bolder"><?= $data->main->work_status ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                        <div class="col-xl-6">
+                                            <span>Employee Status:</span>
+                                        </div>
+                                        <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
+                                            <span class="m--font-bolder"><?= $data->main->employee_status ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                        <div class="col-xl-6">
+                                            <span>Date Started:</span>
+                                        </div>
+                                        <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
+                                            <span class="m--font-bolder">
+                                            <?php
+                                                $date_start = $data->main->date_start != '0000-00-00' ? new DateTime($data->main->date_start) : "";
+                                                echo !empty($date_start) ? $date_start->format("M d, Y") : "N/A";
+                                            ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                        <div class="col-xl-6">
+                                            <span>Date Ended:</span>
+                                        </div>
+                                        <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
+                                            <span class="m--font-bolder">
+                                                <?php
+                                                    //$date_end = $data->main->date_end != '0000-00-00' ? new DateTime($data->main->date_end) : "";
+                                                    $date_end = new DateTime($data->main->date_end);
+                                                    if($data->main->date_end == '0000-00-00' OR $data->main->date_end == NULL OR $data->main->employee_status == 'Active'){
+                                                        echo "N/A";
+                                                    }else{
+                                                        echo $date_end->format("M d, Y");
+                                                    }
+                                                    //echo !empty($date_end) || $date_end == "" ? $date_end->format("M d, Y") : "N/A";
+                                                ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                        <div class="col-xl-6">
+                                            <span>Company:</span>
+                                        </div>
+                                        <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
+                                            <span class="m--font-bolder"><?= $data->main->company_id ?></span>
+                                        </div>
+                                    </div>
+                                    <?php if ($data->main->position == 'owner'): ?>
+                                        <div>
+                                        </div>
+                                    <?php else: ?>
+                                        <?php if ($data->main->level == 'SUPERVISORY' || $data->main->level == 'MANAGERIAL' || $data->main->level == 'EXECUTIVE' ): ?>
+                                            <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                                <div class="col-xl-6">
+                                                    <span>Head/Supervisor:</span>
+                                                </div>
+                                                <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
+                                                    <span class="m--font-bolder">Charles Anthony M. Dumancas</span>
+                                                </div>
+                                            </div>
+                                        <?php else: ?>
+                                            <?php if (empty($data->supervisor)): ?>
+                                                <div></div>
+                                            <?php else: ?>
+                                                <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                                    <div class="col-xl-6">
+                                                        <span>Head/Supervisor</span>
+                                                    </div>
+                                                    <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
+                                                        <span class="m--font-bolder"><?=($data->supervisor) ?></span>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                        <ul class="m-nav m-nav--hover-bg m-portlet-fit--sides left-panel-actions">
+                            <li class="m-nav__separator m-nav__separator--fit"></li>
+                            <li class="m-nav__item">
+                                <a class="m-nav__link btnEdit"
+                                   href="<?= base_url("hris/masterfile/edit_employee_masterfile/" . $data->main->id) ?>">
+                                    <i class="m-nav__link-icon flaticon-edit"></i>
+                                    <span class="m-nav__link-text">Edit Employee Profile</span>
+                                </a>
+                            </li>
+                            <li class="m-nav__item">
+                                <a class="m-nav__link btnBack"
+                                   href="<?php echo base_url("hris/masterfile/employee"); ?>">
+                                    <i class="m-nav__link-icon fa fa-arrow-left"></i>
+                                    <span class="m-nav__link-text">Back to Employee List</span>
+                                </a>
+                            </li>
+                            <li class="m-nav__item">
+                                <?php
+                                    echo '<script>';
+                                    echo 'var info = ' . json_encode($data->main) . ';';
+                                    echo '</script>';
+                                ?>
+                                <a class="m-nav__link btnPrint"
+                                   href=""
+                                   onclick="event.preventDefault(); printEmployeeDataSheet(this, '<?= $avatar ?>', info, '<?= $data->user->display_name ?>', '<?= $timestamp ?>')">
+                                    <i class="m-nav__link-icon la la-print"></i>
+                                    <span class="m-nav__link-text">Print Data Sheet</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-9 offset-xl-0 col-lg-10 offset-lg-1">
+            <!--<div class="row mb-3 search-div">
+                <div class="col-xl-7 col-lg-7 col-md-7 col-sm-12"></div>
+                <div class="col-xl-5 col-lg-5 col-md-5 col-sm-12">
+                    <div class="form-group m-form__group mb-0" id="search">
+                        <div class="m-input-icon m-input-icon--left position-relative search-with-dropdown-container">
+                            <input class="form-control m-input form-control-lg search-with-dropdown"
+                                   placeholder="Looking for someone?"
+                                   style="height: auto; text-transform: none;">
+                            <span class="m-input-icon__icon m-input-icon__icon--left">
+                                <span>
+                                    <i class="fa fa-search"></i>
+                                </span>
+                            </span>
+
+                            <div class="position-absolute options-container invisible search-with-dropdown-suggestion-list">
+                                <ul class="employee-suggestion mb-0">
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>-->
+
+            <div class="m-portlet">
+                <div class="m-portlet__head pt-4 pb-4">
+                    <div class="m-portlet__head-caption">
+                        <div class="m-portlet__head-title">
+                            <span class="m-portlet__head-icon">
+                                <i class="flaticon-file-1"></i>
+                            </span>
+                            <h3 class="m-portlet__head-text">Employee Data Sheet</h3>
+                        </div>
+                        <div id="mobile-search" class="search-div row">
+
+                            <?php if(in_array(strtolower("HR_201_SEARCH"),$this->core_layout->getCurrentActions())): ?>
+                                <!-- for SEARCH privilege HEAD DEPARTMENT-->
+                            
+                            <div class="col-xl-8 col-lg-8 col-md-8 col-sm-12 offset-xl-4 offset-lg-4 offset-md-4 offset-sm-0 btnHr_201_search">
+                                    <div class="form-group m-form__group mb-0" id="search">
+                                        <div class="m-input-icon m-input-icon--left position-relative search-with-mobile-dropdown-container">
+                                            <input class="form-control m-input form-control-lg search-with-mobile-dropdown"
+                                                placeholder="Looking for someone?"
+                                                style="height: auto; text-transform: none; border-radius: 3em; padding-left: 3.5rem;">
+                                            <span class="m-input-icon__icon m-input-icon__icon--left"
+                                                style="width: 4em;">
+                                                <span>
+                                                    <i class="fa fa-search"></i>
+                                                </span>
+                                            </span>
+                                            <span class="m-input-icon__icon m-input-icon__icon--right" style="cursor: pointer;">
+                                                <span>
+                                                    <i class="fa fa-caret-down" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
+                                                    <ul class="dropdown-menu dropdown-menu-right" id="column-options" aria-labelledby="btnGroupDrop1" x-placement="bottom-end" style="position: absolute; transform: translate3d(-121px, 36px, 0px); top: 0px; left: 0px; will-change: transform;">
+                                                        <li class="dropdown-item">
+                                                            <label class="m-checkbox mb-0">
+                                                                <input type="checkbox" name="search_filter" oninput="checkFilter()" value="skills">
+                                                                SKILLS
+                                                                <span></span>
+                                                            </label>
+                                                        </li>
+                                                        <li class="dropdown-item">
+                                                            <label class="m-checkbox mb-0">
+                                                                <input type="checkbox" name="search_filter" oninput="checkFilter()" value="education">
+                                                                EDUCATION
+                                                                <span></span>
+                                                            </label>
+                                                        </li>
+                                                    </ul>
+                                                </span>
+                                            </span>
+
+                                            <div class="position-absolute options-container invisible search-with-mobile-dropdown-suggestion-list">
+                                                <ul class="employee-suggestion mb-0">
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                            </div>
+
+                            <?php endif;?>
+
+                        </div>
+                    </div>
+                    <div id="web-search" class="m-portlet__head-tools">
+                        <div class="search-div row">
+                            <!-- <div class="form-group form-group-lg m-form__group">
+                                <div class="m-inputinput-group m-input-input-group-lg m-input-group m-input-group--pill">
+                                    <span class="m-input-icon__icon m-input-icon__icon--left">
+                                        <span>
+                                            <i class="la la-search"></i>
+                                        </span>
+                                    </span>
+                                    <input type="text" class="form-control form-control-lg" aria-label="Text input with dropdown button">
+                                    <div class="input-group-btn">
+                                        <button type="button" class="btn btn-success dropdown-toggle btnNew" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            Action
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item" href="http://bcd.gccph.com/metronics/theme/default/dist/default/components/forms/controls/input-group.html#">
+                                                Action
+                                            </a>
+                                            <a class="dropdown-item" href="http://bcd.gccph.com/metronics/theme/default/dist/default/components/forms/controls/input-group.html#">
+                                                Another action
+                                            </a>
+                                            <a class="dropdown-item" href="http://bcd.gccph.com/metronics/theme/default/dist/default/components/forms/controls/input-group.html#">
+                                                Something else here
+                                            </a>
+                                            <div role="separator" class="dropdown-divider"></div>
+                                            <a class="dropdown-item" href="http://bcd.gccph.com/metronics/theme/default/dist/default/components/forms/controls/input-group.html#">
+                                                Separated link
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> -->
+
+                            <?php if(in_array(strtolower("HR_201_SEARCH"),$this->core_layout->getCurrentActions())): ?>
+                                <!-- for SEARCH privilege HEAD DEPARTMENT-->
+                            
+                            <div class="col-xl-8 col-lg-8 col-md-8 col-sm-12 offset-xl-4 offset-lg-4 offset-md-4 offset-sm-0 btnHr_201_search">
+                                    <div class="form-group m-form__group mb-0" id="search">
+                                        <div class="m-input-icon m-input-icon--left position-relative search-with-dropdown-container">
+                                            <input class="form-control m-input form-control-lg search-with-dropdown"
+                                                placeholder="Looking for someone?"
+                                                style="height: auto; text-transform: none; border-radius: 3em; padding-left: 3.5rem;">
+                                            <span class="m-input-icon__icon m-input-icon__icon--left"
+                                                style="width: 4em;">
+                                                <span>
+                                                    <i class="fa fa-search"></i>
+                                                </span>
+                                            </span>
+                                            <span class="m-input-icon__icon m-input-icon__icon--right" style="cursor: pointer;">
+                                                <span>
+                                                    <i class="fa fa-caret-down" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
+                                                    <ul class="dropdown-menu dropdown-menu-right" id="column-options" aria-labelledby="btnGroupDrop1" x-placement="bottom-end" style="position: absolute; transform: translate3d(-121px, 36px, 0px); top: 0px; left: 0px; will-change: transform;">
+                                                        <li class="dropdown-item">
+                                                            <label class="m-checkbox mb-0">
+                                                                <input type="checkbox" name="search_filter" oninput="checkFilter()" value="skills">
+                                                                SKILLS
+                                                                <span></span>
+                                                            </label>
+                                                        </li>
+                                                        <li class="dropdown-item">
+                                                            <label class="m-checkbox mb-0">
+                                                                <input type="checkbox" name="search_filter" oninput="checkFilter()" value="education">
+                                                                EDUCATION
+                                                                <span></span>
+                                                            </label>
+                                                        </li>
+                                                    </ul>
+                                                </span>
+                                            </span>
+
+                                            <div class="position-absolute options-container invisible search-with-dropdown-suggestion-list">
+                                                <ul class="employee-suggestion mb-0">
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                            </div>
+
+                            <?php endif;?>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="m-portlet__body data-sheet">
+
+                    <!-- for 201 printing -->
+                    <div class="m-portlet__section web-view" id="to-print">
+                        <?php $this->load->view("hris/masterfile/employee/sections/personal_information", $data, FALSE); ?>
+                    </div>
+                    <div class="m-portlet__section web-view" id="to-print">
+                        <?php $this->load->view("hris/masterfile/employee/sections/employment_data", $data, FALSE); ?>
+                    </div>
+                    <!-- for 201 printing -->
+
+                    <div id="hide-in-print" class="m-portlet__section web-view">
+                        <?php $this->load->view("hris/masterfile/employee/sections/employee_data_web", $data, FALSE); ?>
+                    </div>
+
+                    <div class="m-portlet__section mobile-view" style="display: none">
+                        <?php $this->load->view("hris/masterfile/employee/sections/employee_data", $data, FALSE); ?>
+                    </div>
+                </div>
+            </div>
+            
+            <?php if(isset($profile_payroll_sheet) && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0)): ?>
+            <div class="m-portlet">
+                <div class="m-portlet__head pt-4 pb-4">
+                    <div class="m-portlet__head-caption">
+                        <div class="m-portlet__head-title">
+                            <span class="m-portlet__head-icon">
+                                <i class="flaticon-file-1"></i>
+                            </span>
+                            <h3 class="m-portlet__head-text">Payroll Data Sheet</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="m-portlet__body">
+                <div class="row">
+                        <div class="col-12 col-md-12 col-lg-12 col-xl-12">
+                            <div class="table-responsive-sm">
+                                <table class="table table-bordered" id="table-payroll_sheet-payslip"
+                                    width="100%">
+                                    <thead>
+                                    <tr>
+                                        <th>Pay Date</th>
+                                        <th>Coverage Date</th>
+                                        <th class="text-right">Gross Pay</th>
+                                        <th class="text-right">Net Pay</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if(isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0): ?>
+                                            <?php foreach ($payroll_sheet_data as $key => $value): ?>
+                                                <tr class="<?php echo $value->id == $payroll_sheet_max_id ? "highlight":"" ?>">
+                                                    <td>
+                                                        <p class="mb-0">
+                                                            <?php if($value->is_bonus == 0): ?>
+                                                                <a href="javascript:void(0);" style="text-decoration:none;" onClick="getPayrollSheetData(<?= $value->id; ?>)">
+                                                                    <i class="la la-file-text"></i>
+                                                                </a>
+                                                            <?php else: ?>
+                                                                <i class="la la-file"></i>
+                                                            <?php endif; ?>
+                                                            <span><?php echo date("F d, Y", strtotime($value->pay_date)); ?></span>
+                                                            <?php if($value->bonus_code): ?>
+                                                                <span class="m-badge m-badge--danger m-badge--wide ml-2 m--regular-font-size-sm5"><?php echo $value->bonus_code; ?></span>
+                                                            <?php endif; ?>
+                                                            <?php if($value->id == $payroll_sheet_max_id): ?>
+                                                                <span class="m-badge m-badge--success m-badge--wide ml-2 m--regular-font-size-sm5">CURRENT</span>
+                                                                <?php endif; ?>
+                                                        </p>
+                                                    </td>
+                                                    <td><?php echo date("F d, Y", strtotime($value->date_start)) ." ~ ". date("F d, Y", strtotime($value->date_end)); ?></td>
+                                                    <td class="text-right"><?php echo number_format($value->gross_pay, 2, ".", ","); ?></td>
+                                                    <td class="text-right"><?php echo number_format($value->net_pay, 2, ".", ","); ?></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                                <?php $this->load->view("core/profile/modals/payroll_payslip"); ?>
+                                <script>
+                                    const viewPayrollPayslipModal = $("#view-payroll-payslip-modal");
+
+                                    var vmPayslipContent = new Vue({
+                                        el: "#temp-payslip_content",
+                                        data: { row: {} },
+                                    });
+
+                                    $("#table-payroll_sheet-payslip").DataTable({ ordering: false });
+                                    $("#table-payroll_sheet-payslip_filter input[type='search']").removeClass("form-control-sm");
+                                    const getPayrollSheetData = function(id){
+                                        if(id){
+                                            $.get(siteUrl('core/profile/get_payroll_sheet_data'), { id: id }, "json")
+                                            .done(function(data){
+                                                const json = JSON.parse(data);
+                                                let tempRow = json.response ? Object.assign({}, json.data) : {};
+                                                vmPayslipContent.row = Object.assign({}, tempRow);
+                                                if(json.response){ viewPayrollPayslipModal.modal("show"); }
+                                            });
+                                        }
+                                    }
+                                </script>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>

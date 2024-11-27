@@ -1,0 +1,6 @@
+{
+    "name": "jp02/androidapp",
+    "require": {
+        "phpmailer/phpmailer": "^6.5"
+    }
+}

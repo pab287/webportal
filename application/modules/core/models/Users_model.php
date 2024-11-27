@@ -1,0 +1,206 @@
+<?php defined('BASEPATH') OR exit('No direct script access allowed');
+class Users_model extends CI_Model{
+	protected $usersTable = "tblusers";
+	protected $employeesTable = "tblemployees";
+	protected $rolesTable = "user_role";
+	function __construct(){
+		parent::__construct();
+		$this->load->model("access_control_model", "acl_model");
+		$this->load->model("datatable_model","dt_model");
+	}
+	
+	function getUserData(){
+		$post = $this->input->post();
+		$resultset = array();
+		
+		if(isset($post["id"]) && $post["id"]){
+			$resultset["post"] = $post;
+			$select = "users.id, employees.lastname, employees.firstname, employees.middlename, employees.biometricno, employees.employee_status, users.role_id";
+			$this->db->select($select);
+			$this->db->from("{$this->usersTable} as users");
+			$this->db->join("{$this->employeesTable} as employees", "employees.id=users.emp_id");
+			
+			$where = array();
+			$where["users.id"] = $post["id"];
+			$this->db->where($where);
+			$query = $this->db->get();
+			
+			if($query->num_rows() > 0){
+				$row = $query->row_array();
+				
+				$queryRoles = $this->db->get_where($this->rolesTable, array("status"=>1));
+				$roles = ($queryRoles->num_rows() > 0)? $queryRoles->result_array() : array();
+				
+				$arrData = array();
+				$arrData["row"] = $row;
+				$arrData["roles"] = $roles;
+				
+				$html = $this->load->view("core/users/modal_content/user_content", $arrData, true);
+				$resultset["response"] = true;
+				$resultset["html"] = $html;
+				$resultset["data"] = $row;
+			}else{
+				$resultset["toastr_msg"] = "error getting data";
+				$resultset["response"] = false;
+			}
+		}else{
+			$resultset["toastr_msg"] = "error no data";
+			$resultset["response"] = false;
+		}
+		
+		return $resultset;
+	}
+	
+	function assignUserRole(){
+		$post = $this->input->post();
+		$resultset = array();
+		if(isset($post["id"]) && $post["id"]){
+			$where = array();
+			$where["id"] = $post["id"];
+			
+			$data = array();
+			$data["role_id"] = $post["role_id"];
+			
+			$tempData = $this->core_layout->getUserData($post["id"]);
+			$tempName = (object) $tempData;
+			$tempName = (isset($tempName->display_name_1) && $tempName->display_name_1)? $tempName->display_name_1: "No assigned name";
+			
+			$update = $this->db->update($this->usersTable, $data, $where);
+			if($update){
+				$resultset["response"] = true;
+				$resultset["message"] = "User account role of `{$tempName}` has been updated.";
+			}else{
+				$resultset["response"] = false;
+				$resultset["message"] = "Failed to update user account role of `{$tempName}`!";
+			}
+		}else{
+			$resultset["response"] = false;			
+			$resultset["message"] = "Error, nothing to update!";
+		}
+		
+		$tempStatus = ($resultset["response"])? "success": "error";
+		$this->core_layout->logNotification($resultset["message"], $tempStatus, "users");
+		return $resultset;
+	}
+	function getUserList(){
+		$post = $this->input->post();
+		if($post){
+			$columns = array("users.id", "employees.biometricno", "employees.lastname", "employees.firstname", "employees.middlename", "users.email", "employees.employee_status", "roles.description");
+			
+			$dir = $post["order"][0]["dir"];
+			$order = $columns[$post["order"][0]["column"]];
+			$draw = (isset($post['draw']) && $post['draw'])? $post['draw']: 0;
+			$start = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+			$limit = (isset($post["length"]) && $post["length"])? $post["length"]: 0;
+			$searchValue = (isset($post["search"]["value"]) && $post["search"]["value"])? $post["search"]["value"]: "";
+			$usersTable = $this->dt_model->dataTable();
+			$usersTable->setTable($this->usersTable);
+			$usersTable->setTableAlias("users");
+			
+			$usersTable->setParameterFields($columns);
+			
+			$joinTable = array();
+			$joinTable["table"][$this->employeesTable] = "employees";
+			$joinTable["table"][$this->rolesTable] = "roles";
+			$joinTable["fields"][] = "employees.id=users.emp_id";
+			$joinTable["fields"][] = "roles.id=users.role_id";
+			$joinTable["field_loc"][] = "";
+			$joinTable["field_loc"][] = "LEFT";
+			
+			$usersTable->setJoinTable($joinTable);
+			$usersTable->setWhereInField("users.id");
+			
+			$parameters = array();
+			$parameters["users.is_suspended"] = 0;
+			
+			$usersTable->setWhereParameters($parameters);
+			$totalData = $usersTable->dtAllPostsCount();
+			$totalFiltered = $totalData;
+			
+			/*** no pagination infinite scroll ***/
+			$limit = 0;
+			/*** no pagination infinite scroll ***/
+			
+			if(empty($searchValue)){            
+				$posts = $usersTable->dtAllPosts($limit, $start, $order, $dir);
+			}else {
+				$posts = $usersTable->dtSearch($limit, $start, $searchValue, $order, $dir);
+				$totalFiltered = $usersTable->dtPostSearchCount($searchValue);
+			}
+			
+			$data = array();
+			if(!empty($posts)){
+				foreach ($posts as $pst){
+					$biometricNo = $pst->biometricno;
+					$email = $pst->email;
+					$nestedData['id'] = $pst->id;
+					$nestedData['description'] = $pst->description;
+					$nestedData['lastname'] = $pst->lastname;
+					$nestedData['firstname'] = $pst->firstname;
+					$nestedData['middlename'] = $pst->middlename;
+					$nestedData['biometricno'] = $biometricNo;
+					$nestedData['email'] = $email;
+					$nestedData['employee_status'] = $pst->employee_status;
+					$data[] = $nestedData;
+				}
+			}
+			$json_data = array(
+                    "draw" => intval($draw),  
+                    "recordsTotal" => intval($totalData),  
+                    "recordsFiltered" => intval($totalFiltered), 
+                    "data"            => $data,   
+                    );
+            
+			return $json_data;
+		}else{
+			return array(
+				"draw"=>1,
+				"recordsTotal"=>0,
+				"recordsFiltered"=>0,
+				"data"=>array(),
+				);
+		}
+	}
+	function getUserList2(){
+		$this->db->from("{$this->usersTable} as users");
+		$this->db->join("{$this->employeesTable} as employee", "employee.id = users.emp_id");
+		$this->db->where(array("users.is_suspended"=>0, "employee.employee_status"=>"Active"));
+		$query = $this->db->get();
+		if($query->num_rows() > 0){
+			return $query->result_array();
+		}else{
+			return false;
+		}
+	}
+	// borrowing prevelage notification
+	public function borrow_notif(){
+		$session = $this->session->userdata();
+		$employee_id = $session["logged_in"]["emp_id"];
+		$this->db->select("module_resource");
+		$this->db->where("role_id", $employee_id);
+		$data = $this->db->get("user_role_acl");
+		$borrow_user = $data->row_array();
+		if($borrow_user != null){
+			if(in_array($employee_id, unserialize($borrow_user['module_resource']))){
+				return true;
+			}else{
+				return false;
+			}
+		}else{
+			return false;
+		}
+	}
+
+	function get_remittance_no(){
+		echo "<pre>";
+		$emp = $this->db->get($this->employeesTable);
+		if($emp->num_rows() > 0){
+			foreach ($emp->result() as $key => $value) {
+				$temp = preg_replace("/[^0-9]/", "", $value->sss_no);
+				$tempx = intval($temp);
+				var_dump($tempx);
+				var_dump($temp."~~~".$tempx);
+			}
+		}
+	}
+}
