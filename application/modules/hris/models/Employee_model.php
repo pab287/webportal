@@ -4333,7 +4333,7 @@
             $this->db->where("biometricno", $emp_bio);
             $data = $this->db->get($this->tblPersonnel);
             $personel_id = $data->row_array();
-            return $personel_id['id'];
+            return isset($personel_id['id']) && $personel_id['id'] ? $personel_id['id']: 0;
         }
 
         private function getEmployeeExperiencesForPDS($employee_id) {
