@@ -3,6 +3,7 @@ var isAdded = false;
 var borrower = $("#select2_borrower").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
+  minimumInputLength: 3,
   ajax: {
     url: baseUrl("eforms/borrowing/get_borrower_collection"),
     delay: 250,
@@ -16,6 +17,7 @@ var borrower = $("#select2_borrower").select2({
 var asset = $("#select2_asset").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
+  minimumInputLength: 3,
   ajax: {
     url: baseUrl("eforms/borrowing/get_asset_collection"),
     delay: 250,
@@ -29,6 +31,7 @@ var asset = $("#select2_asset").select2({
 var vehicle = $("#select2_vehicle").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
+  minimumInputLength: 3,
   ajax: {
     url: baseUrl("eforms/borrowing/get_vehicle_collection"),
     delay: 250,

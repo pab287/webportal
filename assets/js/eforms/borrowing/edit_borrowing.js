@@ -52,6 +52,7 @@ var vmTab1 = new Vue({
 $("#select2_borrower").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
+  minimumInputLength: 3,
   ajax: {
     url: baseUrl("eforms/borrowing/get_borrower_collection"),
     global: false,
@@ -65,6 +66,7 @@ $("#select2_borrower").select2({
 $("#select2_asset").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
+  minimumInputLength: 3,
   ajax: {
     url: baseUrl("eforms/borrowing/get_asset_collection"),
     global: false,
@@ -77,6 +79,7 @@ $("#select2_asset").select2({
 $("#select2_vehicle").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
+  minimumInputLength: 3,
   ajax: {
     url: baseUrl("eforms/borrowing/get_vehicle_collection"),
     global: false,

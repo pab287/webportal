@@ -136,7 +136,8 @@
                 <div class="modal-body form">
                   <form action="#" id="form_return" class="form-horizontal">
                     <input type="hidden" value="" name="id_return"/> 
-                   <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                	<input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+					<input type="hidden" name="is_overdue" value="1">
 				   <div class="form-group">
                     <label class="control-label col-md-8">Date Returned *</label>
                     <div class="col-md-12">

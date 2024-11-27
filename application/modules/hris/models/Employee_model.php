@@ -319,7 +319,7 @@
         function getEmployeeDatatableRequest($employee_status) {
             $resultSet = array();
 
-	    $emp_id = $this->loggedinData["emp_id"];
+            $emp_id = $this->loggedinData["emp_id"];
             $this->db->select('dept.*');
             $this->db->where('head_id', $emp_id);
             $query = $this->db->get('gcchris.tbldepartments dept');
@@ -411,8 +411,8 @@
             $query = $this->db->get("gccmaster.tblemployees emp");
             $employees = $query->result();
             $sql = $this->db->last_query();
-	    
-	    $data = array();
+
+            $data = array();
             foreach ($employees as $pst) {
                 $tempPost = (array)$pst;
                 $fullname = $this->core_layout->getDisplayName($tempPost);
@@ -4333,7 +4333,7 @@
             $this->db->where("biometricno", $emp_bio);
             $data = $this->db->get($this->tblPersonnel);
             $personel_id = $data->row_array();
-            return isset($personel_id['id']) && $personel_id['id'] ? $personel_id['id']: 0;
+            return $personel_id['id'];
         }
 
         private function getEmployeeExperiencesForPDS($employee_id) {

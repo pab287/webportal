@@ -733,14 +733,15 @@ class Billing_m extends CI_Model {
         $resultarray = array();
 
         if (isset($get['q'])) {
-            $query = $this->db->query("SELECT id, firstname, lastname, middlename, accountno, meterno, meterno_raw
+            $query = $this->db->query("SELECT id, meterno, meterno_raw, CONCAT(accountno, ' | ', firstname, ' ', middlename, ' ', lastname) as customer
             FROM hydra_billing.accounts
             WHERE status='1' AND is_archive='0' AND (firstname LIKE '%{$get['q']}%' OR lastname LIKE '%{$get['q']}%' OR meterno LIKE '%{$get['q']}%' OR accountno LIKE '%{$get['q']}%') ORDER BY accountno ASC");
-        }else{
-            $query = $this->db->query("SELECT id, firstname, lastname, middlename, accountno, meterno, meterno_raw
-            FROM hydra_billing.accounts
-            WHERE status='1' AND is_archive='0' ORDER BY accountno ASC");
-        }
+        } 
+        // else{
+        //     $query = $this->db->query("SELECT id, firstname, lastname, middlename, accountno, meterno, meterno_raw
+        //     FROM hydra_billing.accounts
+        //     WHERE status='1' AND is_archive='0' ORDER BY accountno ASC");
+        // }
 
         if ($query->num_rows() > 0) {
             foreach ($query->result_array() as $_query) {
@@ -748,7 +749,8 @@ class Billing_m extends CI_Model {
 
                 if($this->checkReadingDuplicate($_query["id"], $_query["meterno_raw"]) == 0){
                     $data["id"] = $_query["id"];
-                    $data["text"] = $_query["accountno"] ." | ". $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
+                    // $data["text"] = $_query["accountno"] ." | ". $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
+                    $data["text"] = $_query["customer"];
                     $resultarray[] = $data;
                 }
             }
@@ -5008,7 +5010,7 @@ class Billing_m extends CI_Model {
         $array["account_id"] = $post['account_id'];
         $array["new_meterno"] = $post['new_meterno'];
         $array["old_meterno"] = $post['old_meterno'];
-        $array["last_reading"] = isset($post['previous_reading']) && $post['previous_reading'] ? $post['previous_reading'] : 0;
+        $array["last_reading"] = $post['previous_reading'];
         $array["edit_by"] = $this->getUserdata()['emp_id'];
         $array["created_date"] = date("Y-m-d H:i:s");
         

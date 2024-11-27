@@ -899,17 +899,21 @@ class Borrowing extends MY_Controller
         }
 
         $data = array(
-            'date_returned' => $this->input->post('date_returned'),
+            'date_returned' => date('Y-m-d H:i:s', strtotime($this->input->post('date_returned'))),
             'return_remarks' => $this->input->post('return_remarks'),
+            'is_overdue' => !empty($this->input->post('is_overdue')) && $this->input->post('is_overdue') ? $this->input->post('is_overdue') : 0,
             'is_returned' => '1',
         );
 
+        $is_overdue = !empty($this->input->post('is_overdue')) && $this->input->post('is_overdue') ? "overdue" : "";
+
         if($this->borrowing->update_content(array('id' => $this->input->post('id_return')), $data)){
-            $message = "Borrowed Borrowing - Return {$this->borrowing->getAssetCodeBorrowingBody($this->input->post('id_return'))}.";
+
+            $message = "Borrowed Borrowing - Return $is_overdue {$this->borrowing->getAssetCodeBorrowingBody($this->input->post('id_return'))}.";
             $type = "success";
             $table = "user";
         }else{
-            $message = "Borrowed Borrowing - Failed return {$this->borrowing->getAssetCodeBorrowingBody($this->input->post('id_return'))}.";
+            $message = "Borrowed Borrowing - Failed return $is_overdue {$this->borrowing->getAssetCodeBorrowingBody($this->input->post('id_return'))}.";
             $type = "error";
             $table = "system";
         }

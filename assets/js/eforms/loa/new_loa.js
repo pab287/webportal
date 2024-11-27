@@ -41,6 +41,7 @@ $.ajax({
 		sel.select2({
 			placeholder: 'SELECT AN OPTION',
 			width: '100%',
+			minimumInputLength: 3,
 			ajax: {
 				url: baseUrl("eforms/Loa/get_employee_collection"),
 				dataType: "json",

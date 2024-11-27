@@ -454,19 +454,14 @@ function edit_template($id){
                 $('#edit_email_to').append(edit_email_to);  
             }
             $("#edit_cc_to").empty();
-            if(typeof data.cc_to != 'undefined' && data.cc_to != null){
-                for (i = 0; i < data.cc_to.length; i++) {
-                    var edit_cc_to = new Option(data.cc_to[i], data.cc_to[i], true, true);
-                    $('#edit_cc_to').append(edit_cc_to);
-                }    
+            for (i = 0; i < data.cc_to.length; i++) {
+                var edit_cc_to = new Option(data.cc_to[i], data.cc_to[i], true, true);
+                $('#edit_cc_to').append(edit_cc_to);
             }
-            
             $("#edit_bcc_to").empty();
-            if(typeof data.bcc_to != 'undefined' && data.bcc_to != null){
-                for (i = 0; i < data.bcc_to.length; i++) {
-                    var edit_bcc_to = new Option(data.bcc_to[i], data.bcc_to[i], true, true);
-                    $('#edit_bcc_to').append(edit_bcc_to);
-                }
+            for (i = 0; i < data.bcc_to.length; i++) {
+                var edit_bcc_to = new Option(data.bcc_to[i], data.bcc_to[i], true, true);
+                $('#edit_bcc_to').append(edit_bcc_to);
             }
            
         }

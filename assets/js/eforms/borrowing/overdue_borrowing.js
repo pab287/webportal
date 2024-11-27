@@ -127,7 +127,7 @@ $('#date_returned').datetimepicker({
     todayBtn: true,
     maxView: 4,
     minView: 2,
-    format: 'mm/dd/yyyy',
+    format: 'mm/dd/yyyy hh:ii:ss',
 });
 
 function open_return($id) {

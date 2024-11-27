@@ -183,6 +183,7 @@ var vmTab1 = new Vue({
     var requested_by = $("#select2_requested").select2({
       placeholder: 'SELECT AN OPTION',
       width: '100%',
+      minimumInputLength: 3,
       ajax: {
         url: baseUrl("eforms/transmittal/get_request_collection"),
         global: false,
@@ -196,6 +197,7 @@ var vmTab1 = new Vue({
     var deliver = $("#select2_deliver").select2({
       placeholder: 'SELECT AN OPTION',
       width: '100%',
+      minimumInputLength: 3,
       ajax: {
         url: baseUrl("eforms/transmittal/get_request_collection"),
         global: false,

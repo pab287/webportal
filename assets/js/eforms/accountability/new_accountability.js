@@ -16,6 +16,7 @@ param_id = getUrlParameter('id');
 $("#issued_to").select2({
     placeholder: 'Select. .',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
         url: baseUrl("eforms/accountability/issued_to_lookup"),
         dataType: "json",
@@ -43,6 +44,7 @@ $("#issued_to").on("select2:select", function () {
 $("#contractor").select2({
     placeholder: 'Select. .',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
         url: baseUrl("eforms/accountability/contractor_lookup"),
         dataType: "json",

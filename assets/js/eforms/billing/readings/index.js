@@ -305,6 +305,7 @@ $("#select2_account").select2({
   placeholder: 'SELECT AN OPTION',
   dropdownParent: $("#m_newReading"),
   width: '100%',
+  minimumInputLength: 3,
   ajax: {
     url: baseUrl("eforms/billing/get_account_select_reading"),
     global: false,

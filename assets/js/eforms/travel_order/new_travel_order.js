@@ -4,6 +4,7 @@ const initVehicleSelect2 = function(){
   return $("#select2_vehicle").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
       url: baseUrl("eforms/Travel_order/get_vehicle_collection"),
       dataType: "json",
@@ -20,6 +21,7 @@ const initDriverSelect2 = function(){
   return $("#driver").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
       url: baseUrl("eforms/Travel_order/driver"),
       dataType: "json",
@@ -97,6 +99,7 @@ driver = initDriverSelect2();
 var emp = $("#select2_emp").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
+  minimumInputLength: 3,
   dropdownParent: $("#modal_form_personnel"),
   ajax: {
     url: baseUrl("eforms/Travel_order/get_request_collection"),
@@ -112,6 +115,7 @@ var emp = $("#select2_emp").select2({
 var req = $("#select2_req").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
+  minimumInputLength: 3,
   dropdownParent: $("#modal_form_destination"),
   ajax: {
     url: baseUrl("eforms/Travel_order/get_request_collection"),

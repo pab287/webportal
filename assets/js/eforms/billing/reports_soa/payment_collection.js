@@ -3,6 +3,7 @@ let tempFormat;
 $("#employee").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
+  minimumInputLength: 3,
   ajax: {
     url: baseUrl("eforms/billing/get_employee_collector"),
     global: false,

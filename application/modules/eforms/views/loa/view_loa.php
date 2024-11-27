@@ -505,8 +505,7 @@
           </div>
             <div class="modal-footer">
               
-              <!-- <button type="submit" id="btnSave" onclick="disapprove()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button> -->
-              <button type="submit" id="btnSave" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
+              <button type="submit" id="btnSave" onclick="disapprove()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
               <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon btnClose" style="color: #FFFFFF;" data-dismiss="modal">Close</button>
             </div>
           </form>
@@ -538,8 +537,7 @@
             </div>
           <div class="modal-footer">
               
-            <!-- <button type="submit" id="btnSave" onclick="cancel()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button> -->
-            <button type="submit" id="btnSave" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
+            <button type="submit" id="btnSave" onclick="cancel()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
               <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon  btnClose" style="color: #FFFFFF;" data-dismiss="modal">Close</button>
             </div>
             </form>
@@ -580,8 +578,7 @@
                     </div>
                    <div class="modal-footer">
                       
-                     <!-- <button type="submit" id="btnSave" onclick="note()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button> -->
-                     <button type="submit" id="btnSave" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
+                     <button type="submit" id="btnSave" onclick="note()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
                       <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon  btnClose" data-dismiss="modal">Close</button>
                     </div>
                     </form>

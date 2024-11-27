@@ -3241,10 +3241,7 @@ class Accountability_m extends CI_Model {
         $this->db->from('gcceforms.accountability_body a');
         $this->db->where('a.accountability_id', $id);
         $i = $sortOrder[0]['column'];
-
-        if($sortBy != (int)$sortOrder){
-            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
-        }
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
         $query = $this->db->get();
         $asset_id = $query->row_array();
 

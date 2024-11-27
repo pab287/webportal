@@ -267,32 +267,6 @@ window.location.replace(baseUrl("eforms/loa/edit_loa?id=")+param_id);
 function print(){
 window.open(baseUrl("eforms/loa/print_loa/")+param_id);
 }
-
-$.validate({
-  form: '#form_cancel',
-  lang: 'en',
-  onSuccess: function(form){
-    $.ajax({
-      url : baseUrl("eforms/loa/cancel_loa/") + param_id,
-       type: "POST",
-       dataType: "JSON",
-       data: { csrf_token: _csrf_hash, cancelled_remarks : $('[name="cancelled_remarks"]').val() },
-       success: function(data)
-       {
-         toastr.success("Loa Canceled Successfully");
-         // location.reload();
-         window.location.href = siteUrl('eforms/loa/view_loa?id=' + param_id); 
-         // window.location.replace(baseUrl("eforms/loa"));
-       },
-       error: function (jqXHR, textStatus, errorThrown)
-       {
-         alert('Error: "ajax_approve"');
-       }
-     });
-
-     return false;
-  }
-});
 function open_cancel() 
               {
              
@@ -350,32 +324,6 @@ function open_dis(){
   $('#modal_form_disapprove').modal('show'); // show bootstrap modal
   $('.modal-title').text('Disapprove Leave of Absence'); // Set Title to Bootstrap modal title
 }
-
-$.validate({
-  form : '#form_disapprove',
-  lang: 'en',
-  onSuccess : function(form) {
-    // ajax delete data to database
-      $.ajax({
-        url : baseUrl("eforms/loa/disapprove_loa/") + param_id,
-        type: "POST",
-        dataType: "JSON",
-        data: { csrf_token: _csrf_hash, disapproved_remarks : $('[name="disapproved_remarks"]').val() },
-        success: function(data)
-        {
-          toastr.success("Loa Disapproved Successfully");
-          // location.reload();
-          window.location.href = siteUrl('eforms/loa/view_loa?id=' + param_id);
-        // window.location.replace(baseUrl("eforms/loa"));
-          
-        },
-        error: function (jqXHR, textStatus, errorThrown)
-        {
-            alert('Error adding / update data');
-        }
-    });
-  },
-});   
 
 function disapprove(){
   $.validate({
@@ -523,33 +471,6 @@ function open_note(){
   $('#modal_form_noted').modal('show'); // show bootstrap modal
   $('.modal-title').text('HR Note'); // Set Title to Bootstrap modal title
 }
-
-$.validate({
-  form : '#form_noted',
-  lang: 'en',
-  onSuccess : function(form) {
-
-    $.ajax({
-      url : baseUrl("eforms/loa/note_loa/") + param_id,
-      type: "POST",
-      dataType: "JSON",
-      data: { csrf_token: _csrf_hash, hr_noted_remarks : $('[name="hr_noted_remarks"]').val(),hr_noted_pay : $('[name="hr_noted_pay"]').val() },
-      success: function(data)
-      {
-        toastr.success("Loa Noted Successfully");
-        // location.reload();
-        window.location.href = siteUrl('eforms/loa/view_loa?id=' + param_id);
-        // window.location.replace(baseUrl("eforms/loa"));
-      },
-      error: function (jqXHR, textStatus, errorThrown)
-      {
-        alert('Error: "ajax_approve"');
-      }
-    });
-    
-    return false;
-  }
-})
 
 function note(){
   $.ajax({

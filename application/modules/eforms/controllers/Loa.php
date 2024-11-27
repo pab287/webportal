@@ -272,7 +272,7 @@
             echo json_encode(array("status" => TRUE, "test" => $to, "last_id" => $last_id));
         }
 
-        public function update_loa($id = NULL)
+        public function update_loa($id)
         {
             $user_id = $this->core_layout->getCurrentEmployeeId();
             date_default_timezone_set('Asia/Singapore');
@@ -330,7 +330,7 @@
             echo json_encode(array("status" => TRUE));
         }
 
-        public function ajax_loa_details($id = NULL)
+        public function ajax_loa_details($id)
         {
             $temp = strtotime("-1 year", time());
             $check = date("Y-m-d", $temp);

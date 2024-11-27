@@ -87,7 +87,7 @@ let tblAllComponentList = $("#all-component-list")
         columns: [
             {
                 data: "image",
-                width: "7%",
+                width: "80px",
                 orderable: false,
                 render: function (data, type, row) {
                     if (data) {
@@ -100,11 +100,11 @@ let tblAllComponentList = $("#all-component-list")
                             '   </div>';
                     }
                 },
-                // className: "d-flex justify-content-center"
+                className: "d-flex justify-content-center"
             },
             { data: "assetacode", width: "13%" },
             {
-                data: "description", width: '30%',
+                data: "description",
                 render: function (data, type, row) {
                     /*let template = data;
                     template += (data !== row.description) ? "<br/>" +

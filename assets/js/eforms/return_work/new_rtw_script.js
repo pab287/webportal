@@ -66,6 +66,7 @@ if (typeof tempForm !== "undefined") {
     if (typeof employeeSelect !== "undefined") {
         employeeSelect.select2({
             width: "100%",
+            minimumInputLength: 3,
             placeholder: "Select an option",
             ajax: {
                 global: false,

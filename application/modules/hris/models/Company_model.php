@@ -202,8 +202,8 @@ class Company_model extends CI_Model{
 			$post["add_date"] = date("Y-m-d H:i:s");
             $post["add_by"] = $session["emp_id"];
 			$post['email_to'] = serialize($post['email_to']);
-			$post['cc_to'] = (!empty($post['cc_to']) && $post['cc_to']) ? serialize($post['cc_to']) : NULL;
-			$post['bcc_to'] = (!empty($post['bcc_to']) && $post['bcc_to']) ? serialize($post['bcc_to']) : NULL;
+			$post['cc_to'] = serialize($post['cc_to']);
+			$post['bcc_to'] = serialize($post['bcc_to']);
 			$allow = $this->checkCompanyCode($post);
 			if($allow){
 				$insert = $this->db->insert($this->companyTable, $post);

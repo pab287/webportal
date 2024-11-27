@@ -1,6 +1,7 @@
 $("#employee").select2({
     placeholder: 'Select',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
       url: baseUrl("eforms/overtime/get_employee"),
       dataType: "json",
@@ -15,6 +16,7 @@ $("#employee").select2({
 $("#requested_by").select2({
     placeholder: 'Select',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
       url: baseUrl("eforms/overtime/get_employee"),
       dataType: "json",

@@ -5,6 +5,7 @@ var idEmp="";
 $("#select_employee").select2({
     placeholder: 'Select',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
       url: baseUrl("eforms/cash_advance/get_employee"),
       dataType: "json",

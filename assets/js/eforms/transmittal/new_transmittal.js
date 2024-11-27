@@ -63,6 +63,7 @@ var department = $("#select2_dep").select2({
 var requested_by = $("#select2_requested").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
         url: baseUrl("eforms/transmittal/get_request_collection"),
         delay: 250,
@@ -75,6 +76,7 @@ var requested_by = $("#select2_requested").select2({
 var deliver = $("#select2_deliver").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
         url: baseUrl("eforms/transmittal/get_request_collection"),
         global: false,
@@ -88,6 +90,7 @@ var deliver = $("#select2_deliver").select2({
 var vehicle = $("#select2_vehicle").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
         url: baseUrl("eforms/transmittal/get_vehicle_collection"),
         global: false,

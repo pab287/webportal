@@ -68,6 +68,7 @@ $.validate({
 $("#driversSelect").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
       url: baseUrl("eforms/tripping/get_drivers_collection"),
       global: false,

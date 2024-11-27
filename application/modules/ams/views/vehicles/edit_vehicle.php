@@ -1072,10 +1072,3 @@ $(document).ready(function(){
     });
 });
 </script>
-
-<style>
-    #all-component-list tbody td:first-child{
-        display: flex !important;
-        justify-content: center !important;
-    }
-</style>

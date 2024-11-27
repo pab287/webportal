@@ -580,8 +580,9 @@
             $this->db->from('gcchris.tblcompanies');
             $this->db->where('id', $company);
             $query = $this->db->get();
+            // return $query->row_array()['description'];
+
             return is_array($query->row_array()) && iseet($query->row_array()['description']) ? $query->row_array()['description'] : "No Data Found!";
-            //return $query->row_array()['description'];
         }
 
         /**function getFilteredPostTo($arrIds = array()) { } */ 

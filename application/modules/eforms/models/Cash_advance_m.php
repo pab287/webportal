@@ -1008,11 +1008,7 @@ class Cash_advance_m extends CI_Model {
                             $notMoved[] = $fileName;
                         }
                         if ($fileExtension!== 'pdf'){
-                            $_tempPath = realpath("$fromPath/thumbnails/$fileName");
-
-                            if(file_exists($_tempPath)){
-                                unlink(realpath("$fromPath/thumbnails/$fileName"));
-                            }
+                            unlink(realpath("$fromPath/thumbnails/$fileName"));
                         }
                     }
                     $attachments[] = $fileName;

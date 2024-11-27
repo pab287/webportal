@@ -214,6 +214,7 @@ var department = $("#select2_dep").select2({
 var vehicle = $("#select2_vehicle").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
+  minimumInputLength: 3,
   ajax: {
     url: baseUrl("eforms/Travel_order/get_vehicle_collection"),
     dataType: "json",
@@ -228,6 +229,7 @@ var vehicle = $("#select2_vehicle").select2({
 var emp = $("#select2_emp").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
+  minimumInputLength: 3,
   dropdownParent: $("#modal_form_personnel"),
   ajax: {
     url: baseUrl("eforms/Travel_order/get_request_collection"),
@@ -258,6 +260,7 @@ var req = $("#select2_req").select2({
 var driver = $("#driver").select2({
   placeholder: 'Select. .',
   width: '100%',
+  minimumInputLength: 3,
   ajax: {
     url: baseUrl("eforms/Travel_order/driver"),
     dataType: "json",

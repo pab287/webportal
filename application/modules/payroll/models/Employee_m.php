@@ -158,7 +158,7 @@
 
                     $data->pic_filename = $currentImage;
                     $displayName = $this->core_layout->getUserData($data->id);
-                    $data->display_name = isset($displayName["display_name_1"]) && $displayName['display_name_1'] ? $displayName['display_name_1'] : 'No Name';
+                    $data->display_name = $displayName["display_name_1"];
 
                     $displayEmail = strtoupper(trim($data->email));
                     $data->display_email = ($displayEmail !== "NONE" && $displayEmail !== "N/A" && $displayEmail !== "") ? $displayEmail : "";

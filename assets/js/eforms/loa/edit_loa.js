@@ -185,6 +185,7 @@ var vmTab1 = new Vue({
         var tempSelect2Employee = $("#select2_employee").select2({
             placeholder: 'SELECT AN OPTION',
             width: '100%',
+            minimumInputLength: 3,
             ajax: {
                 url: baseUrl("eforms/Loa/get_employee_collection"),
                 dataType: 'json',

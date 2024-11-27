@@ -82,7 +82,7 @@
         }
 
         function assets_location(){
-            $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyD2szEzfIU7_Hec55jNy8JtoNr_uj8R2_M&callback=initMap&libraries=places,drawing";
+            $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCm_pTwQzhaAKspErhW9ptpubv_ATLrpgE&callback=initMap&libraries=places,drawing";
 
             $this->core_layout->setPrivilegeName("assetperlocation");
             $this->core_layout->addJs("js/ams/assets_location.js", true);

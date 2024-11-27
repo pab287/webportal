@@ -29,6 +29,7 @@ $("#select_file_under").select2({
   $("#select_department").select2({
     placeholder: 'Select. .',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
       url: baseUrl("eforms/shipping/get_department"),
       delay: 250,
@@ -43,6 +44,7 @@ $("#select_file_under").select2({
   $("#select_requested_by").select2({
     placeholder: 'Select. .',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
       url: baseUrl("eforms/shipping/get_requested_by"),
       delay: 250,
@@ -74,6 +76,7 @@ $("#select_file_under").select2({
   $("#location").select2({
     placeholder: 'Select. .',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
       url: baseUrl("eforms/shipping/get_location"),
       delay: 250,
@@ -89,6 +92,7 @@ $("#select_file_under").select2({
   $("#select_ship_to").select2({
     placeholder: 'Select. .',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
       url: baseUrl("eforms/shipping/get_requested_by"),
       delay: 250,
@@ -127,6 +131,7 @@ $("#select_file_under").select2({
   $("#service").select2({
     placeholder: 'Select. .',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
       url: baseUrl("eforms/shipping/service_vehicle"),
       delay: 250,
@@ -141,6 +146,7 @@ $("#select_file_under").select2({
   $("#driver").select2({
     placeholder: 'Select. .',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
       url: baseUrl("eforms/shipping/driver"),
       delay: 250,
