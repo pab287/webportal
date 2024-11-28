@@ -33,3 +33,4 @@ sql/*
 web.config
 phpinfo.php
 .vscode/extensions.json
+.htaccess
