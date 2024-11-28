@@ -43,9 +43,10 @@ class Location extends Dbase{
         echo $user_data;
     }
 
-    public function update_location($limit = 0){
+    public function update_location(){
+        $limit = isset($_GET['limit']) && $_GET['limit'] ? $_GET['limit'] : 100;
         $data = $this->locationModel->update_undefined_location($limit);
-        var_dump($data);
+        echo json_encode($data);
     }
 }
 ?>
