@@ -42,5 +42,10 @@ class Location extends Dbase{
         $user_data = $this->locationModel->user_status();
         echo $user_data;
     }
+
+    public function update_location(){
+        $data = $this->locationModel->update_undefined_location();
+        var_dump($data);
+    }
 }
 ?>
