@@ -424,11 +424,13 @@
             }
         }
 
-        public function update_undefined_location(){
+        public function update_undefined_location($limit = 0){
             $conn = $this->conn("gcctimeutility");
             $result = array();
 
-            $query = "SELECT id, longtitude, latitude FROM gcctimeutility.app_attendance WHERE LOWER(address) = 'location undefined' AND longtitude != 0 AND latitude != 0 LIMIT 100";
+            $_limit = $limit = 0 ? 100 : $limit;
+
+            $query = "SELECT id, longtitude, latitude FROM gcctimeutility.app_attendance WHERE LOWER(address) = 'location undefined' AND longtitude != 0 AND latitude != 0 LIMIT $_limit";
             $q = $conn->prepare($query);
             $q->execute();
 
