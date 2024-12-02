@@ -69,13 +69,24 @@
                                 </select>
                             </div>
                         </template>
-                        
                     </div>
                     <div class="row mt-3">
                         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                             <div class="form-group m-form__group">
                                 <label for="company" class="m--font-bolder required">COMPANY</label>
                                 <select name="company" id="company" class="form-control" data-validation="required">
+                                    <option></option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                            <div class="form-group m-form__group">
+                                <label for="department">
+                                    DEPARTMENT <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">(Optional)</span>
+                                </label>
+                                <select class="form-control" id="department" name="department">
                                     <option></option>
                                 </select>
                             </div>
