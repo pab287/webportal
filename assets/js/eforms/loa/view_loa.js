@@ -152,7 +152,6 @@ var tblContent = $("#table-previous").DataTable({
     type: "post",
     dataType: "json",
     data: function(d) {
-      console.log(d);
       (d.csrf_token = _csrf_hash), (d.search["value"] = search_val);
     }
   },
@@ -267,38 +266,82 @@ window.location.replace(baseUrl("eforms/loa/edit_loa?id=")+param_id);
 function print(){
 window.open(baseUrl("eforms/loa/print_loa/")+param_id);
 }
-function open_cancel() 
-              {
-             
-                $('#modal_form_cancel').modal('show'); // show bootstrap modal
-                $('.modal-title').text('Cancel Leave of Absence'); // Set Title to Bootstrap modal title
-              }
-              function cancel()
-              {
+function open_cancel(){     
+  $('#modal_form_cancel').modal('show'); // show bootstrap modal
+  $('.modal-title').text('Cancel Leave of Absence'); // Set Title to Bootstrap modal title
+}
 
-                $.ajax({
-                 url : baseUrl("eforms/loa/cancel_loa/") + param_id,
-                  type: "POST",
-                  dataType: "JSON",
-                  data: { csrf_token: _csrf_hash, cancelled_remarks : $('[name="cancelled_remarks"]').val() },
-                  success: function(data)
-                  {
-                    toastr.success("Loa Canceled Successfully");
-                    // location.reload();
-                    window.location.href = siteUrl('eforms/loa/view_loa?id=' + param_id); 
-                    // window.location.replace(baseUrl("eforms/loa"));
-                  },
-                  error: function (jqXHR, textStatus, errorThrown)
-                  {
-                    alert('Error: "ajax_approve"');
-                  }
-                });
-              }
+$.validate({
+  form : '#form_cancel',
+  lang: 'en',
+  onSuccess : function(form) {
+    $.ajax({
+      url : baseUrl("eforms/loa/cancel_loa/") + param_id,
+      type: "POST",
+      dataType: "JSON",
+      // data: { csrf_token: _csrf_hash, cancelled_remarks : $('[name="cancelled_remarks"]').val() },
+      data: $('#form_cancel').serialize(),
+      success: function(data){
+        toastr.success("Loa Canceled Successfully");
+        window.location.href = siteUrl('eforms/loa/view_loa?id=' + param_id); 
+      },
+      error: function (jqXHR, textStatus, errorThrown){
+        alert('Error: "ajax_approve"');
+      }
+    });
+
+    return false;
+  }
+})
+
+function cancel(){
+  $.ajax({
+    url : baseUrl("eforms/loa/cancel_loa/") + param_id,
+    type: "POST",
+    dataType: "JSON",
+    data: { csrf_token: _csrf_hash, cancelled_remarks : $('[name="cancelled_remarks"]').val() },
+    success: function(data)
+    {
+      toastr.success("Loa Canceled Successfully");
+      // location.reload();
+      window.location.href = siteUrl('eforms/loa/view_loa?id=' + param_id); 
+      // window.location.replace(baseUrl("eforms/loa"));
+    },
+    error: function (jqXHR, textStatus, errorThrown)
+    {
+      alert('Error: "ajax_approve"');
+    }
+  });
+}
+
 function open_approve(){
 
   $('#modal_form_approve').modal('show'); // show bootstrap modal
   $('.modal-title').text('Approve Leave of Absence'); // Set Title to Bootstrap modal title
 }
+
+$.validate({
+  form : '#form_approve',
+  lang: 'en',
+  onSuccess: function(form){
+    $.ajax({
+      url : baseUrl("eforms/loa/approve_loa/") + param_id,
+      type: "POST",
+      dataType: "JSON",
+      // data: { csrf_token: _csrf_hash, approved_remarks : $('[name="approved_remarks"]').val() },
+      data: $('#form_approve').serialize(),
+      success: function(data){
+        toastr.success("Loa Approved Successfully");
+        window.location.href = siteUrl('eforms/loa/view_loa?id=' + param_id);
+      },
+      error: function (jqXHR, textStatus, errorThrown){
+        alert('Error: "ajax_approve"');
+      }
+    });
+
+    return false;
+  }
+})
 
 function approve(){
   $.ajax({
@@ -324,6 +367,29 @@ function open_dis(){
   $('#modal_form_disapprove').modal('show'); // show bootstrap modal
   $('.modal-title').text('Disapprove Leave of Absence'); // Set Title to Bootstrap modal title
 }
+
+$.validate({
+  form : '#form_disapprove',
+  lang: 'en',
+  onSuccess : function(form) {
+      $.ajax({
+        url : baseUrl("eforms/loa/disapprove_loa/") + param_id,
+        type: "POST",
+        dataType: "JSON",
+        // data: { csrf_token: _csrf_hash, disapproved_remarks : $('[name="disapproved_remarks"]').val() },
+        data: $("#form_disapprove").serialize(),
+        success: function(data){
+          toastr.success("Loa Disapproved Successfully");
+          window.location.href = siteUrl('eforms/loa/view_loa?id=' + param_id);
+        },
+        error: function (jqXHR, textStatus, errorThrown){
+          alert('Error adding / update data');
+        }
+      });
+
+    return false;
+  },
+}); 
 
 function disapprove(){
   $.validate({
@@ -471,6 +537,29 @@ function open_note(){
   $('#modal_form_noted').modal('show'); // show bootstrap modal
   $('.modal-title').text('HR Note'); // Set Title to Bootstrap modal title
 }
+
+$.validate({
+  form : '#form_noted',
+  lang: 'en',
+  onSuccess : function(form) {
+    $.ajax({
+      url : baseUrl("eforms/loa/note_loa/") + param_id,
+      type: "POST",
+      dataType: "JSON",
+      // data: { csrf_token: _csrf_hash, hr_noted_remarks : $('[name="hr_noted_remarks"]').val(),hr_noted_pay : $('[name="hr_noted_pay"]').val() },
+      data: $("#form_noted").serialize(),
+      success: function(data){
+        toastr.success("Loa Noted Successfully");
+        window.location.href = siteUrl('eforms/loa/view_loa?id=' + param_id);
+      },
+      error: function (jqXHR, textStatus, errorThrown){
+        alert('Error: "ajax_approve"');
+      }
+    });
+
+    return false;
+  },
+});
 
 function note(){
   $.ajax({
