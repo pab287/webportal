@@ -424,5 +424,38 @@
             }
         }
 
+        public function update_undefined_location($limit){
+            $conn = $this->conn("gcctimeutility");
+            $result = array();
+
+            $_limit = $limit ? $limit : 100;
+
+            $query = "SELECT id, longtitude, latitude FROM gcctimeutility.app_attendance WHERE LOWER(address) = 'location undefined' AND longtitude != 0 AND latitude != 0 LIMIT $_limit";
+            $q = $conn->prepare($query);
+            $q->execute();
+
+            if($q->rowCount() > 0){
+                foreach($q->fetchAll(PDO::FETCH_ASSOC) as $key => $rs){
+                    $tempAddress = $this->geoaddress($rs['latitude'], $rs['longtitude']);
+
+                    $sql = "UPDATE gcctimeutility.app_attendance SET address = :tempAdd WHERE id = :id";
+                    $_q = $conn->prepare($sql);
+                    $_q->bindParam(":id", $rs['id']);
+                    $_q->bindParam(":tempAdd", $tempAddress);
+                    $_q->execute();
+
+                    if($_q){
+                        $rs['status'] = true;
+                    }else{
+                        $rs['status'] = false;
+                    }
+
+                    array_push($result, $rs);
+                }
+            }
+
+            return array('affected_rows' => $q->rowCount(), 'data' => $result);
+        }
+
     }
 ?>
