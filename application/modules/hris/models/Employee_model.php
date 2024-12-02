@@ -10363,9 +10363,9 @@
             return $query->row()->date_start;
         }
 
-        function setScheduledEmployeeInactive(){
+        function setScheduledEmployeeInactive($date){
             $result = array();
-            $now = date("Y-m-d");
+            $now = $date ? date('Y-m-d', strtotime($date)) : date("Y-m-d");
             $temp = array();
             $ids = array();
             $sql = "CONCAT(UPPER(TRIM(firstname)), ' ',

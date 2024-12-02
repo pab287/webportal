@@ -780,8 +780,8 @@ class Cronjob_reports extends MY_Controller {
         }else{ echo $message; }
     }
 
-    public function scheduled_resigned_inactive(){
-        $data = $this->employee->setScheduledEmployeeInactive();
+    public function scheduled_resigned_inactive($date = null){
+        $data = $this->employee->setScheduledEmployeeInactive($date);
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
