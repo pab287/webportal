@@ -184,7 +184,7 @@
             $this->core_layout->addCss('css/hris/index.css', TRUE);
 
             $data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataSheetDetails($employee_id)));
-            
+
             $this->load->view("core/templates/header");
             $this->load->view("hris/masterfile/employee/view_employee_masterfile", $data, FALSE);
             $this->load->view("core/templates/footer");

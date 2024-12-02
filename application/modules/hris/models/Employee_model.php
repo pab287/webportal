@@ -4233,7 +4233,7 @@
             $default_station = $this->db->select("UPPER(TRIM(station_description)) as description")->order_by('id', 'DESC')->get_where($this->defaultStationTable, array("employee_id" => $employee_id))->row();
             $this->db->reset_query();
 
-            $allowance = $this->db->select('IFNULL(rate, 0) rate')->get_where($this->tblAllowances, array('emp_id' => $main->id, 'is_active' => 1))->row();
+            $allowance = $this->db->select('IFNULL(rate, 0) rate')->get_where($this->tblAllowances, array('emp_id' => $main->id, 'is_active' => 1, 'is_archived' => 0))->row();
             $this->db->reset_query();
 
             $rtw = $this->db
@@ -8715,8 +8715,11 @@
             if(is_array($tempData) && count($tempData) > 0){
                 $this->db->where("id", $id);
                 $this->db->set($tempData);
-                $tempUpdate = $this->db->update("gcchris.allowances");
-                $updated = $tempUpdate && $this->db->affected_rows() > 0;
+                $updated = $this->db->update("gcchris.allowances");
+                /*** 
+                 * $tempUpdate = $this->db->update("gcchris.allowances");
+                 * $updated = $tempUpdate && $this->db->affected_rows() > 0; 
+                 * ***/
             }
 
             $coreHistoryLog = $this->core_layout->coreHistoryLogs();
@@ -10678,6 +10681,8 @@
             $historyStatus = false;
             $basic = 0;
 
+            $isActiveState = intval($arr["is_active"]) == 1;
+
             $this->db->select('b.name, a.basic_rate, a.payroll_type');
             $this->db->from($this->employeeTable.' as a');
             $this->db->join($this->positionTable.' as b', 'b.id = a.position OR b.name = a.position', 'LEFT');
@@ -10695,9 +10700,9 @@
             }
 
             $rate_fr = $arr['frequency'] == 'day' ? 'Daily Allowance' : 'Monthly Allowance';
-            $rate_remark = $rate_fr ? ' + '.$arr['rate'].' '.$rate_fr : '';
+            $rate_remark = $isActiveState && $arr['rate'] && $rate_fr ? ' + '.$arr['rate'].' '.$rate_fr : '';
             $remarks = $basic.' '.$payroll.' '.$rate_remark;
-            $basic_total = floatval($basic) + floatval($arr['rate']);
+            $basic_total = $isActiveState ? floatval($basic) + floatval($arr['rate']) : floatval($basic);
 
             $data = array(
                 'emp_id' => $arr['emp_id'],
