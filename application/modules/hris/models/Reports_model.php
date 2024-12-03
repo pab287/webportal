@@ -1026,6 +1026,15 @@ class Reports_model extends CI_Model
         return $results;
     }
 
+    public function select2DepartmentData(){
+        $this->db->select("departments.id, UPPER(IF(departments.`code` = departments.`description`, 
+            departments.`description`, 
+            CONCAT(departments.`code`,' | ', departments.`description`))) `text`, departments.*");
+        $this->db->order_by("`code`", "ASC");
+        $results = $this->db->get("gcchris.tbldepartments departments")->result();
+        return $results;
+    }
+
     function getSelect2EmployeeData(){
         $get = $this->input->get();
         $resultarray = array();
@@ -1073,12 +1082,17 @@ class Reports_model extends CI_Model
         $resultset = array();
         $arrFilter = array();
 
+        $hasDepartment = isset($post["department"]) && $post["department"];
+
         if(isset($post["company"]) && $post["company"]){
             $empIds = array();
             $this->db->select("emp.id");
             $this->db->from($this->tblEmployees." as emp");
             $this->db->join($this->companyTable." as comp", "comp.id = emp.company_id");
             $this->db->where("emp.company_id", $post["company"]);
+            if($hasDepartment){
+                $this->db->where("emp.department_id", $post["department"]);
+            }
             $this->db->order_by("emp.id", "ASC");
             $this->db->group_by("emp.id");
             $qData = $this->db->get();
@@ -1239,12 +1253,19 @@ class Reports_model extends CI_Model
         $resultset = array();
         $arrFilter = array();
 
+        $hasDepartment = isset($post["department"]) && $post["department"];
+
         if(isset($post["company"]) && $post["company"]){
             $empIds = array();
             $this->db->select("emp.id");
             $this->db->from($this->tblEmployees." as emp");
             $this->db->join($this->companyTable." as comp", "comp.id = emp.company_id");
             $this->db->where("emp.company_id", $post["company"]);
+            
+            if($hasDepartment){
+                $this->db->where("emp.department_id", $post["department"]);
+            }
+
             $this->db->order_by("emp.id", "ASC");
             $this->db->group_by("emp.id");
             $qData = $this->db->get();
@@ -1252,14 +1273,14 @@ class Reports_model extends CI_Model
             if($qData->num_rows() > 0){ foreach ($qData->result() as $emp) { $empIds[] = $emp->id; } }
             if(count($empIds) > 0 && !isset($post["employee"])){ $post["employee"] = $empIds; }
         }
-        
+
         if(isset($post["employee"]) && $post["employee"]){
             $filterBy = $post["filter_by"];
             $employeeIds = $post["employee"];
 
             $startDate = null;
             $endDate = null;
-            
+
             if(isset($post["company"]) && $post["company"]){
                 $qCompany = $this->db->get_where("gcchris.tblcompanies", array("id"=>$post["company"]));
                 if($qCompany->num_rows() == 1){

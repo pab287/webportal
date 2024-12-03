@@ -1,5 +1,6 @@
 let _years = [];
 let _companies = [];
+let _departments = [];
 
 const hrisFilterLateReport = $("#frm-filter-hris-late_report");
 const dtTableLate = $("#table-late_report");
@@ -36,6 +37,10 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     }
     if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){
         _companies = _tempContentData.company;
+    }
+
+    if(typeof _tempContentData.departments !== "undefined" && _tempContentData.departments.length > 0){
+        _departments = _tempContentData.departments;
     }
 }
 
@@ -284,6 +289,14 @@ if(typeof hrisFilterLateReport !== "undefined" && hrisFilterLateReport.length ==
         }
     });
 
+    hrisFilterLateReport.find("select#department")
+    .select2({
+        width: '100%',
+        placeholder: "SELECT AN OPTION",
+        data: _departments,
+        allowClear: true,
+    });
+
     hrisFilterLateReport.find("select#employee")
     .select2({
         width: '100%',
@@ -388,6 +401,14 @@ if(typeof hrisFilterAbsenteeReport !== "undefined" && hrisFilterAbsenteeReport.l
         if (typeof tempPayrollGroupSelector !== "undefined" && tempPayrollGroupSelector.length == 1) {
             tempPayrollGroupSelector.val([]).trigger("change");
         }
+    });
+
+    hrisFilterAbsenteeReport.find("select#department")
+    .select2({
+        width: '100%',
+        placeholder: "SELECT AN OPTION",
+        data: _departments,
+        allowClear: true,
     });
 
     hrisFilterAbsenteeReport.find("select#employee")

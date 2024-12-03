@@ -54,6 +54,7 @@
             $data = array();
             $data["years"] = $this->report->getVerifiedTimeSheetYearsData();
             $data["company"] = $this->report->select2CompanyData();
+            $data["departments"] = $this->report->select2DepartmentData();
 
             $this->core_layout->addJs("js/buttons.print.min.js", true);
             $this->core_layout->addJs('js/hris/reports/late_absentee_report_script.js', TRUE, $data);
