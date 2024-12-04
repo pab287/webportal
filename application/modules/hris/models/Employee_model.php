@@ -3144,6 +3144,7 @@
                 unset($post["csrf_token"]);
                 $employeeId = $post["id"];
                 if ($employeeId) {
+                    $currentEmployeeData = $this->getEmployeeData($employeeId);
                     unset($post["id"]);
                     $partnerType = $post["partner_type"];
                     $post["partner_type"] = (int)$post["partner_type"];
@@ -3156,8 +3157,9 @@
                             $this->removePartnerDetails($employeeId);
                         }
                         $resultset["response"] = true;
+                        $changes = $this->logChanges($currentEmployeeData, $post);
                         $resultset["data"] = $this->getEmployeeData($employeeId);
-                        $this->core_layout->setEventLog("Updated personal information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname." db id no. ".$employeeId,"update", "success", "gcchris", "user");
+                        $this->core_layout->setEventLog("Updated personal information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname." db id no. ".$employeeId.$changes,"update", "success", "gcchris", "user");
                     } else {
                         $resultset["response"] = false;
                         $this->core_layout->setEventLog("Error updating additional information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname." db id no. ".$employeeId,"update", "error", "gcchris", "user");
