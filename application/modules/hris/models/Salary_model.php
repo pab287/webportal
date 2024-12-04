@@ -168,12 +168,15 @@ class Salary_model extends CI_Model{
             
 			$post["modify_dt"] = date("Y-m-d H:i:s");
             $post["modify_by"] = $session["emp_id"];
-
+			$currentSalaryData = $this->getSalaryData($id);
 			$update = $this->db->update($this->salaryTable, $post, array("id"=>$id));
 			if($update){
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Salary data has been updated.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated salary with db id no. ".$id,"update", "success", "gcchris", "user");
+				unset($post['modify_dt']); 
+                unset($post['modify_by']);
+				$changes = $this->logChanges($currentSalaryData ,$post);
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated salary with db id no. ".$id." ".$changes,"update", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed updating salary data!";
@@ -290,4 +293,30 @@ class Salary_model extends CI_Model{
 
 		return $resultset;
     }
+
+	private function logChanges($currentData, $newData) {
+		$changes = array();
+		$changesString = '';
+		foreach ($currentData as $field => $value) {
+			if (isset($newData[$field]) && $newData[$field]!= $value) {
+				$changes[$field] = array(
+					'old' => $value,
+					'new' => $newData[$field]
+				);
+			}
+		}
+		foreach ($changes as $field => $change) {
+			$changesString.= " Field: $field, from: $change[old], to: $change[new]\n";
+		}
+		return $changesString;
+	}
+
+	private function getSalaryData($id) {
+		$this->db->select("*");
+		$this->db->from($this->salaryTable);
+		$this->db->where('id', $id);
+		$query = $this->db->get(); 
+		return $query->row();
+	}
+
 }
