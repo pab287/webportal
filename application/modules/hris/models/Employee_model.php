@@ -3099,6 +3099,7 @@
                 unset($post["csrf_token"]);
                 $employeeId = $post["id"];
                 if ($employeeId) {
+                    $currentEmployeeData = $this->getEmployeeData($employeeId);
                     $longlat = (isset($post["long_lat_coordinates"]) && $post["long_lat_coordinates"]) ? $post["long_lat_coordinates"] : false;
                     unset($post["id"], $post["long_lat_coordinates"]);
                     $where = array("id" => $employeeId);
@@ -3118,7 +3119,8 @@
                         $this->checkIf201StatusIsComplete($employeeId);
                         $resultset["response"] = true;
                         $resultset["data"] = $this->getEmployeeData($employeeId);
-                        $this->core_layout->setEventLog("Updated personal information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname." db id no. ".$employeeId,"update", "success", "gcchris", "user");
+                        $changes = $this->logChanges($currentEmployeeData, $post);
+                        $this->core_layout->setEventLog("Updated personal information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname." db id no. ".$employeeId.  $changes,"update", "success", "gcchris", "user");
                     } else {
                         $resultset["response"] = false;
                         $this->core_layout->setEventLog("Error updating personal information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname." db id no. ".$employeeId,"update", "error", "gcchris", "user");
@@ -10952,4 +10954,69 @@
 
             return $result;
         }
+
+        private function logChanges($currentData, $newData) {
+            // var_dump($currentData, $newData);
+                if (is_object($currentData)) {
+                    $currentData = get_object_vars($currentData);
+                }
+                if (is_object($newData)) {
+                    $newData = get_object_vars($newData);
+                }
+                $changes = array();
+                $changesString = '';
+                foreach ($currentData as $field => $value) {
+                    if (isset($newData[$field]) && $newData[$field]!= $value) {
+                        $changes[$field] = array(
+                            'old' => $value,
+                            'new' => $newData[$field]
+                        );
+                    }
+                }
+                foreach ($changes as $field => $change) {
+                    if (strtolower($field) == 'department_id'){
+                        $changesString.= " Field: $field, from: ". $this->getDepartmentById($change['old'])->description. ", to: ". $this->getDepartmentById($change['new'])->description. "\n";
+                        }
+                    else if (strtolower($field) == 'position'){
+                        $changesString.= " Field: $field, from: ". $this->getPositionById($change['old'])->name. ", to: ". $this->getPositionById($change['new'])->name. "\n";
+                    }
+                    else if ($field != 'work_station'){
+                        $changesString.= " Field: $field, from: ". $change['old']. ", to: ". $change['new']. "\n";
+                    }
+                }
+                if (isset($newData['work_station'])) {
+                    sort($newData['work_station']);
+                    sort($currentData['work_station']);
+                    if (empty($newData['work_station'])) {
+                        $diff = array_diff($currentData['work_station'], $newData['work_station']);
+                    } else {
+                        $diff = array_diff($newData['work_station'], $currentData['work_station']);
+                    }
+                    if (!empty($diff)) {
+                        $changesString.= " Field: work_station, from: ' ". implode(',', $currentData['work_station']). " ', to: '". implode(',', $newData['work_station']). "'\n";
+                    }
+                } 
+                return $changesString;
+            }
+
+            private function getDepartmentById($id){
+                $this->db->select("description");
+                $this->db->from($this->departmentTable);
+                $this->db->where('id', $id);
+                $query = $this->db->get(); 
+                $result = $query->row();
+                $this->db->reset_query();
+                return $result;
+            }
+    
+            private function getPositionById($id){
+                $this->db->select("name");
+                $this->db->from($this->positionTable);
+                $this->db->where('id', $id);
+                $query = $this->db->get(); 
+                $result = $query->row();
+                $this->db->reset_query();
+                return $result;
+            }
+
     }
