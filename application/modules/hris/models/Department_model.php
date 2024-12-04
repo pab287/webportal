@@ -176,6 +176,7 @@ class Department_model extends CI_Model{
             $post["head"] = $tempHeadName;
 			$post["update_date"] = date("Y-m-d H:i:s");
             $post["update_by"] = $session["emp_id"];
+			$currentDeptData = $this->getDepartmentData($id);
 			if(isset($post['require_clearance']) && $post['require_clearance']  == 'on'){
 				$post['require_clearance'] = 1;
 			}else{
@@ -185,7 +186,11 @@ class Department_model extends CI_Model{
 			if($update){
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Department data has been updated.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated department with db id no. ".$id,"update", "success", "gcchris", "user");
+				unset($post['update_date']); 
+                unset($post['update_by']);
+				$changes = $this->logChanges($currentDeptData,$post);
+				$resultset['changes'] = $changes;
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated department with db id no. ".$id." ".$changes,"update", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed updating department data!";
@@ -324,4 +329,30 @@ class Department_model extends CI_Model{
 
 		return $resultset;
 	}
+
+	private function getDepartmentData($id) {
+		$this->db->select("*");
+		$this->db->from($this->departmentTable);
+		$this->db->where('id', $id);
+		$query = $this->db->get(); 
+		return $query->row();
+	}
+
+	private function logChanges($currentData, $newData) {
+		$changes = array();
+		$changesString = '';
+		foreach ($currentData as $field => $value) {
+			if (isset($newData[$field]) && $newData[$field]!= $value) {
+				$changes[$field] = array(
+					'old' => $value,
+					'new' => $newData[$field]
+				);
+			}
+		}
+		foreach ($changes as $field => $change) {
+			$changesString.= " Field: $field, from: $change[old], to: $change[new]\n";
+		}
+		return $changesString;
+	}
+
 }
