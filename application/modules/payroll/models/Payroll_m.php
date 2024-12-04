@@ -3369,11 +3369,15 @@ class Payroll_m extends CI_Model
         $temp_payDate = strtotime(date("Y-m-d", strtotime($posted_data["pay_date"])));
         $currentYear = date("Y", strtotime($posted_data["pay_date"]));
         
-        $start = date("{$currentYear}-m-d", strtotime($start));
-        $end = date("{$currentYear}-m-d", strtotime($end));
+        /*** modified code here ***/
+        $previousYear = strtotime($start) >= strtotime($end);
+        $tempYear = $previousYear ? date("Y", strtotime("-1 year", strtotime($currentYear))): $currentYear;
+        /*** modified code here ***/
 
+        $start = date("{$tempYear}-m-d", strtotime($start));
+        $end = date("{$currentYear}-m-d", strtotime($end));
+        
         $tempFromDate = strtotime($start);
-        $tempToDate = strtotime($end);
 
         if($tempFromDate > $temp_payDate){
             $tempYear = date("Y", strtotime("-1 year", strtotime($posted_data["pay_date"])));
