@@ -188,13 +188,16 @@
             $post['update_by'] = $session["emp_id"];
             $id = $post['id'];
             unset($post['id']);
-
+            $currentLicenseData = $this->getLicenseData($id);
             $this->db->where('id', $id);
             $query = $this->db->update($this->licenseTable, $post);
             if($query){
                 $resultset['response'] = true;
                 $resultset['toastr_msg'] = 'Updated!';
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " update license with db id no. ".$id,"update", "success", "gcchris", "user");
+                unset($post['update_date']); 
+                unset($post['update_by']);
+                $changes = $this->logChanges($currentLicenseData ,$post);
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " update license with db id no. ".$id." ".$changes,"update", "success", "gcchris", "user");
             }else{
                 $resultset['response'] = true;
                 $resultset['toastr_msg'] = 'Failed to save license!';
@@ -282,4 +285,40 @@
     
             return $resultset;
         }
+
+        private function logChanges($currentData, $newData) {
+            if (is_object($currentData)) {
+                $currentData = get_object_vars($currentData);
+            }
+            if (is_object($newData)) {
+                $newData = get_object_vars($newData);
+            }
+        
+            $changes = array();
+            $changesString = '';
+            foreach ($currentData as $field => $value) {
+                if (isset($newData[$field]) && $newData[$field]!== $value) {
+                    $changes[$field] = array(
+                        'old' => $value,
+                        'new' => $newData[$field]
+                    );
+                }
+            }
+            foreach ($changes as $field => $change) {
+                $changesString.= " Field: $field, from: $change[old], to: $change[new]\n";
+            }
+            return $changesString;
+        }
+
+        private function getLicenseData($id) {
+            $this->db->select("*");
+            $this->db->from($this->licenseTable);
+            $this->db->where('id', $id);
+            $query = $this->db->get(); 
+            $result = $query->row();
+            $this->db->reset_query();
+            return $result;
+        }
+
+
     }
