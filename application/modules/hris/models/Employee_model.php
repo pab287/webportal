@@ -4421,6 +4421,7 @@
             foreach ($bgcheck_docs as $document) {
                 $path = "uploads/files/documents/employee_files/empcode_" . $employee_id . "/documents/" . $document->doc_filename;
                 $realpath = realpath($path);
+                $fileExist = file_exists($realpath);
                 $document->exists = file_exists($realpath);
                 $document->filepath = base_url($path);
 
@@ -4470,6 +4471,7 @@
             foreach ($_trainings as $training) {
                 $path = "uploads/files/documents/employee_files/empcode_" . $employee_id . "/trainings/" . $training->doc_filename;
                 $realpath = realpath($path);
+                $fileExist = file_exists($realpath);
                 $training->exists = file_exists($realpath);
                 $training->filepath = base_url($path);
 
@@ -4518,6 +4520,7 @@
             foreach ($_medical_records as $medical) {
                 $path = "uploads/files/documents/employee_files/empcode_" . $employee_id . "/medical/" . $medical->doc_filename;
                 $realpath = realpath($path);
+                $fileExist = file_exists($realpath);
                 $medical->exists = file_exists($realpath);
                 $medical->filepath = base_url($path);
 
@@ -4567,6 +4570,7 @@
             foreach ($_offenses as $offense) {
                 $path = "uploads/files/documents/employee_files/empcode_" . $employee_id . "/offenses_commendation/" . $offense->doc_filename;
                 $realpath = realpath($path);
+                $fileExist = file_exists($realpath);
                 $offense->exists = file_exists($realpath);
                 $offense->filepath = base_url($path);
 
@@ -4613,6 +4617,7 @@
             foreach ($_performance as $p) {
                 $path = "uploads/files/documents/employee_files/empcode_" . $employee_id . "/performance_eval/" . $p->doc_filename;
                 $realpath = realpath($path);
+                $fileExist = file_exists($realpath);
                 $p->exists = file_exists($realpath);
                 $p->filepath = base_url($path);
 
