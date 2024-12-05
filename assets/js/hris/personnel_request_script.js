@@ -606,6 +606,9 @@ if (typeof editPersonnelRequestPage !== "undefined" && editPersonnelRequestPage.
                         ClassicEditor.create(document.querySelector(id))
                             .then(editor => {
                                 jobClassicEditor[id] = editor;
+                                if (id === '#job_description' || id === '#qualification') {
+                                    editor.isReadOnly = true;
+                                }
                                 console.log(`Editor for ${id} was initialized successfully.`);
                             })
                             .catch(error => {

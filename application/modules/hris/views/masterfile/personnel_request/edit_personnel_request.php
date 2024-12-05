@@ -151,7 +151,7 @@
                             <div class="form-group m-form__group row">
                                 <label for="jobDescription" class="col-xs-12 col-sm-12 col-md-12 col-form-label">Job Description:</label>
                                 <div class="col-xs-12 col-sm-12 col-md-12" id="current-job_description">
-                                    <textarea id="job_description" class="form-control m-input m-input--custom_textarea" contenteditable="true"></textarea>
+                                    <textarea id="job_description" class="form-control m-input m-input--custom_textarea" name="job_description" contenteditable="false" readonly></textarea>
                                 </div>
                             </div>
                         </div>
@@ -162,7 +162,7 @@
                             <div class="form-group m-form__group row">
                                 <label for="qualification" class="col-xs-12 col-sm-12 col-md-12 col-form-label">Qualification:</label>
                                 <div class="col-xs-12 col-sm-12 col-md-12" id="current-qualification">
-                                    <textarea id="qualification" class="form-control m-input m-input--custom_textarea" contenteditable="true"></textarea>
+                                    <textarea id="qualification" class="form-control m-input m-input--custom_textarea" name="qualification" contenteditable="false" readonly></textarea>
                                 </div>
                             </div>
                         </div>

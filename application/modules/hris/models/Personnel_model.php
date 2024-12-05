@@ -694,16 +694,15 @@
             $post = $this->input->post();
             if (isset($post) && $post) {
                 $id = $post["id"];
-                $jobDescData = $post["job_description"];
-                $qualData = $post["qualification"];
-                unset($post["csrf_token"], $post["id"],$post["job_description"],$post["qualification"]);
+                unset($post["csrf_token"], $post["id"]);
 
                 $post["modify_dt"] = date("Y-m-d H:i:s");
                 $post["modify_by"] = $session["emp_id"];
                 $post["need_dt"] = date("Y/m/d", strtotime($post["need_dt"]));
-
+                $currentPersonnelData = $this->getPersonnelData($id);
                 $update = $this->db->update($this->applicationTable, $post, array("id" => $id));
                 if ($update) {
+
                     $arrDatax = array();
                     $arrDatax["id"] = $session["emp_id"];
                     $arrDatax["date"] = date("Y-m-d H:i:s");
@@ -715,18 +714,15 @@
                         $this->db->insert($this->applicationMetaTable, $metaData);
                     }
 
-
-                    $positionData = $this->db->select('job_desc,qualification')->from($this->positionTable)->where('id', $post['position_id'])->get()->row();
-                    if ($positionData->job_desc != $jobDescData ) {
-                        $this->db->set('job_desc', $jobDescData)->where('id', $post['position_id'])->update($this->positionTable);
-                    }
-                    if ($positionData->qualification != $qualData) {
-                        $this->db->set('qualification', $qualData)->where('id', $post['position_id'])->update($this->positionTable);
-                    }
                     $data = $this->getCurrentPersonnelRequest($id);
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Personnel request data has been updated.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated personnel request data with db id no. ".$id,"update", "success", "gcchris", "user");
+                    unset($post['modify_dt']); 
+                    unset($post['modify_by']);
+                    unset($post['qualification']);
+                    unset($post['job_description']);
+                    $changes = $this->logChanges($currentPersonnelData ,$post);
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated personnel request data with db id no. ".$id." ".$changes,"update", "success", "gcchris", "user");
                     $resultset["data"] = $data;
                 } else {
                     $resultset["response"] = false;
@@ -1216,4 +1212,30 @@
 
             return $resultSet;
         }
+
+        private function logChanges($currentData, $newData) {
+            $changes = array();
+            $changesString = '';
+            foreach ($currentData as $field => $value) {
+                if (isset($newData[$field]) && $newData[$field]!= $value) {
+                    $changes[$field] = array(
+                        'old' => $value,
+                        'new' => $newData[$field]
+                    );
+                }
+            }
+            foreach ($changes as $field => $change) {
+                $changesString.= " Field: $field, from: $change[old], to: $change[new]\n";
+            }
+            return $changesString;
+        }
+
+        private function getPersonnelData($id) {
+            $this->db->select("*");
+            $this->db->from($this->applicationTable);
+            $this->db->where('id', $id);
+            $query = $this->db->get(); 
+            return $query->row();
+        }
+
     }
