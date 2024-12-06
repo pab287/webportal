@@ -35,7 +35,7 @@
             </div>
         </div>
         
-        <div class="form-group mt-2">
+        <!-- <div class="form-group mt-2">
             <label class="col-form-label form-control-label">
                 Email To:
             </label>
@@ -60,7 +60,7 @@
                 <select id="bcc_to" name="bcc_to[]">
                     
                 </select>
-        </div>
+        </div> -->
 
         <div class="form-group mt-4">
             <label for="fileupload_logo" class="form-control-label">Attachment Logo</label>

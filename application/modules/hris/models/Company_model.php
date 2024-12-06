@@ -201,9 +201,9 @@ class Company_model extends CI_Model{
 			if($logo){ $post["logo"] = $logo; }
 			$post["add_date"] = date("Y-m-d H:i:s");
             $post["add_by"] = $session["emp_id"];
-			$post['email_to'] = serialize($post['email_to']);
-			$post['cc_to'] = serialize($post['cc_to']);
-			$post['bcc_to'] = serialize($post['bcc_to']);
+			$post['email_to'] = "";
+			$post['cc_to'] = "";
+			$post['bcc_to'] = "";
 			$allow = $this->checkCompanyCode($post);
 			if($allow){
 				$insert = $this->db->insert($this->companyTable, $post);
