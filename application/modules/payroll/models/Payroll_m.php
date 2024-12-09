@@ -7029,7 +7029,7 @@ class Payroll_m extends CI_Model
             $filteredIdChunk = array_chunk($filteredId, 25);
             $this->db->group_start();
             foreach ($filteredIdChunk as $filteredIds) {
-                $this->db->where_in("a.id", $filteredIds);
+                $this->db->or_where_in("a.id", $filteredIds);
             }
             $this->db->group_end();
 
@@ -7108,7 +7108,7 @@ class Payroll_m extends CI_Model
             $filteredIdChunk = array_chunk($filteredId, 25);
             $this->db->group_start();
             foreach ($filteredIdChunk as $filteredIds) {
-                $this->db->where_in("a.id", $filteredIds);
+                $this->db->or_where_in("a.id", $filteredIds);
             }
             $this->db->group_end();
 
