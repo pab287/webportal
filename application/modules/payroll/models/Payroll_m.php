@@ -7025,7 +7025,13 @@ class Payroll_m extends CI_Model
             $this->db->from('payroll.payroll_sheet a');
             $this->db->join('gccmaster.tblemployees b', 'a.emp_id = b.id', "LEFT");
             $this->db->join('payroll.payout_schedule c', 'c.id = b.payout_sched', "LEFT");
-            $this->db->where_in("a.id", $filteredId);
+
+            $filteredIdChunk = array_chunk($filteredId, 25);
+            $this->db->group_start();
+            foreach ($filteredIdChunk as $filteredIds) {
+                $this->db->where_in("a.id", $filteredIds);
+            }
+            $this->db->group_end();
 
             $this->db->where("a.posted", 1);
             $this->db->where("a.is_bonus", 0);
@@ -7098,7 +7104,13 @@ class Payroll_m extends CI_Model
             $this->db->select($sqlSelect);
             $this->db->from('payroll.payroll_sheet a');
             $this->db->join('gccmaster.tblemployees b', 'a.emp_id = b.id', "LEFT");
-            $this->db->where_in("a.id", $filteredId);
+
+            $filteredIdChunk = array_chunk($filteredId, 25);
+            $this->db->group_start();
+            foreach ($filteredIdChunk as $filteredIds) {
+                $this->db->where_in("a.id", $filteredIds);
+            }
+            $this->db->group_end();
 
             $this->db->where("a.posted", 1);
             $this->db->group_by("a.id", "desc");
