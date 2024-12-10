@@ -228,7 +228,7 @@ jQuery(document)
     });
 
 (function ($) {
-    $.fn.donetyping = function (callback, delaySeconds = 1000, limit = 3) {
+    $.fn.donetyping = function (callback, delaySeconds = 1000, limit = 0) {
         var _this = $(this);
         var x_timer;
         _this.keyup(function () {
