@@ -58,7 +58,21 @@ var tblBorrowing = $("#table-borrowing").DataTable({
                 return html;
             }
         },
-        { data: "firstname", render: function (data, type, row, meta) { return displayName(row.display_name) } },
+        // { data: "firstname", render: function (data, type, row, meta) { return displayName(row.display_name) } },
+        { data: "display_name", 
+            render: function (data, type, row, meta) { 
+                var html = ``;
+
+                if(data){
+                    html += `<b>${ data }</b>`;
+                    html += `<p class="m-0">${ row.company }</p>`;
+                    html += `<p class="m-0">${ row.department }</p>`;
+                    html += `<p class="m-0">${ row.position }</p>`;
+                }
+
+                return html;
+            } 
+        },
         { data: "asset" },
         { data: "date_borrowed", render: function (data) { return formatCalendarDate(data) } },
         { data: "date_due", render: function (data) { return formatCalendarDateDue( data) } },

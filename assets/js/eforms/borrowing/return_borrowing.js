@@ -19,7 +19,21 @@ var tblBorrowing = $("#table-borrowing").DataTable({
     searching: true,
     columns: [
         { data: "reference_no"},        
-        { data: "firstname", render: function (data, type, row, meta) {return displayName(row.display_name)}},
+        { data: "display_name", // data: "firstname"
+            render: function (data, type, row, meta) {
+                var html = ``;
+                // return displayName(row.display_name)
+
+                if(data){
+                    html += `<b>${ data }</b>`;
+                    html += `<p class="m-0">${ row.company }</p>`;
+                    html += `<p class="m-0">${ row.department }</p>`;
+                    html += `<p class="m-0">${ row.position }</p>`;
+                }
+
+                return html;
+            }
+        },
         { data: "asset"},
         { data: "date_borrowed", render: function (data) {return formatCalendarDate(data)}},
         { data: "date_due", render: function ( data, type, row, meta ) {return formatCalendarDateDue(data,row)}},
