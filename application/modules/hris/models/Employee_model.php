@@ -4175,6 +4175,24 @@
             return $arrData;
         }
 
+        function getEmployeeDataDetails($employee_id){
+            $main = $this->core_layout->getEmployee($employee_id);
+            $supervisorId = $main->supervisor;
+            $result = $this->db->select("
+                CASE 
+                    WHEN LENGTH(middlename) > 1 THEN CONCAT(firstname, ' ', SUBSTRING(middlename, 1, 1), '. ', lastname)
+                    ELSE CONCAT(firstname, ' ', middlename, ' ', lastname)
+                END AS name
+            ")->from($this->employeeTable)->where("id", $supervisorId)->get()->result();
+            $supervisorName = empty($result)? false : $result[0]->name;
+            return
+            array(
+                "supervisor" => $supervisorName,
+                "main" => $main,
+                "user" => $this->core_layout->getUserLoggedIn(),
+            );
+        }
+
         function getEmployeeDataSheetDetails($employee_id) {
             $main = $this->core_layout->getEmployee($employee_id);
             $supervisorId = $main->supervisor;

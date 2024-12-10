@@ -404,7 +404,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="m-portlet__body data-sheet">
+                <div class="m-portlet__body data-sheet m--hide">
 
                     <!-- for 201 printing -->
                     <div class="m-portlet__section web-view" id="to-print">

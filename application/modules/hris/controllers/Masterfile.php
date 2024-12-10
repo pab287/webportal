@@ -155,7 +155,7 @@
             }
         }
 
-        function view_employee_masterfile($employee_id = null) {
+        function view_employee_masterfile($employee_id = null,$tab = null) {
             // redirect to listing if id is empty
             if (empty($employee_id)) {
                 redirect(base_url("hris/masterfile/employee"), "refresh");
@@ -183,8 +183,8 @@
             $this->core_layout->addJs('js/hris/search_employee_script.js', TRUE);
             $this->core_layout->addCss('css/hris/index.css', TRUE);
 
-            $data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataSheetDetails($employee_id)));
-
+            $data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataDetails($employee_id)));
+            $data->tab = $tab;
             $this->load->view("core/templates/header");
             $this->load->view("hris/masterfile/employee/view_employee_masterfile", $data, FALSE);
             $this->load->view("core/templates/footer");
