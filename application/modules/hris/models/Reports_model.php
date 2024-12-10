@@ -51,12 +51,10 @@ class Reports_model extends CI_Model
         return $this->db->get("information_schema.columns")->result();
     }
 
-    function generateEmployeeReport($export)
-    {
+    function generateEmployeeReport($export){
         $post = $this->utilities->parseFormDataToObject($this->input->post());
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($post);
         $select = implode(", ", $post->fields);
-        // var_dump($select);
         $order_field = $post->order_field;
         $order_by = $post->order_by;
         /* IF BY DEFAULT HIDE EMPLOYEE WITHOUT IDNO
@@ -124,6 +122,10 @@ class Reports_model extends CI_Model
         $resultSet['x'] = $this->db->last_query();
 
         $recordCount = $this->utilities->getTableCount($this->tblEmployees . " emp", $criteria, null, $joinArr, true, null, "emp.id");
+        $exported = intval($export) == 1 ? " and exported as {$post->exportType}" : '';
+        $action = intval($export) == 1 ? 'export' : 'generate'; 
+        $logMessage = "Generated employee report with criteria: $criteria$exported with result count: $recordCount";
+        $this->core_layout->setEventLog($logMessage, $action, 'success', "gcchris", 'user');
         $resultSet["recordsTotal"] = $recordCount;
         $resultSet["recordsFiltered"] = $recordCount;
         return $resultSet;
