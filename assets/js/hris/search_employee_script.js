@@ -1,8 +1,6 @@
 var values = ["company"];
 jQuery(document)
     .ready(function () {
-        
-
         $('.search-with-dropdown')
             .donetyping(function () {
                 const searchKey = $(this).val();
@@ -14,7 +12,7 @@ jQuery(document)
                 } else {
                     $('.search-with-dropdown-suggestion-list').addClass('invisible');
                 }
-            });
+            }, 1000, 3);
 
         $('.search-with-dropdown')
             .on('focus', function () {

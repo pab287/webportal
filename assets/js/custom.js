@@ -228,12 +228,16 @@ jQuery(document)
     });
 
 (function ($) {
-    $.fn.donetyping = function (callback, delaySeconds = 1000) {
+    $.fn.donetyping = function (callback, delaySeconds = 1000, limit = 3) {
         var _this = $(this);
         var x_timer;
         _this.keyup(function () {
-            clearTimeout(x_timer);
-            x_timer = setTimeout(clear_timer, delaySeconds);
+            var length = _this.val().length;
+
+            if(length >= limit || length == 0){
+                clearTimeout(x_timer);
+                x_timer = setTimeout(clear_timer, delaySeconds);
+            }
         });
 
         function clear_timer() {
