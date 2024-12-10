@@ -1320,6 +1320,57 @@ class Reports_model extends CI_Model
             }
     
             if($startDate && $endDate && (is_array($employeeIds) && count($employeeIds) > 0)){
+
+                $employeeShiftRecord = array();
+                $this->db->select("emp.id, ssr.shift_resource");
+                $this->db->from("gcctimeutility.shift_schedule_resource as ssr");
+                $this->db->join("gcctimeutility.personnel as pr", "pr.shift_id = ssr.shift_id", "left");
+                $this->db->join("gccmaster.tblemployees as emp", "emp.biometricno = pr.biometricno OR emp.biometricno = pr.biometric_id", "left");
+                $this->db->where_in("emp.id", $employeeIds);
+                $qtemp = $this->db->get();
+                if ($qtemp->num_rows() > 0){
+                    foreach ($qtemp->result() as $kv) {
+                        $shiftId = @unserialize($kv->shift_resource);
+                        if(is_array($shiftId) && count($shiftId) > 0){
+                            $schedules = $this->db
+                                ->where_in("id", $shiftId)
+                                ->get("gcctimeutility.shift_schedule_list")
+                                ->result();
+    
+                            $schedules_obj = array_reduce($schedules,
+                                function ($carry, $obj) {
+                                    $key = $obj->weekday;
+                                    $carry[$key] = $obj;
+                                    return $carry;
+                                }, []);
+                            
+                                $employeeShiftRecord[$kv->id] = $schedules_obj;
+                        }
+                            
+                    }
+                }
+
+                if(is_array($employeeShiftRecord) && count($employeeShiftRecord) > 0){
+                    $interval = DateInterval::createFromDateString('1 day');
+                    $dateStart = new DateTime($startDate);
+                    $dateEnd = new DateTime($endDate);
+                    $dateEnd->modify("+1 day");
+
+                    $period = new DatePeriod($dateStart, $interval, $dateEnd);
+                    
+                    foreach ($employeeShiftRecord as $empId => $schedule) {
+                        foreach ($period as $dt) {
+                            $weekday = strtolower($dt->format("l"));
+                            $date = $dt->format("Y-m-d");
+                            if(isset($schedule[$weekday]) && $schedule[$weekday]){
+                                var_dump($date, $weekday, $schedule[$weekday]);
+                            }
+                        }
+                    }
+                }
+
+                
+
                 $fsDate = Date("F d, Y", strtotime($startDate));
                 $feDate = Date("F d, Y", strtotime($endDate));
                 $arrFilter["filter_date"] = "{$fsDate} - {$feDate}";
