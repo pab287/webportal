@@ -262,7 +262,7 @@ jQuery(document)
                 clearTimeout(x_timer);
                 x_timer = setTimeout(clear_timer, delaySeconds);
             }
-        }, 100));
+        }, 200));
 
         function clear_timer() {
             clearTimeout(x_timer);
