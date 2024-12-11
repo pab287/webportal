@@ -26,12 +26,14 @@ $("#issued_to").select2({
             return data;
         }
     }
-});
+}).on("select2:select", function (e) {
+    var data = e.params.data;
 
-$("#issued_to").on("select2:select", function () {
     $.ajax({
         type: "GET",
-        data: { data: $("#issued_to option:selected").attr("value") },
+        data: { 
+            data: data.id 
+        },
         url: baseUrl("eforms/accountability/get_file_under"),
         dataType: "json",
         success: function (json) {
@@ -40,6 +42,19 @@ $("#issued_to").on("select2:select", function () {
         }
     });
 });
+
+// $("#issued_to").on("select2:select", function () {
+//     $.ajax({
+//         type: "GET",
+//         data: { data: $("#issued_to option:selected").attr("value") },
+//         url: baseUrl("eforms/accountability/get_file_under"),
+//         dataType: "json",
+//         success: function (json) {
+//             $("#company_to").val(json.company);
+//             $("#department_to").val(json.department);
+//         }
+//     });
+// });
 
 $("#contractor").select2({
     placeholder: 'Select. .',
@@ -54,12 +69,15 @@ $("#contractor").select2({
             return data;
         }
     }
-});
-
-$("#contractor").on("select2:select", function () {
+}).on("select2:select", function () {
     $("#company_to").val("CONTRACTOR");
     $("#department_to").val("CONTRACTOR");
 });
+
+// $("#contractor").on("select2:select", function () {
+//     $("#company_to").val("CONTRACTOR");
+//     $("#department_to").val("CONTRACTOR");
+// });
 
 $('#issue_dtpicker').datetimepicker({
     todayHighlight: true,
@@ -277,7 +295,7 @@ function clear_temp() {
     });
 }
 
-tblTemp.ajax.reload();
+// tblTemp.ajax.reload();
 
 //custom global search init
 $('#generalSearch').donetyping(function (callback) {
@@ -316,6 +334,12 @@ $("#tblassetcomp_edit").DataTable({
 });
 
 $("#tbladdedlist").DataTable({
+    dom: '<"toolbar">frtlip',
+    searching: false,
+    destroy: true
+});
+
+$("#tblmultiple").DataTable({
     dom: '<"toolbar">frtlip',
     searching: false,
     destroy: true
@@ -625,48 +649,50 @@ $("#multiple_search").on("click", function () {
     });
 });
 
-var tblMultiple = $("#tblmultiple").DataTable({
-    dom: '<"toolbar">frtlip',
-    serverSide: true,
-    processing: true,
-    destroy: true,
-    ajax: {
-        url: baseUrl("eforms/accountability/multiple_temp/"),
-        type: "post",
-        dataType: "json",
-        data: function (d) {
-            d.csrf_token = _csrf_hash,
-                d.search['value'] = search_val,
-                d.code = $("#vehicle").val()
-        }
-    },
-    searching: false,
-    columns: [
-        {
-            data: "assetacode", render: function (data, type, row, meta) {
-                return assetCode(row.assetacode, row.is_borrowed);
+function multiple_assets(){
+    var tblMultiple = $("#tblmultiple").DataTable({
+        dom: '<"toolbar">frtlip',
+        serverSide: true,
+        processing: true,
+        destroy: true,
+        ajax: {
+            url: baseUrl("eforms/accountability/multiple_temp/"),
+            type: "post",
+            dataType: "json",
+            data: function (d) {
+                d.csrf_token = _csrf_hash,
+                    d.search['value'] = search_val,
+                    d.code = $("#vehicle").val()
             }
         },
-        {
-            data: "name", render: function (data, type, row, meta) {
-                return assetName(row.name, row.is_borrowed);
-            }
-        },
-        { data: "assetname" },
-        { data: null, width: "5%", className: "text-center" },
-    ],
-    columnDefs: [
-        {
-            data: null,
-            defaultContent: "",
-            targets: -1,
-            orderable: false,
-            render: function (data, type, row, meta) {
-                return multipleDatatableActions(row.id, row.isComponent, row.assetacode, row.name);
+        searching: false,
+        columns: [
+            {
+                data: "assetacode", render: function (data, type, row, meta) {
+                    return assetCode(row.assetacode, row.is_borrowed);
+                }
             },
-        }
-    ]
-});
+            {
+                data: "name", render: function (data, type, row, meta) {
+                    return assetName(row.name, row.is_borrowed);
+                }
+            },
+            { data: "assetname" },
+            { data: null, width: "5%", className: "text-center" },
+        ],
+        columnDefs: [
+            {
+                data: null,
+                defaultContent: "",
+                targets: -1,
+                orderable: false,
+                render: function (data, type, row, meta) {
+                    return multipleDatatableActions(row.id, row.isComponent, row.assetacode, row.name);
+                },
+            }
+        ]
+    });
+}
 
 function multipleDatatableActions($id, $component, $assetcode, $name) {
     if ($id) {

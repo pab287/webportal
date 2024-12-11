@@ -52,14 +52,25 @@ var tblAccountability = $("#table-accountability").DataTable({
         },
         { data: "reference_no" },
         { data: "company" },
+        // {
+        //     data: "firstname", render: function (data, type, row, meta) {
+        //         return empName(row.display_name, row.contractor, row.is_contract)
+        //     }
+        // },
+        { data: "display_name" },
         {
-            data: "firstname", render: function (data, type, row, meta) {
-                return empName(row.display_name, row.contractor, row.is_contract)
-            }
-        },
-        {
-            data: "asset_name", render: function (data, type, row, meta) {
-                return itemName(row.vehicle_name, row.asset_name, row.type)
+            data: "asset_name", orderable: false,
+            render: function (data, type, row, meta) {
+                var html = ``;
+
+                if(row.type == 'Asset'){
+                    html = data ? row.asset_code + " | " + data : 'No Asset Name';
+                }else{
+                    html = data ? row.asset_code + " | " + data : 'No Vehicle Name';
+                }
+
+                return html;
+                // return itemName(row.vehicle_name, row.asset_name, row.type)
             }
         },
         {

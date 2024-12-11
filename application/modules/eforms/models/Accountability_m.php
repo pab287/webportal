@@ -31,16 +31,24 @@ class Accountability_m extends CI_Model {
         $rowCount = 0;
         $rowData = array();
 
-        if (!$search) {
-            $rowData = $this->get_all_post($query_builder, $advanced_search, $limit, $offset, $sortBy, $sortOrder, $status,$company);
-            $rowCount = $this->get_all_post_count($query_builder, $advanced_search, $status,$company);
-        }
+        $rowData = $this->get_all_items($query_builder, $advanced_search, $search, $limit, $offset, $sortBy, $sortOrder, $status, $company);;
+        $rowCount = $this->get_all_items_count($query_builder, $advanced_search, $search, $status,$company);
 
+        // if (!$search) {
+        //     $rowData = $this->get_all_postv1($query_builder, $advanced_search, $limit, $offset, $sortBy, $sortOrder, $status,$company);
+        //     $rowCount = $this->get_all_post_countv1($query_builder, $advanced_search, $status,$company);
+        // }
+
+        // if ($search) {
+        //     $rowData = $this->get_searched_itemv1($query_builder, $advanced_search, $search, $limit, $offset, $sortBy, $sortOrder, $status,$company);
+        //     $rowCount = $this->get_searched_item_countv1($query_builder, $advanced_search, $search, $status,$company);
+        //     $this->core_layout->setEventLog("Accountability Masterfile - Search ".$search." in masterfile.", "search", "success", "gcceforms", "user");
+        // }
+        
         if ($search) {
-            $rowData = $this->get_searched_item($query_builder, $advanced_search, $search, $limit, $offset, $sortBy, $sortOrder, $status,$company);
-            $rowCount = $this->get_searched_item_count($query_builder, $advanced_search, $search, $status,$company);
             $this->core_layout->setEventLog("Accountability Masterfile - Search ".$search." in masterfile.", "search", "success", "gcceforms", "user");
         }
+
         if($query_builder){
             $this->core_layout->setEventLog("Accountability Masterfile - Generate masterfile through query builder `{$query_builder}`.", "search", "success", "gcceforms", "user");
         }
@@ -54,7 +62,173 @@ class Accountability_m extends CI_Model {
         return $resultset;
     }
 
-    private function get_all_post($query_builder = null, $advanced_search, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $company=null) {
+    function get_all_items($query_builder, $advanced_search, $search, $limit, $offset, $sortBy, $sortOrder, $status,$company){
+        $date = date("Y-m-d", strtotime("-1 year"));
+        $data = array();
+
+        $sqlSelect = "a.id, a.status, a.reference_no, a.company, a.date_issued, a.is_contract, b.asset_id, b.asset_code, b.type, c.firstname, c.lastname, c.middlename, c.suffix, d.contractor";
+
+        $filterFields = array("a.status", "a.reference_no", "b.asset_code", "b.description", "b.amount", "b.type", "asset.name", "vehicle.name", "c.company_id", "c.department_id", "c.firstname", "c.lastname", "c.middlename", "c.suffix", "d.contractor", "d.company", "e.description");
+        
+        $this->db->select($sqlSelect);
+        $this->db->join('gcceforms.accountability_body b', 'b.accountability_id = a.id', 'left');
+        $this->db->join('gccmaster.tblemployees c', 'c.id = a.issued_to', 'left');
+        $this->db->join('gcchris.tblcontractor d', 'd.id = a.issued_to', 'left');
+        $this->db->join('gcchris.tblcompanies e', 'e.id = a.company', 'left');
+        
+        if ($search) {
+            $this->db->join('gccasset.assets asset', 'asset.id = b.asset_id AND b.type = "Asset"', 'left');
+            $this->db->join('gccasset.vehicles vehicle', 'vehicle.id = b.asset_id AND b.type = "Vehicle"', 'left');
+        }
+
+        $this->db->from('gcceforms.accountability a');
+
+        $this->db->where_not_in('a.status', array('Released', 'Cancelled'));
+        $this->db->where("DATE(a.date_issued) >= '$date'", NULL, FALSE);
+
+        if ($query_builder) { 
+            $this->db->where($query_builder); 
+        }
+
+        if (isset($search) && $search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if($key == 0){
+                    $this->db->like($field, $search, "both");
+                }else{
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+
+        if($status){
+            $this->db->where('a.status', $status);
+        }
+
+        if (isset($advanced_search) && $advanced_search) {
+            if(isset($advanced_search['company']) && $advanced_search['company']){
+                $this->db->where("a.company", $advanced_search['company']);
+            }
+            if(isset($advanced_search["company"])){
+                unset($advanced_search['company']);
+            }
+
+            $advanced_search['a.reference_no'] = $advanced_search['reference_no'];
+            unset($advanced_search['reference_no']);
+
+            $advanced_search['a.status'] = $advanced_search['status'];
+            unset($advanced_search['status']);
+
+            $advanced_search['b.description'] = $advanced_search['description'];
+            unset($advanced_search['description']);
+
+            $this->db->like($advanced_search, "both");
+        }
+
+        if ($limit != -1) { 
+            $this->db->limit($limit, $offset); 
+        }
+
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $arrData = array();
+
+            foreach ($query->result() as $key => $rs) {
+                $rs->company = strtoupper(is_numeric($rs->company) ? $this->getCompany($rs->company) : $rs->company);
+                $rs->asset_name = $this->getAssetVehiclename($rs->asset_id, $rs->type);
+
+                $tempRs = (array)$rs;
+                $fullname = $this->core_layout->getDisplayName($tempRs);
+                $tempFullname = (object)$fullname;
+
+                $tempname = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                $rs->display_name = $rs->is_contract ? $rs->contractor : $tempname;
+
+                $arrData[$key] = $rs;
+            }
+
+            foreach ($arrData as $k => $v) { 
+                $data[] = $v; 
+            }
+        }
+
+        return $data;
+    }
+
+    function get_all_items_count($query_builder, $advanced_search, $search, $status,$company){
+        $date = date("Y-m-d", strtotime("-1 year"));
+        $sqlSelect = "a.id, a.status, a.reference_no, a.company, a.date_issued, a.is_contract, b.asset_id, b.asset_code, b.type, c.firstname, c.lastname, c.middlename, c.suffix, d.contractor";
+
+        $filterFields = array("a.status", "a.reference_no", "b.asset_code", "b.description", "b.amount", "b.type", "asset.name", "vehicle.name", "c.company_id", "c.department_id", "c.firstname", "c.lastname", "c.middlename", "c.suffix", "d.contractor", "d.company", "e.description");
+
+        $this->db->select($sqlSelect);
+        $this->db->join('gcceforms.accountability_body b', 'b.accountability_id = a.id', 'left');
+        $this->db->join('gccmaster.tblemployees c', 'c.id = a.issued_to', 'left');
+        $this->db->join('gcchris.tblcontractor d', 'd.id = a.issued_to', 'left');
+        $this->db->join('gcchris.tblcompanies e', 'e.id = a.company', 'left');
+        
+        if ($search) {
+            $this->db->join('gccasset.assets asset', 'asset.id = b.asset_id AND b.type = "Asset"', 'left');
+            $this->db->join('gccasset.vehicles vehicle', 'vehicle.id = b.asset_id AND b.type = "Vehicle"', 'left');
+        }
+
+        $this->db->from('gcceforms.accountability a');
+
+        $this->db->where_not_in('a.status', array('Released', 'Cancelled'));
+        $this->db->where("DATE(a.date_issued) >= '$date'", NULL, FALSE);
+
+        if ($query_builder) { 
+            $this->db->where($query_builder); 
+        }
+
+        if (isset($search) && $search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if($key == 0){
+                    $this->db->like($field, $search, "both");
+                }else{
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+
+        if ($status) {
+            $this->db->where('a.status', $status);
+        }
+
+        if (isset($advanced_search) && $advanced_search) {
+
+            if (isset($advanced_search['company']) && $advanced_search['company']) {
+                $this->db->where("a.company", $advanced_search['company']);
+            }
+            
+            if (isset($advanced_search["company"])) {
+                unset($advanced_search['company']);
+            }
+
+            $advanced_search['a.reference_no'] = $advanced_search['reference_no'];
+            unset($advanced_search['reference_no']);
+
+            $advanced_search['a.status'] = $advanced_search['status'];
+            unset($advanced_search['status']);
+
+            $advanced_search['b.description'] = $advanced_search['description'];
+            unset($advanced_search['description']);
+
+            $this->db->like($advanced_search, "both");
+        }
+
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
+    /** v1 */
+    private function get_all_postv1($query_builder = null, $advanced_search, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $company=null) {
         $date = date("Y-m-d", strtotime("-2 year"));
         $sqlSelect = "a.id, UPPER(a.status), a.reference_no, a.company, c.firstname, UPPER(asset.name) as asset_name, a.date_issued, a.*, 
             b.asset_code, UPPER(b.description), b.type, b.amount,  vehicle.name as vehicle_name, c.company_id as temp_company, 
@@ -148,7 +322,7 @@ class Accountability_m extends CI_Model {
         }
     }
 
-    private function get_all_post_count($query_builder = null, $advanced_search, $status = null) {
+    private function get_all_post_countv1($query_builder = null, $advanced_search, $status = null) {
         $date = date("Y-m-d", strtotime("-1 year"));
         $this->db->from('gcceforms.accountability a');
         $this->db->join('gcceforms.accountability_body b', 'b.accountability_id = a.id', 'left');
@@ -190,7 +364,7 @@ class Accountability_m extends CI_Model {
         return $query->num_rows();
     }
 
-    private function get_searched_item($query_builder = null, $advanced_search, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null) {
+    private function get_searched_itemv1($query_builder = null, $advanced_search, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null) {
         $date = date("Y-m-d", strtotime("-1 year"));
         if ($search) {
             $sqlSelect = "a.id, UPPER(a.status), a.reference_no, a.company, c.firstname, UPPER(asset.name) as asset_name, a.date_issued, a.*, 
@@ -293,7 +467,7 @@ class Accountability_m extends CI_Model {
         }
     }
 
-    private function get_searched_item_count($query_builder = null, $advanced_search, $search = null, $status = null) {
+    private function get_searched_item_countv1($query_builder = null, $advanced_search, $search = null, $status = null) {
         $date = date("Y-m-d", strtotime("-1 year"));
         $rowCount = 0;
         if ($search) {
@@ -363,6 +537,7 @@ class Accountability_m extends CI_Model {
         }
         return $rowCount;
     }
+    /** v1 */
 
     /** function to display list of archived accountabilities */
     function archiveList() {
@@ -377,16 +552,20 @@ class Accountability_m extends CI_Model {
         $advanced_search = (isset($post["advanced_search"]) && $post["advanced_search"]) ? $post["advanced_search"] : null;
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql']) ? $post["query_builder"]['sql'] : array();
 
-        $rowCount = 0;
-        $rowData = array();
-        if (!$search) {  // if not been search
-            $rowData = $this->get_archive_post($advanced_search, $query_builder, $limit, $offset, $sortBy, $sortOrder);
-            $rowCount = $this->get_archive_post_count($advanced_search, $query_builder);
-        }
+        $rowData = $this->get_all_archived_items($advanced_search, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder);
+        $rowCount = $this->get_all_archived_items_count($advanced_search, $query_builder, $search);
+        // if (!$search) {  // if not been search
+        //     $rowData = $this->get_archive_postv1($advanced_search, $query_builder, $limit, $offset, $sortBy, $sortOrder);
+        //     $rowCount = $this->get_archive_post_countv1($advanced_search, $query_builder);
+        // }
         
-        if ($search) {  // if been search 
-            $rowData = $this->get_archive_item($advanced_search, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder);
-            $rowCount = $this->get_archive_item_count($advanced_search, $query_builder, $search);
+        // if ($search) {  // if been search 
+        //     $rowData = $this->get_archive_itemv1($advanced_search, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder);
+        //     $rowCount = $this->get_archive_item_countv1($advanced_search, $query_builder, $search);
+        //     $this->core_layout->setEventLog("Archive Accountability Masterfile - Search ".$search." in masterfile datatable.","search", "success", "gcceforms", "user");
+        // }
+
+        if ($search) {
             $this->core_layout->setEventLog("Archive Accountability Masterfile - Search ".$search." in masterfile datatable.","search", "success", "gcceforms", "user");
         }
 
@@ -397,8 +576,151 @@ class Accountability_m extends CI_Model {
         return $resultset;
     }
 
+    private function get_all_archived_items($advanced_search, $query_builder = null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder){
+        $data = array();
+        $date = date("Y-m-d", strtotime("-1 year"));
+
+        $filterFields = array("a.status", "a.reference_no", "b.asset_code", "b.description", "asset.name", "vehicle.name", "c.company_id", "c.department_id", "c.firstname", "c.lastname", "c.middlename", "c.suffix", "d.contractor");
+
+        $sql = "a.id, a.status, a.reference_no, a.is_contract, a.company, a.date_issued, b.asset_id, b.type, c.firstname, c.lastname, c.middlename, c.suffix, d.contractor";
+        $this->db->select($sql);
+        $this->db->join('gcceforms.accountability_body b', 'b.accountability_id = a.id', 'left');
+        $this->db->join('gccmaster.tblemployees c', 'c.id = a.issued_to', 'left');
+        $this->db->join('gcchris.tblcontractor d', 'd.id = a.issued_to', 'left');
+
+        if (isset($search) && $search) {
+            $this->db->join('gccasset.assets asset', 'asset.id = b.asset_id AND b.type = "Asset"', 'left');
+            $this->db->join('gccasset.vehicles vehicle', 'vehicle.id = b.asset_id AND b.type = "Vehicle"', 'left');
+        }
+
+        $this->db->from('gcceforms.accountability a');
+
+        $this->db->group_start();
+            $this->db->where('a.status', 'Cancelled');
+
+            if ($search) {
+                $this->db->or_where("DATE(a.date_issued) <= '$date'", NULL, FALSE);
+            }
+        $this->db->group_end();
+
+        if ($query_builder) {
+            $this->db->where($query_builder);
+        }
+
+        if ($limit != -1) {
+            $this->db->limit($limit, $offset);
+        }
+
+        if ($search) {
+            $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+            $this->db->group_end();
+        }
+
+        if (isset($advanced_search)) {
+            $advanced_search['a.status'] = $advanced_search['status'];
+            unset($advanced_search['status']);
+
+            $advanced_search['a.company'] = $advanced_search['company'];
+            unset($advanced_search['company']);
+
+            $advanced_search['b.description'] = $advanced_search['description'];
+            unset($advanced_search['description']);
+
+            $this->db->like($advanced_search, "both");
+        }
+
+        $i = $sortOrder[0]['column'];
+
+        if ($sortBy[$i]['data'] == "firstname") {
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            $this->db->order_by("d.contractor", $sortOrder[0]['dir']);
+        } else {
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        }
+
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $arrData = array();
+
+            foreach ($query->result() as $key => $rs) {
+                $rs->company = is_numeric($rs->company) ? $this->getCompany($rs->company) : $rs->company;
+                $rs->asset_name = $this->getAssetVehiclename($rs->asset_id, $rs->type);
+                
+                $tempRs = (array)$rs;
+                $fullname = $this->core_layout->getDisplayName($tempRs);
+                $tempFullname = (object)$fullname;
+
+                $tempName = isset($tempFullname->display_name_1) && $tempFullname->display_name_1 ? $tempFullname->display_name_1 : "No Assigned Name";
+                $rs->display_name = $rs->is_contract ? $rs->contractor : $tempName;
+                // $rs->display_name = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+
+                $arrData[$key] = $rs;
+            }
+
+            foreach ($arrData as $k => $v) {
+                $data[] = $v;
+            }
+        }
+
+        return $data;
+    }
+
+    private function get_all_archived_items_count($advanced_search, $query_builder = null, $search = null){
+        $date = date("Y-m-d", strtotime("-1 year"));
+        $filterFields = array("a.status", "a.reference_no", "b.asset_code", "b.description", "asset.name", "vehicle.name", "c.company_id", "c.department_id", "c.firstname", "c.lastname", "c.middlename", "c.suffix", "d.contractor");
+
+        $sql = "a.id, a.status, a.reference_no, a.is_contract, a.company, a.date_issued, b.type, c.firstname, c.lastname, c.middlename, c.suffix, d.contractor";
+        $this->db->select($sql);
+        $this->db->join('gcceforms.accountability_body b', 'b.accountability_id = a.id', 'left');
+        $this->db->join('gccmaster.tblemployees c', 'c.id = a.issued_to', 'left');
+        $this->db->join('gcchris.tblcontractor d', 'd.id = a.issued_to', 'left');
+
+        if (isset($search) && $search) {
+            $this->db->join('gccasset.assets asset', 'asset.id = b.asset_id AND b.type = "Asset"', 'left');
+            $this->db->join('gccasset.vehicles vehicle', 'vehicle.id = b.asset_id AND b.type = "Vehicle"', 'left');
+        }
+
+        $this->db->from('gcceforms.accountability a');
+
+        $this->db->group_start();
+            $this->db->where('a.status', 'Cancelled');
+
+            if($search){
+                $this->db->or_where("DATE(a.date_issued) <= '$date'", NULL, FALSE);
+            }
+        $this->db->group_end();
+
+        if ($query_builder) {
+            $this->db->where($query_builder);
+        }
+
+        if (isset($advanced_search)) {
+            $advanced_search['a.status'] = $advanced_search['status'];
+            unset($advanced_search['status']);
+
+            $advanced_search['a.company'] = $advanced_search['company'];
+            unset($advanced_search['company']);
+
+            $advanced_search['b.description'] = $advanced_search['description'];
+            unset($advanced_search['description']);
+
+            $this->db->like($advanced_search, "both");
+        }
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
+    /** v1 */
     /** function to retrieve list of archived accountabilities */
-    private function get_archive_post($advanced_search, $query_builder = null, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
+    private function get_archive_postv1($advanced_search, $query_builder = null, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
         // $date = date("Y-m-d", strtotime("-1 year"));
         $this->db->select("a.*, b.asset_code, b.description, b.type, b.amount, asset.name as asset_name, vehicle.name as vehicle_name, c.company_id as temp_company, c.department_id as temp_department, c.firstname, c.lastname, c.middlename, c.suffix, d.contractor");
         $this->db->from('gcceforms.accountability a');
@@ -472,7 +794,7 @@ class Accountability_m extends CI_Model {
     }
 
     /** function to display list of archived accountabilities */
-    private function get_archive_post_count($advanced_search, $query_builder = null) {
+    private function get_archive_post_countv1($advanced_search, $query_builder = null) {
         // $date = date("Y-m-d", strtotime("-1 year"));
         $this->db->from('gcceforms.accountability a');
         $this->db->join('gcceforms.accountability_body b', 'b.accountability_id = a.id', 'left');
@@ -503,8 +825,7 @@ class Accountability_m extends CI_Model {
         return $query->num_rows();
     }
 
-    private function get_archive_item($advanced_search, $query_builder = null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
-        $date = date("Y-m-d", strtotime("-1 year"));
+    private function get_archive_itemv1($advanced_search, $query_builder = null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
         if ($search) {
             $filterFields = array("a.status", "a.reference_no", "b.asset_code", "b.description", "asset.name", "vehicle.name", "c.company_id", "c.department_id", "c.firstname", "c.lastname", "c.middlename", "c.suffix", "d.contractor");
             $this->db->select("a.*, b.asset_code, b.description, b.type, b.amount, b.type, asset.name as asset_name, vehicle.name as vehicle_name, c.company_id as temp_company, c.department_id as temp_department, c.firstname, c.lastname, c.middlename, c.suffix, d.contractor");
@@ -591,7 +912,7 @@ class Accountability_m extends CI_Model {
         }
     }
 
-    private function get_archive_item_count($advanced_search, $query_builder = null, $search = null) {
+    private function get_archive_item_countv1($advanced_search, $query_builder = null, $search = null) {
         $date = date("Y-m-d", strtotime("-1 year"));
         $rowCount = 0;
         if ($search) {
@@ -635,15 +956,32 @@ class Accountability_m extends CI_Model {
         }
         return $rowCount;
     }
+    /** v1 */
 
     public function issuedToLookup() {
         $get = $this->input->get();
         $resultarray = array();
-        if (isset($get['q'])) {
-            $query = $this->db->query("SELECT id, firstname, lastname, middlename, suffix FROM gccmaster.tblemployees WHERE employee_status='Active' AND (firstname LIKE '%{$get['q']}%' OR lastname LIKE '%{$get['q']}%') ORDER BY firstname ASC LIMIT 10");
-        } else {
-            $query = $this->db->query("SELECT id, firstname, lastname, middlename, suffix FROM gccmaster.tblemployees WHERE employee_status='Active' ORDER BY firstname ASC LIMIT 10");
+        // if (isset($get['q'])) {
+        //     $query = $this->db->query("SELECT id, firstname, lastname, middlename, suffix FROM gccmaster.tblemployees WHERE employee_status='Active' AND (firstname LIKE '%{$get['q']}%' OR lastname LIKE '%{$get['q']}%') ORDER BY firstname ASC LIMIT 10");
+        // } else {
+        //     $query = $this->db->query("SELECT id, firstname, lastname, middlename, suffix FROM gccmaster.tblemployees WHERE employee_status='Active' ORDER BY firstname ASC LIMIT 10");
+        // }
+        $sql = "id, firstname, lastname, middlename, suffix";
+        $this->db->select($sql);
+        $this->db->where('employee_status', 'Active');
+
+        if (isset($get['q']) && $get['q']) {
+            $this->db->group_start();
+                $this->db->like('firstname', $get['q'], 'both');
+                $this->db->or_like('lastname', $get['q'], 'both');
+            $this->db->group_end();
         }
+
+        $this->db->order_by('firstname', 'ASC');
+        $this->db->limit(10);
+        $this->db->from('gccmaster.tblemployees');
+
+        $query = $this->db->get();
 
         if ($query->num_rows() > 0) {
             foreach ($query->result_array() as $_query) {
@@ -665,7 +1003,13 @@ class Accountability_m extends CI_Model {
         $get = $this->input->get();
         $id = $get['data'];
         $resultarray = array();
-        $query = $this->db->query("SELECT id, company_id, department_id, position FROM gccmaster.tblemployees WHERE id=$id");
+        // $query = $this->db->query("SELECT id, company_id, department_id, position FROM gccmaster.tblemployees WHERE id=$id");
+
+        $this->db->select('id, company_id, department_id, position');
+        $this->db->where('id', $id);
+        $this->db->from('gccmaster.tblemployees');
+        $query = $this->db->get();
+
         if ($query->num_rows() > 0) {
             $row = $query->row_array();
             $resultarray["company"] = $row["company_id"];
@@ -678,11 +1022,22 @@ class Accountability_m extends CI_Model {
     public function contractorLookup() {
         $get = $this->input->get();
         $resultarray = array();
-        if (isset($get['q'])) {
-            $query = $this->db->query("SELECT id, contractor FROM gcchris.tblcontractor WHERE contractor LIKE '%{$get['q']}%' ORDER BY contractor ASC LIMIT 10");
-        } else {
-            $query = $this->db->query("SELECT id, contractor FROM gcchris.tblcontractor ORDER BY contractor ASC LIMIT 10");
+        // if (isset($get['q'])) {
+        //     $query = $this->db->query("SELECT id, contractor FROM gcchris.tblcontractor WHERE contractor LIKE '%{$get['q']}%' ORDER BY contractor ASC LIMIT 10");
+        // } else {
+        //     $query = $this->db->query("SELECT id, contractor FROM gcchris.tblcontractor ORDER BY contractor ASC LIMIT 10");
+        // }
+
+        $this->db->select("id, contractor");
+
+        if (isset($get['q']) && $get['q']) {
+            $this->db->like('contractor', $get['q'], 'both');
         }
+
+        $this->db->order_by('contractor', 'ASC');
+        $this->db->limit(10);
+        $this->db->from('gcchris.tblcontractor');
+        $query = $this->db->get();
 
         if ($query->num_rows() > 0) {
             foreach ($query->result_array() as $_query) {
@@ -705,17 +1060,17 @@ class Accountability_m extends CI_Model {
         $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
 
-        $rowCount = 0;
-        $rowData = array();
-        if (!$search) {
-            $rowData = $this->get_temp_post($limit, $offset, $sortBy, $sortOrder);
-            $rowCount = $this->get_temp_post_count();
-        }
+        $rowData = $this->get_temp_items($search, $limit, $offset, $sortBy, $sortOrder);
+        $rowCount = $this->get_temp_items_count($search);
+        // if (!$search) {
+        //     $rowData = $this->get_temp_postv1($limit, $offset, $sortBy, $sortOrder);
+        //     $rowCount = $this->get_temp_post_countv1();
+        // }
 
-        if ($search) {
-            $rowData = $this->get_temp_searched_item($search, $limit, $offset, $sortBy, $sortOrder);
-            $rowCount = $this->get_temp_searched_item_count($search);
-        }
+        // if ($search) {
+        //     $rowData = $this->get_temp_searched_itemv1($search, $limit, $offset, $sortBy, $sortOrder);
+        //     $rowCount = $this->get_temp_searched_item_countv1($search);
+        // }
 
 
         $resultset["recordsTotal"] = $rowCount;
@@ -725,7 +1080,168 @@ class Accountability_m extends CI_Model {
         return $resultset;
     }
 
-    private function get_temp_post($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC") {
+    function get_temp_items($search = null, $limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC"){
+        $data = array();
+        $ndata = array();
+        $user_id = $this->user_data;
+
+        $this->db->from('gcceforms.accountability_body_temp');
+        $this->db->where('user_id', $user_id['emp_id']);
+
+        if ($limit != -1) {
+            $this->db->limit($limit, $offset);
+        }
+
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        $query = $this->db->get();
+
+        $this->db->reset_query();
+
+        $arrData = array();
+        if ($query->num_rows() > 0) {
+            foreach($query->result() as $index => $rs){
+                $ndata[$index] = (array) $rs;
+
+                $type = (isset($rs->type) && $rs->type) ? $rs->type : "Consumable";
+                $assetId = $rs->asset_id;
+                if ($assetId) {
+                    if (strtolower($type) == 'asset') {
+                        $assetSql = "id, name, brand, modelno, serialno, isComponent";
+                        $asset_query = $this->db->select($assetSql)->get_where('gccasset.assets', array('id' => $assetId));
+                        if ($asset_query->num_rows() > 0) {
+                            $asset_row = $asset_query->row();
+
+                            $this->db->reset_query();
+
+                            $rowAssetName = (isset($asset_row->name) && $asset_row->name) ? $asset_row->name : "No asset name";
+                            $rowBrand = (isset($asset_row->brand) && $asset_row->brand) ? $asset_row->brand : "---";
+                            $rowModel = (isset($asset_row->modelno) && $asset_row->modelno) ? $asset_row->modelno : "---";
+                            $rowSerial = (isset($asset_row->serialno) && $asset_row->serialno) ? $asset_row->serialno : "---";
+
+                            $ndata[$index]["name"] = $rowAssetName;
+                            $ndata[$index]["brand"] = (isset($ndata[$index]["brand"]) && $ndata[$index]["brand"]) ? $ndata[$index]["brand"] : $rowBrand;
+                            $ndata[$index]["modelno"] = (isset($ndata[$index]["modelno"]) && $ndata[$index]["modelno"]) ? $ndata[$index]["modelno"] : $rowModel;
+                            $ndata[$index]["serialno"] = (isset($ndata[$index]["serialno"]) && $ndata[$index]["serialno"]) ? $ndata[$index]["serialno"] : $rowSerial;
+                            $ndata[$index]["is_component"] = (isset($row->isComponent) && $row->isComponent) ? true : false;
+                            $ndata[$index]['desc'] = $this->assetDesc($assetId, $rs->type);
+
+                            $this->db->select("id, company_code, name, assetacode, assetname, brand, modelno, serialno, remarks, purchaseprice");
+                            $this->db->from('gccasset.assets');
+                            $this->db->where('mother_asset', $asset_row->id);
+                            $this->db->where('isComponent', 1);
+                            $this->db->where_not_in('status', array('junk', 'archived'));
+                            
+                            if ($sortOrder[0]['column'] != 0) {
+                                $this->db->order_by($sortOrder[0]['column'], $sortOrder[0]['dir']);
+                            } else {
+                                $this->db->order_by("id", "DESC");
+                            }
+                            $query3 = $this->db->get();
+
+                            $this->db->reset_query();
+
+                            if ($query3->num_rows() > 0) {
+                                $compArrData = array();
+
+                                foreach ($query3->result_array() as $rr) {
+                                    $rr["name"] = (isset($rr["name"]) && $rr["name"]) ? $rr["name"] : "No asset name";
+                                    $rr["purchaseprice"] = number_format($rr["purchaseprice"], 2, ".", "");
+                                    $rr["quantity"] = 1;
+                                    $ndata[$index]['components'][] = $rr;
+                                }
+                            }
+
+                            $rs->amount = number_format($rs->amount, 2);
+                            $rs->desc = $this->assetDesc($assetId, $rs->type);
+                            $arrData[$index] = $rs;
+                        }
+                    }
+
+                    if (strtolower($type) == 'vehicle') {
+                        $assetSql = "id, name, brand, gen_code, engineno, plateno, chasisno, isCompo";
+                        $vehicle_query = $this->db->select($assetSql)->get_where('gccasset.assets', array('id' => $assetId));
+
+                        if ($vehicle_query->num_rows() > 0) {
+                            $row = $query2->row();
+
+                            $this->db->reset_query();
+
+                            $rowAssetName = (isset($row->name) && $row->name) ? $row->name : "No asset name";
+                            $rowGenCode = (isset($row->gen_code) && $row->gen_code) ? $row->gen_code : "No Asset Code";
+                            $rowBrand = (isset($row->brand) && $row->brand) ? $row->brand : "---";
+                            $rowPlateNo = (isset($row->plateno) && $row->plateno) ? $row->plateno : "---";
+                            $rowChasisNo = (isset($row->chasisno) && $row->chasisno) ? $row->chasisno : "---";
+                            $rowEngineNo = (isset($row->engineno) && $row->engineno) ? $row->engineno : "---";
+
+                            $ndata[$index]["name"] = $rowAssetName;
+                            $ndata[$index]["asset_code"] = (isset($ndata[$index]["asset_code"]) && $ndata[$index]["asset_code"]) ? $ndata[$index]["asset_code"] : $rowGenCode;
+                            $ndata[$index]["is_component"] = (isset($row->isCompo) && $row->isCompo) ? true : false;
+                            $ndata[$index]['desc'] = $this->assetDesc($assetId, $rs->type);
+
+                            $this->db->select('b.id as component_id, b.remarks, b.isExcluded as exclude, a.description, a.id, a.name, a.gen_code, a.description, a.purchaseprice');
+                            $this->db->from('gccasset.vehicles a');
+                            $this->db->join('gccasset.vehicles_components b', 'b.asset_id = a.id', 'left');
+                            $this->db->where('b.parent_id', $row->id);
+                            $this->db->limit($limit, $offset);
+
+                            $this->db->group_start();
+                                foreach ($filterFields as $key => $field) {
+                                    if ($key == 0) {
+                                        $this->db->like($field, $search, "both");
+                                    } else {
+                                        $this->db->or_like($field, $search, "both");
+                                    }
+                                }
+                            $this->db->group_end();
+
+                            if ($sortOrder[0]['column'] != 0) {
+                                $this->db->order_by($sortOrder[0]['column'], $sortOrder[0]['dir']);
+                            } else {
+                                $this->db->order_by("a.id", "DESC");
+                            }
+
+                            $query3 = $this->db->get();
+                            if ($query3->num_rows() > 0) {
+                                foreach ($query3->result() as $rr) {
+                                    $rr["name"] = (isset($rr["name"]) && $rr["name"]) ? $rr["name"] : "No asset name";
+                                    $rr["assetacode"] = (isset($rr["gen_code"]) && $rr["gen_code"]) ? $rr["gen_code"] : "No Asset Code";
+                                    $rr["assetname"] = (isset($rr["description"]) && $rr["description"]) ? $rr["description"] : "No Asset Description";
+                                    $rr["purchaseprice"] = number_format($rr["purchaseprice"], 2, ".", "");
+                                    $rr["quantity"] = 1;
+                                    $ndata[$index]['components'][] = $rr;
+                                }
+                            }
+
+                            $rs->amount = number_format($rs->amount, 2);
+                            $rs->desc = $this->assetDesc($rs->asset_id, $rs->type);
+                            $arrData[$index] = $rs;
+                        }
+                    }
+                }
+            }
+
+            foreach ($arrData as $k => $v) {
+                $data[] = $v;
+            }
+
+            if($ndata){
+                $data = $ndata;
+            }
+        }
+
+        return $data;
+    }
+    function get_temp_items_count($search = null){
+        $user_id = $this->user_data;
+        $this->db->from('gcceforms.accountability_body_temp');
+        $this->db->where('user_id', $user_id['emp_id']);
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
+    /** v1 */
+    private function get_temp_postv1($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC") {
         $user_id = $this->user_data;
         $this->db->select("a.asset_code, a.description, a.remarks, a.amount, a.*");
         $this->db->from('gcceforms.accountability_body_temp a');
@@ -843,7 +1359,7 @@ class Accountability_m extends CI_Model {
         return $arrData;
     }
 
-    private function get_temp_post_count() {
+    private function get_temp_post_countv1() {
         $user_id = $this->user_data;
         $this->db->from('gcceforms.accountability_body_temp');
         $this->db->where('user_id', $user_id['emp_id']);
@@ -851,7 +1367,7 @@ class Accountability_m extends CI_Model {
         return $query->num_rows();
     }
 
-    private function get_temp_searched_item($search = null, $limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC") {
+    private function get_temp_searched_itemv1($search = null, $limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC") {
         if ($search) {
             $filterFields = array("a.status", "a.reference_no", "b.asset_code", "b.description", "b.amount", "b.type", "asset.name", "vehicle.name", "c.company_id", "c.department_id");
             $user_id = $this->user_data;
@@ -981,7 +1497,7 @@ class Accountability_m extends CI_Model {
         }
     }
 
-    private function get_temp_searched_item_count($search = null) {
+    private function get_temp_searched_item_countv1($search = null) {
         $rowCount = 0;
         if ($search) {
             $filterFields = array("a.status", "a.reference_no", "b.asset_code", "b.description", "b.amount", "b.type", "asset.name", "vehicle.name", "c.company_id", "c.department_id");
@@ -1007,6 +1523,7 @@ class Accountability_m extends CI_Model {
         }
         return $rowCount;
     }
+    /** v1 */
 
     function temp_details($id) {
         $this->db->from('gcceforms.accountability_body_temp');
@@ -1025,17 +1542,17 @@ class Accountability_m extends CI_Model {
         $sortBy = (isset($post["sort"]) && $post["sort"]) ? $post["sort"] : null;
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : "desc";
 
-        $rowCount = 0;
-        $rowData = array();
-        if (!$search) {
-            $rowData = $this->get_new_asset_temp_post($code, $limit, $offset, $sortBy, $sortOrder);
-            $rowCount = $this->get_new_asset_temp_post_count($code);
-        }
+        // $rowCount = 0;
+        // $rowData = array();
+        $rowData = $this->get_new_asset_temp_post($code, $limit, $offset, $sortBy, $sortOrder);
+        $rowCount = $this->get_new_asset_temp_post_count($code);
+        // if (!$search) {
+        // }
 
-        if ($search) {
-            // $rowData = $this->get_searched_new_asset_temp($search, $limit, $offset, $sortBy, $sortOrder);
-            // $rowCount = $this->get_searched_new_asset_temp_count($search);
-        }
+        // if ($search) {
+        //     $rowData = $this->get_searched_new_asset_temp($search, $limit, $offset, $sortBy, $sortOrder);
+        //     $rowCount = $this->get_searched_new_asset_temp_count($search);
+        // }
 
         $totalNotFiltered = $rowCount;
 
@@ -1047,6 +1564,8 @@ class Accountability_m extends CI_Model {
     }
 
     private function get_new_asset_temp_post($code, $limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC") {
+        $data = array();
+
         $accountability_id = $this->input->post("accountability_id");
         $this->db->select("GROUP_CONCAT(a.asset_id) id");
         $this->db->where('a.accountability_id', $accountability_id);
@@ -1065,6 +1584,7 @@ class Accountability_m extends CI_Model {
         $this->db->where('a.status !=', '');
         $this->db->where("a.is_borrowed", "0");
         $this->db->where_not_in("a.id", $asset_ids_array);
+
         if ($code) {
             $this->db->group_start();
             $this->db->like('a.assetacode', $code);
@@ -1079,6 +1599,7 @@ class Accountability_m extends CI_Model {
         } else {
             $this->db->order_by("a.id", "DESC");
         }
+
         $query = $this->db->get();
 
         if ($query->num_rows() > 0) {
@@ -1086,14 +1607,13 @@ class Accountability_m extends CI_Model {
             foreach ($query->result() as $key => $rs) {
                 $arrData[$key] = $rs;
             }
-            $data = array();
+
             foreach ($arrData as $k => $v) {
                 $data[] = $v;
             }
-            return $data;
-        } else {
-            return array();
         }
+
+        return $data;
     }
 
     private function get_new_asset_temp_post_count($code) {
@@ -1147,6 +1667,8 @@ class Accountability_m extends CI_Model {
     }
 
     private function get_asset_comp_temp_post($code, $limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC") {
+        $data = array();
+        
         $this->db->select("a.*, b.id as temp_id");
         $this->db->from("gccasset.assets a");
         $this->db->join("gcceforms.accountability_body_temp b", "b.asset_id = a.id AND b.type='Asset'", "left");
@@ -1156,25 +1678,27 @@ class Accountability_m extends CI_Model {
         $this->db->where("a.status !=", "archived");
         $this->db->where("a.mother_asset", $code);
         $this->db->limit($limit, $offset);
+
         if ($sortBy) {
             $this->db->order_by($sortBy, $sortOrder);
         } else {
             $this->db->order_by("a.id", "DESC");
         }
+
         $query = $this->db->get();
+
         if ($query->num_rows() > 0) {
             $arrData = array();
             foreach ($query->result() as $key => $rs) {
                 $arrData[$key] = $rs;
             }
-            $data = array();
+
             foreach ($arrData as $k => $v) {
                 $data[] = $v;
             }
-            return $data;
-        } else {
-            return array();
         }
+
+        return $data;
     }
 
     private function get_asset_comp_temp_post_count($code) {
@@ -1215,6 +1739,8 @@ class Accountability_m extends CI_Model {
     }
 
     private function get_new_vehicle_temp_post($code, $limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC") {
+        $data = array();
+        
         $accountability_id = $this->input->post("accountability_id");
         $this->db->select("GROUP_CONCAT(a.asset_id) id");
         $this->db->where('a.accountability_id', $accountability_id);
@@ -1267,14 +1793,13 @@ class Accountability_m extends CI_Model {
             foreach ($query->result() as $key => $rs) {
                 $arrData[$key] = $rs;
             }
-            $data = array();
+
             foreach ($arrData as $k => $v) {
                 $data[] = $v;
             }
-            return $data;
-        } else {
-            return array();
         }
+
+        return $data;
     }
 
     private function get_new_vehicle_temp_post_count($code) {
@@ -1405,6 +1930,8 @@ class Accountability_m extends CI_Model {
     }
 
     private function get_vehicle_comp_temp_post($code, $limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC") {
+        $data = array();
+        
         $this->db->select('a.*');
         $this->db->from('gccasset.vehicles a');
         $this->db->join("gcceforms.accountability_body_temp b", "b.asset_id = a.id AND b.type='Vehicle'", "left");
@@ -1417,25 +1944,27 @@ class Accountability_m extends CI_Model {
         $this->db->where('a.is_borrowed', 0);
         $this->db->where("a.motherID", $code);
         $this->db->limit($limit, $offset);
+        
         if ($sortBy) {
             $this->db->order_by($sortBy, $sortOrder);
         } else {
             $this->db->order_by("a.id", "DESC");
         }
+
         $query = $this->db->get();
+
         if ($query->num_rows() > 0) {
             $arrData = array();
             foreach ($query->result() as $key => $rs) {
                 $arrData[$key] = $rs;
             }
-            $data = array();
+
             foreach ($arrData as $k => $v) {
                 $data[] = $v;
             }
-            return $data;
-        } else {
-            return array();
         }
+
+        return $data;
     }
 
     private function get_vehicle_comp_temp_post_count($code) {
@@ -1474,6 +2003,8 @@ class Accountability_m extends CI_Model {
     }
 
     private function get_multiple_temp_post($code, $limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC") {
+        $data = array();
+        
         $accountability_id = $this->input->post("accountability_id");
         $this->db->select("GROUP_CONCAT(a.asset_id) id");
         $this->db->where('a.accountability_id', $accountability_id);
@@ -1512,17 +2043,17 @@ class Accountability_m extends CI_Model {
 
         if ($query->num_rows() > 0) {
             $arrData = array();
+
             foreach ($query->result() as $key => $rs) {
                 $arrData[$key] = $rs;
             }
-            $data = array();
+
             foreach ($arrData as $k => $v) {
                 $data[] = $v;
             }
-            return $data;
-        } else {
-            return array();
         }
+
+        return $data;
     }
 
     private function get_multiple_temp_post_count($code) {
@@ -1896,6 +2427,8 @@ class Accountability_m extends CI_Model {
             $data = "gen_code";
             $table = "gccasset.vehicles";
         }
+
+        $this->db->select($data);
         return $this->db->get_where($table, array("id"=>$id))->row($data);
     }
 
@@ -2078,7 +2611,11 @@ class Accountability_m extends CI_Model {
     function deleteTemp($id) {
         $session_data = $this->user_data['emp_id'];
         $asset_code = $this->db->get_where("gcceforms.accountability_body_temp", array("id"=>$id))->row();
-        $query = $this->db->query("DELETE FROM gcceforms.accountability_body_temp WHERE id=$id && user_id=$session_data");
+        // $query = $this->db->query("DELETE FROM gcceforms.accountability_body_temp WHERE id=$id && user_id=$session_data");
+        $this->db->where('id', $id);
+        $this->db->where('user_id', $session_data);
+        $query = $this->db->delete('gcceforms.accountability_body_temp');
+        
         if($query){
             $this->core_layout->setEventLog("New Accountability - Remove {$asset_code->type} {$asset_code->asset_code} for accountability.", "delete", "success", "gcceforms", "user");
         }else{
@@ -2167,6 +2704,7 @@ class Accountability_m extends CI_Model {
     /** end function */
 
     function getAccountabilityCode($id){
+        $this->db->select("reference_no");
         return $this->db->get_where("gcceforms.accountability", array("id"=>$id))->row("reference_no");
     }
 
@@ -3081,13 +3619,18 @@ class Accountability_m extends CI_Model {
     }
 
     function getIssuedTo($id) {
-        $query = $this->db->query("SELECT * FROM gccmaster.tblemployees where id='$id'");
-        return $query->row();
+        // $query = $this->db->query("SELECT * FROM gccmaster.tblemployees where id='$id'");
+        $this->db->select('firstname, lastname');
+        $this->db->where('id', $id);
+        $this->db->from('gccmaster.tblemployees');
+        $query = $this->db->get();
+        return $query->row() ? $query->row() : 'No Display Name';
     }
 
     public function getContents($id) {
         $this->db->from('gcceforms.accountability_body_temp');
-        $this->db->where('user_id = "' . $id . '"');
+        // $this->db->where('user_id = "' . $id . '"');
+        $this->db->where('user_id', $id);
         $query = $this->db->get();
         return $query->result();
     }
@@ -3098,7 +3641,7 @@ class Accountability_m extends CI_Model {
         $this->db->where("id", $id);
         $query = $this->db->get();
         $data = $query->row();
-        return $data->description;
+        return isset($data->description) && $data->description ? $data->description : "No Company name";
     }
 
     function getPosition($id) {
@@ -3107,7 +3650,7 @@ class Accountability_m extends CI_Model {
         $this->db->where("id", $id);
         $query = $this->db->get();
         $data = $query->row();
-        return $data->name;
+        return isset($data->name) && $data->name ? $data->name : "No Position name";
     }
 
     function getDepartment($id) {
@@ -3115,8 +3658,8 @@ class Accountability_m extends CI_Model {
         $this->db->from("gcchris.tbldepartments");
         $this->db->where("id", $id);
         $query = $this->db->get();
-        $data = $query->row_array();
-        return $data['description'];
+        $data = $query->row();
+        return isset($data->description) && $data->description ? $data->description : 'No Department name';
     }
 
     function contentDetail($id) {
@@ -3136,17 +3679,19 @@ class Accountability_m extends CI_Model {
         $query->display_name = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
         $query->returned_by_detail = $this->returnedByDetails($query->returned_by, $query->is_contract);
         $query->received_by = $this->receivedBy();
-        if (is_numeric($query->company)) {
-            $query->company = $this->getCompany($query->company);
-        } else {
-            $query->company = $query->company;
-        }
+        $query->company = is_numeric($query->company) ? $this->getCompany($query->company) : $query->company;
+        $query->department = is_numeric($query->department) ? $this->getCompany($query->department) : $query->department;
+        // if (is_numeric($query->company)) {
+        //     $query->company = $this->getCompany($query->company);
+        // } else {
+        //     $query->company = $query->company;
+        // }
 
-        if (is_numeric($query->department)) {
-            $query->department = $this->getDepartment($query->department);
-        } else {
-            $query->department = $query->department;
-        }
+        // if (is_numeric($query->department)) {
+        //     $query->department = $this->getDepartment($query->department);
+        // } else {
+        //     $query->department = $query->department;
+        // }
 
         $marked_returned = $this->marked_return_by($id);
         if ($marked_returned) {
@@ -3644,25 +4189,27 @@ class Accountability_m extends CI_Model {
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql']) ? $post["query_builder"]['sql'] : array();
 
-        $rowCount = 0;
-        $rowData = array();
-        if (!$search) {
-            $rowData = $this->get_all_assets($query_builder, $returned, $table1, $limit, $offset, $sortBy, $sortOrder);
-            $rowCount = $this->get_all_assets_count($query_builder, $returned, $table1);
-        }
+        // $rowCount = 0;
+        // $rowData = array();
+        // if (!$search) {
+        //     $rowData = $this->get_all_assets($query_builder, $returned, $table1, $limit, $offset, $sortBy, $sortOrder);
+        //     $rowCount = $this->get_all_assets_count($query_builder, $returned, $table1);
+        // }
 
-        if ($search) {
-            $rowData = $this->get_searched_assets($query_builder, $returned, $table1, $search, $limit, $offset, $sortBy, $sortOrder);
-            $rowCount = $this->get_searched_assets_count($query_builder, $returned, $table1, $search);
-            if($returned == 0){
-                $table_searched = "Returned Assets";
-            }else{
-                $table_searched = "Released Assets";
-            }
-            $this->core_layout->setEventLog($table_searched." Masterfile - Search ".$search." in datatable.", "search", "success", "gcceforms", "user");
-        }
+        // if ($search) {
+        //     $rowData = $this->get_searched_assets($query_builder, $returned, $table1, $search, $limit, $offset, $sortBy, $sortOrder);
+        //     $rowCount = $this->get_searched_assets_count($query_builder, $returned, $table1, $search);
+        //     if($returned == 0){
+        //         $table_searched = "Returned Assets";
+        //     }else{
+        //         $table_searched = "Released Assets";
+        //     }
+        //     $this->core_layout->setEventLog($table_searched." Masterfile - Search ".$search." in datatable.", "search", "success", "gcceforms", "user");
+        // }
 
-        $totalNotFiltered = $rowCount;
+        // $totalNotFiltered = $rowCount;
+        $rowData = $this->get_all_assets($query_builder, $returned, $table1, $search, $limit, $offset, $sortBy, $sortOrder);
+        $rowCount = $this->get_all_assets_count($query_builder, $returned, $table1, $search);
 
         $resultset["recordsTotal"] = $rowCount;
         $resultset["recordsFiltered"] = $rowCount;
@@ -3671,7 +4218,150 @@ class Accountability_m extends CI_Model {
         return $resultset;
     }
 
-    private function get_all_assets($query_builder = null, $returned, $table1, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
+    function get_all_assets($query_builder = null, $returned, $table1, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder){
+        $date = date("Y-m-d", strtotime("-1 year"));
+        $data = array();
+
+        $filterFields = array("a.status", "a.reference_no", "b.asset_code", "b.description", "d.contractor", "c.lastname", "asset.name", "vehicle.name", "a.company", "c.firstname", "d.company", "e.description");
+
+        $sqlSelect = "a.id as acc_id, a.reference_no, a.is_contract, a.issued_to, b.asset_code, b.asset_id, b.amount, b.type, c.firstname, c.middlename, c.lastname, c.suffix, d.contractor, 
+            IF(a.is_contract = '1', 
+                IFNULL(d.company, IFNULL(a.company, e.description)), 
+                IFNULL(a.company, e.description)) as company";
+
+        $this->db->select($sqlSelect);
+        $this->db->from('gcceforms.accountability a');
+        $this->db->join('gcceforms.accountability_body b', 'a.id = b.accountability_id');
+        $this->db->join('gccmaster.tblemployees c', 'a.issued_to = c.id', 'left');
+        $this->db->join('gcchris.tblcontractor d', 'a.issued_to = d.id', 'left');
+        $this->db->join('gcchris.tblcompanies e', 'e.id = a.company', 'left');
+
+        if(isset($search) && $search){
+            $this->db->join('gccasset.assets asset', 'asset.id = b.asset_id AND b.type = "Asset"', 'left');
+            $this->db->join('gccasset.vehicles vehicle', 'vehicle.id = b.asset_id AND b.type = "Vehicle"', 'left');
+        }
+
+        if($returned == 0){
+            $this->db->group_start();
+                $this->db->where("b.is_returned", 0);
+                $this->db->or_where("b.is_returned", 2);
+            $this->db->group_end();
+        }else{
+            $this->db->where("b.is_returned", $returned);
+        }
+
+        $this->db->where('a.status', 'Released');
+
+        if ($query_builder) {
+            $this->db->where($query_builder);
+        }
+
+        if(isset($search) && $search){
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+
+        if ($limit != -1) {
+            $this->db->limit($limit, $offset);
+        }
+
+        $i = $sortOrder[0]['column'];
+
+        if ($sortBy[$i]['data'] == "firstname") {
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            $this->db->order_by("d.contractor", $sortOrder[0]['dir']);
+        } else {
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        }
+
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $arrData = array();
+
+            foreach($query->result() as $key => $rs){
+                $rs->company = (is_numeric($rs->company)) ? $this->getCompany($rs->company) : $rs->company;
+                $rs->asset_name = $this->getAssetVehiclename($rs->asset_id, $rs->type);
+
+                $tempRs = (array)$rs;
+                $fullname = $this->core_layout->getDisplayName($tempRs);
+                $tempFullname = (object)$fullname;
+                // $rs->display_name = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                $tempname = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                $rs->display_name = $rs->is_contract ? $rs->contractor : $tempname;
+
+                $arrData[$key] = $rs;
+            }
+
+            foreach ($arrData as $k => $v) {
+                $data[] = $v;
+            }
+        }
+
+        return $data;
+    }
+
+    function get_all_assets_count($query_builder = null, $returned, $table1, $search = null){
+        $filterFields = array("a.status", "a.reference_no", "b.asset_code", "b.description", "d.contractor", "c.lastname", "asset.name", "vehicle.name", "a.company", "c.firstname", "d.company", "e.description");
+
+        $sqlSelect = "a.id as acc_id, a.reference_no, a.is_contract, a.issued_to, b.asset_code, b.asset_id, b.amount, b.type, c.firstname, c.middlename, c.lastname, c.suffix, d.contractor, 
+            IF(a.is_contract = '1', 
+                IFNULL(d.company, IFNULL(a.company, e.description)), 
+                IFNULL(a.company, e.description)) as company";
+
+        $this->db->select($sqlSelect);
+        $this->db->from('gcceforms.accountability a');
+        $this->db->join('gcceforms.accountability_body b', 'a.id = b.accountability_id');
+        $this->db->join('gccmaster.tblemployees c', 'a.issued_to = c.id', 'left');
+        $this->db->join('gcchris.tblcontractor d', 'a.issued_to = d.id', 'left');
+        $this->db->join('gcchris.tblcompanies e', 'e.id = a.company', 'left');
+
+        if(isset($search) && $search){
+            $this->db->join('gccasset.assets asset', 'asset.id = b.asset_id AND b.type = "Asset"', 'left');
+            $this->db->join('gccasset.vehicles vehicle', 'vehicle.id = b.asset_id AND b.type = "Vehicle"', 'left');
+        }
+
+        if($returned == 0){
+            $this->db->group_start();
+                $this->db->where("b.is_returned", 0);
+                $this->db->or_where("b.is_returned", 2);
+            $this->db->group_end();
+        }else{
+            $this->db->where("b.is_returned", $returned);
+        }
+
+        $this->db->where('a.status', 'Released');
+
+        if ($query_builder) {
+            $this->db->where($query_builder);
+        }
+
+        if(isset($search) && $search){
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+
+        $query = $this->db->get();
+        $rowCount = $query->num_rows();
+
+        return $rowCount;
+    }
+
+    private function get_all_assetsv1($query_builder = null, $returned, $table1, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
         $date = date("Y-m-d", strtotime("-1 year"));
         $sqlSelect = "a.id as acc_id, a.reference_no, a.is_contract, a.date_issued, a.issued_to, a.acctg_noted_remarks, b.*, 
             asset.name as asset_name, vehicle.name as vehicle_name, c.firstname, c.middlename, c.lastname, c.suffix, d.contractor, 
@@ -3740,7 +4430,7 @@ class Accountability_m extends CI_Model {
         }
     }
 
-    private function get_all_assets_count($query_builder = null, $returned, $table1) {
+    private function get_all_assets_countv1($query_builder = null, $returned, $table1) {
         $date = date("Y-m-d", strtotime("-1 year"));
         $this->db->from('gcceforms.accountability a');
         $this->db->join('gcceforms.accountability_body b', 'a.id = b.accountability_id');
@@ -3768,7 +4458,7 @@ class Accountability_m extends CI_Model {
         return $query->num_rows();
     }
 
-    private function get_searched_assets($query_builder = null, $returned, $table1, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
+    private function get_searched_assetsv1($query_builder = null, $returned, $table1, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
         $date = date("Y-m-d", strtotime("-1 year"));
         if ($search) {
             $sqlSelect = "a.id as acc_id, a.reference_no, a.is_contract, a.date_issued, a.issued_to, a.acctg_noted_remarks, b.*, 
@@ -3855,7 +4545,7 @@ class Accountability_m extends CI_Model {
         }
     }
 
-    private function get_searched_assets_count($query_builder = null, $returned, $table1, $search = null) {
+    private function get_searched_assets_countv1($query_builder = null, $returned, $table1, $search = null) {
         $date = date("Y-m-d", strtotime("-1 year"));
         $rowCount = 0;
         if ($search) {
@@ -3908,8 +4598,11 @@ class Accountability_m extends CI_Model {
     }
 
     function editUnreturnedRemarks($id) {
-        $query = $this->db->query("SELECT * FROM gcceforms.accountability_body WHERE id = '$id'");
-        return $query->row();
+        // $query = $this->db->query("SELECT * FROM gcceforms.accountability_body WHERE id = '$id'");
+        $this->db->where('id', $id);
+        $this->db->from('gcceforms.accountability_body');
+        $query = $this->db->get();
+        return $query->num_rows() > 0 ? $query->row() : array();
     }
 
     function unreturnedRemarks($get) {
@@ -3931,8 +4624,11 @@ class Accountability_m extends CI_Model {
     }
 
     function editReturnedRemarks($id) {
-        $query = $this->db->query("SELECT * FROM gcceforms.accountability_body WHERE id = '$id'");
-        return $query->row();
+        // $query = $this->db->query("SELECT * FROM gcceforms.accountability_body WHERE id = '$id'");
+        $this->db->where('id', $id);
+        $this->db->from('gcceforms.accountability_body');
+        $query = $this->db->get();
+        return $query->num_rows() > 0 ? $query->row() : array();
     }
 
     function returnedRemarks($get) {
@@ -4080,7 +4776,7 @@ class Accountability_m extends CI_Model {
         $this->db->from('gcceforms.accountability_body');
         $this->db->where('id', $id);
         $query = $this->db->get();
-        return $query->row();
+        return $query->num_rows() > 0 ? $query->row() : array();
     }
 
     function update_asset($where, $data) {
@@ -4157,6 +4853,9 @@ class Accountability_m extends CI_Model {
     }
 
     private function ret_body_detail_post($id, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
+        $data = array();
+
+        // $sql = "a.asset_code, a.description, a.remarks, a.amount, a.type, a.brand, a.modelno, a.series, a.is_returned, a.plateno, a.engineno, a.chasisno. a.description, b.created_dt";
         $this->db->select("a.asset_code, a.description, a.remarks, a.amount, a.*, b.created_dt");
         $this->db->from('gcceforms.accountability_body a');
         $this->db->join('gcceforms.accountability b', "a.accountability_id=b.id", "LEFT");
@@ -4199,10 +4898,9 @@ class Accountability_m extends CI_Model {
             foreach ($arrData as $k => $v) {
                 $data[] = $v;
             }
-            return $data;
-        } else {
-            return array();
         }
+
+        return $data;
     }
 
     private function ret_body_detail_count($id) {
@@ -4214,7 +4912,9 @@ class Accountability_m extends CI_Model {
     }
 
     function getComp($id, $rowName = null, $rowDescription = null) {
-        $this->db->select("*");
+        $sql = "assetacode, assetname, purchaseprice";
+
+        $this->db->select($sql);
         $this->db->from("gccasset.assets");
         $this->db->where("mother_asset", $id);
         $this->db->where("mother_asset !=", 0);
@@ -4224,7 +4924,8 @@ class Accountability_m extends CI_Model {
     }
 
     function getVehicleComp($id) {
-        $this->db->select("*");
+        $sql = "gen_code, name, purchaseprice";
+        $this->db->select($sql);
         $this->db->from("gccasset.vehicles");
         $this->db->where("motherID", $id);
         $this->db->where("motherID !=", 0);
@@ -4623,6 +5324,7 @@ class Accountability_m extends CI_Model {
     // return unreturn model function
     function remarks_status(){
         $post = $this->input->post();
+        // $this->db->select('id, remarks, remarks_returned');
         $remarks = $this->db->where('id', $post['id'])->get("gcceforms.accountability_body");
         return $remarks->row_array();
     }
@@ -5022,4 +5724,20 @@ class Accountability_m extends CI_Model {
         }
     }
 
+    function getAssetVehiclename($id = 0, $type = null){
+        $tbl = $type == 'Vehicle' ? 'gccasset.vehicles' : 'gccasset.assets';
+        $name = null;
+
+        $this->db->select("name");
+        $this->db->from($tbl);
+        $this->db->where('id', $id);
+        $query = $this->db->get();
+
+        if($query->num_rows() > 0){
+            $row = $query->row();
+            $name = $row->name;
+        }
+
+        return $name;
+    }
 }
