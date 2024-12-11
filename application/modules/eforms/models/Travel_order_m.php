@@ -33,16 +33,16 @@
             
             $privilege = $this->core_layout->getCurrentActions();
             
-            $rowCount = 0;
-            $rowData = array();
-            if (!$search) {
-                $rowData = $this->get_all_post($privilege, $start, $end, $query_builder, $limit, $offset, $sortBy, $sortOrder, $status);
-                $rowCount = $this->get_all_post_count($privilege, $start, $end, $query_builder, $status);
-            }
+            $rowData = $this->get_all_item($privilege, $start, $end, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status);;
+            $rowCount = $this->get_all_item_count($privilege, $start, $end, $query_builder, $search, $status);
+            // if (!$search) {
+            //     $rowData = $this->get_all_post($privilege, $start, $end, $query_builder, $limit, $offset, $sortBy, $sortOrder, $status);
+            //     $rowCount = $this->get_all_post_count($privilege, $start, $end, $query_builder, $status);
+            // }
 
             if ($search) {
-                $rowData = $this->get_searched_item($privilege, $start, $end, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status);
-                $rowCount = $this->get_searched_item_count($privilege, $start, $end, $query_builder, $search, $status);
+                // $rowData = $this->get_searched_item($privilege, $start, $end, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status);
+                // $rowCount = $this->get_searched_item_count($privilege, $start, $end, $query_builder, $search, $status);
                 $this->core_layout->setEventLog("Travel Order Masterfile - Search ".$search.".","search", "success", "gcceforms", "user");
             }
             if($query_builder){
@@ -54,9 +54,276 @@
             $resultset["data"] = $rowData;
 
             return $resultset;
-        }    
+        }
 
-        private function get_all_post($privilege, $start, $end, $query_builder=null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null) {
+        public function get_all_item($privilege, $start, $end, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null){
+            $filterFields1 = array("a.id", "a.status", "a.reference_no", "a.company", "a.driver", "a.others_remarks","te.lastname","te.firstname","td.des_to", 'tod.destination', 'toe.firstname', 'toe.lastname');
+            $date = date("Y-m-d", strtotime("-1 year", time()));
+            $check = date("Y-m-d", strtotime("-1 year", time()));
+
+            $arrData = array();
+            $role_id = $this->authenticate->getRoleId();
+            $current_date = date("Y-m-d");
+
+            $sql = "a.id, a.reference_no, a.company,a.driver, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt, tod.destination, toe.firstname, toe.lastname, a.created_dt, a.accomplished";
+
+            $this->db->select($sql);
+            $this->db->from("gcceforms.travel_order a");
+            $this->db->join("gcceforms.travel_personnel tp","tp.travel_order_id = a.id");
+            $this->db->join("gccmaster.tblemployees te", "te.id = tp.employee_id", "left");
+            $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id");
+            $this->db->join("gcceforms.travel_destination tod","tod.travel_order_id = a.id");
+            $this->db->join('gcceforms.travel_personnel top', 'top.travel_order_id = a.id', 'left');
+            $this->db->join('gccmaster.tblemployees toe', 'toe.id = top.employee_id', 'left');
+
+            if ($start && $end) {
+                $this->db->group_start();
+                $this->db->where("DATE(td.date_from) >=", $start);
+                $this->db->where("DATE(td.date_from) <=", $end);
+                $this->db->group_end();
+
+                $this->db->where("a.status !=", "Cancelled");
+                $this->db->where("DATE(a.created_dt) >=", $check);
+                $this->db->group_by("a.id");
+            } else {
+                $this->db->group_start();
+                $this->db->where("a.status !=", "Cancelled");
+                $this->db->where("DATE(a.created_dt) >=", $check);
+                $this->db->group_end();
+            }
+
+            if (isset($query_builder) && $query_builder) {
+                $this->db->where($query_builder);
+            }
+        
+            if ($status) {
+                $this->db->where('a.status', $status);
+            }
+
+            $view_own_request = (in_array("view_own_request", $privilege)) ? true : false;
+            if($view_own_request && ($this->user_data['emp_id']!=1)){
+                $this->db->where('a.created_id', $this->user_data['emp_id']);
+            }
+
+            $guard = (in_array("guard_edit_to", $privilege)) ? true : false;
+            if($guard){
+                $this->db->where("a.status =", "Approved");
+                $this->db->where("DATE(a.approved_dt)", $current_date);
+            }
+
+            if (isset($search) && $search) {
+                $this->db->group_start();
+                foreach ($filterFields1 as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+
+            if($limit != -1){
+                $this->db->limit($limit, $offset);
+            }
+            
+            if($sortOrder !== null){
+                $i = $sortOrder[0]['column'];
+                $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            }else{
+                $this->db->order_by("a.id", "DESC");
+            }
+            $this->db->group_by('a.id');
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                foreach ($query->result() as $rs) {
+                    $rowId = $rs->id;
+                    $this->db->select("firstname, lastname, middlename, suffix");
+                    $this->db->from("gcceforms.travel_personnel tp");
+                    $this->db->join("gccmaster.tblemployees te", "te.id = tp.employee_id", "left");
+                    $this->db->where("tp.travel_order_id", $rowId);
+                    $personnel = $this->db->get();
+        
+                    $rowPersonnel = array();
+                    $rowDestination = array();
+                    $rowDriver = "";
+                    $rowVehiclePlate = "";
+                    $rowVehicleDesc = "";
+                    $rowFromTo = "";
+        
+                    if ($personnel->num_rows() > 0) {
+                        foreach ($personnel->result() as $key => $value) {
+                            $tempRs = (array)$value;
+                            $fullname = $this->core_layout->getDisplayName($tempRs);
+                            $tempFullname = (object)$fullname;
+                            $value->display_name = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                            $rowPersonnel[] = $value->display_name;
+                        }
+                    }
+        
+                    if ($rs->is_service == "1") {
+                        $this->db->select("firstname, lastname, middlename, suffix");
+                        $this->db->from("gccmaster.tblemployees te");
+                        $this->db->where("te.id", $rs->driver_id);
+                        $driver = $this->db->get();
+        
+                        if ($driver->num_rows() == 1) {
+                            $rowData = $driver->row();
+                            $tempRs = (array)$rowData;
+                            $fullname = $this->core_layout->getDisplayName($tempRs);
+                            $tempFullname = (object)$fullname;
+                            $rowData->display_name = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                            if ($rowData->display_name) {
+                                $rowDriver = $rowData->display_name;
+                            } else {
+                                $rowDriver = $rs->driver;
+                            }
+                        }
+        
+                        $this->db->select("plateno, description, name");
+                        $queryVehicle = $this->db->get_where("gccasset.vehicles", array("id" => $rs->vehicle_id));
+                        if ($queryVehicle->num_rows() == 1) {
+                            $rowVehicle = $queryVehicle->row();
+                            $rowVehiclePlate = $rowVehicle->plateno;
+                            $rowVehicleDesc = $rowVehicle->name;
+                        }
+                    }
+        
+                    $this->db->select("td.destination, td.date_from, td.date_to");
+                    $this->db->from("gcceforms.travel_destination td");
+                    if ($start && $end) {
+                        $this->db->group_start();
+                        $this->db->where("DATE(td.date_from) >=", $start);
+                        $this->db->where("DATE(td.date_from) <=", $end);
+                        $this->db->group_end();
+                        $this->db->where("td.travel_order_id", $rowId);
+                    } else {
+                        $this->db->where("td.travel_order_id", $rowId);
+                    }
+                    $destination = $this->db->get();
+                    $destinationDateTime = array();
+        
+                    if ($destination->num_rows() > 0) {
+                        $des_num = 0;
+                        foreach ($destination->result() as $key => $vx) {
+                            $des_num++;
+                            $rowDestination[] = $vx->destination;
+        
+                            $x = explode(' ', $vx->date_from);
+                            $y = explode(' ', $vx->date_to);
+                            if ($des_num == 1) {
+                                $date_start = date("M d, Y g:i A", strtotime($vx->date_from));
+                                $z = explode(' ', $vx->date_from);
+                            }
+        
+                            if ($z[0] != $x[0]) {
+                                $date_end = date("M d, Y", strtotime($y[0])) . ' ' . date("g:i A", strtotime($y[1]));
+                            } else if ($x[0] == $y[0]) {
+                                $date_end = date("g:i A", strtotime($y[1]));
+                            } else {
+                                $date_end = date("M d, Y", strtotime($y[0])) . ' ' . date("g:i A", strtotime($y[1]));
+                            }
+        
+                            $date = $date_start . "-" . $date_end;
+                            array_push($destinationDateTime, $date);
+                        }
+                    } else {
+                        return array();
+                    }
+
+                    $rs->personnels = $rowPersonnel;
+                    $rs->driver = $rowDriver;
+                    $rs->vehicle_plate = $rowVehiclePlate;
+                    $rs->vehicle_description = $rowVehicleDesc;
+                    $rs->destination = $rowDestination;
+                    $rs->from_to = $destinationDateTime;
+                    $rs->company_detail = $this->getCompany($rs->company);
+                    $rs->user_role_id = $this->authenticate->getRoleId();
+                    $rs->created_dt = date("m-d-Y h:i A", strtotime( $rs->created_dt));
+                    $arrData[] = $rs;
+                }
+            }
+
+            return $arrData;
+        }
+
+        public function get_all_item_count($privilege, $start, $end, $query_builder=null, $search = null, $status = null){
+            $role_id = $this->authenticate->getRoleId();
+            $current_date = date("Y-m-d");
+
+            $filterFields1 = array("a.id", "a.status", "a.reference_no", "a.company", "a.driver", "a.others_remarks","te.lastname","te.firstname","td.des_from","td.des_to", "tod.destination", "toe.firstname", "toe.lastname");
+            $date = date("Y-m-d", strtotime("-1 year", time()));
+            $check = date("Y-m-d", strtotime("-1 year", time()));
+            $arrData = array();
+
+            $sql = "a.id, a.reference_no, a.company,a.driver, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt, tod.destination, toe.firstname, toe.lastname";
+
+            $this->db->select($sql);
+            $this->db->from("gcceforms.travel_order a");
+            $this->db->join("gcceforms.travel_personnel tp","tp.travel_order_id = a.id");
+            $this->db->join("gccmaster.tblemployees te", "te.id = tp.employee_id", "left");
+            $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id");
+            $this->db->join("gcceforms.travel_destination tod","tod.travel_order_id = a.id");
+            $this->db->join('gcceforms.travel_personnel top', 'top.travel_order_id = a.id', 'left');
+            $this->db->join('gccmaster.tblemployees toe', 'toe.id = top.employee_id', 'left');
+
+            if ($start && $end) {
+                $this->db->group_start();
+                $this->db->where("DATE(td.date_from) >=", $start);
+                $this->db->where("DATE(td.date_from) <=", $end);
+                $this->db->group_end();
+
+                $this->db->where("a.status !=", "Cancelled");
+                $this->db->where("DATE(a.created_dt) >=", $check);
+                $this->db->group_by("a.id");
+            }else{
+                $this->db->group_start();
+                $this->db->where("a.status !=", "Cancelled");
+                $this->db->where("DATE(a.created_dt) >=", $check);
+                $this->db->group_end();
+            }
+
+            if(isset($query_builder) && $query_builder){
+                $this->db->where($query_builder);
+            }
+        
+            if($status){
+                $this->db->where('a.status', $status);
+            }
+        
+            $view_own_request = (in_array("view_own_request", $privilege)) ? true : false;
+            if($view_own_request && ($this->user_data['emp_id']!=1)){
+                $this->db->where('a.created_id', $this->user_data['emp_id']);
+            }
+            
+            $guard = (in_array("guard_edit_to", $privilege)) ? true : false;
+            if($guard){
+                $this->db->where("a.status =", "Approved");
+                $this->db->where("DATE(a.approved_dt)", $current_date);
+            }
+            
+            $this->db->group_by("a.id");
+
+            if (isset($search) && $search) {
+                $this->db->group_start();
+                foreach ($filterFields1 as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+
+            $this->db->group_by('a.id');
+            $query = $this->db->get();
+            $rowCount = $query->num_rows();
+            return $rowCount;
+        }
+
+        private function get_all_postv1($privilege, $start, $end, $query_builder=null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null) {
             $temp = strtotime("-1 year", time());
             $check = date("Y-m-d", $temp);
             $arrData = array();
@@ -268,7 +535,7 @@
             return $arrData;
         }
 
-        private function get_all_post_count($privilege, $start, $end, $query_builder=null, $status = null) {
+        private function get_all_post_countv1($privilege, $start, $end, $query_builder=null, $status = null) {
             $role_id = $this->authenticate->getRoleId();
             $current_date = date("Y-m-d");
             
@@ -323,7 +590,7 @@
             return $query->num_rows();
         }
 
-        private function get_searched_item($privilege, $start, $end, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null) {
+        private function get_searched_itemv1($privilege, $start, $end, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null) {
             $filterFields1 = array("a.id", "a.status", "a.reference_no", "a.company", "a.driver", "a.others_remarks","te.lastname","te.firstname","td.des_to", 'tod.destination', 'toe.firstname', 'toe.lastname');
             $date = date("Y-m-d", strtotime("-1 year", time()));
             $temp = strtotime("-1 year", time());
@@ -508,7 +775,7 @@
             return $arrData;
         }
 
-        private function get_searched_item_count($privilege, $start, $end, $query_builder=null, $search = null, $status = null) {
+        private function get_searched_item_countv1($privilege, $start, $end, $query_builder=null, $search = null, $status = null) {
             $role_id = $this->authenticate->getRoleId();
             $current_date = date("Y-m-d");
 
@@ -590,11 +857,27 @@
         function driver() {
             $get = $this->input->get();
             $resultarray = array();
-            if (isset($get['q'])) {
-                $query = $this->db->query("SELECT  e.id, e.firstname, e.middlename, e.lastname, e.suffix, e.position, c.description as company FROM gccmaster.tblemployees as e LEFT JOIN gcchris.tblcompanies as c ON c.id=e.company_id WHERE  e.employee_status='Active' AND (e.firstname LIKE '%{$get['q']}%' OR e.lastname LIKE '%{$get['q']}%' OR c.description LIKE '%{$get['q']}%') ORDER BY e.firstname ASC");
-            } else {
-                $query = $this->db->query("SELECT  e.id, e.firstname, e.middlename, e.lastname, e.suffix, e.position, c.description as company FROM gccmaster.tblemployees as e LEFT JOIN gcchris.tblcompanies as c ON c.id=e.company_id WHERE e.employee_status='Active' ORDER BY e.firstname ASC");
+            // if (isset($get['q'])) {
+            //     $query = $this->db->query("SELECT  e.id, e.firstname, e.middlename, e.lastname, e.suffix, e.position, c.description as company FROM gccmaster.tblemployees as e LEFT JOIN gcchris.tblcompanies as c ON c.id=e.company_id WHERE  e.employee_status='Active' AND (e.firstname LIKE '%{$get['q']}%' OR e.lastname LIKE '%{$get['q']}%' OR c.description LIKE '%{$get['q']}%') ORDER BY e.firstname ASC");
+            // } else {
+            //     $query = $this->db->query("SELECT  e.id, e.firstname, e.middlename, e.lastname, e.suffix, e.position, c.description as company FROM gccmaster.tblemployees as e LEFT JOIN gcchris.tblcompanies as c ON c.id=e.company_id WHERE e.employee_status='Active' ORDER BY e.firstname ASC");
+            // }
+
+            $sql = "e.id, e.firstname, e.middlename, e.lastname, e.suffix, e.position, c.description as company";
+
+            $this->db->select($sql);
+            $this->db->join('gcchris.tblcompanies as c', 'c.id=e.company_id OR c.id = c.description', 'left');
+            $this->db->where("employee_status", "Active");
+
+            if(isset($get['q']) && $get['q']){
+                $this->db->like('e.firstname', $get['q'], 'both');
+                $this->db->or_like('e.lastname', $get['q'], 'both');
+                $this->db->or_like('c.description', $get['q'], 'both');
             }
+
+            $this->db->from("gccmaster.tblemployees as e");
+            $this->db->order_by("e.firstname", 'ASC');
+            $query = $this->db->get();
 
             if ($query->num_rows() > 0) {
                 foreach ($query->result_array() as $_query) {
@@ -635,17 +918,17 @@
             $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
             $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
 
-            $rowCount = 0;
-            $rowData = array();
-            if (!$search) {
-                $rowData = $this->get_all_archive($limit, $offset, $sortBy, $sortOrder);
-                $rowCount = $this->get_all_archive_count();
-            }
+            $rowData = $this->get_all_archive($search, $limit, $offset, $sortBy, $sortOrder);
+            $rowCount = $this->get_all_archive_count($search);
+            // if (!$search) {
+            //     $rowData = $this->get_all_archive($limit, $offset, $sortBy, $sortOrder);
+            //     $rowCount = $this->get_all_archive_count();
+            // }
 
-            if ($search) {
-                $rowData = $this->get_searched_archive_item($search, $limit, $offset, $sortBy, $sortOrder);
-                $rowCount = $this->get_searched_archive_count($search);
-            }
+            // if ($search) {
+            //     $rowData = $this->get_searched_archive_item($search, $limit, $offset, $sortBy, $sortOrder);
+            //     $rowCount = $this->get_searched_archive_count($search);
+            // }
 
             $resultset["recordsTotal"] = $rowCount;
             $resultset["recordsFiltered"] = $rowCount;
@@ -654,7 +937,167 @@
             return $resultset;
         }
 
-        private function get_all_archive($limit = 10, $offset = 0, $sortBy, $sortOrder) {
+        public function get_all_archive($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder){
+            $filterFields = array("a.id", "a.status", "a.reference_no", "a.company", "a.driver");
+            $date = date("Y-m-d", strtotime("-1 year", time()));
+            $check = date("Y-m-d", strtotime("-1 year", time()));
+            $arrData = array();
+
+            $sql = "a.id, a.reference_no, a.company,a.driver, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks, a.accomplishment_dt";
+            
+            $this->db->select($sql);
+            $this->db->from("gcceforms.travel_order a");
+            $this->db->where('a.status', 'Cancelled');
+            $this->Db->or_where('DATE(a.created_dt) <=', $check);
+
+            if (isset($search) && $search) {
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+
+            if($limit != -1){
+                $this->db->limit($limit, $offset);
+            }
+            
+            $i = $sortOrder[0]['column'];
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                foreach ($query->result() as $rs) {
+                    $rowId = $rs->id;
+                    $this->db->select("firstname, lastname, middlename, suffix");
+                    $this->db->from("gcceforms.travel_personnel tp");
+                    $this->db->join("gccmaster.tblemployees te", "te.id = tp.employee_id", "left");
+                    $this->db->where("tp.travel_order_id", $rowId);
+                    $personnel = $this->db->get();
+    
+                    $rowPersonnel = array();
+                    $rowDestination = array();
+                    $rowDriver = "";
+                    $rowVehiclePlate = "";
+                    $rowVehicleDesc = "";
+                    $rowFromTo = "";
+    
+                    if ($personnel->num_rows() > 0) {
+                        foreach ($personnel->result() as $key => $value) {
+                            $tempRs = (array)$value;
+                            $fullname = $this->core_layout->getDisplayName($tempRs);
+                            $tempFullname = (object)$fullname;
+                            $value->display_name = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                            $rowPersonnel[] = $value->display_name;
+                        }
+                    }
+    
+                    if ($rs->is_service == "1") {
+                        $this->db->select("firstname, lastname, middlename, suffix");
+                        $this->db->from("gccmaster.tblemployees te");
+                        $this->db->where("te.id", $rs->driver_id);
+                        $driver = $this->db->get();
+    
+                        if ($driver->num_rows() == 1) {
+                            $rowData = $driver->row();
+                            $tempRs = (array)$rowData;
+                            $fullname = $this->core_layout->getDisplayName($tempRs);
+                            $tempFullname = (object)$fullname;
+                            $rowData->display_name = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                            if ($rowData->display_name) {
+                                $rowDriver = $rowData->display_name;
+                            } else {
+                                $rowDriver = $rs->driver;
+                            }
+                        }
+    
+                        $this->db->select("plateno, description");
+                        $queryVehicle = $this->db->get_where("gccasset.vehicles", array("id" => $rs->vehicle_id));
+                        if ($queryVehicle->num_rows() == 1) {
+                            $rowVehicle = $queryVehicle->row();
+                            $rowVehiclePlate = $rowVehicle->plateno;
+                            $rowVehicleDesc = $rowVehicle->description;
+                        }
+                    }
+    
+                    $this->db->select("td.destination, td.date_from, td.date_to");
+                    $this->db->from("gcceforms.travel_destination td");
+                    $this->db->where("td.travel_order_id", $rowId);
+                    $destination = $this->db->get();
+    
+                    if ($destination->num_rows() > 0) {
+                        $des_num = 0;
+                        foreach ($destination->result() as $key => $vx) {
+                            $des_num++;
+                            $rowDestination[] = $vx->destination;
+    
+                            $x = explode(' ', $vx->date_from);
+                            $y = explode(' ', $vx->date_to);
+                            if ($des_num == 1) {
+                                $date_start = date("M d, Y g:i A", strtotime($vx->date_from));
+                                $z = explode(' ', $vx->date_from);
+                            }
+    
+                            if ($z[0] != $x[0]) {
+                                $date_end = date("M d, Y", strtotime($y[0])) . ' ' . date("g:i A", strtotime($y[1]));
+                            } else if ($x[0] == $y[0]) {
+                                $date_end = date("g:i A", strtotime($y[1]));
+                            } else {
+                                $date_end = date("M d, Y", strtotime($y[0])) . ' ' . date("g:i A", strtotime($y[1]));
+                            }
+    
+                            $rowFromTo = "{$date_start} - {$date_end}";
+                        }
+                    }
+                    $rs->personnels = $rowPersonnel;
+                    $rs->driver = $rowDriver;
+                    $rs->vehicle_plate = $rowVehiclePlate;
+                    $rs->vehicle_description = $rowVehicleDesc;
+                    $rs->destination = $rowDestination;
+                    $rs->from_to = $rowFromTo;
+                    $rs->company_detail = $this->getCompany($rs->company);
+                    $arrData[] = $rs;
+                }
+            }
+    
+            return $arrData;
+        }
+
+        public function get_all_archive_count($search = null){
+            $filterFields = array("a.id", "a.status", "a.reference_no", "a.company", "a.driver");
+            $date = date("Y-m-d", strtotime("-1 year", time()));
+            $check = date("Y-m-d", strtotime("-1 year", time()));
+
+            $sql = "a.id, a.status, a.reference_no, b.firstname, b.middlename, b.lastname, b.suffix, a.amt_applied, a.purpose, a.amt_approved, a.created_dt, a.approved_dt";
+            $filterFields = array("a.id", "a.status", "a.reference_no", "b.firstname", "b.lastname", "a.amt_applied", "a.purpose", "a.amt_approved", "a.created_dt", "a.approved_dt");
+
+            $this->db->select($sql);
+            $this->db->from("gcceforms.cash_advance a");
+            $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
+            $this->db->where("DATE(a.created_dt) >=", $date);
+            $this->db->where("a.status !=", "Cancelled");
+
+            if (isset($search) && $search) {
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+
+            $query = $this->db->get();
+            return $query->num_rows();
+        }
+
+        private function get_all_archivev1($limit = 10, $offset = 0, $sortBy, $sortOrder) {
             $temp = strtotime("-1 year", time());
             $check = date("Y-m-d", $temp);
             $arrData = array();
@@ -766,7 +1209,7 @@
             return $arrData;
         }
 
-        private function get_all_archive_count() {
+        private function get_all_archive_countv1() {
             $temp = strtotime("-1 year", time());
             $check = date("Y-m-d", $temp);
             $this->db->from("gcceforms.travel_order a");
@@ -775,7 +1218,7 @@
             return $query->num_rows();
         }
 
-        private function get_searched_archive_item($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
+        private function get_searched_archive_itemv1($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
             $filterFields = array("a.id", "a.status", "a.reference_no", "a.company", "a.driver");
             $date = date("Y-m-d", strtotime("-1 year", time()));
             if ($search) {
@@ -901,7 +1344,7 @@
             }
         }
 
-        private function get_searched_archive_count($search = null) {
+        private function get_searched_archive_countv1($search = null) {
             $date = date("Y-m-d", strtotime("-1 year", time()));
             $rowCount = 0;
             if ($search) {
@@ -928,8 +1371,7 @@
             return $rowCount;
         }
 
-
-        function getArchiveList() {
+        function getArchiveListv1() {
             $post = $this->input->post();
             if ($post) {
                 $columns = array("a.status", "a.reference_no", "a.company");
@@ -939,14 +1381,14 @@
                     $dir = $post["order"][0]["dir"];
                     $order = $columns[$post["order"][0]["column"]];
                 }
-
+        
                 $draw = (isset($post['draw']) && $post['draw']) ? $post['draw'] : 0;
                 $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
                 $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 0;
                 $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
                 $begin = (isset($post["start_date"]) && $post["start_date"]) ? $post["start_date"] : false;
                 $end = (isset($post["end_date"]) && $post["end_date"]) ? $post["end_date"] : false;
-
+        
                 $totalData = $this->getAllPostToCountArchive($begin, $end);
                 $totalFiltered = $totalData;
                 
@@ -957,7 +1399,7 @@
                     $posts = $this->getFilteredPostToArchive($begin, $end, $ids);
                     $totalFiltered = $this->dtPostToSearchCountArchive($begin, $end, $searchValue);
                 }
-
+        
                 $data = array();
                 if (!empty($posts)) {
                     foreach ($posts as $pst) {
@@ -999,56 +1441,149 @@
             
         }
 
-        function getAllPostToCountArchive($begin=false, $end=false) {
-            if ($begin && $end) {
-                $temp = strtotime("-1 year", time());
-                $check = date("Y-m-d", $temp);
-                $this->db->select("td.destination, td.date_from, td.date_to");
-                $this->db->from("gcceforms.travel_order a");
-                $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id");
-                $this->db->group_start();
-                $this->db->where("td.date_from >=", $begin);
-                $this->db->where("td.date_from <=", $end);
-                $this->db->group_end();
-                $this->db->group_start();
-                $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
-                $this->db->group_end();
-                $this->db->group_by("td.travel_order_id");
-            } else {
-                $temp = strtotime("-1 year", time());
-                $check = date("Y-m-d", $temp);
-                $this->db->from("gcceforms.travel_order a");
-                $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
+        function getArchiveList() {
+            $post = $this->input->post();
+            $json_data = array();
+
+            $columns = array("a.status", "a.reference_no", "a.company");
+            $dir = "DESC";
+            $order = "a.id";
+            if (isset($post["order"]) && $post["order"]) {
+                $dir = $post["order"][0]["dir"];
+                $order = $columns[$post["order"][0]["column"]];
             }
+
+            $draw = (isset($post['draw']) && $post['draw']) ? $post['draw'] : 0;
+            $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+            $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 0;
+            $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
+            $begin = (isset($post["start_date"]) && $post["start_date"]) ? $post["start_date"] : false;
+            $end = (isset($post["end_date"]) && $post["end_date"]) ? $post["end_date"] : false;
+
+            $totalData = $this->getAllPostToCountArchive($begin, $end);
+            $totalFiltered = $totalData;
+            
+            if (empty($searchValue)) {
+                $posts = $this->getAllPostToArchive($begin, $end, $limit, $start, $order, $dir);
+            } else {
+                $ids = $this->dtPostToSearchArchive($begin, $end, $limit, $start, $searchValue, $order, $dir);
+                $posts = $this->getFilteredPostToArchive($begin, $end, $ids);
+                $totalFiltered = $this->dtPostToSearchCountArchive($begin, $end, $searchValue, $ids);
+            }
+
+            $data = array();
+            if (!empty($posts)) {
+                foreach ($posts as $pst) {
+                    $nestedData = array();
+                    $nestedData['id'] = $pst->id;
+                    $nestedData['status'] = $pst->status;
+                    $nestedData['reference_no'] = $pst->reference_no;
+                    $nestedData['company'] = $pst->company;
+                    $nestedData['driver'] = $pst->driver;
+                    $nestedData['vehicle_plate'] = $pst->vehicle_plate;
+                    $nestedData['vehicle_description'] = $pst->vehicle_description;
+                    $nestedData['accomplishment_dt'] = $pst->accomplishment_dt;
+                    $nestedData['is_service'] = $pst->is_service;
+                    $nestedData['is_commute'] = $pst->is_commute;
+                    $nestedData['is_personal'] = $pst->is_personal;
+                    $nestedData['is_others'] = $pst->is_others;
+                    $nestedData['others_remarks'] = $pst->others_remarks;
+                    $nestedData['personnels'] = $pst->personnels;
+                    $nestedData['destination'] = $pst->destination;
+                    $nestedData['from_to'] = $pst->from_to;
+                    $data[] = $nestedData;
+                }
+            }
+            
+            return $json_data = array(
+                'draw' => intval($draw),
+                "recordsTotal" => intval($totalData),
+                "recordsFiltered" => intval($totalFiltered),
+                "data" => $data
+            );
+        }
+
+        function getAllPostToCountArchive($begin=false, $end=false) {
+            $temp = strtotime("-1 year", time());
+            $check = date("Y-m-d", $temp);
+
+            // if ($begin && $end) {
+            //     $temp = strtotime("-1 year", time());
+            //     $check = date("Y-m-d", $temp);
+            //     $this->db->select("td.destination, td.date_from, td.date_to");
+            //     $this->db->from("gcceforms.travel_order a");
+            //     $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id");
+            //     $this->db->group_start();
+            //     $this->db->where("td.date_from >=", $begin);
+            //     $this->db->where("td.date_from <=", $end);
+            //     $this->db->group_end();
+            //     $this->db->group_start();
+            //     $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
+            //     $this->db->group_end();
+            //     $this->db->group_by("td.travel_order_id");
+            // } else {
+            //     $temp = strtotime("-1 year", time());
+            //     $check = date("Y-m-d", $temp);
+            //     $this->db->from("gcceforms.travel_order a");
+            //     $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
+            // }
+
+            if($begin && $end) {
+                $this->db->select("td.destination, td.date_from, td.date_to");
+                $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id");
+
+                $this->db->group_start();
+                    $this->db->where("DATE(td.date_from) >=", $begin);
+                    $this->db->where("DATE(td.date_from) <=", $end);
+                $this->db->group_end();
+
+                $this->db->group_by("td.travel_order_id");
+            }
+            
+            $this->db->group_start();
+                $this->db->where('a.status', 'Cancelled');
+                $this->db->or_where('DATE(a.created_dt)', $check);
+            $this->db->group_end();
+
+            $this->db->from("gcceforms.travel_order a");
             $query = $this->db->get();
             return $query->num_rows();
         }
 
-        function dtPostToSearchCountArchive($begin=false, $end=false, $searchValue = null) {
-            $temp = strtotime("-1 year", time());
-            $check = date("Y-m-d", $temp);
+        function dtPostToSearchCountArchive($begin=false, $end=false, $searchValue = null, $arrIds = array()) {
+            $check = date("Y-m-d", strtotime("-1 year", time()));
+
             $this->db->select("a.id");
             $this->db->from("gcceforms.travel_order a");
             $this->db->join("gcceforms.travel_personnel b", "b.travel_order_id = a.id", "left");
             $this->db->join("gcceforms.travel_destination c", "c.travel_order_id = a.id", "left");
             $this->db->join("gccmaster.tblemployees d", "d.id = a.driver_id", "left");
             $this->db->join("gccmaster.tblemployees e", "e.id = b.employee_id", "left");
+
+            if (!empty($arrIds)) {
+                $this->db->where_in("a.id", $arrIds);
+            }
+
             if ($begin && $end) {
                 $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id");
                 $this->db->group_start();
-                $this->db->where("td.date_from >=", $begin);
-                $this->db->where("td.date_from <=", $end);
+                $this->db->where("DATE(td.date_from) >=", $begin);
+                $this->db->where("DATE(td.date_from) <=", $end);
                 $this->db->group_end();
-                $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
+                // $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
                 $this->db->group_by("a.id");
-            }else{
-                $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
             }
-            $this->db->group_start();
-            $this->db->like("a.status", $searchValue, "both");
-            $this->db->or_like("a.reference_no", $searchValue, "both");
-            $this->db->or_like("a.company", $searchValue, "both");
-            $this->db->group_end();
+            // else{
+            //     $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
+            // }
+
+            $this->db->where('a.status', 'Canelled');
+            $this->db->where('DATE(a.created_dt) <= ', $check);
+            // $this->db->group_start();
+            // $this->db->like("a.status", $searchValue, "both");
+            // $this->db->or_like("a.reference_no", $searchValue, "both");
+            // $this->db->or_like("a.company", $searchValue, "both");
+            // $this->db->group_end();
             $this->db->group_by("a.id");
 
             $query = $this->db->get();
@@ -1107,20 +1642,29 @@
             $arrData = array();
             $this->db->select("a.id, a.reference_no, a.company, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks, a.accomplishment_dt");
             $this->db->from("gcceforms.travel_order a");
+
             if ($begin && $end) {
                 $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id");
                 $this->db->group_start();
-                $this->db->where("td.date_from >=", $begin);
-                $this->db->where("td.date_from <=", $end);
+                $this->db->where("DATE(td.date_from) >=", $begin);
+                $this->db->where("DATE(td.date_from) <=", $end);
                 $this->db->group_end();
-                $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
+                // $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
                 $this->db->group_by("a.id");
-            }else{
-                $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
             }
+            // else{
+            //     $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
+            // }
+
+            $this->db->group_start();
+            $this->db->where('a.status', 'Canelled');
+            $this->db->where('DATE(a.created_dt) <= ', $check);
+            $this->db->group_end();
+
             if($limit != -1){
                 $this->db->limit($limit, $start);
             }
+            
             $this->db->order_by($order, $dir);
             $query = $this->db->get();
 
@@ -1234,14 +1778,18 @@
                 if ($begin && $end) {
                     $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id");
                     $this->db->group_start();
-                    $this->db->where("td.date_from >=", $begin);
-                    $this->db->where("td.date_from <=", $end);
+                    $this->db->where("DATE(td.date_from) >=", $begin);
+                    $this->db->where("DATE(td.date_from) <=", $end);
                     $this->db->group_end();
-                    $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
+                    // $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
                     $this->db->group_by("a.id");
-                }else{
-                    $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
                 }
+                // else{
+                //     $this->db->where("(a.status='Cancelled' OR a.created_dt<='$check')");
+                // }
+
+                $this->db->where('a.status', 'Canelled');
+                $this->db->where('DATE(a.created_dt) <= ', $check);
                 $query = $this->db->get();
 
                 if ($query->num_rows() > 0) {
@@ -1582,11 +2130,22 @@
         function getCompanyCollection() {
             $get = $this->input->get();
             $resultarray = array();
-            if (isset($get['q'])) {
-                $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tblcompanies WHERE `description` LIKE '%{$get['q']}%' ORDER BY `description` ASC");
-            } else {
-                $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tblcompanies ORDER BY `description` ASC");
+            // if (isset($get['q'])) {
+            //     $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tblcompanies WHERE `description` LIKE '%{$get['q']}%' ORDER BY `description` ASC");
+            // } else {
+            //     $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tblcompanies ORDER BY `description` ASC");
+            // }
+
+            $sql = "id, description";
+            $this->db->select($sql);
+
+            if (isset($get['q']) && $get['q']){
+                $this->db->like('description', $get['q'], 'both');
             }
+
+            $this->db->from('gcchris.tblcompanies');
+            $this->db->limit(10);
+            $query = $this->db->get();
 
             if ($query->num_rows() > 0) {
                 foreach ($query->result_array() as $_query) {
@@ -1602,11 +2161,24 @@
         function getDepartmentCollection() {
             $get = $this->input->get();
             $resultarray = array();
-            if (isset($get['q'])) {
-                $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tbldepartments WHERE `description` LIKE '%{$get['q']}%' ORDER BY `description` ASC");
+            // if (isset($get['q'])) {
+            //     $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tbldepartments WHERE `description` LIKE '%{$get['q']}%' ORDER BY `description` ASC");
+            // } else {
+            //     $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tbldepartments ORDER BY `description` ASC");
+            // }
+
+            $sql = "id, description";
+
+            $this->db->select($sql);
+            
+            if (isset($get['q']) && $get['q']) {
+                $this->db->like('description', $get['q'], 'both');
             } else {
-                $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tbldepartments ORDER BY `description` ASC");
+                $this->db->limit(10);
             }
+
+            $this->db->from("gcchris.tbldepartments");
+            $query = $this->db->get();
 
             if ($query->num_rows() > 0) {
                 foreach ($query->result_array() as $_query) {
@@ -1622,11 +2194,25 @@
         function getEmployeeCollection() {
             $get = $this->input->get();
             $resultarray = array();
-            if (isset($get['q'])) {
-                $query = $this->db->query("SELECT  id, firstname, middlename, lastname, suffix FROM gccmaster.tblemployees WHERE  (employee_status='Active') AND firstname LIKE '%{$get['q']}%' OR lastname LIKE '%{$get['q']}%' ORDER BY firstname ASC LIMIT 10");
-            } else {
-                $query = $this->db->query("SELECT  id, firstname, middlename, lastname, suffix FROM gccmaster.tblemployees WHERE employee_status='Active' ORDER BY firstname ASC LIMIT 10");
+            // if (isset($get['q'])) {
+            //     $query = $this->db->query("SELECT  id, firstname, middlename, lastname, suffix FROM gccmaster.tblemployees WHERE  (employee_status='Active') AND firstname LIKE '%{$get['q']}%' OR lastname LIKE '%{$get['q']}%' ORDER BY firstname ASC LIMIT 10");
+            // } else {
+            //     $query = $this->db->query("SELECT  id, firstname, middlename, lastname, suffix FROM gccmaster.tblemployees WHERE employee_status='Active' ORDER BY firstname ASC LIMIT 10");
+            // }
+
+            $sql = "id, firstname, middlename, lastname, suffix ";
+            $this->db->select($sql);
+            $this->db->from("gccmaster.tblemployees");
+            
+            if (isset($get['q']) && $get['q']) {
+                $this->db->like('firstname', $get['q'], 'both');
+                $this->db->or_like('lastname', $get['q'], 'both');
             }
+
+            $this->db->where('employee_status', 'Active');
+            $this->db->limit(10);
+            $this->db->order_by('firstname', 'ASC');
+            $query = $this->db->get();
 
             if ($query->num_rows() > 0) {
                 foreach ($query->result_array() as $_query) {
@@ -1671,16 +2257,38 @@
         function getVehicleCollection() {
             $get = $this->input->get();
             $resultarray = array();
-            if (isset($get['q'])) {
-                /*** $query = $this->db->query("SELECT  id, CONCAT(gen_code, ' | ', plateno,' | ',name) AS vehicle FROM gccasset.vehicles WHERE  (isCompo='0' AND is_borrowed='0') AND plateno LIKE '%{$get['q']}%' OR name LIKE '%{$get['q']}%' ORDER BY description ASC"); ***/
-                $query = $this->db->query("SELECT  id, CONCAT(gen_code, ' | ', plateno,' | ',name) AS vehicle FROM gccasset.vehicles WHERE  isCompo='0' 
-                AND status2 NOT IN ('archived', 'damage', 'junk', 'lost', 'sold') 
-                AND (plateno LIKE '%{$get['q']}%' OR name LIKE '%{$get['q']}%' OR gen_code LIKE '%{$get['q']}%') ORDER BY description ASC");
-            } else {
-                /*** $query = $this->db->query("SELECT  id, CONCAT(gen_code, ' | ',plateno,' | ',name) AS vehicle FROM gccasset.vehicles WHERE isCompo='0' AND is_borrowed='0' ORDER BY plateno ASC"); ***/
-                $query = $this->db->query("SELECT  id, CONCAT(gen_code, ' | ',plateno,' | ',name) AS vehicle FROM gccasset.vehicles WHERE isCompo='0' 
-                AND status2 NOT IN ('archived', 'damage', 'junk', 'lost', 'sold') ORDER BY plateno ASC");
+            // if (isset($get['q'])) {
+            //     /*** $query = $this->db->query("SELECT  id, CONCAT(gen_code, ' | ', plateno,' | ',name) AS vehicle FROM gccasset.vehicles WHERE  (isCompo='0' AND is_borrowed='0') AND plateno LIKE '%{$get['q']}%' OR name LIKE '%{$get['q']}%' ORDER BY description ASC"); ***/
+            //     $query = $this->db->query("SELECT  id, CONCAT(gen_code, ' | ', plateno,' | ',name) AS vehicle FROM gccasset.vehicles WHERE  isCompo='0' 
+            //     AND status2 NOT IN ('archived', 'damage', 'junk', 'lost', 'sold') 
+            //     AND (plateno LIKE '%{$get['q']}%' OR name LIKE '%{$get['q']}%' OR gen_code LIKE '%{$get['q']}%') ORDER BY description ASC");
+            // } else {
+            //     /*** $query = $this->db->query("SELECT  id, CONCAT(gen_code, ' | ',plateno,' | ',name) AS vehicle FROM gccasset.vehicles WHERE isCompo='0' AND is_borrowed='0' ORDER BY plateno ASC"); ***/
+            //     $query = $this->db->query("SELECT  id, CONCAT(gen_code, ' | ',plateno,' | ',name) AS vehicle FROM gccasset.vehicles WHERE isCompo='0' 
+            //     AND status2 NOT IN ('archived', 'damage', 'junk', 'lost', 'sold') ORDER BY plateno ASC");
+            // }
+
+            $sql = "id, CONCAT(gen_code, ' | ',plateno,' | ',name) AS vehicle";
+
+            $this->db->select($sql);
+            $this->db->where('isCompo', 0);
+            $this->db->where_not_in('status2', array('archived', 'damage', 'junk', 'lost', 'sold'));
+
+            if(isset($get['q']) && $get['q']) {
+                $this->db->group_start();
+                    $this->db->like('plateno', $get['q'], 'both');
+                    $this->db->or_like('name', $get['q'], 'both');
+                    $this->db->or_like('gen_code', $get['q'], 'both');
+                $this->db->group_end();
+
+                $this->db->order_by('description', 'ASC');
+            }else{
+                $this->db->order_by('plateno', 'ASC');
             }
+
+            $this->db->order_by('plateno', 'ASC');
+            $this->db->from('gccasset.vehicles');
+            $query = $this->db->get();
 
             $sqlQuery = $this->db->last_query();
 
@@ -2102,7 +2710,7 @@
             $arrData = array();
             $this->db->select("a.id, a.reference_no, a.company, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt");
             $this->db->from("gcceforms.travel_order a");
-            $this->db->like('a.created_dt', $check);
+            $this->db->like('DATE(a.created_dt)', $check);
             $this->db->limit($limit, $start);
             $this->db->order_by($order, $dir);
             $query = $this->db->get();
@@ -2256,7 +2864,7 @@
             $arrData = array();
             $this->db->select("a.id, a.reference_no, a.company, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt");
             $this->db->from("gcceforms.travel_order a");
-            $this->db->where('a.created_dt >= ', $check);
+            $this->db->where('DATE(a.created_dt) >= ', $check);
             $this->db->limit($limit, $start);
             $this->db->order_by($order, $dir);
             $query = $this->db->get();
@@ -2369,6 +2977,8 @@
         }
 
         function mostTraveledPerson() {
+            $arrData = array();
+            
             $this->db->select("*,count(employee_id) c, b.firstname, b.lastname, b.middlename, b.suffix");
             $this->db->from("gcceforms.travel_personnel a");
             $this->db->join("gccmaster.tblemployees b", "a.employee_id=b.id", "left");
@@ -2378,7 +2988,7 @@
             $this->db->limit(1);
             $query = $this->db->get();
             if ($query->num_rows() > 0) {
-                $arrData = array();
+                
                 foreach ($query->result() as $key => $rs) {
                     $tempRs = (array)$rs;
                     $fullname = $this->core_layout->getDisplayName($tempRs);
@@ -2387,10 +2997,13 @@
                     $rs->sum = $this->sumDetails("travel_personnel", "employee_id");
                     $arrData[] = $rs;
                 }
-                return $arrData[0];
-            } else {
-                return array();
-            }
+                // return $arrData[0];
+            } 
+            // else {
+            //     return array();
+            // }
+
+            return $arrData[0];
         }
 
         function mostTraveledVehicle() {
@@ -2454,7 +3067,7 @@
             $this->db->join("gcceforms.travel_destination d", "a.id = d.travel_order_id");
             $this->db->join("gcchris.tblposition pos", "pos.id = b.position", "left");
             $this->db->group_by("d.travel_order_id");
-            $this->db->like("d.date_from", $currentDate, "both");
+            $this->db->like("DATE(d.date_from)", $currentDate, "both");
             $this->db->order_by("a.id", "ASC");
             $query = $this->db->get();
 
@@ -2542,7 +3155,7 @@
             $this->db->join("gcceforms.travel_destination d", "a.id = d.travel_order_id");
             $this->db->join("gcchris.tblposition pos", "pos.id = b.position", "left");
             $this->db->group_by("d.travel_order_id");
-            $this->db->like("d.date_from", $currentDate, "both");
+            $this->db->like("DATE(d.date_from)", $currentDate, "both");
             $this->db->order_by("a.id", "ASC");
             $query = $this->db->get();
 
@@ -2672,16 +3285,25 @@
 
         public function sitesOption(){
             $post = $this->input->post();
-            if(isset($post['sites_id']) && $post['sites_id'] != ""){
-                $this->db->select("site_name, latitude, longtitude");
+            // if(isset($post['sites_id']) && $post['sites_id'] != ""){
+            //     $this->db->select("site_name, latitude, longtitude");
+            //     $this->db->where("id", $post['sites_id']);
+            //     $all_data = $this->db->get("gcctimeutility.app_location_sites");
+            //     return $all_data->row_array();
+            // }else{
+            //     $this->db->select("id, site_name, latitude, longtitude");
+            //     $all_data = $this->db->get("gcctimeutility.app_location_sites")->result_array();
+            //     return $all_data;
+            // }
+
+            $this->db->select("site_name, latitude, longtitude");
+
+            if(isset($post['sites_id']) && $post['sites_id'] != null){
                 $this->db->where("id", $post['sites_id']);
-                $all_data = $this->db->get("gcctimeutility.app_location_sites");
-                return $all_data->row_array();
-            }else{
-                $this->db->select("id, site_name, latitude, longtitude");
-                $all_data = $this->db->get("gcctimeutility.app_location_sites")->result_array();
-                return $all_data;
             }
+
+            $all_data = $this->db->get("gcctimeutility.app_location_sites")->result_array();
+            return $all_data;
         }
 
         private function numTOAccomplish($travel_id){
@@ -2750,11 +3372,21 @@
             
             $department = $this->db->get_where("gccmaster.tblemployees", array("id"=>$emp_id))->row("department_id");
 
-            if(rtrim(is_numeric($department))){
-                $department_head = $this->db->get_where("gcchris.tbldepartments",array("id"=>$department))->row("head_id");
-            }else{
-                $department_head = $this->db->get_where("gcchris.tbldepartments",array("description"=>$department))->row("head_id");
-            }  
+            $this->db->reset_query();
+
+            $where = rtrim(is_numeric($department)) ? array("id" => $department) : array("description" => $department);
+
+            $this->db->select('head_id');
+            $department_head = $this->db->get_where("gcchris.tbldepartments", $where)->row("head_id");
+            // if(rtrim(is_numeric($department))){
+            //     $department_head = $this->db->get_where("gcchris.tbldepartments",array("id"=>$department))->row("head_id");
+            // }else{
+            //     $department_head = $this->db->get_where("gcchris.tbldepartments",array("description"=>$department))->row("head_id");
+            // }  
+
+            $this->db->reset_query();
+
+            $this->db->select('telegram_chat_id');
             $data = $this->db->get_where("gccmaster.tblusers", array("emp_id"=>$department_head))->row("telegram_chat_id");
             return $data;
         }
@@ -2814,13 +3446,14 @@
         }
 
         function getPersonnelName($id){
+            $this->db->select('firstname, middlename, lastname');
             $data = $this->db->get_where("gccmaster.tblemployees", array("id"=>$id))->row();
             return $data->firstname." ".$data->middlename." ".$data->lastname;
         }
 
         function getDestinationDetails($id){
-            return $this->db->get_where("gcceforms.travel_destination_temp", array("id"=>$id))->row('destination');
-            
+            $this->db->select('destination');
+            return $this->db->get_where("gcceforms.travel_destination_temp", array("id"=>$id))->row('destination');            
         }
 
         function seriesV2($current_date, $code){
@@ -3126,7 +3759,8 @@
         }
 
         function getPersonnelById($id){
-            $this->db->select("*");
+            // $this->db->select("*");
+            $this->db->select("employee_id");
             $this->db->from("gcceforms.travel_personnel");
             $this->db->where('travel_order_id', $id);
             $query = $this->db->get();
@@ -3142,7 +3776,8 @@
         }
 
         function sendTelegramToPersonnelHeads($id, $telegram_msg){
-            $this->db->select("*");
+            // $this->db->select("*");
+            $this->db->select("employee_id");
             $this->db->from("gcceforms.travel_personnel");
             $this->db->where('travel_order_id', $id);
             $query = $this->db->get();
@@ -3158,6 +3793,7 @@
         }
 
         function sendSMStoDriver($id, $reference_no, $destination, $pers){
+            $this->db->select('mobile_no');
             $query = $this->db->get_where("gccmaster.tblemployees", array("id"=>$id));
             $msg = "This is to inform you that you have an assigned Travel Order (".$reference_no.") with personnel/s and destination/s as follows:\n\nPersonnel/s:".$pers."\n\nDestination/s:\n".$destination;
             return $this->contacts->sendSMS($query->row('mobile_no'), $msg);
@@ -3212,7 +3848,7 @@
         }
 
         function getPersonnelByIdDetails($id){
-            $this->db->select("*");
+            $this->db->select("employee_id");
             $this->db->from("gcceforms.travel_personnel");
             $this->db->where('travel_order_id', $id);
             $query = $this->db->get();
@@ -3231,7 +3867,7 @@
         }
 
         function getDestinationByIdDetails($id){
-            $this->db->select("*");
+            $this->db->select("date_from, date_to, remarks, travel_from, travel_to");
             $this->db->from("gcceforms.travel_destination");
             $this->db->where('travel_order_id', $id);
             $query = $this->db->get();
@@ -3528,6 +4164,7 @@
         // -----------------------------------------------------------------------------
 
         function checkAssignTravelType($id){
+            $this->db->select('is_service, is_hitch, driver_id, vehicle_id, is_others, is_personal, is_commute');
             $query = $this->db->get_where("gcceforms.travel_order", array("id"=>$id));
             if((($query->row('is_service') > 0 || $query->row('is_hitch') > 0) && $query->row('driver_id') > 0 && $query->row('vehicle_id') > 0) || 
                 ($query->row('is_others') > 0 || $query->row('is_personal') > 0 || $query->row('is_commute') > 0)){
@@ -3537,6 +4174,7 @@
         }
 
         function getReferenceNo($id){
+            $this->db->select("reference_no");
             return $this->db->get_where("gcceforms.travel_order", array("id"=>$id))->row('reference_no');
         }
 

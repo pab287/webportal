@@ -116,7 +116,8 @@ var req = $("#select2_req").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
   minimumInputLength: 3,
-  dropdownParent: $("#modal_form_destination"),
+  // dropdownParent: $("#modal_form_destination"),
+  dropdownParent: $("#requested-by"),
   ajax: {
     url: baseUrl("eforms/Travel_order/get_request_collection"),
     dataType: "json",
