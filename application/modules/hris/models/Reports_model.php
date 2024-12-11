@@ -1576,14 +1576,10 @@ class Reports_model extends CI_Model
 
                         $dateTime = array_unique($dateTime);
                         $dateTime = array_filter($dateTime);
-
                         array_multisort($dateTime, SORT_ASC, SORT_NUMERIC, $newLogs00);
                         
-                        $datex = array();
-                        foreach ($attDate as $dtt) { $datex[] = strtotime($dtt); }
-                        $datex = array_unique($datex);
-                        $datex = array_filter($datex);
-                        array_multisort($datex, SORT_ASC, SORT_NUMERIC, $attDate);
+                        $timestamp = array_map('strtotime', $attDate); 
+                        array_multisort($timestamp, SORT_ASC, $attDate);
 
                         $attx->attendance_logs = implode(",", $newLogs00);
                         $attx->attendance_dates = implode(",", $attDate);
