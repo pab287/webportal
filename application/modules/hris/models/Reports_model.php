@@ -1249,6 +1249,7 @@ class Reports_model extends CI_Model
     }
 
     public function generateAbsenteeReport(){
+        $this->load->model("gcctime/timesheet_model", "ts_model");
         $post = $this->input->post();
         $resultset = array();
         $arrFilter = array();
@@ -1320,7 +1321,6 @@ class Reports_model extends CI_Model
             }
     
             if($startDate && $endDate && (is_array($employeeIds) && count($employeeIds) > 0)){
-
                 $employeeShiftRecord = array();
                 $this->db->select("emp.id, ssr.shift_resource");
                 $this->db->from("gcctimeutility.shift_schedule_resource as ssr");
@@ -1350,6 +1350,10 @@ class Reports_model extends CI_Model
                     }
                 }
 
+                $newEmployeeRecord = array();
+                $employeeDates = array();
+                $employeeLogDates = array();
+
                 if(is_array($employeeShiftRecord) && count($employeeShiftRecord) > 0){
                     $interval = DateInterval::createFromDateString('1 day');
                     $dateStart = new DateTime($startDate);
@@ -1357,19 +1361,114 @@ class Reports_model extends CI_Model
                     $dateEnd->modify("+1 day");
 
                     $period = new DatePeriod($dateStart, $interval, $dateEnd);
-                    
-                    foreach ($employeeShiftRecord as $empId => $schedule) {
+                    $propShift = array("am_start", "am_end", "pm_start", "pm_end");
+
+                    foreach ($employeeShiftRecord as $key => $schedule) {
                         foreach ($period as $dt) {
                             $weekday = strtolower($dt->format("l"));
                             $date = $dt->format("Y-m-d");
-                            if(isset($schedule[$weekday]) && $schedule[$weekday]){
-                                var_dump($date, $weekday, $schedule[$weekday]);
+                            $md5Date = md5($date);
+
+                            $holidayResponse = (object) $this->ts_model->getCurrentDateIsHoliday($date);
+                            if($holidayResponse->is_holiday == false){
+                                if(isset($schedule[$weekday]) && $schedule[$weekday]){
+                                    $_hasShiftSchedule = true;
+                                    $weekdaySchedule = $schedule[$weekday];
+    
+                                    $tempSchedule = new stdClass();
+                                    foreach ($propShift as $prop) { $tempSchedule->{$prop} = $weekdaySchedule->{$prop}; }
+    
+                                    $shiftSchedule = $this->ts_model->getCustomizedShiftScheduleByDate($date, $key);
+                                    if(isset($shiftSchedule->has_shift) && $shiftSchedule->has_shift == 1){
+                                        $nSchedule = $shiftSchedule->schedule;
+                                        foreach ($propShift as $prop) { $tempSchedule->{$prop} = $nSchedule->{$prop}; }
+                                    }
+    
+                                    $isWholeDay = true;
+                                    $tempSchedule->am_start = $tempSchedule->am_start ? $tempSchedule->am_start : "00:00:00";
+                                    $tempSchedule->am_end = $tempSchedule->am_end ? $tempSchedule->am_end : "00:00:00";
+                                    $tempSchedule->pm_start = $tempSchedule->pm_start ? $tempSchedule->pm_start : "00:00:00";
+                                    $tempSchedule->pm_end = $tempSchedule->pm_end ? $tempSchedule->pm_end : "00:00:00";
+                                    
+                                    $amDateTimeLog = $tempSchedule->am_start != "00:00:00" && $tempSchedule->am_end != "00:00:00" ? $date." ".$tempSchedule->am_start."~".$date." ".$tempSchedule->am_end : null;
+                                    $pmDateTimeLog = $tempSchedule->pm_start != "00:00:00" && $tempSchedule->pm_end != "00:00:00" ? $date." ".$tempSchedule->pm_start."~".$date." ".$tempSchedule->pm_end : null;
+
+                                    if (isset($tempSchedule->am_start) && isset($tempSchedule->am_end) && isset($tempSchedule->pm_start) && isset($tempSchedule->pm_end)){
+                                        if (($tempSchedule->am_start == NULL || $tempSchedule->am_start == "00:00:00") 
+                                            && ($tempSchedule->am_end == NULL || $tempSchedule->am_end == "00:00:00")){
+                                            $isWholeDay = false;
+                                        }
+                                        if (($tempSchedule->pm_start == NULL || $tempSchedule->pm_start == "00:00:00") 
+                                            && ($tempSchedule->pm_end == NULL || $tempSchedule->pm_end == "00:00:00")){
+                                            $isWholeDay = false;
+                                        }
+                                    }
+                                    if($amDateTimeLog){ $employeeLogDates[$key][$md5Date][] = $amDateTimeLog; }
+                                    if($pmDateTimeLog){ $employeeLogDates[$key][$md5Date][] = $pmDateTimeLog; }
+
+                                    $employeeDates[$key][] = $date;
+                                    $newEmployeeRecord[$key][$md5Date] = $isWholeDay ? 1: 0.5;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                $updateEmployeeAbsences = array();
+
+                if(is_array($employeeDates) && count($employeeDates) > 0){
+                    foreach ($employeeDates as $empId => $dates) {
+                        $this->db->select("GROUP_CONCAT(DISTINCT DATE(ts.date)) as dates, MAX(ts.date) as max_date, emp.date_start");
+                        $this->db->from("gcctimeutility.timesheet as ts");
+                        $this->db->join("gccmaster.tblemployees as emp", "emp.id = ts.emp_id", "INNER");
+                        $this->db->join("gcchris.tblposition as pos", "pos.id = emp.position OR pos.name = emp.position", "LEFT");
+                        $this->db->where("ts.is_holiday", 0);
+                        $this->db->where("ts.has_shift", 1);
+                        $this->db->where("ts.verified", 1);
+                        $this->db->group_start();
+                        $this->db->where("DATE(ts.date) >=", $startDate);
+                        $this->db->where("DATE(ts.date) <=", $endDate);
+                        $this->db->group_end();
+                        $this->db->where("ts.emp_id", $empId);
+                        $this->db->order_by("ts.date", "ASC");
+                        $qdates = $this->db->get();
+
+                        if($qdates->num_rows() > 0){
+                            $qdates = $qdates->row();
+                            $qMaxDate = $qdates->max_date;
+                            $qDateStart = $qdates->date_start;
+
+                            $tsDates = $qdates->dates;
+                            $tsDates = explode(",", $tsDates);
+                            $tsDates = array_map("trim", $tsDates);
+                            $tsDates = array_filter($tsDates);
+                            $tsDates = array_unique($tsDates);
+
+                            $arrLogs = array();
+                            $updateEmployeeAbsences[$empId]["attendance_logs"] = "";
+                            $updateEmployeeAbsences[$empId]["absentee_dates"] = array();
+                            foreach ($dates as $dt) {
+                                if(strtotime($dt) >= strtotime($qDateStart) && strtotime($dt) <= strtotime($qMaxDate)){
+                                    if(!in_array($dt, $tsDates)){
+                                        $md5Date = md5($dt);
+                                        $updateEmployeeAbsences[$empId]["absentee_total"] = isset($updateEmployeeAbsences[$empId]["absentee_total"]) && $updateEmployeeAbsences[$empId]["absentee_total"] ? $updateEmployeeAbsences[$empId]["absentee_total"] : 0;
+                                        $updateEmployeeAbsences[$empId]["absentee_total"] += $newEmployeeRecord[$empId][$md5Date];
+                                        
+                                        if(is_array($employeeLogDates[$empId][$md5Date]) && count($employeeLogDates[$empId][$md5Date]) > 0){
+                                            foreach ($employeeLogDates[$empId][$md5Date] as $dtx) { $arrLogs[] = $dtx; }
+                                        }
+                                        $updateEmployeeAbsences[$empId]["absentee_dates"][] = $dt;
+                                    }
+                                }
+                            }
+
+                            if(is_array($arrLogs) && count($arrLogs) > 0){
+                                $updateEmployeeAbsences[$empId]["attendance_logs"] = implode(",", $arrLogs);
                             }
                         }
                     }
                 }
 
-                
 
                 $fsDate = Date("F d, Y", strtotime($startDate));
                 $feDate = Date("F d, Y", strtotime($endDate));
@@ -1427,9 +1526,15 @@ class Reports_model extends CI_Model
                 $ctrCount = $qAttendance->num_rows();
 
                 if($ctrCount > 0){
+                    $qData = array();
                     $loaReference = array();
                     foreach($qAttendance->result() as $attx){
+                        $tempTotal = isset($updateEmployeeAbsences[$attx->emp_id]["absentee_total"]) ? $updateEmployeeAbsences[$attx->emp_id]["absentee_total"] : 0;
+                        $tempLogs = isset($updateEmployeeAbsences[$attx->emp_id]["attendance_logs"]) ? $updateEmployeeAbsences[$attx->emp_id]["attendance_logs"] : "";
+
                         $attDate = array_unique(array_filter(explode(",", $attx->attendance_dates)));
+                        if(isset($updateEmployeeAbsences[$attx->emp_id]["absentee_dates"])){ $attDate = array_merge($attDate, $updateEmployeeAbsences[$attx->emp_id]["absentee_dates"]); }  
+                        
                         if(is_array($attDate) && count($attDate) > 0){
                             foreach ($attDate as $dt) {
                                 $this->db->select("date_from, date_to, employee, reference_no, type");
@@ -1452,9 +1557,41 @@ class Reports_model extends CI_Model
                                 }
                             }
                         }
+
+                        $newLogs00 = explode(",", $attx->attendance_logs);
+                        $newLogs00 = array_filter($newLogs00);
+                        $newLogs00 = array_unique($newLogs00);
+
+                        $newLogs01 = explode(",", $tempLogs);
+                        $newLogs01 = array_filter($newLogs01);
+                        $newLogs01 = array_unique($newLogs01);
+
+                        $newLogs00 = array_merge($newLogs00, $newLogs01);
+
+                        $dateTime = array();
+                        foreach ($newLogs00 as $log) {
+                            $dtLog = explode("~", $log);
+                            $dateTime[] = strtotime($dtLog[0]);
+                        }
+
+                        $dateTime = array_unique($dateTime);
+                        $dateTime = array_filter($dateTime);
+
+                        array_multisort($dateTime, SORT_ASC, SORT_NUMERIC, $newLogs00);
+                        
+                        $datex = array();
+                        foreach ($attDate as $dtt) { $datex[] = strtotime($dtt); }
+                        $datex = array_unique($datex);
+                        $datex = array_filter($datex);
+                        array_multisort($datex, SORT_ASC, SORT_NUMERIC, $attDate);
+
+                        $attx->attendance_logs = implode(",", $newLogs00);
+                        $attx->attendance_dates = implode(",", $attDate);
+                        $attx->absentee_total += $tempTotal;
+                        $qData[] = $attx;
                     }
 
-                    $resultset["data"] = $qAttendance->result_array();
+                    $resultset["data"] = $qData;
                     $resultset["loa_reference"] = $loaReference;
                     $resultset["response"] = true;
                     $resultset["filters"] = $arrFilter;
