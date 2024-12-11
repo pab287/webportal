@@ -14,7 +14,9 @@ class Forgotpassword extends MY_Controller {
  
  	function index()
 	{
+		$data = array();
 		$data['recaptcha_site_key'] = $_ENV['RECAPTCHA_SITE_KEY'];
+		
 	    $this->load->helper(array('form'));
 	    $this->load->view('forgotpassword', $data);
 	}
