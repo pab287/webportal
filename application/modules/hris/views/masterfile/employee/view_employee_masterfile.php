@@ -404,15 +404,17 @@
                         </div>
                     </div>
                 </div>
-                <div class="m-portlet__body data-sheet m--hide">
+                <div class="m-portlet__body data-sheet">
 
                     <!-- for 201 printing -->
-                    <div class="m-portlet__section web-view" id="to-print">
-                        <?php $this->load->view("hris/masterfile/employee/sections/personal_information", $data, FALSE); ?>
+
+                    <!-- <div class="m-portlet__section web-view" id="to-print">
+                        
                     </div>
+                    
                     <div class="m-portlet__section web-view" id="to-print">
-                        <?php $this->load->view("hris/masterfile/employee/sections/employment_data", $data, FALSE); ?>
-                    </div>
+                        
+                    </div> -->
                     <!-- for 201 printing -->
 
                     <div id="hide-in-print" class="m-portlet__section web-view">

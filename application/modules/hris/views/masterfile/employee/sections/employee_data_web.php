@@ -63,10 +63,10 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td data-label="First Name"> <?= $data->main->firstname ?> </td>
-                        <td data-label="Middle Name"> <?= $data->main->middlename ? $data->main->middlename : " --- " ?> </td>
-                        <td data-label="Last Name"> <?= $data->main->lastname ?> </td>
-                        <td data-label="Suffix"> <?= $data->main->suffix ? $data->main->suffix : "&nbsp;" ?> </td>
+                        <td data-label="First Name" v-text="data.firstname || '---'"></td>
+                        <td data-label="Middle Name" v-text="data.middlename || '---'"></td>
+                        <td data-label="Last Name" v-text="data.lastname || '---'"></td>
+                        <td data-label="Suffix" v-text="data.suffix || '---'"></td>
                     </tr>
                 </tbody>
             </table>
@@ -80,8 +80,8 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td data-label="Current Address"> <?= $data->main->curr_addr ? $data->main->curr_addr : "None"  ?> </td>
-                        <td data-label="Provincial Address"> <?= $data->main->prov_addr ? $data->main->prov_addr : "None"  ?> </td>
+                        <td data-label="Current Address" v-text="data.curr_addr || 'None'"></td>
+                        <td data-label="Provincial Address" v-text="data.prov_addr || 'None'"></td> </td>
                     </tr>
                 </tbody>
             </table>
@@ -96,9 +96,9 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td data-label="Citizenship"> <?= $data->main->citizenship ? $data->main->citizenship : "None" ?> </td>
-                        <td data-label="Religion"> <?= $data->main->religion ? $data->main->religion : "None" ?> </td>
-                        <td data-label="Languages"> <?= $data->main->languages ? $data->main->languages : "None" ?> </td>
+                        <td data-label="Citizenship" v-text="data.citizenship || 'None'"></td>
+                        <td data-label="Religion" v-text="data.religion || 'None'"></td>
+                        <td data-label="Languages" v-text="data.languages || 'None'"></td>
                     </tr>
                 </tbody>
             </table>
@@ -115,16 +115,11 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td data-label="Gender"> <?= $data->main->gender ? $data->main->gender : "N/A"  ?> </td>
-                        <td data-label="Civil Status"> <?= $data->main->civil_stat ? $data->main->civil_stat : "N/A" ?> </td>
-                        <td data-label="Date of Birth">
-                            <?php
-                                $bday = new DateTime($data->main->bday);
-                                echo $bday->format("M d, Y");
-                            ?>
-                        </td>
-                        <td data-label="Place of Birth"> <?= $data->main->birthplace ? $data->main->birthplace : "None"  ?> </td>
-                        <td data-label="Blood Type"> <?= $data->main->bloodtype ? $data->main->bloodtype : "None" ?> </td>
+                        <td data-label="Gender" v-text="data.gender || 'N/A'"></td>
+                        <td data-label="Civil Status" v-text="data.civil_stat || 'N/A'"></td>
+                        <td data-label="Date of Birth" v-text="formatDate(data.bday) || 'None'"></td>
+                        <td data-label="Place of Birth" v-text="data.birthplace || 'None'"></td>
+                        <td data-label="Blood Type" v-text="data.bloodtype || 'None'"></td>
                     </tr>
                 </tbody>
             </table>
@@ -142,12 +137,12 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td data-label="Height"><?= $data->main->height ? $data->main->height : "N/A" ?></td>
-                        <td data-label="Weight"><?= $data->main->weight ? $data->main->weight : "N/A" ?></td>
-                        <td data-label="Hair Color"><?= $data->main->hair_color ? $data->main->hair_color : "N/A" ?></td>
-                        <td data-label="Complexion"><?= $data->main->complexion ? $data->main->complexion : "N/A" ?></td>
-                        <td data-label="Tel. No."><?= $data->main->tel_no ? $data->main->tel_no : "N/A" ?></td>
-                        <td data-label="Mobile No."><?= $data->main->mobile_no ? $data->main->mobile_no : "N/A" ?></td>
+                        <td data-label="Height" v-text="data.height || 'N/A'"></td>
+                        <td data-label="Weight" v-text="data.weight || 'N/A'"></td>
+                        <td data-label="Hair Color" v-text="data.hair_color || 'N/A'"></td>
+                        <td data-label="Complexion" v-text="data.complexion || 'N/A'"></td>
+                        <td data-label="Tel. No." v-text="data.tel_no || 'N/A'"></td>
+                        <td data-label="Mobile No." v-text="data.mobile_no || 'N/A'"></td>
                     </tr>
                 </tbody>
             </table>
@@ -182,12 +177,12 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td data-label="Email" class="email_container"><?= $data->main->email ? $data->main->email : "NONE" ?></td>
-                            <td data-label="Tax Status"><?= $data->main->tax_status ? $data->main->tax_status : "NONE" ?></td>
-                            <td data-label="Tin No."><?= $data->main->tin_no ? $data->main->tin_no : "NONE" ?></td>
-                            <td data-label="Philhealth No."><?= $data->main->phealth_no ? $data->main->phealth_no : "NONE" ?></td>
-                            <td data-label="Pag-ibig No."><?= $data->main->pagibig_no ? $data->main->pagibig_no : "NONE" ?></td>
-                            <td data-label="SSS No."><?= $data->main->sss_no ? $data->main->sss_no : "NONE" ?></td>
+                            <td data-label="Email" class="email_container" v-text="data.main.email || 'NONE'"></td>
+                            <td data-label="Tax Status" v-text="data.main.tax_status || 'NONE'"></td>
+                            <td data-label="Tin No." v-text="data.main.tin_no || 'NONE'"></td>
+                            <td data-label="Philhealth No." v-text="data.main.phealth_no || 'NONE'"></td>
+                            <td data-label="Pag-ibig No." v-text="data.main.pagibig_no || 'NONE'"></td>
+                            <td data-label="SSS No." v-text="data.main.sss_no || 'NONE'"></td>
                         </tr>
                     </tbody>
                 </table>
@@ -203,109 +198,83 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <?php
-                                if($data->main->mot_deceased){
-                                    $deceased_mot = "<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                }else{
-                                    $deceased_mot = "";
-                                }
-
-                                if($data->main->fat_deceased){
-                                    $deceased_fat = "<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                }else{
-                                    $deceased_fat = "";
-                                }
-                            ?>
                             <th class="row-header" scope="col">Name</th>
-                            <td><?= $data->main->fat_name ? $data->main->fat_name." ".$deceased_fat : "None" ?></td>
-                            <td><?= $data->main->mot_name ? $data->main->mot_name." ".$deceased_mot : "None" ?></td>
                             <td>
-                                <?php 
-                                if($data->main->partner_type == 1){
-                                    if($data->main->spo_deceased){
-                                        echo $data->main->spo_name." "."<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                    }else{
-                                        echo $data->main->spo_name;
-                                    }
-                                }else if($data->main->partner_type == 2){
-                                    if($data->main->partners_deceased){
-                                        echo $data->main->partners_name." "."<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                    }else{
-                                        echo $data->main->partners_name;
-                                    }
-                                }else{
-                                    echo "None";
-                                } 
-                                ?>
+                                <span v-if="data.main.fat_name" v-text="data.main.fat_name"></span>
+                                <span v-else v-text="'None'"></span>
+                                <span v-if="data.main.fat_deceased == 1" class="m-badge m-badge--primary m-badge--wide">Deceased</span>
+                            </td>
+                            <td>
+                                <span v-if="data.main.mot_name" v-text="data.main.mot_name"></span>
+                                <span v-else v-text="'None'"></span>
+                                <span v-if="data.main.mot_deceased == 1" class="m-badge m-badge--primary m-badge--wide">Deceased</span>
+                            </td>
+                            <td>
+                                <span v-if="data.main.partner_type == 1">
+                                    <span v-if="data.main.spo_deceased == 1">
+                                        <span v-text="data.main.spo_name"></span>
+                                        <span class="m-badge m-badge--primary m-badge--wide">Deceased</span>
+                                    </span>
+                                    <span v-else v-text="data.main.spo_name"></span>
+                                </span>
+                                <span v-else-if="data.main.partner_type == 2">
+                                    <span v-if="data.main.partners_deceased == 1">
+                                        <span v-text="data.main.partners_name"></span>
+                                        <span class="m-badge m-badge--primary m-badge--wide">Deceased</span>
+                                    </span>
+                                    <span v-else v-text="data.main.partners_name"></span>
+                                </span>
+                                <span v-else v-text="'None'"></span>
                             </td>
                         </tr>
                         <tr>
                             <th class="row-header" scope="col">Address</th>
-                            <td><?= $data->main->fat_addr ? $data->main->fat_addr : "None"  ?></td>
-                            <td><?= $data->main->mot_addr ? $data->main->mot_addr : "None"  ?></td>
+                            <td v-text="data.main.fat_addr ? data.main.fat_addr : 'None'"></td>
+                            <td v-text="data.main.mot_addr ? data.main.mot_addr : 'None'"></td>
                             <td>
-                                <?php if($data->main->partner_type == 1){
-                                    echo $data->main->spo_addr;
-                                }else if($data->main->partner_type == 2){
-                                    echo $data->main->partners_addr;
-                                }else{
-                                    echo "None";
-                                } ?>
+                                <span v-if="data.main.partner_type == 1" v-text="data.main.spo_addr"></span>
+                                <span v-else-if="data.main.partner_type == 2" v-text="data.main.partners_addr"></span>
+                                <span v-else>None</span>
                             </td>
                         </tr>
                         <tr>
                             <th class="row-header" scope="col">Company</th>
-                            <td><?= $data->main->fat_company ? $data->main->fat_company : "None" ?></td>
-                            <td><?= $data->main->mot_company ? $data->main->mot_company : "None" ?></td>
+                            <td v-text="data.main.fat_company ? data.main.fat_company : 'None'"></td>
+                            <td v-text="data.main.mot_company ? data.main.mot_company : 'None'"></td>
                             <td>
-                                <?php if($data->main->partner_type == 1){
-                                    echo $data->main->spo_company;
-                                }else if($data->main->partner_type == 2){
-                                    echo $data->main->partners_company;
-                                }else{
-                                    echo "None";
-                                } ?>
+                                <span v-if="data.main.partner_type == 1" v-text="data.main.spo_company"></span>
+                                <span v-else-if="data.main.partner_type == 2" v-text="data.main.partners_company"></span>
+                                <span v-else>None</span>
                             </td>
                         </tr>
                         <tr>
                             <th class="row-header" scope="col">Occupation</th>
-                            <td><?= $data->main->fat_occupation ? $data->main->fat_occupation : "None" ?></td>
-                            <td><?= $data->main->mot_occupation ? $data->main->mot_occupation : "None" ?></td>
+                            <td v-text="data.main.fat_occupation ? data.main.fat_occupation : 'None'"></td>
+                            <td v-text="data.main.mot_occupation ? data.main.mot_occupation : 'None'"></td>
                             <td>
-                                <?php if($data->main->partner_type == 1){
-                                    echo $data->main->spo_occupation;
-                                }else if($data->main->partner_type == 2){
-                                    echo $data->main->partners_occupation;
-                                }else{
-                                    echo "None";
-                                } ?>
+                                <span v-if="data.main.partner_type == 1" v-text="data.main.spo_occupation"></span>
+                                <span v-else-if="data.main.partner_type == 2" v-text="data.main.partners_occupation"></span>
+                                <span v-else>None</span>
                             </td>
                         </tr>
                         <tr>
                             <th class="row-header" scope="col">Contact No.</th>
-                            <td><?= $data->main->fat_contact ? $data->main->fat_contact : "None"  ?></td>
-                            <td><?= $data->main->mot_contact ? $data->main->mot_contact : "None"  ?></td>
+                            <td v-text="data.main.fat_contact ? data.main.fat_contact : 'None'"></td>
+                            <td v-text="data.main.mot_contact ? data.main.mot_contact : 'None'"></td>
                             <td>
-                                <?php if($data->main->partner_type == 1){
-                                    echo $data->main->spo_contact;
-                                }else if($data->main->partner_type == 2){
-                                    echo $data->main->partners_contact;
-                                }else{
-                                    echo "None";
-                                } ?>
+                                <span v-if="data.main.partner_type == 1" v-text="data.main.spo_contact"></span>
+                                <span v-else-if="data.main.partner_type == 2" v-text="data.main.partners_contact"></span>
+                                <span v-else>None</span>
                             </td>
                         </tr>
                     </tbody>
                 </table>
 
                 <div class="m--hidden-desktop">
-                    <table class="table-group-header">
-                        
-                    </table>
                     <table class="responsive">
                         <thead class="customsalary">
                             <tr>
-                                <th colspan="5">FATHER</th>
+                                <th colspan="5">Father</th>
                             </tr>
                         </thead>
                         <thead>
@@ -319,26 +288,18 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <?php
-                                    if($data->main->fat_deceased){
-                                        $deceased_fat = "<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                    }else{
-                                        $deceased_fat = "";
-                                    }
-                                ?>
-
-                                <td data-label="Name"><?= $data->main->fat_name ? $data->main->fat_name.$deceased_fat : "None" ?></td>
-                                <td data-label="Address"><?= $data->main->fat_addr ? $data->main->fat_addr : "None" ?></td>
-                                <td data-label="Company"><?= $data->main->fat_company ? $data->main->fat_company : "None" ?></td>
-                                <td data-label="Occupation"><?= $data->main->fat_occupation ? $data->main->fat_occupation : "None" ?></td>
-                                <td data-label="Contact No."><?= $data->main->fat_contact ? $data->main->fat_contact : "None" ?></td>
+                                <td data-label="Name">
+                                    <span v-if="data.main.fat_deceased == 1">{{ data.main.fat_name }}<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span></span>
+                                    <span v-else v-text="data.main.fat_name ? data.main.fat_name : 'None'"></span>
+                                </td>
+                                <td data-label="Address" v-text="data.main.fat_addr ? data.main.fat_addr : 'None'"></td>
+                                <td data-label="Company" v-text="data.main.fat_company ? data.main.fat_company : 'None'"></td>
+                                <td data-label="Occupation" v-text="data.main.fat_occupation ? data.main.fat_occupation : 'None'"></td>
+                                <td data-label="Contact No." v-text="data.main.fat_contact ? data.main.fat_contact : 'None'"></td>
                             </tr>
                         </tbody>
                     </table>
 
-                    <!-- <table class="table-group-header">
-                        
-                    </table> -->
                     <table class="responsive">
                         <thead class="customsalary">
                             <tr>
@@ -356,25 +317,18 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <?php
-                                    if($data->main->mot_deceased){
-                                        $deceased_mot = "<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                    }else{
-                                        $deceased_mot = "";
-                                    }
-                                ?>
-                                <td data-label="Name"><?= $data->main->mot_name ? $data->main->mot_name." ".$deceased_mot : "None" ?></td>
-                                <td data-label="Address"><?= $data->main->mot_addr ? $data->main->mot_addr : "None" ?></td>
-                                <td data-label="Company"><?= $data->main->mot_company ? $data->main->mot_company : "None" ?></td>
-                                <td data-label="Occupation"><?= $data->main->mot_occupation ? $data->main->mot_occupation : "None" ?></td>
-                                <td data-label="Contact No."><?= $data->main->mot_contact ? $data->main->mot_contact : "None" ?></td>
+                                <td data-label="Name">
+                                    <span v-if="data.main.mot_deceased == 1">{{ data.main.mot_name }}<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span></span>
+                                    <span v-else v-text="data.main.mot_name ? data.main.mot_name : 'None'"></span>
+                                </td>
+                                <td data-label="Address" v-text="data.main.mot_addr ? data.main.mot_addr : 'None'"></td>
+                                <td data-label="Company" v-text="data.main.mot_company ? data.main.mot_company : 'None'"></td>
+                                <td data-label="Occupation" v-text="data.main.mot_occupation ? data.main.mot_occupation : 'None'"></td>
+                                <td data-label="Contact No." v-text="data.main.mot_contact ? data.main.mot_contact : 'None'"></td>
                             </tr>
                         </tbody>
                     </table>
 
-                    <!-- <table class="table-group-header">
-                        
-                    </table> -->
                     <table class="responsive">
                         <thead class="customsalary">
                             <tr>
@@ -393,68 +347,32 @@
                         <tbody>
                             <tr>
                                 <td data-label="Name">
-                                <?php 
-                                if($data->main->partner_type == 1){
-                                    if($data->main->spo_deceased){
-                                        echo $data->main->spo_name." "."<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                    }else{
-                                        echo $data->main->spo_name;
-                                    }
-                                }else if($data->main->partner_type == 2){
-                                    if($data->main->partners_deceased){
-                                        echo $data->main->partners_name." "."<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                    }else{
-                                        echo $data->main->partners_name;
-                                    }
-                                }else{
-                                    echo "None";
-                                } 
-                                ?>
+                                    <span v-if="data.main.partner_type == 1">
+                                        <span v-if="data.main.spo_deceased == 1">
+                                            <span v-text="data.main.spo_name"></span>
+                                            <span class="m-badge m-badge--primary m-badge--wide">Deceased</span>
+                                        </span>
+                                        <span v-else v-text="data.main.spo_name"></span>
+                                    </span>
+                                    <span v-else-if="data.main.partner_type == 2">
+                                        <span v-if="data.main.partners_deceased == 1">
+                                            <span v-text="data.main.partners_name"></span>
+                                            <span class="m-badge m-badge--primary m-badge--wide">Deceased</span>
+                                        </span>
+                                        <span v-else v-text="data.main.partners_name"></span>
+                                    </span>
+                                    <span v-else v-text="'None'"></span>
                                 </td>
-                                <td data-label="Address">
-                                    <?php if($data->main->partner_type == 1){
-                                        echo $data->main->spo_addr;
-                                    }else if($data->main->partner_type == 2){
-                                        echo $data->main->partners_addr;
-                                    }else{
-                                        echo "None";
-                                    } ?>
-                                </td>
-                                <td data-label="Company">
-                                    <?php if($data->main->partner_type == 1){
-                                        echo $data->main->spo_company;
-                                    }else if($data->main->partner_type == 2){
-                                        echo $data->main->partners_company;
-                                    }else{
-                                        echo "None";
-                                    } ?>
-                                </td>
-                                <td data-label="Occupation">
-                                    <?php if($data->main->partner_type == 1){
-                                        echo $data->main->spo_occupation;
-                                    }else if($data->main->partner_type == 2){
-                                        echo $data->main->partners_occupation;
-                                    }else{
-                                        echo "None";
-                                    } ?>
-                                </td>
-                                <td data-label="Contact No.">
-                                    <?php if($data->main->partner_type == 1){
-                                        echo $data->main->spo_contact;
-                                    }else if($data->main->partner_type == 2){
-                                        echo $data->main->partners_contact;
-                                    }else{
-                                        echo "None";
-                                    } ?>
-                                </td>
+                                <td data-label="Address" v-text="data.main.partner_type == 1 ? data.main.spo_addr : (data.main.partner_type == 2 ? data.main.partners_addr : 'None')"></td>
+                                <td data-label="Company" v-text="data.main.partner_type == 1 ? data.main.spo_company : (data.main.partner_type == 2 ? data.main.partners_company : 'None')"></td>
+                                <td data-label="Occupation" v-text="data.main.partner_type == 1 ? data.main.spo_occupation : (data.main.partner_type == 2 ? data.main.partners_occupation : 'None')"></td>
+                                <td data-label="Contact No." v-text="data.main.partner_type == 1 ? data.main.spo_contact : (data.main.partner_type == 2 ? data.main.partners_contact : 'None')"></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
                 <!-- START DEPENDENT TABLES -->
-                <!-- <table class="table-group-header">
-                
-                </table> -->
+
                 <table class="responsive">
                     <thead class="customsalary">
                     <tr>
@@ -470,58 +388,22 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <?php 
-                    foreach ($data->dependents as $dependent) {
-                        $currentDate = date_create(date("Y-m-d"));
-                        $nextDate = date_create(date("Y-m-d", strtotime($dependent->dep_birthdate)));
-                        $intervalDate = date_diff($currentDate, $nextDate);
-                        
-                        $tempAge = 0;
-                        if($dependent->dep_birthdate == "0000-00-00"){
-                            $tempAge = "---";
-                        }else{
-                            if ($intervalDate->y == 0 && $intervalDate->m == 0) {
-                                $tempAge = $intervalDate->d;
-                                $tempAge = $tempAge > 1 ? $tempAge . " Days Old" : " Day Old";
-                            } else if ($intervalDate->y == 0) {
-                                $tempAge = $intervalDate->m;
-                                $tempAge = $tempAge > 1 ? $tempAge . " Months Old" : " Month Old";
-                            } else {
-                                $tempAge = $intervalDate->y;
-                                $tempAge = $tempAge > 1 ? $tempAge . " Years Old" : "1 Year Old";
-                            }
-                        }
-                        $dep_birthdate = $dependent->dep_birthdate;
-                        if (!empty($dep_birthdate)) {
-                            if($dep_birthdate == "0000-00-00"){
-                                $dep_birthdate = "---";
-                            }else{
-                                $dep_birthdate = new DateTime($dep_birthdate);
-                                $dep_birthdate = $dep_birthdate->format("M d, Y");
-                            }
-                        } else {
-                            echo "None";
-                        }
-
-                        ?>
-                        <tr>
-                            <td data-label="Name"><?= $dependent->dep_name ?></td>
-                            <td data-label="Age"><?= $tempAge ?></td>
-                            <td data-label="Date of Birth">
-                                <?php echo $dep_birthdate;?>
-                            </td>
-                            <td data-label="Relationship"><?= $dependent->dep_relation ?></td>
+                        <template v-if="data.dependents && data.dependents.length > 0">
+                        <tr v-for="dependent in data.dependents" :key="dependent.dep_name">
+                            <td data-label="Name">{{ dependent.dep_name }}</td>
+                            <td data-label="Age">{{ calculateAge(dependent.dep_birthdate) }}</td>
+                            <td data-label="Date of Birth">{{ formatBirthdate(dependent.dep_birthdate) }}</td>
+                            <td data-label="Relationship">{{ dependent.dep_relation }}</td>
                         </tr>
-                    <?php } ?>
-
-                    <?php if (count($data->dependents) <= 0) { ?>
+                        </template>
+                        <template v-else>
                         <tr>
                             <td data-label="Name">None</td>
                             <td data-label="Age">None</td>
                             <td data-label="Date of Birth">None</td>
                             <td data-label="Relationship">None</td>
                         </tr>
-                    <?php } ?>
+                        </template>
                     </tbody>
                 </table>
                 <!-- END DEPENDENT TABLES -->
@@ -542,11 +424,11 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr>
-                        <td data-label="Contact Person"><?= $data->main->emer_name ? $data->main->emer_name : "None" ?></td>
-                        <td data-label="Contact No."><?= $data->main->emer_contact ? $data->main->emer_contact : "None" ?></td>
-                        <td data-label="Address"><?= $data->main->emer_addr ? $data->main->emer_addr : "None" ?></td>
-                    </tr>
+                        <tr>
+                            <td data-label="Contact Person" v-text="data.main.emer_name || 'None'"></td>
+                            <td data-label="Contact No." v-text="data.main.emer_contact || 'None'"></td>
+                            <td data-label="Address" v-text="data.main.emer_addr || 'None'"></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -567,25 +449,21 @@
         </div>
         <div id="collapseQuestionWeb" class="collapse" role="tabpanel" aria-labelledby="headingQuestionWeb" data-parent="#accordionOtherAdditionalInfoWeb">
             <div class="card-body m-portlet__body--custom table-responsive">
-                <?php foreach ($data->questions as $key => $question) {
-                    $answer = "ques" . ($question->a); ?>
-                    <table class="responsive <?= ($key+1) < count($data->questions) ? 'mb-1' : '' ?>">
-                        <thead>
+            <table class="responsive mb-1" v-for="(question, index) in data.questions" :key="index">
+                    <thead>
                         <tr>
-                            <th class="" scope="col">
-                                <?= $question->q ?>
+                            <th class="" scope="col" v-text="question.q">
                             </th>
                         </tr>
-                        </thead>
-                        <tbody>
+                    </thead>
+                    <tbody>
                         <tr>
-                            <td data-label="<?= $question->q ?>" class="questions">
-                                <label><?= $data->main->$answer ? $data->main->$answer : "N/A" ?></label>
+                            <td class="questions">
+                                <span v-text="hasAnswer(question) ? data.main[`ques${question.a}`] : 'N/A'"></span>
                             </td>
                         </tr>
-                        </tbody>
-                    </table>
-                <?php } ?>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -617,27 +495,23 @@
                     </thead>
 
                     <tbody>
-                        <?php foreach ($data->educations as $education) { ?>
-                            <tr>
-                                <td data-label="Level"><?= $education->educ_level_type ?></td>
-                                <td data-label="School"><?= $education->educ_school ?></td>
-                                <td data-label="Degree"><?= $education->educ_degree ?></td>
-                                <td data-label="Honors"><?= $education->educ_honors ? $education->educ_honors: "N/A" ?></td>
-                                <td data-label="From"><?= $education->educ_from ?></td>
-                                <td data-label="To"><?= $education->educ_to ?></td>
-                            </tr>
-                        <?php } ?>
+                        <tr v-for="education in data.educations" :key="education.id">
+                            <td data-label="Level" v-text="education.educ_level_type"></td>
+                            <td data-label="School" v-text="education.educ_school"></td>
+                            <td data-label="Degree" v-text="education.educ_degree"></td>
+                            <td data-label="Honors" v-text="education.educ_honors || 'N/A'"></td>
+                            <td data-label="From" v-text="education.educ_from"></td>
+                            <td data-label="To" v-text="education.educ_to"></td>
+                        </tr>
 
-                        <?php if (count($data->educations) <= 0) { ?>
-                            <tr>
-                                <td data-label="Level">None</td>
-                                <td data-label="School">None</td>
-                                <td data-label="Degree">None</td>
-                                <td data-label="Honors">None</td>
-                                <td data-label="From">None</td>
-                                <td data-label="To">None</td>
-                            </tr>
-                        <?php } ?>
+                        <tr v-if="data.educations.length == 0">
+                            <td data-label="Level">None</td>
+                            <td data-label="School">None</td>
+                            <td data-label="Degree">None</td>
+                            <td data-label="Honors">None</td>
+                            <td data-label="From">None</td>
+                            <td data-label="To" >None</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -670,53 +544,44 @@
                     </tr>
                     </thead>
                     <tbody>
-
-                    <?php foreach ($data->licenses as $license) { ?>
-                        <tr>
-                            <td data-label="LICENSE/EXAM TYPE"><?= $license->license_type ?></td>
-                            <td data-label="EXAM PLACE"><?= $license->exam_place ?></td>
-                            <td data-label="RATING"><?= $license->rating ?></td>
-                            <td data-label="RELEASE DATE"><?= $license->release_date ?></td>
-                            <td data-label="EXAM DATE"><?= $license->exam_date ?></td>
-                            <td data-label="LICENSE NO."><?= $license->license_no ?></td>
-                        </tr>
-                    <?php } ?>
-
-                    <?php if (count($data->licenses) <= 0) { ?>
-                        <tr>
-                            <td data-label="LICENSE/EXAM TYPE">None</td>
-                            <td data-label="EXAM PLACE">None</td>
-                            <td data-label="RATING">None</td>
-                            <td data-label="RELEASE DATE">None</td>
-                            <td data-label="EXAM DATE">None</td>
-                            <td data-label="LICENSE NO.">None</td>
-                        </tr>
-                    <?php } ?>
-                    <!-- START DRIVER'S LICENSE ROW -->
-                    <?php if($data->if_driver > 0 AND count($data->driverlicenses) > 0){ ?>
-                    <thead>
-                    <tr>
-                        <th class="" scope="col" colspan="2">RESTRICTION</th>
-                        <th class="" scope="col" colspan="2">LICENSE NO.</th>
-                        <th class="" scope="col" colspan="2">EXPIRATION DATE</th>
+                    <tr v-if="data.licenses.length == 0">
+                        <td data-label="LICENSE/EXAM TYPE">None</td>
+                        <td data-label="EXAM PLACE">None</td>
+                        <td data-label="RATING">None</td>
+                        <td data-label="RELEASE DATE">None</td>
+                        <td data-label="EXAM DATE">None</td>
+                        <td data-label="LICENSE NO.">None</td>
                     </tr>
-                    </thead>
-                    <?php foreach ($data->driverlicenses as $driverlicense) {
-                    $date_now = date("Y-m-d");
-                        if($date_now > $driverlicense->expiration_date){
-                            $expiration_date = "<span class='m-badge m-badge--danger m-badge--wide'>$driverlicense->expiration_date</span>";
-                        }else{
-                            $expiration_date = "<span class='m-badge m-badge--success m-badge--wide'>$driverlicense->expiration_date</span>";
-                        }
-                        
-                    ?>
-                        <tr>
-                            <td data-label="RESTRICTION" colspan="2"><?= $driverlicense->restriction ?></td>
-                            <td data-label="LICENSE NO." colspan="2"><?= $driverlicense->license_no ?></td>
-                            <td data-label="EXPIRATION DATE" colspan="2"><?= $expiration_date ?></td>
+                    <tr v-else>
+                        <tr v-for="license in data.licenses" :key="license.id">
+                            <td data-label="LICENSE/EXAM TYPE" v-text="license.license_type"></td>
+                            <td data-label="EXAM PLACE" v-text="license.exam_place"></td>
+                            <td data-label="RATING" v-text="license.rating"></td>
+                            <td data-label="RELEASE DATE" v-text="license.release_date"></td>
+                            <td data-label="EXAM DATE" v-text="license.exam_date"></td>
+                            <td data-label="LICENSE NO." v-text="license.license_no"></td>
                         </tr>
-                    <?php } } ?>
-                    <!-- END DRIVER'S LICENSE ROW -->
+                    </tr>
+                    <template v-if="data.if_driver > 0 && data.driverlicenses && data.driverlicenses.length > 0">
+                        <thead>
+                        <tr>
+                            <th class="" scope="col" colspan="2">RESTRICTION</th>
+                            <th class="" scope="col" colspan="2">LICENSE NO.</th>
+                            <th class="" scope="col" colspan="2">EXPIRATION DATE</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="driverlicense in data.driverlicenses" :key="driverlicense.license_no">
+                                <td data-label="RESTRICTION" colspan="2" v-text="driverlicense.restriction"></td>
+                                <td data-label="LICENSE NO." colspan="2" v-text="driverlicense.license_no"></td>
+                                <td data-label="EXPIRATION DATE" colspan="2">
+                                    <span :class="['m-badge m-badge--wide', getExpirationClass(driverlicense.expiration_date)]">
+                                        <span v-text="driverlicense.expiration_date"></span>
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </template>
                     </tbody>
                 </table>
             </div>

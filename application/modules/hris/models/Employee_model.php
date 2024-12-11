@@ -10975,4 +10975,61 @@
 
             return $result;
         }
+
+        public function getAddtionalInfo($id){
+            $select = array("employee.email" , "employee.tax_status", "employee.tin_no", "employee.phealth_no", "employee.pagibig_no", "employee.sss_no","employee.fat_name","employee.mot_name","employee.fat_addr","employee.mot_addr","employee.fat_company","employee.mot_company","employee.fat_occupation","employee.mot_occupation","employee.fat_contact","employee.mot_contact","employee.spo_name","employee.spo_addr","employee.spo_company","employee.spo_occupation","employee.spo_contact","employee.spo_deceased","employee.partners_name","employee.partners_addr","employee.partners_company","employee.partners_occupation","employee.partners_contact","employee.partners_deceased","employee.partner_type","employee.mot_deceased","employee.fat_deceased","employee.emer_name","employee.emer_contact","employee.emer_addr");
+            $this->db->select($select);
+            $this->db->from($this->employeeTable." as employee");
+            $this->db->where('employee.id', $id);
+            $data['main'] = $this->db->get()->row();
+            $this->db->reset_query();
+            $data['dependents'] = $this->db->get_where($this->employeeDependentsTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            $this->db->reset_query();
+            return $data;
+        }
+
+        public function getEmploymentQuestion(){
+            $data['questions'] = $this->questions;
+            return $data;
+        }
+
+
+        public function getEducationBackground($id){
+            $data['educations'] = $this->db->order_by('educ_to', 'DESC')->get_where($this->employeeEducationTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            return $data;
+        }
+
+        public function getLicenseAndCerts($id){
+            $data['licenses'] = $this->db->get_where($this->employeeLicensureTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            $this->db->reset_query();
+            $data['driverlicenses'] = $this->db->get_where($this->employeeDriverLicenseTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            $this->db->reset_query();
+            $if_driver = $this->db->select("emp.position as position")->get_where($this->employeeTable . " emp", array("emp.id" => $id))->row_array();
+            $this->db->reset_query();
+            if(is_numeric($if_driver['position'])){
+                $driver = $this->db
+                ->group_start()
+                ->like("pos.name","driver")
+                ->or_like("pos.name","operator")
+                ->group_end()
+                ->from("gcchris.tblposition pos")
+                ->join("gccmaster.tblemployees emp","emp.position = pos.id")
+                ->where("emp.id",$id)
+                ->count_all_results();
+                $this->db->reset_query();
+
+            }else{
+                $driver = $this->db
+                ->group_start()
+                ->like("emp.position","driver")
+                ->or_like("emp.position","operator")
+                ->group_end()
+                ->from("gccmaster.tblemployees emp")
+                ->where("emp.id",$id)
+                ->count_all_results();
+                $this->db->reset_query();
+            }
+            $data['if_driver'] = $driver;
+            return $data;
+        }
     }

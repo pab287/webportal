@@ -161,7 +161,7 @@
                 redirect(base_url("hris/masterfile/employee"), "refresh");
                 die();
             }
-
+            $data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataDetails($employee_id)));
             $this->core_layout->setPageTitle("HRIS - View Employee Masterfile");
             $this->core_layout->setBodyClass("hris view-employee_masterfile");
             $this->core_layout->setPrivilegeName("hris_employee_masterfile");
@@ -177,14 +177,13 @@
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
             
-            $this->core_layout->addJs("js/hris/employee_view_script.js", true);
+            $this->core_layout->addJs("js/hris/employee_view_script.js",true,$data);
             $this->core_layout->addCss("css/hris/view_employee_masterfile.css", true);
 
             $this->core_layout->addJs('js/hris/search_employee_script.js', TRUE);
             $this->core_layout->addCss('css/hris/index.css', TRUE);
 
-            $data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataDetails($employee_id)));
-            $data->tab = $tab;
+
             $this->load->view("core/templates/header");
             $this->load->view("hris/masterfile/employee/view_employee_masterfile", $data, FALSE);
             $this->load->view("core/templates/footer");
@@ -1870,4 +1869,25 @@
             ->set_content_type('json')
             ->set_output(json_encode($data));
         }
+
+        public function get_additional_info($id){
+            $data = $this->employee_model->getAddtionalInfo($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_employment_question(){
+            $data = $this->employee_model->getEmploymentQuestion();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_education_background($id){
+            $data = $this->employee_model->getEducationBackground($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_license_and_cert($id){
+            $data = $this->employee_model->getLicenseAndCerts($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
     }

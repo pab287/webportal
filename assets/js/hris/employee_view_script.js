@@ -1,7 +1,12 @@
+let data = _tempContentData.data;
 $(document).ready(function(){
-    var id = $("#employee_id").val();
+    let id = $("#employee_id").val();
     getPerformanceRating(id);
-
+    getPersonalInformation();
+    getAdditionalInformation(id);
+    getEmploymentQuestion();
+    getEducationBackground(id);
+    getLicenseAndCert(id);
     $('#column-options').on('click', function (e) {
         e.stopPropagation();
     });
@@ -250,3 +255,139 @@ function showRemarks(remarks) {
     $('#remarksModal').modal('show');
 }
 
+let personalInformation = new Vue({
+    el: "#collapsePersonalWeb",
+    data: { data:{} },
+    methods:{
+        formatDate(dateString) {
+            if (!dateString) return 'N/A'; // Return 'N/A' if date is empty
+            
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'Invalid Date'; // Handle invalid dates
+            
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            
+            return `${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+        }
+    }
+});
+
+let additionalInformation = new Vue({
+    el: "#collapseAdditionalWeb",
+    data: { data:{main:{},dependets:{}} },
+    methods:{
+        calculateAge(birthdate){
+            if (!birthdate || birthdate === '0000-00-00') {
+                return '---';
+              }
+            const currentDate = new Date();
+            const birthdateObj = new Date(birthdate);
+            const diffMs = currentDate - birthdateObj;
+            const diffYears = currentDate.getFullYear() - birthdateObj.getFullYear();
+            const diffMonths = currentDate.getMonth() - birthdateObj.getMonth();
+            const diffDays = currentDate.getDate() - birthdateObj.getDate();
+    
+            if (diffYears === 0 && diffMonths === 0) {
+                const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                return days > 1 ? `${days} Days Old` : '1 Day Old';
+            } else if (diffYears === 0) {
+                const months = diffMonths >= 0 ? diffMonths : diffMonths + 12;
+                return months > 1 ? `${months} Months Old` : '1 Month Old';
+            } else {
+                return diffYears > 1 ? `${diffYears} Years Old` : '1 Year Old';
+            }
+        },
+        formatBirthdate(birthdate) {
+            if (!birthdate || birthdate === '0000-00-00') {
+                return '---';
+              }
+            const date = new Date(birthdate);
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: '2-digit', 
+                year: 'numeric' 
+              });
+        }
+    }
+});
+
+let employmentQuestion = new Vue({
+    el: "#collapseQuestionWeb",
+    data: { data:{} },
+    methods:{
+        hasAnswer(question) {
+            const answerKey = `ques${question.a}`;
+            return !!this.data.main[answerKey];
+        }
+    },
+});
+
+let educationBackground = new Vue({
+    el: "#collapseEducationWeb",
+    data: { data:{educations:{}} },
+});
+
+
+let licenseAndCert = new Vue({
+    el: "#collapseLicenseWeb",
+    data: { data : {licenses: {}, driverlicenses: {},if_driver:{}} },
+    methods: {
+        getExpirationClass(expirationDate) {
+            const today = new Date();
+            const expirationDateObj = new Date(expirationDate);
+            return expirationDateObj > today ? 'm-badge--success' : 'm-badge--danger';
+        }
+    }
+  });
+
+function getPersonalInformation(){
+    personalInformation.data = data.main;
+}
+
+function getAdditionalInformation(id){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_additional_info/")+id,
+        type: "GET",
+        dataType: "JSON",
+        success: function(response) {
+            additionalInformation.data = response;
+        }
+    });
+}
+
+function getEmploymentQuestion(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_employment_question/"),
+        type: "GET",
+        dataType: "JSON",
+        success: function(response) {
+            employmentQuestion.data = response;
+            employmentQuestion.data.main = data.main;
+            console.log("Employment Question: ", employmentQuestion.data);
+        }
+    });
+}
+
+function getEducationBackground(id){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_education_background/")+id,
+        type: "GET",
+        dataType: "JSON",
+        success: function(response) {
+            educationBackground.data = response;
+        }
+    });
+}
+
+function getLicenseAndCert(id){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_license_and_cert/")+id,
+        type: "GET",
+        dataType: "JSON",
+        success: function(response) {
+            licenseAndCert.data = response;
+            console.log("licenseAndCert: ", licenseAndCert.data);
+        }
+    });
+}
