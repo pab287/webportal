@@ -1567,11 +1567,13 @@ class Reports_model extends CI_Model
                         $newLogs01 = array_unique($newLogs01);
 
                         $newLogs00 = array_merge($newLogs00, $newLogs01);
+                        $newLogs00 = array_unique($newLogs00);
+                        $newLogs00 = array_filter($newLogs00);
 
                         $dateTime = array();
-                        foreach ($newLogs00 as $log) {
+                        foreach ($newLogs00 as $key => $log) {
                             $dtLog = explode("~", $log);
-                            $dateTime[] = strtotime($dtLog[0]);
+                            $dateTime[$key] = strtotime($dtLog[0]);
                         }
 
                         $dateTime = array_unique($dateTime);
