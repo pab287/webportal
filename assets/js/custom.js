@@ -232,9 +232,10 @@ jQuery(document)
         var _this = $(this);
         var x_timer;
         _this.keyup(function () {
-            var length = _this.val().length;
+            var trim = _this.val().trim();
+            var length = trim.length;
 
-            if(length >= limit || length == 0){
+            if ((length >= limit) || (length == 0 && limit == 0)) {
                 clearTimeout(x_timer);
                 x_timer = setTimeout(clear_timer, delaySeconds);
             }
