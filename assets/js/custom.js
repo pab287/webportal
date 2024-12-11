@@ -231,15 +231,38 @@ jQuery(document)
     $.fn.donetyping = function (callback, delaySeconds = 1000, limit = 0) {
         var _this = $(this);
         var x_timer;
-        _this.keyup(function () {
+        // _this.keyup(function () {
+        //     var trim = _this.val().trim();
+        //     var length = trim.length;
+
+        //     if (limit <= 0) {
+        //         clearTimeout(x_timer);
+        //         x_timer = setTimeout(clear_timer, delaySeconds);
+        //     }
+            
+        //     if (length >= limit) {
+        //         clearTimeout(x_timer);
+        //         x_timer = setTimeout(clear_timer, delaySeconds);
+        //     }
+        // });
+
+        /**
+         * added delay function to keyup event as it still trigger the request event if the length of the value is less than the limit
+         */
+        _this.keyup(delay( function(e) {
             var trim = _this.val().trim();
             var length = trim.length;
 
-            if ((length >= limit) || (length == 0 && limit == 0)) {
+            if (limit <= 0) {
                 clearTimeout(x_timer);
                 x_timer = setTimeout(clear_timer, delaySeconds);
             }
-        });
+
+            if (length >= limit) {
+                clearTimeout(x_timer);
+                x_timer = setTimeout(clear_timer, delaySeconds);
+            }
+        }, 100));
 
         function clear_timer() {
             clearTimeout(x_timer);
@@ -592,3 +615,14 @@ $(window).on('beforeunload', function (e) {
 });
 
 /*** stop all ajax request ***/
+
+function delay(callback, ms) {
+    var timer = 0;
+    return function() {
+      var context = this, args = arguments;
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        callback.apply(context, args);
+      }, ms || 0);
+    };
+  }
