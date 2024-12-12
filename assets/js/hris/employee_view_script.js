@@ -7,6 +7,15 @@ $(document).ready(function(){
     getEmploymentQuestion();
     getEducationBackground(id);
     getLicenseAndCert(id);
+    getWorkExperience(id);
+    getAwardsAndAchievements(id);
+    getEmpSkills(id);
+    getOrgs(id);
+    getTrainingsAndSeminars(id);
+    getPersonalReferences(id);
+    getMedicalHistory(id);
+    getLegalHistory(id);
+    getAccountability(id);
     $('#column-options').on('click', function (e) {
         e.stopPropagation();
     });
@@ -308,7 +317,7 @@ let additionalInformation = new Vue({
                 day: '2-digit', 
                 year: 'numeric' 
               });
-        }
+        },
     }
 });
 
@@ -338,6 +347,72 @@ let licenseAndCert = new Vue({
             const expirationDateObj = new Date(expirationDate);
             return expirationDateObj > today ? 'm-badge--success' : 'm-badge--danger';
         }
+    }
+  });
+
+let workExperience = new Vue({
+    el: "#collapseWorkWeb",
+    data: { data:{works:{}} },
+});
+
+let awardsAndAchievements = new Vue({
+    el: "#collapseAwardWeb",
+    data: { data:{awards:{}} },
+});
+
+let skills = new Vue({
+    el: "#collapseSkillWeb",
+    data: { data:{skillset:{}} },
+})
+
+let orgs = new Vue({
+    el: "#collapseOrgWeb",
+    data: { data:{organizations:{}} },
+})
+
+let trainingsAndSeminars = new Vue({
+    el: "#collapseTrainWeb",
+    data: { data:{trainings:{}} },
+})
+
+let personalReferences = new Vue({
+    el: "#collapseRefWeb",
+    data: { data:{references:{}} },
+})
+
+let medicalHistory = new Vue({
+    el: "#collapseMedWeb",
+    data: { data:{medicals:{}} },
+})
+
+let legalHistory = new Vue({
+    el: "#collapseLegalWeb",
+    data: { data:{legals:{}} },
+})
+
+let accountability = new Vue({
+    el: "#collapseAccountabilityWeb",
+    data: { data : {accountability: {}}},
+    methods: {
+      formatAmount(amount) {
+        return new Intl.NumberFormat('en-PH', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(amount);
+      },
+      formatDate(dateString) {
+        if (!dateString || dateString === "0000-00-00") {
+          return "N/A";
+        }
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-PH');
+      },
+      isReturned(acct) {
+        return parseInt(acct.is_returned) === 1;
+      },
+      hasRemarks(acct) {
+        return !empty(acct.remarks_returned);
+      }
     }
   });
 
@@ -388,6 +463,115 @@ function getLicenseAndCert(id){
         success: function(response) {
             licenseAndCert.data = response;
             console.log("licenseAndCert: ", licenseAndCert.data);
+        }
+    });
+}
+
+function getWorkExperience(id){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_work_experience/")+id,
+        type: "GET",
+        dataType: "JSON",
+        success: function(response) {
+            workExperience.data = response;
+            console.log("workExperience: ", workExperience.data);   
+        }
+    });
+}
+
+
+function getAwardsAndAchievements(id){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_awards_and_achievements/")+id,
+        type: "GET",
+        dataType: "JSON",
+        success: function(response) {
+            awardsAndAchievements.data = response;
+            console.log("awardsAndAchievements: ", awardsAndAchievements.data);
+        }
+    });
+}
+
+function getEmpSkills(id){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_emp_skills/")+id,
+        type: "GET",
+        dataType: "JSON",
+        success: function(response) {
+            skills.data = response;
+            console.log("skills: ", skills.data);
+        }
+    });
+}
+
+function getOrgs(id){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_orgs/")+id,
+        type: "GET",
+        dataType: "JSON",
+        success: function(response) {
+            orgs.data = response;
+            console.log("orgs: ", orgs.data);
+        }
+    });
+}
+
+function getTrainingsAndSeminars(id){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_trainings_and_seminars/")+id,
+        type: "GET",
+        dataType: "JSON",
+        success: function(response) {
+            trainingsAndSeminars.data = response;
+            console.log("trainingsAndSeminars: ", trainingsAndSeminars.data);
+        }
+    });
+}
+
+function getPersonalReferences(id){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_personal_references/")+id,
+        type: "GET",
+        dataType: "JSON",
+        success: function(response) {
+            personalReferences.data = response;
+            console.log("personalReferences: ", personalReferences.data);
+        }
+    });
+}
+
+function getMedicalHistory(id){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_medical_history/")+id,
+        type: "GET",
+        dataType: "JSON",
+        success: function(response) {
+            medicalHistory.data = response;
+            console.log("medicalHistory: ", medicalHistory.data);
+        }
+    });
+}
+
+function getLegalHistory(id){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_legal_history/")+id,
+        type: "GET",
+        dataType: "JSON",
+        success: function(response) {
+            legalHistory.data = response;
+            console.log("legalHistory: ", legalHistory.data);
+        }
+    });
+}
+
+function getAccountability(id){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_accountability/")+id,
+        type: "GET",
+        dataType: "JSON",
+        success: function(response) {
+            accountability.data = response;
+            console.log("accountability: ", accountability.data);
         }
     });
 }

@@ -1890,4 +1890,49 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
+        public function get_work_experience($id){
+            $data = $this->employee_model->getEmpWorkExperience($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_awards_and_achievements($id){
+            $data = $this->employee_model->getAwardsAndAchievements($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_emp_skills($id){
+            $data = $this->employee_model->getEmpSkills($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_orgs($id){
+            $data = $this->employee_model->getOrgs($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_trainings_and_seminars($id){
+            $data = $this->employee_model->getTrainingsAndSeminars($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_personal_references($id){
+            $data = $this->employee_model->getPersonalReferences($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_medical_history($id){
+            $data = $this->employee_model->getEmpMedicalHistory($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_legal_history($id){
+            $data = $this->employee_model->getLegalHistory($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_accountability($id){
+            $data = $this->employee_model->getAccountability($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
     }

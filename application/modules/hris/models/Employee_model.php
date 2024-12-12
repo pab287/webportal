@@ -11032,4 +11032,59 @@
             $data['if_driver'] = $driver;
             return $data;
         }
+
+        public function getEmpWorkExperience($id){
+            $this->db->select("xps.id, xps.emp_id, xps.work_to,
+                               xps.work_company, xps.work_status, xps.work_reason, xps.work_from, old_idno,
+                               IF(pos.id IS NULL, xps.work_position, pos.`name`) work_position");
+            $this->db->from($this->employeeWorkExperienceTable . " xps");
+            $this->db->join($this->positionTable . " pos", "pos.id = xps.work_position", "LEFT");
+            $this->db->where('xps.emp_id', $id);
+            $this->db->order_by("xps.work_from DESC, xps.work_to DESC");
+            $query = $this->db->get();
+            return ['works' => $query->result()];
+        }
+
+
+        public function getAwardsAndAchievements($id){  
+            $data['awards'] = $this->db->order_by("award_date", "desc")->get_where($this->employeeAwardsTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            $this->db->reset_query();
+            return $data;
+        }
+
+        public function getEmpSkills($id){
+            $data['skillset'] = $this->db->get_where($this->employeeSkillsTable, array("emp_id" => $id,"is_archived" => 0))->result();            
+            return $data;
+        }
+
+        public function getOrgs($id){
+            $data['organizations'] = $this->db->order_by("org_to","desc")->get_where($this->employeeOrganizationTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            return $data;
+        }
+
+        public function getTrainingsAndSeminars($id){
+            $data['trainings'] = $this->db->order_by("train_to","desc")->get_where($this->employeeTrainingsTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            return $data;
+        }
+
+        public function getPersonalReferences($id){
+            $data['references'] = $this->db->get_where($this->employeeReferencesTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            return $data;
+        }
+
+        public function getEmpMedicalHistory($id){
+            $data['medicals'] = $this->db->order_by("med_date","desc")->get_where($this->employeeMedicalHistoryTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            return $data;
+        }
+
+        public function getLegalHistory($id){
+            $data['legals'] = $this->db->order_by("leg_case_date","desc")->get_where($this->employeeLegalHistoryTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            return $data;
+        }
+
+        public function getAccountability($id){
+            $data['accountability'] = $this->getEmployeeAccountability(0, $id);
+            return $data;
+        }
+
     }
