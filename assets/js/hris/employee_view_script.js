@@ -1,4 +1,6 @@
 let data = _tempContentData.data;
+let actions = _currentActions;
+let session_id = $("#user_id").val();
 $(document).ready(function(){
     let id = $("#employee_id").val();
     getPerformanceRating(id);
@@ -16,6 +18,7 @@ $(document).ready(function(){
     getMedicalHistory(id);
     getLegalHistory(id);
     getAccountability(id);
+    getEmploymentInformation(id);
     $('#column-options').on('click', function (e) {
         e.stopPropagation();
     });
@@ -401,20 +404,41 @@ let accountability = new Vue({
         }).format(amount);
       },
       formatDate(dateString) {
-        if (!dateString || dateString === "0000-00-00") {
+        if (!dateString || dateString == "0000-00-00") {
           return "N/A";
         }
         const date = new Date(dateString);
         return date.toLocaleDateString('en-PH');
       },
       isReturned(acct) {
-        return parseInt(acct.is_returned) === 1;
+        return parseInt(acct.is_returned) == 1;
       },
       hasRemarks(acct) {
-        return !empty(acct.remarks_returned);
+        return !!acct.remarks_returned
       }
     }
   });
+
+let employmentInformation = new Vue({
+    el: "#collpaseEmploymentWeb",
+    data: { data:{offenses:{},salaries:{},default_station:{}} },
+    methods:{
+        formatSalaryRate(rate) {
+            if (!rate || rate === '') return 'NONE';
+            
+            const formattedRate = new Intl.NumberFormat('en-PH', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }).format(parseFloat(rate.replace(',', '')));
+            
+            return formattedRate;
+          },
+          isCurrentSalary(salary, index) {
+            const grandTotal = parseFloat(this.data.grandTotal);
+            return salary.sal_rate === grandTotal && index === 0;
+          }
+    },
+})
 
 function getPersonalInformation(){
     personalInformation.data = data.main;
@@ -572,6 +596,22 @@ function getAccountability(id){
         success: function(response) {
             accountability.data = response;
             console.log("accountability: ", accountability.data);
+        }
+    });
+}
+
+function getEmploymentInformation(id){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_employment_information/")+id,
+        type: "post",
+        data:{csrf_token: _csrf_hash,biono : data.main.biometricno},
+        dataType: "JSON",
+        success: function(response) {
+            employmentInformation.data = response;
+            if (actions.includes("view_own_request") && data.main.id !== session_id) {
+                employmentInformation.data.salaries = false;
+            }
+            console.log("employmentInformation: ", employmentInformation.data);
         }
     });
 }

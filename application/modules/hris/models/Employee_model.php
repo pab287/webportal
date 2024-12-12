@@ -11087,4 +11087,24 @@
             return $data;
         }
 
+        public function getEmploymentInformation($id){
+            $post = $this->input->post();
+            $data['offenses'] =  $this->db->order_by('offcom_date', 'DESC')->get_where($this->employeeOffensesTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            $this->db->reset_query();
+            $data['salaries'] = $this->db
+                ->select("sal.id,sal.add_date, sal.sal_date, sal.sal_rate, sal.sal_remarks, IF(pos.id IS NULL, sal.sal_position, pos.name) sal_position")
+                ->join("gcchris.tblposition pos", "pos.id = sal.sal_position", "LEFT")
+                ->order_by("sal.add_date", "desc")
+                ->get_where($this->employeeSalaryTable . " sal", array("sal.emp_id" => $id, "sal.is_archived" => 0))
+                ->result();
+            $this->db->reset_query();
+            $personnelId = $this->getEmpLocation($post['biono']);
+            $this->db->reset_query();
+            $data['stations'] = $this->db->order_by('id', 'DESC')->get_where($this->tblPersonnelLocation, array("personnel_id" => $personnelId))->result();
+            $this->db->reset_query();
+            $data['default_station'] = $this->db->select("UPPER(TRIM(station_description)) as description")->order_by('id', 'DESC')->get_where($this->defaultStationTable, array("employee_id" => $id))->row();
+            $this->db->reset_query();
+            return $data;
+        }
+
     }

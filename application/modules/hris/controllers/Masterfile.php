@@ -1935,4 +1935,9 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
+        public function get_employment_information($id){
+            $data = $this->employee_model->getEmploymentInformation($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
     }

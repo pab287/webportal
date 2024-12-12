@@ -1005,7 +1005,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <template v-if="true">
+                    <template v-if="data.accountability.length == 0">
                         <tr>
                             <td data-label="STATUS">NONE</td>
                             <td data-label="REF. NO">NONE</td>
@@ -1076,142 +1076,75 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <?php foreach ($data->offenses as $offense) { ?>
-                        <tr>
-                            <td data-label="TYPE"><?= $offense->offcom_type ?></td>
-                            <td data-label="DATE"><?= $offense->offcom_date ?></td>
-                            <td data-label="NATURE"><?= $offense->offcom_nature ?></td>
-                            <td data-label="ACTION TAKEN"><?= $offense->offcom_action ?></td>
-                        </tr>
-                    <?php } ?>
-
-                    <?php if (count($data->offenses) <= 0) { ?>
+                        <template v-if="data.offenses.length == 0">
                         <tr>
                             <td data-label="TYPE">NONE</td>
                             <td data-label="DATE">NONE</td>
                             <td data-label="NATURE">NONE</td>
                             <td data-label="ACTION TAKEN">NONE</td>
                         </tr>
-                    <?php } ?>
+                        </template>
+                        <template v-else>
+                        <tr v-for="offense in data.offenses" :key="offense.id">
+                            <td data-label="TYPE" v-text="offense.offcom_type"></td>
+                            <td data-label="DATE" v-text="offense.offcom_date"></td>
+                            <td data-label="NATURE" v-text="offense.offcom_nature"></td>
+                            <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
+                        </tr>
+                        </template>
                     </tbody>
                 </table>
                 <!-- OFFENSES AND COMMENDATIONS -->
 
-                <?php 
-                    $actions = $this->core_layout->getCurrentActions();
-                    $session_id = $this->core_layout->getCurrentEmployeeId();
-                    if(in_array("view_own_request", $this->core_layout->getCurrentActions()) AND $data->main->id != $session_id){ 
-                ?>
-                <!-- START SALARY HISTORY -->
+<!-- START SALARY HISTORY -->
 
-                <?php }elseif(in_array("view_own_request", $this->core_layout->getCurrentActions()) AND $data->main->id == $session_id){ ?>
+                <template v-if = "data.salaries == false">
+
+                </template>
+                <template v-else>
                     <table class="responsive">
-                        <thead class="customsalary">
-                        <tr>
-                            <th scope="col" colspan="4">SALARY HISTORY</th>
-                        </tr>
-                        </thead>
-                        <thead>
-                        <tr>
-                            <th class="" scope="col" style="width: 13%">DATE</th>
-                            <th class="" scope="col" style="width: 15%">RATE</th>
-                            <th class="" scope="col">POSITION</th>
-                            <th class="" scope="col">REMARKS</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php 
-                        foreach ($data->salaries as $salaryIndex => $salary) { 
-                            if($salary->sal_rate != ""){
-                                $salary_rate = number_format(str_replace(',', '', $salary->sal_rate), 2, '.', ',');    
-                            }else{
-                                $salary_rate = $salary->sal_rate;
-                            }
-                            $grandTotal = floatval($main->basic_rate) + floatval($allowance);
-                        ?>
+                            <thead class="customsalary">
                             <tr>
-                                <td data-label="DATE"><?= $salary->sal_date ?></td>
-                                <td data-label="RATE">
-                                    <?= $salary_rate?>
-                                    <?php 
-                                        if($salary->sal_rate == $grandTotal && $salaryIndex == 0){
-                                                echo "<p class='m-0'><small><span class='m-badge m-badge--success m-badge--wide'>Current</span></small></p>";
-                                        }
-                                    ?>
-                                </td>
-                                <td data-label="POSITION"><?= $salary->sal_position ? $salary->sal_position : "<br>" ?></td>
-                                <td data-label="REMARKS"><?= $salary->sal_remarks ?></td>
+                                <th scope="col" colspan="4">SALARY HISTORY</th>
                             </tr>
-                        <?php } ?>
-
-                        <?php if (count($data->salaries) <= 0) { ?>
+                            </thead>
+                            <thead>
                             <tr>
-                                <td data-label="DATE">NONE</td>
-                                <td data-label="RATE">NONE</td>
-                                <td data-label="POSITION">NONE</td>
-                                <td data-label="REMARKS">NONE</td>
+                                <th class="" scope="col" style="width: 13%">DATE</th>
+                                <th class="" scope="col" style="width: 15%">RATE</th>
+                                <th class="" scope="col">POSITION</th>
+                                <th class="" scope="col">REMARKS</th>
                             </tr>
-                        <?php } ?>
-                        </tbody>
-                    </table>
-                <?php }else{ ?>
-                    <table class="responsive">
-                        <thead class="customsalary">
-                        <tr>
-                            <th scope="col" colspan="4">SALARY HISTORY</th>
-                        </tr>
-                        </thead>
-                        <thead>
-                        <tr>
-                            <th class="" scope="col" style="width: 13%">DATE</th>
-                            <th class="" scope="col" style="width: 15%">RATE</th>
-                            <th class="" scope="col">POSITION</th>
-                            <th class="" scope="col">REMARKS</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php 
-                        foreach ($data->salaries as $salaryIndex => $salary) { 
-                            if($salary->sal_rate != ""){
-                                $salary_rate = number_format(str_replace(',', '', $salary->sal_rate), 2, '.', ',');    
-                            }else{
-                                $salary_rate = $salary->sal_rate;
-                            }
-                            $grandTotal = floatval($main->basic_rate) + floatval($allowance);
-                        ?>
-                            <tr>
-                                <td data-label="DATE"><?= $salary->sal_date ?></td>
-                                <td data-label="RATE">
-                                    <?= $salary_rate?>
-                                    <?php 
-                                        if($salary->sal_rate == $grandTotal && $salaryIndex == 0){
-                                                echo "<p class='m-0'><small><span class='m-badge m-badge--success m-badge--wide'>Current</span></small></p>";
-                                        }
-                                    ?>
-                                </td>
-                                <td data-label="POSITION"><?= $salary->sal_position ? $salary->sal_position : "<br>" ?></td>
-                                <td data-label="REMARKS"><?= $salary->sal_remarks ?></td>
-                            </tr>
-                        <?php } ?>
-
-                        <?php if (count($data->salaries) <= 0) { ?>
-                            <tr>
-                                <td data-label="DATE">NONE</td>
-                                <td data-label="RATE">NONE</td>
-                                <td data-label="POSITION">NONE</td>
-                                <td data-label="REMARKS">NONE</td>
-                            </tr>
-                        <?php } ?>
-                        </tbody>
-                    </table>
-                <?php } ?>
-
-                <!-- SALARY HISTORY -->
-
-                <!-- START SALARY HISTORY -->
-                
-                <!-- SALARY HISTORY -->
-
+                            </thead>
+                            <tbody>
+                                <template v-if="data.salaries.length == 0">
+                                    <tr>
+                                        <td data-label="DATE">NONE</td>
+                                        <td data-label="RATE">NONE</td>
+                                        <td data-label="POSITION">NONE</td>
+                                        <td data-label="REMARKS">NONE</td>
+                                    </tr>
+                                </template>
+                                <template v-else>
+                                    <tr v-for="(salary, index) in data.salaries" :key="index">
+                                        <td data-label="DATE" v-text="salary.sal_date"></td>
+                                        <td data-label="RATE">
+                                        <span v-text="formatSalaryRate(salary.sal_rate)">{{index}}</span>
+                                        <template v-if="index == 0">
+                                            <p class="m-0">
+                                            <small>
+                                                <span class="m-badge m-badge--success m-badge--wide">Current</span>
+                                            </small>
+                                            </p>
+                                        </template>
+                                        </td>
+                                        <td data-label="POSITION" v-text="salary.sal_position || '<br>'"></td>
+                                        <td data-label="REMARKS" v-text="salary.sal_remarks"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                </template>
                 <!-- START EMPLOYEE INFORMATION -->
                 <table class="responsive">
                     <thead class="customsalary">
@@ -1250,15 +1183,16 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td data-label="CURRENT STATION / LOCATION" style="vertical-align: top">
-                                <?php echo isset($data->default_station->description) && $data->default_station->description ? $data->default_station->description: ""; ?>
-                            </td>
-                            <td data-label="STATIONS">
-                                <ul class="row"><?php if(count($data->station) > 0){
-                                    foreach($data->station as $sites){ ?>
-                                    <li class="col-4"><?php echo (isset($sites->location_name) && $sites->location_name) ? $sites->location_name : "N/A"; ?></li>
-                                <?php } } ?>
-                            </ul></td>
+                        <td data-label="CURRENT STATION / LOCATION">
+                            <span v-text="data.default_station.description || 'N/A'"></span>
+                        </td>
+                        <td data-label="STATIONS">
+                            <ul class="row">
+                            <li class="col-4" v-for="(site, index) in data.stations" :key="index">
+                                <span v-text="site.location_name || 'N/A'"></span>
+                            </li>
+                            </ul>
+                        </td>
                         </tr>
                     </tbody>
                 </table>
