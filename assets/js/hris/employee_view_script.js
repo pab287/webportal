@@ -1,32 +1,140 @@
-let data = _tempContentData.data;
 let actions = _currentActions;
 let session_id = $("#user_id").val();
+let id = $("#employee_id").val();
+let employeeData = _tempContentData.data.main;
 $(document).ready(function(){
-    let id = $("#employee_id").val();
+
     getPerformanceRating(id);
-    getPersonalInformation();
-    getAdditionalInformation(id);
-    getEmploymentQuestion();
-    getEducationBackground(id);
-    getLicenseAndCert(id);
-    getWorkExperience(id);
-    getAwardsAndAchievements(id);
-    getEmpSkills(id);
-    getOrgs(id);
-    getTrainingsAndSeminars(id);
-    getPersonalReferences(id);
-    getMedicalHistory(id);
-    getLegalHistory(id);
-    getAccountability(id);
-    getEmploymentInformation(id);
+    // employeeDataSheet.getPersonalInformation();
+
     $('#column-options').on('click', function (e) {
         e.stopPropagation();
     });
 });
 
+let employeeDataSheet = new Vue({
+    el:"#accordionMain",
+    data:{
+            main:{},
+            dependents:{},
+            questions:{
+                ques1: "HAVE YOU EVER BEEN EMPLOYED BY US BEFORE? IN WHAT BRANCH AND WHAT POSITION?",
+                ques2: "WHO REFERRED YOU TO OUR COMPANY?",
+                ques3: "NAME OF FRIENDS/RELATIVES EMPLOYED IN THIS COMPANY",
+                ques4: "WHERE DID YOU LEARN OF THE VACANCY? ADVERTISING / WALK IN / REFERRAL / SCHOOL PLACEMENT / OTHERS (PLS. SPECIFY)?",
+                ques5: "DO YOU HAVE ANY CURRENT ILLNESS OR PHYSICAL DEFECTS? IF YES, PLEASE DESCRIBE.",
+                ques6: "HAVE YOU BEEN HOSPITALIZED FOR THE PAST 12 MONTHS? IF YES, STATE WHAT ILLNESS, DATE OF CONFINEMENT AND NAME OF HOSPITAL.",
+                ques7: "HAVE YOU BEEN CHARGED OF ANY CRIMINAL, CIVIL, OR ADMINISTRATIVE OFFENSE? IF YES, PLEASE DESCRIBE.",
+                ques8: "HAVE YOU FILED ANY LABOR CASE AGAINST PREVIOUS EMPLOYERS? IF YES, WHAT TYPE DOLE,NLRC OR OTHER, PLEASE DESCRIBE.",
+                ques9: "WERE YOU INVOLVED OR HAVE PREVIOUSLY PARTICIPATED IN ANY LABOR STRIKE? IF YES, PLEASE DESCRIBE."
+            },
+            educations:{},
+            licensesAndCerts:{
+                licenses:"",
+                driverlicenses:"",
+                if_driver:"",
+            },
+    },
+    created() {
+        Object.keys(employeeData).forEach(key => {
+            this.$set(this.main, key,"");
+        });
+        console.log(this.main);
+    },
+    methods:{
+        getPersonalInformation(){
+            this.main = { ...this.$data.main, ..._tempContentData.data.main };
+            console.log(this.main);
+        },
+        calculateAge(birthdate){
+            if (!birthdate || birthdate === '0000-00-00') {
+                return '---';
+              }
+            const currentDate = new Date();
+            const birthdateObj = new Date(birthdate);
+            const diffMs = currentDate - birthdateObj;
+            const diffYears = currentDate.getFullYear() - birthdateObj.getFullYear();
+            const diffMonths = currentDate.getMonth() - birthdateObj.getMonth();
+            const diffDays = currentDate.getDate() - birthdateObj.getDate();
+    
+            if (diffYears === 0 && diffMonths === 0) {
+                const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                return days > 1 ? `${days} Days Old` : '1 Day Old';
+            } else if (diffYears === 0) {
+                const months = diffMonths >= 0 ? diffMonths : diffMonths + 12;
+                return months > 1 ? `${months} Months Old` : '1 Month Old';
+            } else {
+                return diffYears > 1 ? `${diffYears} Years Old` : '1 Year Old';
+            }
+        },
+        formatDate(empdate) {
+            if (!empdate || empdate === '0000-00-00') {
+                return '---';
+              }
+            const date = new Date(empdate);
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: '2-digit', 
+                year: 'numeric' 
+              });
+        },
+        hasAnswer(question) {
+            const answerKey = this.main[question];
+            return answerKey !== undefined ? answerKey : "N/A";
+        },
+        getExpirationClass(expirationDate) {
+            const today = new Date();
+            const expirationDateObj = new Date(expirationDate);
+            return expirationDateObj > today ? 'm-badge--success' : 'm-badge--danger';
+        },
+    }
+})
+
+$('#personalInfo-body').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.main)) {
+        employeeDataSheet.getPersonalInformation();
+    }
+});
+
+$('#additionalInfo-body').on('show.bs.collapse', function () {
+    // console.log(Object.values(employeeDataSheet.main).filter(Boolean).length, "Click addinfo");
+    if (!hasValue(employeeDataSheet.main) || !hasValue(employeeDataSheet.dependents)) {
+        employeeDataSheet.getPersonalInformation();
+        getAdditionalInformation();
+       console.log(employeeDataSheet.dependents);
+    } 
+});
+
+$('#employmentQuestion-body').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.main)) {
+        employeeDataSheet.getPersonalInformation();
+    }
+});
+
+$('#educBackground-body').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.educations)) {
+        getEducationBackground();
+    }
+});
+
+$('#licenseAndCert-body').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.licensesAndCerts)) {
+        getLicenseAndCert();
+    }
+});
+
+function hasValue(obj) {
+    return Object.values(obj).some(value => {
+        if (value !== null && value !== undefined) {
+            return Boolean(value);
+        }
+        return false;
+    });
+}
+
 function getPerformanceRating(id){
     $("#performance-rating").starRating({
-        readOnly: true,
+        readOnly: true, 
         totalStars: 5,
         starShape: 'rounded',
         starSize: 25,
@@ -42,6 +150,7 @@ function getPerformanceRating(id){
         url: baseUrl("core/profile/get_employee_rating_remarks/" + id),
         type: "post",
         dataType: "json",
+        global: false,
         data: { csrf_token: _csrf_hash},
         success: function (response) {
             if(response){
@@ -267,78 +376,6 @@ function showRemarks(remarks) {
     $('#remarksModal').modal('show');
 }
 
-let personalInformation = new Vue({
-    el: "#collapsePersonalWeb",
-    data: { data:{} },
-    methods:{
-        formatDate(dateString) {
-            if (!dateString) return 'N/A'; // Return 'N/A' if date is empty
-            
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return 'Invalid Date'; // Handle invalid dates
-            
-            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            
-            return `${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
-        }
-    }
-});
-
-let additionalInformation = new Vue({
-    el: "#collapseAdditionalWeb",
-    data: { data:{main:{},dependets:{}} },
-    methods:{
-        calculateAge(birthdate){
-            if (!birthdate || birthdate === '0000-00-00') {
-                return '---';
-              }
-            const currentDate = new Date();
-            const birthdateObj = new Date(birthdate);
-            const diffMs = currentDate - birthdateObj;
-            const diffYears = currentDate.getFullYear() - birthdateObj.getFullYear();
-            const diffMonths = currentDate.getMonth() - birthdateObj.getMonth();
-            const diffDays = currentDate.getDate() - birthdateObj.getDate();
-    
-            if (diffYears === 0 && diffMonths === 0) {
-                const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                return days > 1 ? `${days} Days Old` : '1 Day Old';
-            } else if (diffYears === 0) {
-                const months = diffMonths >= 0 ? diffMonths : diffMonths + 12;
-                return months > 1 ? `${months} Months Old` : '1 Month Old';
-            } else {
-                return diffYears > 1 ? `${diffYears} Years Old` : '1 Year Old';
-            }
-        },
-        formatBirthdate(birthdate) {
-            if (!birthdate || birthdate === '0000-00-00') {
-                return '---';
-              }
-            const date = new Date(birthdate);
-            return date.toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: '2-digit', 
-                year: 'numeric' 
-              });
-        },
-    }
-});
-
-let employmentQuestion = new Vue({
-    el: "#collapseQuestionWeb",
-    data: { data:{} },
-    methods:{
-        hasAnswer(question) {
-            const answerKey = `ques${question.a}`;
-            return !!this.data.main[answerKey];
-        }
-    },
-});
-
-let educationBackground = new Vue({
-    el: "#collapseEducationWeb",
-    data: { data:{educations:{}} },
-});
 
 
 let licenseAndCert = new Vue({
@@ -440,53 +477,43 @@ let employmentInformation = new Vue({
     },
 })
 
-function getPersonalInformation(){
-    personalInformation.data = data.main;
-}
 
-function getAdditionalInformation(id){
+
+function getAdditionalInformation(){
     $.ajax({
         url: baseUrl("hris/masterfile/get_additional_info/")+id,
         type: "GET",
         dataType: "JSON",
+        global: false,
         success: function(response) {
-            additionalInformation.data = response;
+            employeeDataSheet.$data.dependents = { ...employeeDataSheet.$data.dependents, ...response.dependents };
+            console.log(employeeDataSheet.$data.dependents);
         }
     });
 }
 
-function getEmploymentQuestion(){
-    $.ajax({
-        url: baseUrl("hris/masterfile/get_employment_question/"),
-        type: "GET",
-        dataType: "JSON",
-        success: function(response) {
-            employmentQuestion.data = response;
-            employmentQuestion.data.main = data.main;
-            console.log("Employment Question: ", employmentQuestion.data);
-        }
-    });
-}
-
-function getEducationBackground(id){
+function getEducationBackground(){
     $.ajax({
         url: baseUrl("hris/masterfile/get_education_background/")+id,
         type: "GET",
         dataType: "JSON",
+        global: false,
         success: function(response) {
-            educationBackground.data = response;
+            console.log(employeeDataSheet.$data.educations);
+            employeeDataSheet.$data.educations = { ...employeeDataSheet.$data.educations, ...response.educations };
         }
     });
 }
 
-function getLicenseAndCert(id){
+function getLicenseAndCert(){
     $.ajax({
         url: baseUrl("hris/masterfile/get_license_and_cert/")+id,
         type: "GET",
         dataType: "JSON",
+        global: false,
         success: function(response) {
-            licenseAndCert.data = response;
-            console.log("licenseAndCert: ", licenseAndCert.data);
+            employeeDataSheet.$data.licensesAndCerts = { ...employeeDataSheet.$data.licensesAndCerts, ...response };
+            console.log('EMP',employeeDataSheet.$data.licensesAndCerts);
         }
     });
 }
@@ -615,3 +642,13 @@ function getEmploymentInformation(id){
         }
     });
 }
+
+// $('#headingPersonalWeb').on('click', function () {
+//     employeeDataSheet.getPersonnalInformation();
+//     employeeDataSheet.$forceUpdate();
+//     console.log(employeeDataSheet.main);
+//     $("#collapsePersonalWeb").addClass("show");
+//   })
+
+
+

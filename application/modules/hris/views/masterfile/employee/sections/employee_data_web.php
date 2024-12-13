@@ -36,12 +36,12 @@
   }
 </style>
 
-<div id="accordionOtherAdditionalInfoWeb" class="accordion mb-5" role="tablist" aria-multiselectable="true">
+<div id="accordionMain" class="accordion mb-5" role="tablist">
     <div class="card">
-        <div id="headingPersonalWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+        <div id="personalInfo-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" data-toggle="collapse" href="#personalInfo-body" aria-expanded="false" aria-controls="personalInfo-body">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapsePersonalWeb" aria-expanded="false" aria-controls="collapsePersonalWeb">
+                    <a class="m-portlet__nav-link collapsed">
                         <h5 class="m-portlet__head-text">
                             <span>Personal Information</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -50,28 +50,27 @@
                 </div>
             </div>
         </div>
-        <div id="collapsePersonalWeb" class="collapse show" role="tabpanel" aria-labelledby="headingPersonalWeb" data-parent="#accordionOtherAdditionalInfoWeb">
+        <div id="personalInfo-body" class="collapse" aria-labelledby="personalInfo-head" data-parent="#accordionMain">
             <div class="card-body m-portlet__body--custom table-responsive">
-            <table class="responsive">
-                <thead>
-                    <tr>
+                <table class="responsive">
+                    <thead>
+                        <tr>
                         <th class="" scope="col">First Name</th>
                         <th class="" scope="col">Middle Name</th>
                         <th class="" scope="col">Last Name</th>
                         <th class="" scope="col" style="width: 15%;">Suffix</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td data-label="First Name" v-text="data.firstname || '---'"></td>
-                        <td data-label="Middle Name" v-text="data.middlename || '---'"></td>
-                        <td data-label="Last Name" v-text="data.lastname || '---'"></td>
-                        <td data-label="Suffix" v-text="data.suffix || '---'"></td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <table class="responsive">
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td v-text="main.firstname || '---'"></td>
+                            <td v-text="main.middlename || '---'"></td>
+                            <td v-text="main.lastname || '---'"></td>
+                            <td v-text="main.suffix || '---'"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="responsive">
                 <thead>
                     <tr>
                         <th class="" scope="col">Current Address</th>
@@ -80,12 +79,11 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td data-label="Current Address" v-text="data.curr_addr || 'None'"></td>
-                        <td data-label="Provincial Address" v-text="data.prov_addr || 'None'"></td> </td>
+                        <td data-label="Current Address" v-text="main.curr_addr || 'None'"></td>
+                        <td data-label="Provincial Address" v-text="main.prov_addr || 'None'"></td> </td>
                     </tr>
                 </tbody>
             </table>
-
             <table class="responsive">
                 <thead>
                     <tr>
@@ -96,13 +94,12 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td data-label="Citizenship" v-text="data.citizenship || 'None'"></td>
-                        <td data-label="Religion" v-text="data.religion || 'None'"></td>
-                        <td data-label="Languages" v-text="data.languages || 'None'"></td>
+                        <td data-label="Citizenship" v-text="main.citizenship || 'None'"></td>
+                        <td data-label="Religion" v-text="main.religion || 'None'"></td>
+                        <td data-label="Languages" v-text="main.languages || 'None'"></td>
                     </tr>
                 </tbody>
             </table>
-
             <table class="responsive">
                 <thead>
                     <tr>
@@ -115,15 +112,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td data-label="Gender" v-text="data.gender || 'N/A'"></td>
-                        <td data-label="Civil Status" v-text="data.civil_stat || 'N/A'"></td>
-                        <td data-label="Date of Birth" v-text="formatDate(data.bday) || 'None'"></td>
-                        <td data-label="Place of Birth" v-text="data.birthplace || 'None'"></td>
-                        <td data-label="Blood Type" v-text="data.bloodtype || 'None'"></td>
+                        <td data-label="Gender" v-text="main.gender || 'N/A'"></td>
+                        <td data-label="Civil Status" v-text="main.civil_stat || 'N/A'"></td>
+                        <td data-label="Date of Birth" v-text="formatDate(main.bday) || 'None'"></td>
+                        <td data-label="Place of Birth" v-text="main.birthplace || 'None'"></td>
+                        <td data-label="Blood Type" v-text="main.bloodtype || 'None'"></td>
                     </tr>
                 </tbody>
             </table>
-
             <table class="responsive">
                 <thead>
                     <tr>
@@ -137,12 +133,12 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td data-label="Height" v-text="data.height || 'N/A'"></td>
-                        <td data-label="Weight" v-text="data.weight || 'N/A'"></td>
-                        <td data-label="Hair Color" v-text="data.hair_color || 'N/A'"></td>
-                        <td data-label="Complexion" v-text="data.complexion || 'N/A'"></td>
-                        <td data-label="Tel. No." v-text="data.tel_no || 'N/A'"></td>
-                        <td data-label="Mobile No." v-text="data.mobile_no || 'N/A'"></td>
+                        <td data-label="Height" v-text="main.height || 'N/A'"></td>
+                        <td data-label="Weight" v-text="main.weight || 'N/A'"></td>
+                        <td data-label="Hair Color" v-text="main.hair_color || 'N/A'"></td>
+                        <td data-label="Complexion" v-text="main.complexion || 'N/A'"></td>
+                        <td data-label="Tel. No." v-text="main.tel_no || 'N/A'"></td>
+                        <td data-label="Mobile No." v-text="main.mobile_no || 'N/A'"></td>
                     </tr>
                 </tbody>
             </table>
@@ -150,10 +146,10 @@
         </div>
     </div>
     <div class="card">
-        <div id="headingAdditionalWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+        <div id="additionalInfo-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" data-toggle="collapse" href="#additionalInfo-body" aria-expanded="false" aria-controls="additionalInfo-body">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapseAdditionalWeb" aria-expanded="false" aria-controls="collapseAdditionalWeb">
+                    <a class="m-portlet__nav-link collapsed">
                         <h5 class="m-portlet__head-text">
                             <span>Additional Information</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -162,8 +158,8 @@
                 </div>
             </div>
         </div>
-        <div id="collapseAdditionalWeb" class="collapse" role="tabpanel" aria-labelledby="headingAdditionalWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
+        <div id="additionalInfo-body" class="collapse" aria-labelledby="additionalInfo-head" data-parent="#accordionMain">
+            <div class="card-body">
                 <table class="responsive">
                     <thead>
                         <tr>
@@ -177,12 +173,12 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td data-label="Email" class="email_container" v-text="data.main.email || 'NONE'"></td>
-                            <td data-label="Tax Status" v-text="data.main.tax_status || 'NONE'"></td>
-                            <td data-label="Tin No." v-text="data.main.tin_no || 'NONE'"></td>
-                            <td data-label="Philhealth No." v-text="data.main.phealth_no || 'NONE'"></td>
-                            <td data-label="Pag-ibig No." v-text="data.main.pagibig_no || 'NONE'"></td>
-                            <td data-label="SSS No." v-text="data.main.sss_no || 'NONE'"></td>
+                            <td data-label="Email" class="email_container" v-text="main.email || 'NONE'"></td>
+                            <td data-label="Tax Status" v-text="main.tax_status || 'NONE'"></td>
+                            <td data-label="Tin No." v-text="main.tin_no || 'NONE'"></td>
+                            <td data-label="Philhealth No." v-text="main.phealth_no || 'NONE'"></td>
+                            <td data-label="Pag-ibig No." v-text="main.pagibig_no || 'NONE'"></td>
+                            <td data-label="SSS No." v-text="main.sss_no || 'NONE'"></td>
                         </tr>
                     </tbody>
                 </table>
@@ -200,70 +196,70 @@
                         <tr>
                             <th class="row-header" scope="col">Name</th>
                             <td>
-                                <span v-if="data.main.fat_name" v-text="data.main.fat_name"></span>
+                                <span v-if="main.fat_name" v-text="main.fat_name"></span>
                                 <span v-else v-text="'None'"></span>
-                                <span v-if="data.main.fat_deceased == 1" class="m-badge m-badge--primary m-badge--wide">Deceased</span>
+                                <span v-if="main.fat_deceased == 1" class="m-badge m-badge--primary m-badge--wide">Deceased</span>
                             </td>
                             <td>
-                                <span v-if="data.main.mot_name" v-text="data.main.mot_name"></span>
+                                <span v-if="main.mot_name" v-text="main.mot_name"></span>
                                 <span v-else v-text="'None'"></span>
-                                <span v-if="data.main.mot_deceased == 1" class="m-badge m-badge--primary m-badge--wide">Deceased</span>
+                                <span v-if="main.mot_deceased == 1" class="m-badge m-badge--primary m-badge--wide">Deceased</span>
                             </td>
                             <td>
-                                <span v-if="data.main.partner_type == 1">
-                                    <span v-if="data.main.spo_deceased == 1">
-                                        <span v-text="data.main.spo_name"></span>
+                                <span v-if="main.partner_type == 1">
+                                    <span v-if="main.spo_deceased == 1">
+                                        <span v-text="main.spo_name"></span>
                                         <span class="m-badge m-badge--primary m-badge--wide">Deceased</span>
                                     </span>
-                                    <span v-else v-text="data.main.spo_name"></span>
+                                    <span v-else v-text="main.spo_name"></span>
                                 </span>
-                                <span v-else-if="data.main.partner_type == 2">
-                                    <span v-if="data.main.partners_deceased == 1">
-                                        <span v-text="data.main.partners_name"></span>
+                                <span v-else-if="main.partner_type == 2">
+                                    <span v-if="main.partners_deceased == 1">
+                                        <span v-text="main.partners_name"></span>
                                         <span class="m-badge m-badge--primary m-badge--wide">Deceased</span>
                                     </span>
-                                    <span v-else v-text="data.main.partners_name"></span>
+                                    <span v-else v-text="main.partners_name"></span>
                                 </span>
                                 <span v-else v-text="'None'"></span>
                             </td>
                         </tr>
                         <tr>
                             <th class="row-header" scope="col">Address</th>
-                            <td v-text="data.main.fat_addr ? data.main.fat_addr : 'None'"></td>
-                            <td v-text="data.main.mot_addr ? data.main.mot_addr : 'None'"></td>
+                            <td v-text="main.fat_addr ? main.fat_addr : 'None'"></td>
+                            <td v-text="main.mot_addr ? main.mot_addr : 'None'"></td>
                             <td>
-                                <span v-if="data.main.partner_type == 1" v-text="data.main.spo_addr"></span>
-                                <span v-else-if="data.main.partner_type == 2" v-text="data.main.partners_addr"></span>
+                                <span v-if="main.partner_type == 1" v-text="main.spo_addr"></span>
+                                <span v-else-if="main.partner_type == 2" v-text="main.partners_addr"></span>
                                 <span v-else>None</span>
                             </td>
                         </tr>
                         <tr>
                             <th class="row-header" scope="col">Company</th>
-                            <td v-text="data.main.fat_company ? data.main.fat_company : 'None'"></td>
-                            <td v-text="data.main.mot_company ? data.main.mot_company : 'None'"></td>
+                            <td v-text="main.fat_company ? main.fat_company : 'None'"></td>
+                            <td v-text="main.mot_company ? main.mot_company : 'None'"></td>
                             <td>
-                                <span v-if="data.main.partner_type == 1" v-text="data.main.spo_company"></span>
-                                <span v-else-if="data.main.partner_type == 2" v-text="data.main.partners_company"></span>
+                                <span v-if="main.partner_type == 1" v-text="main.spo_company"></span>
+                                <span v-else-if="main.partner_type == 2" v-text="main.partners_company"></span>
                                 <span v-else>None</span>
                             </td>
                         </tr>
                         <tr>
                             <th class="row-header" scope="col">Occupation</th>
-                            <td v-text="data.main.fat_occupation ? data.main.fat_occupation : 'None'"></td>
-                            <td v-text="data.main.mot_occupation ? data.main.mot_occupation : 'None'"></td>
+                            <td v-text="main.fat_occupation ? main.fat_occupation : 'None'"></td>
+                            <td v-text="main.mot_occupation ? main.mot_occupation : 'None'"></td>
                             <td>
-                                <span v-if="data.main.partner_type == 1" v-text="data.main.spo_occupation"></span>
-                                <span v-else-if="data.main.partner_type == 2" v-text="data.main.partners_occupation"></span>
+                                <span v-if="main.partner_type == 1" v-text="main.spo_occupation"></span>
+                                <span v-else-if="main.partner_type == 2" v-text="main.partners_occupation"></span>
                                 <span v-else>None</span>
                             </td>
                         </tr>
                         <tr>
                             <th class="row-header" scope="col">Contact No.</th>
-                            <td v-text="data.main.fat_contact ? data.main.fat_contact : 'None'"></td>
-                            <td v-text="data.main.mot_contact ? data.main.mot_contact : 'None'"></td>
+                            <td v-text="main.fat_contact ? main.fat_contact : 'None'"></td>
+                            <td v-text="main.mot_contact ? main.mot_contact : 'None'"></td>
                             <td>
-                                <span v-if="data.main.partner_type == 1" v-text="data.main.spo_contact"></span>
-                                <span v-else-if="data.main.partner_type == 2" v-text="data.main.partners_contact"></span>
+                                <span v-if="main.partner_type == 1" v-text="main.spo_contact"></span>
+                                <span v-else-if="main.partner_type == 2" v-text="main.partners_contact"></span>
                                 <span v-else>None</span>
                             </td>
                         </tr>
@@ -289,13 +285,13 @@
                         <tbody>
                             <tr>
                                 <td data-label="Name">
-                                    <span v-if="data.main.fat_deceased == 1">{{ data.main.fat_name }}<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span></span>
-                                    <span v-else v-text="data.main.fat_name ? data.main.fat_name : 'None'"></span>
+                                    <span v-if="main.fat_deceased == 1">{{ main.fat_name }}<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span></span>
+                                    <span v-else v-text="main.fat_name ? main.fat_name : 'None'"></span>
                                 </td>
-                                <td data-label="Address" v-text="data.main.fat_addr ? data.main.fat_addr : 'None'"></td>
-                                <td data-label="Company" v-text="data.main.fat_company ? data.main.fat_company : 'None'"></td>
-                                <td data-label="Occupation" v-text="data.main.fat_occupation ? data.main.fat_occupation : 'None'"></td>
-                                <td data-label="Contact No." v-text="data.main.fat_contact ? data.main.fat_contact : 'None'"></td>
+                                <td data-label="Address" v-text="main.fat_addr ? main.fat_addr : 'None'"></td>
+                                <td data-label="Company" v-text="main.fat_company ? main.fat_company : 'None'"></td>
+                                <td data-label="Occupation" v-text="main.fat_occupation ? main.fat_occupation : 'None'"></td>
+                                <td data-label="Contact No." v-text="main.fat_contact ? main.fat_contact : 'None'"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -318,13 +314,13 @@
                         <tbody>
                             <tr>
                                 <td data-label="Name">
-                                    <span v-if="data.main.mot_deceased == 1">{{ data.main.mot_name }}<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span></span>
-                                    <span v-else v-text="data.main.mot_name ? data.main.mot_name : 'None'"></span>
+                                    <span v-if="main.mot_deceased == 1">{{ main.mot_name }}<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span></span>
+                                    <span v-else v-text="main.mot_name ? main.mot_name : 'None'"></span>
                                 </td>
-                                <td data-label="Address" v-text="data.main.mot_addr ? data.main.mot_addr : 'None'"></td>
-                                <td data-label="Company" v-text="data.main.mot_company ? data.main.mot_company : 'None'"></td>
-                                <td data-label="Occupation" v-text="data.main.mot_occupation ? data.main.mot_occupation : 'None'"></td>
-                                <td data-label="Contact No." v-text="data.main.mot_contact ? data.main.mot_contact : 'None'"></td>
+                                <td data-label="Address" v-text="main.mot_addr ? main.mot_addr : 'None'"></td>
+                                <td data-label="Company" v-text="main.mot_company ? main.mot_company : 'None'"></td>
+                                <td data-label="Occupation" v-text="main.mot_occupation ? main.mot_occupation : 'None'"></td>
+                                <td data-label="Contact No." v-text="main.mot_contact ? main.mot_contact : 'None'"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -347,98 +343,95 @@
                         <tbody>
                             <tr>
                                 <td data-label="Name">
-                                    <span v-if="data.main.partner_type == 1">
-                                        <span v-if="data.main.spo_deceased == 1">
-                                            <span v-text="data.main.spo_name"></span>
+                                    <span v-if="main.partner_type == 1">
+                                        <span v-if="main.spo_deceased == 1">
+                                            <span v-text="main.spo_name"></span>
                                             <span class="m-badge m-badge--primary m-badge--wide">Deceased</span>
                                         </span>
-                                        <span v-else v-text="data.main.spo_name"></span>
+                                        <span v-else v-text="main.spo_name"></span>
                                     </span>
-                                    <span v-else-if="data.main.partner_type == 2">
-                                        <span v-if="data.main.partners_deceased == 1">
-                                            <span v-text="data.main.partners_name"></span>
+                                    <span v-else-if="main.partner_type == 2">
+                                        <span v-if="main.partners_deceased == 1">
+                                            <span v-text="main.partners_name"></span>
                                             <span class="m-badge m-badge--primary m-badge--wide">Deceased</span>
                                         </span>
-                                        <span v-else v-text="data.main.partners_name"></span>
+                                        <span v-else v-text="main.partners_name"></span>
                                     </span>
                                     <span v-else v-text="'None'"></span>
                                 </td>
-                                <td data-label="Address" v-text="data.main.partner_type == 1 ? data.main.spo_addr : (data.main.partner_type == 2 ? data.main.partners_addr : 'None')"></td>
-                                <td data-label="Company" v-text="data.main.partner_type == 1 ? data.main.spo_company : (data.main.partner_type == 2 ? data.main.partners_company : 'None')"></td>
-                                <td data-label="Occupation" v-text="data.main.partner_type == 1 ? data.main.spo_occupation : (data.main.partner_type == 2 ? data.main.partners_occupation : 'None')"></td>
-                                <td data-label="Contact No." v-text="data.main.partner_type == 1 ? data.main.spo_contact : (data.main.partner_type == 2 ? data.main.partners_contact : 'None')"></td>
+                                <td data-label="Address" v-text="main.partner_type == 1 ? main.spo_addr : (main.partner_type == 2 ? main.partners_addr : 'None')"></td>
+                                <td data-label="Company" v-text="main.partner_type == 1 ? main.spo_company : (main.partner_type == 2 ? main.partners_company : 'None')"></td>
+                                <td data-label="Occupation" v-text="main.partner_type == 1 ? main.spo_occupation : (main.partner_type == 2 ? main.partners_occupation : 'None')"></td>
+                                <td data-label="Contact No." v-text="main.partner_type == 1 ? main.spo_contact : (main.partner_type == 2 ? main.partners_contact : 'None')"></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <!-- START DEPENDENT TABLES -->
 
                 <table class="responsive">
                     <thead class="customsalary">
-                    <tr>
-                        <th scope="col" colspan="4">Dependents</th>
-                    </tr>
+                        <tr>
+                            <th scope="col" colspan="4">Dependents</th>
+                        </tr>
                     </thead>
                     <thead>
-                    <tr>
-                        <th scope="col">Name</th>
-                        <th scope="col" style="width: 8%;">Age</th>
-                        <th scope="col" style="width: 13%">Date of Birth</th>
-                        <th scope="col">Relationship</th>
-                    </tr>
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col" style="width: 8%;">Age</th>
+                            <th scope="col" style="width: 13%">Date of Birth</th>
+                            <th scope="col">Relationship</th>
+                        </tr>
                     </thead>
                     <tbody>
-                        <template v-if="data.dependents && data.dependents.length > 0">
-                        <tr v-for="dependent in data.dependents" :key="dependent.dep_name">
-                            <td data-label="Name">{{ dependent.dep_name }}</td>
-                            <td data-label="Age">{{ calculateAge(dependent.dep_birthdate) }}</td>
-                            <td data-label="Date of Birth">{{ formatBirthdate(dependent.dep_birthdate) }}</td>
-                            <td data-label="Relationship">{{ dependent.dep_relation }}</td>
-                        </tr>
+                        <template v-if="dependents.length == 0">
+                            <tr>
+                                <td data-label="Name">None</td>
+                                <td data-label="Age">None</td>
+                                <td data-label="Date of Birth">None</td>
+                                <td data-label="Relationship">None</td>
+                            </tr>
                         </template>
                         <template v-else>
-                        <tr>
-                            <td data-label="Name">None</td>
-                            <td data-label="Age">None</td>
-                            <td data-label="Date of Birth">None</td>
-                            <td data-label="Relationship">None</td>
-                        </tr>
+                            <tr v-for="dependent in dependents" :key="dependent.dep_name">
+                                <td data-label="Name">{{ dependent.dep_name }}</td>
+                                <td data-label="Age">{{ calculateAge(dependent.dep_birthdate) }}</td>
+                                <td data-label="Date of Birth">{{ formatDate(dependent.dep_birthdate) }}</td>
+                                <td data-label="Relationship">{{ dependent.dep_relation }}</td>
+                            </tr>
                         </template>
                     </tbody>
                 </table>
-                <!-- END DEPENDENT TABLES -->
-                <!-- <table class="table-group-header">
-                    
-                </table> -->
                 <table class="responsive">
                     <thead>
-                    <tr>
-                        <th scope="col" colspan="3">In Case Of Emergency Please Notify</th>
-                    </tr>
+                        <tr>
+                            <th scope="col" colspan="3">In Case Of Emergency Please Notify</th>
+                        </tr>
                     </thead>
                     <thead>
-                    <tr>
-                        <th scope="col">Contact Person</th>
-                        <th scope="col" style="width: 14%">Contact No.</th>
-                        <th scope="col">Address</th>
-                    </tr>
+                        <tr>
+                            <th scope="col">Contact Person</th>
+                            <th scope="col" style="width: 14%">Contact No.</th>
+                            <th scope="col">Address</th>
+                        </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td data-label="Contact Person" v-text="data.main.emer_name || 'None'"></td>
-                            <td data-label="Contact No." v-text="data.main.emer_contact || 'None'"></td>
-                            <td data-label="Address" v-text="data.main.emer_addr || 'None'"></td>
+                            <td data-label="Contact Person" v-text="main.emer_name || 'None'"></td>
+                            <td data-label="Contact No." v-text="main.emer_contact || 'None'"></td>
+                            <td data-label="Address" v-text="main.emer_addr || 'None'"></td>
                         </tr>
                     </tbody>
                 </table>
+
             </div>
         </div>
     </div>
+
     <div class="card">
-        <div id="headingQuestionWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+        <div id="employmentQuestion-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" data-toggle="collapse" href="#employmentQuestion-body" aria-expanded="false" aria-controls="employmentQuestion-body">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapseQuestionWeb" aria-expanded="false" aria-controls="collapseQuestionWeb">
+                    <a class="m-portlet__nav-link collapsed">
                         <h5 class="m-portlet__head-text">
                             <span>Employment Questions</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -447,19 +440,19 @@
                 </div>
             </div>
         </div>
-        <div id="collapseQuestionWeb" class="collapse" role="tabpanel" aria-labelledby="headingQuestionWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
-            <table class="responsive mb-1" v-for="(question, index) in data.questions" :key="index">
+        <div id="employmentQuestion-body" class="collapse" aria-labelledby="employmentQuestion-head" data-parent="#accordionMain">
+            <div class="card-body">
+                <table class="responsive mb-1" v-for="(question, key) in questions" :key="key">
                     <thead>
                         <tr>
-                            <th class="" scope="col" v-text="question.q">
+                            <th class="" scope="col" v-text="question">
                             </th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td class="questions">
-                                <span v-text="hasAnswer(question) ? data.main[`ques${question.a}`] : 'N/A'"></span>
+                                <span v-text="hasAnswer(key)"></span>
                             </td>
                         </tr>
                     </tbody>
@@ -467,11 +460,12 @@
             </div>
         </div>
     </div>
+
     <div class="card">
-        <div id="headingEducationWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+        <div id="educBackground-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" data-toggle="collapse" href="#educBackground-body" aria-expanded="false" aria-controls="educBackground-body">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapseEducationWeb" aria-expanded="false" aria-controls="collapseEducationWeb">
+                    <a class="m-portlet__nav-link collapsed">
                         <h5 class="m-portlet__head-text">
                             <span>Educational Background</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -480,8 +474,8 @@
                 </div>
             </div>
         </div>
-        <div id="collapseEducationWeb" class="collapse" role="tabpanel" aria-labelledby="headingEducationWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
+        <div id="educBackground-body" class="collapse" aria-labelledby="educBackground-head" data-parent="#accordionMain">
+            <div class="card-body">
                 <table class="responsive">
                     <thead>
                     <tr>
@@ -495,28 +489,109 @@
                     </thead>
 
                     <tbody>
-                        <tr v-for="education in data.educations" :key="education.id">
-                            <td data-label="Level" v-text="education.educ_level_type"></td>
-                            <td data-label="School" v-text="education.educ_school"></td>
-                            <td data-label="Degree" v-text="education.educ_degree"></td>
-                            <td data-label="Honors" v-text="education.educ_honors || 'N/A'"></td>
-                            <td data-label="From" v-text="education.educ_from"></td>
-                            <td data-label="To" v-text="education.educ_to"></td>
-                        </tr>
-
-                        <tr v-if="data.educations.length == 0">
-                            <td data-label="Level">None</td>
-                            <td data-label="School">None</td>
-                            <td data-label="Degree">None</td>
-                            <td data-label="Honors">None</td>
-                            <td data-label="From">None</td>
-                            <td data-label="To" >None</td>
-                        </tr>
+                        <template v-if="educations.length == 0">
+                            <tr>
+                                <td data-label="Level">None</td>
+                                <td data-label="School">None</td>
+                                <td data-label="Degree">None</td>
+                                <td data-label="Honors">None</td>
+                                <td data-label="From">None</td>
+                                <td data-label="To" >None</td>
+                            </tr>
+                        </template>
+                        <template v-else>
+                            <tr v-for="education in educations" :key="education.id">
+                                <td data-label="Level" v-text="education.educ_level_type"></td>
+                                <td data-label="School" v-text="education.educ_school"></td>
+                                <td data-label="Degree" v-text="education.educ_degree"></td>
+                                <td data-label="Honors" v-text="education.educ_honors || 'N/A'"></td>
+                                <td data-label="From" v-text="education.educ_from"></td>
+                                <td data-label="To" v-text="education.educ_to"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+    <div class="card">
+        <div id="licenseAndCert-head" class="card-header  m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" data-toggle="collapse" href="#licenseAndCert-body" aria-expanded="false" aria-controls="licenseAndCert-body">
+            <div class="m-portlet__head">
+                <div class="m-portlet__head-caption">
+                    <a class="m-portlet__nav-link collapsed">
+                        <h5 class="m-portlet__head-text">
+                            <span>Licenses and Certificates</span>
+                            <i class="la pull-right la-angle-down"></i>
+                        </h5>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div id="licenseAndCert-body" class="collapse" aria-labelledby="licenseAndCert-head" data-parent="#accordionMain">
+            <div class="card-body">
+                <table class="responsive">
+                    <thead>
+                    <tr>
+                        <th class="" scope="col">LICENSE/EXAM TYPE</th>
+                        <th class="" scope="col">EXAM PLACE</th>
+                        <th class="" scope="col" style="width: 8%">RATING</th>
+                        <th class="" scope="col" style="width: 15%">RELEASE DATE</th>
+                        <th class="" scope="col" style="width: 15%">EXAM DATE</th>
+                        <th class="" scope="col">LICENSE NO.</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        <template v-if="licensesAndCerts.licenses.length == 0">
+                            <tr >
+                                <td data-label="LICENSE/EXAM TYPE">None</td>
+                                <td data-label="EXAM PLACE">None</td>
+                                <td data-label="RATING">None</td>
+                                <td data-label="RELEASE DATE">None</td>
+                                <td data-label="EXAM DATE">None</td>
+                                <td data-label="LICENSE NO.">None</td>
+                            </tr>
+                        </template>
+                        <template v-else>
+                            <tr v-for="license in licensesAndCerts.licenses" :key="license.id">
+                                <td data-label="LICENSE/EXAM TYPE" v-text="license.license_type"></td>
+                                <td data-label="EXAM PLACE" v-text="license.exam_place"></td>
+                                <td data-label="RATING" v-text="license.rating"></td>
+                                <td data-label="RELEASE DATE" v-text="license.release_date"></td>
+                                <td data-label="EXAM DATE" v-text="license.exam_date"></td>
+                                <td data-label="LICENSE NO." v-text="license.license_no"></td>
+                            </tr>
+                        </template>
+
+                    <!-- <template v-if="data.if_driver > 0 && data.driverlicenses && data.driverlicenses.length > 0">
+                        <thead>
+                        <tr>
+                            <th class="" scope="col" colspan="2">RESTRICTION</th>
+                            <th class="" scope="col" colspan="2">LICENSE NO.</th>
+                            <th class="" scope="col" colspan="2">EXPIRATION DATE</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="driverlicense in data.driverlicenses" :key="driverlicense.license_no">
+                                <td data-label="RESTRICTION" colspan="2" v-text="driverlicense.restriction"></td>
+                                <td data-label="LICENSE NO." colspan="2" v-text="driverlicense.license_no"></td>
+                                <td data-label="EXPIRATION DATE" colspan="2">
+                                    <span :class="['m-badge m-badge--wide', getExpirationClass(driverlicense.expiration_date)]">
+                                        <span v-text="driverlicense.expiration_date"></span>
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </template> -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<div id="accordionOtherAdditionalInfoWeb" class="accordion mb-5" role="tablist" >
     <div class="card">
         <div id="headingLicenseWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
             <div class="m-portlet__head">
@@ -544,14 +619,14 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr v-if="data.licenses.length == 0">
+                    <!-- <tr v-if="data.licenses.length == 0">
                         <td data-label="LICENSE/EXAM TYPE">None</td>
                         <td data-label="EXAM PLACE">None</td>
                         <td data-label="RATING">None</td>
                         <td data-label="RELEASE DATE">None</td>
                         <td data-label="EXAM DATE">None</td>
                         <td data-label="LICENSE NO.">None</td>
-                    </tr>
+                    </tr> -->
                     <tr v-else>
                         <tr v-for="license in data.licenses" :key="license.id">
                             <td data-label="LICENSE/EXAM TYPE" v-text="license.license_type"></td>
@@ -562,7 +637,7 @@
                             <td data-label="LICENSE NO." v-text="license.license_no"></td>
                         </tr>
                     </tr>
-                    <template v-if="data.if_driver > 0 && data.driverlicenses && data.driverlicenses.length > 0">
+                    <!-- <template v-if="data.if_driver > 0 && data.driverlicenses && data.driverlicenses.length > 0">
                         <thead>
                         <tr>
                             <th class="" scope="col" colspan="2">RESTRICTION</th>
@@ -581,7 +656,7 @@
                                 </td>
                             </tr>
                         </tbody>
-                    </template>
+                    </template> -->
                     </tbody>
                 </table>
             </div>
@@ -614,7 +689,7 @@
                         <th class="" scope="col" style="width: 13%">REASON FOR LEAVING</th>
                     </tr>
                     </thead>
-                    <tbody>
+                    <!-- <tbody>
                         <template v-if="data.works.length > 0">
                             <tr v-for="(experience, index) in data.works" :key="index">
                                 <td data-label="COMPANY" v-text="experience.work_company"></td>
@@ -637,7 +712,7 @@
                                 <td data-label="REASON FOR LEAVING">None</td>
                             </tr>
                         </template>
-                    </tbody>
+                    </tbody> -->
                 </table>
             </div>
         </div>
@@ -666,13 +741,13 @@
                     </tr>
                     </thead>
                     <tbody>
-                        <template v-if="data.awards.length > 0">
+                        <!-- <template v-if="data.awards.length > 0">
                             <tr v-for="(award, index) in data.awards" :key="index">
                                 <td data-label="AWARD/ACHIEVEMENT" v-text="award.award"></td>
                                 <td data-label="INSTITUTION" v-text="award.award_institution"></td>
                                 <td data-label="GIVEN DATE" v-text="award.award_date"></td>
                             </tr>
-                        </template>
+                        </template> -->
                         <template v-else>
                             <tr>
                                 <td data-label="AWARD/ACHIEVEMENT">None</td>
@@ -706,12 +781,12 @@
                             <th class="" scope="col"><label>TECHNICAL/ MANAGEMENT/ BUSINESS/ SPECIAL SKILLS</label></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <!-- <tbody>
                         <template v-if="data.skillset.length > 0">
                             <tr v-for="(skill, index) in data.skillset" :key="index">
                                 <td data-label="TECHNICAL/MANAGEMENT/BUSINESS/SPECIAL SKILLS" v-text="skill.skills"></td>
                             </tr>
-                        </template>
+                        </template> -->
                         <template v-else>
                             <tr>
                                 <td data-label="TECHNICAL/MANAGEMENT/BUSINESS/SPECIAL SKILLS">None</td>
@@ -747,14 +822,14 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <template v-if="data.organizations.length == 0">
+                        <!-- <template v-if="data.organizations.length == 0">
                             <tr >
                                 <td data-label="INSTITUTION">None</td>
                                 <td data-label="MEMBERSHIP TITLE">None</td>
                                 <td data-label="FROM">None</td>
                                 <td data-label="TO">None</td>
                             </tr>
-                        </template>
+                        </template> -->
                         <template v-else>
                             <tr v-for="organization in data.organizations" :key="organization.id">
                                 <td data-label="INSTITUTION" v-text="organization.org_institution"></td>
@@ -795,7 +870,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <template v-if="data.trainings.length == 0">
+                        <!-- <template v-if="data.trainings.length == 0">
                         <tr>
                             <td data-label="TRAINING">None</td>
                             <td data-label="FROM">None</td>
@@ -804,7 +879,7 @@
                             <td data-label="CONDUCTOR">None</td>
                             <td data-label="VENUE">None</td>
                         </tr>
-                        </template>
+                        </template> -->
                         <template v-else>
                         <tr v-for="training in data.trainings" :key="training.id">
                             <td data-label="TRAINING" v-text="training.training"></td>
@@ -845,13 +920,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <template v-if="data.references.length == 0">
+                        <!-- <template v-if="data.references.length == 0">
                         <tr>
                             <td data-label="NAME">None</td>
                             <td data-label="CONTACT NO.">None</td>
                             <td data-label="ADDRESS">None</td>
                         </tr>
-                        </template>
+                        </template> -->
                         <template v-else>
                         <tr v-for="reference in data.references" :key="reference.id">
                             <td data-label="NAME" v-text="reference.ref_name"></td>
@@ -892,7 +967,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <template v-if="data.medicals.length == 0">
+                        <!-- <template v-if="data.medicals.length == 0">
                         <tr>
                             <td data-label="DETAILS">NONE</td>
                             <td data-label="MED.NO.">NONE</td>
@@ -902,7 +977,7 @@
                             <td data-label="FINDINGS">NONE</td>
                             <td data-label="REMARKS">NONE</td>
                         </tr>
-                        </template>
+                        </template> -->
                         <template v-else>
                         <tr v-for="medical in data.medicals" :key="medical.id">
                             <td data-label="DETAILS" v-text="medical.med_details"></td>
@@ -946,7 +1021,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                    <template v-if="data.legals.length == 0">
+                    <!-- <template v-if="data.legals.length == 0">
                         <tr>
                             <td data-label="CASE NO.">NONE</td>
                             <td data-label="DETAILS">NONE</td>
@@ -955,7 +1030,7 @@
                             <td data-label="PROSECUTOR">NONE</td>
                             <td data-label="STATUS">NONE</td>
                         </tr>
-                    </template>
+                    </template> -->
                     <template v-else>
                         <tr v-for="legal in data.legals" :key="legal.id">
                             <td data-label="CASE NO." v-text="legal.leg_case_no || 'N/A'"></td>
@@ -1005,7 +1080,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <template v-if="data.accountability.length == 0">
+                    <!-- <template v-if="data.accountability.length == 0">
                         <tr>
                             <td data-label="STATUS">NONE</td>
                             <td data-label="REF. NO">NONE</td>
@@ -1016,7 +1091,7 @@
                             <td data-label="REMARKS">NONE</td>
                             <td data-label="DATE">NONE</td>
                         </tr>
-                    </template>
+                    </template> -->
                     <template v-else>
                         <tr v-for="acct in data.accountability" :key="acct.id">
                             <td data-label="STATUS" v-text="acct.status"></td>
@@ -1076,14 +1151,14 @@
                     </tr>
                     </thead>
                     <tbody>
-                        <template v-if="data.offenses.length == 0">
+                        <!-- <template v-if="data.offenses.length == 0">
                         <tr>
                             <td data-label="TYPE">NONE</td>
                             <td data-label="DATE">NONE</td>
                             <td data-label="NATURE">NONE</td>
                             <td data-label="ACTION TAKEN">NONE</td>
                         </tr>
-                        </template>
+                        </template> -->
                         <template v-else>
                         <tr v-for="offense in data.offenses" :key="offense.id">
                             <td data-label="TYPE" v-text="offense.offcom_type"></td>
@@ -1117,14 +1192,14 @@
                             </tr>
                             </thead>
                             <tbody>
-                                <template v-if="data.salaries.length == 0">
+                                <!-- <template v-if="data.salaries.length == 0">
                                     <tr>
                                         <td data-label="DATE">NONE</td>
                                         <td data-label="RATE">NONE</td>
                                         <td data-label="POSITION">NONE</td>
                                         <td data-label="REMARKS">NONE</td>
                                     </tr>
-                                </template>
+                                </template> -->
                                 <template v-else>
                                     <tr v-for="(salary, index) in data.salaries" :key="index">
                                         <td data-label="DATE" v-text="salary.sal_date"></td>
@@ -1184,7 +1259,7 @@
                     <tbody>
                         <tr>
                         <td data-label="CURRENT STATION / LOCATION">
-                            <span v-text="data.default_station.description || 'N/A'"></span>
+                            <!-- <span v-text="data.default_station.description || 'N/A'"></span> -->
                         </td>
                         <td data-label="STATIONS">
                             <ul class="row">
