@@ -8,12 +8,22 @@ jQuery(document)
                 const filter = values;
                 if (searchKey) {
                     if(filter){
-                    searchEmployee(searchKey,filter);
+                        searchEmployee(searchKey,filter);
                     }
                 } else {
                     $('.search-with-dropdown-suggestion-list').addClass('invisible');
                 }
-            }, 1000, characterLimit);
+            }, 1000, 3);
+        
+
+        /** added to remove suggestion list when input is empty */
+        $(".search-with-dropdown").on('keyup', function (e) {
+            var val = $(this).val();
+
+            if (val == 0){
+                $('.search-with-dropdown-suggestion-list').addClass('invisible');
+            }
+        });
 
         $('.search-with-dropdown')
             .on('focus', function () {
