@@ -1019,11 +1019,13 @@ class Reports_model extends CI_Model
         return $arrData;
     }
 
-    function select2CompanyData(){
-        $this->db->select("companies.id, companies.`code` `text`, companies.*");
+    public function select2CompanyData(){
+        $this->db->select("companies.id, companies.`code` `text`");
+        $this->db->join('gccmaster.tblemployees emp', 'emp.company_id = companies.id', "INNER");
+        $this->db->where("emp.employee_status", "Active");
+        $this->db->group_by("companies.id");
         $this->db->order_by("`code`", "ASC");
-        $results = $this->db->get("gcchris.tblcompanies companies")->result();
-        return $results;
+        return $this->db->get("gcchris.tblcompanies companies")->result();
     }
 
     public function select2DepartmentData(){
