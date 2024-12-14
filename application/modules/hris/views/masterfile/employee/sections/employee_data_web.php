@@ -38,10 +38,10 @@
 
 <div id="accordionMain" class="accordion mb-5" role="tablist">
     <div class="card">
-        <div id="personalInfo-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" data-toggle="collapse" href="#personalInfo-body" aria-expanded="false" aria-controls="personalInfo-body">
+        <div id="personalInfo-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" >
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" href="#personalInfo-body" aria-expanded="false" aria-controls="personalInfo-body">
                         <h5 class="m-portlet__head-text">
                             <span>Personal Information</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -146,10 +146,10 @@
         </div>
     </div>
     <div class="card">
-        <div id="additionalInfo-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" data-toggle="collapse" href="#additionalInfo-body" aria-expanded="false" aria-controls="additionalInfo-body">
+        <div id="additionalInfo-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" href="#additionalInfo-body" aria-expanded="false" aria-controls="additionalInfo-body" role="tab">
                         <h5 class="m-portlet__head-text">
                             <span>Additional Information</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -383,7 +383,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <template v-if="dependents.length == 0">
+                        <template v-if="dependents == false">
                             <tr>
                                 <td data-label="Name">None</td>
                                 <td data-label="Age">None</td>
@@ -428,10 +428,10 @@
     </div>
 
     <div class="card">
-        <div id="employmentQuestion-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" data-toggle="collapse" href="#employmentQuestion-body" aria-expanded="false" aria-controls="employmentQuestion-body">
+        <div id="employmentQuestion-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" href="#employmentQuestion-body" aria-expanded="false" aria-controls="employmentQuestion-body">
                         <h5 class="m-portlet__head-text">
                             <span>Employment Questions</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -462,10 +462,10 @@
     </div>
 
     <div class="card">
-        <div id="educBackground-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" data-toggle="collapse" href="#educBackground-body" aria-expanded="false" aria-controls="educBackground-body">
+        <div id="educBackground-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" >
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" href="#educBackground-body" aria-expanded="false" aria-controls="educBackground-body">
                         <h5 class="m-portlet__head-text">
                             <span>Educational Background</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -489,7 +489,7 @@
                     </thead>
 
                     <tbody>
-                        <template v-if="educations.length == 0">
+                        <template v-if="educations == false">
                             <tr>
                                 <td data-label="Level">None</td>
                                 <td data-label="School">None</td>
@@ -515,10 +515,10 @@
         </div>
     </div>
     <div class="card">
-        <div id="licenseAndCert-head" class="card-header  m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" data-toggle="collapse" href="#licenseAndCert-body" aria-expanded="false" aria-controls="licenseAndCert-body">
+        <div id="licenseAndCert-head" class="card-header  m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" >
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" href="#licenseAndCert-body" aria-expanded="false" aria-controls="licenseAndCert-body">
                         <h5 class="m-portlet__head-text">
                             <span>Licenses and Certificates</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -561,8 +561,9 @@
                                 <td data-label="LICENSE NO." v-text="license.license_no"></td>
                             </tr>
                         </template>
+                    </tbody>
 
-                    <!-- <template v-if="data.if_driver > 0 && data.driverlicenses && data.driverlicenses.length > 0">
+                    <template v-if="licensesAndCerts.if_driver > 0 && licensesAndCerts.driverlicenses && licensesAndCerts.driverlicenses.length > 0">
                         <thead>
                         <tr>
                             <th class="" scope="col" colspan="2">RESTRICTION</th>
@@ -571,7 +572,7 @@
                         </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="driverlicense in data.driverlicenses" :key="driverlicense.license_no">
+                            <tr v-for="driverlicense in licensesAndCerts.driverlicenses" :key="driverlicense.license_no">
                                 <td data-label="RESTRICTION" colspan="2" v-text="driverlicense.restriction"></td>
                                 <td data-label="LICENSE NO." colspan="2" v-text="driverlicense.license_no"></td>
                                 <td data-label="EXPIRATION DATE" colspan="2">
@@ -581,102 +582,26 @@
                                 </td>
                             </tr>
                         </tbody>
-                    </template> -->
-                    </tbody>
+                    </template>
                 </table>
             </div>
         </div>
     </div>
-
-</div>
-
-
-<div id="accordionOtherAdditionalInfoWeb" class="accordion mb-5" role="tablist" >
     <div class="card">
-        <div id="headingLicenseWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+        <div id="workExperience-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" data-toggle="collapse" href="#workExperience-body" aria-expanded="false" aria-controls="workExperience-body">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapseLicenseWeb" aria-expanded="false" aria-controls="collapseLicenseWeb">
+                    <a class="m-portlet__nav-link collapsed">
                         <h5 class="m-portlet__head-text">
-                            <span>Licenses and Certificates</span>
+                            <span>Work Experience</span>
                             <i class="la pull-right la-angle-down"></i>
                         </h5>
                     </a>
                 </div>
             </div>
         </div>
-        <div id="collapseLicenseWeb" class="collapse" role="tabpanel" aria-labelledby="headingLicenseWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
-                <table class="responsive">
-                    <thead>
-                    <tr>
-                        <th class="" scope="col">LICENSE/EXAM TYPE</th>
-                        <th class="" scope="col">EXAM PLACE</th>
-                        <th class="" scope="col">RATING</th>
-                        <th class="" scope="col" style="width: 13%">RELEASE DATE</th>
-                        <th class="" scope="col" style="width: 13%">EXAM DATE</th>
-                        <th class="" scope="col">LICENSE NO.</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <!-- <tr v-if="data.licenses.length == 0">
-                        <td data-label="LICENSE/EXAM TYPE">None</td>
-                        <td data-label="EXAM PLACE">None</td>
-                        <td data-label="RATING">None</td>
-                        <td data-label="RELEASE DATE">None</td>
-                        <td data-label="EXAM DATE">None</td>
-                        <td data-label="LICENSE NO.">None</td>
-                    </tr> -->
-                    <tr v-else>
-                        <tr v-for="license in data.licenses" :key="license.id">
-                            <td data-label="LICENSE/EXAM TYPE" v-text="license.license_type"></td>
-                            <td data-label="EXAM PLACE" v-text="license.exam_place"></td>
-                            <td data-label="RATING" v-text="license.rating"></td>
-                            <td data-label="RELEASE DATE" v-text="license.release_date"></td>
-                            <td data-label="EXAM DATE" v-text="license.exam_date"></td>
-                            <td data-label="LICENSE NO." v-text="license.license_no"></td>
-                        </tr>
-                    </tr>
-                    <!-- <template v-if="data.if_driver > 0 && data.driverlicenses && data.driverlicenses.length > 0">
-                        <thead>
-                        <tr>
-                            <th class="" scope="col" colspan="2">RESTRICTION</th>
-                            <th class="" scope="col" colspan="2">LICENSE NO.</th>
-                            <th class="" scope="col" colspan="2">EXPIRATION DATE</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="driverlicense in data.driverlicenses" :key="driverlicense.license_no">
-                                <td data-label="RESTRICTION" colspan="2" v-text="driverlicense.restriction"></td>
-                                <td data-label="LICENSE NO." colspan="2" v-text="driverlicense.license_no"></td>
-                                <td data-label="EXPIRATION DATE" colspan="2">
-                                    <span :class="['m-badge m-badge--wide', getExpirationClass(driverlicense.expiration_date)]">
-                                        <span v-text="driverlicense.expiration_date"></span>
-                                    </span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </template> -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <div class="card">
-        <div id="headingWorkWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
-            <div class="m-portlet__head">
-                <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapseWorkWeb" aria-expanded="false" aria-controls="collapseWorkWeb">
-                        <h5 class="m-portlet__head-text">
-                            <span>Work Experiences</span>
-                            <i class="la pull-right la-angle-down"></i>
-                        </h5>
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div id="collapseWorkWeb" class="collapse" role="tabpanel" aria-labelledby="headingWorkWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
+        <div id="workExperience-body" class="collapse" aria-labelledby="workExperience-head" data-parent="#accordionMain">
+            <div class="card-body">
                 <table class="responsive">
                     <thead>
                     <tr>
@@ -689,19 +614,9 @@
                         <th class="" scope="col" style="width: 13%">REASON FOR LEAVING</th>
                     </tr>
                     </thead>
-                    <!-- <tbody>
-                        <template v-if="data.works.length > 0">
-                            <tr v-for="(experience, index) in data.works" :key="index">
-                                <td data-label="COMPANY" v-text="experience.work_company"></td>
-                                <td data-label="FROM" v-text="experience.work_from"></td>
-                                <td data-label="TO" v-text="experience.work_to"></td>
-                                <td data-label="POSITION" v-text="experience.work_position"></td>
-                                <td data-label="ID NO" v-text="experience.old_idno || 'N/A'"></td>
-                                <td data-label="STATUS" v-text="experience.work_status || '<br>'"></td>
-                                <td data-label="REASON FOR LEAVING" v-text="experience.work_reason || 'N/A'"></td>
-                            </tr>
-                        </template>
-                        <template v-else>
+                    <tbody>
+                        
+                        <template v-if="works == false">
                             <tr>
                                 <td data-label="COMPANY">None</td>
                                 <td data-label="FROM">None</td>
@@ -712,16 +627,27 @@
                                 <td data-label="REASON FOR LEAVING">None</td>
                             </tr>
                         </template>
-                    </tbody> -->
+                        <template v-else>
+                            <tr v-for="(experience, index) in works" :key="index">
+                                <td data-label="COMPANY" v-text="experience.work_company"></td>
+                                <td data-label="FROM" v-text="experience.work_from"></td>
+                                <td data-label="TO" v-text="experience.work_to"></td>
+                                <td data-label="POSITION" v-text="experience.work_position"></td>
+                                <td data-label="ID NO" v-text="experience.old_idno || 'N/A'"></td>
+                                <td data-label="STATUS" v-text="experience.work_status || '<br>'"></td>
+                                <td data-label="REASON FOR LEAVING" v-text="experience.work_reason || 'N/A'"></td>
+                            </tr>
+                        </template>
+                    </tbody>
                 </table>
             </div>
         </div>
     </div>
     <div class="card">
-        <div id="headingAwardWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+        <div id="employeeAwards-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapseAwardWeb" aria-expanded="false" aria-controls="collapseAwardWeb">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionMain" href="#employeeAwards-body" aria-expanded="false" aria-controls="employeeAwards-body">
                         <h5 class="m-portlet__head-text">
                             <span>Awards and Achievements</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -730,8 +656,8 @@
                 </div>
             </div>
         </div>
-        <div id="collapseAwardWeb" class="collapse" role="tabpanel" aria-labelledby="headingAwardWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
+        <div id="employeeAwards-body" class="collapse" aria-labelledby="employeeAwards-head" data-parent="#accordionMain">
+            <div class="card-body">
                 <table class="responsive">
                     <thead>
                     <tr>
@@ -741,30 +667,31 @@
                     </tr>
                     </thead>
                     <tbody>
-                        <!-- <template v-if="data.awards.length > 0">
-                            <tr v-for="(award, index) in data.awards" :key="index">
-                                <td data-label="AWARD/ACHIEVEMENT" v-text="award.award"></td>
-                                <td data-label="INSTITUTION" v-text="award.award_institution"></td>
-                                <td data-label="GIVEN DATE" v-text="award.award_date"></td>
-                            </tr>
-                        </template> -->
-                        <template v-else>
+                        <template v-if="awards == false">
                             <tr>
                                 <td data-label="AWARD/ACHIEVEMENT">None</td>
                                 <td data-label="INSTITUTION">None</td>
                                 <td data-label="GIVEN DATE">None</td>
                             </tr>
                         </template>
+                        <template v-else>
+                            <tr v-for="(award, index) in awards" :key="index">
+                                <td data-label="AWARD/ACHIEVEMENT" v-text="award.award"></td>
+                                <td data-label="INSTITUTION" v-text="award.award_institution"></td>
+                                <td data-label="GIVEN DATE" v-text="award.award_date"></td>
+                            </tr>
+                        </template>
+
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
     <div class="card">
-        <div id="headingSkillsWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+        <div id="empSkills-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapseSkillWeb" aria-expanded="false" aria-controls="collapseSkillWeb">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionMain" href="#empSkills-body" aria-expanded="false" aria-controls="empSkills-body">
                         <h5 class="m-portlet__head-text">
                             <span>Skills</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -773,35 +700,35 @@
                 </div>
             </div>
         </div>
-        <div id="collapseSkillWeb" class="collapse" role="tabpanel" aria-labelledby="headingSkillsWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
+        <div id="empSkills-body" class="collapse" aria-labelledby="empSkills-head" data-parent="#accordionMain">
+            <div class="card-body">
                 <table class="responsive">
                     <thead>
                         <tr>
                             <th class="" scope="col"><label>TECHNICAL/ MANAGEMENT/ BUSINESS/ SPECIAL SKILLS</label></th>
                         </tr>
                     </thead>
-                    <!-- <tbody>
-                        <template v-if="data.skillset.length > 0">
-                            <tr v-for="(skill, index) in data.skillset" :key="index">
-                                <td data-label="TECHNICAL/MANAGEMENT/BUSINESS/SPECIAL SKILLS" v-text="skill.skills"></td>
-                            </tr>
-                        </template> -->
-                        <template v-else>
+                    <tbody>
+                        <template v-if="skillset == false">
                             <tr>
                                 <td data-label="TECHNICAL/MANAGEMENT/BUSINESS/SPECIAL SKILLS">None</td>
                             </tr>
                         </template>
+                        <template v-else>
+                            <tr v-for="(skill, index) in skillset" :key="skill.id">
+                                <td data-label="TECHNICAL/MANAGEMENT/BUSINESS/SPECIAL SKILLS" v-text="skill.skills"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
-            </div>
-        </div>
+			</div>
+		</div>
     </div>
     <div class="card">
-        <div id="headingOrgWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+        <div id="empOrg-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapseOrgWeb" aria-expanded="false" aria-controls="collapseOrgWeb">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionMain" href="#empOrg-body" aria-expanded="false" aria-controls="empOrg-body">
                         <h5 class="m-portlet__head-text">
                             <span>Organizations</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -810,8 +737,8 @@
                 </div>
             </div>
         </div>
-        <div id="collapseOrgWeb" class="collapse" role="tabpanel" aria-labelledby="headingOrgWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
+        <div id="empOrg-body" class="collapse" aria-labelledby="empOrg-head" data-parent="#accordionMain">
+            <div class="card-body">
                 <table class="responsive">
                     <thead>
                         <tr>
@@ -822,16 +749,16 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- <template v-if="data.organizations.length == 0">
+                        <template v-if="organizations == false">
                             <tr >
                                 <td data-label="INSTITUTION">None</td>
                                 <td data-label="MEMBERSHIP TITLE">None</td>
                                 <td data-label="FROM">None</td>
                                 <td data-label="TO">None</td>
                             </tr>
-                        </template> -->
+                        </template>
                         <template v-else>
-                            <tr v-for="organization in data.organizations" :key="organization.id">
+                            <tr v-for="organization in organizations" :key="organization.id">
                                 <td data-label="INSTITUTION" v-text="organization.org_institution"></td>
                                 <td data-label="MEMBERSHIP TITLE" v-text="organization.org_membership_title"></td>
                                 <td data-label="FROM" v-text="organization.org_from"></td>
@@ -840,14 +767,15 @@
                         </template>
                     </tbody>
                 </table>
-            </div>
-        </div>
+			</div>
+		</div>
     </div>
+
     <div class="card">
-        <div id="headingTrainWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+        <div id="empTrainings-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapseTrainWeb" aria-expanded="false" aria-controls="collapseTrainWeb">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionMain" href="#empTrainings-body" aria-expanded="false" aria-controls="empTrainings-body">
                         <h5 class="m-portlet__head-text">
                             <span>Training and Seminars</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -856,8 +784,8 @@
                 </div>
             </div>
         </div>
-        <div id="collapseTrainWeb" class="collapse" role="tabpanel" aria-labelledby="headingTrainWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
+        <div id="empTrainings-body" class="collapse" aria-labelledby="empTrainings-head" data-parent="#accordionMain">
+            <div class="card-body">
                 <table class="responsive">
                     <thead>
                         <tr>
@@ -870,36 +798,37 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- <template v-if="data.trainings.length == 0">
-                        <tr>
-                            <td data-label="TRAINING">None</td>
-                            <td data-label="FROM">None</td>
-                            <td data-label="TO">None</td>
-                            <td data-label="INSTITUTION">None</td>
-                            <td data-label="CONDUCTOR">None</td>
-                            <td data-label="VENUE">None</td>
-                        </tr>
-                        </template> -->
+                        <template v-if="trainings == false">
+                            <tr>
+                                <td data-label="TRAINING">None</td>
+                                <td data-label="FROM">None</td>
+                                <td data-label="TO">None</td>
+                                <td data-label="INSTITUTION">None</td>
+                                <td data-label="CONDUCTOR">None</td>
+                                <td data-label="VENUE">None</td>
+                            </tr>
+                        </template>
                         <template v-else>
-                        <tr v-for="training in data.trainings" :key="training.id">
-                            <td data-label="TRAINING" v-text="training.training"></td>
-                            <td data-label="FROM" v-text="training.train_from"></td>
-                            <td data-label="TO" v-text="training.train_to"></td>
-                            <td data-label="INSTITUTION" v-text="training.train_institution"></td>
-                            <td data-label="CONDUCTOR" v-text="training.train_conductor"></td>
-                            <td data-label="VENUE" v-text="training.train_venue"></td>
-                        </tr>
+                            <tr v-for="training in trainings" :key="training.id">
+                                <td data-label="TRAINING" v-text="training.training"></td>
+                                <td data-label="FROM" v-text="training.train_from"></td>
+                                <td data-label="TO" v-text="training.train_to"></td>
+                                <td data-label="INSTITUTION" v-text="training.train_institution"></td>
+                                <td data-label="CONDUCTOR" v-text="training.train_conductor"></td>
+                                <td data-label="VENUE" v-text="training.train_venue"></td>
+                            </tr>
                         </template>
                     </tbody>
                 </table>
-            </div>
-        </div>
+			</div>
+		</div>
     </div>
+  
     <div class="card">
-        <div id="headingRefWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+        <div id="empPersonalReferences-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapseRefWeb" aria-expanded="false" aria-controls="collapseRefWeb">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionMain" href="#empPersonalReferences-body" aria-expanded="false" aria-controls="empPersonalReferences-body">
                         <h5 class="m-portlet__head-text">
                             <span>Personal References</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -908,8 +837,8 @@
                 </div>
             </div>
         </div>
-        <div id="collapseRefWeb" class="collapse" role="tabpanel" aria-labelledby="headingRefWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
+        <div id="empPersonalReferences-body" class="collapse" aria-labelledby="empPersonalReferences-head" data-parent="#accordionMain">
+            <div class="card-body">
                 <table class="responsive">
                     </thead>
                     <thead>
@@ -920,30 +849,31 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- <template v-if="data.references.length == 0">
-                        <tr>
-                            <td data-label="NAME">None</td>
-                            <td data-label="CONTACT NO.">None</td>
-                            <td data-label="ADDRESS">None</td>
-                        </tr>
-                        </template> -->
+                        <template v-if="references == false">
+                            <tr>
+                                <td data-label="NAME">None</td>
+                                <td data-label="CONTACT NO.">None</td>
+                                <td data-label="ADDRESS">None</td>
+                            </tr>
+                        </template>
                         <template v-else>
-                        <tr v-for="reference in data.references" :key="reference.id">
-                            <td data-label="NAME" v-text="reference.ref_name"></td>
-                            <td data-label="CONTACT NO." v-text="reference.ref_contact_no"></td>
-                            <td data-label="ADDRESS" v-text="reference.ref_address"></td>
-                        </tr>
+                            <tr v-for="reference in references" :key="reference.id">
+                                <td data-label="NAME" v-text="reference.ref_name"></td>
+                                <td data-label="CONTACT NO." v-text="reference.ref_contact_no"></td>
+                                <td data-label="ADDRESS" v-text="reference.ref_address"></td>
+                            </tr>
                         </template>
                     </tbody>
                 </table>
-            </div>
-        </div>
+			</div>
+		</div>
     </div>
+
     <div class="card">
-        <div id="headingMedWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+        <div id="empMedicalHistory-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapseMedWeb" aria-expanded="false" aria-controls="collapseMedWeb">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionMain" href="#empMedicalHistory-body" aria-expanded="false" aria-controls="empMedicalHistory-body">
                         <h5 class="m-portlet__head-text">
                             <span>Medical History / Records</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -952,8 +882,8 @@
                 </div>
             </div>
         </div>
-        <div id="collapseMedWeb" class="collapse" role="tabpanel" aria-labelledby="headingMedWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
+        <div id="empMedicalHistory-body" class="collapse" aria-labelledby="empMedicalHistory-head" data-parent="#accordionMain">
+            <div class="card-body">
                 <table class="responsive">
                     <thead>
                         <tr>
@@ -967,38 +897,39 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- <template v-if="data.medicals.length == 0">
-                        <tr>
-                            <td data-label="DETAILS">NONE</td>
-                            <td data-label="MED.NO.">NONE</td>
-                            <td data-label="DATE">NONE</td>
-                            <td data-label="VENUE">NONE</td>
-                            <td data-label="PHYSICIAN">NONE</td>
-                            <td data-label="FINDINGS">NONE</td>
-                            <td data-label="REMARKS">NONE</td>
-                        </tr>
-                        </template> -->
+                        <template v-if="medicals == false">
+                            <tr>
+                                <td data-label="DETAILS">NONE</td>
+                                <td data-label="MED.NO.">NONE</td>
+                                <td data-label="DATE">NONE</td>
+                                <td data-label="VENUE">NONE</td>
+                                <td data-label="PHYSICIAN">NONE</td>
+                                <td data-label="FINDINGS">NONE</td>
+                                <td data-label="REMARKS">NONE</td>
+                            </tr>
+                        </template>
                         <template v-else>
-                        <tr v-for="medical in data.medicals" :key="medical.id">
-                            <td data-label="DETAILS" v-text="medical.med_details"></td>
-                            <td data-label="MED.NO." v-text="medical.med_no"></td>
-                            <td data-label="DATE" v-text="medical.med_date"></td>
-                            <td data-label="VENUE" v-text="medical.med_venue"></td>
-                            <td data-label="PHYSICIAN" v-text="medical.med_physician"></td>
-                            <td data-label="FINDINGS" v-text="medical.med_findings"></td>
-                            <td data-label="REMARKS" v-text="medical.remarks"></td>
-                        </tr>
+                            <tr v-for="medical in medicals" :key="medical.id">
+                                <td data-label="DETAILS" v-text="medical.med_details"></td>
+                                <td data-label="MED.NO." v-text="medical.med_no"></td>
+                                <td data-label="DATE" v-text="medical.med_date"></td>
+                                <td data-label="VENUE" v-text="medical.med_venue"></td>
+                                <td data-label="PHYSICIAN" v-text="medical.med_physician"></td>
+                                <td data-label="FINDINGS" v-text="medical.med_findings"></td>
+                                <td data-label="REMARKS" v-text="medical.remarks"></td>
+                            </tr>
                         </template>
                     </tbody>
                 </table>
-            </div>
-        </div>
+			</div>
+		</div>
     </div>
+
     <div class="card">
-        <div id="headingLegalWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+        <div id="empLegalHistory-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapseLegalWeb" aria-expanded="false" aria-controls="collapseLegalWeb">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionMain" href="#empLegalHistory-body" aria-expanded="false" aria-controls="empLegalHistory-body">
                         <h5 class="m-portlet__head-text">
                             <span>Legal History / Records</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -1007,8 +938,8 @@
                 </div>
             </div>
         </div>
-        <div id="collapseLegalWeb" class="collapse" role="tabpanel" aria-labelledby="headingLegalWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
+        <div id="empLegalHistory-body" class="collapse" aria-labelledby="empLegalHistory-head" data-parent="#accordionMain">
+            <div class="card-body">
                 <table class="responsive">
                     <thead>
                         <tr>
@@ -1021,36 +952,37 @@
                         </tr>
                     </thead>
                     <tbody>
-                    <!-- <template v-if="data.legals.length == 0">
-                        <tr>
-                            <td data-label="CASE NO.">NONE</td>
-                            <td data-label="DETAILS">NONE</td>
-                            <td data-label="DATE">NONE</td>
-                            <td data-label="COURT FIELD">NONE</td>
-                            <td data-label="PROSECUTOR">NONE</td>
-                            <td data-label="STATUS">NONE</td>
-                        </tr>
-                    </template> -->
-                    <template v-else>
-                        <tr v-for="legal in data.legals" :key="legal.id">
-                            <td data-label="CASE NO." v-text="legal.leg_case_no || 'N/A'"></td>
-                            <td data-label="DETAILS" v-text="legal.leg_details || 'N/A'"></td>
-                            <td data-label="DATE" v-text="legal.leg_case_date || 'N/A'"></td>
-                            <td data-label="COURT FIELD" v-text="legal.leg_court_field || 'N/A'"></td>
-                            <td data-label="PROSECUTOR" v-text="legal.leg_prosecutor || 'N/A'"></td>
-                            <td data-label="STATUS" v-text="legal.leg_status || 'N/A'"></td>
-                        </tr>
-                    </template>
+                        <template v-if="legals == false">
+                            <tr>
+                                <td data-label="CASE NO.">NONE</td>
+                                <td data-label="DETAILS">NONE</td>
+                                <td data-label="DATE">NONE</td>
+                                <td data-label="COURT FIELD">NONE</td>
+                                <td data-label="PROSECUTOR">NONE</td>
+                                <td data-label="STATUS">NONE</td>
+                            </tr>
+                        </template>
+                        <template v-else>
+                            <tr v-for="legal in legals" :key="legal.id">
+                                <td data-label="CASE NO." v-text="legal.leg_case_no || 'N/A'"></td>
+                                <td data-label="DETAILS" v-text="legal.leg_details || 'N/A'"></td>
+                                <td data-label="DATE" v-text="legal.leg_case_date || 'N/A'"></td>
+                                <td data-label="COURT FIELD" v-text="legal.leg_court_field || 'N/A'"></td>
+                                <td data-label="PROSECUTOR" v-text="legal.leg_prosecutor || 'N/A'"></td>
+                                <td data-label="STATUS" v-text="legal.leg_status || 'N/A'"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
-            </div>
-        </div>
+			</div>
+		</div>
     </div>
+
     <div class="card">
-        <div id="headingAccountabilityWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+        <div id="empAccountability-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapseAccountabilityWeb" aria-expanded="false" aria-controls="collapseAccountabilityWeb">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionMain" href="#empAccountability-body" aria-expanded="false" aria-controls="empAccountability-body">
                         <h5 class="m-portlet__head-text">
                             <span>Accountability</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -1059,8 +991,8 @@
                 </div>
             </div>
         </div>
-        <div id="collapseAccountabilityWeb" class="collapse" role="tabpanel" aria-labelledby="headingAccountabilityWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
+        <div id="empAccountability-body" class="collapse" aria-labelledby="empAccountability-head" data-parent="#accordionMain">
+            <div class="card-body">
                 <table class="responsive" id="accountability_table">
                     <thead class="customsalary">
                     <tr>
@@ -1068,19 +1000,19 @@
                     </tr>
                     </thead>
                     <thead>
-                    <tr>
-                        <th class="" scope="col" width="12%">STATUS</th>
-                        <th class="" scope="col" width="12%">REF. NO</th>
-                        <th class="" scope="col" width="12%">ASSET CODE</th>
-                        <th class="" scope="col">ASSET NAME</th>
-                        <th class="text-right" scope="col" width="10%">AMOUNT</th>
-                        <th class="text-center" scope="col" width="10%">RETURNED</th>
-                        <th class="text-center" scope="col" width="13%">REMARKS</th>
-                        <th class="" scope="col" width="13%">DATE</th>
-                    </tr>
+                        <tr>
+                            <th class="" scope="col" width="12%">STATUS</th>
+                            <th class="" scope="col" width="12%">REF. NO</th>
+                            <th class="" scope="col" width="12%">ASSET CODE</th>
+                            <th class="" scope="col">ASSET NAME</th>
+                            <th class="text-right" scope="col" width="10%">AMOUNT</th>
+                            <th class="text-center" scope="col" width="10%">RETURNED</th>
+                            <th class="text-center" scope="col" width="13%">REMARKS</th>
+                            <th class="" scope="col" width="13%">DATE</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    <!-- <template v-if="data.accountability.length == 0">
+                    <template v-if="accountability == false">
                         <tr>
                             <td data-label="STATUS">NONE</td>
                             <td data-label="REF. NO">NONE</td>
@@ -1091,9 +1023,9 @@
                             <td data-label="REMARKS">NONE</td>
                             <td data-label="DATE">NONE</td>
                         </tr>
-                    </template> -->
+                    </template>
                     <template v-else>
-                        <tr v-for="acct in data.accountability" :key="acct.id">
+                        <tr v-for="acct in accountability" :key="acct.id">
                             <td data-label="STATUS" v-text="acct.status"></td>
                             <td data-label="REF. NO" v-text="acct.reference_no"></td>
                             <td data-label="ASSET CODE" v-text="acct.asset_code"></td>
@@ -1118,9 +1050,66 @@
                     </template>
                     </tbody>
                 </table>
+			</div>
+		</div>
+    </div>
+
+    <div class="card">
+        <div id="empEmploymentInfo-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+            <div class="m-portlet__head">
+                <div class="m-portlet__head-caption">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionMain" href="#empEmploymentInfo-body" aria-expanded="false" aria-controls="empEmploymentInfo-body">
+                        <h5 class="m-portlet__head-text">
+                            <span>Employment Information</span>
+                            <i class="la pull-right la-angle-down"></i>
+                        </h5>
+                    </a>
+                </div>
             </div>
         </div>
+        <div id="empEmploymentInfo-body" class="collapse" aria-labelledby="empEmploymentInfo-head" data-parent="#accordionMain">
+            <div class="card-body">
+                <table class="responsive">
+                    <thead class="customsalary">
+                        <tr>
+                            <th scope="col" colspan="4">OFFENSE AND COMMENDATIONS</th>
+                        </tr>
+                    </thead>
+                    <thead>
+                        <tr>
+                            <th class="" scope="col">TYPE</th>
+                            <th class="" scope="col" style="width: 13%">DATE</th>
+                            <th class="" scope="col">NATURE</th>
+                            <th class="" scope="col">ACTION TAKEN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template v-if="offenses == false">
+                            <tr>
+                                <td data-label="TYPE">NONE</td>
+                                <td data-label="DATE">NONE</td>
+                                <td data-label="NATURE">NONE</td>
+                                <td data-label="ACTION TAKEN">NONE</td>
+                            </tr>
+                        </template>
+                        <template v-else>
+                            <tr v-for="offense in offenses" :key="offense.id">
+                                <td data-label="TYPE" v-text="offense.offcom_type"></td>
+                                <td data-label="DATE" v-text="offense.offcom_date"></td>
+                                <td data-label="NATURE" v-text="offense.offcom_nature"></td>
+                                <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+			</div>
+		</div>
     </div>
+
+</div>
+
+
+<div id="accordionOtherAdditionalInfoWeb" class="accordion mb-5" role="tablist" >
     <div class="card">
         <div id="headingEmploymentWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
             <div class="m-portlet__head">
@@ -1159,23 +1148,23 @@
                             <td data-label="ACTION TAKEN">NONE</td>
                         </tr>
                         </template> -->
-                        <template v-else>
+                        <!-- <template v-else>
                         <tr v-for="offense in data.offenses" :key="offense.id">
                             <td data-label="TYPE" v-text="offense.offcom_type"></td>
                             <td data-label="DATE" v-text="offense.offcom_date"></td>
                             <td data-label="NATURE" v-text="offense.offcom_nature"></td>
                             <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
                         </tr>
-                        </template>
+                        </template> -->
                     </tbody>
                 </table>
                 <!-- OFFENSES AND COMMENDATIONS -->
 
 <!-- START SALARY HISTORY -->
 
-                <template v-if = "data.salaries == false">
+                <!-- <template v-if = "data.salaries == false">
 
-                </template>
+                </template> -->
                 <template v-else>
                     <table class="responsive">
                             <thead class="customsalary">

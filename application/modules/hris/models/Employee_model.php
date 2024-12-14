@@ -11041,7 +11041,7 @@
         }
 
         public function getEmpSkills($id){
-            $data['skillset'] = $this->db->get_where($this->employeeSkillsTable, array("emp_id" => $id,"is_archived" => 0))->result();            
+            $data['skillset'] = $this->db->select('id,skills')->get_where($this->employeeSkillsTable, array("emp_id" => $id,"is_archived" => 0))->result();            
             return $data;
         }
 
