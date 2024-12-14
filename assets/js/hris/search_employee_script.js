@@ -1,7 +1,7 @@
 var values = ["company"];
+const characterLimit = 3;
 jQuery(document)
     .ready(function () {
-        const characterLimit = 3;
         $('.search-with-dropdown')
             .donetyping(function () {
                 const searchKey = $(this).val();
@@ -13,8 +13,7 @@ jQuery(document)
                 } else {
                     $('.search-with-dropdown-suggestion-list').addClass('invisible');
                 }
-            }, 1000, 3);
-        
+            }, 1000, characterLimit);
 
         /** added to remove suggestion list when input is empty */
         $(".search-with-dropdown").on('keyup', function (e) {
@@ -176,6 +175,11 @@ jQuery(document)
             });
         }
         
+        $("#manual-limit").on("click", function () {
+            const searchKey = $(".search-with-dropdown").val().trim();
+            const filter = values;
+            searchEmployee(searchKey,filter);
+        });
     });
 
 function openEmployeeDataSheet(emp_id) {
