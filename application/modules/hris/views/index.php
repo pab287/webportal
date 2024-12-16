@@ -77,6 +77,17 @@
             font-weight: bold;
         }
     } */
+
+    #manual-limit {
+        border: none;
+        background-color: transparent;
+        cursor: pointer;
+    }
+
+    #manual-limit:focus {
+        border: none;
+        outline: none;
+    }
 </style>
 
 
@@ -93,14 +104,12 @@
         <div class="offset-xl-2 offset-lg-2 offset-md-2 offset-sm-0 col-xl-4 col-lg-4 col-md-4 col-sm-12">
             <div class="form-group m-form__group mb-0" id="search">
                 <div class="m-input-icon m-input-icon--left position-relative search-with-dropdown-container">
-                    <input class="form-control m-input form-control-lg search-with-dropdown"
-                        placeholder="Looking for someone?"
-                        style="height: auto; text-transform: none;">
-                    <span class="m-input-icon__icon m-input-icon__icon--left">
+                    <input class="form-control m-input form-control-lg search-with-dropdown" placeholder="Looking for someone?" style="height: auto; text-transform: none;">
+                    <button id="manual-limit" class="m-input-icon__icon m-input-icon__icon--left" data-toggle="m-tooltip" data-placement="top" data-original-title="Click this for manual Search of Employee">
                         <span>
                             <i class="fa fa-search"></i>
                         </span>
-                    </span>
+                    </button>
                     <span class="m-input-icon__icon m-input-icon__icon--right" style="cursor: pointer;">
                         <span>
                             <i class="fa fa-caret-down" id="search_filter" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
