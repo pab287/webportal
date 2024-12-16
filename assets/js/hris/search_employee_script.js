@@ -2,7 +2,6 @@ var values = ["company"];
 const characterLimit = 3;
 jQuery(document)
     .ready(function () {
-
         $('.search-with-dropdown')
             .donetyping(function () {
                 const searchKey = $(this).val();
@@ -180,6 +179,8 @@ jQuery(document)
             const searchKey = $(".search-with-dropdown").val().trim();
             const filter = values;
             searchEmployee(searchKey,filter);
+
+            $(this).tooltip('hide');
         });
     });
 
@@ -198,9 +199,7 @@ function checkFilter(){
 }
 
 /** reset search field and its checkbox when page is loaded */
-document.onreadystatechange = function(e) {
-    if (document.readyState === 'complete') {
-        $("#search .search-with-dropdown").val('');
-        $("#search input[name=search_filter]").prop("checked", false);
-    }
+window.onload = (event) => {
+    $("#search .search-with-dropdown").val('');
+    $("#search input[name=search_filter]").prop("checked", false);
 };

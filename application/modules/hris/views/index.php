@@ -105,7 +105,7 @@
             <div class="form-group m-form__group mb-0" id="search">
                 <div class="m-input-icon m-input-icon--left position-relative search-with-dropdown-container">
                     <input class="form-control m-input form-control-lg search-with-dropdown" placeholder="Looking for someone?" style="height: auto; text-transform: none;">
-                    <button id="manual-limit" class="m-input-icon__icon m-input-icon__icon--left" data-toggle="m-tooltip" data-placement="bottom" data-original-title="Click this for manual Search of Employee">
+                    <button id="manual-limit" class="m-input-icon__icon m-input-icon__icon--left" data-toggle="m-tooltip" data-placement="top" data-original-title="Click this for manual Search of Employee">
                         <span>
                             <i class="fa fa-search"></i>
                         </span>
