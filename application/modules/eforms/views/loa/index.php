@@ -19,36 +19,35 @@
                         </div>
                     </div>
                     <div class="m-portlet__head-tools">
-                                            <ul class="m-portlet__nav">
-                                                <li class="m-portlet__nav-item m-dropdown m-dropdown--inline m-dropdown--arrow m-dropdown--align-right m-dropdown--align-push" data-dropdown-toggle="hover" aria-expanded="true">
-                                                    <a href="#" class="m-portlet__nav-link m-portlet__nav-link--icon m-dropdown__toggle ">
-                                                        Quick Actions &nbsp;<i class="la la-cog m--font-brand"></i> 
-                                                    </a>
-                                                    <div class="m-dropdown__wrapper">
-                                                        <span class="m-dropdown__arrow m-dropdown__arrow--right m-dropdown__arrow--adjust" style="left: auto; right: 16.8047px;"></span>
-                                                        <div class="m-dropdown__inner">
-                                                            <div class="m-dropdown__body">
-                                                                <div class="m-dropdown__content">
-                                                                    <ul class="m-nav">
-                                                                        <li class="m-nav__item"> 
-                                                                                <?php 
-                                                                                $ses_id = $this->core_layout->getCurrentEmployeeId();   
-                                                                                $role = $this->core_layout->getEmployeeData($ses_id);
-                                                                                if($role['group_id'] == 1){ ?>
-                                                                                <span class="btn m-btn m-nav__section-text" id="telegram_config" data-toggle="modal" data-target="#modal_telegram_config_loa">Telegram Integration</span>
-                                                                                <?php } ?> 
-                                                                        </li>
-                                                                         <li class="m-nav__item"> 
-                                                                                <a href="<?php echo base_url("eforms/loa/registry");?>" class="text-dark"> <span class="btn m-btn m-nav__section-text" data-toggle="modal" >Registry</span></a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                            </ul>
-
+                        <ul class="m-portlet__nav">
+                            <li class="m-portlet__nav-item m-dropdown m-dropdown--inline m-dropdown--arrow m-dropdown--align-right m-dropdown--align-push" data-dropdown-toggle="hover" aria-expanded="true">
+                                <a href="#" class="m-portlet__nav-link m-portlet__nav-link--icon m-dropdown__toggle ">
+                                    Quick Actions &nbsp;<i class="la la-cog m--font-brand"></i> 
+                                </a>
+                                <div class="m-dropdown__wrapper">
+                                    <span class="m-dropdown__arrow m-dropdown__arrow--right m-dropdown__arrow--adjust" style="left: auto; right: 16.8047px;"></span>
+                                    <div class="m-dropdown__inner">
+                                        <div class="m-dropdown__body">
+                                            <div class="m-dropdown__content">
+                                                <ul class="m-nav">
+                                                    <li class="m-nav__item"> 
+                                                            <?php 
+                                                            $ses_id = $this->core_layout->getCurrentEmployeeId();   
+                                                            $role = $this->core_layout->getEmployeeData($ses_id);
+                                                            if($role['group_id'] == 1){ ?>
+                                                            <span class="btn m-btn m-nav__section-text" id="telegram_config" data-toggle="modal" data-target="#modal_telegram_config_loa">Telegram Integration</span>
+                                                            <?php } ?> 
+                                                    </li>
+                                                        <li class="m-nav__item"> 
+                                                            <a href="<?php echo base_url("eforms/loa/registry");?>" class="text-dark"> <span class="btn m-btn m-nav__section-text" data-toggle="modal" >Registry</span></a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
                     </div>
                 </div>
                 <div class="m-portlet__body">
@@ -121,7 +120,7 @@
                         <div class="m-form m-form--label-align-right m--margin-top-10 m--margin-bottom-10">
                             <div class="row align-items-center">
                                 <div class="col-xl-8 order-2 order-xl-1">
-                                   
+                                   &nbsp;
                                 </div>
                                 <div class="col-xl-4 order-2 order-xl-1">
                                     <div style='float:right !important;' class="form-group m-form__group row">
