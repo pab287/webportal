@@ -37,11 +37,11 @@
             //     $rowCount = $this->get_all_post_count($view_own_request,  $query_builder, $status, $view_own_dept);
             // }
 
-            // if ($search) {
+            if ($search) {
             //     $rowData = $this->get_searched_item($view_own_request,  $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_own_dept);
             //     $rowCount = $this->get_searched_item_count($view_own_request,  $query_builder, $search, $status, $view_own_dept);
-            //     $this->core_layout->setEventLog("Search ".$search.".","search", "success", "gcceforms", "user");
-            // }
+                $this->core_layout->setEventLog("Search ".$search.".","search", "success", "gcceforms", "user");
+            }
 
             $totalNotFiltered = $rowCount;
 
@@ -438,8 +438,7 @@
         }
     
 
-        function getArchiveRequest()
-        {
+        function getArchiveRequest(){
             $resultset = array();
             $post = $this->input->post();
             $order_val = array(array("column"=>"8", "dir"=>"desc"));
@@ -449,17 +448,17 @@
             $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
             $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
             
-            $rowCount = 0;
-            $rowData = array();
-            if (!$search) {
-                $rowData = $this->get_all_archive($limit, $offset, $sortBy, $sortOrder);
-                $rowCount = $this->get_all_archive_count();
-            }
+            $rowData = $this->get_all_archive_items($search, $limit, $offset, $sortBy, $sortOrder);
+            $rowCount = $this->get_all_archive_items_count($search);
+            // if (!$search) {
+            //     $rowData = $this->get_all_archive($limit, $offset, $sortBy, $sortOrder);
+            //     $rowCount = $this->get_all_archive_count();
+            // }
 
-            if ($search) {
-                $rowData = $this->get_searched_archive_item($search, $limit, $offset, $sortBy, $sortOrder);
-                $rowCount = $this->get_searched_archive_item_count($search);
-            }
+            // if ($search) {
+            //     $rowData = $this->get_searched_archive_item($search, $limit, $offset, $sortBy, $sortOrder);
+            //     $rowCount = $this->get_searched_archive_item_count($search);
+            // }
 
             $totalNotFiltered = $rowCount;
 
@@ -470,8 +469,96 @@
             return $resultset;
         }
 
-        private function get_all_archive_count()
-        {
+        function get_all_archive_items($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder){
+            $check = date("Y-m-d", strtotime("-1 year", time()));
+            $data = array();
+
+            $filterFields = array("a.id", "a.status", "a.company", "a.department", "a.reference_no", "DATE(a.date_from)", "DATE(a.date_to)", "a.nature", "a.reason", "a.position", "b.firstname", "b.middlename", "b.lastname", "a.type");
+            $sql = "a.id, a.status, CONCAT('<b>',a.company,'</b><br>',a.department) AS file, b.firstname, b.middlename, b.lastname, b.suffix, a.position, a.nature, a.reason, a.date_from, a.date_to, a.reference_no, a.type";
+            $this->db->select($sql);
+            $this->db->from("gcceforms.loa a");
+            $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
+            
+            $this->db->group_start();
+                $this->db->where('a.status', 'Cancelled');
+                $this->db->or_where('DATE(a.date_from) <= ', $check);
+            $this->db->group_end();
+
+            if (isset($search) && $search) {
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+
+            if ($limit != -1) {
+                $this->db->limit($limit, $offset);
+            }
+
+            $i = $sortOrder[0]['column'];
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            $query = $this->db->get();
+
+            // var_dump($this->db->last_query());
+
+            if ($query->num_rows() > 0) {
+                $arrData = array();
+
+                foreach ($query->result() as $key => $rs) {
+                    $tempRs = (array) $rs;
+                    $fullname = $this->core_layout->getDisplayName($tempRs);
+                    $tempFullname = (object) $fullname;
+                    $rs->display_name = ($tempFullname->display_name_1)? $tempFullname->display_name_1: "No Assigned Name";
+                    $rs->display_name = "<b>".$rs->display_name."</b><br>".$rs->position;
+                    $arrData[$key] = $rs;
+                }
+
+                $data = array();
+                foreach ($arrData as $k => $v) {
+                    $data[] = $v;
+                }
+            }
+
+            return $data;
+        }
+
+        function get_all_archive_items_count($search = null){
+            $check = date("Y-m-d", strtotime("-1 year", time()));
+            $data = array();
+
+            $filterFields = array("a.id", "a.status", "a.company", "a.department", "a.reference_no", "DATE(a.date_from)", "DATE(a.date_to)", "a.nature", "a.reason", "a.position", "b.firstname", "b.middlename", "b.lastname", "a.type");
+            $sql = "a.id, a.status, CONCAT('<b>',a.company,'</b><br>',a.department) AS file, b.firstname, b.middlename, b.lastname, b.suffix, a.position, a.nature, a.reason, a.date_from, a.date_to, a.reference_no, a.type";
+            $this->db->select($sql);
+            $this->db->from("gcceforms.loa a");
+            $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
+            
+            $this->db->group_start();
+                $this->db->where('a.status', 'Cancelled');
+                $this->db->or_where('DATE(a.date_from) <= ', $check);
+            $this->db->group_end();
+
+            if (isset($search) && $search) {
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+
+            $query = $this->db->get();
+            return $query->num_rows();
+        }
+
+        private function get_all_archive_count() {
             $temp = strtotime("-1 year", time());
             $check = date("Y-m-d", $temp);
             $this->db->from("gcceforms.loa");
@@ -482,8 +569,7 @@
             return $query->num_rows();
         }
 
-        private function get_all_archive($limit = 10, $offset = 0, $sortBy, $sortOrder)
-        {
+        private function get_all_archive($limit = 10, $offset = 0, $sortBy, $sortOrder) {
             $temp = strtotime("-1 year", time());
             $check = date("Y-m-d", $temp);
             $sql = "a.id, a.status, CONCAT('<b>',a.company,'</b><br>',a.department) AS file, b.firstname, b.middlename, b.lastname, b.suffix, a.position, a.nature, a.reason, a.date_from, a.date_to, a.reference_no, a.type";
@@ -525,8 +611,7 @@
         }
 
 
-        private function get_searched_archive_item($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder)
-        {
+        private function get_searched_archive_item($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
             $temp = strtotime("-1 year", time());
             $check = date("Y-m-d", $temp);
             $rowCount = 0;
@@ -582,8 +667,7 @@
             }
         }
 
-        private function get_searched_archive_item_count($search = null)
-        {
+        private function get_searched_archive_item_count($search = null) {
             $temp = strtotime("-1 year", time());
             $check = date("Y-m-d", $temp);
             $rowCount = 0;
