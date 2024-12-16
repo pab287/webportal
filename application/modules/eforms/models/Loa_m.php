@@ -26,21 +26,22 @@
             $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
             $status = (isset($post['status']) && $post['status']) ? ucwords($post['status']) : null; //clicked in portal dashboard
 
-            $rowCount = 0;
-            $rowData = array();
-            
             $view_own_request = (in_array("view_own_request", $this->current_action)) ? true : false;
             $view_own_dept = (in_array("view_by_dept", $this->current_action)) ? true : false;
-            if (!$search) {
-                $rowData = $this->get_all_post($view_own_request,  $query_builder, $limit, $offset, $sortBy, $sortOrder, $status, $view_own_dept);
-                $rowCount = $this->get_all_post_count($view_own_request,  $query_builder, $status, $view_own_dept);
-            }
+            
+            $rowData = $this->get_all_items($view_own_request,  $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_own_dept);
+            $rowCount = $this->get_all_items_count($view_own_request,  $query_builder, $search, $status, $view_own_dept);
+            
+            // if (!$search) {
+            //     $rowData = $this->get_all_post($view_own_request,  $query_builder, $limit, $offset, $sortBy, $sortOrder, $status, $view_own_dept);
+            //     $rowCount = $this->get_all_post_count($view_own_request,  $query_builder, $status, $view_own_dept);
+            // }
 
-            if ($search) {
-                $rowData = $this->get_searched_item($view_own_request,  $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_own_dept);
-                $rowCount = $this->get_searched_item_count($view_own_request,  $query_builder, $search, $status, $view_own_dept);
-                $this->core_layout->setEventLog("Search ".$search.".","search", "success", "gcceforms", "user");
-            }
+            // if ($search) {
+            //     $rowData = $this->get_searched_item($view_own_request,  $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_own_dept);
+            //     $rowCount = $this->get_searched_item_count($view_own_request,  $query_builder, $search, $status, $view_own_dept);
+            //     $this->core_layout->setEventLog("Search ".$search.".","search", "success", "gcceforms", "user");
+            // }
 
             $totalNotFiltered = $rowCount;
 
@@ -53,8 +54,127 @@
             return $resultset;
         }
 
-        private function get_all_post_count($view, $query_builder=null, $status = null, $view_dept)
-        {
+        function get_all_items($view, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_dept){
+            $data = array();
+            $check = date("Y-m-d", strtotime("-1 year", time()));
+
+            $filterFields = array("a.id", "a.status", "a.company", "a.department", "a.reference_no", "a.date_from", "a.date_to", "a.nature", "a.reason", "a.position", "b.firstname", "b.middlename", "b.lastname", "a.type");
+
+            $sql = "a.id, a.status, a.company, a.department, b.firstname, b.middlename, b.lastname, b.suffix, a.position, a.nature, a.reason, a.date_from, a.date_to, a.reference_no, a.type";
+
+            $this->db->select($sql);
+            $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
+            $this->db->where('a.status != ', 'Cancelled');
+            $this->db->where('DATE(a.date_from) >= ', $check);
+            $this->db->from("gcceforms.loa a");
+
+            if ($view && ($this->user_data['emp_id'] != 1)) {
+                $this->db->where('a.employee', $this->user_data['emp_id']);
+            }
+
+            if ($view_dept && ($this->user_data['emp_id']!=1)) {
+                $this->db->where('b.department_id', $this->user_data['department']);
+            }
+
+            if ($query_builder) {
+                $this->db->where($query_builder);
+            }
+
+            if ($status) {
+                $this->db->where('a.status', $status);
+            }
+
+            if (isset($search) && $search) {
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+
+            if ($limit != -1) {
+                $this->db->limit($limit, $offset);
+            }
+
+            $i = $sortOrder[0]['column'];
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                $arrData = array();
+
+                foreach ($query->result() as $key => $rs) {
+                    $rs->company = (is_numeric($rs->company)) ? $this->getCompany($rs->company) : $rs->company;
+                    $rs->department = (is_numeric($rs->department)) ? $this->getDepartment($rs->department) : $rs->department;
+                    $rs->position = (is_numeric($rs->position)) ? $this->getPosition($rs->position) : $rs->position;
+
+                    $rs->file = "<b>".$rs->company."</b><br>".$rs->department;
+                    $tempRs = (array) $rs;
+                    $fullname = $this->core_layout->getDisplayName($tempRs);
+                    $tempFullname = (object) $fullname;
+                    $rs->display_name = ($tempFullname->display_name_1)? $tempFullname->display_name_1: "No Assigned Name";
+                    $rs->display_name = "<b>".$rs->display_name."</b><br>".$rs->position;
+                    $arrData[$key] = $rs;
+                }
+
+                foreach ($arrData as $k => $v) {
+                    $data[] = $v;
+                }
+            }
+
+            return $data;
+        }
+
+        function get_all_items_count($view, $query_builder=null, $search = null, $status = null, $view_dept){
+            $check = date("Y-m-d", strtotime("-1 year", time()));
+
+            $filterFields = array("a.id", "a.status", "a.company", "a.department", "a.reference_no", "a.date_from", "a.date_to", "a.nature", "a.reason", "a.position", "b.firstname", "b.middlename", "b.lastname", "a.type");
+
+            $sql = "a.id, a.status, a.company, a.department, b.firstname, b.middlename, b.lastname, b.suffix, a.position, a.nature, a.reason, a.date_from, a.date_to, a.reference_no, a.type";
+
+            $this->db->select($sql);
+            $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
+            $this->db->where('a.status != ', 'Cancelled');
+            $this->db->where('DATE(a.date_from) >= ', $check);
+            $this->db->from("gcceforms.loa a");
+
+            if ($view && ($this->user_data['emp_id'] != 1)) {
+                $this->db->where('a.employee', $this->user_data['emp_id']);
+            }
+
+            if ($view_dept && ($this->user_data['emp_id']!=1)) {
+                $this->db->where('b.department_id', $this->user_data['department']);
+            }
+
+            if ($query_builder) {
+                $this->db->where($query_builder);
+            }
+
+            if ($status) {
+                $this->db->where('a.status', $status);
+            }
+
+            if (isset($search) && $search) {
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+
+            $query = $this->db->get();
+            return $query->num_rows();
+        }
+
+        private function get_all_post_countv1($view, $query_builder=null, $status = null, $view_dept) {
             $temp = strtotime("-1 year", time());
             $check = date("Y-m-d", $temp);
             $this->db->from("gcceforms.loa a");
@@ -79,8 +199,7 @@
             return $query->num_rows();
         }
 
-        private function get_all_post($view, $query_builder=null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_dept)
-        {
+        private function get_all_postv1($view, $query_builder=null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_dept) {
             $temp = strtotime("-1 year", time());
             $check = date("Y-m-d", $temp);
             $sql = "a.id, a.status, a.company, a.department, b.firstname, b.middlename, b.lastname, b.suffix, a.position, a.nature, a.reason, a.date_from, a.date_to, a.reference_no, a.type";
@@ -158,9 +277,7 @@
             }
         }
 
-
-        private function get_searched_item($view, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_dept)
-        {
+        private function get_searched_itemv1($view, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_dept) {
             $temp = strtotime("-1 year", time());
             $check = date("Y-m-d", $temp);
             $rowCount = 0;
@@ -250,8 +367,7 @@
             }
         }
 
-        private function get_searched_item_count($view, $query_builder=null, $search = null, $status = null, $view_dept)
-        {
+        private function get_searched_item_countv1($view, $query_builder=null, $search = null, $status = null, $view_dept) {
             $temp = strtotime("-1 year", time());
             $check = date("Y-m-d", $temp);
             $rowCount = 0;
@@ -499,60 +615,84 @@
             return $rowCount;
         }
 
-        function getEmployeeCollection()
-        {
+        function getEmployeeCollection() {
             $id = $this->user_data['emp_id'];
             $get = $this->input->get();
             $resultarray = array();
-            if (isset($get['q'])) {
-                $this->db->from('gccmaster.tblemployees');
-                $this->db->where('gccmaster.tblemployees.employee_status', 'Active');
-                $this->db->order_by('firstname', 'asc');
-                $this->db->like('firstname', $get['q']);
-                $this->db->or_like('middlename', $get['q']);
-                $this->db->or_like('lastname', $get['q']);
-                $query = $this->db->get();
 
-                if ($query->num_rows() > 0) {
-                    foreach ($query->result_array() as $_query) {
-                        $empName = $this->core_layout->getDisplayName($_query);
-                        $displayName = $empName["display_name_1"];
+            $this->db->select('id, firstname, lastname, middlename, suffix');
+            $this->db->from('gccmaster.tblemployees');
+            $this->db->where('gccmaster.tblemployees.employee_status', 'Active');
+            $this->db->order_by('firstname', 'asc');
 
-                        $data = array();
-                        $data["id"] = $_query["id"];
-                        $data["text"] = $displayName;
-                        /*** $data["text"] = $_query["firstname"]." ".$_query["middlename"]." ".$_query["lastname"]; ***/
-                        $resultarray[] = $data;
-                    }
-                }
-            } else {
-                $this->db->from('gccmaster.tblemployees');
-                $this->db->where('gccmaster.tblemployees.employee_status', 'Active');
-                $this->db->order_by('firstname', 'asc');
-                $query = $this->db->get();
-                if ($query->num_rows() > 0) {
-                    foreach ($query->result_array() as $_query) {
-                        $empName = $this->core_layout->getDisplayName($_query);
-                        $displayName = $empName["display_name_1"];
+            if (isset($get['q']) && $get['q']) {
+                $this->db->like('firstname', $get['q'], 'both');
+                $this->db->or_like('middlename', $get['q'], 'both');
+                $this->db->or_like('lastname', $get['q'], 'both');
+            }
 
-                        $data = array();
-                        $data["id"] = $_query["id"];
-                        $data["text"] = $displayName;
-                        /*** $data["text"] = $_query["firstname"]." ".$_query["middlename"]." ".$_query["lastname"]; ***/
-                        $resultarray[] = $data;
-                    }
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                foreach ($query->result_array() as $_query) {
+                    $empName = $this->core_layout->getDisplayName($_query);
+                    $displayName = $empName["display_name_1"];
+
+                    $data = array();
+                    $data["id"] = $_query["id"];
+                    $data["text"] = $displayName;
+                    $resultarray[] = $data;
                 }
             }
+            // if (isset($get['q'])) {
+            //     $this->db->from('gccmaster.tblemployees');
+            //     $this->db->where('gccmaster.tblemployees.employee_status', 'Active');
+            //     $this->db->order_by('firstname', 'asc');
+            //     $this->db->like('firstname', $get['q']);
+            //     $this->db->or_like('middlename', $get['q']);
+            //     $this->db->or_like('lastname', $get['q']);
+            //     $query = $this->db->get();
+
+            //     if ($query->num_rows() > 0) {
+            //         foreach ($query->result_array() as $_query) {
+            //             $empName = $this->core_layout->getDisplayName($_query);
+            //             $displayName = $empName["display_name_1"];
+
+            //             $data = array();
+            //             $data["id"] = $_query["id"];
+            //             $data["text"] = $displayName;
+            //             /*** $data["text"] = $_query["firstname"]." ".$_query["middlename"]." ".$_query["lastname"]; ***/
+            //             $resultarray[] = $data;
+            //         }
+            //     }
+            // } else {
+            //     $this->db->from('gccmaster.tblemployees');
+            //     $this->db->where('gccmaster.tblemployees.employee_status', 'Active');
+            //     $this->db->order_by('firstname', 'asc');
+            //     $query = $this->db->get();
+            //     if ($query->num_rows() > 0) {
+            //         foreach ($query->result_array() as $_query) {
+            //             $empName = $this->core_layout->getDisplayName($_query);
+            //             $displayName = $empName["display_name_1"];
+
+            //             $data = array();
+            //             $data["id"] = $_query["id"];
+            //             $data["text"] = $displayName;
+            //             /*** $data["text"] = $_query["firstname"]." ".$_query["middlename"]." ".$_query["lastname"]; ***/
+            //             $resultarray[] = $data;
+            //         }
+            //     }
+            // }
 
             return array("results" => $resultarray);
         }
 
-        function getUserEmpData()
-        {
+        function getUserEmpData() {
             $get = $this->input->get();
             $id = $this->user_data['emp_id'];
             $resultarray = array();
 
+            $this->db->select('id');
             $this->db->from("gcchris.tbldepartments");
             $query_dep = $this->db->where(array("head_id" => $id, "is_archived" => 0))->get();
 
@@ -560,7 +700,10 @@
             $isDepartmentHead = $dept_head > 0 ? true: false;
             $view_own_request = (in_array("view_own_request", $this->current_action)) ? true : false;
             $allowSearchEmployee = ($isDepartmentHead == true || $view_own_request == false)? true: false;
+
+            $this->db->reset_query();
             
+            $this->db->select('firstname, lastname, middlename, suffix');
             $this->db->from('gccmaster.tblemployees');
             $this->db->where('employee_status', 'Active');
             $this->db->where('id', $id);
@@ -586,7 +729,8 @@
 
         function emp_details($emp){
             $resultset = array();
-            $this->db->select('a.*, b.company_address');
+            // $this->db->select('a.*, b.company_address');
+            $this->db->select('a.id, a.firstname, a.lastname, a.middlename, a.suffix, a.department_id, a.company_id, a.position, b.company_address');
             $this->db->from('gccmaster.tblemployees a');
             $this->db->join('gcchris.tblcompanies b', 'b.id = a.company_id OR b.description = a.company_id OR b.code = a.company_id', 'left');
             $this->db->where('a.employee_status', 'Active');
@@ -595,14 +739,18 @@
 
             if ($query->num_rows() == 1) {
                 $tempRow = $query->row();
-                if(is_numeric($tempRow->company_id)){ $tempRow->company_id = $this->getCompany($tempRow->company_id); }
-                else{ $tempRow->company_id = $tempRow->company_id; }
 
-                if(is_numeric($tempRow->department_id)){ $tempRow->department_id = $this->getDepartment($tempRow->department_id);  }
-                else{ $tempRow->department_id = $tempRow->department_id; }
+                $tempRow->company_id = is_numeric($tempRow->company_id) ? $this->getCompany($tempRow->company_id) : $tempRow->company_id;
+                $tempRow->department_id = is_numeric($tempRow->department_id) ? $this->getDepartment($tempRow->department_id) : $tempRow->department_id;
+                $tempRow->position = is_numeric($tempRow->position) ? $this->getPosition($tempRow->position) : $tempRow->position;
+                // if(is_numeric($tempRow->company_id)){ $tempRow->company_id = $this->getCompany($tempRow->company_id); }
+                // else{ $tempRow->company_id = $tempRow->company_id; }
+
+                // if(is_numeric($tempRow->department_id)){ $tempRow->department_id = $this->getDepartment($tempRow->department_id);  }
+                // else{ $tempRow->department_id = $tempRow->department_id; }
     
-                if(is_numeric($tempRow->position)){ $tempRow->position = $this->getPosition($tempRow->position); }
-                else{ $tempRow->position = $tempRow->position; }
+                // if(is_numeric($tempRow->position)){ $tempRow->position = $this->getPosition($tempRow->position); }
+                // else{ $tempRow->position = $tempRow->position; }
                 $resultset["response"] = true;
                 $resultset["row"] = $tempRow;
             } else {
@@ -692,34 +840,38 @@
             }
         }
 
-        public function loa_details($id)
-        {
+        public function loa_details($id) {
             $this->db->from('gcceforms.loa');
             $this->db->where('id', $id);
             $query = $this->db->get();
             if($query->num_rows() > 0){
                 $arrData = array();
-                foreach($query->result() as $key => $rs){
-                    if(is_numeric($rs->company)){
-                        $rs->company = $this->getCompany($rs->company);
-                      
-                    }else{
-                        $rs->company = $rs->company;
-                    }
 
-                    if(is_numeric($rs->department)){
-                        $rs->department = $this->getDepartment($rs->department);
+                foreach($query->result() as $key => $rs){
+
+                    $rs->company = is_numeric($rs->company) ? $this->getCompany($rs->company) : $rs->company;
+                    $rs->department = is_numeric($rs->department) ? $this->getDepartment($rs->department) : $rs->department;
+                    $rs->position = is_numeric($rs->position) ? $this->getPosition($rs->position) : $rs->position;
+                    // if(is_numeric($rs->company)){
+                    //     $rs->company = $this->getCompany($rs->company);
                       
-                    }else{
-                        $rs->department = $rs->department;
-                    }
+                    // }else{
+                    //     $rs->company = $rs->company;
+                    // }
+
+                    // if(is_numeric($rs->department)){
+                    //     $rs->department = $this->getDepartment($rs->department);
+                      
+                    // }else{
+                    //     $rs->department = $rs->department;
+                    // }
         
-                    if(is_numeric($rs->position)){
-                        $rs->position = $this->getPosition($rs->position);
+                    // if(is_numeric($rs->position)){
+                    //     $rs->position = $this->getPosition($rs->position);
                       
-                    }else{
-                        $rs->position = $rs->position;
-                    }
+                    // }else{
+                    //     $rs->position = $rs->position;
+                    // }
 
                     $rs->file = "<b>".$rs->company."</b><br>".$rs->department;
                     $arrData[$key] = $rs;
@@ -730,12 +882,14 @@
             }
         }
 
-        function employee_details($id)
-        {
+        function employee_details($id) {
+
+            $this->db->select('id, firstname, lastname, middlename, suffix');
             $this->db->from('gccmaster.tblemployees');
             $this->db->where('id', $id);
             $query = $this->db->get();
-            if($query->num_rows() > 0){
+
+            if ($query->num_rows() > 0) {
                 $arrData = array();
                 foreach($query->result() as $key => $rs){  
                     $tempRs = (array) $rs;
@@ -751,22 +905,20 @@
             }
         }
 
-        function m_get_loa_analytics_for_dashboard()
-        {
+        function m_get_loa_analytics_for_dashboard() {
             
             $this->db->select("a.status, COUNT(a.id) AS count");
-        $this->db->from("gcceforms.loa a");
-        $this->db->group_by("a.status");
-        $query = $this->db->get()->result();
-        $result = json_decode(json_encode($query));
+            $this->db->from("gcceforms.loa a");
+            $this->db->group_by("a.status");
+            $query = $this->db->get()->result();
+            $result = json_decode(json_encode($query));
 
-        $data = array($result[4], $result[3], $result[0], $result[2], $result[1]);
-        $results = json_decode(json_encode($data));
-        return $results;
+            $data = array($result[4], $result[3], $result[0], $result[2], $result[1]);
+            $results = json_decode(json_encode($data));
+            return $results;
         }
 
-        function m_get_loa_for_today()
-        {
+        function m_get_loa_for_today() {
             $pagination_data = $this->parseFormDataToObject($this->input->post());
             $length = $pagination_data->length;
             $start = $pagination_data->start;

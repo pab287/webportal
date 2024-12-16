@@ -214,9 +214,9 @@ function formatContent(data) {
 
 function formatcheck(data, row) {
     if (data) {
-        var _checkButton = "<input type='checkbox'  value=" + data + ">";
-
-
+        var isDisabled = (row.status.toLowerCase() == 'approved' || row.status.toLowerCase() == 'hr noted') ? 'disabled' : '';
+        var isChecked = (row.status.toLowerCase() == 'approved' || row.status.toLowerCase() == 'hr noted') ? 'checked' : '';
+        var _checkButton = "<input type='checkbox' class='call-checkbox' value=" + data + " "+isDisabled+" "+isChecked+">";
         return _checkButton;
     } else {
         return false;
@@ -374,39 +374,41 @@ $("#reload_dtTbl").on("click", function () {
     tblLoa.ajax.reload();
 });
 
-
-$("#choice").on("select2:select", function () {
+$("#choice").select2({
+    width: '200px',
+    placeholder: 'Select an Option'
+}).on("select2:select", function (e) {
     var type = $("#choice option:selected").val();
 
     var rowcollection = tblLoa.$(".call-checkbox:checked", { "page": "all" });
 
     rowcollection.each(function (index, elem) {
         var checkbox_value = $(elem).val();
-
-
-        if (type == "1") {
+        if (type == 1) {
             $.ajax({
                 url: baseUrl("eforms/loa/approve_loa/") + checkbox_value,
                 type: "POST",
                 dataType: "JSON",
                 data: { csrf_token: _csrf_hash, approved_remarks: "" },
                 success: function (data) {
-                    window.location.replace(baseUrl("eforms/loa"));
+                    // window.location.replace(baseUrl("eforms/loa"));
+                    tblLoa.ajax.reload();
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     alert('Error: "ajax_approve"');
                 }
             });
         }
-        if (type == "2") {
+
+        if (type == 2) {
             $.ajax({
                 url: baseUrl("eforms/loa/disapprove_loa/") + checkbox_value,
                 type: "POST",
                 dataType: "JSON",
                 data: { csrf_token: _csrf_hash, disapproved_remarks: "" },
                 success: function (data) {
-                    window.location.replace(baseUrl("eforms/loa"));
-
+                    // window.location.replace(baseUrl("eforms/loa"));
+                    tblLoa.ajax.reload();
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     alert('Error adding / update data');

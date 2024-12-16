@@ -126,9 +126,8 @@
                                 <div class="col-xl-4 order-2 order-xl-1">
                                     <div style='float:right !important;' class="form-group m-form__group row">
                                         <div class="align-items-right col-md-12">
-                                            <select class="form-control select2" id="choice" name="choice">
-                                                <option value="" hidden>select an option
-                                                </option>
+                                            <select class="form-control" id="choice" data-validation="false">
+                                                <option></option>
                                                 <option value="1">Approve</option>
                                                 <option value="2">Disapprove</option>
                                             </select>
