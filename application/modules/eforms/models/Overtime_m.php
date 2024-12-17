@@ -593,7 +593,7 @@ class Overtime_m extends CI_Model {
         $this->db->select('id, company_id, department_id, position');
         $this->db->from('gccmaster.tblemployees');
         $this->db->where('id', $id);
-        $query = $thi->db->get();
+        $query = $this->db->get();
 
         // $query = $this->db->query("SELECT id, company_id, department_id, position FROM gccmaster.tblemployees WHERE id=$id");
         if ($query->num_rows() > 0) {
@@ -1380,34 +1380,40 @@ class Overtime_m extends CI_Model {
             $this->db->select('overtime.*, employeetbl.firstname, employeetbl.lastname, employeetbl.middlename, employeetbl.company_id');
             $this->db->from($this->eformsOvertimeTable);
             $this->db->join($this->employeeTable .' as employeetbl', 'employeetbl.id = overtime.employee', 'left');
+
             if(isset($post["status"]) && $post["status"]){
-               $this->db->where("overtime.status", $post["status"]);
+                $this->db->where("overtime.status", $post["status"]);
+            } else {
+                $this->db->where("overtime.status != 'Cancelled'");
             }
-            else {
-              $this->db->where("overtime.status != 'Cancelled'");
-          }
+
             if(isset($post["employee"]) && $post["employee"]){
                $this->db->where("employeetbl.id", $post["employee"]);
             }
+
             if(isset($post["company"]) && $post["company"]){
-             $this->db->where("employeetbl.company_id", $post["company"]);
-            }   
-            if (isset($post["date_time"]) && $post["date_time"]) {
-             list($startDate, $endDate) = explode(" - ", $post["date_time"]);
-             $startDate = date("Y-m-d", strtotime($startDate));
-             $endDate = date("Y-m-d", strtotime($endDate));
-             $this->db->where("overtime.date_from BETWEEN '$startDate' AND '$endDate'");
-             $this->db->where("overtime.date_to BETWEEN '$startDate' AND '$endDate'");
+                $this->db->where("employeetbl.company_id", $post["company"]);
             }
+
+            if (isset($post["date_time"]) && $post["date_time"]) {
+                list($startDate, $endDate) = explode(" - ", $post["date_time"]);
+                $startDate = date("Y-m-d", strtotime($startDate));
+                $endDate = date("Y-m-d", strtotime($endDate));
+                $this->db->where("overtime.date_from BETWEEN '$startDate' AND '$endDate'");
+                $this->db->where("overtime.date_to BETWEEN '$startDate' AND '$endDate'");
+            }
+
             $query = $this->db->get();
             $result = $query->result();
+
             if (is_array($result) && count($result) > 0) {
-              foreach ($result as $key => $value) {
-                  if ($value->id !== null && !in_array($value->id, $arrIds)) {
-                      $arrIds[] = $value->id;
-                  }
-              }
-          }
+                foreach ($result as $key => $value) {
+                    if ($value->id !== null && !in_array($value->id, $arrIds)) {
+                        $arrIds[] = $value->id;
+                    }
+                }
+            }
+
             $resultset["response"] = true;
             $resultset["ids"] = $arrIds;
             if(empty($arrIds)){
