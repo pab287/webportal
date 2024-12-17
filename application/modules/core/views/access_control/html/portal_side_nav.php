@@ -2,7 +2,7 @@
 $currentPage = $this->core_layout->getBodyClass();
 $hasBodyClass = $this->core_layout->hasBodyClass();
 ?>
-<ul class="m-menu__nav  m-menu__nav--dropdown-submenu-arrow ">
+<ul class="m-menu__nav m-menu__nav--dropdown-submenu-arrow">
 <?php if(isset($aclMenu, $roleResource) && ($aclMenu && $roleResource)): ?>
 <?php foreach($aclMenu['modules'] as $menu): ?>
 <?php
@@ -13,16 +13,27 @@ $hasBodyClass = $this->core_layout->hasBodyClass();
 	if(count($explodeCurrentPage) > 0){
 		$activeMenu = ($hasBodyClass && in_array($menuName, $explodeCurrentPage))? " m-menu__item--active": "";
 	}
-	
+
 	$subMenu = (isset($menu->children) && $menu->children)? " m-menu__item--submenu":"";
 	$toggleMenu = (isset($menu->children) && $menu->children)? " data-menu-submenu-toggle='hover'":"";
 	$menuToogle = (isset($menu->children) && $menu->children)? " m-menu__toggle":"";
 	$menuUrl = (isset($menu->url) && $menu->url)? base_url($menu->url): "javascript:void(0);";
 	$menuIcon = (isset($menu->icon) && $menu->icon)? $menu->icon: "";
 	$menuLabel = (isset($menu->label) && $menu->label)? $menu->label: "";
+
+	$identifier = (isset($menu->identifier) && $menu->identifier)? $menu->identifier: "";
+	$isHidden = false;
+	if($identifier){
+		$explodeIdentifier = explode("--", $identifier);
+		$explodeMenuIcon = explode("--", $menuIcon);
+		$hideMenu = count($explodeMenuIcon) > 0 && in_array("hidden", $explodeMenuIcon)? true: false;
+		$hideIdentifier = count($explodeIdentifier) > 0 && in_array("hidden", $explodeIdentifier)? true: false;
+		$isHidden = $hideMenu || $hideIdentifier;
+	}
+
 ?>
-<?php if(isset($menu->id) && ($menu->id && in_array(intval($menu->id), (array) $roleResource)) && $menuIcon !== "m-menu__item--hidden"): ?>
-	<li class="m-menu__item<?php echo "{$subMenu}{$activeMenu}"; ?>" aria-haspopup="true"<?php echo $toggleMenu; ?> data-skin="dark" data-toggle="m-tooltip" data-placement="left" data-original-title="<?=strtoupper($menu->description) ?>">
+<?php if(isset($menu->id) && ($menu->id && in_array(intval($menu->id), (array) $roleResource)) && $isHidden === false): ?>
+	<li class="m-menu__item<?php echo "{$subMenu}{$activeMenu}"; ?>" <?= $toggleMenu; ?> data-skin="dark" data-toggle="m-tooltip" data-placement="left" data-original-title="<?= strtoupper($menu->description) ?>">
 		<a  href="<?php echo $menuUrl; ?>" class="m-menu__link<?php echo $menuToogle; ?>">
 			<span class="m-menu__item-here"></span>
 			<i class="m-menu__link-icon <?php echo $menuIcon; ?>"></i>
@@ -41,7 +52,7 @@ $hasBodyClass = $this->core_layout->hasBodyClass();
 			if(in_array($child["id"], $roleResource) && $menuIconChild !== "m-menu__item--hidden"):
 			$childUrl = (isset($child["url"]) && $child["url"])? base_url($child["url"]): "javascript:void(0);";
 			$childLabel = (isset($child["label"]) && $child["label"])? $child["label"]: ""; ?>
-				<li class="m-menu__item  m-menu__item--parent" aria-haspopup="true" >
+				<li class="m-menu__item  m-menu__item--parent">
 					<a  href="<?php echo $childUrl; ?>" class="m-menu__link ">
 						<span class="m-menu__item-here"></span>
 						<span class="m-menu__link-text"><?php echo $childLabel; ?></span>
@@ -54,7 +65,7 @@ $hasBodyClass = $this->core_layout->hasBodyClass();
 	</li>
 <?php endif; ?>
 <?php endforeach; ?>
-<li class="m-menu__item" aria-haspopup="true" >
+<li class="m-menu__item">
 	<a  href="<?php echo base_url("portal/index"); ?>" class="m-menu__link ">
 		<span class="m-menu__item-here"></span>
 		<i class="m-menu__link-icon fa fa-globe"></i>
@@ -62,7 +73,7 @@ $hasBodyClass = $this->core_layout->hasBodyClass();
 	</a>
 </li>
 <?php else: ?>
-<li class="m-menu__item" aria-haspopup="true" >
+<li class="m-menu__item">
 	<a  href="<?php echo base_url("portal/index"); ?>" class="m-menu__link ">
 		<span class="m-menu__item-here"></span>
 		<i class="m-menu__link-icon fa fa-globe"></i>

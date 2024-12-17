@@ -330,6 +330,11 @@ class Reports extends MY_Controller{
         echo json_encode($data);
     }
 
+    public function get_select2_department_data(){
+        $data = $this->report->getSelect2DepartmentData();
+        echo json_encode($data);
+    }
+
     public function generate_late_report(){
         $data = $this->report->generateLateReport();
         echo json_encode($data);

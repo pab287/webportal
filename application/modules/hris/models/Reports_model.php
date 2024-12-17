@@ -1,8 +1,5 @@
-<?php
-defined('BASEPATH') || exit('No direct script access allowed');
-
-class Reports_model extends CI_Model
-{
+<?php defined('BASEPATH') || exit('No direct script access allowed');
+class Reports_model extends CI_Model{
     protected $tblHolidays = "gcchris.tblholidays";
     protected $tblEmployees = "gccmaster.tblemployees";
     protected $companyTable = "gcchris.tblcompanies";
@@ -15,8 +12,7 @@ class Reports_model extends CI_Model
     protected $now = null;
     protected $user = null;
 
-    function __construct()
-    {
+    public function __construct(){
         parent::__construct();
         $this->load->model("ams/Utilities_model", "utilities");
         $this->load->model("hris/employee_model", "employee");
@@ -25,9 +21,8 @@ class Reports_model extends CI_Model
         $this->user = $this->core_layout->getUserLoggedIn();
     }
 
-    function getTableColumns($db, $table, $except_columns = array())
-    {
-        $this->db->select("CONCAT('$db','.', '$table','.', COLUMN_NAME) AS `field`, COLUMN_NAME description", FALSE);
+    public function getTableColumns($db, $table, $except_columns = array()){
+        $this->db->select("CONCAT('$db','.', '$table','.', COLUMN_NAME) AS `field`, COLUMN_NAME description", false);
         $this->db->where("table_schema", $db);
         $this->db->where("table_name", $table);
 
@@ -38,9 +33,8 @@ class Reports_model extends CI_Model
         return $this->db->get("information_schema.columns")->result();
     }
 
-    function getTableColumnsForFilter($db, $table, $except_columns = array())
-    {
-        $this->db->select("COLUMN_NAME AS `id`, COLUMN_NAME AS `label`, DATA_TYPE `type`", FALSE);
+    public function getTableColumnsForFilter($db, $table, $except_columns = array()){
+        $this->db->select("COLUMN_NAME AS `id`, COLUMN_NAME AS `label`, DATA_TYPE `type`", false);
         $this->db->where("table_schema", $db);
         $this->db->where("table_name", $table);
 
@@ -51,29 +45,23 @@ class Reports_model extends CI_Model
         return $this->db->get("information_schema.columns")->result();
     }
 
-    function generateEmployeeReport($export)
-    {
+    public function generateEmployeeReport($export){
         $post = $this->utilities->parseFormDataToObject($this->input->post());
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($post);
         $select = implode(", ", $post->fields);
         // var_dump($select);
         $order_field = $post->order_field;
         $order_by = $post->order_by;
-        /* IF BY DEFAULT HIDE EMPLOYEE WITHOUT IDNO
-         * $criteria = "(idno != '' OR idno is null)" . (isset($post->criteria) AND !empty($post->criteria) ? " AND " . $post->criteria : '');
-         * */
         $criteria = $post->criteria;
 
-        $this->db->select($select, FALSE);
+        $this->db->select($select, false);
 
         if (!empty($criteria)) {
-            $this->db->where($criteria, NULL, FALSE);
+            $this->db->where($criteria, null, false);
         }
 
-        if (intval($export) === 0) {
-            if($pageOptions->length > -1) {
-                $this->db->limit($pageOptions->length, $pageOptions->start);
-            }
+        if (intval($export) === 0 && $pageOptions->length > -1) {
+            $this->db->limit($pageOptions->length, $pageOptions->start);
         }
 
         if (!empty($order_field)) {
@@ -89,7 +77,7 @@ class Reports_model extends CI_Model
             array(
                 "table" => "gcchris.tbldepartments department",
                 "condition" => "department.id = emp.department_id OR department.description = emp.department_id",
-                "option" => "LEFT"), 
+                "option" => "LEFT"),
             array(
                 "table" => "gcchris.tblposition position",
                 "condition" => "position.id = emp.position",
@@ -129,8 +117,7 @@ class Reports_model extends CI_Model
         return $resultSet;
     }
 
-    public function saveFieldTemplate($post)
-    {
+    public function saveFieldTemplate($post){
         $resultSet = array();
         $this->db->trans_begin();
 
@@ -146,7 +133,7 @@ class Reports_model extends CI_Model
 
         $this->db->insert_batch('gcchris.tblrpttemplate_body', $template_body);
 
-        if ($this->db->trans_status() === FALSE) {
+        if ($this->db->trans_status() === false) {
             $this->db->trans_rollback();
             $resultSet['success'] = false;
             $resultSet['message'] = $this->db->error();
@@ -168,7 +155,7 @@ class Reports_model extends CI_Model
         unset($post->id);
 
         $this->db->where('id', $id);
-        $updateResult = $this->db->update('gcchris.tblrpttemplate', array('description' => $post->description));
+        $this->db->update('gcchris.tblrpttemplate', array('description' => $post->description));
         $this->db->reset_query();
         $template_body = array();
 
@@ -180,7 +167,7 @@ class Reports_model extends CI_Model
         $this->db->delete('gcchris.tblrpttemplate_body', array('template_id' => $id));
         $this->db->insert_batch('gcchris.tblrpttemplate_body', $template_body);
 
-        if ($this->db->trans_status() === FALSE) {
+        if ($this->db->trans_status() === false) {
             $this->db->trans_rollback();
             $resultSet['success'] = false;
             $resultSet['message'] = $this->db->error();
@@ -195,32 +182,28 @@ class Reports_model extends CI_Model
         return $resultSet;
     }
 
-    public function getFieldTempates()
-    {
+    public function getFieldTempates(){
         $q = isset($_GET['q']) ? $_GET['q'] : '';
 
         $this->db->select('id, description text');
         $this->db->like('description', $q, 'both');
-        $this->db->where('description IS NOT NULL', FALSE, FALSE);
+        $this->db->where('description IS NOT NULL', false, false);
         $this->db->where('description !=', '');
         return array('results' => $this->db->get('gcchris.tblrpttemplate')->result());
     }
 
-    public function getTemplateBody($template_id)
-    {
+    public function getTemplateBody($template_id){
         $this->db->where('template_id', $template_id);
         return $this->db->get('gcchris.tblrpttemplate_body')->result();
     }
 
-    public function getTemplateData()
-    {
+    public function getTemplateData(){
         $formData = $this->input->post('formData');
         $this->db->where('id', $formData['id']);
         return array('data' => $this->db->get('gcchris.tblrpttemplate')->row());
     }
 
-    public function getExpiringEmployees($export, $work_status)
-    {
+    public function getExpiringEmployees($export, $work_status){
         $tableConfig = $this->input->post();
         $tableConfigStd = $this->utilities->parseFormDataToObject($tableConfig);
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($tableConfigStd);
@@ -258,10 +241,8 @@ class Reports_model extends CI_Model
             $this->db->join($join['table'], $join['condition'], $join['option']);
         }
 
-        if (intval($export) === 0) {
-            if ($pageOptions->length > -1) {
-                $this->db->limit($pageOptions->length, $pageOptions->start);
-            }
+        if (intval($export) === 0 && $pageOptions->length > -1) {
+            $this->db->limit($pageOptions->length, $pageOptions->start);
         }
 
         $searchFields = array(
@@ -285,24 +266,21 @@ class Reports_model extends CI_Model
         return $resultSet;
     }
 
-    public function getCompanyCollection()
-    {
+    public function getCompanyCollection(){
         $q = isset($_GET['q']) ? $_GET['q'] : '';
         $this->db->select('id, code text');
         $this->db->like('CONCAT(description, code)', $q, 'both');
         return array('results' => $this->db->get('gcchris.tblcompanies')->result());
     }
 
-    public function getDepartmentCollection()
-    {
+    public function getDepartmentCollection(){
         $q = isset($_GET['q']) ? $_GET['q'] : '';
         $this->db->select('id, code text');
         $this->db->like('CONCAT(description, code)', $q, 'both');
         return array('results' => $this->db->get('gcchris.tbldepartments')->result());
     }
 
-    public function getEmployeesForSalaryRange($export)
-    {
+    public function getEmployeesForSalaryRange($export){
         $tableConfig = $this->input->post();
         $tableConfigStd = $this->utilities->parseFormDataToObject($tableConfig);
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($tableConfigStd);
@@ -368,10 +346,8 @@ class Reports_model extends CI_Model
                 'option' => 'LEFT'),
         );
 
-        if (intval($export) === 0) {
-            if ($pageOptions->length > -1) {
-                $this->db->limit($pageOptions->length, $pageOptions->start);
-            }
+        if (intval($export) === 0 && $pageOptions->length > -1) {
+            $this->db->limit($pageOptions->length, $pageOptions->start);
         }
 
         $this->db->order_by($pageOptions->order_column, $pageOptions->order_direction);
@@ -393,9 +369,9 @@ class Reports_model extends CI_Model
                                IF(dep.id IS NULL, emp.department_id, dep.code),
                                IFNULL(emp.lastname, ''), IFNULL(emp.firstname, ''), IFNULL(emp.middlename,''),
                                CONCAT(emp.firstname,' ', emp.middlename, ' ', emp.lastname, 
-                                    CASE 
+                                    CASE
                                WHEN emp.suffix IS NOT NULL AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)
-                                    ELSE '' 
+                                    ELSE ''
                                END))",
             "key" => $search,
             "option" => "BOTH"
@@ -414,12 +390,9 @@ class Reports_model extends CI_Model
                 $arrData[$key] = $rs;
             }
 
-            foreach ($arrData as $k => $v) {
-                $result[] = $v;
-            }
+            foreach ($arrData as $v) { $result[] = $v; }
         }
 
-        // $resultSet['data'] = $query->result();
         $resultSet['data'] = $result;
         $resultSet['sql'] = $this->db->last_query();
         $resultSet['recordsTotal'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $searchField, $joinArr);
@@ -427,26 +400,25 @@ class Reports_model extends CI_Model
         return $resultSet;
     }
 
-    public function getEmployeeLeaves()
-    {
+    public function getEmployeeLeaves(){
         $select = "CONCAT(
                         CASE
                             WHEN loa.`type`=1 OR loa.`type`=2 THEN CONCAT(DATE_FORMAT(loa.date_from, '%h:%i%p'), '-', DATE_FORMAT(loa.date_to, '%h:%i%p'), '\n')
-                            ELSE '' 
+                            ELSE ''
                         END,
-                        emp.firstname,' ', emp.middlename, ' ', emp.lastname, 
+                        emp.firstname,' ', emp.middlename, ' ', emp.lastname,
                         CASE WHEN emp.suffix IS NOT NULL AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)
-                               ELSE '' 
+                            ELSE ''
                         END
                         , '\n\n REF No. ' ,loa.reference_no
                        ) title,
-                       loa.id, 
+                       loa.id,
                        loa.reason,
                        loa.date_from start,
                        loa.date_to end,
                        'm-fc-event--light text-light' className,
                        '#233e6b' backgroundColor";
-        $this->db->select($select, FALSE);
+        $this->db->select($select, false);
         $this->db->where('loa.status', 'Approved');
         $this->db->like('DATE(loa.approved_dt)', date('Y-m'));
         $this->db->join('gccmaster.tblemployees emp', 'emp.id = loa.employee', 'inner');
@@ -478,8 +450,8 @@ class Reports_model extends CI_Model
                         $_filteredOption = "Hired";
                         if(is_array($option) && count($option) == 2){
                             $filteredOptions["filtered_column"] = $option[1];
-                            if($option[1] == "date_start"){ $_filteredOption = "Hired"; }
-                            else if($option[1] == "date_end"){ $_filteredOption = "Separated"; }
+                            if ($option[1] == "date_start"){ $_filteredOption = "Hired"; }
+                            elseif ($option[1] == "date_end"){ $_filteredOption = "Separated"; }
         
                             $filteredOptions["filtered_by"] = $_filteredOption;
                             $filteredOptions["filtered_by_date"] = $_filteredOption;
@@ -524,7 +496,7 @@ class Reports_model extends CI_Model
                 if(is_array($option) && count($option) == 2){
                     $filteredOptions["filtered_column"] = $option[1];
                     if($option[1] == "date_start"){ $_filteredOption = "Hired"; }
-                    else if($option[1] == "date_end"){ $_filteredOption = "Separated"; }
+                    elseif($option[1] == "date_end"){ $_filteredOption = "Separated"; }
 
                     $filteredOptions["filtered_by"] = $_filteredOption;
                     $filteredOptions["filtered_by_date"] = $_filteredOption;
@@ -608,12 +580,9 @@ class Reports_model extends CI_Model
                                 $arrData[$key] = $rs;
                             }
 
-                            foreach($arrData as $k => $v){
-                                $arr[] = $v;
-                            }
+                            foreach($arrData as $v){ $arr[] = $v; }
 
                             $resultset["response"] = true;
-                            // $resultset["data"] = $result->result(); -> original source code
                             $resultset["data"] = $arr;
                             $resultset["count"] = $numRows;
                             $resultset["filtered_options"] = $filteredOptions;
@@ -653,12 +622,9 @@ class Reports_model extends CI_Model
                         $arrData[$key] = $rs;
                     }
 
-                    foreach($arrData as $k => $v){
-                        $arr[] = $v;
-                    }
+                    foreach($arrData as $v){ $arr[] = $v; }
 
                     $resultset["response"] = true;
-                    // $resultset["data"] = $result->result(); -> original source code
                     $resultset["data"] = $arr;
                     $resultset["count"] = $numRows;
                     $resultset["filtered_options"] = $filteredOptions;
@@ -687,7 +653,7 @@ class Reports_model extends CI_Model
         if(isset($post["filter_by"]) && $post["filter_by"]){
             $filterType = $post["filter_by"];
             if($filterType == "date_range"){
-                if(isset($post["date_start"], $post["date_end"], $post["company_id"]) && 
+                if(isset($post["date_start"], $post["date_end"], $post["company_id"]) &&
                 ($post["date_start"] && $post["date_end"] && $post["company_id"])){
                     $data = $this->employee->getActiveManpowerByCompany($post["date_start"], $post["date_end"], $post["company_id"], $post['department_id'], $post['location_name']);
                     if($data){
@@ -961,7 +927,7 @@ class Reports_model extends CI_Model
         return $resultset;
     }
 
-    function getSalaryPayinfoRequest($limit, $offset){
+    public function getSalaryPayinfoRequest($limit, $offset){
         $this->db->select("UPPER(emp.lastname) as lastname, UPPER(emp.firstname) as firstname, UPPER(comp.description) as company_description, dept.code as dept_code, 
             dept.description as dept_description, pos.name as position, emp.basic_rate as salary_rate, GROUP_CONCAT(DISTINCT UPPER(loc.location_name)) as station");
         $this->db->from('gccmaster.tblemployees emp');
@@ -979,7 +945,7 @@ class Reports_model extends CI_Model
         else { return array(); }
     }
 
-    function getSalaryPayinfoRequestCount(){
+    public function getSalaryPayinfoRequestCount(){
         $this->db->select("UPPER(emp.lastname) as lastname, UPPER(emp.firstname) as firstname, UPPER(comp.description) as company_description, dept.code as dept_code, 
             dept.description as dept_description, pos.name as position, emp.basic_rate as salary_rate, GROUP_CONCAT(DISTINCT UPPER(loc.location_name)) as station");
         $this->db->from('gccmaster.tblemployees emp');
@@ -1005,7 +971,7 @@ class Reports_model extends CI_Model
         if($qTemp->num_rows() > 0){
             $tempYear = array();
             $tempArray = $qTemp->result_array();
-            foreach ($qTemp->result() as $key => $value) {
+            foreach ($qTemp->result() as $value) {
                 $tempYear[] = $value->id;
             }
             if(!in_array(date("Y"), $tempYear)){
@@ -1033,50 +999,74 @@ class Reports_model extends CI_Model
             departments.`description`, 
             CONCAT(departments.`code`,' | ', departments.`description`))) `text`, departments.*");
         $this->db->order_by("`code`", "ASC");
-        $results = $this->db->get("gcchris.tbldepartments departments")->result();
-        return $results;
+        return $this->db->get("gcchris.tbldepartments departments")->result();
     }
 
-    function getSelect2EmployeeData(){
+    public function getSelect2EmployeeData(){
         $get = $this->input->get();
         $resultarray = array();
-        $companyIds = (isset($get["company_ids"]) && $get["company_ids"])? $get["company_ids"]: array();
-        $this->db->select("a.id, CONCAT(UPPER(TRIM(a.firstname)), ' ',
-        CASE WHEN UPPER(TRIM(a.middlename)) != 'N/A' AND UPPER(TRIM(a.middlename)) != 'NONE' AND
-                TRIM(a.middlename) !='' AND a.middlename IS NOT NULL
-            THEN CONCAT(SUBSTR(a.middlename, 1, 1), '.') ELSE ''
-        END,' ', UPPER(TRIM(a.lastname)),
-        CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND
-            UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
-            a.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(a.suffix))) ELSE ''
-        END) as employee_name");
-        $this->db->from("gccmaster.tblemployees a");
-        $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
-        $this->db->where("a.employee_status", "Active"); 
-        if(is_array($companyIds) && count($companyIds) > 0){ $this->db->where_in("b.id", $companyIds); }
-        if(isset($get["company_ids"]) && !is_array($get["company_ids"]) && $get["company_ids"]){
-            $this->db->where("b.id", $get["company_ids"]);
-        }
-        if (isset($get['q']) && $get['q']) {
-            $this->db->group_start();
-            $this->db->like("a.firstname", $get['q'], "both");
-            $this->db->or_like("a.lastname", $get['q'], "both");
-            $this->db->group_end();
-        }
-        $this->db->limit(10);
-        $this->db->order_by("trim(a.firstname)", "ASC");
-        $query = $this->db->get();
+        if(isset($get["company_id"]) && $get["company_id"]){
+            $departmentId = (isset($get["department_id"]) && $get["department_id"])? $get["department_id"]: 0;
+            $this->db->select("a.id, CONCAT(UPPER(TRIM(a.firstname)), ' ', CASE WHEN UPPER(TRIM(a.middlename)) != 'N/A' AND UPPER(TRIM(a.middlename)) != 'NONE' AND TRIM(a.middlename) !='' AND a.middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(a.middlename, 1, 1), '.') ELSE '' END,' ', UPPER(TRIM(a.lastname)), CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
+                a.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(a.suffix))) ELSE '' END) as employee_name");
+            $this->db->from("gccmaster.tblemployees a");
+            $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
+            $this->db->where("a.employee_status", "Active");
+            $this->db->where("a.company_id", $get["company_id"]);
+            if($departmentId){ $this->db->where("a.department_id", $departmentId); }
 
-        if ($query->num_rows() > 0) {
-            foreach ($query->result_array() as $_query) {
-                $data = array();
+            if (isset($get['q']) && $get['q']) {
+                $this->db->group_start();
+                $this->db->like("a.firstname", $get['q'], "both");
+                $this->db->or_like("a.lastname", $get['q'], "both");
+                $this->db->group_end();
+            }
+            $this->db->limit(25);
+            $this->db->order_by("trim(a.firstname)", "ASC");
+            $query = $this->db->get();
 
-                $data["id"] = $_query["id"];
-                $data["text"] = $_query["employee_name"];
-                $resultarray[] = $data;
+            if ($query->num_rows() > 0) {
+                foreach ($query->result_array() as $_query) {
+                    $data = array();
+
+                    $data["id"] = $_query["id"];
+                    $data["text"] = $_query["employee_name"];
+                    $resultarray[] = $data;
+                }
             }
         }
+        
+        
         return array("results" => $resultarray);
+    }
+
+    public function getSelect2DepartmentData(){
+        $get = $this->input->get();
+        $resultarray = array();
+        $resultarray["results"] = array();
+
+        if(isset($get["company_id"]) && $get["company_id"]){
+            $this->db->select("a.id, UPPER(IF(a.`code` = a.`description`, TRIM(a.`description`), TRIM(CONCAT(a.`code`,' | ', a.`description`)))) as text");
+            $this->db->from("gcchris.tbldepartments a");
+            $this->db->join("gccmaster.tblemployees b", "b.department_id = a.id", "INNER");
+            $this->db->join("gcchris.tblcompanies c", "c.id = b.company_id", "INNER");
+            $this->db->where("b.employee_status", "Active");
+            $this->db->where("c.id", $get["company_id"]);
+            if (isset($get['q']) && $get['q']) {
+                $this->db->group_start();
+                $this->db->like("a.code", $get['q'], "both");
+                $this->db->or_like("a.description", $get['q'], "both");
+                $this->db->group_end();
+            }
+            $this->db->limit(25);
+            $this->db->group_by("a.id");
+            $this->db->order_by("trim(a.code)", "ASC");
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) { $resultarray["results"] = $query->result_array(); }
+        }
+        return $resultarray;
     }
 
     public function generateLateReport(){
@@ -1100,7 +1090,7 @@ class Reports_model extends CI_Model
             $qData = $this->db->get();
 
             if($qData->num_rows() > 0){ foreach ($qData->result() as $emp) { $empIds[] = $emp->id; } }
-            if(count($empIds) > 0 && !isset($post["employee"])){ $post["employee"] = $empIds; }
+            if(!empty($empIds) && !isset($post["employee"])){ $post["employee"] = $empIds; }
         }
 
         if(isset($post["employee"]) && $post["employee"]){
@@ -1153,6 +1143,15 @@ class Reports_model extends CI_Model
                 $feDate = Date("F d, Y", strtotime($endDate));
                 $arrFilter["filter_date"] = "{$fsDate} - {$feDate}";
 
+                $this->db->select("MAX(date) as max_date");
+                $this->db->from("gcctimeutility.timesheet");
+                $this->db->where("has_shift", 1);
+                $this->db->where("verified", 1);
+                $this->db->limit(1);
+                $qTempMax = $this->db->get();
+                $tempMaxDate = $qTempMax->row()->max_date ? $qTempMax->row()->max_date: null;
+                $this->db->reset_query();
+
                 $this->db->select("CONCAT(UPPER(TRIM(emp.firstname)), ' ',
                 CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
                         TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
@@ -1182,14 +1181,15 @@ class Reports_model extends CI_Model
                 $qAttendance = $this->db->get();
                 $ctrCount = $qAttendance->num_rows();
 
-                if($ctrCount > 0){ 
+                if($ctrCount > 0){
+                    $maxDate = $qAttendance->row_array()["max_date"];
                     $resultset["data"] = $qAttendance->result_array();
                     $resultset["response"] = true;
                     $resultset["filters"] = $arrFilter;
-                    $resultset["toastr_msg"] = "A total of ({$ctrCount}) employee late attendance record/s found.";
+                    $resultset["toastr_msg"] = "Last verified attendance date on `{$maxDate}`, A total of ({$ctrCount}) employee late attendance record/s found!";
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = "No late attendance record/s found!";
+                    $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `{$tempMaxDate}`." : "No late attendance record/s found!";
                 }
             }else{
                 $resultset["response"] = false;
@@ -1274,7 +1274,7 @@ class Reports_model extends CI_Model
             $qData = $this->db->get();
 
             if($qData->num_rows() > 0){ foreach ($qData->result() as $emp) { $empIds[] = $emp->id; } }
-            if(count($empIds) > 0 && !isset($post["employee"])){ $post["employee"] = $empIds; }
+            if(!empty($empIds) && !isset($post["employee"])){ $post["employee"] = $empIds; }
         }
 
         if(isset($post["employee"]) && $post["employee"]){
@@ -1323,6 +1323,15 @@ class Reports_model extends CI_Model
             }
     
             if($startDate && $endDate && (is_array($employeeIds) && count($employeeIds) > 0)){
+                $this->db->select("MAX(date) as max_date");
+                $this->db->from("gcctimeutility.timesheet");
+                $this->db->where("has_shift", 1);
+                $this->db->where("verified", 1);
+                $this->db->limit(1);
+                $qTempMax = $this->db->get();
+                $tempMaxDate = $qTempMax->row()->max_date ? $qTempMax->row()->max_date: null;
+                $this->db->reset_query();
+
                 $employeeShiftRecord = array();
                 $this->db->select("emp.id, ssr.shift_resource");
                 $this->db->from("gcctimeutility.shift_schedule_resource as ssr");
@@ -1356,7 +1365,7 @@ class Reports_model extends CI_Model
                 $employeeDates = array();
                 $employeeLogDates = array();
 
-                if(is_array($employeeShiftRecord) && count($employeeShiftRecord) > 0){
+                if(is_array($employeeShiftRecord) && !empty($employeeShiftRecord)){
                     $interval = DateInterval::createFromDateString('1 day');
                     $dateStart = new DateTime($startDate);
                     $dateEnd = new DateTime($endDate);
@@ -1372,8 +1381,8 @@ class Reports_model extends CI_Model
                             $md5Date = md5($date);
 
                             $holidayResponse = (object) $this->ts_model->getCurrentDateIsHoliday($date);
-                            if($holidayResponse->is_holiday == false){
-                                if(isset($schedule[$weekday]) && $schedule[$weekday]){
+                            if($holidayResponse->is_holiday === false){
+                                if (isset($schedule[$weekday]) && $schedule[$weekday]){
                                     $_hasShiftSchedule = true;
                                     $weekdaySchedule = $schedule[$weekday];
     
@@ -1418,7 +1427,7 @@ class Reports_model extends CI_Model
                 
                 $updateEmployeeAbsences = array();
 
-                if(is_array($employeeDates) && count($employeeDates) > 0){
+                if(is_array($employeeDates) && !empty($employeeDates)){
                     foreach ($employeeDates as $empId => $dates) {
                         $this->db->select("GROUP_CONCAT(DISTINCT DATE(ts.date)) as dates, MAX(ts.date) as max_date, emp.date_start");
                         $this->db->from("gcctimeutility.timesheet as ts");
@@ -1464,7 +1473,7 @@ class Reports_model extends CI_Model
                                 }
                             }
 
-                            if(is_array($arrLogs) && count($arrLogs) > 0){
+                            if(is_array($arrLogs) && !empty($arrLogs)){
                                 $updateEmployeeAbsences[$empId]["attendance_logs"] = implode(",", $arrLogs);
                             }
                         }
@@ -1491,22 +1500,22 @@ class Reports_model extends CI_Model
                     IF(ISNULL(ts.shift_pm_start) && ISNULL(ts.shift_pm_end), 0, IF(ISNULL(ts.pm_in) && ISNULL(ts.pm_out), '0.5', 0))
                 )) as absentee_total,
                 CONCAT(
-                    GROUP_CONCAT(DISTINCT 
-                        IF(ISNULL(ts.shift_am_start) && ISNULL(ts.shift_am_end), '', IF(ISNULL(ts.am_in) && ISNULL(ts.am_out), 
+                    GROUP_CONCAT(DISTINCT
+                        IF(ISNULL(ts.shift_am_start) && ISNULL(ts.shift_am_end), '', IF(ISNULL(ts.am_in) && ISNULL(ts.am_out),
                             CONCAT(ts.date, ' ', ts.shift_am_start, '~', ts.date, ' ', ts.shift_am_end), ''))
                     ),
-                    GROUP_CONCAT(DISTINCT 
-                        IF(ISNULL(ts.shift_pm_start) && ISNULL(ts.shift_pm_end), '', IF(ISNULL(ts.pm_in) && ISNULL(ts.pm_out), 
+                    GROUP_CONCAT(DISTINCT
+                        IF(ISNULL(ts.shift_pm_start) && ISNULL(ts.shift_pm_end), '', IF(ISNULL(ts.pm_in) && ISNULL(ts.pm_out),
                             CONCAT(ts.date, ' ', ts.shift_pm_start, '~', ts.date, ' ', ts.shift_pm_end), ''))
                     )
                 ) as attendance_logs,
                 CONCAT(
-                    GROUP_CONCAT(DISTINCT 
-                        IF(ISNULL(ts.shift_am_start) && ISNULL(ts.shift_am_end), '', IF(ISNULL(ts.am_in) && ISNULL(ts.am_out), 
+                    GROUP_CONCAT(DISTINCT
+                        IF(ISNULL(ts.shift_am_start) && ISNULL(ts.shift_am_end), '', IF(ISNULL(ts.am_in) && ISNULL(ts.am_out),
                             ts.date, ''))
                     ),
-                    GROUP_CONCAT(DISTINCT 
-                        IF(ISNULL(ts.shift_pm_start) && ISNULL(ts.shift_pm_end), '', IF(ISNULL(ts.pm_in) && ISNULL(ts.pm_out), 
+                    GROUP_CONCAT(DISTINCT
+                        IF(ISNULL(ts.shift_pm_start) && ISNULL(ts.shift_pm_end), '', IF(ISNULL(ts.pm_in) && ISNULL(ts.pm_out),
                             ts.date, ''))
                     )
                 ) as attendance_dates,
@@ -1528,6 +1537,8 @@ class Reports_model extends CI_Model
                 $ctrCount = $qAttendance->num_rows();
 
                 if($ctrCount > 0){
+                    $maxDate = $qAttendance->row()->max_date;
+
                     $qData = array();
                     $loaReference = array();
                     foreach($qAttendance->result() as $attx){
@@ -1595,10 +1606,10 @@ class Reports_model extends CI_Model
                     $resultset["loa_reference"] = $loaReference;
                     $resultset["response"] = true;
                     $resultset["filters"] = $arrFilter;
-                    $resultset["toastr_msg"] = "A total of ({$ctrCount}) employee absentee attendance record/s found.";
+                    $resultset["toastr_msg"] = "Last verified attendance date on `{$maxDate}`, A total of ({$ctrCount}) employee absentee attendance record/s found!";
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = "No late attendance record/s found!";
+                    $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `{$tempMaxDate}`." : "No absentee attendance record/s found!";
                 }
             }else{
                 $resultset["response"] = false;
@@ -1612,7 +1623,7 @@ class Reports_model extends CI_Model
         return $resultset;
     }
 
-    function getDropdownSelectData() {
+    public function getDropdownSelectData() {
         $resultset = array();
         $this->db->select("id, description as text");
         $companies = $this->db->get($this->companyTable);
@@ -1623,49 +1634,26 @@ class Reports_model extends CI_Model
         $this->db->select("id, name as text");
         $positions = $this->db->get($this->positionTable);
 
-        // $this->db->select("code as id, name as text");
-        // $this->db->where("status", 1);
-        // $payroll_type = $this->db->get($this->payrollTypeTable);
-
-        // $this->db->select("site_name as id, site_name as text");
-        // $station = $this->db->get($this->tblAppLocationSites);
-
-        // $this->db->select("
-        // id,
-        // CASE 
-        //     WHEN LENGTH(middlename) > 1 THEN CONCAT(firstname, ' ', SUBSTRING(middlename, 1, 1), '. ', lastname)
-        //     ELSE CONCAT(firstname, ' ', middlename, ' ', lastname)
-        // END AS text
-        // ");
-        // $this->db->group_start();
-        // $this->db->where_in('lower(level)',['supervisory', 'department head', 'executive', 'managerial']);
-        // $this->db->where("employee_status",'Active');
-        // $this->db->group_end();
-        // $supervisory = $this->db->get($this->tblEmployees);
-
         $resultset["dropdown_company"] = ($companies->num_rows() > 0) ? $companies->result() : array();
         $resultset["dropdown_department"] = ($departments->num_rows() > 0) ? $departments->result() : array();
         $resultset["dropdown_position"] = ($positions->num_rows() > 0) ? $positions->result() : array();
-        // $resultset["dropdown_payroll_type"] = ($payroll_type->num_rows() > 0) ? $payroll_type->result() : array();
-        // $resultset["dropdown_station"] = ($station->num_rows() > 0) ? $station->result() : array();
-        // $resultset["dropdown_supervisory"] = ($supervisory->num_rows() > 0) ? $supervisory->result() : array();
 
         return $resultset;
     }
 
-    function getSelect2Companies(){
+    public function getSelect2Companies(){
         $this->db->select('id, code text');
         $this->db->where('is_archived', 0)        ;
         return $this->db->get($this->companyTable)->result();
     }
     
-    function getSelect2Departments(){
+    public function getSelect2Departments(){
         $this->db->select('id, code text');
         $this->db->where('is_archived', 0);
         return $this->db->get($this->departmentTable)->result();
     }
 
-    function getSelect2Year(){
+    public function getSelect2Year(){
         $this->db->select('YEAR(date_start) as id, YEAR(date_start) as text');
         $this->db->where('is_archived', 0);
         $this->db->where('employee_status', 'Active');
@@ -1675,7 +1663,7 @@ class Reports_model extends CI_Model
         return $this->db->get($this->tblEmployees)->result();
     }
 
-    function generateAttritionReport(){
+    public function generateAttritionReport(){
         $post = $this->input->post();
 
         $months = array(
@@ -1697,7 +1685,6 @@ class Reports_model extends CI_Model
         $hasMonth = isset($post['filter_month']) && $post['filter_month'] ? true : false;
         $dateParam = $hasMonth ? $post['filter_year']."-".$post['filter_month'] : $post['filter_year'].'-'.'12';
         $deptSelect = ($hasDepartment) ? "c.id as department_id, UPPER(TRIM(c.code)) as deptcode, UPPER(TRIM(c.description)) as deptdesc, IFNULL(UPPER(c.code), 'No Department name') as department," : "";
-        $tempCompany = "";
 
         $firstDay = date('Y-m-d', strtotime('first day of January ' . date($post['filter_year'])));
         $lastDay = date("Y-m-t", strtotime($dateParam));
@@ -1791,7 +1778,7 @@ class Reports_model extends CI_Model
             $this->db->where('DATE(a.date_end) >= ', $firstDay);
             $this->db->where('DATE(a.date_end) <= ', $lastDay);
             $this->db->group_start();
-            $this->db->where('a.date_end is NOT NULL', NULL, FALSE);
+            $this->db->where('a.date_end is NOT NULL', null, false);
             $this->db->where('a.date_end != ', '0000-00-00');
             $this->db->group_end();
 
@@ -1803,11 +1790,11 @@ class Reports_model extends CI_Model
             $this->db->group_by("MONTH(a.date_end), $groupedGenerated");
             $this->db->order_by('MONTH(a.date_end)');
             $this->db->order_by('b.code', 'ASC');
-            $SeperatedTemp = $this->db->get();
+            $seperatedTemp = $this->db->get();
 
             $arrSeperated = array();
-            if($SeperatedTemp->num_rows() > 0){
-                foreach ($SeperatedTemp->result() as $key => $rs) {
+            if($seperatedTemp->num_rows() > 0){
+                foreach ($seperatedTemp->result() as $key => $rs) {
                     $rs->company = strtoupper($rs->company);
                     $m = strtolower(date('F', mktime(0, 0, 0, $rs->month, 10)));
                     $rs->$m = $rs->total_seperated;
@@ -1815,15 +1802,10 @@ class Reports_model extends CI_Model
 
                     $label = "";
 
-                    if($hasDepartment){
-                        if($rs->deptcode != $rs->deptdesc){
-                            $label = "$rs->deptcode | $rs->deptdesc";
-                        }else{
-                            $label = $rs->deptcode;
-                        }
-                    }else{
-                        $label = $rs->company;
-                    }
+                    if ($hasDepartment){
+                        if ($rs->deptcode != $rs->deptdesc){ $label = "$rs->deptcode | $rs->deptdesc"; }
+                        else { $label = $rs->deptcode; }
+                    } else { $label = $rs->company; }
 
                     $arrSeperated[$indexLabel]['label'] = $label;
                     $arrSeperated[$indexLabel]['company'] = $rs->company;
@@ -1891,7 +1873,7 @@ class Reports_model extends CI_Model
         return $resultSet;
     }
 
-    function getGeneratedCompany($id){
+    public function getGeneratedCompany($id){
         $this->db->select('code');
         $this->db->from($this->companyTable);
         $this->db->where('id', $id);
@@ -1900,14 +1882,14 @@ class Reports_model extends CI_Model
         return $query->code;
     }
 
-    function getNewlyHired($first, $last, $company = null, $hasDepartment = false, $department = null){
+    public function getNewlyHired($first, $last, $company = null, $hasDepartment = false, $department = null){
         $this->db->select('COUNT(a.date_start) as total');
         $this->db->from($this->tblEmployees.' a');
         $this->db->join($this->companyTable.' b', 'b.id = a.company_id', 'LEFT');
 
-        if($hasDepartment){
+        if ($hasDepartment){
             $this->db->join($this->departmentTable.' c', 'c.id = a.department_id OR c.code = a.department_id', 'LEFT');
-            if($department){
+            if ($department){
                 $this->db->where('a.department_id', $department);
             }
         }
@@ -1915,9 +1897,7 @@ class Reports_model extends CI_Model
         $this->db->where('DATE(a.date_start) >=', $first);
         $this->db->where('DATE(a.date_start) <=', $last);
 
-        if($company){
-            $this->db->where('a.company_id', $company);
-        }
+        if ($company){ $this->db->where('a.company_id', $company); }
 
         $this->db->where('a.is_archived', 0);
         $groupedGenerated = $hasDepartment ? ', c.code' : 'b.code';
@@ -1925,7 +1905,7 @@ class Reports_model extends CI_Model
         $query = $this->db->get();
 
         $total = 0;
-        if($query->num_rows() > 0){
+        if ($query->num_rows() > 0){
             foreach($query->result() as $key => $rs){
                 $total += $rs->total;
             }
@@ -1935,24 +1915,20 @@ class Reports_model extends CI_Model
         return $total;
     }
 
-    function getSeperated($first, $last, $company = null, $hasDepartment = false, $department = null){
+    public function getSeperated($first, $last, $company = null, $hasDepartment = false, $department = null){
         $this->db->select('COUNT(a.date_end) as total');
         $this->db->from($this->tblEmployees.' a');
         $this->db->join($this->companyTable.' b', 'b.id = a.company_id', 'LEFT');
 
-        if($hasDepartment){
+        if ($hasDepartment){
             $this->db->join($this->departmentTable.' c', 'c.id = a.department_id OR c.code = a.department_id', 'LEFT');
-            if($department){
-                $this->db->where('a.department_id', $department);
-            }
+            if ($department){ $this->db->where('a.department_id', $department); }
         }
 
         $this->db->where('DATE(a.date_end) >=', $first);
         $this->db->where('DATE(a.date_end) <=', $last);
 
-        if($company){
-            $this->db->where('a.company_id', $company);
-        }
+        if ($company){ $this->db->where('a.company_id', $company); }
 
         $this->db->where('a.is_archived', 0);
 
@@ -1961,17 +1937,15 @@ class Reports_model extends CI_Model
         $query = $this->db->get();
 
         $total = 0;
-        if($query->num_rows() > 0){
-            foreach($query->result() as $key => $rs){
-                $total += $rs->total;
-            }
+        if ($query->num_rows() > 0){
+            foreach ($query->result() as $rs){ $total += $rs->total; }
         }
 
         $this->db->reset_query();
         return $total;
     }
 
-    function generateAttritionChartReport(){
+    public function generateAttritionChartReport(){
         $post = $this->input->post();
         $resultSet = array();
 
@@ -2133,4 +2107,13 @@ class Reports_model extends CI_Model
         }
         return $resultset;
     }
+
+    public function exportLog(){
+        $post = $this->input->post();
+        $action = ['print' => 'Printed', 'excel' => 'Made Excel file'][$post['exportType']] ?? 'Exported';
+        $filters = implode(', ', array_map(function($k, $v) { return "$k: $v"; }, array_keys($post['filter']), $post['filter']));
+        $this->core_layout->setEventLog("$action {$post['type']} with filters: $filters", "generate", "success", "gcchris", "user");
+        return $post;
+    }
+
 }

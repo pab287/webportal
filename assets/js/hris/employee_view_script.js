@@ -41,12 +41,18 @@ function getPerformanceRating(id){
     
 }
 
-function printEmployeeDataSheet(element, avatar, info, user, timestamp) {
+$(document).on("click", "#printDataSheet", function (e) {
+    e.preventDefault();
+    const currentTimestamp = moment().format('LLL');
+    const { avatar, user } = info;
+
+    printEmployeeDataSheet(avatar, info, user, currentTimestamp);
+});
+
+function printEmployeeDataSheet(avatar, info, user, timestamp) {
     const divToPrint = $(".data-sheet").html();
     const newWin = window.open('', 'Print-Employee Data Sheet');
     const style1 = baseUrl("assets/css/responsiveTable.css");
-    const style2 = baseUrl("assets/vendors/base/vendors.bundle.css");
-    const style3 = baseUrl("assets/demo/demo3/base/style.bundle.css");
 
     const bootstrapRowCol = `.row {
         display: flex;
