@@ -230,7 +230,7 @@ var vmTab1 = new Vue({
 var search_val = "";
 var check = "0";
 var tblContent = $("#table-content").DataTable({
-  dom: '<"toolbar">rt',
+  dom: '<"toolbar">rtp',
   serverSide: true,
   processing: true,
   ajax: {

@@ -854,6 +854,7 @@
         public function transmittal_body($id)
         {
             $arrData = array();
+            $this->db->select('description');
             $this->db->from('gcceforms.transmittal_body');
             $this->db->where('transmittal_id', $id);
             $query = $this->db->get();
