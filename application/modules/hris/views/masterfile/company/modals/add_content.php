@@ -31,7 +31,7 @@
             <div class="form-group mt-4 col-xl-6 col-lg-6 col-md-6 col-sm-12">
                 <label for="work_days_in_year" class="form-control-label required">WORK DAYS IN YEAR</label>
                 <input id="work_days_in_year" name="work_days_in_year" type="number" autocomplete="off"
-                       min="0" data-validation="required" class="form-control m-input text-right"/>
+                       min="0" max="320"data-validation="required" class="form-control m-input text-right"/>
             </div>
         </div>
         

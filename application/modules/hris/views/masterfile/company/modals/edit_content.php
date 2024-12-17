@@ -39,7 +39,7 @@
                 <label for="work_days_in_year" class="form-control-label required">WORK DAYS IN YEAR</label>
                 <input id="work_days_in_year" name="work_days_in_year" type="number" autocomplete="off"
                        value="<?= $data->work_days_in_year ?>"
-                       min="0" data-validation="required" class="form-control m-input text-right"/>
+                       min="0" max="320" data-validation="required" class="form-control m-input text-right"/>
             </div>
         </div>
 
