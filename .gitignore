@@ -34,3 +34,8 @@ web.config
 phpinfo.php
 .vscode/extensions.json
 .htaccess
+
+vendor/
+vendor/*
+
+.env
