@@ -12,21 +12,13 @@
                             <h3 class="m-portlet__head-text">Filter Options</h3>
                         </div>
                     </div>
-                    <div class="m-portlet__head-tools">
-                        <ul class="m-portlet__nav">
-                            <li class="m-portlet__nav-item">
-                                <a href="javascript:void(0);"  data-portlet-tool="toggle" class="m-portlet__nav-link m-portlet__nav-link--icon">
-                                    <i class="la la-angle-down"></i>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
+                    <div class="m-portlet__head-tools">&nbsp;</div>
                 </div>
                 <div class="m-portlet__body">
                     <div id="tempFilterByLateReport" class="row">
                         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                             <div class="form-group has-success">
-                                <label class="m--font-bolder">FILTER BY</label>
+                                <label class="m--font-bolder" for="">FILTER BY</label>
                                 <div class="m-checkbox-inline">
                                     <label class="m-checkbox">
                                         <input type="radio" id="ranged_filter" name="filter_by" value="date_range" data-validation="required" v-model="filter_by" />
@@ -117,14 +109,14 @@
                     <div class="m-portlet__foot text-right" v-if="has_actions">
                         <button type="button" 
                             class="btn btn-warning m-btn btnAdvance_search m-btn--sm mr-1 text-white" 
-                            onclick="resetFilterLateReport(this)">
+                            onclick="resetFilterLateAbsenteeReport(this)">
                             <span>
                                 <i class="fa fa-refresh"></i>
                                 <span>Reset Filter</span>
                             </span>
                         </button>
                         <button type="button" 
-                            class="m-btn btn btn-success btnAdvance_search btn-submit" onclick="submitLateFilterForm(this)">Search</button>
+                            class="m-btn btn btn-success btnAdvance_search btn-submit" onclick="submitLateAbsenteeFilterForm(this)">Search</button>
                     </div>
                 </div>
             </div>
