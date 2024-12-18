@@ -82,7 +82,8 @@
 <script type="text/javascript">
     $("#sss_class").select2({
         width: "100%",
-        placeholder: "SELECT"
+        placeholder: "SELECT",
+        minimumResultsForSearch: -1
     });
 
 

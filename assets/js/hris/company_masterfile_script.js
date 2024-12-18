@@ -326,48 +326,48 @@ $(document).on("click", ".btnNewCompany", function () {
                     var tempModalContent = modalWindow.find("#modalTempContainer");
                     tempModalContent.empty().html(json.html);
                     modalWindow.modal("show");
-                    tempModalContent.find("#email_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    }); 
-                    tempModalContent.find("#cc_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    });
-                    tempModalContent.find("#bcc_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    });
+                    // tempModalContent.find("#email_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // }); 
+                    // tempModalContent.find("#cc_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // });
+                    // tempModalContent.find("#bcc_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // });
                     var url = baseUrl("hris/masterfile/temp_upload_company_file");
                     $("#fileupload_logo")
                         .fileupload({
