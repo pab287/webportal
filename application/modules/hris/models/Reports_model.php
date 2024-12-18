@@ -1443,6 +1443,7 @@ class Reports_model extends CI_Model{
                         if($qdates->num_rows() > 0){
                             $qdates = $qdates->row();
                             $qMaxDate = $qdates->max_date;
+                            
                             $qDateStart = $qdates->date_start;
 
                             $tsDates = $qdates->dates;
@@ -1456,11 +1457,12 @@ class Reports_model extends CI_Model{
                             $updateEmployeeAbsences[$empId]["absentee_dates"] = array();
                             foreach ($dates as $dt) {
                                 if(strtotime($dt) >= strtotime($qDateStart) && strtotime($dt) <= strtotime($qMaxDate) && !in_array($dt, $tsDates)){
+                                    $md5Datex = md5($dt);
                                     $updateEmployeeAbsences[$empId]["absentee_total"] = isset($updateEmployeeAbsences[$empId]["absentee_total"]) && $updateEmployeeAbsences[$empId]["absentee_total"] ? $updateEmployeeAbsences[$empId]["absentee_total"] : 0;
-                                    $updateEmployeeAbsences[$empId]["absentee_total"] += $newEmployeeRecord[$empId][$md5Date];
+                                    $updateEmployeeAbsences[$empId]["absentee_total"] += $newEmployeeRecord[$empId][$md5Datex];
                                     
-                                    if(is_array($employeeLogDates[$empId][$md5Date]) && count($employeeLogDates[$empId][$md5Date]) > 0){
-                                        foreach ($employeeLogDates[$empId][$md5Date] as $dtx) { $arrLogs[] = $dtx; }
+                                    if(is_array($employeeLogDates[$empId][$md5Datex]) && count($employeeLogDates[$empId][$md5Datex]) > 0){
+                                        foreach ($employeeLogDates[$empId][$md5Datex] as $dtx) { $arrLogs[] = $dtx; }
                                     }
                                     $updateEmployeeAbsences[$empId]["absentee_dates"][] = $dt;
                                 }
@@ -1498,21 +1500,21 @@ class Reports_model extends CI_Model{
                 )) as absentee_total,
                 CONCAT(
                     GROUP_CONCAT(DISTINCT
-                        IF(ISNULL(ts.shift_am_start) && ISNULL(ts.shift_am_end), '', IF(ISNULL(ts.am_in) && ISNULL(ts.am_out),
+                        IF(ts.date >= emp.date_start && ISNULL(ts.shift_am_start) && ISNULL(ts.shift_am_end), '', IF(ISNULL(ts.am_in) && ISNULL(ts.am_out),
                             CONCAT(ts.date, ' ', ts.shift_am_start, '~', ts.date, ' ', ts.shift_am_end), ''))
                     ),
                     GROUP_CONCAT(DISTINCT
-                        IF(ISNULL(ts.shift_pm_start) && ISNULL(ts.shift_pm_end), '', IF(ISNULL(ts.pm_in) && ISNULL(ts.pm_out),
+                        IF(ts.date >= emp.date_start && ISNULL(ts.shift_pm_start) && ISNULL(ts.shift_pm_end), '', IF(ISNULL(ts.pm_in) && ISNULL(ts.pm_out),
                             CONCAT(ts.date, ' ', ts.shift_pm_start, '~', ts.date, ' ', ts.shift_pm_end), ''))
                     )
                 ) as attendance_logs,
                 CONCAT(
                     GROUP_CONCAT(DISTINCT
-                        IF(ISNULL(ts.shift_am_start) && ISNULL(ts.shift_am_end), '', IF(ISNULL(ts.am_in) && ISNULL(ts.am_out),
+                        IF(ts.date >= emp.date_start && ISNULL(ts.shift_am_start) && ISNULL(ts.shift_am_end), '', IF(ISNULL(ts.am_in) && ISNULL(ts.am_out),
                             ts.date, ''))
                     ),
                     GROUP_CONCAT(DISTINCT
-                        IF(ISNULL(ts.shift_pm_start) && ISNULL(ts.shift_pm_end), '', IF(ISNULL(ts.pm_in) && ISNULL(ts.pm_out),
+                        IF(ts.date >= emp.date_start && ISNULL(ts.shift_pm_start) && ISNULL(ts.shift_pm_end), '', IF(ISNULL(ts.pm_in) && ISNULL(ts.pm_out),
                             ts.date, ''))
                     )
                 ) as attendance_dates,
@@ -1574,10 +1576,10 @@ class Reports_model extends CI_Model{
                         }
 
                         $newLogs00 = explode(",", $attx->attendance_logs);
-                        $newLogs00x = array_filter($newLogs00, function($log) use ($qDateStart) {
+                        $newLogs00x = array_filter($newLogs00, function($log) use ($qDateStart, $maxDate) {
                             $log = explode("~", $log);
                             $nDatex = date("Y-m-d", strtotime($log[0]));
-                            return strtotime($nDatex) >= strtotime($qDateStart);
+                            return strtotime($nDatex) >= strtotime($qDateStart) && strtotime($nDatex) <= strtotime($maxDate);
                         });
                         
                         $newLogs00x = array_filter($newLogs00x);
