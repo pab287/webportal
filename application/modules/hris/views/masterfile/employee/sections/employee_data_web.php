@@ -50,7 +50,7 @@
                 </div>
             </div>
         </div>
-        <div id="personalInfo-body" class="collapse" aria-labelledby="personalInfo-head" data-parent="#accordionMain">
+        <div id="personalInfo-body" class="collapse" :class="{show :activeSection == 'personalInfo'}" aria-labelledby="personalInfo-head" data-parent="#accordionMain">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="responsive">
                     <thead>
@@ -158,7 +158,7 @@
                 </div>
             </div>
         </div>
-        <div id="additionalInfo-body" class="collapse" aria-labelledby="additionalInfo-head" data-parent="#accordionMain">
+        <div id="additionalInfo-body" class="collapse" :class="{show :activeSection == 'additionalInfo'}" aria-labelledby="additionalInfo-head" data-parent="#accordionMain">
             <div class="card-body">
                 <table class="responsive">
                     <thead>
@@ -440,7 +440,7 @@
                 </div>
             </div>
         </div>
-        <div id="employmentQuestion-body" class="collapse" aria-labelledby="employmentQuestion-head" data-parent="#accordionMain">
+        <div id="employmentQuestion-body" class="collapse" :class="{show :activeSection == 'employmentQuestion'}" aria-labelledby="employmentQuestion-head" data-parent="#accordionMain">
             <div class="card-body">
                 <table class="responsive mb-1" v-for="(question, key) in questions" :key="key">
                     <thead>
@@ -474,7 +474,7 @@
                 </div>
             </div>
         </div>
-        <div id="educBackground-body" class="collapse" aria-labelledby="educBackground-head" data-parent="#accordionMain">
+        <div id="educBackground-body" class="collapse" :class="{show :activeSection == 'educBackground'}" aria-labelledby="educBackground-head" data-parent="#accordionMain">
             <div class="card-body">
                 <table class="responsive">
                     <thead>
@@ -527,7 +527,7 @@
                 </div>
             </div>
         </div>
-        <div id="licenseAndCert-body" class="collapse" aria-labelledby="licenseAndCert-head" data-parent="#accordionMain">
+        <div id="licenseAndCert-body" class="collapse" :class="{show :activeSection == 'licenseAndCert'}" aria-labelledby="licenseAndCert-head" data-parent="#accordionMain">
             <div class="card-body">
                 <table class="responsive">
                     <thead>
@@ -588,10 +588,10 @@
         </div>
     </div>
     <div class="card">
-        <div id="workExperience-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" data-toggle="collapse" href="#workExperience-body" aria-expanded="false" aria-controls="workExperience-body">
+        <div id="workExperience-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab" >
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" href="#workExperience-body" aria-expanded="false" aria-controls="workExperience-body">
                         <h5 class="m-portlet__head-text">
                             <span>Work Experience</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -600,7 +600,7 @@
                 </div>
             </div>
         </div>
-        <div id="workExperience-body" class="collapse" aria-labelledby="workExperience-head" data-parent="#accordionMain">
+        <div id="workExperience-body" class="collapse" :class="{show :activeSection == 'workExperience'}" aria-labelledby="workExperience-head" data-parent="#accordionMain">
             <div class="card-body">
                 <table class="responsive">
                     <thead>
@@ -656,7 +656,7 @@
                 </div>
             </div>
         </div>
-        <div id="employeeAwards-body" class="collapse" aria-labelledby="employeeAwards-head" data-parent="#accordionMain">
+        <div id="employeeAwards-body" class="collapse" :class="{show :activeSection == 'employeeAwards'}" aria-labelledby="employeeAwards-head" data-parent="#accordionMain">
             <div class="card-body">
                 <table class="responsive">
                     <thead>
@@ -700,7 +700,7 @@
                 </div>
             </div>
         </div>
-        <div id="empSkills-body" class="collapse" aria-labelledby="empSkills-head" data-parent="#accordionMain">
+        <div id="empSkills-body" class="collapse" :class="{show :activeSection == 'empSkills'}" aria-labelledby="empSkills-head" data-parent="#accordionMain">
             <div class="card-body">
                 <table class="responsive">
                     <thead>
@@ -737,7 +737,7 @@
                 </div>
             </div>
         </div>
-        <div id="empOrg-body" class="collapse" aria-labelledby="empOrg-head" data-parent="#accordionMain">
+        <div id="empOrg-body" class="collapse" :class="{show :activeSection == 'empOrg'}" aria-labelledby="empOrg-head" data-parent="#accordionMain">
             <div class="card-body">
                 <table class="responsive">
                     <thead>
@@ -784,7 +784,7 @@
                 </div>
             </div>
         </div>
-        <div id="empTrainings-body" class="collapse" aria-labelledby="empTrainings-head" data-parent="#accordionMain">
+        <div id="empTrainings-body" class="collapse" :class="{show :activeSection == 'empTrainings'}" aria-labelledby="empTrainings-head" data-parent="#accordionMain">
             <div class="card-body">
                 <table class="responsive">
                     <thead>
@@ -837,10 +837,9 @@
                 </div>
             </div>
         </div>
-        <div id="empPersonalReferences-body" class="collapse" aria-labelledby="empPersonalReferences-head" data-parent="#accordionMain">
+        <div id="empPersonalReferences-body" class="collapse" :class="{show :activeSection == 'empPersonalReferences'}" aria-labelledby="empPersonalReferences-head" data-parent="#accordionMain">
             <div class="card-body">
                 <table class="responsive">
-                    </thead>
                     <thead>
                         <tr>
                             <th class="" scope="col">NAME</th>
@@ -882,7 +881,7 @@
                 </div>
             </div>
         </div>
-        <div id="empMedicalHistory-body" class="collapse" aria-labelledby="empMedicalHistory-head" data-parent="#accordionMain">
+        <div id="empMedicalHistory-body" class="collapse" :class="{show :activeSection == 'empMedicalHistory'}" aria-labelledby="empMedicalHistory-head" data-parent="#accordionMain">
             <div class="card-body">
                 <table class="responsive">
                     <thead>
@@ -929,7 +928,7 @@
         <div id="empLegalHistory-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionMain" href="#empLegalHistory-body" aria-expanded="false" aria-controls="empLegalHistory-body">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" :class="{show :activeSection == 'empLegalHistory'}" data-parent="#accordionMain" href="#empLegalHistory-body" aria-expanded="false" aria-controls="empLegalHistory-body">
                         <h5 class="m-portlet__head-text">
                             <span>Legal History / Records</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -991,7 +990,7 @@
                 </div>
             </div>
         </div>
-        <div id="empAccountability-body" class="collapse" aria-labelledby="empAccountability-head" data-parent="#accordionMain">
+        <div id="empAccountability-body" class="collapse" :class="{show :activeSection == 'empAccountability'}" aria-labelledby="empAccountability-head" data-parent="#accordionMain">
             <div class="card-body">
                 <table class="responsive" id="accountability_table">
                     <thead class="customsalary">
@@ -1067,7 +1066,7 @@
                 </div>
             </div>
         </div>
-        <div id="empEmploymentInfo-body" class="collapse" aria-labelledby="empEmploymentInfo-head" data-parent="#accordionMain">
+        <div id="empEmploymentInfo-body" class="collapse" :class="{show :activeSection == 'empEmploymentInfo'}" aria-labelledby="empEmploymentInfo-head" data-parent="#accordionMain">
             <div class="card-body">
                 <table class="responsive">
                     <thead class="customsalary">
@@ -1102,70 +1101,8 @@
                         </template>
                     </tbody>
                 </table>
-			</div>
-		</div>
-    </div>
 
-</div>
-
-
-<div id="accordionOtherAdditionalInfoWeb" class="accordion mb-5" role="tablist" >
-    <div class="card">
-        <div id="headingEmploymentWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
-            <div class="m-portlet__head">
-                <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collpaseEmploymentWeb" aria-expanded="false" aria-controls="collpaseEmploymentWeb">
-                        <h5 class="m-portlet__head-text">
-                            <span>Employment Information</span>
-                            <i class="la pull-right la-angle-down"></i>
-                        </h5>
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div id="collpaseEmploymentWeb" class="collapse" role="tabpanel" aria-labelledby="headingEmploymentWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
-                <table class="responsive">
-                    <thead class="customsalary">
-                    <tr>
-                        <th scope="col" colspan="4">OFFENSE AND COMMENDATIONS</th>
-                    </tr>
-                    </thead>
-                    <thead>
-                    <tr>
-                        <th class="" scope="col">TYPE</th>
-                        <th class="" scope="col" style="width: 13%">DATE</th>
-                        <th class="" scope="col">NATURE</th>
-                        <th class="" scope="col">ACTION TAKEN</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                        <!-- <template v-if="data.offenses.length == 0">
-                        <tr>
-                            <td data-label="TYPE">NONE</td>
-                            <td data-label="DATE">NONE</td>
-                            <td data-label="NATURE">NONE</td>
-                            <td data-label="ACTION TAKEN">NONE</td>
-                        </tr>
-                        </template> -->
-                        <!-- <template v-else>
-                        <tr v-for="offense in data.offenses" :key="offense.id">
-                            <td data-label="TYPE" v-text="offense.offcom_type"></td>
-                            <td data-label="DATE" v-text="offense.offcom_date"></td>
-                            <td data-label="NATURE" v-text="offense.offcom_nature"></td>
-                            <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
-                        </tr>
-                        </template> -->
-                    </tbody>
-                </table>
-                <!-- OFFENSES AND COMMENDATIONS -->
-
-<!-- START SALARY HISTORY -->
-
-                <!-- <template v-if = "data.salaries == false">
-
-                </template> -->
-                <template v-else>
+                <template v-if="salaries != 'not_allowed'">
                     <table class="responsive">
                             <thead class="customsalary">
                             <tr>
@@ -1181,16 +1118,16 @@
                             </tr>
                             </thead>
                             <tbody>
-                                <!-- <template v-if="data.salaries.length == 0">
+                                <template v-if="salaries == false">
                                     <tr>
                                         <td data-label="DATE">NONE</td>
                                         <td data-label="RATE">NONE</td>
                                         <td data-label="POSITION">NONE</td>
                                         <td data-label="REMARKS">NONE</td>
                                     </tr>
-                                </template> -->
+                                </template>
                                 <template v-else>
-                                    <tr v-for="(salary, index) in data.salaries" :key="index">
+                                    <tr v-for="(salary, index) in salaries" :key="index">
                                         <td data-label="DATE" v-text="salary.sal_date"></td>
                                         <td data-label="RATE">
                                         <span v-text="formatSalaryRate(salary.sal_rate)">{{index}}</span>
@@ -1209,7 +1146,7 @@
                             </tbody>
                         </table>
                 </template>
-                <!-- START EMPLOYEE INFORMATION -->
+
                 <table class="responsive">
                     <thead class="customsalary">
                     <tr>
@@ -1248,21 +1185,24 @@
                     <tbody>
                         <tr>
                         <td data-label="CURRENT STATION / LOCATION">
-                            <!-- <span v-text="data.default_station.description || 'N/A'"></span> -->
+                            <span v-text="default_station.description || 'N/A'"></span>
                         </td>
                         <td data-label="STATIONS">
                             <ul class="row">
-                            <li class="col-4" v-for="(site, index) in data.stations" :key="index">
-                                <span v-text="site.location_name || 'N/A'"></span>
-                            </li>
+                                <template v-if="stations != false">
+                                    <li class="col-4" v-for="(site, index) in stations" :key="index">
+                                        <span v-text="site.location_name || 'N/A'"></span>
+                                    </li>
+                                </template>
+                                <template v-else>
+                                    <span v-text="'N/A'"></span>
+                                </template>
                             </ul>
                         </td>
                         </tr>
                     </tbody>
                 </table>
-                <!-- EMPLOYEE INFORMATION -->
 
-                <!-- START WORK STATUS -->
                 <table class="responsive">
                     <thead class="customsalary">
                     <tr>
@@ -1298,7 +1238,6 @@
                     </tr>
                     </tbody>
                 </table>
-                <!-- WORK STATUS -->
 
                 <table class="responsive">
                     <thead class="customsalary">
@@ -1324,15 +1263,16 @@
                     </tr>
                     </tbody>
                 </table>
-                <!-- JOB DETAIL -->
-            </div>
-        </div>
+
+			</div>
+		</div>
     </div>
+
     <div class="card">
-        <div id="headingJobWeb" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+        <div id="jobDescription-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfoWeb" href="#collapseJobWeb" aria-expanded="false" aria-controls="collapseJobWeb">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionMain" href="#jobDescription-body" aria-expanded="false" aria-controls="jobDescription-body">
                         <h5 class="m-portlet__head-text">
                             <span>Job Description</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -1341,8 +1281,8 @@
                 </div>
             </div>
         </div>
-        <div id="collapseJobWeb" class="collapse" role="tabpanel" aria-labelledby="headingJobWeb" data-parent="#accordionOtherAdditionalInfoWeb">
-            <div class="card-body m-portlet__body--custom table-responsive">
+        <div id="jobDescription-body" class="collapse" :class="{show :activeSection == 'jobDescription'}" aria-labelledby="jobDescription-head" data-parent="#accordionMain">
+            <div class="card-body">
                 <table class="responsive">
                     <tbody>
                         <tr>
@@ -1366,10 +1306,12 @@
                         </tr>
                     </tbody>
                 </table>
-            </div>
-        </div>
+			</div>
+		</div>
     </div>
+
 </div>
+
 
 <div class="modal fade" id="remarksModal" tabindex="-1" role="dialog" aria-labelledby="remarksModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">

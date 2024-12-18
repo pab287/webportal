@@ -162,6 +162,7 @@
                 die();
             }
             $data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataDetails($employee_id)));
+            $data->tab=$tab;
             $this->core_layout->setPageTitle("HRIS - View Employee Masterfile");
             $this->core_layout->setBodyClass("hris view-employee_masterfile");
             $this->core_layout->setPrivilegeName("hris_employee_masterfile");

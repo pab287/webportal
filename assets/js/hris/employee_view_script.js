@@ -3,10 +3,7 @@ let session_id = $("#user_id").val();
 let id = $("#employee_id").val();
 let employeeData = _tempContentData.data.main;
 $(document).ready(function(){
-
     getPerformanceRating(id);
-    // employeeDataSheet.getPersonalInformation();
-
     $('#column-options').on('click', function (e) {
         e.stopPropagation();
     });
@@ -14,7 +11,8 @@ $(document).ready(function(){
 
 let employeeDataSheet = new Vue({
     el:"#accordionMain",
-    data:{
+    data:{ 
+            activeSection:"",
             main:[],
             dependents:[],
             questions:{
@@ -52,12 +50,75 @@ let employeeDataSheet = new Vue({
         Object.keys(employeeData).forEach(key => {
             this.$set(this.main, key,"");
         });
-        console.log(this.main);
     },
+    mounted(){
+        if (_tempContentData.tab == null){
+            this.$data.activeSection = "personalInfo"
+        }else{
+            this.$data.activeSection =  _tempContentData.tab
+        }
+
+        switch (this.$data.activeSection) {
+            case "personalInfo":
+                this.getPersonalInformation();
+                break;
+            case "additionalInfo":
+                this.getPersonalInformation();
+                getAdditionalInformation();
+                break;
+            case "employmentQuestion":
+                getPersonalInformation();
+                break;
+            case "educBackground":
+                getEducationBackground();
+                break;
+            case "licenseAndCert":
+                getLicenseAndCert();
+                break;
+            case "workExperience":
+                getWorkExperience();
+                break;
+            case "employeeAwards":
+                getAwardsAndAchievements();
+                break;
+            case "empSkills":
+                getEmpSkills();
+                break;
+            case "empOrg":
+                getEmpOrgs();
+                break;
+            case "empTrainings":
+                getTrainingsAndSeminars();
+                break;
+            case "empPersonalReferences":
+                getPersonalReferences();
+                break;
+            case "empMedicalHistory":
+                getMedicalHistory();
+                break;
+            case "empLegalHistory":
+                getLegalHistory();
+                break;
+            case "empAccountability":
+                getAccountability();
+                break;
+            case "empEmploymentInfo":
+                getEmploymentInformation();
+                break;
+            case "jobDescription":
+                this.getPersonalInformation();
+                break;
+            default:
+             {
+                this.$data.activeSection = "personalInfo"
+                this.getPersonalInformation();
+             }
+        }
+    },
+
     methods:{
         getPersonalInformation(){
             this.main = { ...this.$data.main, ..._tempContentData.data.main };
-            console.log(this.main);
         },
         calculateAge(birthdate){
             if (!birthdate || birthdate == '0000-00-00') {
@@ -125,8 +186,21 @@ let employeeDataSheet = new Vue({
           },
           hasRemarks(acct) {
             return !!acct.remarks_returned
-          }
-
+          },
+          formatSalaryRate(rate) {
+            if (!rate || rate == '') return 'NONE';
+            
+            const formattedRate = new Intl.NumberFormat('en-PH', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }).format(parseFloat(rate.replace(',', '')));
+            
+            return formattedRate;
+          },
+          isCurrentSalary(salary, index) {
+            const grandTotal = parseFloat(this.data.grandTotal);
+            return salary.sal_rate == grandTotal && index == 0;
+          },
     }
 })
 
@@ -134,13 +208,12 @@ $('#personalInfo-body').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.main)) {
         employeeDataSheet.getPersonalInformation();
     }
-});
+})
 
 $('#additionalInfo-body').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.main) || !hasValue(employeeDataSheet.dependents)) {
         employeeDataSheet.getPersonalInformation();
         getAdditionalInformation();
-       console.log(employeeDataSheet.dependents);
     } 
 });
 
@@ -217,11 +290,16 @@ $('#empAccountability-body').on('show.bs.collapse', function () {
 });
 
 $('#empEmploymentInfo-body').on('show.bs.collapse', function () {
-            getEmploymentInformation();
-    if (!hasValue(employeeDataSheet.accountability)) {
-
+    if (!hasValue(employeeDataSheet.offenses)) {
+        getEmploymentInformation();
     }
 });
+
+$('#jobDescription-body').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.main)) {
+        employeeDataSheet.getPersonalInformation();
+    }
+})
 
 function hasValue(obj) {
     return Object.values(obj).some(value => {
@@ -271,29 +349,6 @@ function showRemarks(remarks) {
     $('#remarksText').text(remarks);
     $('#remarksModal').modal('show');
 }
-
-let employmentInformation = new Vue({
-    el: "#collpaseEmploymentWeb",
-    data: { data:{offenses:{},salaries:{},default_station:{}} },
-    methods:{
-        formatSalaryRate(rate) {
-            if (!rate || rate == '') return 'NONE';
-            
-            const formattedRate = new Intl.NumberFormat('en-PH', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }).format(parseFloat(rate.replace(',', '')));
-            
-            return formattedRate;
-          },
-          isCurrentSalary(salary, index) {
-            const grandTotal = parseFloat(this.data.grandTotal);
-            return salary.sal_rate == grandTotal && index == 0;
-          }
-    },
-})
-
-
 
 function getAdditionalInformation(){
     $.ajax({
@@ -380,7 +435,6 @@ function getEmpSkills(){
         dataType: "JSON",
         global: false,
         success: function(response) {
-            console.log("empSkills: ", response);
             if (!response || Object.keys(response.skillset).length == 0) {
                 employeeDataSheet.$data.skillset = false;
             } else {
@@ -462,7 +516,6 @@ function getLegalHistory(){
         dataType: "JSON",
         global: false,
         success: function(response) {
-            console.log("legalHistory: ", response);
             if (!response || Object.keys(response.legals).length == 0) {
                 employeeDataSheet.$data.legals = false;
             } else {
@@ -479,7 +532,6 @@ function getAccountability(){
         dataType: "JSON",
         global: false,
         success: function(response) {
-            console.log(response);
             if (!response || Object.keys(response.accountability).length == 0) {
                 employeeDataSheet.$data.accountability = false;
             } else {
@@ -493,15 +545,37 @@ function getEmploymentInformation(){
     $.ajax({
         url: baseUrl("hris/masterfile/get_employment_information/")+id,
         type: "post",
-        data:{csrf_token: _csrf_hash,biono : employeeDataSheet.$data.main.biometricno},
+        data:{csrf_token: _csrf_hash,biono : employeeData.biometricno},
         dataType: "JSON",
+        global: false,
         success: function(response) {
-            console.log(response);
-            // employmentInformation.data = response;
-            // if (actions.includes("view_own_request") && data.main.id !== session_id) {
-            //     employmentInformation.data.salaries = false;
-            // }
-            // console.log("employmentInformation: ", employmentInformation.data);
+            if (actions.includes("view_own_request") && employeeDataSheet.$data.main.id !== session_id) {
+                employeeDataSheet.$data.salaries = "not_allowed";
+            }else{
+                if (!response || Object.keys(response.salaries).length == 0) {
+                    employeeDataSheet.$data.salaries = false;
+                } else {
+                    employeeDataSheet.$data.salaries = { ...employeeDataSheet.$data.salaries, ...response.salaries };
+                }
+            }
+            if (!response || Object.keys(response.offenses).length == 0) {
+                employeeDataSheet.$data.offenses = false;
+            } else {
+                employeeDataSheet.$data.offenses = { ...employeeDataSheet.$data.offenses, ...response.offenses };
+            }
+
+            if (!response || Object.keys(response.stations).length == 0) {
+                employeeDataSheet.$data.stations = false;
+            } else {
+                employeeDataSheet.$data.stations = { ...employeeDataSheet.$data.stations, ...response.stations };
+            }
+
+            if (!response || response.default_station == null) {
+                employeeDataSheet.$data.default_station = false;
+            } else {
+                employeeDataSheet.$data.default_station = { ...employeeDataSheet.$data.default_station, ...response.default_station };
+            }
+
         }
     });
 }
