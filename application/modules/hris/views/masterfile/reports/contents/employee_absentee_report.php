@@ -132,7 +132,7 @@
                 <div class="row">
                     <div class="col-7 col-md-7 col-lg-7 col-sm-12">
                         <div class="alert alert-danger m-alert m-alert--air m-alert--outline mb-0 mt-3" role="alert">
-                            <strong>Note!</strong> The Absentee attendance record/s listed are verified time sheet reference data.					  	
+                            <strong>Note!</strong> The Absentee attendance record/s listed are all time sheet reference data.					  	
                         </div>
                     </div>
                 </div>
@@ -145,7 +145,7 @@
     <div class="modal-dialog modal-lg" role="document">
         <div id="modalAbsenteeContainer" class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel"><i class="la la-trash mr-2"></i>Absentee Attedance Preview</h5>
+                <h5 class="modal-title" id="exampleModalLabel"><i class="la la-trash mr-2"></i>Absentee Attendance Preview</h5>
                 <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
                     <span aria-hidden="true">×</span>
                 </button>
@@ -155,6 +155,12 @@
                     <div class="col-9 col-md-9 col-lg-9 col-sm-12">
                         <h4 v-text="row.employee_name">&nbsp;</h4>
                         <p v-text="row.position">&nbsp;</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-3 col-md-3 col-lg-3 col-sm-12">
+                        <h6>Date Hired</h6>
+                        <p v-text="dateFormatted(row.date_start)">&nbsp;</p>
                     </div>
                     <div class="col-3 col-md-3 col-lg-3 col-sm-12">
                         <h6>Last Verified Date</h6>

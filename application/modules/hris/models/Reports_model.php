@@ -1160,11 +1160,11 @@ class Reports_model extends CI_Model{
                     UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
                     emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
                 END) as employee_name, emp.idno, IFNULL(UPPER(pos.name), 'NO ASSIGNED POSITION') as position,
-                COALESCE(SUM(IF(ts.am_late > 0, 1, 0))) + COALESCE(SUM(IF(ts.pm_late > 0, 1, 0))) as late_total, 
+                COALESCE(SUM(IF(ts.date >= emp.date_start && ts.am_late > 0, 1, 0))) + COALESCE(SUM(IF(ts.date >= emp.date_start && ts.pm_late > 0, 1, 0))) as late_total, 
                 CONCAT(
-                    GROUP_CONCAT(DISTINCT IF(ts.am_late > 0, CONCAT(ts.date, ' ', ts.am_in), '')),
-                    GROUP_CONCAT(DISTINCT IF(ts.pm_late > 0, CONCAT(ts.date, ' ', ts.pm_in), ''))
-                ) as attendance_logs, MAX(ts.date) as max_date");
+                    GROUP_CONCAT(DISTINCT IF(ts.date >= emp.date_start && ts.am_late > 0, CONCAT(ts.date, ' ', ts.am_in), '')),
+                    GROUP_CONCAT(DISTINCT IF(ts.date >= emp.date_start && ts.pm_late > 0, CONCAT(ts.date, ' ', ts.pm_in), ''))
+                ) as attendance_logs, MAX(ts.date) as max_date, emp.date_start");
                 $this->db->from("gcctimeutility.timesheet as ts");
                 $this->db->join("gccmaster.tblemployees as emp", "emp.id = ts.emp_id", "INNER");
                 $this->db->join("gcchris.tblposition as pos", "pos.id = emp.position OR pos.name = emp.position", "LEFT");
@@ -1456,7 +1456,6 @@ class Reports_model extends CI_Model{
                             $updateEmployeeAbsences[$empId]["absentee_dates"] = array();
                             foreach ($dates as $dt) {
                                 if(strtotime($dt) >= strtotime($qDateStart) && strtotime($dt) <= strtotime($qMaxDate) && !in_array($dt, $tsDates)){
-                                    $md5Date = md5($dt);
                                     $updateEmployeeAbsences[$empId]["absentee_total"] = isset($updateEmployeeAbsences[$empId]["absentee_total"]) && $updateEmployeeAbsences[$empId]["absentee_total"] ? $updateEmployeeAbsences[$empId]["absentee_total"] : 0;
                                     $updateEmployeeAbsences[$empId]["absentee_total"] += $newEmployeeRecord[$empId][$md5Date];
                                     
@@ -1489,9 +1488,13 @@ class Reports_model extends CI_Model{
                     emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
                 END) as employee_name, emp.idno, IFNULL(UPPER(pos.name), 'NO ASSIGNED POSITION') as position, 
                 COALESCE(SUM(
-                    IF(ISNULL(ts.shift_am_start) && ISNULL(ts.shift_am_end), 0, IF(ISNULL(ts.am_in) && ISNULL(ts.am_out), '0.5', 0))
+                    IF(ts.date >= emp.date_start,
+                        IF(ISNULL(ts.shift_am_start) && ISNULL(ts.shift_am_end), 0, IF(ISNULL(ts.am_in) && ISNULL(ts.am_out), '0.5', 0))
+                    , 0)
                 )) + COALESCE(SUM(
-                    IF(ISNULL(ts.shift_pm_start) && ISNULL(ts.shift_pm_end), 0, IF(ISNULL(ts.pm_in) && ISNULL(ts.pm_out), '0.5', 0))
+                    IF(ts.date >= emp.date_start,
+                        IF(ISNULL(ts.shift_pm_start) && ISNULL(ts.shift_pm_end), 0, IF(ISNULL(ts.pm_in) && ISNULL(ts.pm_out), '0.5', 0))
+                    , 0)
                 )) as absentee_total,
                 CONCAT(
                     GROUP_CONCAT(DISTINCT
@@ -1513,7 +1516,7 @@ class Reports_model extends CI_Model{
                             ts.date, ''))
                     )
                 ) as attendance_dates,
-                MAX(ts.date) as max_date");
+                MAX(ts.date) as max_date, emp.date_start");
                 $this->db->from("gcctimeutility.timesheet as ts");
                 $this->db->join("gccmaster.tblemployees as emp", "emp.id = ts.emp_id", "INNER");
                 $this->db->join("gcchris.tblposition as pos", "pos.id = emp.position OR pos.name = emp.position", "LEFT");
@@ -1532,18 +1535,23 @@ class Reports_model extends CI_Model{
 
                 if($ctrCount > 0){
                     $maxDate = $qAttendance->row()->max_date;
-
                     $qData = array();
                     $loaReference = array();
                     foreach($qAttendance->result() as $attx){
+                        $qDateStart = $attx->date_start;
+
                         $tempTotal = isset($updateEmployeeAbsences[$attx->emp_id]["absentee_total"]) ? $updateEmployeeAbsences[$attx->emp_id]["absentee_total"] : 0;
                         $tempLogs = isset($updateEmployeeAbsences[$attx->emp_id]["attendance_logs"]) ? $updateEmployeeAbsences[$attx->emp_id]["attendance_logs"] : "";
 
                         $attDate = array_unique(array_filter(explode(",", $attx->attendance_dates)));
-                        if(isset($updateEmployeeAbsences[$attx->emp_id]["absentee_dates"])){ $attDate = array_merge($attDate, $updateEmployeeAbsences[$attx->emp_id]["absentee_dates"]); }  
+                        $attDatex = array_filter($attDate, function($date) use ($qDateStart) { return strtotime($date) >= strtotime($qDateStart); });
+
+                        if(isset($updateEmployeeAbsences[$attx->emp_id]["absentee_dates"])){
+                            $attDatex = array_merge($attDatex, $updateEmployeeAbsences[$attx->emp_id]["absentee_dates"]);
+                        }
                         
-                        if(is_array($attDate) && count($attDate) > 0){
-                            foreach ($attDate as $dt) {
+                        if(is_array($attDatex) && count($attDatex) > 0){
+                            foreach ($attDatex as $dt) {
                                 $this->db->select("date_from, date_to, employee, reference_no, type");
                                 $this->db->from("gcceforms.loa");
                                 $this->db->where("DATE(date_from) >=", $dt);
@@ -1566,32 +1574,38 @@ class Reports_model extends CI_Model{
                         }
 
                         $newLogs00 = explode(",", $attx->attendance_logs);
-                        $newLogs00 = array_filter($newLogs00);
-                        $newLogs00 = array_unique($newLogs00);
+                        $newLogs00x = array_filter($newLogs00, function($log) use ($qDateStart) {
+                            $log = explode("~", $log);
+                            $nDatex = date("Y-m-d", strtotime($log[0]));
+                            return strtotime($nDatex) >= strtotime($qDateStart);
+                        });
+                        
+                        $newLogs00x = array_filter($newLogs00x);
+                        $newLogs00x = array_unique($newLogs00x);
 
                         $newLogs01 = explode(",", $tempLogs);
                         $newLogs01 = array_filter($newLogs01);
                         $newLogs01 = array_unique($newLogs01);
 
-                        $newLogs00 = array_merge($newLogs00, $newLogs01);
-                        $newLogs00 = array_unique($newLogs00);
-                        $newLogs00 = array_filter($newLogs00);
+                        $newLogs00x = array_merge($newLogs00x, $newLogs01);
+                        $newLogs00x = array_unique($newLogs00x);
+                        $newLogs00x = array_filter($newLogs00x);
 
                         $dateTime = array();
-                        foreach ($newLogs00 as $key => $log) {
+                        foreach ($newLogs00x as $key => $log) {
                             $dtLog = explode("~", $log);
                             $dateTime[$key] = strtotime($dtLog[0]);
                         }
 
                         $dateTime = array_unique($dateTime);
                         $dateTime = array_filter($dateTime);
-                        array_multisort($dateTime, SORT_ASC, SORT_NUMERIC, $newLogs00);
+                        array_multisort($dateTime, SORT_ASC, SORT_NUMERIC, $newLogs00x);
                         
-                        $timestamp = array_map('strtotime', $attDate); 
-                        array_multisort($timestamp, SORT_ASC, $attDate);
+                        $timestamp = array_map('strtotime', $attDatex); 
+                        array_multisort($timestamp, SORT_ASC, $attDatex);
 
-                        $attx->attendance_logs = implode(",", $newLogs00);
-                        $attx->attendance_dates = implode(",", $attDate);
+                        $attx->attendance_logs = implode(",", $newLogs00x);
+                        $attx->attendance_dates = implode(",", $attDatex);
                         $attx->absentee_total += $tempTotal;
                         $qData[] = $attx;
                     }
