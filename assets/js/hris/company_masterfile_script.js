@@ -44,15 +44,15 @@ if (typeof tableCompanyList !== "undefined") {
                     }
                 }
             },
-            {
-                data: "email_to"
-            },
-            {   
-                data: "cc_to"
-            },
-            {   
-                data: "bcc_to"
-            },
+            // {
+            //     data: "email_to"
+            // },
+            // {   
+            //     data: "cc_to"
+            // },
+            // {   
+            //     data: "bcc_to"
+            // },
             {data: null, width: "8%", className: "text-center"}
         ],
         columnDefs: [
@@ -76,30 +76,30 @@ if (typeof tableCompanyList !== "undefined") {
                     return employeeDataTableActions(row.id);
                 }
             },
-            {
-                data: "email_to",
-                targets: 5,
-                orderable: false,
-                render: function (data, type, row, meta) {
-                    return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
-                }
-            },
-            {
-                data: "cc_to",
-                targets: 6,
-                orderable: false,
-                render: function (data, type, row, meta) {
-                    return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
-                }
-            },
-            {
-                data: "bcc_to",
-                targets: 7,
-                orderable: false,
-                render: function (data, type, row, meta) {
-                    return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
-                }
-            },
+            // {
+            //     data: "email_to",
+            //     targets: 5,
+            //     orderable: false,
+            //     render: function (data, type, row, meta) {
+            //         return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
+            //     }
+            // },
+            // {
+            //     data: "cc_to",
+            //     targets: 6,
+            //     orderable: false,
+            //     render: function (data, type, row, meta) {
+            //         return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
+            //     }
+            // },
+            // {
+            //     data: "bcc_to",
+            //     targets: 7,
+            //     orderable: false,
+            //     render: function (data, type, row, meta) {
+            //         return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
+            //     }
+            // },
             {
                 targets: "_all",
                 defaultContent: ""
@@ -198,48 +198,48 @@ $(document).on("click", ".btnEditCompany", function () {
                     tempModalContent.empty().html(json.html);
                     modalWindow.modal("show");
                     edit_template(dataId);
-                    tempModalContent.find("#edit_email_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    }); 
-                    tempModalContent.find("#edit_cc_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    });
-                    tempModalContent.find("#edit_bcc_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    });
+                    // tempModalContent.find("#edit_email_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // }); 
+                    // tempModalContent.find("#edit_cc_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // });
+                    // tempModalContent.find("#edit_bcc_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // });
                     
                     var url = baseUrl("hris/masterfile/temp_upload_company_file/true");
                     $("#edit-fileupload_logo")
@@ -326,48 +326,48 @@ $(document).on("click", ".btnNewCompany", function () {
                     var tempModalContent = modalWindow.find("#modalTempContainer");
                     tempModalContent.empty().html(json.html);
                     modalWindow.modal("show");
-                    tempModalContent.find("#email_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    }); 
-                    tempModalContent.find("#cc_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    });
-                    tempModalContent.find("#bcc_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    });
+                    // tempModalContent.find("#email_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // }); 
+                    // tempModalContent.find("#cc_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // });
+                    // tempModalContent.find("#bcc_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // });
                     var url = baseUrl("hris/masterfile/temp_upload_company_file");
                     $("#fileupload_logo")
                         .fileupload({
@@ -448,21 +448,21 @@ function edit_template($id){
         url: baseUrl("hris/masterfile/edit_details_company/") +$id,
         type: "GET",
         success: function(data){
-            $("#edit_email_to").empty();
-            for (i = 0; i < data.email_to.length; i++) {
-                var edit_email_to = new Option(data.email_to[i], data.email_to[i], true, true);
-                $('#edit_email_to').append(edit_email_to);  
-            }
-            $("#edit_cc_to").empty();
-            for (i = 0; i < data.cc_to.length; i++) {
-                var edit_cc_to = new Option(data.cc_to[i], data.cc_to[i], true, true);
-                $('#edit_cc_to').append(edit_cc_to);
-            }
-            $("#edit_bcc_to").empty();
-            for (i = 0; i < data.bcc_to.length; i++) {
-                var edit_bcc_to = new Option(data.bcc_to[i], data.bcc_to[i], true, true);
-                $('#edit_bcc_to').append(edit_bcc_to);
-            }
+            // $("#edit_email_to").empty();
+            // for (i = 0; i < data.email_to.length; i++) {
+            //     var edit_email_to = new Option(data.email_to[i], data.email_to[i], true, true);
+            //     $('#edit_email_to').append(edit_email_to);  
+            // }
+            // $("#edit_cc_to").empty();
+            // for (i = 0; i < data.cc_to.length; i++) {
+            //     var edit_cc_to = new Option(data.cc_to[i], data.cc_to[i], true, true);
+            //     $('#edit_cc_to').append(edit_cc_to);
+            // }
+            // $("#edit_bcc_to").empty();
+            // for (i = 0; i < data.bcc_to.length; i++) {
+            //     var edit_bcc_to = new Option(data.bcc_to[i], data.bcc_to[i], true, true);
+            //     $('#edit_bcc_to').append(edit_bcc_to);
+            // }
            
         }
     });
@@ -510,15 +510,15 @@ if(typeof tableArchivedCompanyList !== 'undefined'){
                     }
                 }
             },
-            {
-                data: "email_to"
-            },
-            {   
-                data: "cc_to"
-            },
-            {   
-                data: "bcc_to"
-            },
+            // {
+            //     data: "email_to"
+            // },
+            // {   
+            //     data: "cc_to"
+            // },
+            // {   
+            //     data: "bcc_to"
+            // },
             {data: null, width: "8%", className: "text-center"}
         ],
         columnDefs: [
@@ -542,30 +542,30 @@ if(typeof tableArchivedCompanyList !== 'undefined'){
                     return employeeArchivedDataTableActions(row.id);
                 }
             },
-            {
-                data: "email_to",
-                targets: 5,
-                orderable: false,
-                render: function (data, type, row, meta) {
-                    return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
-                }
-            },
-            {
-                data: "cc_to",
-                targets: 6,
-                orderable: false,
-                render: function (data, type, row, meta) {
-                    return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
-                }
-            },
-            {
-                data: "bcc_to",
-                targets: 7,
-                orderable: false,
-                render: function (data, type, row, meta) {
-                    return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
-                }
-            },
+            // {
+            //     data: "email_to",
+            //     targets: 5,
+            //     orderable: false,
+            //     render: function (data, type, row, meta) {
+            //         return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
+            //     }
+            // },
+            // {
+            //     data: "cc_to",
+            //     targets: 6,
+            //     orderable: false,
+            //     render: function (data, type, row, meta) {
+            //         return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
+            //     }
+            // },
+            // {
+            //     data: "bcc_to",
+            //     targets: 7,
+            //     orderable: false,
+            //     render: function (data, type, row, meta) {
+            //         return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
+            //     }
+            // },
             {
                 targets: "_all",
                 defaultContent: ""

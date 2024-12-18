@@ -39,11 +39,11 @@
                 <label for="work_days_in_year" class="form-control-label required">WORK DAYS IN YEAR</label>
                 <input id="work_days_in_year" name="work_days_in_year" type="number" autocomplete="off"
                        value="<?= $data->work_days_in_year ?>"
-                       min="0" data-validation="required" class="form-control m-input text-right"/>
+                       min="0" max="320" data-validation="required" class="form-control m-input text-right"/>
             </div>
         </div>
 
-        <div class="form-group mt-2">
+        <!-- <div class="form-group mt-2">
             <label class="col-form-label form-control-label">
                 Email To:
             </label>
@@ -67,7 +67,7 @@
                 <select id="edit_bcc_to" name="bcc_to[]">
                     
                 </select>
-        </div>
+        </div> -->
 
         <div class="form-group">
             <label for="edit-fileupload_logo" class="form-control-label">Attachment Logo</label>
@@ -91,6 +91,7 @@
 <script type="text/javascript">
     $("#sss_class").select2({
         width: "100%",
-        placeholder: "SELECT"
+        placeholder: "SELECT",
+        minimumResultsForSearch: -1
     });
 </script>
