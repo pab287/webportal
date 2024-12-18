@@ -1178,7 +1178,6 @@ class Reports_model extends CI_Model{
                 $this->db->order_by("emp.lastname", "ASC");
                 $this->db->group_by("ts.emp_id");
                 $qAttendance = $this->db->get();
-                var_dump($this->db->last_query());
                 $ctrCount = $qAttendance->num_rows();
 
                 if($ctrCount > 0){
@@ -1438,7 +1437,6 @@ class Reports_model extends CI_Model{
                         $this->db->where("DATE(ts.date) <=", $endDate);
                         $this->db->group_end();
                         $this->db->where("ts.emp_id", $empId);
-                        $this->db->group_by("ts.date");
                         $this->db->order_by("ts.date", "ASC");
                         $qdates = $this->db->get();
 
@@ -1457,7 +1455,7 @@ class Reports_model extends CI_Model{
                             $updateEmployeeAbsences[$empId]["attendance_logs"] = "";
                             $updateEmployeeAbsences[$empId]["absentee_dates"] = array();
                             foreach ($dates as $dt) {
-                                if(strtotime($dt) >= strtotime($qDateStart) && strtotime($dt) <= strtotime($qMaxDate) && in_array($dt, $tsDates)){
+                                if(strtotime($dt) >= strtotime($qDateStart) && strtotime($dt) <= strtotime($qMaxDate) && !in_array($dt, $tsDates)){
                                     $md5Date = md5($dt);
                                     $updateEmployeeAbsences[$empId]["absentee_total"] = isset($updateEmployeeAbsences[$empId]["absentee_total"]) && $updateEmployeeAbsences[$empId]["absentee_total"] ? $updateEmployeeAbsences[$empId]["absentee_total"] : 0;
                                     $updateEmployeeAbsences[$empId]["absentee_total"] += $newEmployeeRecord[$empId][$md5Date];
