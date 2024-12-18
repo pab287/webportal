@@ -49,7 +49,6 @@ class Reports_model extends CI_Model{
         $post = $this->utilities->parseFormDataToObject($this->input->post());
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($post);
         $select = implode(", ", $post->fields);
-        // var_dump($select);
         $order_field = $post->order_field;
         $order_by = $post->order_by;
         $criteria = $post->criteria;
@@ -247,7 +246,7 @@ class Reports_model extends CI_Model{
 
         $searchFields = array(
             "field" => "CONCAT(emp.firstname, emp.lastname, emp.middlename, 
-                        CONCAT(emp.firstname, ' ', emp.middlename, ' ', emp.lastname, CASE WHEN emp.suffix IS NOT NULL 
+                        CONCAT(emp.firstname, ' ', emp.middlename, ' ', emp.lastname, CASE WHEN emp.suffix IS NOT NULL
                         AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix) ELSE '' END),
                         IF(company.code IS NULL, emp.company_id ,company.code),
                         IF(dep.description IS NULL, emp.department_id, dep.description),
@@ -317,13 +316,13 @@ class Reports_model extends CI_Model{
 
         $select = "IF(comp.id IS NULL, emp.company_id, comp.code) company,
                        IF(dep.id IS NULL, emp.department_id, dep.code) department,
-                       CONCAT(emp.firstname,' ', emp.middlename, ' ', emp.lastname, 
+                       CONCAT(emp.firstname,' ', emp.middlename, ' ', emp.lastname,
                            CASE 
                                WHEN emp.suffix IS NOT NULL AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)
-                               ELSE '' 
+                               ELSE ''
                            END) employees_name,
-                       salaries.sal_date, 
-                       salaries.sal_rate, 
+                       salaries.sal_date,
+                       salaries.sal_rate,
                        salaries.sal_remarks,
                        salaries.sal_date,
                        emp.work_status,
@@ -360,10 +359,10 @@ class Reports_model extends CI_Model{
 
 
         $searchField = array(
-            "field" => "CONCAT(IFNULL(salaries.sal_rate, ''), 
-                               IFNULL(salaries.sal_remarks,''), 
-                               IFNULL(salaries.sal_date,''), 
-                               IFNULL(emp.work_status, ''), 
+            "field" => "CONCAT(IFNULL(salaries.sal_rate, ''),
+                               IFNULL(salaries.sal_remarks,''),
+                               IFNULL(salaries.sal_date,''),
+                               IFNULL(emp.work_status, ''),
                                IFNULL(emp.employee_status, ''),
                                IF(comp.id IS NULL, emp.company_id, comp.code),
                                IF(dep.id IS NULL, emp.department_id, dep.code),
@@ -941,7 +940,7 @@ class Reports_model extends CI_Model{
         $this->db->order_by("emp.lastname, emp.firstname", "ASC");
         $this->db->group_by("emp.id");
         $query = $this->db->get();
-        if ($query->num_rows() > 0) { return $query->result(); } 
+        if ($query->num_rows() > 0) { return $query->result(); }
         else { return array(); }
     }
 
@@ -1146,7 +1145,7 @@ class Reports_model extends CI_Model{
                 $this->db->select("MAX(date) as max_date");
                 $this->db->from("gcctimeutility.timesheet");
                 $this->db->where("has_shift", 1);
-                $this->db->where("verified", 1);
+                /*** $this->db->where("verified", 1); ***/
                 $this->db->limit(1);
                 $qTempMax = $this->db->get();
                 $tempMaxDate = $qTempMax->row()->max_date ? $qTempMax->row()->max_date: null;
@@ -1170,7 +1169,7 @@ class Reports_model extends CI_Model{
                 $this->db->join("gccmaster.tblemployees as emp", "emp.id = ts.emp_id", "INNER");
                 $this->db->join("gcchris.tblposition as pos", "pos.id = emp.position OR pos.name = emp.position", "LEFT");
                 $this->db->where("ts.has_shift", 1);
-                $this->db->where("ts.verified", 1);
+                /*** $this->db->where("ts.verified", 1); ***/
                 $this->db->group_start();
                 $this->db->where("DATE(ts.date) >=", $startDate);
                 $this->db->where("DATE(ts.date) <=", $endDate);
@@ -1203,7 +1202,7 @@ class Reports_model extends CI_Model{
         return $resultset;
     }
 
-    function selectPayrollGroup(){
+    public function selectPayrollGroup(){
         $get = $this->input->get();
         $arrData = array();
         $resultset = array();
@@ -1326,7 +1325,7 @@ class Reports_model extends CI_Model{
                 $this->db->select("MAX(date) as max_date");
                 $this->db->from("gcctimeutility.timesheet");
                 $this->db->where("has_shift", 1);
-                $this->db->where("verified", 1);
+                /*** $this->db->where("verified", 1); ***/
                 $this->db->limit(1);
                 $qTempMax = $this->db->get();
                 $tempMaxDate = $qTempMax->row()->max_date ? $qTempMax->row()->max_date: null;
@@ -1381,45 +1380,42 @@ class Reports_model extends CI_Model{
                             $md5Date = md5($date);
 
                             $holidayResponse = (object) $this->ts_model->getCurrentDateIsHoliday($date);
-                            if($holidayResponse->is_holiday === false){
-                                if (isset($schedule[$weekday]) && $schedule[$weekday]){
-                                    $_hasShiftSchedule = true;
-                                    $weekdaySchedule = $schedule[$weekday];
-    
-                                    $tempSchedule = new stdClass();
-                                    foreach ($propShift as $prop) { $tempSchedule->{$prop} = $weekdaySchedule->{$prop}; }
-    
-                                    $shiftSchedule = $this->ts_model->getCustomizedShiftScheduleByDate($date, $key);
-                                    if(isset($shiftSchedule->has_shift) && $shiftSchedule->has_shift == 1){
-                                        $nSchedule = $shiftSchedule->schedule;
-                                        foreach ($propShift as $prop) { $tempSchedule->{$prop} = $nSchedule->{$prop}; }
-                                    }
-    
-                                    $isWholeDay = true;
-                                    $tempSchedule->am_start = $tempSchedule->am_start ? $tempSchedule->am_start : "00:00:00";
-                                    $tempSchedule->am_end = $tempSchedule->am_end ? $tempSchedule->am_end : "00:00:00";
-                                    $tempSchedule->pm_start = $tempSchedule->pm_start ? $tempSchedule->pm_start : "00:00:00";
-                                    $tempSchedule->pm_end = $tempSchedule->pm_end ? $tempSchedule->pm_end : "00:00:00";
-                                    
-                                    $amDateTimeLog = $tempSchedule->am_start != "00:00:00" && $tempSchedule->am_end != "00:00:00" ? $date." ".$tempSchedule->am_start."~".$date." ".$tempSchedule->am_end : null;
-                                    $pmDateTimeLog = $tempSchedule->pm_start != "00:00:00" && $tempSchedule->pm_end != "00:00:00" ? $date." ".$tempSchedule->pm_start."~".$date." ".$tempSchedule->pm_end : null;
+                            if($holidayResponse->is_holiday === false && isset($schedule[$weekday]) && $schedule[$weekday]){
+                                $weekdaySchedule = $schedule[$weekday];
 
-                                    if (isset($tempSchedule->am_start) && isset($tempSchedule->am_end) && isset($tempSchedule->pm_start) && isset($tempSchedule->pm_end)){
-                                        if (($tempSchedule->am_start == NULL || $tempSchedule->am_start == "00:00:00") 
-                                            && ($tempSchedule->am_end == NULL || $tempSchedule->am_end == "00:00:00")){
-                                            $isWholeDay = false;
-                                        }
-                                        if (($tempSchedule->pm_start == NULL || $tempSchedule->pm_start == "00:00:00") 
-                                            && ($tempSchedule->pm_end == NULL || $tempSchedule->pm_end == "00:00:00")){
-                                            $isWholeDay = false;
-                                        }
-                                    }
-                                    if($amDateTimeLog){ $employeeLogDates[$key][$md5Date][] = $amDateTimeLog; }
-                                    if($pmDateTimeLog){ $employeeLogDates[$key][$md5Date][] = $pmDateTimeLog; }
+                                $tempSchedule = new stdClass();
+                                foreach ($propShift as $prop) { $tempSchedule->{$prop} = $weekdaySchedule->{$prop}; }
 
-                                    $employeeDates[$key][] = $date;
-                                    $newEmployeeRecord[$key][$md5Date] = $isWholeDay ? 1: 0.5;
+                                $shiftSchedule = $this->ts_model->getCustomizedShiftScheduleByDate($date, $key);
+                                if(isset($shiftSchedule->has_shift) && $shiftSchedule->has_shift == 1){
+                                    $nSchedule = $shiftSchedule->schedule;
+                                    foreach ($propShift as $prop) { $tempSchedule->{$prop} = $nSchedule->{$prop}; }
                                 }
+
+                                $isWholeDay = true;
+                                $tempSchedule->am_start = $tempSchedule->am_start ? $tempSchedule->am_start : "00:00:00";
+                                $tempSchedule->am_end = $tempSchedule->am_end ? $tempSchedule->am_end : "00:00:00";
+                                $tempSchedule->pm_start = $tempSchedule->pm_start ? $tempSchedule->pm_start : "00:00:00";
+                                $tempSchedule->pm_end = $tempSchedule->pm_end ? $tempSchedule->pm_end : "00:00:00";
+                                
+                                $amDateTimeLog = $tempSchedule->am_start != "00:00:00" && $tempSchedule->am_end != "00:00:00" ? $date." ".$tempSchedule->am_start."~".$date." ".$tempSchedule->am_end : null;
+                                $pmDateTimeLog = $tempSchedule->pm_start != "00:00:00" && $tempSchedule->pm_end != "00:00:00" ? $date." ".$tempSchedule->pm_start."~".$date." ".$tempSchedule->pm_end : null;
+
+                                if (isset($tempSchedule->am_start) && isset($tempSchedule->am_end) && isset($tempSchedule->pm_start) && isset($tempSchedule->pm_end)){
+                                    if (($tempSchedule->am_start == null || $tempSchedule->am_start == "00:00:00")
+                                        && ($tempSchedule->am_end == null || $tempSchedule->am_end == "00:00:00")){
+                                        $isWholeDay = false;
+                                    }
+                                    if (($tempSchedule->pm_start == null || $tempSchedule->pm_start == "00:00:00")
+                                        && ($tempSchedule->pm_end == null || $tempSchedule->pm_end == "00:00:00")){
+                                        $isWholeDay = false;
+                                    }
+                                }
+                                if($amDateTimeLog){ $employeeLogDates[$key][$md5Date][] = $amDateTimeLog; }
+                                if($pmDateTimeLog){ $employeeLogDates[$key][$md5Date][] = $pmDateTimeLog; }
+
+                                $employeeDates[$key][] = $date;
+                                $newEmployeeRecord[$key][$md5Date] = $isWholeDay ? 1: 0.5;
                             }
                         }
                     }
@@ -1435,7 +1431,7 @@ class Reports_model extends CI_Model{
                         $this->db->join("gcchris.tblposition as pos", "pos.id = emp.position OR pos.name = emp.position", "LEFT");
                         $this->db->where("ts.is_holiday", 0);
                         $this->db->where("ts.has_shift", 1);
-                        $this->db->where("ts.verified", 1);
+                        /*** $this->db->where("ts.verified", 1); ***/
                         $this->db->group_start();
                         $this->db->where("DATE(ts.date) >=", $startDate);
                         $this->db->where("DATE(ts.date) <=", $endDate);
@@ -1459,17 +1455,15 @@ class Reports_model extends CI_Model{
                             $updateEmployeeAbsences[$empId]["attendance_logs"] = "";
                             $updateEmployeeAbsences[$empId]["absentee_dates"] = array();
                             foreach ($dates as $dt) {
-                                if(strtotime($dt) >= strtotime($qDateStart) && strtotime($dt) <= strtotime($qMaxDate)){
-                                    if(!in_array($dt, $tsDates)){
-                                        $md5Date = md5($dt);
-                                        $updateEmployeeAbsences[$empId]["absentee_total"] = isset($updateEmployeeAbsences[$empId]["absentee_total"]) && $updateEmployeeAbsences[$empId]["absentee_total"] ? $updateEmployeeAbsences[$empId]["absentee_total"] : 0;
-                                        $updateEmployeeAbsences[$empId]["absentee_total"] += $newEmployeeRecord[$empId][$md5Date];
-                                        
-                                        if(is_array($employeeLogDates[$empId][$md5Date]) && count($employeeLogDates[$empId][$md5Date]) > 0){
-                                            foreach ($employeeLogDates[$empId][$md5Date] as $dtx) { $arrLogs[] = $dtx; }
-                                        }
-                                        $updateEmployeeAbsences[$empId]["absentee_dates"][] = $dt;
+                                if(strtotime($dt) >= strtotime($qDateStart) && strtotime($dt) <= strtotime($qMaxDate) && in_array($dt, $tsDates)){
+                                    $md5Date = md5($dt);
+                                    $updateEmployeeAbsences[$empId]["absentee_total"] = isset($updateEmployeeAbsences[$empId]["absentee_total"]) && $updateEmployeeAbsences[$empId]["absentee_total"] ? $updateEmployeeAbsences[$empId]["absentee_total"] : 0;
+                                    $updateEmployeeAbsences[$empId]["absentee_total"] += $newEmployeeRecord[$empId][$md5Date];
+                                    
+                                    if(is_array($employeeLogDates[$empId][$md5Date]) && count($employeeLogDates[$empId][$md5Date]) > 0){
+                                        foreach ($employeeLogDates[$empId][$md5Date] as $dtx) { $arrLogs[] = $dtx; }
                                     }
+                                    $updateEmployeeAbsences[$empId]["absentee_dates"][] = $dt;
                                 }
                             }
 
@@ -1525,7 +1519,7 @@ class Reports_model extends CI_Model{
                 $this->db->join("gcchris.tblposition as pos", "pos.id = emp.position OR pos.name = emp.position", "LEFT");
                 $this->db->where("ts.is_holiday", 0);
                 $this->db->where("ts.has_shift", 1);
-                $this->db->where("ts.verified", 1);
+                /*** $this->db->where("ts.verified", 1); ***/
                 $this->db->group_start();
                 $this->db->where("DATE(ts.date) >=", $startDate);
                 $this->db->where("DATE(ts.date) <=", $endDate);
@@ -1711,7 +1705,7 @@ class Reports_model extends CI_Model{
             $this->db->where('DATE(a.date_start) <= ', $lastDay);
 
             $this->db->group_start();
-            $this->db->where('a.date_start is NOT NULL', NULL, FALSE);
+            $this->db->where('a.date_start is NOT NULL', null, false);
             $this->db->where('a.date_start != ', '0000-00-00');
             $this->db->group_end();
 
@@ -1727,7 +1721,7 @@ class Reports_model extends CI_Model{
 
             $arrHired = array();
             if($hiredTemp->num_rows() > 0){
-                foreach ($hiredTemp->result() as $key => $rs) {
+                foreach ($hiredTemp->result() as $rs) {
                     $rs->company = strtoupper($rs->company);
                     $m = strtolower(date('F', mktime(0, 0, 0, $rs->month, 10)));
                     $rs->$m = $rs->total_hired;
@@ -1833,7 +1827,6 @@ class Reports_model extends CI_Model{
         foreach($temp as $key => $rs){
             foreach($rs as $k => $v){
                 array_push($data, $v); //pushed to a single array to be injected to table column
-
                 $label[$k]  = $v['label'];
                 $type[$k] = $v['type'];
             }
@@ -1906,9 +1899,7 @@ class Reports_model extends CI_Model{
 
         $total = 0;
         if ($query->num_rows() > 0){
-            foreach($query->result() as $key => $rs){
-                $total += $rs->total;
-            }
+            foreach($query->result() as $rs){ $total += $rs->total; }
         }
 
         $this->db->reset_query();
@@ -1994,7 +1985,7 @@ class Reports_model extends CI_Model{
         return $resultSet;
     }
 
-    function getTenureship($date){
+    public function getTenureship($date){
         $now = date('Y-m-d');
         $html = '';
 
@@ -2002,21 +1993,23 @@ class Reports_model extends CI_Model{
         $timeStampNow = strtotime($now);
 
         $hiredYear = date('Y', $timeStampHired);
-        $NowYear = date('Y', $timeStampNow);
+        $nowYear = date('Y', $timeStampNow);
         
         $hiredMonth = date('m', $timeStampHired);
-        $NowMonth = date('m', $timeStampNow);
+        $nowMonth = date('m', $timeStampNow);
 
-        $totalYear = $NowYear - $hiredYear;
-        $totalMonths = $NowMonth - $hiredMonth;
-        $totalDiff = (($NowYear - $hiredYear) * 12) + ($NowMonth - $hiredMonth);
+        $totalYear = $nowYear - $hiredYear;
+        $totalMonths = $nowMonth - $hiredMonth;
+        $totalDiff = (($nowYear - $hiredYear) * 12) + ($nowMonth - $hiredMonth);
 
         $year = intval($totalYear) > 0 ? $totalYear : '';
         $month = intval($totalMonths > 0) ? $totalMonths : '';
 
-        $html .= ($year != '') ? ($year > 1 ? $year.' years' : $year.' year') : '';
-        $html .= ($year != '' && $month != '') ? ' and ' : '';
-        $html .= ($month != '') ? ($month > 1 ? $month.' months' : $month.' month') : '';
+        if($year != '' && $year == 1){ $html .= $year.' year'; }
+        elseif ($year != '' && $year > 1) { $html .= $year.' years'; }
+        if($year != '' && $month != ''){ $html .= ' and '; }
+        if($month != '' && $month == 1){ $html .= $month.' month'; }
+        elseif ($month != '' && $month > 1) { $html .= $month.' months'; }
 
         return array(
             'tenured' => $html,
@@ -2051,7 +2044,7 @@ class Reports_model extends CI_Model{
             $this->db->join($this->defaultStationTable." as dsl", "dsl.employee_id = emp.id", "LEFT");
             $this->db->join($this->departmentTable." as dept", "dept.id = emp.department_id OR (dept.code = emp.department_id OR dept.description = emp.department_id)", "LEFT");
             $this->db->join($this->positionTable." as pos", "pos.id = emp.position OR pos.name = emp.position", "LEFT");
-            $this->db->where("dsl.id", NULL);
+            $this->db->where("dsl.id", null);
             $this->db->where("emp.employee_status", "Active");
             $this->db->where("emp.company_id", $post["company"]);
             $this->db->order_by("emp.lastname", "ASC");
@@ -2063,12 +2056,14 @@ class Reports_model extends CI_Model{
         }else{
             $resultset["response"] = false;
         }
-        return $dataOnly ? 
-            ($resultset["response"] == true ? $resultset["rows"]: array()) 
-            : $resultset;
+
+        if($dataOnly){
+            if($resultset["response"] === true){ return $resultset["rows"]; }
+            else{ return array(); }
+        }else{ return $resultset; }
     }
 
-    function setEmployeesWithoutStations(){
+    public function setEmployeesWithoutStations(){
         $post = $this->input->post();
         $resultset = array();
         $records = array();
@@ -2115,5 +2110,4 @@ class Reports_model extends CI_Model{
         $this->core_layout->setEventLog("$action {$post['type']} with filters: $filters", "generate", "success", "gcchris", "user");
         return $post;
     }
-
 }
