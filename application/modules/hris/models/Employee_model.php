@@ -3729,7 +3729,7 @@
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee work experience has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new employee work experience. Company.".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new employee work experience. Company: ".$post['work_company']." for employee ".$empName['name'],"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee work experience!";
