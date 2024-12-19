@@ -10,7 +10,7 @@ $(document).ready(function(){
 });
 
 let employeeDataSheet = new Vue({
-    el:"#accordionMain",
+    el:"#data-sheet",
     data:{ 
             activeSection:"",
             main:[],
@@ -45,6 +45,29 @@ let employeeDataSheet = new Vue({
             salaries:[],
             stations:[],
             default_station:[],
+            printData:{
+                main : {},
+                dependents:{},
+                licensesAndCerts:{
+                    licenses:"",
+                    driverlicenses:"",
+                    if_driver:"",
+                },
+                experiences:[],
+                awards:[],
+                skillset:[],
+                organizations: [],
+                trainings:[],
+                references:[],
+                medicals:[],
+                legals:[],
+                accountability:[],
+                offenses:[],
+                salaries:[],
+                stations:[],
+                default_station:[],
+                return_to_work:[],
+            }
     },
     created() {
         Object.keys(employeeData).forEach(key => {
@@ -67,7 +90,7 @@ let employeeDataSheet = new Vue({
                 getAdditionalInformation();
                 break;
             case "employmentQuestion":
-                getPersonalInformation();
+                this.getPersonalInformation();
                 break;
             case "educBackground":
                 getEducationBackground();
@@ -103,6 +126,7 @@ let employeeDataSheet = new Vue({
                 getAccountability();
                 break;
             case "empEmploymentInfo":
+                this.getPersonalInformation();
                 getEmploymentInformation();
                 break;
             case "jobDescription":
@@ -142,6 +166,7 @@ let employeeDataSheet = new Vue({
             }
         },
         formatDate(empdate) {
+
             if (!empdate || empdate == '0000-00-00') {
                 return '---';
               }
@@ -174,13 +199,6 @@ let employeeDataSheet = new Vue({
             }).format(amount);
           },
     
-          formatDate(dateString) {
-            if (!dateString || dateString == "0000-00-00") {
-              return "N/A";
-            }
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-PH');
-          },
           isReturned(acct) {
             return parseInt(acct.is_returned) == 1;
           },
@@ -204,98 +222,99 @@ let employeeDataSheet = new Vue({
     }
 })
 
-$('#personalInfo-body').on('show.bs.collapse', function () {
+$('#personalInfo-body, #collapsePersonal').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.main)) {
         employeeDataSheet.getPersonalInformation();
     }
 })
 
-$('#additionalInfo-body').on('show.bs.collapse', function () {
+$('#additionalInfo-body, #collapseAdditional').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.main) || !hasValue(employeeDataSheet.dependents)) {
         employeeDataSheet.getPersonalInformation();
         getAdditionalInformation();
     } 
 });
 
-$('#employmentQuestion-body').on('show.bs.collapse', function () {
+$('#employmentQuestion-body, #collapseQuestion').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.main)) {
         employeeDataSheet.getPersonalInformation();
     }
 });
 
-$('#educBackground-body').on('show.bs.collapse', function () {
+$('#educBackground-body, #collapseEducation').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.educations)) {
         getEducationBackground();
     }
 });
 
-$('#licenseAndCert-body').on('show.bs.collapse', function () {
+$('#licenseAndCert-body, #collapseLicense').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.licensesAndCerts)) {
         getLicenseAndCert();
     }
 });
 
-$('#workExperience-body').on('show.bs.collapse', function () {
+$('#workExperience-body, #collapseWork').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.works)) {
         getWorkExperience();
     }
 });
 
-$('#employeeAwards-body').on('show.bs.collapse', function () {
+$('#employeeAwards-body, #collapseAwards').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.awards)) {
         getAwardsAndAchievements();
     }
 });
 
-$('#empSkills-body').on('show.bs.collapse', function () {
+$('#empSkills-body, #collapseSkill').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.skillset)) {
         getEmpSkills();
     }
 });
 
-$('#empOrg-body').on('show.bs.collapse', function () {
+$('#empOrg-body, #collapseOrg').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.organizations)) {
         getEmpOrgs();
     }
 });
 
-$('#empTrainings-body').on('show.bs.collapse', function () {
+$('#empTrainings-body, #collapseTrain').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.trainings)) {
         getTrainingsAndSeminars();
     }
 });
 
-$('#empPersonalReferences-body').on('show.bs.collapse', function () {
+$('#empPersonalReferences-body, #collapseRef').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.references)) {
         getPersonalReferences();
     }
 });
 
-$('#empMedicalHistory-body').on('show.bs.collapse', function () {
+$('#empMedicalHistory-body, #collapseMed').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.medicals)) {
         getMedicalHistory();
     }
 });
 
-$('#empLegalHistory-body').on('show.bs.collapse', function () {
+$('#empLegalHistory-body, #collapseLegal').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.legals)) {
         getLegalHistory();
     }
 });
 
-$('#empAccountability-body').on('show.bs.collapse', function () {
+$('#empAccountability-body, #collapseAccountability').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.accountability)) {
         getAccountability();
     }
 });
 
-$('#empEmploymentInfo-body').on('show.bs.collapse', function () {
-    if (!hasValue(employeeDataSheet.offenses)) {
+$('#empEmploymentInfo-body, #collapseEmployment').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.main) || !hasValue(employeeDataSheet.offenses)) {
+        employeeDataSheet.getPersonalInformation();
         getEmploymentInformation();
-    }
+    } 
 });
 
-$('#jobDescription-body').on('show.bs.collapse', function () {
+$('#jobDescription-body, #collapseEmployment').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.main)) {
         employeeDataSheet.getPersonalInformation();
     }
@@ -536,6 +555,53 @@ function getAccountability(){
                 employeeDataSheet.$data.accountability = false;
             } else {
                 employeeDataSheet.$data.accountability = { ...employeeDataSheet.$data.accountability, ...response.accountability };
+
+                console.log(employeeDataSheet.$data.accountability);
+                $("#accountability_table_mobile").dataTable({
+                    pageLength : 5,
+                    bLengthChange : false,
+                    data: Object.values(employeeDataSheet.$data.accountability),
+                    columns:[
+                        { data: 'status' },
+                        { data: null, 
+                            render: function(data, type, row) {
+                                // Format amount with two decimal places and comma as thousand separator
+                                const formattedAmount = parseFloat(row.amount).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                
+                                // Format return status
+                                const returnStatus = parseInt(row.is_returned) === 1 
+                                    ? '<span class="m-badge m-badge--success px-2 m--font-bolder">Yes</span>'
+                                    : '<span class="m-badge m-badge--danger px-2 m--font-bolder">No</span>';
+                
+                                // Format date
+                                const formattedDate = row.date_returned && row.date_returned !== "0000-00-00" 
+                                    ? new Date(row.date_returned).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric'
+                                    })
+                                    : 'N/A';
+                
+                                return `
+                                    <div style="font-size: 0.8em">
+                                        <p style="margin-bottom: 0.3rem"><b>Ref. No:</b> <span>${row.reference_no}</span></p>
+                                        <p style="margin-bottom: 0.3rem"><b>Asset Code:</b> <span>${row.asset_code}</span></p>
+                                        <p style="margin-bottom: 0.3rem"><b>Asset Name:</b> <span>${row.aname}</span></p>
+                                        <p style="margin-bottom: 0.3rem"><b>Amount:</b> <span>${formattedAmount}</span></p>
+                                        <p style="margin-bottom: 0.3rem">
+                                            <b>Returned:</b> ${returnStatus}
+                                        </p>
+                                        <p style="margin-bottom: 0.3rem"><b>Date:</b> <span>${formattedDate}</span></p>
+                                    </div>
+                                `;
+                            }
+                        }
+                    ]
+                });
+
             }
         }
     });
@@ -580,6 +646,27 @@ function getEmploymentInformation(){
     });
 }
 
+function printFetch(element, avatar, info, user, timestamp){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_print_data/")+id,
+        type: "post",
+        data:{csrf_token: _csrf_hash},
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            if(response){
+
+                employeeDataSheet.$data.printData = { ...employeeDataSheet.$data.printData, ...response.data };
+                if (actions.includes("view_own_request") && employeeDataSheet.$data.printData.main.id !== session_id) {
+                    employeeDataSheet.$data.printData.salaries = "not_allowed";
+                }
+                Vue.nextTick(() => {
+                    printEmployeeDataSheet(element, avatar, info, user, timestamp)
+                });
+            }
+        }
+    })
+}
 
 function printEmployeeDataSheet(element, avatar, info, user, timestamp) {
     const divToPrint = $(".data-sheet").html();

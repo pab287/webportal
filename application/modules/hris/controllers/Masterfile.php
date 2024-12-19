@@ -190,6 +190,11 @@
             $this->load->view("core/templates/footer");
         }
 
+        public function get_print_data($employee_id){
+            $data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataSheetDetails($employee_id)));
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
         function add_employee_masterfile() {
             $this->core_layout->setBodyClass("hris masterfile add_employee");
             $this->core_layout->setPageTitle("HRIS - Add Employee");

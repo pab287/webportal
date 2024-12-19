@@ -14,21 +14,6 @@
     }
   }
 
-    .bg-a9{
-        background: #a9a8a8;
-        border-color: #a9a8a8;
-        border: 1px solid #a9a8a8 !important;
-    }
-
-    .bg-a9 .m-portlet__head {
-        background-color: #a9a8a8;
-        border-color: #a9a8a8;
-    }
-
-    .bg-a9 .m-portlet__head-text{
-        color: #fff !important;
-    }
-
   @media screen and (max-width: 640px){
     #accountability_table_mobile_wrapper .col-sm-12.col-md-6{
         padding: 0;
@@ -73,7 +58,7 @@
                 </div>
             </div>
         </div>
-        <div id="collapsePersonal" class="collapse show" role="tabpanel" aria-labelledby="headingPersonal" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapsePersonal" class="collapse" :class="{show :activeSection == 'personalInfo'}" role="tabpanel" aria-labelledby="headingPersonal" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
             <table class="responsive">
                 <thead>
@@ -86,10 +71,10 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td data-label="First Name"> <label><?= $data->main->firstname ?></label> </td>
-                        <td data-label="Middle Name"> <label><?= $data->main->middlename ? $data->main->middlename : " --- " ?></label> </td>
-                        <td data-label="Last Name"> <label><?= $data->main->lastname ?></label> </td>
-                        <td data-label="Suffix"> <label><?= $data->main->suffix ? $data->main->suffix : "&nbsp;" ?></label> </td>
+                        <td data-label="First Name" v-text="main.firstname || '---'"> </td>
+                        <td data-label="Middle Name" v-text="main.middlename || '---'"> </td>
+                        <td data-label="Last Name" v-text="main.lastname || '---'"> </td>
+                        <td data-label="Suffix" v-text="main.suffix || '---'"> </td>
                     </tr>
                 </tbody>
             </table>
@@ -103,8 +88,8 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td data-label="Current Address"> <label><?= $data->main->curr_addr ? $data->main->curr_addr : "None"  ?></label> </td>
-                        <td data-label="Provincial Address"> <label><?= $data->main->prov_addr ? $data->main->prov_addr : "None"  ?></label> </td>
+                        <td data-label="Current Address" v-text="main.curr_addr || '---'"> </td>
+                        <td data-label="Provincial Address" v-text="main.prov_addr || '---'"> </td>
                     </tr>
                 </tbody>
             </table>
@@ -119,9 +104,9 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td data-label="Citizenship"> <label><?= $data->main->citizenship ? $data->main->citizenship : "None" ?></label> </td>
-                        <td data-label="Religion"> <label><?= $data->main->religion ? $data->main->religion : "None" ?></label> </td>
-                        <td data-label="Languages"> <label><?= $data->main->languages ? $data->main->languages : "None" ?></label> </td>
+                        <td data-label="Citizenship" v-text="main.citizenship || '---'"> </td>
+                        <td data-label="Religion" v-text="main.religion || '---'"> </td>
+                        <td data-label="Languages" v-text="main.languages || '---'"> </td>
                     </tr>
                 </tbody>
             </table>
@@ -135,21 +120,14 @@
                         <th class="" scope="col">Place of Birth</th>
                         <th class="" scope="col">Blood Type</th>
                     </tr>
-                </thead>
+                </thead>    
                 <tbody>
                     <tr>
-                        <td data-label="Gender"> <label><?= $data->main->gender ? $data->main->gender : "N/A"  ?></label> </td>
-                        <td data-label="Civil Status"> <label><?= $data->main->civil_stat ? $data->main->civil_stat : "N/A" ?></label> </td>
-                        <td data-label="Date of Birth">
-                            <label>
-                                <?php
-                                    $bday = new DateTime($data->main->bday);
-                                    echo $bday->format("M d, Y");
-                                ?>
-                            </label>
-                        </td>
-                        <td data-label="Place of Birth"> <br id="break-390" style="display: none"><label><?= $data->main->birthplace ? $data->main->birthplace : "None"  ?></label> </td>
-                        <td data-label="Blood Type"> <label><?= $data->main->bloodtype ? $data->main->bloodtype : "None" ?></label> </td>
+                        <td data-label="Gender" v-text="main.gender || '---'"> </td>
+                        <td data-label="Civil Status" v-text="main.civil_stat || '---'"> </td>
+                        <td data-label="Date of Birth" v-text="formatDate(main.bday) || 'None'"> </td>
+                        <td data-label="Place of Birth" v-text="main.birthplace || 'None'"> </td>
+                        <td data-label="Blood Type" v-text="main.bloodtype || 'None'"> </td>
                     </tr>
                 </tbody>
             </table>
@@ -167,12 +145,12 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td data-label="Height"><label><?= $data->main->height ? $data->main->height : "N/A" ?></label></td>
-                        <td data-label="Weight"><label><?= $data->main->weight ? $data->main->weight : "N/A" ?></label></td>
-                        <td data-label="Hair Color"><label><?= $data->main->hair_color ? $data->main->hair_color : "N/A" ?></label></td>
-                        <td data-label="Complexion"><label><?= $data->main->complexion ? $data->main->complexion : "N/A" ?></label></td>
-                        <td data-label="Tel. No."><label><?= $data->main->tel_no ? $data->main->tel_no : "N/A" ?></label></td>
-                        <td data-label="Mobile No."><label><?= $data->main->mobile_no ? $data->main->mobile_no : "N/A" ?></label></td>
+                        <td data-label="Height" v-text="main.height || '---'"> </td>
+                        <td data-label="Weight" v-text="main.weight || '---'"> </td>
+                        <td data-label="Hair Color" v-text="main.hair_color || '---'"> </td>
+                        <td data-label="Complexion" v-text="main.complexion || '---'"> </td>
+                        <td data-label="Tel. No." v-text="main.tel_no || '---'"> </td>
+                        <td data-label="Mobile No." v-text="main.mobile_no || '---'"> </td>
                     </tr>
                 </tbody>
             </table>
@@ -192,7 +170,7 @@
                 </div>
             </div>
         </div>
-        <div id="collapseAdditional" class="collapse" role="tabpanel" aria-labelledby="headingAdditional" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseAdditional" class="collapse" :class="{show :activeSection == 'additionalInfo'}" role="tabpanel" aria-labelledby="headingAdditional" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="responsive">
                     <thead>
@@ -207,12 +185,12 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td data-label="Email" class="email_container"><label><?= $data->main->email ? $data->main->email : "NONE" ?></label></td>
-                            <td data-label="Tax Status"><label><?= $data->main->tax_status ? $data->main->tax_status : "NONE" ?></label></td>
-                            <td data-label="Tin No."><label><?= $data->main->tin_no ? $data->main->tin_no : "NONE" ?></label></td>
-                            <td data-label="Philhealth No."><label><?= $data->main->phealth_no ? $data->main->phealth_no : "NONE" ?></label></td>
-                            <td data-label="Pag-ibig No."><label><?= $data->main->pagibig_no ? $data->main->pagibig_no : "NONE" ?></label></td>
-                            <td data-label="SSS No."><label><?= $data->main->sss_no ? $data->main->sss_no : "NONE" ?></label></td>
+                            <td data-label="Email" v-text="main.email || '---'" class="email_container"></td>
+                            <td data-label="Tax Status" v-text="main.tax_status || '---'"></td>
+                            <td data-label="Tin No." v-text="main.tin_no || '---'"></td>
+                            <td data-label="Philhealth No." v-text="main.phealth_no || '---'"></td>
+                            <td data-label="Pag-ibig No." v-text="main.pagibig_no || '---'"></td>
+                            <td data-label="SSS No." v-text="main.sss_no || '---'"></td>
                         </tr>
                     </tbody>
                 </table>
@@ -228,114 +206,73 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <?php
-                                if($data->main->mot_deceased){
-                                    $deceased_mot = "<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                }else{
-                                    $deceased_mot = "";
-                                }
-
-                                if($data->main->fat_deceased){
-                                    $deceased_fat = "<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                }else{
-                                    $deceased_fat = "";
-                                }
-                            ?>
                             <th class="row-header" scope="col">Name</th>
-                            <td><label><?= $data->main->fat_name ? $data->main->fat_name." ".$deceased_fat : "None" ?></label></td>
-                            <td><label><?= $data->main->mot_name ? $data->main->mot_name." ".$deceased_mot : "None" ?></label></td>
                             <td>
-                                <label>
-                                    <?php 
-                                        if($data->main->partner_type == 1){
-                                            if($data->main->spo_deceased){
-                                                echo $data->main->spo_name." "."<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                            }else{
-                                                echo $data->main->spo_name;
-                                            }
-                                        }else if($data->main->partner_type == 2){
-                                            if($data->main->partners_deceased){
-                                                echo $data->main->partners_name." "."<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                            }else{
-                                                echo $data->main->partners_name;
-                                            }
-                                        }else{
-                                            echo "None";
-                                        } 
-                                    ?>
-                                </label>
+                                <span v-if="main.fat_name" v-text="main.fat_name"></span>
+                                <span v-else v-text="'None'"></span>
+                                <span v-if="main.fat_deceased == 1" class="m-badge m-badge--primary m-badge--wide">Deceased</span>
+                            </td>
+                            <td>
+                                <span v-if="main.mot_name" v-text="main.mot_name"></span>
+                                <span v-else v-text="'None'"></span>
+                                <span v-if="main.mot_deceased == 1" class="m-badge m-badge--primary m-badge--wide">Deceased</span>
+                            </td>
+                            <td>
+                                <span v-if="main.partner_type == 1">
+                                    <span v-if="main.spo_deceased == 1">
+                                        <span v-text="main.spo_name"></span>
+                                        <span class="m-badge m-badge--primary m-badge--wide">Deceased</span>
+                                    </span>
+                                    <span v-else v-text="main.spo_name"></span>
+                                </span>
+                                <span v-else-if="main.partner_type == 2">
+                                    <span v-if="main.partners_deceased == 1">
+                                        <span v-text="main.partners_name"></span>
+                                        <span class="m-badge m-badge--primary m-badge--wide">Deceased</span>
+                                    </span>
+                                    <span v-else v-text="main.partners_name"></span>
+                                </span>
+                                <span v-else v-text="'None'"></span>
                             </td>
                         </tr>
                         <tr>
                             <th class="row-header" scope="col">Address</th>
-                            <td><label><?= $data->main->fat_addr ? $data->main->fat_addr : "None"  ?></label></td>
-                            <td><label><?= $data->main->mot_addr ? $data->main->mot_addr : "None"  ?></label></td>
+                            <td v-text="main.fat_addr ? main.fat_addr : 'None'"></td>
+                            <td v-text="main.mot_addr ? main.mot_addr : 'None'"></td>
                             <td>
-                                <label>
-                                    <?php 
-                                        if($data->main->partner_type == 1){
-                                            echo $data->main->spo_addr;
-                                        }else if($data->main->partner_type == 2){
-                                            echo $data->main->partners_addr;
-                                        }else{
-                                            echo "None";
-                                        } 
-                                    ?>
-                                </label>
+                                <span v-if="main.partner_type == 1" v-text="main.spo_addr"></span>
+                                <span v-else-if="main.partner_type == 2" v-text="main.partners_addr"></span>
+                                <span v-else>None</span>
                             </td>
                         </tr>
                         <tr>
                             <th class="row-header" scope="col">Company</th>
-                            <td><label><?= $data->main->fat_company ? $data->main->fat_company : "None" ?></label></td>
-                            <td><label><?= $data->main->mot_company ? $data->main->mot_company : "None" ?></label></td>
+                            <td v-text="main.fat_company ? main.fat_company : 'None'"></td>
+                            <td v-text="main.mot_company ? main.mot_company : 'None'"></td>
                             <td>
-                                <label>
-                                    <?php 
-                                        if($data->main->partner_type == 1){
-                                            echo $data->main->spo_company;
-                                        }else if($data->main->partner_type == 2){
-                                            echo $data->main->partners_company;
-                                        }else{
-                                            echo "None";
-                                        } 
-                                    ?>
-                                </label>
+                                <span v-if="main.partner_type == 1" v-text="main.spo_company"></span>
+                                <span v-else-if="main.partner_type == 2" v-text="main.partners_company"></span>
+                                <span v-else>None</span>
                             </td>
                         </tr>
                         <tr>
                             <th class="row-header" scope="col">Occupation</th>
-                            <td><label><?= $data->main->fat_occupation ? $data->main->fat_occupation : "None" ?></label></td>
-                            <td><label><?= $data->main->mot_occupation ? $data->main->mot_occupation : "None" ?></label></td>
+                            <td v-text="main.fat_occupation ? main.fat_occupation : 'None'"></td>
+                            <td v-text="main.mot_occupation ? main.mot_occupation : 'None'"></td>
                             <td>
-                                <label>
-                                    <?php 
-                                        if($data->main->partner_type == 1){
-                                            echo $data->main->spo_occupation;
-                                        }else if($data->main->partner_type == 2){
-                                            echo $data->main->partners_occupation;
-                                        }else{
-                                            echo "None";
-                                        } 
-                                    ?>
-                                </label>
+                                <span v-if="main.partner_type == 1" v-text="main.spo_occupation"></span>
+                                <span v-else-if="main.partner_type == 2" v-text="main.partners_occupation"></span>
+                                <span v-else>None</span>
                             </td>
                         </tr>
                         <tr>
-                            <th class="row-header" scope="col">Contact No.</th>
-                            <td><label><?= $data->main->fat_contact ? $data->main->fat_contact : "None"  ?></label></td>
-                            <td><label><?= $data->main->mot_contact ? $data->main->mot_contact : "None"  ?></label></td>
+                        <th class="row-header" scope="col">Contact No.</th>
+                            <td v-text="main.fat_contact ? main.fat_contact : 'None'"></td>
+                            <td v-text="main.mot_contact ? main.mot_contact : 'None'"></td>
                             <td>
-                                <label>
-                                    <?php 
-                                        if($data->main->partner_type == 1){
-                                            echo $data->main->spo_contact;
-                                        }else if($data->main->partner_type == 2){
-                                            echo $data->main->partners_contact;
-                                        }else{
-                                            echo "None";
-                                        } 
-                                    ?>
-                                </label>
+                                <span v-if="main.partner_type == 1" v-text="main.spo_contact"></span>
+                                <span v-else-if="main.partner_type == 2" v-text="main.partners_contact"></span>
+                                <span v-else>None</span>
                             </td>
                         </tr>
                     </tbody>
@@ -362,19 +299,14 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <?php
-                                    if($data->main->fat_deceased){
-                                        $deceased_fat = "<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                    }else{
-                                        $deceased_fat = "";
-                                    }
-                                ?>
-
-                                <td data-label="Name"><label><?= $data->main->fat_name ? $data->main->fat_name.$deceased_fat : "None" ?></label></td>
-                                <td data-label="Address"><label><?= $data->main->fat_addr ? $data->main->fat_addr : "None" ?></label></td>
-                                <td data-label="Company"><label><?= $data->main->fat_company ? $data->main->fat_company : "None" ?></label></td>
-                                <td data-label="Occupation"><label><?= $data->main->fat_occupation ? $data->main->fat_occupation : "None" ?></label></td>
-                                <td data-label="Contact No."><label><?= $data->main->fat_contact ? $data->main->fat_contact : "None" ?></label></td>
+                                <td data-label="Name">
+                                    <span v-if="main.fat_deceased == 1">{{ main.fat_name }}<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span></span>
+                                    <span v-else v-text="main.fat_name ? main.fat_name : 'None'"></span>
+                                </td>
+                                <td data-label="Address" v-text="main.fat_addr ? main.fat_addr : 'None'"></td>
+                                <td data-label="Company" v-text="main.fat_company ? main.fat_company : 'None'"></td>
+                                <td data-label="Occupation" v-text="main.fat_occupation ? main.fat_occupation : 'None'"></td>
+                                <td data-label="Contact No." v-text="main.fat_contact ? main.fat_contact : 'None'"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -399,18 +331,14 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <?php
-                                    if($data->main->mot_deceased){
-                                        $deceased_mot = "<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                    }else{
-                                        $deceased_mot = "";
-                                    }
-                                ?>
-                                <td data-label="Name"><label><?= $data->main->mot_name ? $data->main->mot_name." ".$deceased_mot : "None" ?></label></td>
-                                <td data-label="Address"><label><?= $data->main->mot_addr ? $data->main->mot_addr : "None" ?></label></td>
-                                <td data-label="Company"><label><?= $data->main->mot_company ? $data->main->mot_company : "None" ?></label></td>
-                                <td data-label="Occupation"><label><?= $data->main->mot_occupation ? $data->main->mot_occupation : "None" ?></label></td>
-                                <td data-label="Contact No."><label><?= $data->main->mot_contact ? $data->main->mot_contact : "None" ?></label></td>
+                                <td data-label="Name">
+                                    <span v-if="main.mot_deceased == 1">{{ main.mot_name }}<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span></span>
+                                    <span v-else v-text="main.mot_name ? main.mot_name : 'None'"></span>
+                                </td>
+                                <td data-label="Address" v-text="main.mot_addr ? main.mot_addr : 'None'"></td>
+                                <td data-label="Company" v-text="main.mot_company ? main.mot_company : 'None'"></td>
+                                <td data-label="Occupation" v-text="main.mot_occupation ? main.mot_occupation : 'None'"></td>
+                                <td data-label="Contact No." v-text="main.mot_contact ? main.mot_contact : 'None'"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -436,78 +364,26 @@
                         <tbody>
                             <tr>
                                 <td data-label="Name">
-                                    <label>
-                                        <?php 
-                                            if($data->main->partner_type == 1){
-                                                if($data->main->spo_deceased){
-                                                    echo $data->main->spo_name." "."<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                                }else{
-                                                    echo $data->main->spo_name;
-                                                }
-                                            }else if($data->main->partner_type == 2){
-                                                if($data->main->partners_deceased){
-                                                    echo $data->main->partners_name." "."<span class='m-badge m-badge--primary m-badge--wide'>Deceased</span>";
-                                                }else{
-                                                    echo $data->main->partners_name;
-                                                }
-                                            }else{
-                                                echo "None";
-                                            } 
-                                        ?>
-                                    </label>
+                                    <span v-if="main.partner_type == 1">
+                                        <span v-if="main.spo_deceased == 1">
+                                            <span v-text="main.spo_name"></span>
+                                            <span class="m-badge m-badge--primary m-badge--wide">Deceased</span>
+                                        </span>
+                                        <span v-else v-text="main.spo_name"></span>
+                                    </span>
+                                    <span v-else-if="main.partner_type == 2">
+                                        <span v-if="main.partners_deceased == 1">
+                                            <span v-text="main.partners_name"></span>
+                                            <span class="m-badge m-badge--primary m-badge--wide">Deceased</span>
+                                        </span>
+                                        <span v-else v-text="main.partners_name"></span>
+                                    </span>
+                                    <span v-else v-text="'None'"></span>
                                 </td>
-                                <td data-label="Address">
-                                    <label>
-                                        <?php 
-                                            if($data->main->partner_type == 1){
-                                                echo $data->main->spo_addr;
-                                            }else if($data->main->partner_type == 2){
-                                                echo $data->main->partners_addr;
-                                            }else{
-                                                echo "None";
-                                            } 
-                                        ?>
-                                    </label>
-                                </td>
-                                <td data-label="Company">
-                                    <label>
-                                        <?php 
-                                            if($data->main->partner_type == 1){
-                                                echo $data->main->spo_company;
-                                            }else if($data->main->partner_type == 2){
-                                                echo $data->main->partners_company;
-                                            }else{
-                                                echo "None";
-                                            } 
-                                        ?>
-                                    </label>
-                                </td>
-                                <td data-label="Occupation">
-                                    <label>
-                                        <?php 
-                                            if($data->main->partner_type == 1){
-                                                echo $data->main->spo_occupation;
-                                            }else if($data->main->partner_type == 2){
-                                                echo $data->main->partners_occupation;
-                                            }else{
-                                                echo "None";
-                                            } 
-                                        ?>
-                                    </label>
-                                </td>
-                                <td data-label="Contact No.">
-                                    <label>
-                                        <?php 
-                                            if($data->main->partner_type == 1){
-                                                echo $data->main->spo_contact;
-                                            }else if($data->main->partner_type == 2){
-                                                echo $data->main->partners_contact;
-                                            }else{
-                                                echo "None";
-                                            } 
-                                        ?>
-                                    </label>
-                                </td>
+                                <td data-label="Address" v-text="main.partner_type == 1 ? main.spo_addr : (main.partner_type == 2 ? main.partners_addr : 'None')"></td>
+                                <td data-label="Company" v-text="main.partner_type == 1 ? main.spo_company : (main.partner_type == 2 ? main.partners_company : 'None')"></td>
+                                <td data-label="Occupation" v-text="main.partner_type == 1 ? main.spo_occupation : (main.partner_type == 2 ? main.partners_occupation : 'None')"></td>
+                                <td data-label="Contact No." v-text="main.partner_type == 1 ? main.spo_contact : (main.partner_type == 2 ? main.partners_contact : 'None')"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -531,58 +407,22 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <?php 
-                    foreach ($data->dependents as $dependent) {
-                        $currentDate = date_create(date("Y-m-d"));
-                        $nextDate = date_create(date("Y-m-d", strtotime($dependent->dep_birthdate)));
-                        $intervalDate = date_diff($currentDate, $nextDate);
-                        
-                        $tempAge = 0;
-                        if($dependent->dep_birthdate == "0000-00-00"){
-                            $tempAge = "---";
-                        }else{
-                            if ($intervalDate->y == 0 && $intervalDate->m == 0) {
-                                $tempAge = $intervalDate->d;
-                                $tempAge = $tempAge > 1 ? $tempAge . " Days Old" : " Day Old";
-                            } else if ($intervalDate->y == 0) {
-                                $tempAge = $intervalDate->m;
-                                $tempAge = $tempAge > 1 ? $tempAge . " Months Old" : " Month Old";
-                            } else {
-                                $tempAge = $intervalDate->y;
-                                $tempAge = $tempAge > 1 ? $tempAge . " Years Old" : "1 Year Old";
-                            }
-                        }
-                        $dep_birthdate = $dependent->dep_birthdate;
-                        if (!empty($dep_birthdate)) {
-                            if($dep_birthdate == "0000-00-00"){
-                                $dep_birthdate = "---";
-                            }else{
-                                $dep_birthdate = new DateTime($dep_birthdate);
-                                $dep_birthdate = $dep_birthdate->format("M d, Y");
-                            }
-                        } else {
-                            echo "None";
-                        }
-
-                        ?>
-                        <tr>
-                            <td data-label="Name"><label><?= $dependent->dep_name ?></label></td>
-                            <td data-label="Age"><label><?= $tempAge ?></label></td>
-                            <td data-label="Date of Birth">
-                                <label><?php echo $dep_birthdate;?></label>
-                            </td>
-                            <td data-label="Relationship"><label><?= $dependent->dep_relation ?></label></td>
-                        </tr>
-                    <?php } ?>
-
-                    <?php if (count($data->dependents) <= 0) { ?>
-                        <tr>
-                            <td data-label="Name">None</td>
-                            <td data-label="Age">None</td>
-                            <td data-label="Date of Birth">None</td>
-                            <td data-label="Relationship">None</td>
-                        </tr>
-                    <?php } ?>
+                        <template v-if="dependents == false">
+                            <tr>
+                                <td data-label="Name">None</td>
+                                <td data-label="Age">None</td>
+                                <td data-label="Date of Birth">None</td>
+                                <td data-label="Relationship">None</td>
+                            </tr>
+                        </template>
+                        <template v-else>
+                            <tr v-for="dependent in dependents" :key="dependent.dep_name">
+                                <td data-label="Name" v-text="dependent.dep_name"></td>
+                                <td data-label="Age" v-text="calculateAge(dependent.dep_birthdate)"></td>
+                                <td data-label="Date of Birth" v-text="formatDate(dependent.dep_birthdate)"></td>
+                                <td data-label="Relationship" v-text="dependent.dep_relation"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
                 <!-- END DEPENDENT TABLES -->
@@ -603,11 +443,11 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr>
-                        <td data-label="Contact Person"><label><?= $data->main->emer_name ? $data->main->emer_name : "None" ?></label></td>
-                        <td data-label="Contact No."><label><?= $data->main->emer_contact ? $data->main->emer_contact : "None" ?></label></td>
-                        <td data-label="Address"><label><?= $data->main->emer_addr ? $data->main->emer_addr : "None" ?></label></td>
-                    </tr>
+                        <tr>
+                            <td data-label="Contact Person" v-text="main.emer_name || 'None'"></td>
+                            <td data-label="Contact No." v-text="main.emer_contact || 'None'"></td>
+                            <td data-label="Address" v-text="main.emer_addr || 'None'"></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -626,27 +466,26 @@
                 </div>
             </div>
         </div>
-        <div id="collapseQuestion" class="collapse" role="tabpanel" aria-labelledby="headingQuestion" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseQuestion" class="collapse" :class="{show :activeSection == 'employmentQuestion'}" role="tabpanel" aria-labelledby="headingQuestion" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
-                <?php foreach ($data->questions as $key => $question) {
-                    $answer = "ques" . ($question->a); ?>
-                    <table class="responsive <?= ($key+1) < count($data->questions) ? 'mb-1' : '' ?>">
-                        <thead>
+                <table class="responsive mb-1" v-for="(question, key) in questions" :key="key">
+                    <thead>
                         <tr>
-                            <th class="" scope="col">
-                                <?= $question->q ?>
+                        <th scope="col">Questions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th class="" scope="col" v-text="question">
                             </th>
                         </tr>
-                        </thead>
-                        <tbody>
                         <tr>
-                            <td data-label="<?= $question->q ?>" class="questions">
-                                <label><?= $data->main->$answer ? $data->main->$answer : "N/A" ?></label>
+                            <td class="questions">
+                                <span v-text="hasAnswer(key)"></span>
                             </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                <?php } ?>
+                        </tr>   
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -663,7 +502,7 @@
                 </div>
             </div>
         </div>
-        <div id="collapseEducation" class="collapse" role="tabpanel" aria-labelledby="headingEducation" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseEducation" class="collapse" :class="{show :activeSection == 'educBackground'}" role="tabpanel" aria-labelledby="headingEducation" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="responsive">
                     <thead>
@@ -676,29 +515,27 @@
                         <th class="" scope="col" style="width: 5%">To</th>
                     </tr>
                     </thead>
-
                     <tbody>
-                        <?php foreach ($data->educations as $education) { ?>
-                            <tr>
-                                <td data-label="Level"><label><?= $education->educ_level_type ?></label></td>
-                                <td data-label="School"><label><?= $education->educ_school ?></label></td>
-                                <td data-label="Degree"><label><?= $education->educ_degree ?></label></td>
-                                <td data-label="Honors"><label><?= $education->educ_honors ? $education->educ_honors: "N/A" ?></label></td>
-                                <td data-label="From"><label><?= $education->educ_from ?></label></td>
-                                <td data-label="To"><label><?= $education->educ_to ?></label></td>
-                            </tr>
-                        <?php } ?>
-
-                        <?php if (count($data->educations) <= 0) { ?>
+                        <template v-if="educations == false">
                             <tr>
                                 <td data-label="Level">None</td>
                                 <td data-label="School">None</td>
                                 <td data-label="Degree">None</td>
                                 <td data-label="Honors">None</td>
                                 <td data-label="From">None</td>
-                                <td data-label="To">None</td>
+                                <td data-label="To" >None</td>
                             </tr>
-                        <?php } ?>
+                        </template>
+                        <template v-else>
+                            <tr v-for="education in educations" :key="education.id">
+                                <td data-label="Level" v-text="education.educ_level_type"></td>
+                                <td data-label="School" v-text="education.educ_school"></td>
+                                <td data-label="Degree" v-text="education.educ_degree"></td>
+                                <td data-label="Honors" v-text="education.educ_honors || 'N/A'"></td>
+                                <td data-label="From" v-text="education.educ_from"></td>
+                                <td data-label="To" v-text="education.educ_to"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
@@ -717,7 +554,7 @@
                 </div>
             </div>
         </div>
-        <div id="collapseLicense" class="collapse" role="tabpanel" aria-labelledby="headingLicense" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseLicense" class="collapse" :class="{show :activeSection == 'employmentQuestion'}" role="tabpanel" aria-labelledby="headingLicense" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="responsive">
                     <thead>
@@ -731,53 +568,26 @@
                     </tr>
                     </thead>
                     <tbody>
-
-                    <?php foreach ($data->licenses as $license) { ?>
-                        <tr>
-                            <td data-label="LICENSE/EXAM TYPE"><label><?= $license->license_type ?></label></td>
-                            <td data-label="EXAM PLACE"><label><?= $license->exam_place ?></label></td>
-                            <td data-label="RATING"><label><?= $license->rating ?></label></td>
-                            <td data-label="RELEASE DATE"><label><?= $license->release_date ?></label></td>
-                            <td data-label="EXAM DATE"><label><?= $license->exam_date ?></label></td>
-                            <td data-label="LICENSE NO."><label><?= $license->license_no ?></label></td>
-                        </tr>
-                    <?php } ?>
-
-                    <?php if (count($data->licenses) <= 0) { ?>
-                        <tr>
-                            <td data-label="LICENSE/EXAM TYPE">None</td>
-                            <td data-label="EXAM PLACE">None</td>
-                            <td data-label="RATING">None</td>
-                            <td data-label="RELEASE DATE">None</td>
-                            <td data-label="EXAM DATE">None</td>
-                            <td data-label="LICENSE NO.">None</td>
-                        </tr>
-                    <?php } ?>
-                    <!-- START DRIVER'S LICENSE ROW -->
-                    <?php if($data->if_driver > 0 AND count($data->driverlicenses) > 0){ ?>
-                    <thead>
-                    <tr>
-                        <th class="" scope="col" colspan="2">RESTRICTION</th>
-                        <th class="" scope="col" colspan="2">LICENSE NO.</th>
-                        <th class="" scope="col" colspan="2">EXPIRATION DATE</th>
-                    </tr>
-                    </thead>
-                    <?php foreach ($data->driverlicenses as $driverlicense) {
-                    $date_now = date("Y-m-d");
-                        if($date_now > $driverlicense->expiration_date){
-                            $expiration_date = "<span class='m-badge m-badge--danger m-badge--wide'>$driverlicense->expiration_date</span>";
-                        }else{
-                            $expiration_date = "<span class='m-badge m-badge--success m-badge--wide'>$driverlicense->expiration_date</span>";
-                        }
-                        
-                    ?>
-                        <tr>
-                            <td data-label="RESTRICTION" colspan="2"><label><?= $driverlicense->restriction ?></label></td>
-                            <td data-label="LICENSE NO." colspan="2"><label><?= $driverlicense->license_no ?></label></td>
-                            <td data-label="EXPIRATION DATE" colspan="2"><label><?= $expiration_date ?></label></td>
-                        </tr>
-                    <?php } } ?>
-                    <!-- END DRIVER'S LICENSE ROW -->
+                        <template v-if="licensesAndCerts.licenses.length == 0">
+                            <tr >
+                                <td data-label="LICENSE/EXAM TYPE">None</td>
+                                <td data-label="EXAM PLACE">None</td>
+                                <td data-label="RATING">None</td>
+                                <td data-label="RELEASE DATE">None</td>
+                                <td data-label="EXAM DATE">None</td>
+                                <td data-label="LICENSE NO.">None</td>
+                            </tr>
+                        </template>
+                        <template v-else>
+                            <tr v-for="license in licensesAndCerts.licenses" :key="license.id">
+                                <td data-label="LICENSE/EXAM TYPE" v-text="license.license_type"></td>
+                                <td data-label="EXAM PLACE" v-text="license.exam_place"></td>
+                                <td data-label="RATING" v-text="license.rating"></td>
+                                <td data-label="RELEASE DATE" v-text="license.release_date"></td>
+                                <td data-label="EXAM DATE" v-text="license.exam_date"></td>
+                                <td data-label="LICENSE NO." v-text="license.license_no"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
@@ -796,7 +606,7 @@
                 </div>
             </div>
         </div>
-        <div id="collapseWork" class="collapse" role="tabpanel" aria-labelledby="headingWork" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseWork" :class="{show :activeSection == 'workExperience'}" class="collapse" role="tabpanel" aria-labelledby="headingWork" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="responsive">
                     <thead>
@@ -811,19 +621,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($data->experiences as $experience) { ?>
-                            <tr>
-                                <td data-label="COMPANY"><label><?= $experience->work_company ?></label></td>
-                                <td data-label="FROM"><label><?= $experience->work_from ?></label></td>
-                                <td data-label="TO"><label><?= $experience->work_to ?></label></td>
-                                <td data-label="POSITION"><label><?= $experience->work_position ?></label></td>
-                                <td data-label="ID NO"><label><?= empty($experience->old_idno) ? "N/A" : $experience->old_idno ?></label></td>
-                                <td data-label="STATUS"><label><?= $experience->work_status ? $experience->work_status : "<br>" ?></label></td>
-                                <td data-label="REASON FOR LEAVING"><label><?=  empty($experience->work_reason) ? "N/A" : $experience->work_reason ?></label></td>
-                            </tr>
-                        <?php } ?>
-
-                        <?php if (count($data->experiences) <= 0) { ?>
+                        <template v-if="works == false">
                             <tr>
                                 <td data-label="COMPANY">None</td>
                                 <td data-label="FROM">None</td>
@@ -833,7 +631,18 @@
                                 <td data-label="STATUS">None</td>
                                 <td data-label="REASON FOR LEAVING">None</td>
                             </tr>
-                        <?php } ?>
+                        </template>
+                        <template v-else>
+                            <tr v-for="(experience, index) in works" :key="index">
+                                <td data-label="COMPANY" v-text="experience.work_company"></td>
+                                <td data-label="FROM" v-text="experience.work_from"></td>
+                                <td data-label="TO" v-text="experience.work_to"></td>
+                                <td data-label="POSITION" v-text="experience.work_position"></td>
+                                <td data-label="ID NO" v-text="experience.old_idno || 'N/A'"></td>
+                                <td data-label="STATUS" v-text="experience.work_status || '<br>'"></td>
+                                <td data-label="REASON FOR LEAVING" v-text="experience.work_reason || 'N/A'"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
@@ -852,7 +661,7 @@
                 </div>
             </div>
         </div>
-        <div id="collapseAward" class="collapse" role="tabpanel" aria-labelledby="headingAward" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseAward" class="collapse" role="tabpanel" :class="{show :activeSection == 'employeeAwards'}" aria-labelledby="headingAward" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="responsive">
                     <thead>
@@ -863,21 +672,20 @@
                     </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($data->awards as $award) { ?>
-                            <tr>
-                                <td data-label="AWARD/ACHIEVEMENT"><label><?= $award->award ?></label></td>
-                                <td data-label="INSTITUTION"><label><?= $award->award_institution ?></label></td>
-                                <td data-label="GIVEN DATE"><label><?= $award->award_date ?></label></td>
-                            </tr>
-                        <?php } ?>
-
-                        <?php if (count($data->awards) <= 0) { ?>
+                        <template v-if="awards == false">
                             <tr>
                                 <td data-label="AWARD/ACHIEVEMENT">None</td>
                                 <td data-label="INSTITUTION">None</td>
                                 <td data-label="GIVEN DATE">None</td>
                             </tr>
-                        <?php } ?>
+                        </template>
+                        <template v-else>
+                            <tr v-for="(award, index) in awards" :key="index">
+                                <td data-label="AWARD/ACHIEVEMENT" v-text="award.award"></td>
+                                <td data-label="INSTITUTION" v-text="award.award_institution"></td>
+                                <td data-label="GIVEN DATE" v-text="award.award_date"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
@@ -896,7 +704,7 @@
                 </div>
             </div>
         </div>
-        <div id="collapseSkill" class="collapse" role="tabpanel" aria-labelledby="headingSkills" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseSkill" class="collapse" :class="{show :activeSection == 'empSkills'}" role="tabpanel" aria-labelledby="headingSkills" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="responsive">
                     <thead>
@@ -905,19 +713,16 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($data->skills as $skill) { ?>
-                            <tr>
-                                <td data-label="TECHNICAL/MANAGEMENT/BUSINESS/SPECIAL SKILLS">
-                                    <label><?= $skill->skills ?></label>
-                                </td>
-                            </tr>
-                        <?php } ?>
-
-                        <?php if (count($data->skills) <= 0) { ?>
+                        <template v-if="skillset == false">
                             <tr>
                                 <td data-label="TECHNICAL/MANAGEMENT/BUSINESS/SPECIAL SKILLS">None</td>
                             </tr>
-                        <?php } ?>
+                        </template>
+                        <template v-else>
+                            <tr v-for="(skill, index) in skillset" :key="skill.id">
+                                <td data-label="TECHNICAL/MANAGEMENT/BUSINESS/SPECIAL SKILLS" v-text="skill.skills"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
@@ -936,7 +741,7 @@
                 </div>
             </div>
         </div>
-        <div id="collapseOrg" class="collapse" role="tabpanel" aria-labelledby="headingOrg" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseOrg" class="collapse" :class="{show :activeSection == 'empOrg'}" role="tabpanel" aria-labelledby="headingOrg" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="responsive">
                     <thead>
@@ -948,23 +753,22 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($data->organizations as $organization) { ?>
-                            <tr>
-                                <td data-label="INSTITUTION"><label><?= $organization->org_institution ?></label></td>
-                                <td data-label="MEMBERSHIP TITLE"><label><?= $organization->org_membership_title ?></label></td>
-                                <td data-label="FROM"><label><?= $organization->org_from ?></label></td>
-                                <td data-label="TO"><label><?= $organization->org_to ?></label></td>
-                            </tr>
-                        <?php } ?>
-
-                        <?php if (count($data->organizations) <= 0) { ?>
-                            <tr>
+                        <template v-if="organizations == false">
+                            <tr >
                                 <td data-label="INSTITUTION">None</td>
                                 <td data-label="MEMBERSHIP TITLE">None</td>
                                 <td data-label="FROM">None</td>
                                 <td data-label="TO">None</td>
                             </tr>
-                        <?php } ?>
+                        </template>
+                        <template v-else>
+                            <tr v-for="organization in organizations" :key="organization.id">
+                                <td data-label="INSTITUTION" v-text="organization.org_institution"></td>
+                                <td data-label="MEMBERSHIP TITLE" v-text="organization.org_membership_title"></td>
+                                <td data-label="FROM" v-text="organization.org_from"></td>
+                                <td data-label="TO" v-text="organization.org_to"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
@@ -983,7 +787,7 @@
                 </div>
             </div>
         </div>
-        <div id="collapseTrain" class="collapse" role="tabpanel" aria-labelledby="headingTrain" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseTrain" class="collapse" :class="{show :activeSection == 'empTrainings'}" role="tabpanel" aria-labelledby="headingTrain" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="responsive">
                     <thead>
@@ -997,18 +801,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($data->trainings as $training) { ?>
-                            <tr>
-                                <td data-label="TRAINING"><label><?= $training->training ?></label></td>
-                                <td data-label="FROM"><label><?= $training->train_from ?></label></td>
-                                <td data-label="TO"><label><?= $training->train_to ?></label></td>
-                                <td data-label="INSTITUTION"><label><?= $training->train_institution ?></label></td>
-                                <td data-label="CONDUCTOR"><label><?= $training->train_conductor ?></label></td>
-                                <td data-label="VENUE"><label><?= $training->train_venue ?></label></td>
-                            </tr>
-                        <?php } ?>
-
-                        <?php if (count($data->trainings) <= 0) { ?>
+                        <template v-if="trainings == false">
                             <tr>
                                 <td data-label="TRAINING">None</td>
                                 <td data-label="FROM">None</td>
@@ -1017,7 +810,17 @@
                                 <td data-label="CONDUCTOR">None</td>
                                 <td data-label="VENUE">None</td>
                             </tr>
-                        <?php } ?>
+                        </template>
+                        <template v-else>
+                            <tr v-for="training in trainings" :key="training.id">
+                                <td data-label="TRAINING" v-text="training.training"></td>
+                                <td data-label="FROM" v-text="training.train_from"></td>
+                                <td data-label="TO" v-text="training.train_to"></td>
+                                <td data-label="INSTITUTION" v-text="training.train_institution"></td>
+                                <td data-label="CONDUCTOR" v-text="training.train_conductor"></td>
+                                <td data-label="VENUE" v-text="training.train_venue"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
@@ -1036,7 +839,7 @@
                 </div>
             </div>
         </div>
-        <div id="collapseRef" class="collapse" role="tabpanel" aria-labelledby="headingRef" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseRef" class="collapse" :class="{show :activeSection == 'empPersonalReferences'}" role="tabpanel" aria-labelledby="headingRef" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="responsive">
                     </thead>
@@ -1048,21 +851,20 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($data->references as $reference) { ?>
-                            <tr>
-                                <td data-label="NAME"><label><?= $reference->ref_name ?></label></td>
-                                <td data-label="CONTACT NO."><label><?= $reference->ref_contact_no ?></label></td>
-                                <td data-label="ADDRESS"><label><?= $reference->ref_address ?></label></td>
-                            </tr>
-                        <?php } ?>
-
-                        <?php if (count($data->references) <= 0) { ?>
+                        <template v-if="references == false">
                             <tr>
                                 <td data-label="NAME">None</td>
                                 <td data-label="CONTACT NO.">None</td>
                                 <td data-label="ADDRESS">None</td>
                             </tr>
-                        <?php } ?>
+                        </template>
+                        <template v-else>
+                            <tr v-for="reference in references" :key="reference.id">
+                                <td data-label="NAME" v-text="reference.ref_name"></td>
+                                <td data-label="CONTACT NO." v-text="reference.ref_contact_no"></td>
+                                <td data-label="ADDRESS" v-text="reference.ref_address"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
@@ -1081,7 +883,7 @@
                 </div>
             </div>
         </div>
-        <div id="collapseMed" class="collapse" role="tabpanel" aria-labelledby="headingMed" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseMed" class="collapse" :class="{show :activeSection == 'empMedicalHistory'}" role="tabpanel" aria-labelledby="headingMed" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="responsive">
                     <thead>
@@ -1096,19 +898,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($data->medicals as $medical) { ?>
-                            <tr>
-                                <td data-label="DETAILS"><label><?= $medical->med_details ?></label></td>
-                                <td data-label="MED.NO."><label><?= $medical->med_no ?></label></td>
-                                <td data-label="DATE"><label><?= $medical->med_date ?></label></td>
-                                <td data-label="VENUE"><label><?= $medical->med_venue ?></label></td>
-                                <td data-label="PHYSICIAN"><label><?= $medical->med_physician ?></label></td>
-                                <td data-label="FINDINGS"><label><?= $medical->med_findings ?></label></td>
-                                <td data-label="REMARKS"><label><?= $medical->remarks ?></label></td>
-                            </tr>
-                        <?php } ?>
-
-                        <?php if (count($data->medicals) <= 0) { ?>
+                        <template v-if="medicals == false">
                             <tr>
                                 <td data-label="DETAILS">NONE</td>
                                 <td data-label="MED.NO.">NONE</td>
@@ -1118,7 +908,18 @@
                                 <td data-label="FINDINGS">NONE</td>
                                 <td data-label="REMARKS">NONE</td>
                             </tr>
-                        <?php } ?>
+                        </template>
+                        <template v-else>
+                            <tr v-for="medical in medicals" :key="medical.id">
+                                <td data-label="DETAILS" v-text="medical.med_details"></td>
+                                <td data-label="MED.NO." v-text="medical.med_no"></td>
+                                <td data-label="DATE" v-text="medical.med_date"></td>
+                                <td data-label="VENUE" v-text="medical.med_venue"></td>
+                                <td data-label="PHYSICIAN" v-text="medical.med_physician"></td>
+                                <td data-label="FINDINGS" v-text="medical.med_findings"></td>
+                                <td data-label="REMARKS" v-text="medical.remarks"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
@@ -1137,7 +938,7 @@
                 </div>
             </div>
         </div>
-        <div id="collapseLegal" class="collapse" role="tabpanel" aria-labelledby="headingLegal" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseLegal" class="collapse" :class="{show :activeSection == 'empLegalHistory'}" role="tabpanel" aria-labelledby="headingLegal" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="responsive">
                     <thead>
@@ -1151,18 +952,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($data->legals as $legal) { ?>
-                            <tr>
-                                <td data-label="CASE NO."><label><?= $legal->leg_case_no ? $legal->leg_case_no : "N/A" ?></label></td>
-                                <td data-label="DETAILS"><label><?= $legal->leg_details ? $legal->leg_details : "N/A" ?></label></td>
-                                <td data-label="DATE"><label><?= $legal->leg_case_date ? $legal->leg_case_date : "N/A" ?></label></td>
-                                <td data-label="COURT FIELD"><label><?= $legal->leg_court_field ? $legal->leg_court_field : "N/A" ?></label></td>
-                                <td data-label="PROSECUTOR"><label><?= $legal->leg_prosecutor ? $legal->leg_prosecutor : "N/A" ?></label></td>
-                                <td data-label="STATUS"><label><?= $legal->leg_status ? $legal->leg_status : "N/A" ?></label></td>
-                            </tr>
-                        <?php } ?>
-
-                        <?php if (count($data->legals) <= 0) { ?>
+                        <template v-if="legals == false">
                             <tr>
                                 <td data-label="CASE NO.">NONE</td>
                                 <td data-label="DETAILS">NONE</td>
@@ -1171,7 +961,17 @@
                                 <td data-label="PROSECUTOR">NONE</td>
                                 <td data-label="STATUS">NONE</td>
                             </tr>
-                        <?php } ?>
+                        </template>
+                        <template v-else>
+                            <tr v-for="legal in legals" :key="legal.id">
+                                <td data-label="CASE NO." v-text="legal.leg_case_no || 'N/A'"></td>
+                                <td data-label="DETAILS" v-text="legal.leg_details || 'N/A'"></td>
+                                <td data-label="DATE" v-text="legal.leg_case_date || 'N/A'"></td>
+                                <td data-label="COURT FIELD" v-text="legal.leg_court_field || 'N/A'"></td>
+                                <td data-label="PROSECUTOR" v-text="legal.leg_prosecutor || 'N/A'"></td>
+                                <td data-label="STATUS" v-text="legal.leg_status || 'N/A'"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
@@ -1190,7 +990,7 @@
                 </div>
             </div>
         </div>
-        <div id="collapseAccountability" class="collapse" role="tabpanel" aria-labelledby="headingAccountability" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseAccountability" class="collapse" :class="{show :activeSection == 'empAccountability'}" role="tabpanel" aria-labelledby="headingAccountability" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="table table-bordered" id="accountability_table_mobile">
                     <thead>
@@ -1200,28 +1000,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($data->accountability as $acct): ?>
-                            <tr>
-                                <td style="font-size: .8em"><?= $acct->status ?></td>
-                                <td style="font-size: .8em">
-                                    <p style="margin-bottom: 0.3rem"><b>Ref. No:</b> <span><?= $acct->reference_no ?></span></p>
-                                    <p style="margin-bottom: 0.3rem"><b>Asset Code:</b> <span><?= $acct->asset_code ?></span></p>
-                                    <p style="margin-bottom: 0.3rem"><b>Asset Name:</b> <span><?= $acct->aname ?></span></p>
-                                    <p style="margin-bottom: 0.3rem"><b>Amount:</b> <span><?= number_format($acct->amount, 2, ".", ",") ?></span></p>
-                                    <p style="margin-bottom: 0.3rem">
-                                        <b>Returned:</b>
-                                        <?php
-                                            if (intval($acct->is_returned) === 1) {
-                                                echo "<span class='m-badge m-badge--success px-2 m--font-bolder'>Yes</span>";
-                                            } else {
-                                                echo "<span class='m-badge m-badge--danger px-2 m--font-bolder'>No</span>";
-                                            }
-                                        ?>
-                                    </p>
-                                    <p style="margin-bottom: 0.3rem"><b>Date:</b> <span><?= $acct->date_returned !== "0000-00-00" ? date("M j, Y", strtotime($acct->date_returned)) : "N/A" ?></span></p>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
@@ -1231,7 +1009,7 @@
         <div id="headingEmployment" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfo" href="#collpaseEmployment" aria-expanded="false" aria-controls="collpaseEmployment">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherAdditionalInfo" href="#collapseEmployment" aria-expanded="false" aria-controls="collapseEmployment">
                         <h5 class="m-portlet__head-text">
                             <span>Employment Information</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -1240,7 +1018,7 @@
                 </div>
             </div>
         </div>
-        <div id="collpaseEmployment" class="collapse" role="tabpanel" aria-labelledby="headingEmployment" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseEmployment" class="collapse" :class="{show :activeSection == 'empEmploymentInfo'}" role="tabpanel" aria-labelledby="headingEmployment" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="responsive">
                     <thead class="customsalary">
@@ -1257,136 +1035,68 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <?php foreach ($data->offenses as $offense) { ?>
-                        <tr>
-                            <td data-label="TYPE"><label><?= $offense->offcom_type ?></label></td>
-                            <td data-label="DATE"><label><?= $offense->offcom_date ?></label></td>
-                            <td data-label="NATURE"><label><?= $offense->offcom_nature ?></label></td>
-                            <td data-label="ACTION TAKEN"><label><?= $offense->offcom_action ?></label></td>
-                        </tr>
-                    <?php } ?>
-
-                    <?php if (count($data->offenses) <= 0) { ?>
-                        <tr>
-                            <td data-label="TYPE">NONE</td>
-                            <td data-label="DATE">NONE</td>
-                            <td data-label="NATURE">NONE</td>
-                            <td data-label="ACTION TAKEN">NONE</td>
-                        </tr>
-                    <?php } ?>
+                        <template v-if="offenses == false">
+                            <tr>
+                                <td data-label="TYPE">NONE</td>
+                                <td data-label="DATE">NONE</td>
+                                <td data-label="NATURE">NONE</td>
+                                <td data-label="ACTION TAKEN">NONE</td>
+                            </tr>
+                        </template>
+                        <template v-else>
+                            <tr v-for="offense in offenses" :key="offense.id">
+                                <td data-label="TYPE" v-text="offense.offcom_type"></td>
+                                <td data-label="DATE" v-text="offense.offcom_date"></td>
+                                <td data-label="NATURE" v-text="offense.offcom_nature"></td>
+                                <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
-                <!-- OFFENSES AND COMMENDATIONS -->
-
-                <?php 
-                    $actions = $this->core_layout->getCurrentActions();
-                    $session_id = $this->core_layout->getCurrentEmployeeId();
-                    if(in_array("view_own_request", $this->core_layout->getCurrentActions()) AND $data->main->id != $session_id){ 
-                ?>
-                <!-- START SALARY HISTORY -->
-
-                <?php }elseif(in_array("view_own_request", $this->core_layout->getCurrentActions()) AND $data->main->id == $session_id){ ?>
+                <template v-if="salaries != 'not_allowed'">
                     <table class="responsive">
-                        <thead class="customsalary">
-                        <tr>
-                            <th scope="col" colspan="4">SALARY HISTORY</th>
-                        </tr>
-                        </thead>
-                        <thead>
-                        <tr>
-                            <th class="" scope="col" style="width: 13%">DATE</th>
-                            <th class="" scope="col" style="width: 15%">RATE</th>
-                            <th class="" scope="col">POSITION</th>
-                            <th class="" scope="col">REMARKS</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php 
-                        foreach ($data->salaries as $salaryIndex => $salary) { 
-                            if($salary->sal_rate != ""){
-                                $salary_rate = number_format(str_replace(',', '', $salary->sal_rate), 2, '.', ',');    
-                            }else{
-                                $salary_rate = $salary->sal_rate;
-                            }
-                            $grandTotal = floatval($main->basic_rate) + floatval($allowance);
-                        ?>
+                            <thead class="customsalary">
                             <tr>
-                                <td data-label="DATE"><?= $salary->sal_date ?></td>
-                                <td data-label="RATE">
-                                    <?= $salary_rate?>
-                                    <?php 
-                                        if($salary->sal_rate == $grandTotal && $salaryIndex == 0){
-                                                echo "<p class='m-0'><small><span class='m-badge m-badge--success m-badge--wide'>Current</span></small></p>";
-                                        }
-                                    ?>
-                                </td>
-                                <td data-label="POSITION"><?= $salary->sal_position ? $salary->sal_position : "<br>" ?></td>
-                                <td data-label="REMARKS"><?= $salary->sal_remarks ?></td>
+                                <th scope="col" colspan="4">SALARY HISTORY</th>
                             </tr>
-                        <?php } ?>
-
-                        <?php if (count($data->salaries) <= 0) { ?>
+                            </thead>
+                            <thead>
                             <tr>
-                                <td data-label="DATE">NONE</td>
-                                <td data-label="RATE">NONE</td>
-                                <td data-label="POSITION">NONE</td>
-                                <td data-label="REMARKS">NONE</td>
+                                <th class="" scope="col" style="width: 13%">DATE</th>
+                                <th class="" scope="col" style="width: 15%">RATE</th>
+                                <th class="" scope="col">POSITION</th>
+                                <th class="" scope="col">REMARKS</th>
                             </tr>
-                        <?php } ?>
-                        </tbody>
-                    </table>
-                <?php }else{ ?>
-                    <table class="responsive">
-                        <thead class="customsalary">
-                        <tr>
-                            <th scope="col" colspan="4">SALARY HISTORY</th>
-                        </tr>
-                        </thead>
-                        <thead>
-                        <tr>
-                            <th class="" scope="col" style="width: 13%">DATE</th>
-                            <th class="" scope="col" style="width: 15%">RATE</th>
-                            <th class="" scope="col">POSITION</th>
-                            <th class="" scope="col">REMARKS</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php 
-                        foreach ($data->salaries as $salaryIndex => $salary) { 
-                            if($salary->sal_rate != ""){
-                                $salary_rate = number_format(str_replace(',', '', $salary->sal_rate), 2, '.', ',');    
-                            }else{
-                                $salary_rate = $salary->sal_rate;
-                            }
-                            $grandTotal = floatval($main->basic_rate) + floatval($allowance);
-                        ?>
-                            <tr>
-                                <td data-label="DATE"><?= $salary->sal_date ?></td>
-                                <td data-label="RATE">
-                                    <?= $salary_rate?>
-                                    <?php 
-                                        if($salary->sal_rate == $grandTotal && $salaryIndex == 0){
-                                                echo "<p class='m-0'><small><span class='m-badge m-badge--success m-badge--wide'>Current</span></small></p>";
-                                        }
-                                    ?>
-                                </td>
-                                <td data-label="POSITION"><?= $salary->sal_position ? $salary->sal_position : "<br>" ?></td>
-                                <td data-label="REMARKS"><?= $salary->sal_remarks ?></td>
-                            </tr>
-                        <?php } ?>
-
-                        <?php if (count($data->salaries) <= 0) { ?>
-                            <tr>
-                                <td data-label="DATE">NONE</td>
-                                <td data-label="RATE">NONE</td>
-                                <td data-label="POSITION">NONE</td>
-                                <td data-label="REMARKS">NONE</td>
-                            </tr>
-                        <?php } ?>
-                        </tbody>
-                    </table>
-                <?php } ?>
-
+                            </thead>
+                            <tbody>
+                                <template v-if="salaries == false">
+                                    <tr>
+                                        <td data-label="DATE">NONE</td>
+                                        <td data-label="RATE">NONE</td>
+                                        <td data-label="POSITION">NONE</td>
+                                        <td data-label="REMARKS">NONE</td>
+                                    </tr>
+                                </template>
+                                <template v-else>
+                                    <tr v-for="(salary, index) in salaries" :key="index">
+                                        <td data-label="DATE" v-text="salary.sal_date"></td>
+                                        <td data-label="RATE">
+                                        <span v-text="formatSalaryRate(salary.sal_rate)">{{index}}</span>
+                                        <template v-if="index == 0">
+                                            <p class="m-0">
+                                            <small>
+                                                <span class="m-badge m-badge--success m-badge--wide">Current</span>
+                                            </small>
+                                            </p>
+                                        </template>
+                                        </td>
+                                        <td data-label="POSITION" v-text="salary.sal_position || '<br>'"></td>
+                                        <td data-label="REMARKS" v-text="salary.sal_remarks"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                </template>
                 <!-- SALARY HISTORY -->
 
                 <!-- START SALARY HISTORY -->
@@ -1407,26 +1117,44 @@
                         <th class="" scope="col">PAYROLL TYPE</th>
                         <th class="" scope="col">LEVEL / RANKING</th>
                         <th class="" scope="col">COMPANY</th>
-                        <th class="" scope="col">STATIONS</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr>
-                        <td data-label="DEPARTMENT"><label><?= $data->main->department_description ? $data->main->department_description : "None" ?></label></td>
-                        <td data-label="WORK MODE"><label><?= $data->main->work_mode ? $data->main->work_mode : "None" ?></label></td>
-                        <td data-label="PAYROLL TYPE"><label><?= $data->main->payroll_type ? $data->main->payroll_type : "None" ?></label></td>
-                        <td data-label="LEVEL / RANKING"><label><?= $data->main->level ? $data->main->level : "None" ?></label></td>
-                        <td data-label="COMPANY"><label><?= $data->main->company_id ? $data->main->company_id : "None"?></label></td>
-                        <td data-label="STATIONS"><ul>
-                        <?php if(count($data->station) != 0){
-                            foreach($data->station as $sites){ ?>
-                                <li><?php echo (isset($sites->location_name) && $sites->location_name) ? $sites->location_name : "N/A"; ?></li>
-                        <?php
-                            }
-                        }
-                        ?>
-                        </ul></td>
+                        <td data-label="DEPARTMENT" v-text="main.department_description || 'None'"></td>
+                        <td data-label="WORK MODE" v-text="main.work_mode || 'None'"></td>
+                        <td data-label="PAYROLL TYPE" v-text="main.payroll_type || 'None'"></td>
+                        <td data-label="LEVEL / RANKING" v-text="main.level || 'None'"></td>
+                        <td data-label="COMPANY" v-text="main.company_id || 'None'"></td>
                     </tr>
+                    </tbody>
+                </table>
+
+                <table class="responsive">
+                    <thead class="customsalary">
+                        <tr>
+                            <th class="" scope="col">CURRENT STATION / LOCATION</th>
+                            <th class="" scope="col">STATIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                        <td data-label="CURRENT STATION / LOCATION">
+                            <span v-text="default_station.description || 'N/A'"></span>
+                        </td>
+                        <td data-label="STATIONS">
+                            <ul class="row">
+                                <template v-if="stations != false">
+                                    <li v-for="(site, index) in stations" :key="index">
+                                        <span v-text="site.location_name || 'N/A'"></span>
+                                    </li>
+                                </template>
+                                <template v-else>
+                                    <span v-text="'N/A'"></span>
+                                </template>
+                            </ul>
+                        </td>
+                        </tr>
                     </tbody>
                 </table>
                 <!-- EMPLOYEE INFORMATION -->
@@ -1448,24 +1176,10 @@
                     </thead>
                     <tbody>
                     <tr>
-                        <td data-label="DATE REGULARIZED"><label><?= ($data->main->date_regular == "0000-00-00" OR $data->main->date_regular == NULL) ? "N/A" : $data->main->date_regular ?></label></td>
-                        <td data-label="PROBEE END DATE">
-                            <label>
-                                <?php
-                                    echo $data->main->date_end_prob;
-
-                                    /** commented out for showing of auto generate probe end date */
-                                    // if($data->main->work_status == "PROBATIONARY"){
-                                    //     echo "N/A";
-                                    // }else{
-                                    //     echo $data->main->date_end_prob;
-                                    // }  
-                                    /** commented out for showing of auto generate probe end date */
-                                //($data->main->date_end_prob == "0000-00-00" OR $data->main->date_end_prob == NULL) ? "N/A" : $data->main->date_end_prob?>
-                            </label>
-                        </td>
-                        <td data-label="DATE SEPARATED"><label><?= ($data->main->date_end == "0000-00-00" OR $data->main->date_end == NULL) ? "N/A" : $data->main->date_end ?></label></td>
-                        <td data-label="REASON FOR SEPARATION"><label><?= $data->main->resign_reason ? $data->main->resign_reason : "N/A" ?></label></td>
+                        <td data-label="DATE REGULARIZED" v-text="formatDate(main.date_regular)"></td>
+                        <td data-label="PROBEE END DATE" v-text="formatDate(main.date_end_prob)"></td>
+                        <td data-label="DATE SEPARATED" v-text="formatDate(main.date_end)"></td>
+                        <td data-label="REASON FOR SEPARATION" v-text="main.resign_reason ? main.resign_reason : 'N/A'"></td>
                     </tr>
                     </tbody>
                 </table>
@@ -1488,10 +1202,10 @@
                     <tbody>
 
                     <tr>
-                        <td data-label="POSITION"><label><?= $data->main->position ? $data->main->position : "N/A" ?></label></td>
-                        <td data-label="TYPE"><label><?= $data->main->level ? $data->main->level : "N/A" ?></label></td>
-                        <td data-label="DEPARTMENT"><label><?= $data->main->department_description ? $data->main->department_description : "N/A" ?></label></td>
-                        <td data-label="COMPANY"><label><?= $data->main->company_id ? $data->main->company_id : "N/A" ?></label></td>
+                        <td data-label="POSITION" v-text="main.position ? main.position : 'N/A'"></td>
+                        <td data-label="TYPE" v-text="main.level ? main.level : 'N/A'"></td>
+                        <td data-label="DEPARTMENT" v-text="main.department_description ? main.department_description : 'N/A'"></td>
+                        <td data-label="COMPANY" v-text="main.company_id ? main.company_id : 'N/A'"></td>
                     </tr>
                     </tbody>
                 </table>
@@ -1512,7 +1226,7 @@
                 </div>
             </div>
         </div>
-        <div id="collapseJob" class="collapse" role="tabpanel" aria-labelledby="headingJob" data-parent="#accordionOtherAdditionalInfo">
+        <div id="collapseJob" class="collapse" :class="{show :activeSection == 'jobDescription'}" role="tabpanel" aria-labelledby="headingJob" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
                 <table class="responsive">
                     <tbody>
@@ -1544,10 +1258,6 @@
 
 <script type="text/javascript">
 $(document).ready(function(){
-    $("#accountability_table_mobile").dataTable({
-        pageLength : 5,
-        bLengthChange : false
-    });
 
     if(screen.width <= 450){
         $("#accountability_table #returned").removeClass("text-center");

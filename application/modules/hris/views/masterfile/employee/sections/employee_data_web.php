@@ -14,20 +14,6 @@
     }
   }
 
-    .bg-a9{
-        background: #a9a8a8;
-        border-color: #a9a8a8;
-        border: 1px solid #a9a8a8 !important;
-    }
-
-    .bg-a9 .m-portlet__head {
-        background-color: #a9a8a8;
-        border-color: #a9a8a8;
-    }
-
-    .bg-a9 .m-portlet__head-text{
-        color: #fff !important;
-    }
 
   @media screen and (max-width: 640px){
     #accountability_table_mobile_wrapper .col-sm-12.col-md-6{
@@ -615,7 +601,6 @@
                     </tr>
                     </thead>
                     <tbody>
-                        
                         <template v-if="works == false">
                             <tr>
                                 <td data-label="COMPANY">None</td>
@@ -681,7 +666,6 @@
                                 <td data-label="GIVEN DATE" v-text="award.award_date"></td>
                             </tr>
                         </template>
-
                     </tbody>
                 </table>
             </div>
@@ -928,7 +912,7 @@
         <div id="empLegalHistory-head" class="card-header m-portlet m-portlet--bordered m-portlet--unair bg-a9 m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
             <div class="m-portlet__head">
                 <div class="m-portlet__head-caption">
-                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse" :class="{show :activeSection == 'empLegalHistory'}" data-parent="#accordionMain" href="#empLegalHistory-body" aria-expanded="false" aria-controls="empLegalHistory-body">
+                    <a class="m-portlet__nav-link collapsed" data-toggle="collapse"  data-parent="#accordionMain" href="#empLegalHistory-body" aria-expanded="false" aria-controls="empLegalHistory-body">
                         <h5 class="m-portlet__head-text">
                             <span>Legal History / Records</span>
                             <i class="la pull-right la-angle-down"></i>
@@ -937,7 +921,7 @@
                 </div>
             </div>
         </div>
-        <div id="empLegalHistory-body" class="collapse" aria-labelledby="empLegalHistory-head" data-parent="#accordionMain">
+        <div id="empLegalHistory-body" class="collapse" :class="{show :activeSection == 'empLegalHistory'}" aria-labelledby="empLegalHistory-head" data-parent="#accordionMain">
             <div class="card-body">
                 <table class="responsive">
                     <thead>
@@ -1164,11 +1148,11 @@
                     </thead>
                     <tbody>
                     <tr>
-                        <td data-label="DEPARTMENT"><?= $data->main->department_description ? $data->main->department_description : "None" ?></td>
-                        <td data-label="WORK MODE"><?= $data->main->work_mode ? $data->main->work_mode : "None" ?></td>
-                        <td data-label="PAYROLL TYPE"><?= $data->main->payroll_type ? $data->main->payroll_type : "None" ?></td>
-                        <td data-label="LEVEL / RANKING"><?= $data->main->level ? $data->main->level : "None" ?></td>
-                        <td data-label="COMPANY"><?= $data->main->company_id ? $data->main->company_id : "None"?></td>
+                        <td data-label="DEPARTMENT" v-text="main.department_description || 'None'"></td>
+                        <td data-label="WORK MODE" v-text="main.work_mode || 'None'"></td>
+                        <td data-label="PAYROLL TYPE" v-text="main.payroll_type || 'None'"></td>
+                        <td data-label="LEVEL / RANKING" v-text="main.level || 'None'"></td>
+                        <td data-label="COMPANY" v-text="main.company_id || 'None'"></td>
                     </tr>
                     </tbody>
                 </table>
@@ -1219,22 +1203,10 @@
                     </thead>
                     <tbody>
                     <tr>
-                        <td data-label="DATE REGULARIZED"><?= ($data->main->date_regular == "0000-00-00" OR $data->main->date_regular == NULL) ? "N/A" : $data->main->date_regular ?></td>
-                        <td data-label="PROBEE END DATE">
-                            <?php
-                                echo $data->main->date_end_prob;
-
-                                /** commented out for showing of auto generate probe end date */
-                                // if($data->main->work_status == "PROBATIONARY"){
-                                //     echo "N/A";
-                                // }else{
-                                //     echo $data->main->date_end_prob;
-                                // }  
-                                /** commented out for showing of auto generate probe end date */
-                            //($data->main->date_end_prob == "0000-00-00" OR $data->main->date_end_prob == NULL) ? "N/A" : $data->main->date_end_prob?>
-                        </td>
-                        <td data-label="DATE SEPARATED"><?= ($data->main->date_end == "0000-00-00" OR $data->main->date_end == NULL) ? "N/A" : $data->main->date_end ?></td>
-                        <td data-label="REASON FOR SEPARATION"><?= $data->main->resign_reason ? $data->main->resign_reason : "N/A" ?></td>
+                        <td data-label="DATE REGULARIZED" v-text="formatDate(main.date_regular)"></td>
+                        <td data-label="PROBEE END DATE" v-text="formatDate(main.date_end_prob)"></td>
+                        <td data-label="DATE SEPARATED" v-text="formatDate(main.date_end)"></td>
+                        <td data-label="REASON FOR SEPARATION" v-text="main.resign_reason ? main.resign_reason : 'N/A'"></td>
                     </tr>
                     </tbody>
                 </table>
@@ -1256,10 +1228,10 @@
                     <tbody>
 
                     <tr>
-                        <td data-label="POSITION"><?= $data->main->position ? $data->main->position : "N/A" ?></td>
-                        <td data-label="TYPE"><?= $data->main->level ? $data->main->level : "N/A" ?></td>
-                        <td data-label="DEPARTMENT"><?= $data->main->department_description ? $data->main->department_description : "N/A" ?></td>
-                        <td data-label="COMPANY"><?= $data->main->company_id ? $data->main->company_id : "N/A" ?></td>
+                        <td data-label="POSITION" v-text="main.position ? main.position : 'N/A'"></td>
+                        <td data-label="TYPE" v-text="main.level ? main.level : 'N/A'"></td>
+                        <td data-label="DEPARTMENT" v-text="main.department_description ? main.department_description : 'N/A'"></td>
+                        <td data-label="COMPANY" v-text="main.company_id ? main.company_id : 'N/A'"></td>
                     </tr>
                     </tbody>
                 </table>

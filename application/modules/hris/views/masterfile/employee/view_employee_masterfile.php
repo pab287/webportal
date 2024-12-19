@@ -41,6 +41,21 @@
         }
     }
 
+    .bg-a9{
+        background: #a9a8a8;
+        border-color: #a9a8a8;
+        border: 1px solid #a9a8a8 !important;
+    }
+
+    .bg-a9 .m-portlet__head {
+        background-color: #a9a8a8;
+        border-color: #a9a8a8;
+    }
+
+    .bg-a9 .m-portlet__head-text{
+        color: #fff !important;
+    }
+
     table tbody tr.highlight td { font-weight: 600; }
     table tbody tr.highlight { background-color: #F2F3F88F; }
 </style>
@@ -227,7 +242,7 @@
                                 ?>
                                 <a class="m-nav__link btnPrint"
                                    href=""
-                                   onclick="event.preventDefault(); printEmployeeDataSheet(this, '<?= $avatar ?>', info, '<?= $data->user->display_name ?>', '<?= $timestamp ?>')">
+                                   onclick="event.preventDefault(); printFetch(this, '<?= $avatar ?>', info, '<?= $data->user->display_name ?>', '<?= $timestamp ?>')">
                                     <i class="m-nav__link-icon la la-print"></i>
                                     <span class="m-nav__link-text">Print Data Sheet</span>
                                 </a>
@@ -404,19 +419,15 @@
                         </div>
                     </div>
                 </div>
-                <div class="m-portlet__body data-sheet">
-
+                <div id="data-sheet" class="m-portlet__body data-sheet">
                     <!-- for 201 printing -->
-
-                    <!-- <div class="m-portlet__section web-view" id="to-print">
-                        
-                    </div>
-                    
                     <div class="m-portlet__section web-view" id="to-print">
-                        
-                    </div> -->
+                    <?php $this->load->view("hris/masterfile/employee/sections/personal_information"); ?>
+                    </div>
+                    <div class="m-portlet__section web-view" id="to-print">
+                        <?php $this->load->view("hris/masterfile/employee/sections/employment_data"); ?>
+                    </div>
                     <!-- for 201 printing -->
-
                     <div id="hide-in-print" class="m-portlet__section web-view">
                         <?php $this->load->view("hris/masterfile/employee/sections/employee_data_web", $data, FALSE); ?>
                     </div>
