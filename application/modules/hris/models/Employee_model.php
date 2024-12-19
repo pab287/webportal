@@ -2015,7 +2015,7 @@
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
                     $resultset["toastr_state"] = "warning";
-                    $this->core_layout->setEventLog("Failed to create directory folder for the uploaded file!","file upload", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Failed to create directory folder for the uploaded file!","file upload", "error", "gcchris", "system");
                 } else {
                     $config = array();
                     $config['upload_path'] = $imagesPath;
@@ -2049,19 +2049,19 @@
                                 $resultset["response"] = false;
                                 $resultset["toastr_msg"] = "Error updating employee profile image!";
                                 $resultset["toastr_state"] = "error";
-                                $this->core_layout->setEventLog("Employee Avatar - Error updating employee profile image.","file upload", "error", "gcchris", "user");
+                                $this->core_layout->setEventLog("Employee Avatar - Error updating employee profile image.","file upload", "error", "gcchris", "system");
                             }
                         } else {
                             $resultset["response"] = false;
                             $resultset["toastr_msg"] = "Image upload to specific path failed!";
                             $resultset["toastr_state"] = "error";
-                            $this->core_layout->setEventLog("Employee Avatar - Image upload to specific path failed.","file upload", "error", "gcchris", "user");
+                            $this->core_layout->setEventLog("Employee Avatar - Image upload to specific path failed.","file upload", "error", "gcchris", "system");
                         }
                     } else {
                         $resultset["response"] = false;
                         $resultset["toastr_msg"] = $data["message"];
                         $resultset["toastr_state"] = "error";
-                        $this->core_layout->setEventLog("Employee Avatar - ".$data["message"],"file upload", "error", "gcchris", "user");
+                        $this->core_layout->setEventLog("Employee Avatar - ".$data["message"],"file upload", "error", "gcchris", "system");
                     }
                 }
 
@@ -2069,7 +2069,7 @@
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Employee data not found!";
                 $resultset["toastr_state"] = "error";
-                $this->core_layout->setEventLog("Employee Avatar - Employee data not found.","file upload", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Employee Avatar - Employee data not found.","file upload", "error", "gcchris", "system");
             }
 
             return $resultset;
@@ -2159,7 +2159,7 @@
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
                     $resultset["toastr_state"] = "warning";
-                    $this->core_layout->setEventLog("Employee Training - Failed to create directory folder for the uploaded file.","file upload", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Employee Training - Failed to create directory folder for the uploaded file.","file upload", "error", "gcchris", "system");
                 } else {
                     $config = array();
                     $config['upload_path'] = $imagesPath;
@@ -2181,20 +2181,20 @@
                             $resultset["response"] = false;
                             $resultset["toastr_msg"] = "File upload to specific path failed!";
                             $resultset["toastr_state"] = "error";
-                            $this->core_layout->setEventLog("Employee Training - File upload to specific path failed.","file upload", "error", "gcchris", "user");
+                            $this->core_layout->setEventLog("Employee Training - File upload to specific path failed.","file upload", "error", "gcchris", "system");
                         }
                     } else {
                         $resultset["response"] = false;
                         $resultset["toastr_msg"] = "File upload failed!";
                         $resultset["toastr_state"] = "error";
-                        $this->core_layout->setEventLog("Employee Training - File upload failed.","file upload", "error", "gcchris", "user");
+                        $this->core_layout->setEventLog("Employee Training - File upload failed.","file upload", "error", "gcchris", "system");
                     }
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Employee data not found!";
                 $resultset["toastr_state"] = "error";
-                $this->core_layout->setEventLog("Employee Training - Employee data not found.","file upload", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Employee Training - Employee data not found.","file upload", "error", "gcchris", "system");
             }
 
             return $resultset;
@@ -2240,26 +2240,26 @@
                             $resultset["response"] = false;
                             $resultset["toastr_msg"] = "File upload to specific path failed!";
                             $resultset["toastr_state"] = "error";
-                            $this->core_layout->setEventLog("Medical History - File upload to specific path failed.","file upload", "error", "gcchris", "user");
+                            $this->core_layout->setEventLog("Medical History - File upload to specific path failed.","file upload", "error", "gcchris", "system");
                         }
                     } else {
                         $resultset["response"] = false;
                         $resultset["toastr_msg"] = "File upload failed!";
                         $resultset["toastr_state"] = "error";
-                        $this->core_layout->setEventLog("Medical History - File upload failed.","file upload", "error", "gcchris", "user");
+                        $this->core_layout->setEventLog("Medical History - File upload failed.","file upload", "error", "gcchris", "system");
                     }
 
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
                     $resultset["toastr_state"] = "warning";
-                    $this->core_layout->setEventLog("Medical History - Failed to create directory folder for the uploaded file.","file upload", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Medical History - Failed to create directory folder for the uploaded file.","file upload", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Employee data not found!";
                 $resultset["toastr_state"] = "error";
-                $this->core_layout->setEventLog("Medical History - Employee data not found.","file upload", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Medical History - Employee data not found.","file upload", "error", "gcchris", "system");
             }
 
             return $resultset;
@@ -2287,7 +2287,7 @@
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
                     $resultset["toastr_state"] = "warning";
-                    $this->core_layout->setEventLog("Employee Offense - Failed to create directory folder for the uploaded file.","file upload", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Employee Offense - Failed to create directory folder for the uploaded file.","file upload", "error", "gcchris", "system");
                 } else {
                     $config = array();
                     $config['upload_path'] = $imagesPath;
@@ -2309,20 +2309,20 @@
                             $resultset["response"] = false;
                             $resultset["toastr_msg"] = "File upload to specific path failed!";
                             $resultset["toastr_state"] = "error";
-                            $this->core_layout->setEventLog("Employee Offense - File upload to specific path failed.","file upload", "error", "gcchris", "user");
+                            $this->core_layout->setEventLog("Employee Offense - File upload to specific path failed.","file upload", "error", "gcchris", "system");
                         }
                     } else {
                         $resultset["response"] = false;
                         $resultset["toastr_msg"] = "File upload failed!";
                         $resultset["toastr_state"] = "error";
-                        $this->core_layout->setEventLog("Employee Offense - File upload failed.","file upload", "error", "gcchris", "user");
+                        $this->core_layout->setEventLog("Employee Offense - File upload failed.","file upload", "error", "gcchris", "system");
                     }
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Employee data not found!";
                 $resultset["toastr_state"] = "error";
-                $this->core_layout->setEventLog("Employee Offense - Employee data not found", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Employee Offense - Employee data not found", "error", "gcchris", "system");
             }
 
             return $resultset;
@@ -2367,26 +2367,26 @@
                             $resultset["response"] = false;
                             $resultset["toastr_msg"] = "File upload to specific path failed!";
                             $resultset["toastr_state"] = "error";
-                            $this->core_layout->setEventLog("Documents - File upload to specific path failed.","file upload", "error", "gcchris", "user");
+                            $this->core_layout->setEventLog("Documents - File upload to specific path failed.","file upload", "error", "gcchris", "system");
                         }
                     } else {
                         $resultset["response"] = false;
                         $resultset["toastr_msg"] = "File upload failed!";
                         $resultset["toastr_state"] = "error";
-                        $this->core_layout->setEventLog("Documents - File upload failed.","file upload", "error", "gcchris", "user");
+                        $this->core_layout->setEventLog("Documents - File upload failed.","file upload", "error", "gcchris", "system");
                     }
 
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
                     $resultset["toastr_state"] = "warning";
-                    $this->core_layout->setEventLog("Documents - Failed to create directory folder for the uploaded file.","file upload", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Documents - Failed to create directory folder for the uploaded file.","file upload", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Employee data not found!";
                 $resultset["toastr_state"] = "error";
-                $this->core_layout->setEventLog("Documents - Employee data not found.","file upload", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Documents - Employee data not found.","file upload", "error", "gcchris", "system");
             }
 
             return $resultset;
@@ -2414,7 +2414,7 @@
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
                     $resultset["toastr_state"] = "warning";
-                    $this->core_layout->setEventLog("Performance - Failed to create directory folder for the uploaded file.","file upload", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Performance - Failed to create directory folder for the uploaded file.","file upload", "error", "gcchris", "system");
                 } else {
                     $config = array();
                     $config['upload_path'] = $imagesPath;
@@ -2436,20 +2436,20 @@
                             $resultset["response"] = false;
                             $resultset["toastr_msg"] = "File upload to specific path failed!";
                             $resultset["toastr_state"] = "error";
-                            $this->core_layout->setEventLog("Performance - File upload to specific path failed.","file upload", "error", "gcchris", "user");
+                            $this->core_layout->setEventLog("Performance - File upload to specific path failed.","file upload", "error", "gcchris", "system");
                         }
                     } else {
                         $resultset["response"] = false;
                         $resultset["toastr_msg"] = "File upload failed!";
                         $resultset["toastr_state"] = "error";
-                        $this->core_layout->setEventLog("Performance - File upload failed.","file upload", "error", "gcchris", "user");
+                        $this->core_layout->setEventLog("Performance - File upload failed.","file upload", "error", "gcchris", "system");
                     }
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Employee data not found!";
                 $resultset["toastr_state"] = "error";
-                $this->core_layout->setEventLog("Performance - Employee data not found.","file upload", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Performance - Employee data not found.","file upload", "error", "gcchris", "system");
             }
 
             return $resultset;
@@ -2795,7 +2795,7 @@
                                 $this->core_layout->setEventLog("Updated personal information.","update", "success", "gcchris", "user");
                             } else {
                                 $resultset["response"] = false;
-                                $this->core_layout->setEventLog("Error updating personal information.","update", "error", "gcchris", "user");
+                                $this->core_layout->setEventLog("Error updating personal information.","update", "error", "gcchris", "system");
                             }
                         }else{
                             $resultset["response"] = false;
@@ -3056,13 +3056,13 @@
                             $this->core_layout->setEventLog("Updated personal information.","update", "success", "gcchris", "user");
                         } else {
                             $resultset["response"] = false;
-                            $this->core_layout->setEventLog("Error updating personal information.","update", "error", "gcchris", "user");
+                            $this->core_layout->setEventLog("Error updating personal information.","update", "error", "gcchris", "system");
                         }
                     }
                 }
             } else {
                 $resultset["response"] = false;
-                $this->core_layout->setEventLog("Error updating personal information.","update", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Error updating personal information.","update", "error", "gcchris", "system");
             }
             return $resultset;
         }
@@ -3120,18 +3120,18 @@
                         $resultset["response"] = true;
                         $resultset["data"] = $this->getEmployeeData($employeeId);
                         $changes = $this->logChanges($currentEmployeeData, $post);
-                        $this->core_layout->setEventLog("Updated personal information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname." db id no. ".$employeeId.  $changes,"update", "success", "gcchris", "user");
+                        $this->core_layout->setEventLog("Updated personal information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname." ".$changes,"update", "success", "gcchris", "user");
                     } else {
                         $resultset["response"] = false;
-                        $this->core_layout->setEventLog("Error updating personal information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname." db id no. ".$employeeId,"update", "error", "gcchris", "user");
+                        $this->core_layout->setEventLog("Error updating personal information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname,"update", "error", "gcchris", "system");
                     }
                 } else {
                     $resultset["response"] = false;
-                    $this->core_layout->setEventLog("Error updating personal information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname." db id no. ".$employeeId,"update", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Error updating personal information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname,"update", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
-                $this->core_layout->setEventLog("Error updating personal information of employee","update", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Error updating personal information of employee","update", "error", "gcchris", "system");
             }
             return $resultset;
         }
@@ -3159,18 +3159,18 @@
                         $resultset["response"] = true;
                         $changes = $this->logChanges($currentEmployeeData, $post);
                         $resultset["data"] = $this->getEmployeeData($employeeId);
-                        $this->core_layout->setEventLog("Updated personal information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname." db id no. ".$employeeId.$changes,"update", "success", "gcchris", "user");
+                        $this->core_layout->setEventLog("Updated personal information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname." ".$changes,"update", "success", "gcchris", "user");
                     } else {
                         $resultset["response"] = false;
-                        $this->core_layout->setEventLog("Error updating additional information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname." db id no. ".$employeeId,"update", "error", "gcchris", "user");
+                        $this->core_layout->setEventLog("Error updating additional information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname,"update", "error", "gcchris", "system");
                     }
                 } else {
                     $resultset["response"] = false;
-                    $this->core_layout->setEventLog("Error updating additional information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname." db id no. ".$employeeId,"update", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Error updating additional information of employee ".$resultset['data']->firstname." ".$resultset['data']->lastname,"update", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
-                $this->core_layout->setEventLog("Error updating additional information of employee","update", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Error updating additional information of employee","update", "error", "gcchris", "system");
             }
             return $resultset;
         }
@@ -3527,19 +3527,20 @@
 
                 $post = array_map('strtoupper', $post);
                 $saved = $this->db->insert($this->employeeDependentsTable, $post);
+                $empName = $this->getEmployeeName($post['emp_id']);
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee Dependent has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "inserted new dependent of employee db id no. ".$post['emp_id'],"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "inserted new dependent of employee ".$empName["name"],"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee dependent!";
-                    $this->core_layout->setEventLog("error inserting new dependent of employee db id no. ".$post['emp_id'],"insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Error inserting new dependent of employee ".$empName['name'],"insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Error, No post data found!";
-                $this->core_layout->setEventLog("error inserting new dependent of employee","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Error inserting new dependent of employee","insert", "error", "gcchris", "system");
             }
             return $resultset;
         }
@@ -3556,20 +3557,21 @@
 
                 $post = array_map('strtoupper', $post);
                 $saved = $this->db->insert($this->employeeEducationTable, $post);
+                $empName = $this->getEmployeeName($post['emp_id']);
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee educational background has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "inserted educational background".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted ".$post['educ_level_type']." educational background for ".$empName['name'],"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee educational background!";
-                    $this->core_layout->setEventLog("error inserting educational background","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Error inserting educational background","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Error, No post data found!";
-                $this->addEventLog("error","No post data found inserting new employee educational background data.",$this->employeeEducationTable,0);
-                $this->core_layout->setEventLog("error inserting educational background","insert", "error", "gcchris", "user");
+                $this->addEventLog("Error","No post data found inserting new employee educational background data.",$this->employeeEducationTable,0);
+                $this->core_layout->setEventLog("Error inserting educational background","insert", "error", "gcchris", "system");
             }
             return $resultset;
         }
@@ -3600,7 +3602,7 @@
                         $loggedIn = $this->core_layout->getCurrentSession();
                         $post["add_date"] = date("Y-m-d H:i:s");
                         $post["add_by"] = $loggedIn["emp_id"];
-        
+                        $type = $post['license_type'];
                         /**
                          * --> START
                          * 
@@ -3629,20 +3631,20 @@
         
                         $post = array_map('strtoupper', $post);
                         $saved = $this->db->insert($this->employeeLicensureTable, $post);
+                        $empName = $this->getEmployeeName($post['emp_id']);
                         if ($saved) {
                             $resultset["response"] = true;
                             $resultset["toastr_msg"] = "Employee licensure exam and certification has been added successfully.";
-                            $this->core_layout->setEventLog("User ".$this->loggedInUsername. "inserted new licensure exam and ceritication of employee db id no. ".$post['emp_id'],"insert", "success", "gcchris", "user");
+                            $this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new licensure exam and certification type: ".$type." of employee ".$empName['name'] ." ","insert", "success", "gcchris", "user");
                         } else {
                             $resultset["response"] = false;
                             $resultset["toastr_msg"] = "Failed to save employee licensure exam and certification!";
-                            $this->core_layout->setEventLog("Failed to save employee licensure exam and certification.","insert", "error", "gcchris", "user");
-                            
+                            $this->core_layout->setEventLog("Failed to save employee licensure exam and certification.","insert", "error", "gcchris", "system");
                         }
                     } else {
                         $resultset["response"] = false;
                         $resultset["toastr_msg"] = "Error, No post data found!";
-                        $this->core_layout->setEventLog("Licensure and certification - Error, No post data found.","insert", "error", "gcchris", "user");
+                        $this->core_layout->setEventLog("Licensure and certification - Error, No post data found.","insert", "error", "gcchris", "system");
                     }
                 } else {
                     $resultset["response"] = false;
@@ -3692,20 +3694,21 @@
 
                 $post = array_map('strtoupper', $post);
                 $saved = $this->db->insert($this->employeeDriverLicenseTable, $post);
+                $empName = $this->getEmployeeName($post['emp_id']);
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee driver's license has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Added new employee driver license details.".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new employee driver license, license no: ".$post['license_no']. " for employee ".$empName['name'],"insert", "success", "gcchris", "user");
 
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee driver's license!";
-                    $this->core_layout->setEventLog("Failed to save employee driver's license!","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Failed to save employee driver's license!","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Error, No post data found!";
-                $this->core_layout->setEventLog("Driver's License - Error, No post data found","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Driver's License - Error, No post data found","insert", "error", "gcchris", "system");
             }
             return $resultset;
         }
@@ -3722,10 +3725,11 @@
 
                 $post = array_map('strtoupper', $post);
                 $saved = $this->db->insert($this->employeeWorkExperienceTable, $post);
+                $empName = $this->getEmployeeName($post['emp_id']);
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee work experience has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Added new employee work experience details.".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new employee work experience. Company.".$this->db->insert_id(),"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee work experience!";
