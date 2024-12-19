@@ -869,7 +869,6 @@ function printEmployeeDataSheet(element, avatar, info, user, timestamp) {
     setTimeout(function () {
         newWin.close();
     }, 1500);
-    
 }
 
 
