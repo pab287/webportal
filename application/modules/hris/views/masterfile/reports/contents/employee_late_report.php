@@ -123,7 +123,7 @@
         </form>
     </div>
     <div class="col">
-        
+
         <div class="m-portlet m-portlet--bordered m-portlet--rounded">
             <div id="filteredLateReport" class="m-portlet__body">
                 <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll table-responsive">

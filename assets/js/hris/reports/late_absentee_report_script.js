@@ -11,7 +11,10 @@ const hrisFilterAbsenteeReport = $("#frm-filter-hris-absentee_report");
 const dtTableAbsentee = $("#table-absentee_report");
 const modalAbsenteePreview = $("#modalAbsenteePreview");
 
-let dtTableLateReport, dtTableAbsenteeReport;
+const hrisFilterLateAbsenteeReport = $("#frm-filter-hris-late_absentee_report");
+const dtTableLateAbsentee = $("#table-late_absentee_report");
+
+let dtTableLateReport, dtTableAbsenteeReport, dtTableLateAbsenteeReport;
 
 let filterOptions = {};
 let filterOptionsAbsentee = {};
@@ -105,6 +108,68 @@ const vmLateReport = new Vue({
 const vmAbsenteeReport = new Vue({
     el: "#tempFilterByAbsenteeReport",
     data: { filter_by: "date_range" },
+    watch: {
+        filter_by(value) {
+            const currentElement = this.$el;
+            if (value === 'date_range') {
+                setTimeout(() => this.renderRangeDatePicker(), 500);
+            } else {
+                setTimeout(() => {
+                    $(currentElement).find("select[name='filter_month']")
+                    .select2({
+                        width: '100%',
+                        data: months,
+                        placeholder: 'Search',
+                        allowClear: true
+                    })
+                    .on('select2:select', (e) => $(e.target).validate())
+                    .on('select2:unselect', (e) => $(e.target).validate()); 
+
+                    $(currentElement).find("select[name='filter_year']")
+                    .select2({
+                        width: '100%',
+                        data: _years,
+                        placeholder: 'Search',
+                        allowClear: true
+                    })
+                    .on('select2:select', (e) => $(e.target).validate())
+                    .on('select2:unselect', (e) => $(e.target).validate()); 
+                }, 250);
+            }
+        }
+    }, methods: {
+        renderRangeDatePicker(){
+            const currentElement = this.$el;
+            const dtPickerElement = $(currentElement).find("#date-picker")
+            .daterangepicker({
+                buttonClasses: 'm-btn btn',
+                applyClass: 'btn-primary',
+                cancelClass: 'btn-secondary',
+                locale: {
+                    format: 'MM/DD/YYYY'
+                }, maxDate: new Date,
+            })
+            .on('apply.daterangepicker', function (ev, picker) {
+                const tempStartDate = picker.startDate.format('MMM DD, YYYY');
+                const tempEndDate = picker.endDate.format('MMM DD, YYYY');
+                const tempFormat = tempStartDate + ' - ' + tempEndDate;
+                const dtRange = $(currentElement).find("#date-range");
+                dtRange.val(tempFormat);
+                setTimeout( function () { dtRange.validate(); }, 500 );
+            });
+
+            return dtPickerElement;
+        }
+    },
+    mounted(){
+        this.renderRangeDatePicker();
+    }
+});
+
+
+const vmLateAbsenteeReport = new Vue({
+    el: "#tempFilterByLateAbsenteeReport",
+    data: { filter_by: "date_range", report_type: "late" },
     watch: {
         filter_by(value) {
             const currentElement = this.$el;
@@ -502,6 +567,126 @@ if(typeof hrisFilterAbsenteeReport !== "undefined" && hrisFilterAbsenteeReport.l
     });
 }
 
+if(typeof hrisFilterLateAbsenteeReport !== "undefined" && hrisFilterLateAbsenteeReport.length == 1){
+    hrisFilterLateAbsenteeReport.find("select#company")
+    .select2({
+        width: '100%',
+        data: _companies,
+        placeholder: "Search",
+        allowClear: true,
+    }).on("select2:select", function (e) {
+        const tempDepartmentSelector = hrisFilterLateAbsenteeReport.find("select#department");
+        const tempEmployeeSelector = hrisFilterLateAbsenteeReport.find("select#employee");
+        const tempPayrollGroupSelector = hrisFilterLateAbsenteeReport.find("select#payroll_group");
+
+        tempSelectorClear(tempDepartmentSelector);
+        tempSelectorClear(tempEmployeeSelector);
+        tempSelectorClear(tempPayrollGroupSelector);
+        
+        $(e.target).validate();
+    }).on("select2:unselect", function (e) {
+        const tempDepartmentSelector = hrisFilterLateAbsenteeReport.find("select#department");
+        const tempEmployeeSelector = hrisFilterLateAbsenteeReport.find("select#employee");
+        const tempPayrollGroupSelector = hrisFilterLateAbsenteeReport.find("select#payroll_group");
+
+        tempSelectorClear(tempDepartmentSelector);
+        tempSelectorClear(tempEmployeeSelector);
+        tempSelectorClear(tempPayrollGroupSelector);
+    });
+
+    hrisFilterLateAbsenteeReport.find("select#department")
+    .select2({
+        width: '100%',
+        placeholder: "Search",
+        allowClear: true,
+        ajax: {
+            url: baseUrl('hris/reports/get_select2_department_data'),
+            dataType: 'json',
+            global: false,
+            delay: 250,
+            data: function ({ term }) {
+                return { q: term, company_id: hrisFilterLateAbsenteeReport.find("select#company").val() };
+            },
+            processResults: function (data) { return data; }
+        }, language: { errorLoading: function () { return "Searching..." } }
+    });
+
+    hrisFilterLateAbsenteeReport.find("select#employee")
+    .select2({
+        width: '100%',
+        placeholder: "Search",
+        ajax: {
+            url: baseUrl('hris/reports/get_select2_employee_data'),
+            dataType: 'json',
+            global: false,
+            delay: 250,
+            data: function (params) {
+                params.q = params.term;
+                params.company_id = hrisFilterLateAbsenteeReport.find("select#company").val();
+                params.department_id = hrisFilterLateAbsenteeReport.find("select#department").val(); 
+                return params;
+            },
+            processResults: function (data) {
+                return data;
+            }
+        }, language: { errorLoading: function () { return "Searching..." } }
+    });
+
+    hrisFilterLateAbsenteeReport.find("select#payroll_group").select2({
+        placeholder: 'Search',
+        width: '100%',
+        allowClear: true,
+        minimumInputLength: 3,
+        ajax: {
+            url: siteUrl("hris/reports/select_payroll_group"),
+            dataType: "json",
+            type: 'get',
+            delay: 250,
+            global: false,
+            data: function (params) {
+                params.company_id = hrisFilterLateAbsenteeReport.find("select#company").val();
+                return params;
+            }, 
+            processResults: function (data) {
+                return data;
+            }
+        }
+    }).on("select2:select", function (e) {
+        const data = e.params.data;
+        if (typeof data.employees == "object" && typeof data.employees !== "undefined") {
+            const tempEmployeeSelector = hrisFilterLateAbsenteeReport.find("select#employee");
+            if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
+                $.each(data.employees, function (ii, vv) {
+                    const tempOption = new Option(vv.text, vv.id, true, true);
+                    tempEmployeeSelector.append(tempOption);
+                });
+                tempEmployeeSelector.prop("disabled", true);
+            }
+        }
+    }).on("select2:unselect", function (e) {
+        const tempData = $(this).select2("data");
+
+        const tempEmployeeSelector = hrisFilterLateAbsenteeReport.find("select#employee");
+        if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
+            if(!jQuery.isEmptyObject(tempData)){
+                tempEmployeeSelector.empty();
+                $.each(tempData[0].employees, function(ii, vv){
+                    const tempOption = new Option(vv.text, vv.id, true, true);
+                    tempEmployeeSelector.append(tempOption);
+                });
+
+                tempEmployeeSelector.prop("disabled", true);
+            }else{
+                tempEmployeeSelector.empty();
+                tempEmployeeSelector.prop("disabled", false);
+            }
+            
+        }
+    });
+}
+
+
+
 $.validate({
     form: "#frm-filter-hris-late_report",
     lang: "en",
@@ -586,6 +771,49 @@ $.validate({
         return false;
     }
 });
+
+$.validate({
+    form: "#frm-filter-hris-late_absentee_report",
+    lang: "en",
+    scrollToTopOnError: false,
+    onSuccess: function (form) {
+        let propDisabled = false;
+        const currentForm = form[0];
+
+        const tempEmployeeFilter = $(currentForm).find("select#employee");
+        if(typeof tempEmployeeFilter !== "undefined"){
+            propDisabled = tempEmployeeFilter.is(":disabled");
+            if(propDisabled){ tempEmployeeFilter.prop("disabled", false); }
+        }
+
+        const formData = $(currentForm).serialize();
+        if(propDisabled){ tempEmployeeFilter.prop("disabled", true); }
+
+        $.ajax({
+            url: siteUrl("hris/reports/generate_late_absentee_report"),
+            type: "post",
+            dataType: "json",
+            data: formData,
+            success: function(json){
+                if(json.response){
+                    dtTableLateAbsenteeReport.clear();
+                    dtTableLateAbsenteeReport.rows.add(json.data);
+                    dtTableLateAbsenteeReport.draw(false);
+                    Object.assign(filterOptions, json.filters);
+                }else{
+                    dtTableLateAbsenteeReport.clear();
+                    dtTableLateAbsenteeReport.draw(false);
+                }
+
+                const state = json.response ? "success" : "error";
+                toastr[state](json.toastr_msg, "Filtered Late/Absentee Report");
+            }
+        });
+
+        return false;
+    }
+});
+
 
 const drawCallbackRequestAction = function (btnAction, dtActions, tempData) {
     if (!btnAction || !dtActions) return;
@@ -768,6 +996,110 @@ if(typeof dtTableAbsentee !== "undefined" && dtTableAbsentee.length == 1){
         const api = this.api();
         const btnPrint = $(settings.nTableWrapper).find(".printAbsenteeReportAction");
         const btnExport = $(settings.nTableWrapper).find(".exportAbsenteeReportAction");
+        const dtActions = $(settings.nTableWrapper).find(".dtActions");
+        if (typeof btnPrint !== "undefined" && typeof dtActions !== "undefined") {
+            btnPrint.addClass("btn m-btn btn-brand m-btn--icon m--hide animated fadeIn mr-1");
+            const tempData = api.data();
+            if (tempData.length > 0) {
+                if (btnPrint.hasClass("m--hide") === true) { btnPrint.removeClass("m--hide"); }
+                if (dtActions.hasClass("m--hide") === true) { dtActions.removeClass("m--hide"); }
+            } else {
+                if (dtActions.hasClass("m--hide") === false) { dtActions.addClass("m--hide"); }
+                if (btnPrint.hasClass("m--hide") === false) { btnPrint.addClass("m--hide"); }
+            }
+        }
+        if (typeof btnExport !== "undefined" && typeof dtActions !== "undefined") {
+            btnExport.addClass("btn m-btn btn-brand m-btn--icon m--hide animated fadeIn");
+            const tempData = api.data();
+            if (tempData.length > 0) {
+                if (btnExport.hasClass("m--hide") === true) { btnExport.removeClass("m--hide"); }
+                if (dtActions.hasClass("m--hide") === true) { dtActions.removeClass("m--hide"); }
+            } else {
+                if (dtActions.hasClass("m--hide") === false) { dtActions.addClass("m--hide"); }
+                if (btnExport.hasClass("m--hide") === false) { btnExport.addClass("m--hide"); }
+            }
+        }
+    }
+    });
+}
+
+if(typeof dtTableLateAbsentee !== "undefined" && dtTableLateAbsentee.length > 0){
+    dtTableLateAbsenteeReport = dtTableLateAbsentee.DataTable({
+        dom: "<'row'<'col-md-9 dtDetails'><'col-md-3 dtActions m--hide'B>>rt",
+        ordering: false,
+        paging: false,
+        columns: [
+            { title: "ID Number", data: "idno", width: "8%" },
+            { title: "Employee Name", data: "employee_name", width: "*" },
+            { title: "Position", data: "position", width: "22%" },
+            { title: "Total", data: "reports_total", width: "5%", className: "text-right" },
+            { title: "", width: "4%", className: "text-center", render: function(_data, _type, row){
+                const objResponse = JSON.stringify(row);
+                return `<button class='btn btn-secondary m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill btnView btnAbsenteePreview' data-raw='${objResponse}'>
+                    <i class='fa fa-hourglass-half'></i>
+                </button>`;
+                }
+            }
+        ], buttons: [{
+            extend: 'excel',
+            text: '<i class="fa fa-download"></i><span class="m--font-boldest">EXPORT EXCEL</span>',
+            className: "pull-right exportTempReportAction btnExport",
+            exportOptions: {
+                columns: [0, 1, 2, 3],
+                stripHtml: true,
+            }
+        }, {
+            extend: 'print',
+            text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT</span>',
+            className: "pull-right printTempReportAction btnPrint",
+            title: function () {
+                const filterType = `<div>
+                    <div class="m--regular-font-size-sm1 mt-1">FILTER BY: ${filterOptionsAbsentee.filter_by}</div>
+                    <div class="m--regular-font-size-sm1 mt-1">FILTER DATE: ${filterOptionsAbsentee.filter_date}</div>
+                </div>`;
+                const companyCode = typeof filterOptionsAbsentee.company_code != "undefined" ? `<div>
+                    <div class="m--regular-font-size-sm1 mt-1">COMPANY: ${filterOptionsAbsentee.company_code}</div>
+                </div>`:``;
+                const payrollGroup = typeof filterOptionsAbsentee.payroll_group != "undefined" ? `<div>
+                    <div class="m--regular-font-size-sm1 mt-1">PAYROLL GROUP: ${filterOptionsAbsentee.payroll_group}</div>
+                </div>`:``;
+
+                return `<div class="m--regular-font-size-lg1">ATTENDANCE ABSENTEE REPORT</div>
+                    <div class='mb-3'>${companyCode}${filterType}${payrollGroup}</div>`;
+            }, customize: function (win) {
+                const css = `@page { size: portrait; margin: 0.5cm; }
+                    table { font-size: 12px; }
+                    .print-size-auto{ width: auto }
+                    .print-size-8{ width: 8% }
+                    .print-size-10{ width: 10% }
+                    .print-size-25{ width: 25% }`,
+                    head = win.document.head || win.document.getElementsByTagName('head')[0],
+                    style = win.document.createElement('style');
+
+                style.type = 'text/css';
+                style.media = 'print';
+
+                if (style.styleSheet) { style.styleSheet.cssText = css; } 
+                else { style.appendChild(win.document.createTextNode(css)); }
+
+                head.appendChild(style);
+                win.document.title = "Late/Absentee Report Printable Page";
+            }, exportOptions: {
+                columns: [0, 1, 2, 3],
+                stripHtml: true,
+            }
+        }],
+        drawCallback: function(settings){
+            $(".btnAbsenteePreview").on("click", function(){
+                vmAbsenteePreview.row = {};
+                const data = $(this).data("raw");
+                Object.assign(vmAbsenteePreview.row, data);
+                modalAbsenteePreview.modal();
+            });
+
+        const api = this.api();
+        const btnPrint = $(settings.nTableWrapper).find(".printTempReportAction");
+        const btnExport = $(settings.nTableWrapper).find(".exportTempReportAction");
         const dtActions = $(settings.nTableWrapper).find(".dtActions");
         if (typeof btnPrint !== "undefined" && typeof dtActions !== "undefined") {
             btnPrint.addClass("btn m-btn btn-brand m-btn--icon m--hide animated fadeIn mr-1");

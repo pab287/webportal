@@ -1068,8 +1068,7 @@ class Reports_model extends CI_Model{
         return $resultarray;
     }
 
-    public function generateLateReport(){
-        $post = $this->input->post();
+    protected function generateLateReport($post = array()){
         $resultset = array();
         $arrFilter = array();
 
@@ -1160,7 +1159,7 @@ class Reports_model extends CI_Model{
                     UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
                     emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
                 END) as employee_name, emp.idno, IFNULL(UPPER(pos.name), 'NO ASSIGNED POSITION') as position,
-                COALESCE(SUM(IF(ts.date >= emp.date_start && ts.am_late > 0, 1, 0))) + COALESCE(SUM(IF(ts.date >= emp.date_start && ts.pm_late > 0, 1, 0))) as late_total, 
+                COALESCE(SUM(IF(ts.date >= emp.date_start && ts.am_late > 0, 1, 0))) + COALESCE(SUM(IF(ts.date >= emp.date_start && ts.pm_late > 0, 1, 0))) as reports_total,
                 CONCAT(
                     GROUP_CONCAT(DISTINCT IF(ts.date >= emp.date_start && ts.am_late > 0, CONCAT(ts.date, ' ', ts.am_in), '')),
                     GROUP_CONCAT(DISTINCT IF(ts.date >= emp.date_start && ts.pm_late > 0, CONCAT(ts.date, ' ', ts.pm_in), ''))
@@ -1200,6 +1199,18 @@ class Reports_model extends CI_Model{
         }
 
         return $resultset;
+    }
+
+    public function generateLateAbsenteeReport(){
+        $post = $this->input->post();
+        $reportType = $post["report_type"];
+        unset($post["report_type"]);
+        $arrResponse = array();
+
+        if($reportType == "late"){ $arrResponse = $this->generateLateReport($post); }
+        elseif($reportType == "absentee"){ $arrResponse = $this->generateAbsenteeReport($post); }
+
+        return $arrResponse;
     }
 
     public function selectPayrollGroup(){
@@ -1249,9 +1260,8 @@ class Reports_model extends CI_Model{
         return $resultset;
     }
 
-    public function generateAbsenteeReport(){
+    public function generateAbsenteeReport($post = array()){
         $this->load->model("gcctime/timesheet_model", "ts_model");
-        $post = $this->input->post();
         $resultset = array();
         $arrFilter = array();
 
@@ -1497,7 +1507,7 @@ class Reports_model extends CI_Model{
                     IF(ts.date >= emp.date_start,
                         IF(ISNULL(ts.shift_pm_start) && ISNULL(ts.shift_pm_end), 0, IF(ISNULL(ts.pm_in) && ISNULL(ts.pm_out), '0.5', 0))
                     , 0)
-                )) as absentee_total,
+                )) as reports_total,
                 CONCAT(
                     GROUP_CONCAT(DISTINCT
                         IF(ts.date >= emp.date_start && ISNULL(ts.shift_am_start) && ISNULL(ts.shift_am_end), '', IF(ISNULL(ts.am_in) && ISNULL(ts.am_out),
