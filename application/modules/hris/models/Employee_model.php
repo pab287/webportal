@@ -6840,11 +6840,12 @@
 
             $id = $post["id"];
             unset($post["id"]);
+            $currentSalaryHistoryData = $this->getSalaryHistory($id);
             $post["sal_date"] = date("Y-m-d", strtotime($post["sal_date"]));
             $post["sal_rate"] = str_replace(",", "", $post["sal_rate"]);
             $post["update_date"] = date("Y-m-d H:i:s");
             $post["update_by"] = $user["employee_id"];
-
+            $changes = $this->logChanges($currentSalaryHistoryData, $post);
             $this->db->where("id", $id);
             return $this->db->update($this->employeeSalaryTable, $post);
         }
@@ -11038,6 +11039,10 @@
                 $result = $query->row();
                 $this->db->reset_query();
                 return $result->name;
+            }
+
+            private function getSalaryHistory($id){
+                
             }
 
     }
