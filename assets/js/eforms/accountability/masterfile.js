@@ -246,7 +246,7 @@ function redirectTo(id) {
 $('#generalSearch').donetyping(function (callback) {
     search_val = $(this).val();
     tblAccountability.ajax.reload();
-});
+}, 1000, 3);
 
 //refresh datatable 
 $("#reload_dtTbl").on("click", function () {

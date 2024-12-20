@@ -75,7 +75,7 @@ function tblReleased() {
     $('#generalSearch').donetyping(function (callback) {
         search_val = $(this).val();
         tblReleased.ajax.reload();
-    });
+    }, 1000, 3);
 
     $("#reload_dtTbl").on("click", function () {
         tblReleased.ajax.reload();
@@ -190,7 +190,7 @@ function assetsTab(evt, tabName) {
         $('#generalSearch2').donetyping(function (callback) {
             search_val = $(this).val();
             tblReturned.ajax.reload();
-        });
+        }, 1000, 3);
 
         $("#reload_dtTbl").on("click", function () {
             tblReturned.ajax.reload();
