@@ -1504,7 +1504,7 @@ class Borrowing_m extends CI_Model
 
         $filterFields = array("a.id", "comp.code", "c.reference_no", "a.asset_name", "a.asset_code", "a.date_borrowed", "a.date_due", "b.firstname", "b.middlename", "b.lastname");
 
-        $sql = "a.id, CONCAT( b.firstname,b.middlename,b.lastname) AS name, IF(comp.`code` IS NULL, c.company, comp.`code`) company, IF(dept.`code` IS NULL, c.department, dept.`code`) department, IF(pos.`name` IS NULL, c.position, pos.`name`) position, c.reference_no, a.asset_code, a.asset_name, a.date_borrowed, a.date_due";
+        $sql = "a.id, b.firstname, b.middlename, b.lastname, b.suffix, IF(comp.`code` IS NULL, c.company, comp.`code`) company, IF(dept.`code` IS NULL, c.department, dept.`code`) department, IF(pos.`name` IS NULL, c.position, pos.`name`) position, c.reference_no, a.asset_code, a.asset_name, a.date_borrowed, a.date_due";
 
         $this->db->select($sql);
         $this->db->from("gcceforms.borrowing_body a");
@@ -1569,7 +1569,9 @@ class Borrowing_m extends CI_Model
         date_default_timezone_set('Asia/Singapore');
         $check = date('Y-m-d H:i:s');
 
-        $this->db->select($sql);
+        $filterFields = array("a.id", "comp.code", "c.reference_no", "a.asset_name", "a.asset_code", "a.date_borrowed", "a.date_due", "b.firstname", "b.middlename", "b.lastname");
+
+        $sql = "a.id, b.firstname, b.middlename, b.lastname, b.suffix, IF(comp.`code` IS NULL, c.company, comp.`code`) company, IF(dept.`code` IS NULL, c.department, dept.`code`) department, IF(pos.`name` IS NULL, c.position, pos.`name`) position, c.reference_no, a.asset_code, a.asset_name, a.date_borrowed, a.date_due";
         $this->db->from("gcceforms.borrowing_body a");
         $this->db->join("gcceforms.borrowing c", "a.borrowing_id = c.id", "LEFT");
         $this->db->join("gccmaster.tblemployees b", "c.borrower = b.id", "LEFT");

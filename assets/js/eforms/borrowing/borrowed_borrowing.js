@@ -348,7 +348,7 @@ $(document).ready(function () {
     $('#query-builder').queryBuilder({
         'bt-tooltip-errors': {delay: 100},
         filters: [
-            {id: 'a.id', label: 'ID #', type: 'integer'},
+            // {id: 'a.id', label: 'ID #', type: 'integer'},
             {id: 'c.reference_no', label: 'Reference #', type: 'string'},
             {id: 'firstname', label: 'Firstname', type: 'string'},
             {id: 'middlename', label: 'Middlename', type: 'string'},
