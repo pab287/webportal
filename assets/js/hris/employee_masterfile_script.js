@@ -209,6 +209,7 @@ function loadEmployees(employee_status = "All") {
 
                     if(clickedView == 'grid'){
                         $("#table-employee tbody td #details #grid .custom-fullname a").removeAttr('target');
+                        $("#table-employee.grid tbody td:first-child").addClass('btnViewEmployee201');
                     }
 
                     if (data.length == 0) {
