@@ -23,8 +23,22 @@ var tblAccountability = $("#table-accountability").DataTable({
         { data: "status",  width: "14%", className: "text-center", render: function (data) {return renderStatusHtml(data)}},
         { data: "reference_no"},
         { data: "company"},
-        { data: "firstname", render: function (data, type, row, meta) {return empName(row.display_name, row.contractor, row.is_contract)}},
-        { data: "asset_name", render: function (data, type, row, meta) {return itemName(row.vehicle_name, row.asset_name, row.type)}},
+        // { data: "firstname", render: function (data, type, row, meta) {return empName(row.display_name, row.contractor, row.is_contract)}},
+        // { data: "asset_name", render: function (data, type, row, meta) {return itemName(row.vehicle_name, row.asset_name, row.type)}},
+        { data: "display_name" },
+        { data: "asset_name", orderable: false,
+            render: function(data, type, row, meta){
+                var html = ``;
+
+                if(row.type == 'Asset'){
+                    html = data ? data : 'No Asset Name';
+                }else{
+                    html = data ? data : 'No Vehicle Name';
+                }
+
+                return html;
+            }
+        },
         { data: "date_issued", render: function (data) {return formatCalendarDate(data)}},
         { data: null, width: "5%", className: "text-center"},
     ],
@@ -183,6 +197,7 @@ $("#issued_to").select2({
     dropdownParent: $("#modal-advance-search"),
     placeholder: 'Select. .',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
         url: baseUrl("eforms/accountability/issued_to_lookup"),
         dataType: "json",
@@ -212,7 +227,7 @@ $(document).ready(function () {
     $('#query-builder').queryBuilder({
         'bt-tooltip-errors': {delay: 100},
         filters: [
-            {id: 'a.id', label: 'ID #', type: 'integer'},
+            // {id: 'a.id', label: 'ID #', type: 'integer'},
             {
                 id: 'a.status', 
                 label: 'Status', 
