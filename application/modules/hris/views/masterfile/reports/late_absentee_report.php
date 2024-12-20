@@ -112,7 +112,7 @@
                                             <label for="department">
                                                 DEPARTMENT <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">(Optional)</span>
                                             </label>
-                                            <select class="form-control" id="department" name="department">
+                                            <select class="form-control" id="department" name="department" disabled>
                                                 <option></option>
                                             </select>
                                         </div>
@@ -132,13 +132,13 @@
                                             <label for="payroll_group">
                                                 PAYROLL GROUP <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">(Optional)</span>
                                             </label>
-                                            <select class="form-control" id="payroll_group" name="payroll_group[]" multiple></select>
+                                            <select class="form-control" id="payroll_group" name="payroll_group[]" multiple disabled></select>
                                         </div>
                                     </div>
                                     <div class="col-sm-12 col-md-12 col-xl-12 col-lg-12">
                                         <div class="form-group m-form__group">
                                             <label for="employee" class="m--font-bolder">Employee <small>( Optional )</small></label>
-                                            <select id="employee" class="form-control" name="employee[]" multiple>
+                                            <select id="employee" class="form-control" name="employee[]" multiple disabled>
                                                 <option></option>
                                             </select>
                                         </div>
