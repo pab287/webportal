@@ -163,8 +163,8 @@
                                     <th style="width: 8%">ID Number</th>
                                     <th style="width: 30%">Employee Name</th>
                                     <th style="width: *">Position</th>
-                                    <th style="width: 5%">Total</th>
-                                    <th style="width: 4%">&nbsp;</th>
+                                    <th style="width: 8%">Total</th>
+                                    <th style="width: 6%">&nbsp;</th>
                                 </tr>
                             </thead>
                         </table>
@@ -179,25 +179,49 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- div class="col-12 col-md-12 col-lg-12 col-xl-12 col-sm-12">
-            <ul class="nav nav-tabs nav-fill">
-                <li class="nav-item">
-                    <a class="nav-link active show" data-toggle="tab" href="#m_tabs_late_report">EMPLOYEES LATE REPORT</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-toggle="tab" href="#m_tabs_absentee_report">EMPLOYEES ABSENTEE REPORT</a>
-                </li>
-            </ul>
-
-            <div class="tab-content">
-                <div class="tab-pane active" id="m_tabs_late_report" role="tabpanel">
-                    <?php $this->load->view("hris/masterfile/reports/contents/employee_late_report"); ?>
+    <div class="modal fade" id="modalLateAbsenteePreview" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div id="modalLateAbsenteeContainer" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel"><i class="la la-trash mr-2"></i>Attendance Preview</h5>
+                <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-9 col-md-9 col-lg-9 col-sm-12">
+                        <h4 v-text="row.employee_name">&nbsp;</h4>
+                        <p v-text="row.position">&nbsp;</p>
+                    </div>
                 </div>
-                <div class="tab-pane" id="m_tabs_absentee_report" role="tabpanel">
-                    <?php $this->load->view("hris/masterfile/reports/contents/employee_absentee_report"); ?>
+                <div class="row">
+                    <div class="col-3 col-md-3 col-lg-3 col-sm-12">
+                        <h6>Date Hired</h6>
+                        <p v-text="dateFormatted(row.date_start)">&nbsp;</p>
+                    </div>
+                    <div class="col-3 col-md-3 col-lg-3 col-sm-12">
+                        <h6>Last Verified Date</h6>
+                        <p v-text="dateFormatted(row.max_date)">&nbsp;</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 col-md-6 col-lg-6 col-sm-12" v-for="log in attlogs">
+                        <div class="m-alert m-alert--outline alert text-center" :class="backgroundClass(log)" role="alert">
+                            <p v-text="log">&nbsp;</p>
+                            <p class="m--regular-font-size-lg2 m--font-boldest mb-0" v-if="report_type == 'absentee'">{{getLoaReference(row.emp_id, log)}}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12 col-md-12 col-lg-12 col-sm-12">
+                        <h6>Total Accumulated Attendance Record/s: <span class="m--regular-font-size-lg5 ml-3" v-text="row.reports_total">0</span></h6>
+                    </div>
                 </div>
             </div>
-        </div -->
+        </div>
     </div>
+</div>
 </div>

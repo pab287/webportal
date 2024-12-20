@@ -1068,12 +1068,21 @@ class Reports_model extends CI_Model{
         return $resultarray;
     }
 
+    protected function getTimesheetMaxDate($verified = 0){
+        $this->db->select("MAX(date) as max_date");
+        $this->db->from("gcctimeutility.timesheet");
+        $this->db->where("has_shift", 1);
+        if(intval($verified) == 1){  $this->db->where("verified", 1); }
+        $this->db->limit(1);
+        $qTempMax = $this->db->get();
+       return $qTempMax->row()->max_date ? $qTempMax->row()->max_date: null;
+    }
+
     protected function generateLateReport($post = array()){
         $resultset = array();
         $arrFilter = array();
 
         $hasDepartment = isset($post["department"]) && $post["department"];
-
         if(isset($post["company"]) && $post["company"]){
             $empIds = array();
             $this->db->select("emp.id");
@@ -1141,13 +1150,7 @@ class Reports_model extends CI_Model{
                 $feDate = Date("F d, Y", strtotime($endDate));
                 $arrFilter["filter_date"] = "{$fsDate} - {$feDate}";
 
-                $this->db->select("MAX(date) as max_date");
-                $this->db->from("gcctimeutility.timesheet");
-                $this->db->where("has_shift", 1);
-                /*** $this->db->where("verified", 1); ***/
-                $this->db->limit(1);
-                $qTempMax = $this->db->get();
-                $tempMaxDate = $qTempMax->row()->max_date ? $qTempMax->row()->max_date: null;
+                $tempMaxDate = $this->getTimesheetMaxDate();
                 $this->db->reset_query();
 
                 $this->db->select("CONCAT(UPPER(TRIM(emp.firstname)), ' ',
@@ -1207,11 +1210,11 @@ class Reports_model extends CI_Model{
         unset($post["report_type"]);
         $arrResponse = array();
 
-        if($reportType == "late"){ 
+        if ($reportType == "late"){
             $arrResponse = $this->generateLateReport($post);
             $arrResponse["filters"]["report_type"] = "Attendance Late Report";
         }
-        elseif($reportType == "absentee"){ 
+        elseif ($reportType == "absentee"){
             $arrResponse = $this->generateAbsenteeReport($post);
             $arrResponse["filters"]["report_type"] = "Attendance Absentee Report";
         }
@@ -1270,9 +1273,7 @@ class Reports_model extends CI_Model{
         $this->load->model("gcctime/timesheet_model", "ts_model");
         $resultset = array();
         $arrFilter = array();
-
         $hasDepartment = isset($post["department"]) && $post["department"];
-
         if(isset($post["company"]) && $post["company"]){
             $empIds = array();
             $this->db->select("emp.id");
@@ -1295,10 +1296,9 @@ class Reports_model extends CI_Model{
         if(isset($post["employee"]) && $post["employee"]){
             $filterBy = $post["filter_by"];
             $employeeIds = $post["employee"];
-
             $startDate = null;
             $endDate = null;
-
+            
             if(isset($post["company"]) && $post["company"]){
                 $qCompany = $this->db->get_where("gcchris.tblcompanies", array("id"=>$post["company"]));
                 if($qCompany->num_rows() == 1){
@@ -1338,13 +1338,7 @@ class Reports_model extends CI_Model{
             }
 
             if($startDate && $endDate && (is_array($employeeIds) && count($employeeIds) > 0)){
-                $this->db->select("MAX(date) as max_date");
-                $this->db->from("gcctimeutility.timesheet");
-                $this->db->where("has_shift", 1);
-                /*** $this->db->where("verified", 1); ***/
-                $this->db->limit(1);
-                $qTempMax = $this->db->get();
-                $tempMaxDate = $qTempMax->row()->max_date ? $qTempMax->row()->max_date: null;
+                $tempMaxDate = $this->getTimesheetMaxDate();
                 $this->db->reset_query();
 
                 $employeeShiftRecord = array();

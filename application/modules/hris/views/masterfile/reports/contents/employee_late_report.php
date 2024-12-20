@@ -132,7 +132,7 @@
                 <div class="row">
                     <div class="col-7 col-md-7 col-lg-7 col-sm-12">
                         <div class="alert alert-danger m-alert m-alert--air m-alert--outline mb-0 mt-3" role="alert">
-                            <strong>Note!</strong> The late attendance record/s listed are all time sheet reference data.					  	
+                            <strong>Note!</strong> The late attendance record/s listed are all time sheet reference data.
                         </div>
                     </div>
                 </div>
