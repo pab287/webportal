@@ -3,7 +3,7 @@ load_telegram_config();
 var isExport = false;
 
 $("#selectall").click(function () {
-    $('#table-loa tbody input[type="checkbox"]').prop('checked', this.checked);
+    $('#table-loa tbody input[type="checkbox"]:not(.has-checked)').prop('checked', this.checked);
 });
 
 $("#table-loa")
@@ -214,9 +214,11 @@ function formatContent(data) {
 
 function formatcheck(data, row) {
     if (data) {
-        var isDisabled = (row.status.toLowerCase() == 'approved' || row.status.toLowerCase() == 'hr noted') ? 'disabled' : '';
-        var isChecked = (row.status.toLowerCase() == 'approved' || row.status.toLowerCase() == 'hr noted') ? 'checked' : '';
-        var _checkButton = "<input type='checkbox' class='call-checkbox' value=" + data + " "+isDisabled+" "+isChecked+">";
+        var isDisabled = (row.status.toLowerCase() == 'approved' || row.status.toLowerCase() == 'hr noted' || row.status.toLowerCase() == 'disapproved') ? 'disabled' : '';
+        var isChecked = (row.status.toLowerCase() == 'approved' || row.status.toLowerCase() == 'hr noted' || row.status.toLowerCase() == 'disapproved') ? 'checked' : '';
+        var hasCheck = isChecked ? 'has-checked' : '';
+
+        var _checkButton = "<input type='checkbox' class='call-checkbox "+ hasCheck +"' value=" + data + " "+isDisabled+" "+isChecked+">";
         return _checkButton;
     } else {
         return false;
@@ -379,11 +381,28 @@ $("#choice").select2({
     placeholder: 'Select an Option'
 }).on("select2:select", function (e) {
     var type = $("#choice option:selected").val();
+    let isUpdated = false;
 
-    var rowcollection = tblLoa.$(".call-checkbox:checked", { "page": "all" });
+    var rowcollection = tblLoa.$(".call-checkbox:not(.has-checked):checked", { "page": "all" });
 
-    rowcollection.each(function (index, elem) {
+    if (rowcollection.length > 0) {
+        isUpdated = massAction(rowcollection, type);
+
+        if (isUpdated) {
+            tblLoa.ajax.reload();
+            $("#choice").val(null).trigger("change");
+        }
+    } else{
+        $("#choice").val(null).trigger("change");
+        toastr.warning("Please select at least one record", "Mass Action", 5000);
+    }
+
+});
+
+function massAction(rowcollection, type){
+    let updated = rowcollection.each(function (index, elem) {
         var checkbox_value = $(elem).val();
+        let upDate = false;
         if (type == 1) {
             $.ajax({
                 url: baseUrl("eforms/loa/approve_loa/") + checkbox_value,
@@ -392,7 +411,9 @@ $("#choice").select2({
                 data: { csrf_token: _csrf_hash, approved_remarks: "" },
                 success: function (data) {
                     // window.location.replace(baseUrl("eforms/loa"));
-                    tblLoa.ajax.reload();
+                    if(data.status && data.status == true){
+                        upDate = true;
+                    }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     alert('Error: "ajax_approve"');
@@ -408,21 +429,27 @@ $("#choice").select2({
                 data: { csrf_token: _csrf_hash, disapproved_remarks: "" },
                 success: function (data) {
                     // window.location.replace(baseUrl("eforms/loa"));
-                    tblLoa.ajax.reload();
+                    if(data.status && data.status == true){
+                        upDate = true;
+                    }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     alert('Error adding / update data');
                 }
             });
         }
+
+        return upDate;
     });
-});
+
+    return updated;
+}
 
 $(document).ready(function () {
     $('#query-builder').queryBuilder({
         'bt-tooltip-errors': { delay: 100 },
         filters: [
-            { id: 'a.id', label: 'ID #', type: 'integer' },
+            // { id: 'a.id', label: 'ID #', type: 'integer' },
             {
                 id: 'a.status',
                 label: 'Status',
