@@ -917,9 +917,11 @@
             $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
             $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
             $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
+            $begin = (isset($post["start_date"]) && $post["start_date"]) ? $post["start_date"] : false;
+            $end = (isset($post["end_date"]) && $post["end_date"]) ? $post["end_date"] : false;
 
-            $rowData = $this->get_all_archive($search, $limit, $offset, $sortBy, $sortOrder);
-            $rowCount = $this->get_all_archive_count($search);
+            $rowData = $this->get_all_archive($search, $limit, $offset, $sortBy, $sortOrder, $begin, $end);
+            $rowCount = $this->get_all_archive_count($search, $begin, $end);
             // if (!$search) {
             //     $rowData = $this->get_all_archive($limit, $offset, $sortBy, $sortOrder);
             //     $rowCount = $this->get_all_archive_count();
@@ -937,7 +939,7 @@
             return $resultset;
         }
 
-        public function get_all_archive($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder){
+        public function get_all_archive($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $begin = null, $end = null){
             $filterFields = array("a.id", "a.status", "a.reference_no", "a.company", "a.driver");
             $date = date("Y-m-d", strtotime("-1 year", time()));
             $check = date("Y-m-d", strtotime("-1 year", time()));
@@ -947,8 +949,23 @@
             
             $this->db->select($sql);
             $this->db->from("gcceforms.travel_order a");
+
+            $this->db->group_start();
             $this->db->where('a.status', 'Cancelled');
-            $this->Db->or_where('DATE(a.created_dt) <=', $check);
+            $this->db->or_where('DATE(a.created_dt) <=', $check);
+            $this->db->group_end();
+
+            if($begin && $end) {
+                $this->db->select("td.destination, td.date_from, td.date_to");
+                $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id");
+        
+                $this->db->group_start();
+                    $this->db->where("DATE(td.date_from) >=", $begin);
+                    $this->db->where("DATE(td.date_from) <=", $end);
+                $this->db->group_end();
+        
+                $this->db->group_by("td.travel_order_id");
+            }
 
             if (isset($search) && $search) {
                 $this->db->group_start();
@@ -1067,19 +1084,32 @@
             return $arrData;
         }
 
-        public function get_all_archive_count($search = null){
+        public function get_all_archive_count($search = null, $begin = null, $end = null){
             $filterFields = array("a.id", "a.status", "a.reference_no", "a.company", "a.driver");
             $date = date("Y-m-d", strtotime("-1 year", time()));
             $check = date("Y-m-d", strtotime("-1 year", time()));
 
-            $sql = "a.id, a.status, a.reference_no, b.firstname, b.middlename, b.lastname, b.suffix, a.amt_applied, a.purpose, a.amt_approved, a.created_dt, a.approved_dt";
-            $filterFields = array("a.id", "a.status", "a.reference_no", "b.firstname", "b.lastname", "a.amt_applied", "a.purpose", "a.amt_approved", "a.created_dt", "a.approved_dt");
-
+            $sql = "a.id, a.reference_no, a.company,a.driver, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks, a.accomplishment_dt";
+            
             $this->db->select($sql);
-            $this->db->from("gcceforms.cash_advance a");
-            $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
-            $this->db->where("DATE(a.created_dt) >=", $date);
-            $this->db->where("a.status !=", "Cancelled");
+            $this->db->from("gcceforms.travel_order a");
+            
+            $this->db->group_start();
+            $this->db->where('a.status', 'Cancelled');
+            $this->db->or_where('DATE(a.created_dt) <=', $check);
+            $this->db->group_end();
+
+            if($begin && $end) {
+                $this->db->select("td.destination, td.date_from, td.date_to");
+                $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id");
+        
+                $this->db->group_start();
+                    $this->db->where("DATE(td.date_from) >=", $begin);
+                    $this->db->where("DATE(td.date_from) <=", $end);
+                $this->db->group_end();
+        
+                $this->db->group_by("td.travel_order_id");
+            }
 
             if (isset($search) && $search) {
                 $this->db->group_start();
@@ -1371,7 +1401,7 @@
             return $rowCount;
         }
 
-        function getArchiveListv1() {
+        function getArchiveList() {
             $post = $this->input->post();
             if ($post) {
                 $columns = array("a.status", "a.reference_no", "a.company");
@@ -1441,7 +1471,7 @@
             
         }
 
-        function getArchiveList() {
+        function getArchiveListv1() {
             $post = $this->input->post();
             $json_data = array();
 
@@ -2074,7 +2104,6 @@
 
             return $resultset;
         }
-
 
         private function get_all_personnel($limit = 10, $offset = 0, $sortBy, $sortOrder, $id) {
             $sql = "a.id, IFNULL(c.name, IFNULL(b.position, '---')) as position, b.firstname, b.middlename, b.lastname, b.suffix";

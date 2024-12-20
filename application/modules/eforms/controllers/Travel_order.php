@@ -103,7 +103,7 @@ class Travel_order extends MY_Controller
 
     function get_travel_order_archive_list()
     {
-        $data = $this->travel_order->getArchiveList();
+        $data = $this->travel_order->getArchiveLists();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
