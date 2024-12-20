@@ -1135,7 +1135,7 @@ class Reports_model extends CI_Model{
                 $endDate = Date("Y-m-d", strtotime("last day of this month", $timeStamp));
                 $arrFilter["filter_by"] = "Month";
             }
-            
+
             if($startDate && $endDate && (is_array($employeeIds) && count($employeeIds) > 0)){
                 $fsDate = Date("F d, Y", strtotime($startDate));
                 $feDate = Date("F d, Y", strtotime($endDate));
@@ -1207,8 +1207,14 @@ class Reports_model extends CI_Model{
         unset($post["report_type"]);
         $arrResponse = array();
 
-        if($reportType == "late"){ $arrResponse = $this->generateLateReport($post); }
-        elseif($reportType == "absentee"){ $arrResponse = $this->generateAbsenteeReport($post); }
+        if($reportType == "late"){ 
+            $arrResponse = $this->generateLateReport($post);
+            $arrResponse["filters"]["report_type"] = "Attendance Late Report";
+        }
+        elseif($reportType == "absentee"){ 
+            $arrResponse = $this->generateAbsenteeReport($post);
+            $arrResponse["filters"]["report_type"] = "Attendance Absentee Report";
+        }
 
         return $arrResponse;
     }
@@ -1330,7 +1336,7 @@ class Reports_model extends CI_Model{
                 $endDate = Date("Y-m-d", strtotime("last day of this month", $timeStamp));
                 $arrFilter["filter_by"] = "Month";
             }
-    
+
             if($startDate && $endDate && (is_array($employeeIds) && count($employeeIds) > 0)){
                 $this->db->select("MAX(date) as max_date");
                 $this->db->from("gcctimeutility.timesheet");
@@ -1618,7 +1624,7 @@ class Reports_model extends CI_Model{
 
                         $attx->attendance_logs = implode(",", $newLogs00x);
                         $attx->attendance_dates = implode(",", $attDatex);
-                        $attx->absentee_total += $tempTotal;
+                        $attx->reports_total += $tempTotal;
                         $qData[] = $attx;
                     }
 

@@ -13,12 +13,16 @@ const modalAbsenteePreview = $("#modalAbsenteePreview");
 
 const hrisFilterLateAbsenteeReport = $("#frm-filter-hris-late_absentee_report");
 const dtTableLateAbsentee = $("#table-late_absentee_report");
+const _tblPortletReports = $("#m_portlet_tools-late_absentee_report").mPortlet();
 
 let dtTableLateReport, dtTableAbsenteeReport, dtTableLateAbsenteeReport;
 
 let filterOptions = {};
 let filterOptionsAbsentee = {};
+let filterOptionsLateAbsentee = {};
 let globalLoaReference = {};
+
+let isCollapsedPortlet = true;
 
 const months = [
     { id: 1, text: "January" },
@@ -799,11 +803,57 @@ $.validate({
                     dtTableLateAbsenteeReport.clear();
                     dtTableLateAbsenteeReport.rows.add(json.data);
                     dtTableLateAbsenteeReport.draw(false);
-                    Object.assign(filterOptions, json.filters);
+                    Object.assign(filterOptionsLateAbsentee, json.filters);
+
+                    setTimeout(function () {
+                        const rowCount = dtTableLateAbsenteeReport.rows().count();
+                        if (rowCount > 0 && isCollapsedPortlet === true) { isCollapsedPortlet = _tblPortletReports.expand(); }
+                    }, 500);
                 }else{
                     dtTableLateAbsenteeReport.clear();
                     dtTableLateAbsenteeReport.draw(false);
                 }
+                const { report_type, company_code, filter_by } = json.filters;
+                let tempHtml = `
+                <div class="row">
+                    <div class="col-sm-12 col-12 col-md-3 col-lg-3 col-xl-3">
+                        <div class="m-widget1 p-0">
+                            <div class="m-widget1__item">
+                                <div class="row m-row--no-padding align-items-center">
+                                    <div class="col">
+                                        <h3 class="m-widget1__title">${report_type}</h3>
+                                        <span class="m-widget1__desc">REPORT TYPE</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-12 col-md-2 col-lg-2 col-xl-2">
+                        <div class="m-widget1 p-0">
+                            <div class="m-widget1__item">
+                                <div class="row m-row--no-padding align-items-center">
+                                    <div class="col">
+                                        <h3 class="m-widget1__title">${filter_by}</h3>
+                                        <span class="m-widget1__desc">FILTER BY</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-12 col-md-3 col-lg-3 col-xl-3">
+                        <div class="m-widget1 p-0">
+                            <div class="m-widget1__item">
+                                <div class="row m-row--no-padding align-items-center">
+                                    <div class="col">
+                                        <h3 class="m-widget1__title">${company_code}</h3>
+                                        <span class="m-widget1__desc">COMPANY</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+                $(".dtDetails").empty().html(tempHtml);
 
                 const state = json.response ? "success" : "error";
                 toastr[state](json.toastr_msg, "Filtered Late/Absentee Report");
@@ -1030,8 +1080,8 @@ if(typeof dtTableLateAbsentee !== "undefined" && dtTableLateAbsentee.length > 0)
         paging: false,
         columns: [
             { title: "ID Number", data: "idno", width: "8%" },
-            { title: "Employee Name", data: "employee_name", width: "*" },
-            { title: "Position", data: "position", width: "22%" },
+            { title: "Employee Name", data: "employee_name", width: "30%" },
+            { title: "Position", data: "position", width: "*" },
             { title: "Total", data: "reports_total", width: "5%", className: "text-right" },
             { title: "", width: "4%", className: "text-center", render: function(_data, _type, row){
                 const objResponse = JSON.stringify(row);
@@ -1053,18 +1103,21 @@ if(typeof dtTableLateAbsentee !== "undefined" && dtTableLateAbsentee.length > 0)
             text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT</span>',
             className: "pull-right printTempReportAction btnPrint",
             title: function () {
+                const { filter_by, filter_date, company_code, payroll_group, report_type } = filterOptionsLateAbsentee;
+                const tempTitle = typeof report_type != "undefined" ? report_type: 'Attendance Report';
+
                 const filterType = `<div>
-                    <div class="m--regular-font-size-sm1 mt-1">FILTER BY: ${filterOptionsAbsentee.filter_by}</div>
-                    <div class="m--regular-font-size-sm1 mt-1">FILTER DATE: ${filterOptionsAbsentee.filter_date}</div>
+                    <div class="m--regular-font-size-sm1 mt-1">FILTER BY: ${filter_by}</div>
+                    <div class="m--regular-font-size-sm1 mt-1">FILTER DATE: ${filter_date}</div>
                 </div>`;
-                const companyCode = typeof filterOptionsAbsentee.company_code != "undefined" ? `<div>
-                    <div class="m--regular-font-size-sm1 mt-1">COMPANY: ${filterOptionsAbsentee.company_code}</div>
+                const companyCode = typeof company_code != "undefined" ? `<div>
+                    <div class="m--regular-font-size-sm1 mt-1">COMPANY: ${company_code}</div>
                 </div>`:``;
-                const payrollGroup = typeof filterOptionsAbsentee.payroll_group != "undefined" ? `<div>
-                    <div class="m--regular-font-size-sm1 mt-1">PAYROLL GROUP: ${filterOptionsAbsentee.payroll_group}</div>
+                const payrollGroup = typeof payroll_group != "undefined" ? `<div>
+                    <div class="m--regular-font-size-sm1 mt-1">PAYROLL GROUP: ${payroll_group}</div>
                 </div>`:``;
 
-                return `<div class="m--regular-font-size-lg1">ATTENDANCE ABSENTEE REPORT</div>
+                return `<div class="m--regular-font-size-lg1">${tempTitle.toUpperCase()}</div>
                     <div class='mb-3'>${companyCode}${filterType}${payrollGroup}</div>`;
             }, customize: function (win) {
                 const css = `@page { size: portrait; margin: 0.5cm; }
@@ -1125,6 +1178,7 @@ if(typeof dtTableLateAbsentee !== "undefined" && dtTableLateAbsentee.length > 0)
         }
     }
     });
+
 }
 
 const resetFilterLateAbsenteeReport = function(event){

@@ -8,7 +8,7 @@
 <div class="m-content">
     <div class="row">
         <div class="col-12 col-md-12 col-lg-12 col-xl-12 col-sm-12">
-        <div class="m-portlet m-portlet--head-sm mb-2" data-portlet="true" id="m_portlet_tools-late_report">
+        <div class="m-portlet m-portlet--head-sm mb-2" data-portlet="true" id="m_portlet_tools-late_absentee_report">
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
                         <div class="m-portlet__head-title">
@@ -161,8 +161,8 @@
                             <thead>
                                 <tr>
                                     <th style="width: 8%">ID Number</th>
-                                    <th style="width: *">Employee Name</th>
-                                    <th style="width: 22%">Position</th>
+                                    <th style="width: 30%">Employee Name</th>
+                                    <th style="width: *">Position</th>
                                     <th style="width: 5%">Total</th>
                                     <th style="width: 4%">&nbsp;</th>
                                 </tr>
