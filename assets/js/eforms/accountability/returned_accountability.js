@@ -275,7 +275,7 @@ $(document).ready(function () {
     $('#query-builder').queryBuilder({
         'bt-tooltip-errors': { delay: 100 },
         filters: [
-            { id: 'a.id', label: 'ID #', type: 'integer' },
+            // { id: 'a.id', label: 'ID #', type: 'integer' },
             { id: 'a.company', label: 'File Under', type: 'string' },
             { id: 'd.company', label: 'Contractor Company', type: 'string' },
             { id: 'reference_no', label: 'Reference #', type: 'string' },
