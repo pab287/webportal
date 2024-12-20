@@ -199,21 +199,26 @@ class Overtime_m extends CI_Model {
         $this->db->where_not_in('a.status', "Cancelled");
         if($qBuilder){ $this->db->where($qBuilder); }
         if ($search) {
-          $this->db->group_start();
-          foreach ($filterFields as $key => $field) {
-              if ($key == 0) {
-                  $this->db->like($field, $search, "both");
-              } else {
-                  $this->db->or_like($field, $search, "both");
-              }
-          }
-          $this->db->group_end();
-      }
-      if($filtered=="true"){
-        if (is_array($filter)) {
-          $this->db->where_in("a.id", $filter);
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
         }
-      }
+        if($filtered=="true"){
+            if (is_array($filter)) {
+                $chucked = array_chunk($filter, 100);
+                $this->db->group_start();
+                foreach ($chucked as $value) {
+                    $this->db->or_where_in("a.id", $value);
+                }
+                $this->db->group_end();
+            }
+        }
 
         if($limit != -1){
             $this->db->limit($limit, $offset);
@@ -297,7 +302,13 @@ class Overtime_m extends CI_Model {
       }
       if($filtered=="true"){
         if (is_array($filter)) {
-          $this->db->where_in("a.id", $filter);
+
+            $chucked = array_chunk($filter, 100);
+            $this->db->group_start();
+            foreach ($chucked as $value) {
+                $this->db->or_where_in("a.id", $value);
+            }
+            $this->db->group_end();
         }
       }
 
