@@ -921,6 +921,62 @@ class Borrowing extends MY_Controller
         echo json_encode(array("status" => TRUE));
     }
 
+    public function mass_return_item(){
+        $post = $this->input->post();
+
+        $ids = json_decode($post['checked']);
+        $this->db->select("asset_id, type");
+        $this->db->from("gcceforms.borrowing_body");
+        $this->db->where_in("id", $ids);
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result() as $key => $rs) {
+                if($rs->type == "asset"){
+                    $asset = array(
+                        'is_borrowed' => '0'
+                    );
+                    $this->db->where('id', $rs->asset_id);
+                    $this->db->update("gccasset.assets", $asset);
+                }else{
+                    $asset = array(
+                        'is_borrowed' => '0'
+                    );
+                    $this->db->where('id', $rs->asset_id);
+                    $this->db->update("gccasset.vehicles", $asset);
+                }
+            }
+        }
+
+
+        $data = array(
+            'date_returned' => date('Y-m-d H:i:s', strtotime($post['date_returned'])),
+            'return_remarks' => $post['return_remarks'],
+            'is_overdue' => !empty($post['is_overdue']) && $post['is_overdue'] ? $post['is_overdue'] : 0,
+            'is_returned' => '1',
+        );
+
+        $is_overdue = !empty($post['is_overdue']) && $post['is_overdue'] ? "overdue" : "";
+
+        foreach ($ids as $key => $value) {
+            if($this->borrowing->update_content(array('id' => $value), $data)){
+    
+                $message = "Borrowed Borrowing - Return $is_overdue {$this->borrowing->getAssetCodeBorrowingBody($value)} via mass return.";
+                $type = "success";
+                $table = "user";
+            }else{
+                $message = "Borrowed Borrowing - Failed return $is_overdue {$this->borrowing->getAssetCodeBorrowingBody($value)} via mass return.";
+                $type = "error";
+                $table = "system";
+            }
+
+            $this->core_layout->setEventLog($message, "updated", $type, "gcceforms", $table);
+        }
+
+
+        echo json_encode(array("status" => TRUE));
+    }
+
     public function extend()
     {
 

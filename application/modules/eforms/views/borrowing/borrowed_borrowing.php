@@ -94,7 +94,7 @@
 							<table class="table table-striped table-bordered" id="table-borrowing" width="100%">
 								<thead>
 									<tr>
-									<th class="notExport" ><input name="select_all" value="1" type="checkbox"></th>
+										<th class="notExport" ><input id="selectall" name="select_all" value="1" type="checkbox"></th>
 										<th>Reference#</th>
 										<th>Borrower</th>
 										<th>Item Borrowed</th>

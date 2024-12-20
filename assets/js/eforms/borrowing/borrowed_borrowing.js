@@ -278,22 +278,30 @@ function return_item() {
     });
 }
 function mass_return_item() {
+    let checked = [];
 
     $.validate({
         form: '#form_return',
         lang: 'en',
         onSuccess: function (form) {
-            $.ajax({
-                url: baseUrl("eforms/borrowing/return_item/"),
-                type: "POST",
-                data: $('#form_return').serialize(),
-                dataType: "JSON",
+            $("#table-borrowing tbody input[type='checkbox']:checked").each(function () {
+                checked.push($(this).val());
+            });
 
+            let data = $('#form_return').serialize();
+            data += "&checked=" + JSON.stringify(checked);
+
+            $.ajax({
+                url: baseUrl("eforms/borrowing/mass_return_item/"),
+                type: "POST",
+                data: data,
+                dataType: "JSON",
                 success: function (data) {
                     if (data.status) {
 
                         tblBorrowing.ajax.reload();
                         $('#modal_form_return').modal("hide");
+                        $("#form_return").trigger('reset');
                     } else {
                         alert('Error get data from ajax');
                     }
@@ -385,3 +393,14 @@ function clear_query_builder(){
     tblBorrowing.ajax.reload();
 }
 
+$("#selectall").click(function () {
+    $('#table-borrowing tbody input[type="checkbox"]').prop('checked', this.checked);
+});
+
+$("#table-borrowing")
+    .on("click", "tbody input[type='checkbox']", function () {
+        const allCheckboxes = $("#table-borrowing tbody input[type='checkbox']").length;
+        const checkedCheckboxes = $("#table-borrowing tbody input[type='checkbox']:checked").length;
+        const checked = allCheckboxes <= checkedCheckboxes;
+        $('#selectall').prop('checked', checked);
+    });
