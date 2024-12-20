@@ -57,7 +57,18 @@
                     <div id="collapseOffenses" class="collapse" role="tabpanel" aria-labelledby="headingOffenses"
                          data-parent="#accordionOtherEmploymentData">
                         <div class="card-body m-portlet__body--custom">
-                            <table id="tbl-offenses_list" class="table display table-bordered table-striped table-responsive" width="100%" style="width:100%;">
+                            <table id="tbl-offenses_list" class="table display table-bordered table-striped table-responsive" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Dates</th>
+                                        <th>Nature</th>
+                                        <th>Sanction/Remarks</th>
+                                        <th>File</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
                             </table>
                         </div>
                     </div>

@@ -2914,10 +2914,10 @@ if (typeof _tempContentData !== "undefined") {
                 data: { csrf_token: _csrf_hash, emp_id: tempDataId }
             },
             columns: [
-                { data: "offcom_type", title: "Type" },
+                { data: "offcom_type", width: "*" },
                 { 
                     data: "offcom_date", 
-                    title: "Date",  
+                    width: "*",
                     render: function(data, type, row) {
                         // Assuming 'data' is in the format YYYY-MM-DD
                         var date = new Date(data);
@@ -2927,20 +2927,19 @@ if (typeof _tempContentData !== "undefined") {
                             day: 'numeric',
                         });
                         return formattedDate;
-                    }
+                    },
                 },
-                { data: "offcom_nature", title: "Nature" },
-                { data: "offcom_action", title: "Sanction/Remarks" },
+                { data: "offcom_nature", },
+                { data: "offcom_action", },
                 {
                     data: "filename",
-                    title: "File",
                     width: "10%",
                     render: function(data, type, row, meta) {
                         var filePath = `<a onclick="openFile('${tempDataId}', '${data}')"  style="cursor:pointer;text-decoration:none;  this.style.color='black';" onmouseover="this.style.textDecoration='underline'; this.style.color='blue';" onmouseout="this.style.textDecoration='none';  this.style.color='black';">${data}</a>`;
                         return filePath;
                     },
                 },
-                { data: null, title: "Action", width: "12%", className: "text-center" }
+                { data: null, width: "12%", className: "text-center" }
             ],
             columnDefs: [
                 {

@@ -1021,7 +1021,7 @@ $(".m-content")
             const form = $(this);
             const url = form.attr("action");
             const formData = new FormData(this);
-
+            formData.append('emp_id', tempDataId);
             if (form.isValid()) {
                 $.ajax({
                     url,
@@ -1118,7 +1118,7 @@ $(".m-content")
             const form = $(this);
             const url = form.attr("action");
             const formData = new FormData(this);
-
+            formData.append('emp_id', tempDataId);
             const id = form.find("input[name='id']").val();
             const tr = $('.btnEditDependents[data-id="' + id + '"]').closest("tr");
 

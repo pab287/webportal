@@ -3733,12 +3733,12 @@
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee work experience!";
-                    $this->core_layout->setEventLog("Work experience - Failed to save employee work experience.","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Work experience - Failed to save employee work experience.","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Error, No post data found!";
-                $this->core_layout->setEventLog("Work experience - Error, No post data found","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Work experience - Error, No post data found","insert", "error", "gcchris", "system");
             }
             return $resultset;
         }
@@ -3755,19 +3755,20 @@
 
                 $post = array_map('strtoupper', $post);
                 $saved = $this->db->insert($this->employeeAwardsTable, $post);
+                $empName = $this->getEmployeeName($post['emp_id']);
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee award and achievement has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Added new employee award and achievement details.".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new employee award and achievement. Award: ".$post['award']." for employee ".$empName['name'],"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee award and achievement!";
-                    $this->core_layout->setEventLog("Award and achievement - Failed to save employee award and achievement.","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Award and achievement - Failed to save employee award and achievement.","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Error, No post data found!";
-                $this->core_layout->setEventLog("Award and achievement - Error, No post data found.","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Award and achievement - Error, No post data found.","insert", "error", "gcchris", "system");
             }
             return $resultset;
         }
@@ -3786,19 +3787,20 @@
 
                 $post = array_map('strtoupper', $post);
                 $saved = $this->db->insert($this->employeeOrganizationTable, $post);
+                $empName = $this->getEmployeeName($post['emp_id']);
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee organization has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Added new employee organization experience details.".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new employee organization. Organization: ".$post['org_membership_title']." for employee ".$empName['name'],"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee organization!";
-                    $this->core_layout->setEventLog("Organization - Failed to save employee organization.","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Organization - Failed to save employee organization.","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Error, No post data found!";
-                $this->core_layout->setEventLog("Organization - Error, No post data found.","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Organization - Error, No post data found.","insert", "error", "gcchris", "system");
             }
             return $resultset;
         }
@@ -3817,21 +3819,21 @@
 
                 $post = array_map('strtoupper', $post);
                 $post["attachment"] = $tempAttachment;
-
+                $empName = $this->getEmployeeName($post['emp_id']);
                 $saved = $this->db->insert($this->employeeTrainingsTable, $post);
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee training and seminar has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Added new training and seminar details.".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new training and seminar details. Training/Seminar: ".$post['training_title']." for employee ".$empName['name'],"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee training and seminar!";
-                    $this->core_layout->setEventLog("Trainings - Failed to save employee training and seminar.","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Trainings - Failed to save employee training and seminar.","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Error, No post data found!";
-                $this->core_layout->setEventLog("Trainings - Error, No post data found.","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Trainings - Error, No post data found.","insert", "error", "gcchris", "system");
             }
             return $resultset;
         }
@@ -3849,19 +3851,20 @@
 
                 $post = array_map('strtoupper', $post);
                 $saved = $this->db->insert($this->employeeReferencesTable, $post);
+                $empName = $this->getEmployeeName($post['emp_id']);
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee personal reference has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Added new personal reference details.".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new personal reference. Reference: ".$post['ref_name']." for employee ".$empName['name'],"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee personal reference!";
-                    $this->core_layout->setEventLog("Personal reference - Failed to save employee personal reference.","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Personal reference - Failed to save employee personal reference.","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Error, No post data found!";
-                $this->core_layout->setEventLog("Personal reference - Error, No post data found.","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Personal reference - Error, No post data found.","insert", "error", "gcchris", "system");
             }
             return $resultset;
         }
@@ -3882,21 +3885,21 @@
 
                 $post = array_map('strtoupper', $post);
                 $post["filename"] = $tempAttachment;
-
                 $saved = $this->db->insert($this->employeeMedicalHistoryTable, $post);
+                $empName = $this->getEmployeeName($post['emp_id']);
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee medical history/record has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Added new medical history/record details.".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new medical history/record details. ".$post['med_details'] ." for employee ".$empName['name'],"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee medical history/record!";
-                    $this->core_layout->setEventLog("Medical record - Failed to save employee medical history/record.","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Medical record - Failed to save employee medical history/record.","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Error, No post data found!";
-                $this->core_layout->setEventLog("Medical record - Error, No post data found.","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Medical record - Error, No post data found.","insert", "error", "gcchris", "system");
             }
             return $resultset;
         }
@@ -3914,19 +3917,20 @@
 
                 $post = array_map('strtoupper', $post);
                 $saved = $this->db->insert($this->employeeLegalHistoryTable, $post);
+                $empName = $this->getEmployeeName($post['emp_id']);
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee legal history/record has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Added new legal history/record details.".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new legal history/record details. Case number:".$post['leg_case_no']." for employee ".$empName['name'],"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee legal history/record!";
-                    $this->core_layout->setEventLog("Legal record - Failed to save employee legal history/record.","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Legal record - Failed to save employee legal history/record.","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Error, No post data found!";
-                $this->core_layout->setEventLog("Legal record - Error, No post data found.","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Legal record - Error, No post data found.","insert", "error", "gcchris", "system");
             }
             return $resultset;
         }
@@ -3945,13 +3949,13 @@
 
                 $post = array_map('strtoupper', $post);
                 $post["filename"] = $tempAttachment;
-
+                $empName = $this->getEmployeeName($post['emp_id']);
                 $saved = $this->db->insert($this->employeeOffensesTable, $post);
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee offense and commendation has been added successfully.";
                     $insertid = $this->db->insert_id();
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Added new offense and commendation details.".$insertid,"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new offense and commendation. Nature: ".$post['offcom_nature']." for employee ".$empName['name'],"insert", "success", "gcchris", "user");
                     $this->updateOffensesCommendationHistory(false,$post2,$insertid);
                 } else {
                     $resultset["response"] = false;
@@ -3988,6 +3992,7 @@
                     );
                     $saved = $this->db->insert($this->employeeDocumentsTable, $employeeDocuments);
                 }
+                $empName = $this->getEmployeeName($post['emp_id']);
                 if ($saved) {
 
                     if(isset($post['is_checklist']) && $post['is_checklist']){
@@ -4004,16 +4009,16 @@
 
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee document has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new document details.".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new document. File/s: ".$post['document_names']." for employee ".$empName['name'].".","insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee document!";
-                    $this->core_layout->setEventLog("Documents record - Failed to save employee offense and commendation.","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Documents record - Failed to save employee document.","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Error, No post data found!";
-                $this->core_layout->setEventLog("Documents record - Error, No post data found.","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Documents record - Error, No post data found.","insert", "error", "gcchris", "system");
             }
 
             return $resultset;
@@ -4034,19 +4039,20 @@
                 $post["add_by"] = $loggedIn["emp_id"];
 
                 $saved = $this->db->insert($this->employeeDocumentsTable, $post);
+                $empName = $this->getEmployeeName($post['emp_id']);
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee background check has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Added new document details.".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new document. File: ".$post['background_check_attachment']." for employee ".$empName['name'],"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee background check!";
-                    $this->core_layout->setEventLog("Background check record - Failed to save employee background check.","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Background check record - Failed to save employee background check.","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Error, No post data found!";
-                $this->core_layout->setEventLog("Background check record - Error, No post data found.","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Background check record - Error, No post data found.","insert", "error", "gcchris", "system");
             }
             return $resultset; 
         }
@@ -4054,10 +4060,10 @@
         function setModalJobDescription() {
             $post = $this->input->post();
             $resultset = array();
-
+            $emp_id = $post['emp_id'];
             if ($post) {
                 $where = array("id" => $post["position_id"]);
-                unset($post["csrf_token"], $post["position_id"]);
+                unset($post["csrf_token"], $post["position_id"], $post['emp_id']);
                 $loggedIn = $this->core_layout->getCurrentSession();
 
                 $data = array();
@@ -4066,20 +4072,21 @@
                 $data["modify_by"] = $loggedIn["emp_id"];
 
                 $saved = $this->db->update($this->positionTable, $data, $where);
+                $empName = $this->getEmployeeName($emp_id);
                 if ($saved) {
                     $resultset["response"] = true;
-                    $resultset["toastr_msg"] = "Employee job description has been updated.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Added updated job description details.".$where["position_id"],"insert", "success", "gcchris", "user");
+                    $resultset["toastr_msg"] = "Employee job description has been added.";
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added job description. for ".$this->getPositionById($where["position_id"]),"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee job description!";
                     $this->addEventLog("error",$this->db->error(),$this->positionTable,0);
-                    $this->core_layout->setEventLog("Job description record - Failed to save employee job description.","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("Job description record - Failed to save employee job description.","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Error, No post data found!";
-                $this->core_layout->setEventLog("Job description record - Error, No post data found.","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Job description record - Error, No post data found.","insert", "error", "gcchris", "system");
             }
             return $resultset;
         }
@@ -4137,12 +4144,12 @@
                 $post["filename"] = $tempAttachment;
                 $post["created_at"] = date("Y-m-d H:i:s");
                 $post["created_by"] = $loggedIn["emp_id"];
-
+                $empName = $this->getEmployeeName($post["emp_id"]);
                 $saved = $this->db->insert($this->employeePerformanceTable, $post);
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee performance evaluation has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Updated performance evaluation details.".$this->db->insert_id(),"update", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Updated performance evaluation details. for employee ".$empName['name'],"update", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee performance evaluation!";
@@ -4852,12 +4859,13 @@
                 $this->db->where('id', $checklistDocId);
                 $this->db->update($this->tblChecklist, $data);
             }
-
+            $empName = $this->getEmployeeName($post->id);
             if ($this->db->trans_status() === FALSE) {
                 $resultSet["success"] = "false";
                 $resultSet["message"] = $this->db->error();
                 $this->db->trans_rollback();
-                $this->core_layout->setEventLog("Error updating addocuments details.".$post->id,"update", "error", "gcchris", "user");
+
+                $this->core_layout->setEventLog("Error updating documents details for employee ".$empName['name'],"update", "error", "gcchris", "system");
             } else {
                 $resultSet["success"] = "true";
                 $resultSet["message"] = "Record was successfully updated.";
@@ -4865,7 +4873,7 @@
                     "doc_type" => $post->doc_type,
                     "doc_filename" => $uploaded['response'] ? $uploaded['files'][0]['file_name'] : ""
                 );
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Updated documents details.".$post->id,"update", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Updated documents details for employee ".$empName['name'],"update", "success", "gcchris", "user");
                 $this->db->trans_commit();
             }
 
@@ -4885,7 +4893,7 @@
             } else {
                 $resultSet['success'] = false;
                 $resultSet['message'] = $this->db->error();
-                $this->core_layout->setEventLog("Error updating legal details.".$post->id,"update", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Error updating legal details.".$post->id,"update", "error", "gcchris", "system");
             }
 
             $resultSet['data'] = $post;
@@ -5013,17 +5021,17 @@
 
             $this->db->where("id", $post->id);
             $this->db->update($this->employeeTable, $data);
-
+            $empName = $this->getEmployeeName($post->id);
             if ($this->db->trans_status() === FALSE) {
                 $resultSet["success"] = "false";
                 $resultSet["message"] = $this->db->error();
-                $this->core_layout->setEventLog("Error Updating employment questionaires details.".$post->id,"update", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Error Updating employment questionaires details. for employee ".$empName['name'],"update", "error", "gcchris", "system");
                 $this->db->trans_rollback();
             } else {
                 $resultSet["success"] = "true";
                 $resultSet["message"] = "Record was successfully updated.";
                 $resultSet["data"] = $post->ques;
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Updated employment questionaires details.".$post->id,"update", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Updated employment questionaires details. for employee ".$empName['name'],"update", "success", "gcchris", "user");
                 $this->db->trans_commit();
             }
 
@@ -5033,17 +5041,19 @@
         function updateEmployeeJobDescription($post) {
             $resultSet = array();
             $id = $post->id;
-            unset($post->id);
-
+            $emp_id = $post->emp_id;
+            unset($post->id,$post->emp_id);
+            $empName = $this->getEmployeeName($emp_id);
+            $position = $this->getPositionById($id);
             $this->db->where("id", $id);
             if ($this->db->update($this->positionTable, $post)) {
                 $resultSet['success'] = true;
                 $resultSet['message'] = "Job Description successfully updated.";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Updated job description details.".$id,"update", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Updated job description. for employee: ".$empName['name']." position: ".$position,"update", "success", "gcchris", "user");
             } else {
                 $resultSet['success'] = false;
                 $resultSet['message'] = $this->db->error();
-                $this->core_layout->setEventLog("Error Updating job description details.".$id,"update", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Error Updating job description details.".$id,"update", "error", "gcchris", "system");
             }
             $resultSet['data'] = $post;
 
@@ -6810,13 +6820,18 @@
         function addSalaryHistory() {
             $user = $this->core_layout->getUserLoggedIn();
             $post = $this->input->post();
-
             $post["sal_date"] = date("Y-m-d", strtotime($post["sal_date"]));
             $post["sal_rate"] = str_replace(",", "", $post["sal_rate"]);
             $post["add_date"] = date("Y-m-d H:i:s");
             $post["add_by"] = $user["employee_id"];
-
-            return $this->db->insert($this->employeeSalaryTable, $post);
+            $empName = $this->getEmployeeName($post['emp_id']);
+            $salary = $this->db->insert($this->employeeSalaryTable, $post);
+            if ($salary){
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new salary history record for employee: ".$empName['name']." rate: ".$post['sal_rate'],"insert", "success", "gcchris", "user");
+            }else{
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Failed to add new salary history record for employee: ".$empName['name'],"insert", "error", "gcchris", "system");
+            }
+            return $salary;
         }
 
         function editSalaryHistory() {
@@ -11012,7 +11027,7 @@
                 $query = $this->db->get(); 
                 $result = $query->row();
                 $this->db->reset_query();
-                return $result;
+                return $result->description;
             }
     
             private function getPositionById($id){
@@ -11022,7 +11037,7 @@
                 $query = $this->db->get(); 
                 $result = $query->row();
                 $this->db->reset_query();
-                return $result;
+                return $result->name;
             }
 
     }
