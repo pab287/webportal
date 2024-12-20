@@ -158,11 +158,6 @@ function loadEmployees(employee_status = "All") {
 
                             const ids = row.id;
                             $("#table-employee.grid tbody td:first-child").addClass('btnViewEmployee201').prop('data-id', ids);
-
-                            /** removed target attribute when table is in grid view */
-                            if(clickedView == 'grid'){
-                                $("#table-employee tbody td #details #grid .custom-fullname a").removeAttr('target');
-                            }
                             
                             _html += '<div id="details" style="padding: 10px">';
                                 _html += '<div id="grid">';
@@ -211,6 +206,16 @@ function loadEmployees(employee_status = "All") {
                 drawCallback: function () {
                     const data = dtEmployee.data();
                     setPerformanceRating(data);
+
+                    if(clickedView == 'grid'){
+                        $("#table-employee tbody td #details #grid .custom-fullname a").removeAttr('target');
+                    }
+
+                    if (data.length == 0) {
+                        $("#table-employee.grid .grid").css('justify-content', 'center');
+                    } else {
+                        $("#table-employee.grid .grid").css('justify-content', 'flex-start');
+                    }
                 },
                 initComplete: function () {
                     $(document)
