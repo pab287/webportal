@@ -59,7 +59,7 @@ class Borrowing_m extends CI_Model
         $data = array();
 
         $filterFields = array("a.id", "a.status", "comp.code", "pos.name", "a.reference_no", "a.date_trans", "c.asset_name", "b.firstname", "b.middlename", "b.lastname", "CONCAT(b.firstname,' ',b.lastname)");
-        $sql = "a.id, a.status, b.firstname, b.lastname, b.middlename, b.suffix, IF(pos.`name` IS NULL, a.position, pos.`name`) position, IF(comp.`code` IS NULL, a.company, comp.`code`) company, a.reference_no, a.date_trans, c.asset_name";
+        $sql = "a.id, a.status, b.firstname, b.lastname, b.middlename, b.suffix, IF(pos.`name` IS NULL, a.position, pos.`name`) position, IF(comp.code IS NULL, a.company, comp.code) company, a.reference_no, a.date_trans, c.asset_name";
 
         $this->db->select($sql);
         $this->db->from("gcceforms.borrowing a");
