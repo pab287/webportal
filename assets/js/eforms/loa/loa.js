@@ -439,7 +439,7 @@ function massAction(rowcollection, type){
             });
         }
 
-        return upDate;
+        // return upDate;
     });
 
     return updated;
