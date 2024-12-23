@@ -124,7 +124,7 @@ function formatTime(time){
 function itemDatatableActions($id){
 	if($id){
 		var _actionButton ="";
-        _actionButton += "<a href='view_overtime?id="+$id+"' target='__blank'><button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit' data-toggle='m-tooltip' data-original-title='View Details' data-placement='bottom' data-delay='{\"show\": 300}'><i class='la la-pencil-square'></i></button>";					
+        _actionButton += "<a href='view_overtime?id="+$id+"&page=archive' target='__blank'><button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit' data-toggle='m-tooltip' data-original-title='View Details' data-placement='bottom' data-delay='{\"show\": 300}'><i class='la la-pencil-square'></i></button>";					
 		return _actionButton;
 	}else{ return false; }
 }

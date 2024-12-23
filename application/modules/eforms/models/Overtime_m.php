@@ -179,7 +179,8 @@ class Overtime_m extends CI_Model {
     }
 
     private function masterfile_list($filtered,$filter,$search=null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $qBuilder=null, $status = null) {
-        $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.reference_no", "a.position", "a.created_at", "b.firstname", "b.lastname", "b.middlename", "b.suffix");
+        // $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.reference_no", "a.position", "a.created_at", "b.firstname", "b.lastname", "b.middlename", "b.suffix");
+        $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.reference_no", "a.position", "a.created_at", "b.firstname", "b.lastname");
         $this->db->select("a.id, a.reference_no, a.status, a.purpose, a.date_from, a.date_to, a.company, a.employee, a.department, a.created_at, a.position");
         $this->db->from('gcceforms.overtime a');
         $this->db->join('gccmaster.tblemployees b', 'a.employee = b.id', 'LEFT');
@@ -269,7 +270,7 @@ class Overtime_m extends CI_Model {
     }
     
     private function masterfile_count($filtered,$filter,$search=null, $qBuilder=null, $status = null) {
-        $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.position", "b.firstname", "b.lastname", "b.middlename", "b.suffix");
+        $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.position", "b.firstname", "b.lastname");
         $this->db->select("a.id, a.reference_no, a.status, a.purpose, a.date_from, a.date_to, a.company, a.employee, a.department, a.created_at, a.position");
         $this->db->from('gcceforms.overtime a');
         $this->db->join('gccmaster.tblemployees b', 'a.employee = b.id', 'LEFT');

@@ -50,7 +50,8 @@
                                         </a>
 
                                         <button class="btn btn-default m-btn m-btn--icon m-btn--pill btnQuick_action" type="button" id="dropdownMenuMassButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <span><i class="la la-ellipsis-h"></i> Actions <span class="dropdown-toggle"></span></span>
+                                            <!-- <span><i class="la la-ellipsis-h"></i> Actions <span class="dropdown-toggle"></span></span> -->
+                                            <span> Actions <span class="dropdown-toggle"></span></span>
                                         </button>
                                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuMassButton" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 37px, 0px); top: 0px; left: 0px; will-change: transform;">
                                             <li>
