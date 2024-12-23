@@ -548,7 +548,3 @@ if(typeof _currentActions != "undefined" && _currentActions.includes("advance_se
     vmLateAction.has_actions = true;
     vmAbsentAction.has_actions = true;
 }
-
-const propDisabled = function(form){
-    console.log(form);
-}
