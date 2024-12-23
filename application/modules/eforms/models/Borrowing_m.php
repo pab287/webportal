@@ -1516,7 +1516,7 @@ class Borrowing_m extends CI_Model
 
         $this->db->group_start();
             $this->db->where('a.is_returned', 0);
-            $this->db->where('a.is_returned <=', $check);
+            $this->db->where('a.date_due <=', $check);
         $this->db->group_end();
 
         if (isset($query_builder) && $query_builder) {
@@ -1581,7 +1581,7 @@ class Borrowing_m extends CI_Model
 
         $this->db->group_start();
             $this->db->where('a.is_returned', 0);
-            $this->db->where('a.is_returned <=', $check);
+            $this->db->where('a.date_due <=', $check);
         $this->db->group_end();
 
         if (isset($query_builder) && $query_builder) {
