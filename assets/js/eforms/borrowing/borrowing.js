@@ -211,7 +211,7 @@ $(document).ready(function () {
                 plugin: 'select2',
                 plugin_config: {
                     placeholder: 'Select. .',
-                    width: '110%',
+                    width: '150px',
                     data: [
                         {
                           id: "Pending",
@@ -222,6 +222,9 @@ $(document).ready(function () {
                         },{
                             id: "Disapproved",
                             text: "Disapproved"
+                        },{
+                            id: "Released",
+                            text: "Released"
                         },{
                             id: "HR Noted",
                             text: "HR Noted"

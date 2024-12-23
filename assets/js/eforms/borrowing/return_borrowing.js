@@ -117,17 +117,16 @@ function formatCalendarDate(data){
 function formatCalendarDateDue(data,row){
     if(data=="0000-00-00 00:00:00"){
         return "";
-    }
-    else{
+    } else{
+    
         var date_ret = new Date(row.date_returned);
         var due = new Date(data);
         
-if(date_ret<due){
-   
-    return moment(data).format("MM/DD/YYYY").fontcolor( "red" );
-}else{
-    return moment(data).format("MM/DD/YYYY");
-}
+        if (date_ret <= due) {
+            return moment(data).format("MM/DD/YYYY");
+        } else {
+            return moment(data).format("MM/DD/YYYY").fontcolor( "red" );
+        }
         
     }
   
@@ -135,17 +134,15 @@ if(date_ret<due){
 function formatCalendarDateReturn(data,row){
     if(data=="0000-00-00 00:00:00"){
         return "";
-    }
-    else{
+    } else {
         var date_ret = new Date(data);
         var due = new Date(row.date_due);
-        
-if(date_ret<due){
-   
-    return moment(data).format("MM/DD/YYYY").fontcolor( "red" );
-}else{
-    return moment(data).format("MM/DD/YYYY");
-}
+
+        if(date_ret <= due){
+            return moment(data).format("MM/DD/YYYY");
+        }else{
+            return moment(data).format("MM/DD/YYYY").fontcolor( "red" );
+        }
         
     }
   
