@@ -164,10 +164,10 @@ const vmLateAbsenteePreview = new Vue({
     }
 });
 
-const tempSelectorClear = function (tempSelector) {
+const tempSelectorClear = function (tempSelector, disabled=false) {
     if (typeof tempSelector !== "undefined" && tempSelector.length == 1) {
         tempSelector.val([]).trigger("change");
-        return tempSelector.prop("disabled", false);
+        return tempSelector.prop("disabled", disabled);
     }else{ return false; }
 }
 
@@ -193,9 +193,11 @@ if(typeof hrisFilterLateAbsenteeReport !== "undefined" && hrisFilterLateAbsentee
         const tempEmployeeSelector = hrisFilterLateAbsenteeReport.find("select#employee");
         const tempPayrollGroupSelector = hrisFilterLateAbsenteeReport.find("select#payroll_group");
 
-        tempSelectorClear(tempDepartmentSelector);
-        tempSelectorClear(tempEmployeeSelector);
-        tempSelectorClear(tempPayrollGroupSelector);
+        setTimeout(() => {
+            tempSelectorClear(tempDepartmentSelector, true);
+            tempSelectorClear(tempEmployeeSelector, true);
+            tempSelectorClear(tempPayrollGroupSelector, true);
+        }, 250);
     });
 
     hrisFilterLateAbsenteeReport.find("select#department")
