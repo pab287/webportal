@@ -307,34 +307,68 @@ $('#refresh').click(function() {
   tblOvertime.ajax.reload();
 });
 
-$("#frm-advance-search").on("submit", function (e) {
-    e.preventDefault();
-    var tempUrl = e.target.action;
-    var tempType = e.target.method;
+// $("#frm-advance-search").on("submit", function (e) {
+//     e.preventDefault();
+//     var tempUrl = e.target.action;
+//     var tempType = e.target.method;
 
-    $.ajax({
-        url: tempUrl,
-        type: tempType,
-        dataType: "json",
-        data: $(e.target).serialize(),
-        success: function (json) {
-            if (json.response) {
-                filteredIds = json.ids;
-                enabledFilter = true;
-                $("#modal-advance-search").modal('hide');
-                tblOvertime.ajax.reload();
-            }
-            if (json.has_error) { 
-              console.log('Error');
-              toastr.error(json.toastr_msg, "Filtered Search", { timeOut: 5000 }); }
-        }
-    });
-});
+//     $.ajax({
+//         url: tempUrl,
+//         type: tempType,
+//         dataType: "json",
+//         data: $(e.target).serialize(),
+//         success: function (json) {
+//             if (json.response) {
+//                 filteredIds = json.ids;
+//                 enabledFilter = true;
+//                 $("#modal-advance-search").modal('hide');
+//                 tblOvertime.ajax.reload();
+//             }
+//             if (json.has_error) { 
+//               console.log('Error');
+//               toastr.error(json.toastr_msg, "Filtered Search", { timeOut: 5000 }); }
+//         }
+//     });
+// });
+
+$.validate({
+    form: "#frm-advance-search",
+    lang: "en",
+    onSuccess: function (form) {
+        var currentForm = form[0];
+        var formUrl = currentForm.action;
+        var formData = $(currentForm).serialize();
+        var currentModal = $(currentForm).closest(".modal");
+
+        $.ajax({
+            url: formUrl,
+            type: 'post',
+            dataType: "json",
+            data: formData,
+            success: function (json) {
+                if (json.response) {
+                    filteredIds = json.ids;
+                    enabledFilter = true;
+                    if (typeof currentModal !== "undefined") { currentModal.modal("hide"); }
+                    tblOvertime.ajax.reload();
+
+                    $(currentForm).trigger('reset');
+                }
+                if (json.has_error) { 
+                    console.log('Error');
+                    toastr.error(json.toastr_msg, "Filtered Search", { timeOut: 5000 }); }
+                }
+        });
+
+        return false;
+    }
+})
 
 $("#employee").select2({
   placeholder: 'Select an option',
   width: '100%',
   dropdownParent: $("#modal-advance-search"),
+  minimumInputLength: 3,
     ajax: {
       url: baseUrl("eforms/overtime/get_employee"),
       dataType: "json",
@@ -356,6 +390,7 @@ $("#company").select2({
   placeholder: 'Select an option',
   width: '100%',
   dropdownParent: $("#modal-advance-search"),
+  minimumInputLength: 3,
   ajax: {
       url: baseUrl("eforms/overtime/get_company"),
       dataType: "json",
@@ -374,8 +409,10 @@ $("#status").select2({
     width: '100%',
     dropdownParent: $("#modal-advance-search"),
 });
+
 var startDate = moment().startOf('week');
 var endDate = moment().endOf('week');
+
 $("#date_time").daterangepicker({
   startDate: startDate,
   endDate: endDate,
@@ -383,18 +420,26 @@ $("#date_time").daterangepicker({
     format: 'MM/DD/YYYY',
     cancelLabel: 'Clear'
   },
+  autoUpdateInput: false
 });
 
 $("#date_time").on('apply.daterangepicker', function(ev, picker) {
-  $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
+    $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
+
+    var self = $(ev.target);
+    self.validate();
 });
 
-
+$("#date_time").on('cancel.daterangepicker', function(ev, picker) {
+    $(this).val('').trigger('change');
+});
 
 $("#modal-advance-search").on("hidden.bs.modal", function () {
   $('#status').val(null).trigger('change');
   $('#company').val(null).trigger('change');
   $('#employee').val(null).trigger('change');
+
+  $("#frm-advance-search").trigger('reset');
 })
 
 $(document).on('shown.bs.modal', '#modal-import-overtime', function (e) {

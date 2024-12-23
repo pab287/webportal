@@ -193,7 +193,7 @@
                     <div class="form-group pt-3">
                         <label for="date_time">Date From &amp; To</label>
                         <div class="input-group date">
-                            <input class="form-control m-input" type="text" name="date_time" id="date_time" autocomplete="off" />
+                            <input class="form-control m-input" type="text" name="date_time" id="date_time" autocomplete="off" data-validation="required" />
                             <span class="input-group-addon">
                                 <i class="la la-calendar glyphicon-th"></i>
                             </span>
