@@ -941,12 +941,13 @@ if (typeof _tempContentData !== "undefined") {
                 }
             });
 
-            // here not done
             $('#is_two_level').on('change', function(){
                 if($(this).is(':checked')){
                     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 1 });
                 }else{
                     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 0 });
+
+                    $("#m--input-manager_id").val('').trigger('change');
                 }
             });
         }
