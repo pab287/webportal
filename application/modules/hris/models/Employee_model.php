@@ -1977,7 +1977,19 @@
                     /** jp01 updated query starts here **/
 
                     $data->_status = $data->work_status;
-                    $data->current_supervisor = $data->supervisor;
+
+                    $tempMeta = unserialize($data->supervisor_meta);
+                    $data->current_supervisor = $tempMeta['supervisory'];
+                    // $data->current_supervisor = $data->supervisor;
+                    $data->supervisor = $tempMeta['supervisory'];
+
+                    if ($data->tl_supervisory == 1) {
+                        $data->current_manager = $tempMeta['managerial'];
+                        $data->manager = $tempMeta['managerial'];
+                    }
+
+                    $data->current_tl_supervisory = $data->tl_supervisory;
+
                     $data->current_company_id = $data->company_id;
                     $data->current_department_id = $data->department_id;
                     $data->current_position_id = $data->position;

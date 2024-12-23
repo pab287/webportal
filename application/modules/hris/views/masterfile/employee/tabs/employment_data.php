@@ -86,7 +86,16 @@
                 </div>
             </div>
         </div>
+        <!-- here not done -->
         <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x"></div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label text-center">
+                <label class="m-checkbox m-checkbox--check-bold m-checkbox--state-brand col-form-label" style="padding-top: 1px !important">
+                    <input type="checkbox" id="is_two_level" :checked="vm_tab3.current_tl_supervisory == 1 ? true : false" name="vmTab3.tl_supervisory"> <label> TWO LEVEL SUPERVISORY </label>
+                    <span></span>
+                </label>
+            </div>
+        </div>
         <div class="row m--margin-bottom-10">
             <div class="col-12 col-sm-12 col-md-8 col-lg-8 col-xl-8" v-show="vm_tab3.level !== 'SUPERVISORY' && vm_tab3.level !== 'MANAGERIAL'  && vm_tab3.level !== 'EXECUTIVE' ">
                 <div class="form-group m-form__group row">
@@ -94,6 +103,19 @@
                     <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
                         <select id="m--input-supervisor_id" class="form-control m-input select2" name="supervisor" placeholder="Select an option"
                                 v-model="vm_tab3.supervisor">
+                            <option value="0">None</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row m--margin-bottom-10">
+            <div class="col-12 col-sm-12 col-md-8 col-lg-8 col-xl-8" v-show="vm_tab3.current_tl_supervisory == 1">
+                <div class="form-group m-form__group row">
+                    <label for="position" class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label">Department Manager:</label>
+                    <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                        <select id="m--input-manager_id" class="form-control m-input select2" name="manager" placeholder="Select an option"
+                                v-model="vm_tab3.manager">
                             <option value="0">None</option>
                         </select>
                     </div>
