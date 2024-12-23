@@ -182,7 +182,7 @@ function descriptionDetail($desc, $brand, $model, $serial, $plateno, $engineno, 
     if ($type == 'Asset') {
         return '<b>' + $desc + '</b><br>Description: ' + $desc_det + '<br>Brand: ' + $brand + '<br>Model: ' + $model + '<br>Serial: ' + $serial;
     } else {
-        return '<b>' + $desc + '</b><br>Description: ' + $desc_det + '<br>Plate no.: ' + $plateno + '<br>Engine no.: ' + $engineno + '<br>Chasis no.: ' + $chasisno;
+        return '<b>' + $desc + '</b><br>Description: ' + $desc_det + '<br>Plate no.: ' + ($plateno ? $plateno : 'N/A') + '<br>Engine no.: ' + ($engineno    ? engineno : 'N/A') + '<br>Chasis no.: ' + ($chasisno ? chasisno : 'N/A');
     }
 }
 
@@ -574,7 +574,7 @@ function getVehicleDetail($id, $component) {
             $("#vehicle_qty").val(1);
             $("#vehicle_code").val(data.gen_code);
             $("#vehicle_name").text(data.name);
-            $("#vehicle_desc").text(data.description + '\nBrand: ' + data.brand + '\nModel: ' + data.model + '\nPlate No.: ' + data.plateno);
+            $("#vehicle_desc").text(data.description + '\nBrand: ' + data.brand + '\nModel: ' + data.model + '\nPlate No.: ' + (data.plateno ? data.plateno : 'N/A'));
             return data;
         }
     });
