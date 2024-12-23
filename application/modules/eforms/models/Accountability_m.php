@@ -1160,10 +1160,10 @@ class Accountability_m extends CI_Model {
 
                     if (strtolower($type) == 'vehicle') {
                         $assetSql = "id, name, brand, gen_code, engineno, plateno, chasisno, isCompo";
-                        $vehicle_query = $this->db->select($assetSql)->get_where('gccasset.assets', array('id' => $assetId));
+                        $vehicle_query = $this->db->select($assetSql)->get_where('gccasset.vehicles', array('id' => $assetId));
 
                         if ($vehicle_query->num_rows() > 0) {
-                            $row = $query2->row();
+                            $row = $vehicle_query->row();
 
                             $this->db->reset_query();
 
@@ -1183,17 +1183,6 @@ class Accountability_m extends CI_Model {
                             $this->db->from('gccasset.vehicles a');
                             $this->db->join('gccasset.vehicles_components b', 'b.asset_id = a.id', 'left');
                             $this->db->where('b.parent_id', $row->id);
-                            $this->db->limit($limit, $offset);
-
-                            $this->db->group_start();
-                                foreach ($filterFields as $key => $field) {
-                                    if ($key == 0) {
-                                        $this->db->like($field, $search, "both");
-                                    } else {
-                                        $this->db->or_like($field, $search, "both");
-                                    }
-                                }
-                            $this->db->group_end();
 
                             if ($sortOrder[0]['column'] != 0) {
                                 $this->db->order_by($sortOrder[0]['column'], $sortOrder[0]['dir']);
