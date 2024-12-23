@@ -11,17 +11,19 @@
         <div class="m-portlet m-portlet--head-sm mb-2" data-portlet="true" id="m_portlet_tools-late_absentee_report">
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
-                        <div class="m-portlet__head-title">
-                        <span class="m-portlet__head-icon">
-                            <i class="fa fa-filter"></i>
-                        </span>
-                            <h3 class="m-portlet__head-text">Late and Absentee Report <small>Filter Options</small></h3>
-                        </div>
+                        <a href="javascript:void(0);" id="toggleCollapse" style="text-decoration: none">
+                            <div class="m-portlet__head-title">
+                            <span class="m-portlet__head-icon">
+                                <i class="fa fa-filter"></i>
+                            </span>
+                                <h3 class="m-portlet__head-text">Late and Absentee Report <small>Filter Options</small></h3>
+                            </div>
+                        </a>
                     </div>
                     <div class="m-portlet__head-tools">
                         <ul class="m-portlet__nav">
                             <li class="m-portlet__nav-item">
-                                <a href="javascript:void(0);" data-portlet-tool="toggle" class="m-portlet__nav-link m-portlet__nav-link--icon" title="" data-original-title="Collapse">
+                                <a href="javascript:void(0);" data-portlet-tool="toggle" class="m-portlet__nav-link m-portlet__nav-link--icon" title="Collapse" data-original-title="Collapse">
                                     <i class="la la-angle-down"></i>
                                 </a>
                             </li>
@@ -36,7 +38,7 @@
                             <div id="tempFilterByLateAbsenteeReport">
                                 <div class="row mb-3">
                                     <div class="col-sm-12 col-md-3 col-xl-3 col-lg-3">
-                                        <div class="form-group has-success">
+                                        <div class="form-group m-form__group has-success">
                                             <label class="m--font-bolder" for="">REPORT TYPE</label>
                                             <div class="m-checkbox-inline">
                                                 <label class="m-checkbox">
@@ -51,7 +53,7 @@
                                         </div>
                                     </div>
                                     <div class="col-sm-12 col-md-2 col-xl-2 col-lg-2">
-                                        <div class="form-group has-success">
+                                        <div class="form-group m-form__group has-success">
                                             <label class="m--font-bolder" for="">FILTER BY</label>
                                             <div class="m-checkbox-inline">
                                                 <label class="m-checkbox">

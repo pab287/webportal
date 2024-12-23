@@ -507,7 +507,7 @@ const resetFilterLateAbsenteeReport = function(event){
     if (typeof form !== "undefined" && form.length == 1) {
         const select2 = form.find("#employee, #payroll_group, #company, #department, [name='filter_month'], [name='filter_year']");
         if (typeof select2 !== "undefined" && select2.length > 0) {
-            $.each(select2, function (i, v) {
+            $.each(select2, function (_i, v) {
                 const multi = $(v)[0].multiple;
                 if (multi) { $(v).val([]).trigger("change").prop("disabled", false); } 
                 else { $(v).val("").trigger("change"); }
@@ -523,7 +523,17 @@ const resetFilterLateAbsenteeReport = function(event){
             }
             dateRange.val("");
         }
+
+        const select2Containers = form.find("#employee, #payroll_group, #department");
+        if (typeof select2Containers !== "undefined" && select2Containers.length > 0) {
+            $.each(select2Containers, function (i, v) {
+                tempSelectorClear($(v), true);
+            });
+        }
+
+        form[0].reset();
     }
+
 }
 
 const submitLateAbsenteeFilterForm = function(event){
@@ -548,3 +558,13 @@ if(typeof _currentActions != "undefined" && _currentActions.includes("advance_se
     vmLateAction.has_actions = true;
     vmAbsentAction.has_actions = true;
 }
+
+$("#toggleCollapse").on("click", function(){
+    if(isCollapsedPortlet){
+        _tblPortletReports.expand();
+        isCollapsedPortlet = false;
+    }else{        
+        _tblPortletReports.collapse();
+        isCollapsedPortlet = true;
+    }
+});
