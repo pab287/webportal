@@ -165,14 +165,26 @@ $.ajax({
                     break;    
             case "For Releasing":
                 $("#acctg_note").show();
-                $("#hr_note").show();
+
+                if (data[0].is_contract == 0) {
+                    $("#hr_note").show();
+                }
+
                 $("#status").append('<div class="m-badge m-badge--wide alert alert-brand" role="alert"><strong>For Releasing</strong></div>');
                 if (_currentActions.includes('acct_release') ) {
                     $("#buttons").append("<button type='button' class='btn btn-success btnAcct_release m-btn m-btn--custom m-btn--air m-btn--box' data-toggle='modal' data-target='#release_note_modal'><span>Release</span></button>");
                 }
-                if (_currentActions.includes('undo_hr_note') ) {
-                    $("#buttons").append("<button type='button' class='btn btn-danger btnUndo_hr_note m-btn m-btn--custom m-btn--air m-btn--box' data-toggle='modal' data-target='#undo_hr_modal'><span>Undo Payroll Notes</span></button>");
+
+                if (data[0].is_contract == 0) {
+                    if (_currentActions.includes('undo_hr_note') ) {
+                        $("#buttons").append("<button type='button' class='btn btn-danger btnUndo_hr_note m-btn m-btn--custom m-btn--air m-btn--box' data-toggle='modal' data-target='#undo_hr_modal'><span>Undo Payroll Notes</span></button>");
+                    }
+                } else {
+                    if (_currentActions.includes('undo_acct_note') ) {
+                        $("#buttons").append("<button type='button' class='btn btn-danger btnUndo_acct_note m-btn m-btn--custom m-btn--air m-btn--box' data-toggle='modal' data-target='#undo_acctg_modal'><span>Undo Acctg Notes</span></button>");
+                    }
                 }
+
                 if (_currentActions.includes('cancel') ) {
                     $("#buttons").append("<button type='button' class='btn btn-danger btnCancel m-btn m-btn--custom m-btn--air m-btn--box' data-toggle='modal' data-target='#cancel_modal'><span>Cancel</span></button>");
                 }
@@ -182,7 +194,11 @@ $.ajax({
                 break;
             case "Released":
                 $("#acctg_note").show();
-                $("#hr_note").show();
+
+                if (data[0].is_contract == 0) {
+                    $("#hr_note").show();
+                }
+                
                 $("#release_note").show();
                 $("#status").append('<div class="m-badge m-badge--wide alert alert-success" role="alert"><strong>Released</strong></div>');
                 if (_currentActions.includes('undo_release') ) {
