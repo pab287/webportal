@@ -3,7 +3,7 @@
         'name' => 'alzen8work/ci_hmvc',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => '4a266b2c3f80d0ed8f27c8a4743233d0580e6e37',
+        'reference' => 'b653c82f8b7f446af94ba002c339daff6ae25185',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'alzen8work/ci_hmvc' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => '4a266b2c3f80d0ed8f27c8a4743233d0580e6e37',
+            'reference' => 'b653c82f8b7f446af94ba002c339daff6ae25185',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
