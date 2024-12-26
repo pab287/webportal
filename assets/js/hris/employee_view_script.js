@@ -1,7 +1,9 @@
 let actions = _currentActions;
 let session_id = $("#user_id").val();
-let id = $("#employee_id").val();
 let employeeData = _tempContentData.data.main;
+let user_name = _tempContentData.data.user.display_name;
+let id = employeeData.id;
+let today = _tempContentData.data.timestamp;
 $(document).ready(function(){
     getPerformanceRating(id);
     $('#column-options').on('click', function (e) {
@@ -10,11 +12,14 @@ $(document).ready(function(){
 });
 
 let employeeDataSheet = new Vue({
-    el:"#data-sheet",
+    el:"#m-content",
     data:{ 
             activeSection:"",
             main:[],
+            supervisor:"",
+            path:"",
             dependents:[],
+            job_desc:"",
             questions:{
                 ques1: "HAVE YOU EVER BEEN EMPLOYED BY US BEFORE? IN WHAT BRANCH AND WHAT POSITION?",
                 ques2: "WHO REFERRED YOU TO OUR COMPANY?",
@@ -128,7 +133,7 @@ let employeeDataSheet = new Vue({
                 getEmploymentInformation();
                 break;
             case "jobDescription":
-                this.getPersonalInformation();
+                getJobDescription();
                 break;
             default:
              {
@@ -141,7 +146,45 @@ let employeeDataSheet = new Vue({
     methods:{
         getSidebarData(){
             this.main = { ...this.$data.main, ..._tempContentData.data.main };
+            this.path = _tempContentData.data.path;
+            this.supervisor = _tempContentData.data.supervisor;
         },
+        getDisplayName() {
+            const { firstname, middlename, lastname, suffix } = this.main;
+      
+            let displayName1 = '';
+            let displayName2 = '';
+      
+            const middleInitial = middlename && !['', 'N/A', 'NONE'].includes(middlename.toUpperCase()) 
+              ? middlename.trim()[0].toUpperCase() + '.'
+              : '';
+      
+            const formattedSuffix = suffix && !['', 'N/A', 'NONE'].includes(suffix.toUpperCase()) 
+              ? suffix.toUpperCase()
+              : '';
+      
+            if (middleInitial && formattedSuffix) {
+              displayName1 = `${lastname}, ${firstname} ${middleInitial} ${formattedSuffix}`;
+              displayName2 = `${firstname} ${middleInitial} ${lastname} ${formattedSuffix}`;
+            } else if (formattedSuffix) {
+              displayName1 = `${lastname}, ${firstname} ${formattedSuffix}`;
+              displayName2 = `${firstname} ${lastname} ${formattedSuffix}`;
+            } else if (middleInitial) {
+              displayName1 = `${lastname}, ${firstname} ${middleInitial}`;
+              displayName2 = `${firstname} ${middleInitial} ${lastname}`;
+            } else {
+              displayName1 = `${lastname}, ${firstname}`;
+              displayName2 = `${firstname} ${lastname}`;
+            }
+      
+            displayName1 = displayName1.toUpperCase();
+            displayName2 = displayName2.toUpperCase();
+      
+            return {
+              display_name_0: displayName1,
+              display_name_1: displayName2
+            };
+          },
         getPersonalInformation(){
             if (!hasValue(this.main)) {
                 this.main = { ...this.$data.main, ..._tempContentData.data.main };
@@ -168,10 +211,29 @@ let employeeDataSheet = new Vue({
                 return diffYears > 1 ? `${diffYears} Years Old` : '1 Year Old';
             }
         },
+        displayName(lastname, firstname, middlename, suffix) {
+            const middleInitial = middlename?.trim()?.[0]?.toUpperCase() || '';
+            const formattedSuffix = suffix?.toLowerCase() === suffix?.toUpperCase() ? '' : suffix.toUpperCase();
+          
+            return [
+              `${lastname.toUpperCase()}, ${firstname.toUpperCase()}${middleInitial}${formattedSuffix}`,
+              `${firstname.toUpperCase()}${middleInitial} ${lastname.toUpperCase()}${formattedSuffix}`
+            ];
+          },
         formatDate(empdate) {
-
             if (!empdate || empdate == '0000-00-00') {
                 return '---';
+              }
+            const date = new Date(empdate);
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: '2-digit', 
+                year: 'numeric' 
+              });
+        },
+        formatStartDate(empdate) {
+            if (!empdate || empdate == '0000-00-00') {
+                return 'N/A';
               }
             const date = new Date(empdate);
             return date.toLocaleDateString('en-US', { 
@@ -210,7 +272,7 @@ let employeeDataSheet = new Vue({
           },
           formatSalaryRate(rate) {
             if (!rate || rate == '') return 'NONE';
-            
+
             const formattedRate = new Intl.NumberFormat('en-PH', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
@@ -221,6 +283,22 @@ let employeeDataSheet = new Vue({
           isCurrentSalary(salary, index) {
             const grandTotal = parseFloat(this.data.grandTotal);
             return salary.sal_rate == grandTotal && index == 0;
+          },
+          formattedJobDesc() {
+            if (!this.main.job_desc) return '';
+            
+            // Create a temporary div to parse HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = this.main.job_desc;
+            
+            // Check if there are any li elements
+            const hasListItems = tempDiv.getElementsByTagName('li').length > 0;
+            
+            // If it has list items, return the HTML as is
+            // If not, convert newlines to <br>
+            return hasListItems 
+              ? this.main.job_desc 
+              : this.main.job_desc.replace(/\n/g, '<br>');
           },
     }
 })
@@ -318,8 +396,8 @@ $('#empEmploymentInfo-body, #collapseEmployment').on('show.bs.collapse', functio
 });
 
 $('#jobDescription-body, #collapseEmployment').on('show.bs.collapse', function () {
-    if (!hasValue(employeeDataSheet.main)) {
-        employeeDataSheet.getPersonalInformation();
+    if (!hasValue(employeeDataSheet.job_desc)) {
+        getJobDescription();
     }
 })
 
@@ -360,8 +438,6 @@ function getPerformanceRating(id){
                 $("#performance-rating").starRating('setRating', 0);
                 $("#performance-rating-description").html("");
             }
-            
-           
         }
     });
     
@@ -647,7 +723,24 @@ function getEmploymentInformation(){
     });
 }
 
-function printFetch(element, avatar, info, user, timestamp){
+function getJobDescription(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_job_description/")+employeeDataSheet.$data.main.position_id,
+        type: "post",
+        data:{csrf_token: _csrf_hash},
+        dataType: "JSON",
+        global: false,
+        success: function(response) {            
+            if (!response || response.job_desc == null) {
+                employeeDataSheet.$data.job_desc = false;
+            } else {
+                employeeDataSheet.$data.job_desc = { ...employeeDataSheet.$data.job_desc, ...response.job_desc };
+            }
+        }
+    });
+}
+
+function printFetch(){
     $.ajax({
         url: baseUrl("hris/masterfile/get_print_data/")+id,
         type: "post",
@@ -657,24 +750,21 @@ function printFetch(element, avatar, info, user, timestamp){
         success: function(response) {
             if(response){
                 employeeDataSheet.$data.printData = { ...employeeDataSheet.$data.printData, ...response.data };
-
                 if (actions.includes("view_own_request") && employeeDataSheet.$data.printData.main.id !== session_id) {
                     employeeDataSheet.$data.printData.salaries = "not_allowed";
                 }
                 Vue.nextTick(() => {
-                    printEmployeeDataSheet(element, avatar, info, user, timestamp)
+                    printEmployeeDataSheet(employeeDataSheet.path, employeeDataSheet.$data.printData, user_name ,today)
                 });
             }
         }
     })
 }
 
-function printEmployeeDataSheet(element, avatar, info, user, timestamp) {
+function printEmployeeDataSheet(avatar, info, user, timestamp) {
     const divToPrint = $(".data-sheet").html();
     const newWin = window.open('', 'Print-Employee Data Sheet');
     const style1 = baseUrl("assets/css/responsiveTable.css");
-    const style2 = baseUrl("assets/vendors/base/vendors.bundle.css");
-    const style3 = baseUrl("assets/demo/demo3/base/style.bundle.css");
 
     const bootstrapRowCol = `.row {
         display: flex;
@@ -832,8 +922,8 @@ function printEmployeeDataSheet(element, avatar, info, user, timestamp) {
         '               <td>' +
         '                   <div style="display: block;">' +
         '                       <div class="avatar"></div>' +
-        '                       <p style="margin: 8px 0 0; font-size: 14px;">ID No.: ' + info.idno + '</p>' +
-        '                       <p style="margin: 2px 0 0; font-size: 14px;">Biometric No.: ' + info.biometricno + '</p>' +
+        '                       <p style="margin: 8px 0 0; font-size: 14px;">ID No.: ' + info.main.idno + '</p>' +
+        '                       <p style="margin: 2px 0 0; font-size: 14px;">Biometric No.: ' + info.main.biometricno + '</p>' +
         '                   </div>' +
         '               </td>' +
         '           </tr>' +
