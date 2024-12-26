@@ -1232,7 +1232,7 @@
                 <tbody>
                     <tr>
                         <td id="job_desc" class="text-left">
-                        <label v-if="main.job_desc && main.job_desc !== 'NONE'" v-html="formattedJobDesc"></label>
+                        <label v-if="job_desc && job_desc !== 'NONE'" v-html="formattedJobDesc()"></label>
                         </td>
                     </tr>
                     </tbody>

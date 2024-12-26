@@ -1257,31 +1257,16 @@
             <div class="card-body">
                 <table class="responsive">
                     <tbody>
-                        <tr>
-                        <?php
-                            $dom = new DOMDocument;
-                            @$dom->loadHTML($data->main->job_desc);
-                            $allElements = $dom->getElementsByTagName("li");
-
-                            $count = $allElements->length;
-                            if($count > 0){
-                                $display = $data->main->job_desc;
-                            }else{
-                                $display = nl2br($data->main->job_desc);
-                            }
-                        ?>
-                            <td id="job_desc" class="text-left">
-                            <?php if($display != NULL OR $display != "NONE"){?>
-                                <label><?= $display ?></label>
-                            <?php } ?>
-                            </td>
-                        </tr>
+                    <tr>
+                        <td id="job_desc" class="text-left">
+                        <label v-if="job_desc && job_desc !== 'NONE'" v-html="formattedJobDesc()"></label>
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
 			</div>
 		</div>
     </div>
-
 </div>
 
 

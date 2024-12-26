@@ -285,11 +285,11 @@ let employeeDataSheet = new Vue({
             return salary.sal_rate == grandTotal && index == 0;
           },
           formattedJobDesc() {
-            if (!this.main.job_desc) return '';
+            if (!this.job_desc) return '';
             
             // Create a temporary div to parse HTML
             const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = this.main.job_desc;
+            tempDiv.innerHTML = this.job_desc;
             
             // Check if there are any li elements
             const hasListItems = tempDiv.getElementsByTagName('li').length > 0;
@@ -297,8 +297,8 @@ let employeeDataSheet = new Vue({
             // If it has list items, return the HTML as is
             // If not, convert newlines to <br>
             return hasListItems 
-              ? this.main.job_desc 
-              : this.main.job_desc.replace(/\n/g, '<br>');
+              ? this.job_desc 
+              : this.job_desc.replace(/\n/g, '<br>');
           },
     }
 })
@@ -734,7 +734,7 @@ function getJobDescription(){
             if (!response || response.job_desc == null) {
                 employeeDataSheet.$data.job_desc = false;
             } else {
-                employeeDataSheet.$data.job_desc = { ...employeeDataSheet.$data.job_desc, ...response.job_desc };
+                employeeDataSheet.$data.job_desc =  response.job_desc;
             }
         }
     });
