@@ -179,8 +179,9 @@ class Overtime_m extends CI_Model {
     }
 
     private function masterfile_list($filtered,$filter,$search=null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $qBuilder=null, $status = null) {
-        $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.reference_no", "a.position", "a.created_at", "b.firstname", "b.lastname", "b.middlename", "b.suffix");
-        $this->db->select("a.*");
+        // $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.reference_no", "a.position", "a.created_at", "b.firstname", "b.lastname", "b.middlename", "b.suffix");
+        $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.reference_no", "a.position", "a.created_at", "b.firstname", "b.lastname");
+        $this->db->select("a.id, a.reference_no, a.status, a.purpose, a.date_from, a.date_to, a.company, a.employee, a.department, a.created_at, a.position");
         $this->db->from('gcceforms.overtime a');
         $this->db->join('gccmaster.tblemployees b', 'a.employee = b.id', 'LEFT');
 
@@ -199,21 +200,26 @@ class Overtime_m extends CI_Model {
         $this->db->where_not_in('a.status', "Cancelled");
         if($qBuilder){ $this->db->where($qBuilder); }
         if ($search) {
-          $this->db->group_start();
-          foreach ($filterFields as $key => $field) {
-              if ($key == 0) {
-                  $this->db->like($field, $search, "both");
-              } else {
-                  $this->db->or_like($field, $search, "both");
-              }
-          }
-          $this->db->group_end();
-      }
-      if($filtered=="true"){
-        if (is_array($filter)) {
-          $this->db->where_in("a.id", $filter);
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
         }
-      }
+        if($filtered=="true"){
+            if (is_array($filter)) {
+                $chucked = array_chunk($filter, 100);
+                $this->db->group_start();
+                foreach ($chucked as $value) {
+                    $this->db->or_where_in("a.id", $value);
+                }
+                $this->db->group_end();
+            }
+        }
 
         if($limit != -1){
             $this->db->limit($limit, $offset);
@@ -264,8 +270,8 @@ class Overtime_m extends CI_Model {
     }
     
     private function masterfile_count($filtered,$filter,$search=null, $qBuilder=null, $status = null) {
-        $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.position", "b.firstname", "b.lastname", "b.middlename", "b.suffix");
-        $this->db->select("a.*");
+        $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.position", "b.firstname", "b.lastname");
+        $this->db->select("a.id, a.reference_no, a.status, a.purpose, a.date_from, a.date_to, a.company, a.employee, a.department, a.created_at, a.position");
         $this->db->from('gcceforms.overtime a');
         $this->db->join('gccmaster.tblemployees b', 'a.employee = b.id', 'LEFT');
 
@@ -297,7 +303,13 @@ class Overtime_m extends CI_Model {
       }
       if($filtered=="true"){
         if (is_array($filter)) {
-          $this->db->where_in("a.id", $filter);
+
+            $chucked = array_chunk($filter, 100);
+            $this->db->group_start();
+            foreach ($chucked as $value) {
+                $this->db->or_where_in("a.id", $value);
+            }
+            $this->db->group_end();
         }
       }
 
@@ -418,7 +430,7 @@ class Overtime_m extends CI_Model {
 
     private function archive_list($search=null, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
         $filterFields = array("a.id", "status", "a.purpose","a.company", "a.department", "a.position", "b.firstname", "b.lastname", "b.middlename", "b.suffix", "a.reference_no");
-        $this->db->select("a.*");
+        $this->db->select("a.id, a.reference_no, a.status, a.purpose, a.date_from, a.date_to, a.company, a.employee, a.department, a.created_at, a.position");
         $this->db->from('gcceforms.overtime a');
         $this->db->join('gccmaster.tblemployees b', 'a.employee = b.id', 'LEFT');
         $this->db->where('status', "Cancelled");
@@ -466,7 +478,7 @@ class Overtime_m extends CI_Model {
 
     private function archive_count($search=null) {
         $filterFields = array("a.id", "status", "a.purpose","a.company", "a.department", "a.position", "b.firstname", "b.lastname", "b.middlename", "b.suffix");
-        $this->db->select("a.*");
+        $this->db->select("a.id, a.reference_no, a.status, a.purpose, a.date_from, a.date_to, a.company, a.employee, a.department, a.created_at, a.position");
         $this->db->from('gcceforms.overtime a');
         $this->db->join('gccmaster.tblemployees b', 'a.employee = b.id', 'LEFT');
         $this->db->where('status', "Cancelled");
@@ -521,23 +533,34 @@ class Overtime_m extends CI_Model {
   
 
     function getCompanyList(){
-      $get = $this->input->get();
-      $resultarray = array();
-      if(isset($get['q'])){ 
-        $query = $this->db->query("SELECT id, description FROM gcchris.tblcompanies WHERE is_archived = 0 AND description LIKE '%{$get['q']}%' LIMIT 10");
-      }else{
-        $query = $this->db->query("SELECT id, description FROM gcchris.tblcompanies WHERE is_archived = 0 LIMIT 10");
-      }
-      if($query->num_rows() > 0){
-        foreach($query->result_array() as $_query){
-          $data = array();
-          $tempRs = (array) $_query;
-          $data["id"] = $_query["id"];
-          $data["text"] = $_query["description"];
-          $resultarray[] = $data;
+        $get = $this->input->get();
+        $resultarray = array();
+        //   if(isset($get['q'])){ 
+        //     $query = $this->db->query("SELECT id, description FROM gcchris.tblcompanies WHERE is_archived = 0 AND description LIKE '%{$get['q']}%' LIMIT 10");
+        //   }else{
+        //     $query = $this->db->query("SELECT id, description FROM gcchris.tblcompanies WHERE is_archived = 0 LIMIT 10");
+        //   }
+
+        $this->db->select("id, description");
+        $this->db->from("gcchris.tblcompanies");
+        $this->db->where("is_archived", 0);
+
+        if (isset($get['q'])) {
+            $this->db->like("description", $get['q'], "both");
         }
-      }
-      return array("results"=>$resultarray);
+        $this->db->limit(10);
+        $query = $this->db->get();
+
+        if($query->num_rows() > 0){
+            foreach($query->result_array() as $_query){
+                $data = array();
+                $tempRs = (array) $_query;
+                $data["id"] = $_query["id"];
+                $data["text"] = $_query["description"];
+                $resultarray[] = $data;
+            }
+        }
+        return array("results"=>$resultarray);
     }
 
     function getEmployeeDepartmentHead(){
@@ -578,27 +601,37 @@ class Overtime_m extends CI_Model {
         $get = $this->input->get();
         $id = $get['data'];
         $resultarray = array();
-        $query = $this->db->query("SELECT id, company_id, department_id, position FROM gccmaster.tblemployees WHERE id=$id");
-        if($query->num_rows() > 0){
+
+        $this->db->select('id, company_id, department_id, position');
+        $this->db->from('gccmaster.tblemployees');
+        $this->db->where('id', $id);
+        $query = $this->db->get();
+
+        // $query = $this->db->query("SELECT id, company_id, department_id, position FROM gccmaster.tblemployees WHERE id=$id");
+        if ($query->num_rows() > 0) {
             $row = $query->row_array();
 
-            if(is_numeric($row["company_id"])){
-                $company = $this->getCompany($row["company_id"]);
-            }else{
-                $company = $row["company_id"];
-            }
+            $company = (is_numeric($row["company_id"])) ? $this->getCompany($row["company_id"]) : $row["company_id"];
+            $department = (is_numeric($row["department_id"])) ? $this->getDepartment($row["department_id"]) : $row["department_id"];
+            $position = (is_numeric($row["position"])) ? $this->getPosition($row["position"]) : $row["position"];
 
-            if(is_numeric($row["department_id"])){
-                $department = $this->getDepartment($row["department_id"]);
-            }else{
-                $department = $row["department_id"];
-            }
+            // if(is_numeric($row["company_id"])){
+            //     $company = $this->getCompany($row["company_id"]);
+            // }else{
+            //     $company = $row["company_id"];
+            // }
 
-            if(is_numeric($row["position"])){
-                $position = $this->getPosition($row["position"]);
-            }else{
-                $position = $row["position"];
-            }
+            // if(is_numeric($row["department_id"])){
+            //     $department = $this->getDepartment($row["department_id"]);
+            // }else{
+            //     $department = $row["department_id"];
+            // }
+
+            // if(is_numeric($row["position"])){
+            //     $position = $this->getPosition($row["position"]);
+            // }else{
+            //     $position = $row["position"];
+            // }
 
             $resultarray["company"] = $company;
             $resultarray["department"] = $department;
@@ -680,6 +713,7 @@ class Overtime_m extends CI_Model {
     }
 
     function getOvertimeReference($id){
+        $this->db->select("reference_no");
         return $this->db->get_where("gcceforms.overtime", array("id"=>$id))->row('reference_no');
     }
 
@@ -774,136 +808,144 @@ class Overtime_m extends CI_Model {
     }
 
     function getReports(){
-      $rowCount = 0;
-      $rowData = array();
-      $resultset = array();
-      $post = $this->input->post();
-      $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
-      $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
-      $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
-      $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
-      $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : "";
-      $company = (isset($post["company"]) && $post["company"]) ? $post["company"] : null;
-      $payroll_group = (isset($post["payroll_group"]) && $post["payroll_group"]) ? $post["payroll_group"] : null;
-      $dateRange = (isset($post["dateRange"]) && $post["dateRange"]) ? $post["dateRange"] : null;
-      $rowData = $this->getReportsData($search, $limit, $offset, $sortBy, $sortOrder,$company,$dateRange,$payroll_group);
-      $rowCount = $this->getReportsDataCount($search,$company,$dateRange,$payroll_group);
-      $resultset["recordsTotal"] = $rowCount;
-      $resultset["recordsFiltered"] = $rowCount;
-      $resultset["data"] = $rowData;
-      return $resultset;
+        $rowCount = 0;
+        $rowData = array();
+        $resultset = array();
+        $post = $this->input->post();
+        $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+        $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
+        $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+        $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+        $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : "";
+        $company = (isset($post["company"]) && $post["company"]) ? $post["company"] : null;
+        $payroll_group = (isset($post["payroll_group"]) && $post["payroll_group"]) ? $post["payroll_group"] : null;
+        $dateRange = (isset($post["dateRange"]) && $post["dateRange"]) ? $post["dateRange"] : null;
+
+        $rowData = $this->getReportsData($search, $limit, $offset, $sortBy, $sortOrder,$company,$dateRange,$payroll_group);
+        $rowCount = $this->getReportsDataCount($search,$company,$dateRange,$payroll_group);
+
+        $resultset["recordsTotal"] = $rowCount;
+        $resultset["recordsFiltered"] = $rowCount;
+        $resultset["data"] = $rowData;
+        return $resultset;
     }
 
     function getReportsData($search = null, $limit, $offset, $sortBy, $sortOrder,$company,$dateRange,$payroll_group){
-      $filterFields = array('');
-      $employee_ids = array();
-      if($payroll_group !== null && $payroll_group !== "all"){
-        $this->db->select('employee_id');
-        $this->db->from('payroll.payroll_group');
-        $this->db->where('payroll_group.id', $payroll_group);
-        $payroll_group_query = $this->db->get();
-        if ($payroll_group_query->num_rows() >   0) {
-            $payroll_group_result = $payroll_group_query->row();
-            $employee_ids = unserialize($payroll_group_result->employee_id);
-            
-        }
-        $this->db->reset_query();
-    }
+        $filterFields = array('');
+        $employee_ids = array();
 
-      $data=array();
-      $this->db->select("a.*, CONCAT(b.firstname, ' ', b.middlename, ' ', b.lastname, ' ', b.suffix) as emp_name");
-      $this->db->from('gcceforms.overtime a');
-      $this->db->join('gccmaster.tblemployees b', 'a.employee = b.id', 'LEFT');
-      $this->db->where('a.status','Approved');
-      if($dateRange !== null){
-        $startDate = $dateRange['start'];
-        $endDate = $dateRange['end'];
-        $this->db->where('a.date_from >=', $startDate);
-        $this->db->where('a.date_to <=', $endDate);
-    }
+        if($payroll_group !== null && $payroll_group !== "all"){
+            $this->db->select('employee_id');
+            $this->db->from('payroll.payroll_group');
+            $this->db->where('payroll_group.id', $payroll_group);
+            $payroll_group_query = $this->db->get();
 
-      if($company !== null){
-        $this->db->where('b.company_id',$company);
-      }
-
-      if($payroll_group !== null && $payroll_group !== "all"){
-        $this->db->where_in('a.employee', $employee_ids);
-      }
-
-      if ($search) {
-        $this->db->group_start();
-        foreach ($filterFields as $key => $field) {
-            if ($key == 0) {
-                $this->db->like($field, $search, "both");
-            } else {
-                $this->db->or_like($field, $search, "both");
+            if ($payroll_group_query->num_rows() >   0) {
+                $payroll_group_result = $payroll_group_query->row();
+                $employee_ids = unserialize($payroll_group_result->employee_id);
             }
+            $this->db->reset_query();
         }
-        $this->db->group_end();
-    }
 
-    if ($limit != -1) {
-      $this->db->limit($limit, $offset);
-    }
+        $data=array();
+        $this->db->select("a.*, CONCAT(b.firstname, ' ', b.middlename, ' ', b.lastname, ' ', b.suffix) as emp_name");
+        $this->db->from('gcceforms.overtime a');
+        $this->db->join('gccmaster.tblemployees b', 'a.employee = b.id', 'LEFT');
+        $this->db->where('a.status','Approved');
 
-    $i = $sortOrder[0]['column'];
-    $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        if ($dateRange !== null) {
+            $startDate = $dateRange['start'];
+            $endDate = $dateRange['end'];
+            $this->db->where('DATE(a.date_from) >=', $startDate);
+            $this->db->where('DATE(a.date_to) <=', $endDate);
+        }
 
-    $query = $this->db->get();
-    if ($query->num_rows() > 0) {
-      $data = $query->result();
-    }
-    return $data;
+        if($company !== null){
+            $this->db->where('b.company_id',$company);
+        }
+
+        if($payroll_group !== null && $payroll_group !== "all"){
+            $this->db->where_in('a.employee', $employee_ids);
+        }
+
+        if ($search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+
+        if ($limit != -1) {
+        $this->db->limit($limit, $offset);
+        }
+
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $data = $query->result();
+        }
+
+        return $data;
     }
 
     function getReportsDataCount($search = null,$company,$dateRange,$payroll_group){
-      $check = date('Y-m-d');
-      $data = array();
-      $filterFields = array('');
+        $check = date('Y-m-d');
+        $data = array();
+        $filterFields = array('');
 
-      if($payroll_group !== null && $payroll_group !== "all"){
-        $this->db->select('employee_id');
-        $this->db->from('payroll.payroll_group');
-        $this->db->where('payroll_group.id', $payroll_group);
-        $payroll_group_query = $this->db->get();
-        if ($payroll_group_query->num_rows() >   0) {
-            $payroll_group_result = $payroll_group_query->row();
-            $employee_ids = unserialize($payroll_group_result->employee_id);
-            
-        }
-        $this->db->reset_query();
-    }
+        if ($payroll_group !== null && $payroll_group !== "all") {
+            $this->db->select('employee_id');
+            $this->db->from('payroll.payroll_group');
+            $this->db->where('payroll_group.id', $payroll_group);
+            $payroll_group_query = $this->db->get();
 
-
-      $this->db->select("a.*");
-      $this->db->from('gcceforms.overtime a');
-      $this->db->join('gccmaster.tblemployees b', 'a.employee = b.id', 'LEFT');
-      $this->db->where('a.status','Approved');
-      if($dateRange !== null){
-        $startDate = $dateRange['start'];
-        $endDate = $dateRange['end'];
-        $this->db->where('a.date_from >=', $startDate);
-        $this->db->where('a.date_to <=', $endDate);
-    }
-
-      if($company !== null){
-        $this->db->where('b.company_id',$company);
-      }
-
-      if ($search) {
-        $this->db->group_start();
-        foreach ($filterFields as $key => $field) {
-            if ($key == 0) {
-                $this->db->like($field, $search, "both");
-            } else {
-                $this->db->or_like($field, $search, "both");
+            if ($payroll_group_query->num_rows() >   0) {
+                $payroll_group_result = $payroll_group_query->row();
+                $employee_ids = unserialize($payroll_group_result->employee_id);
+                
             }
+            $this->db->reset_query();
         }
-        $this->db->group_end();
-    }
 
-    $query = $this->db->get();
-    return $query->num_rows();
+
+        $this->db->select("a.*");
+        $this->db->from('gcceforms.overtime a');
+        $this->db->join('gccmaster.tblemployees b', 'a.employee = b.id', 'LEFT');
+        $this->db->where('a.status','Approved');
+
+        if($dateRange !== null){
+            $startDate = $dateRange['start'];
+            $endDate = $dateRange['end'];
+            $this->db->where('a.date_from >=', $startDate);
+            $this->db->where('a.date_to <=', $endDate);
+        }
+
+        if($company !== null){
+            $this->db->where('b.company_id',$company);
+        }
+
+        if ($search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+
+        $query = $this->db->get();
+        return $query->num_rows();
     }
 
     function getOvertimeRequestDetails($id){
@@ -915,37 +957,40 @@ class Overtime_m extends CI_Model {
         if($query->num_rows() > 0){
             $arrData = array();
             foreach($query->result() as $key => $rs){
+                $rs->company = (is_numeric($rs->company))? $this->getCompany($rs->company): strtoupper($rs->company);
+                $rs->department = (is_numeric($rs->department))? $this->getDepartment($rs->department): $rs->department;
+                $rs->position = (is_numeric($rs->position))? $this->getPosition($rs->position): $rs->position;
 
-                if(is_numeric($rs->company)){
-                    $rs->company =  $this->getCompany($rs->company);
-                }else{
-                    $rs->company = strtoupper($rs->company);
-                }
+                // if(is_numeric($rs->company)){
+                //     $rs->company =  $this->getCompany($rs->company);
+                // }else{
+                //     $rs->company = strtoupper($rs->company);
+                // }
 
-                if(is_numeric($rs->department)){
-                    $rs->department = $this->getDepartment($rs->department);
-                }else{
-                    $rs->department = $rs->department;
-                }
+                // if(is_numeric($rs->department)){
+                //     $rs->department = $this->getDepartment($rs->department);
+                // }else{
+                //     $rs->department = $rs->department;
+                // }
 
-                if(is_numeric($rs->position)){
-                    $rs->position = $this->getPosition($rs->position);
-                }else{
-                    $rs->position = $rs->position;
-                }
+                // if(is_numeric($rs->position)){
+                //     $rs->position = $this->getPosition($rs->position);
+                // }else{
+                //     $rs->position = $rs->position;
+                // }
 
                 $rs->display_name = $this->format_name($rs->employee);
                 $rs->display_details = "<span><b>".$rs->company."</b><br>".$rs->department."</span>";
                 $rs->created_by = $this->format_name($rs->created_by);
                 $rs->display_requested_by = $this->format_name($rs->requested_by);
-                $rs->updated_by = $rs->updated_by? $this->format_name($rs->updated_by): "N/A";
-                $rs->approved_by =  $rs->approved_by? $this->format_name($rs->approved_by): "N/A";
-                $rs->disapproved_by =  $rs->disapproved_by? $this->format_name($rs->disapproved_by): "N/A";
-                $rs->cancelled_by =  $rs->cancelled_by? $this->format_name($rs->cancelled_by): "N/A";
+                $rs->updated_by = $rs->updated_by ? $this->format_name($rs->updated_by) : "N/A";
+                $rs->approved_by =  $rs->approved_by ? $this->format_name($rs->approved_by) : "N/A";
+                $rs->disapproved_by =  $rs->disapproved_by ? $this->format_name($rs->disapproved_by) : "N/A";
+                $rs->cancelled_by =  $rs->cancelled_by ? $this->format_name($rs->cancelled_by) : "N/A";
                 $rs->print_purpose = nl2br($rs->purpose);
                 $rs->purpose = str_replace("\n",", ",str_replace("-","",$rs->purpose));
 
-                $tempImage = ($rs->attachment_image)? unserialize($rs->attachment_image): array();
+                $tempImage = ($rs->attachment_image) ? unserialize($rs->attachment_image) : array();
                 if(is_array($tempImage) && count($tempImage) > 0){
                     $rs->has_attachment = true;
                     $_tempImages = array();
@@ -1016,6 +1061,7 @@ class Overtime_m extends CI_Model {
         $attachment = (isset($post["attachment_image"]) && $post["attachment_image"])? $post["attachment_image"]: array();
         $attachment = serialize($attachment);
 
+        $this->db->select("id, employee, date_from");
         $row = $this->db->get_where("gcceforms.overtime", array("id" => $id))->row();
         $ot_date = date("Y-m-d", strtotime($row->date_from));
         $emp_id  = $row->employee;
@@ -1032,16 +1078,15 @@ class Overtime_m extends CI_Model {
         $this->db->where('overtime.id', $id);
         $result = $this->db->update('gcceforms.overtime', $data);
 
-        if($result){
+        if ($result) {
             $created = $this->ts_model->create($ot_date, 0, array($emp_id), NULL, 1);
             $resultset['state'] = true;
             $resultset['message'] = "Overtime request approved!";
             $resultset["created"] = $created;
             $message = "View Overtime - Approve overtime request {$this->getOvertimeReference($id)}.";
             $type = "success";
-            $table = "user";
-            
-        }else{
+            $table = "user"; 
+        } else {
             $resultset['state'] = false;
             $resultset['message'] = "Error updating form!";
             $message = "View Overtime - Failed approve overtime request {$this->getOvertimeReference($id)}.";
@@ -1061,6 +1106,7 @@ class Overtime_m extends CI_Model {
                 'approved_at' => ""
         );
 
+        $this->db->select("id, employee, date_from");
         $row = $this->db->get_where("gcceforms.overtime", array("id" => $id))->row();
         $ot_date = date("Y-m-d", strtotime($row->date_from));
         $emp_id  = $row->employee;
@@ -1148,164 +1194,164 @@ class Overtime_m extends CI_Model {
     }
 
     function select2CompanyData(){
-      $this->db->select("companies.id, companies.`code` `text`, companies.*");
-      $this->db->order_by("`code`", "ASC");
-      $results = $this->db->get("gcchris.tblcompanies companies")->result();
-      return $results;
-  }
+        $this->db->select("companies.id, companies.`code` `text`, companies.*");
+        $this->db->order_by("`code`", "ASC");
+        $results = $this->db->get("gcchris.tblcompanies companies")->result();
+        return $results;
+    }
 
     function selectPayrollGroup(){
-      $get = $this->input->get();
-      $arrData = array();
-      $resultset = array();
-      $companyId = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: 0;
-      if($companyId || $companyId == 0){
-          $this->db->select("id, description as text, employee_id");
-          $this->db->from($this->tbl_payroll_group);
-          $this->db->where("company_id", $companyId);
-          $this->db->where("status", 1);
-          $this->db->where("is_archived", 0);
-          if (isset($get['term']) && $get['term']) {
-              $this->db->like("description", $get['term'], "both");
-          }
-          $this->db->limit(10);
-          $this->db->order_by("description", "ASC");
-          $qTemp = $this->db->get();
-          if($qTemp->num_rows() > 0){
-              foreach($qTemp->result() as $kk => $vv){
-                  $employees = array();
-                  $tempIds = @unserialize($vv->employee_id);
-                  unset($vv->employee_id);
-                  $this->db->from($this->tbl_employees);
-                  $this->db->where_in("id", $tempIds);
-                  $this->db->order_by("lastname","ASC");
-                  $qTempEmp = $this->db->get();
-                  if($qTempEmp->num_rows() > 0){
-                      foreach($qTempEmp->result() as $rs){
-                          $tempRs = (array) $rs;
-                          $tempName = $this->core_layout->getDisplayName($tempRs);
-                          $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
-                          $employees[] = array(
-                              "id"=>$rs->id,
-                              "text"=>$tempName,
-                          );
-                      }
-                  }
-                  $vv->employees = $employees;
-                  $arrData[$kk] = $vv;
-              }
-          }
-      }
+        $get = $this->input->get();
+        $arrData = array();
+        $resultset = array();
+        $companyId = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: 0;
+        if($companyId || $companyId == 0){
+            $this->db->select("id, description as text, employee_id");
+            $this->db->from($this->tbl_payroll_group);
+            $this->db->where("company_id", $companyId);
+            $this->db->where("status", 1);
+            $this->db->where("is_archived", 0);
+            if (isset($get['term']) && $get['term']) {
+                $this->db->like("description", $get['term'], "both");
+            }
+            $this->db->limit(10);
+            $this->db->order_by("description", "ASC");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() > 0){
+                foreach($qTemp->result() as $kk => $vv){
+                    $employees = array();
+                    $tempIds = @unserialize($vv->employee_id);
+                    unset($vv->employee_id);
+                    $this->db->from($this->tbl_employees);
+                    $this->db->where_in("id", $tempIds);
+                    $this->db->order_by("lastname","ASC");
+                    $qTempEmp = $this->db->get();
+                    if($qTempEmp->num_rows() > 0){
+                        foreach($qTempEmp->result() as $rs){
+                            $tempRs = (array) $rs;
+                            $tempName = $this->core_layout->getDisplayName($tempRs);
+                            $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                            $employees[] = array(
+                                "id"=>$rs->id,
+                                "text"=>$tempName,
+                            );
+                        }
+                    }
+                    $vv->employees = $employees;
+                    $arrData[$kk] = $vv;
+                }
+            }
+        }
 
-      $resultset["results"] = $arrData;
-      return $resultset;
-  }
+        $resultset["results"] = $arrData;
+        return $resultset;
+    }
 
-  function selectPayrollGroupMultiple(){
-    $post = $this->input->post();
-    $resultset = array();
-    $employees = array();
-    if(isset($post["group_id"]) && $post["group_id"]){
-        $ids = $post["group_id"];
-        $tempIdx = array();
-        $this->db->select("employee_id");
-        $this->db->from($this->tbl_payroll_group);
-        $this->db->where("status", 1);
-        $this->db->where("is_archived", 0);
-        $this->db->where_in("id", $ids);
-        $q = $this->db->get();
-        if($q->num_rows() > 0){
-            foreach ($q->result() as $key => $value) {
-                $idx = @unserialize($value->employee_id);
-                if(is_array($idx) && count($idx) > 0){
-                    foreach ($idx as $kk => $vv) {
-                        if(!in_array($vv, $tempIdx)){ $tempIdx[] = $vv; }
+    function selectPayrollGroupMultiple(){
+        $post = $this->input->post();
+        $resultset = array();
+        $employees = array();
+        if(isset($post["group_id"]) && $post["group_id"]){
+            $ids = $post["group_id"];
+            $tempIdx = array();
+            $this->db->select("employee_id");
+            $this->db->from($this->tbl_payroll_group);
+            $this->db->where("status", 1);
+            $this->db->where("is_archived", 0);
+            $this->db->where_in("id", $ids);
+            $q = $this->db->get();
+            if($q->num_rows() > 0){
+                foreach ($q->result() as $key => $value) {
+                    $idx = @unserialize($value->employee_id);
+                    if(is_array($idx) && count($idx) > 0){
+                        foreach ($idx as $kk => $vv) {
+                            if(!in_array($vv, $tempIdx)){ $tempIdx[] = $vv; }
+                        }
                     }
                 }
             }
-        }
 
-        if(is_array($tempIdx) && count($tempIdx) > 0){
-            $this->db->from($this->tbl_employees);
-            $this->db->where_in("id", $tempIdx);
-            $this->db->order_by("lastname", "ASC");
-            $qTempEmp = $this->db->get();
-            if($qTempEmp->num_rows() > 0){
-                foreach($qTempEmp->result() as $rs){
-                    $tempRs = (array) $rs;
-                    $tempName = $this->core_layout->getDisplayName($tempRs);
-                    $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
-                    $employees[] = array(
-                        "id"=>$rs->id,
-                        "text"=>$tempName,
-                    );
+            if(is_array($tempIdx) && count($tempIdx) > 0){
+                $this->db->from($this->tbl_employees);
+                $this->db->where_in("id", $tempIdx);
+                $this->db->order_by("lastname", "ASC");
+                $qTempEmp = $this->db->get();
+                if($qTempEmp->num_rows() > 0){
+                    foreach($qTempEmp->result() as $rs){
+                        $tempRs = (array) $rs;
+                        $tempName = $this->core_layout->getDisplayName($tempRs);
+                        $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                        $employees[] = array(
+                            "id"=>$rs->id,
+                            "text"=>$tempName,
+                        );
+                    }
                 }
             }
+            $resultset["response"] = true;
+            $resultset["data"] = $employees;
+        }else{
+            $resultset["response"] = false;
         }
-        $resultset["response"] = true;
-        $resultset["data"] = $employees;
-    }else{
-        $resultset["response"] = false;
-    }
-    
-    return $resultset;
-  }
-
-  function selectEmployee(){
-      $get = $this->input->get();
-      $resultarray = array();
-      $employee_ids = array();
-      $companyIds = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: null;
-      $search = (isset($get["q"]) && $get["q"])? $get["q"]: null;
-      $payroll_group = (isset($get["payroll_group"]) && $get["payroll_group"]) ? $get["payroll_group"] : null;
-      if($payroll_group !== null && $payroll_group !== "all"){
-        $this->db->select('employee_id');
-        $this->db->from('payroll.payroll_group');
-        $this->db->where('payroll_group.id', $payroll_group);
-        $payroll_group_query = $this->db->get();
-        if ($payroll_group_query->num_rows() >   0) {
-            $payroll_group_result = $payroll_group_query->row();
-            $employee_ids = unserialize($payroll_group_result->employee_id);
-        }
-        $this->db->reset_query();
+        
+        return $resultset;
     }
 
-      $this->db->select("a.id, a.firstname, a.lastname, a.middlename, a.suffix");
-      $this->db->from("gccmaster.tblemployees a");
-      $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
-      $this->db->where("a.employee_status", "Active"); 
-      if(isset($companyIds) && $companyIds !== null){
-          $this->db->where("b.id", $companyIds);
-      }
-      if($payroll_group != null && $payroll_group !== "all"){
-        $this->db->where_in('a.id', $employee_ids);
-      }
-      if (isset($search) &&  $search) {
-          $this->db->group_start();
-          $this->db->like("a.firstname",  $search, "both");
-          $this->db->or_like("a.lastname",  $search, "both");
-          $this->db->limit(10);
-          $this->db->group_end();
-      }
+    function selectEmployee(){
+        $get = $this->input->get();
+        $resultarray = array();
+        $employee_ids = array();
+        $companyIds = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: null;
+        $search = (isset($get["q"]) && $get["q"])? $get["q"]: null;
+        $payroll_group = (isset($get["payroll_group"]) && $get["payroll_group"]) ? $get["payroll_group"] : null;
+        if($payroll_group !== null && $payroll_group !== "all"){
+            $this->db->select('employee_id');
+            $this->db->from('payroll.payroll_group');
+            $this->db->where('payroll_group.id', $payroll_group);
+            $payroll_group_query = $this->db->get();
+            if ($payroll_group_query->num_rows() >   0) {
+                $payroll_group_result = $payroll_group_query->row();
+                $employee_ids = unserialize($payroll_group_result->employee_id);
+            }
+            $this->db->reset_query();
+        }
 
-      // $this->db->order_by("trim(a.firstname)", "ASC");
-      $query = $this->db->get();
+        $this->db->select("a.id, a.firstname, a.lastname, a.middlename, a.suffix");
+        $this->db->from("gccmaster.tblemployees a");
+        $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
+        $this->db->where("a.employee_status", "Active"); 
+        if(isset($companyIds) && $companyIds !== null){
+            $this->db->where("b.id", $companyIds);
+        }
+        if($payroll_group != null && $payroll_group !== "all"){
+            $this->db->where_in('a.id', $employee_ids);
+        }
+        if (isset($search) &&  $search) {
+            $this->db->group_start();
+            $this->db->like("a.firstname",  $search, "both");
+            $this->db->or_like("a.lastname",  $search, "both");
+            $this->db->limit(10);
+            $this->db->group_end();
+        }
+
+        // $this->db->order_by("trim(a.firstname)", "ASC");
+        $query = $this->db->get();
 
 
-      if ($query->num_rows() > 0) {
-          foreach ($query->result_array() as $_query) {
-              $data = array();
-              $data["id"] = $_query["id"];
-              $data["text"] = $_query["firstname"] . " " . $_query["middlename"] . " " . $_query["lastname"];
-              if ($_query["suffix"] != "N/A" && $_query["suffix"] != "none") {
-                  $data["text"] .= " " . $_query["suffix"];
-              }
-              $resultarray[] = $data;
-          }
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $data["id"] = $_query["id"];
+                $data["text"] = $_query["firstname"] . " " . $_query["middlename"] . " " . $_query["lastname"];
+                if ($_query["suffix"] != "N/A" && $_query["suffix"] != "none") {
+                    $data["text"] .= " " . $_query["suffix"];
+                }
+                $resultarray[] = $data;
+            }
 
-      }
-      return array("results" => $resultarray);
-  }
+        }
+        return array("results" => $resultarray);
+    }
 
     function cancelOvertime($id){
         $this->input->post();
@@ -1346,34 +1392,40 @@ class Overtime_m extends CI_Model {
             $this->db->select('overtime.*, employeetbl.firstname, employeetbl.lastname, employeetbl.middlename, employeetbl.company_id');
             $this->db->from($this->eformsOvertimeTable);
             $this->db->join($this->employeeTable .' as employeetbl', 'employeetbl.id = overtime.employee', 'left');
+
             if(isset($post["status"]) && $post["status"]){
-               $this->db->where("overtime.status", $post["status"]);
+                $this->db->where("overtime.status", $post["status"]);
+            } else {
+                $this->db->where("overtime.status != 'Cancelled'");
             }
-            else {
-              $this->db->where("overtime.status != 'Cancelled'");
-          }
+
             if(isset($post["employee"]) && $post["employee"]){
                $this->db->where("employeetbl.id", $post["employee"]);
             }
+
             if(isset($post["company"]) && $post["company"]){
-             $this->db->where("employeetbl.company_id", $post["company"]);
-            }   
-            if (isset($post["date_time"]) && $post["date_time"]) {
-             list($startDate, $endDate) = explode(" - ", $post["date_time"]);
-             $startDate = date("Y-m-d", strtotime($startDate));
-             $endDate = date("Y-m-d", strtotime($endDate));
-             $this->db->where("overtime.date_from BETWEEN '$startDate' AND '$endDate'");
-             $this->db->where("overtime.date_to BETWEEN '$startDate' AND '$endDate'");
+                $this->db->where("employeetbl.company_id", $post["company"]);
             }
+
+            if (isset($post["date_time"]) && $post["date_time"]) {
+                list($startDate, $endDate) = explode(" - ", $post["date_time"]);
+                $startDate = date("Y-m-d", strtotime($startDate));
+                $endDate = date("Y-m-d", strtotime($endDate));
+                $this->db->where("overtime.date_from BETWEEN '$startDate' AND '$endDate'");
+                $this->db->where("overtime.date_to BETWEEN '$startDate' AND '$endDate'");
+            }
+
             $query = $this->db->get();
             $result = $query->result();
+
             if (is_array($result) && count($result) > 0) {
-              foreach ($result as $key => $value) {
-                  if ($value->id !== null && !in_array($value->id, $arrIds)) {
-                      $arrIds[] = $value->id;
-                  }
-              }
-          }
+                foreach ($result as $key => $value) {
+                    if ($value->id !== null && !in_array($value->id, $arrIds)) {
+                        $arrIds[] = $value->id;
+                    }
+                }
+            }
+
             $resultset["response"] = true;
             $resultset["ids"] = $arrIds;
             if(empty($arrIds)){

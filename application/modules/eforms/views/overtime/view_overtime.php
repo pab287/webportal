@@ -31,7 +31,7 @@
 					<div class="m-portlet__head-caption">
 						<div class="m-portlet__head-title">
                             <span class="m-portlet__head-icon">
-                                <a type="button" href="masterfile" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnBack">
+                                <a type="button" href="<?=(isset($_GET['page']) && $_GET['page']) ? $_GET['page'] : 'masterfile' ?>" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnBack">
                                     <i class="la la-arrow-left"></i>
                                 </a>
                             </span>
@@ -260,7 +260,7 @@
                                 </a>
                             <?php endif; ?>
                             <?php if((in_array("back", $this->current_action))): ?>
-                                <a href="masterfile" class="btn btn-metal m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnBack text-white">
+                                <a href="<?=(isset($_GET['page']) && $_GET['page']) ? $_GET['page'] : 'masterfile' ?>" class="btn btn-metal m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnBack text-white">
                                     Back
                                 </a>
                             <?php endif; ?>
