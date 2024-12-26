@@ -221,6 +221,7 @@
                                            id="tblnewasset" width="100%">
                                         <thead>
                                         <tr>
+                                            <th>id</th>
                                             <th>Asset Code</th>
                                             <th>Asset Name</th>
                                             <th>Description</th>
@@ -325,6 +326,7 @@
                                            id="tblnewvehicle" width="100%">
                                         <thead>
                                         <tr>
+                                            <th>id</th>
                                             <th>Asset Code</th>
                                             <th>Asset Name</th>
                                             <th>Description</th>
@@ -435,6 +437,7 @@
                                            id="tblmultiple" width="100%">
                                         <thead>
                                         <tr>
+                                            <th>id</th>
                                             <th>Asset Code</th>
                                             <th>Asset Name</th>
                                             <th>Description</th>

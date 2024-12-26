@@ -403,6 +403,7 @@
                                     <table class="table table-striped table-bordered" name="tblmultiple" id="tblmultiple" width="100%">
                                         <thead>
                                         <tr>
+                                            <th>id</th>
                                             <th>Asset Code</th>
                                             <th>Asset Name</th>
                                             <th>Description</th>

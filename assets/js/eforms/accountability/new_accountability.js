@@ -158,6 +158,21 @@ $('#issue_dtpicker').datetimepicker({
     format: 'mm/dd/yyyy',
 });
 
+$(".today").on('click', function(){
+    var date = $('#issue_dt').val();
+    $("#issue_dt").validate();
+    $("#issue_dtpicker").validate();
+
+    $("#issue_dt").removeClass('error').addClass('valid');
+});
+
+$("#issue_dtpicker").on('blur', function(){
+    $("#issue_dt").validate();
+    $("#issue_dtpicker").validate();
+
+    $("#issue_dt").removeClass('error').addClass('valid');
+});
+
 $('#emp_but').hide();
 $('#con_but').on("click", function () {
     $('#con_but').hide();
@@ -264,7 +279,7 @@ function itemDatatableActions($id) {
     }
 }
 
-function delete_temp($id) {
+function delete_temp($id, isMultiple = false) {
     $.validate({
         form: '#delete_asset_form',
         lang: 'en',
@@ -280,8 +295,15 @@ function delete_temp($id) {
                 success: function (data) {
                     if (data) {
                         $('#delete_asset_modal').modal('hide');
+
+                        if (isMultiple) {
+                            tblAddedList.ajax.reload();
+
+                            $("#add_multiple_modal").css('overflow-y', 'auto');
+                        }
+
                         tblTemp.ajax.reload();
-                        $("#tbladdedlist").DataTable({ destroy: true, data: true });
+                        // $("#tbladdedlist").DataTable({ destroy: true, data: true });
                         toastr.success(data.toastr_msg, "Removed successfully", 5000);
                     } else {
                         toastr.error(data.toastr_msg, "Error removing item!", 5000);
@@ -424,7 +446,7 @@ $("#tblassetcomp_edit").DataTable({
     searching: false,
 });
 
-$("#tbladdedlist").DataTable({
+var tblAddedList = $("#tbladdedlist").DataTable({
     dom: '<"toolbar">frtlip',
     searching: false,
     destroy: true
@@ -433,7 +455,14 @@ $("#tbladdedlist").DataTable({
 $("#tblmultiple").DataTable({
     dom: '<"toolbar">frtlip',
     searching: false,
-    destroy: true
+    destroy: true,
+    columns: [
+        { data: "id", visible: false },
+        { data: "assetacode" },
+        { data: "name" },
+        { data: "assetname" },
+        { data: null, width: "5%", className: "text-center" },
+    ]
 });
 
 $("#asset_search").on("click", function () {
@@ -487,11 +516,11 @@ $("#asset_search").on("click", function () {
         if ($id) {
             if ($assetcode && $name) {
                 var _actionButton = "";
-                _actionButton += " <button type='button' onclick='getAssetDetail(" + $id + ', ' + $component + ")' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-search'></i></button>";
+                _actionButton += " <button type='button' onclick='getAssetDetail(" + $id + ', ' + $component + ")' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-plus'></i></button>";
                 return _actionButton;
             } else {
                 var _actionButton = "";
-                _actionButton += " <button type='button' onclick='noAssetCode()' class='btn m-btn btn-danger m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-search'></i></button>";
+                _actionButton += " <button type='button' onclick='noAssetCode()' class='btn m-btn btn-danger m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-plus'></i></button>";
                 return _actionButton;
             }
         } else {
@@ -620,11 +649,11 @@ $("#vehicle_search").on("click", function () {
         if ($id) {
             if ($assetcode && $name) {
                 var _actionButton = "";
-                _actionButton += " <button type='button'  onclick='getVehicleDetail(" + $id + ', ' + $component + ")'  class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-search'></i></button>";
+                _actionButton += " <button type='button'  onclick='getVehicleDetail(" + $id + ', ' + $component + ")'  class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-plus'></i></button>";
                 return _actionButton;
             } else {
                 var _actionButton = "";
-                _actionButton += " <button type='button' onclick='noAssetCode()' class='btn m-btn btn-danger m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-search'></i></button>";
+                _actionButton += " <button type='button' onclick='noAssetCode()' class='btn m-btn btn-danger m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-plus'></i></button>";
                 return _actionButton;
             }
         } else {
@@ -719,8 +748,12 @@ $("#multiple_search").on("click", function () {
                 d.code = code;
                 return d;
             }
-        }, searching: false,
-        columns: [{
+        }, 
+        order: [[0, 'desc']],
+        searching: false,
+        columns: [
+        { data: "id", visible: false },
+        {
             data: "assetacode", render: function (data, type, row, meta) {
                 return assetCode(row.assetacode, row.is_borrowed);
             }
@@ -838,18 +871,19 @@ function multipleAssetDetail($id, $component) {
         }
     });
 
-    var tblAddedList = $("#tbladdedlist").DataTable({
+    tblAddedList = $("#tbladdedlist").DataTable({
         dom: '<"toolbar">frtlip',
         serverSide: true,
         processing: true,
         destroy: true,
         ajax: {
-            url: baseUrl("eforms/accountability/list_temp/") + $id,
+            // url: baseUrl("eforms/accountability/list_temp/") + $id,
+            url: baseUrl("eforms/accountability/list_temp/"),
             type: "post",
             dataType: "json",
             data: function (d) {
                 d.csrf_token = _csrf_hash,
-                    d.search['value'] = search_val
+                d.search['value'] = search_val
             }
         },
         searching: false,
@@ -857,7 +891,9 @@ function multipleAssetDetail($id, $component) {
             { data: "asset_code", width: "20%" },
             {
                 data: "description", render: function (data, type, row, meta) {
-                    return descriptionDetail(row.description, row.brand, row.modelno, row.serialno, row.plateno, row.engineno, row.chasisno, row.type);
+
+                    console.log(row.desc);
+                    return descriptionDetail(row.description, row.brand, row.modelno, row.serialno, row.plateno, row.engineno, row.chasisno, row.type, row.desc);
                 }
             },
             { data: "amount", width: "20%", className: "text-right" },
@@ -875,15 +911,15 @@ function multipleAssetDetail($id, $component) {
             }
         ]
     });
+}
 
-    function addedListDatatableActions($id) {
-        if ($id) {
-            var _actionButton = "";
-            _actionButton += " <button type='button' onclick='delete_temp(" + $id + ")' data-toggle='modal' data-target='#delete_asset_modal' class='btn btn-default m-btn m-btn--hover-danger m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='fa fa-remove'></i></button>";
-            return _actionButton;
-        } else {
-            return false;
-        }
+function addedListDatatableActions($id) {
+    if ($id) {
+        var _actionButton = "";
+        _actionButton += " <button type='button' onclick='delete_temp(" + $id + ", true)' data-toggle='modal' data-target='#delete_asset_modal' class='btn btn-default m-btn m-btn--hover-danger m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='fa fa-remove'></i></button>";
+        return _actionButton;
+    } else {
+        return false;
     }
 }
 

@@ -1994,14 +1994,15 @@ class Accountability_m extends CI_Model {
         $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
         $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
         $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
-        $sortBy = (isset($post["sort"]) && $post["sort"]) ? $post["sort"] : null;
+        $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : null;
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : "desc";
+        $accountability_id = (isset($post['accountability_id']) && $post['accountability_id']) ? $post['accountability_id'] : null;
 
         $rowCount = 0;
         $rowData = array();
 
-        $rowData = $this->get_multiple_temp_post($code, $limit, $offset, $sortBy, $sortOrder);
-        $rowCount = $this->get_multiple_temp_post_count($code);
+        $rowData = $this->get_multiple_temp_post($code, $limit, $offset, $sortBy, $sortOrder, $accountability_id);
+        $rowCount = $this->get_multiple_temp_post_count($code, $accountability_id);
 
         $resultset["recordsTotal"] = $rowCount;
         $resultset["recordsFiltered"] = $rowCount;
@@ -2010,15 +2011,18 @@ class Accountability_m extends CI_Model {
         return $resultset;
     }
 
-    private function get_multiple_temp_post($code, $limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC") {
+    private function get_multiple_temp_post($code, $limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $accountability_id = null) {
         $data = array();
-        
-        $accountability_id = $this->input->post("accountability_id");
-        $this->db->select("GROUP_CONCAT(a.asset_id) id");
-        $this->db->where('a.accountability_id', $accountability_id);
-        $this->db->where("a.type", "Asset");
-        $asset_ids = $this->db->get('gcceforms.accountability_body a')->row("id");
-        $asset_ids_array = explode(",", $asset_ids);
+        $asset_ids = array();
+        $asset_ids_array = "";
+
+        if ($accountability_id){
+            $this->db->select("GROUP_CONCAT(a.asset_id) id");
+            $this->db->where('a.accountability_id', $accountability_id);
+            $this->db->where("a.type", "Asset");
+            $asset_ids = $this->db->get('gcceforms.accountability_body a')->row("id");
+            $asset_ids_array = explode(",", $asset_ids);
+        }
 
         $this->db->reset_query();
 
@@ -2030,7 +2034,9 @@ class Accountability_m extends CI_Model {
         $this->db->where("a.is_borrowed", "0");
         $this->db->where("a.status !=", "archived");
 
-        $this->db->where_not_in("a.id", $asset_ids_array);
+        if (!empty($asset_ids)){
+            $this->db->where_not_in("a.id", $asset_ids_array);
+        }
 
         if ($code) {
             $this->db->group_start();
@@ -2039,13 +2045,12 @@ class Accountability_m extends CI_Model {
             $this->db->group_end();
         }
 
-        $this->db->limit($limit, $offset);
-
-        if ($sortBy) {
-            $this->db->order_by($sortBy, $sortOrder);
-        } else {
-            $this->db->order_by("a.id", "DESC");
+        if ($limit !== -1){
+            $this->db->limit($limit, $offset);
         }
+
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
 
         $query = $this->db->get();
 
@@ -2064,13 +2069,17 @@ class Accountability_m extends CI_Model {
         return $data;
     }
 
-    private function get_multiple_temp_post_count($code) {
-        $accountability_id = $this->input->post("accountability_id");
-        $this->db->select("GROUP_CONCAT(a.asset_id) id");
-        $this->db->where('a.accountability_id', $accountability_id);
-        $this->db->where("a.type", "Asset");
-        $asset_ids = $this->db->get('gcceforms.accountability_body a')->row("id");
-        $asset_ids_array = explode(",", $asset_ids);
+    private function get_multiple_temp_post_count($code, $accountability_id = null) {
+        $asset_ids = array();
+        $asset_ids_array = "";
+
+        if ($accountability_id){
+            $this->db->select("GROUP_CONCAT(a.asset_id) id");
+            $this->db->where('a.accountability_id', $accountability_id);
+            $this->db->where("a.type", "Asset");
+            $asset_ids = $this->db->get('gcceforms.accountability_body a')->row("id");
+            $asset_ids_array = explode(",", $asset_ids);
+        }
 
         $this->db->reset_query();
 
@@ -2081,7 +2090,9 @@ class Accountability_m extends CI_Model {
         $this->db->where("a.is_borrowed", "0");
         $this->db->where("a.status !=", "archived");
 
-        $this->db->where_not_in("a.id", $asset_ids_array);
+        if (!empty($asset_ids)){
+            $this->db->where_not_in("a.id", $asset_ids_array);
+        }
 
         if ($code) {
             $this->db->group_start();
