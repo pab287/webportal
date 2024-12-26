@@ -217,7 +217,8 @@ $.validate({
 										toastr.success(data.toastr_msg, "Successfully saved!", 5000)
 										window.location.replace(baseUrl("eforms/loa/masterfile"));
 									} else {
-										alert('Error get data from ajax');
+										toastr.error("Failed to save LOA. `FROM DATE` must be less than `TO DATE`.", "Error!", 5000);
+										$("#btnSaveLoa").attr('disabled', false);
 									}
 								}
 							});

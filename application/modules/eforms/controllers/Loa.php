@@ -157,9 +157,9 @@
             return $result;
         }
 
-        public function add_loa()
-        {
+        public function add_loa() {
             $user_id = $this->core_layout->getCurrentEmployeeId();
+            $isValidDate = false;
             date_default_timezone_set('Asia/Singapore');
             $date = date('Y-m-d H:i:s');
             $year = substr($date, 2, 2);
@@ -183,10 +183,12 @@
             } else {
                 $series = '0001';
             }
+
             $x = explode("\n", $this->input->post('company'));
             $company = trim($x[0]);
             $department = trim($x[1]);
             $position = $x[2];
+
             if ($this->input->post('type') == "1") {
                 $from = $this->input->post('under_from');
                 $to = substr($this->input->post('under_from'), 0, -6) . ' ' . $this->input->post('under_to') . ':00';
@@ -205,6 +207,7 @@
                 $from = $this->input->post('date_from');
                 $to = $this->input->post('date_to');
             }
+
             $data = array(
                 'ref_yr' => $year,
                 'ref_series' => $series,
@@ -226,50 +229,66 @@
                 'created_dt' => $date,
 
             );
-            $referenceNumber = 'LOA'.$year.'-'.$month.'-'.$series;
-            $insert = $this->loa->save($data);
-            if($this->input->post('type') == '3'){
-                $loa_date = '<b>DATE </b>: '.$from.chr(10);
-            }else{
-                $loa_date = '<b>DATE </b>: '.date_format(date_create($from),"Y-m-d H:i").' - '.date_format(date_create($to),"Y-m-d H:i").chr(10);
-            }
 
-            $head_id = $this->loa->getTelegramId($department);
-            $last_id = $this->db->insert_id();
-            $emp_id = $this->loa->getEmpTelegramId($this->input->post('employee'));
-
-            if($insert){
-                $telegram_msg = '';
-                $telegram_msg .= '<b>LOA #</b>: '.$referenceNumber.chr(10);
-                $telegram_msg .= '<b>EMPLOYEE: </b>'.strtoupper($this->loa->employee_details($this->input->post('employee'))->display_name).chr(10);
-                $telegram_msg .= '<b>COMPANY: </b>'.strtoupper($company).chr(10);
-                $telegram_msg .= '<b>DEPARTMENT: </b>'.strtoupper($department).chr(10);
-                $telegram_msg .= '<b>TYPE: </b>'.strtoupper($this->leave_type($this->input->post('type'))).chr(10);
-                $telegram_msg .= $loa_date;
-                $telegram_msg .= '<b>NATURE OF LEAVE: </b>'.strtoupper($this->input->post('nature')).chr(10);
-                $telegram_msg .= '<b>REASON: </b>'.strtoupper($this->input->post('reason')).chr(10);
-                $telegram_msg .= '<b>ADDRESS ON LEAVE: </b>'.strtoupper($this->input->post('address')).chr(10);
-                $telegram_msg .= '<b>NUMBER ON LEAVE: </b>'.strtoupper($this->input->post('phone')).chr(10);
-                if($this->loa->telegram_config_if_exist('loa', 'count') > 0){
-
-                    if($emp_id){
-                        $this->loa->telegram($telegram_msg);
-                    }
-                    if($head_id){
-                        if($head_id != 2){
-                            $this->loa->telegram_dept_heads($telegram_msg,$head_id);
-                        }
-                    }else{
-                        
-                    }
+            if ($this->input->post('type') == "4") {
+                if (date('Y-m-d', strtotime($this->input->post('date_from'))) > date('Y-m-d', strtotime($this->input->post('date_to')))) {
+                    $isValidDate = false;
+                } else {
+                    $isValidDate = true;
                 }
-                $reference_no = $this->db->get_where("gcceforms.loa", array("id"=>$last_id))->row('reference_no');
-                $this->core_layout->setEventLog("Filed leave of absence ".$reference_no.".","add", "success", "gcceforms", "user");
-            }else{
-                $this->core_layout->setEventLog("Failed in adding leave of absence.","add", "error", "gcceforms", "system");
+            } else {
+                $isValidDate = true;
             }
-            
-            echo json_encode(array("status" => TRUE, "test" => $to, "last_id" => $last_id));
+
+            $referenceNumber = 'LOA'.$year.'-'.$month.'-'.$series;
+
+            if ($isValidDate) {
+                $insert = $this->loa->save($data);
+                if($this->input->post('type') == '3'){
+                    $loa_date = '<b>DATE </b>: '.$from.chr(10);
+                }else{
+                    $loa_date = '<b>DATE </b>: '.date_format(date_create($from),"Y-m-d H:i").' - '.date_format(date_create($to),"Y-m-d H:i").chr(10);
+                }
+    
+                $head_id = $this->loa->getTelegramId($department);
+                $last_id = $this->db->insert_id();
+                $emp_id = $this->loa->getEmpTelegramId($this->input->post('employee'));
+    
+                if($insert){
+                    $telegram_msg = '';
+                    $telegram_msg .= '<b>LOA #</b>: '.$referenceNumber.chr(10);
+                    $telegram_msg .= '<b>EMPLOYEE: </b>'.strtoupper($this->loa->employee_details($this->input->post('employee'))->display_name).chr(10);
+                    $telegram_msg .= '<b>COMPANY: </b>'.strtoupper($company).chr(10);
+                    $telegram_msg .= '<b>DEPARTMENT: </b>'.strtoupper($department).chr(10);
+                    $telegram_msg .= '<b>TYPE: </b>'.strtoupper($this->leave_type($this->input->post('type'))).chr(10);
+                    $telegram_msg .= $loa_date;
+                    $telegram_msg .= '<b>NATURE OF LEAVE: </b>'.strtoupper($this->input->post('nature')).chr(10);
+                    $telegram_msg .= '<b>REASON: </b>'.strtoupper($this->input->post('reason')).chr(10);
+                    $telegram_msg .= '<b>ADDRESS ON LEAVE: </b>'.strtoupper($this->input->post('address')).chr(10);
+                    $telegram_msg .= '<b>NUMBER ON LEAVE: </b>'.strtoupper($this->input->post('phone')).chr(10);
+                    if($this->loa->telegram_config_if_exist('loa', 'count') > 0){
+    
+                        if($emp_id){
+                            $this->loa->telegram($telegram_msg);
+                        }
+                        if($head_id){
+                            if($head_id != 2){
+                                $this->loa->telegram_dept_heads($telegram_msg,$head_id);
+                            }
+                        }else{
+                            
+                        }
+                    }
+                    $reference_no = $this->db->get_where("gcceforms.loa", array("id"=>$last_id))->row('reference_no');
+                    $this->core_layout->setEventLog("Filed leave of absence ".$reference_no.".","add", "success", "gcceforms", "user");
+                }else{
+                    $this->core_layout->setEventLog("Failed in adding leave of absence.","add", "error", "gcceforms", "system");
+                }
+                
+                echo json_encode(array("status" => TRUE, "test" => $to, "last_id" => $last_id));
+            } else {
+                echo json_encode(array("status" => FALSE));
+            }
         }
 
         public function update_loa($id)

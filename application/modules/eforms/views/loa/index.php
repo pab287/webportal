@@ -38,8 +38,8 @@
                                                             <span class="btn m-btn m-nav__section-text" id="telegram_config" data-toggle="modal" data-target="#modal_telegram_config_loa">Telegram Integration</span>
                                                             <?php } ?> 
                                                     </li>
-                                                        <li class="m-nav__item"> 
-                                                            <a href="<?php echo base_url("eforms/loa/registry");?>" class="text-dark"> <span class="btn m-btn m-nav__section-text" data-toggle="modal" >Registry</span></a>
+                                                    <li class="m-nav__item"> 
+                                                        <a href="<?php echo base_url("eforms/loa/registry");?>" class="text-dark btn m-btn m-nav__section-text btnRegistry p-0" > <span class="btn m-btn m-nav__section-text" data-toggle="modal" >Registry</span></a>
                                                     </li>
                                                 </ul>
                                             </div>

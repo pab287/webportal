@@ -60,7 +60,7 @@
 
             $filterFields = array("a.id", "a.status", "a.company", "a.department", "a.reference_no", "a.date_from", "a.date_to", "a.nature", "a.reason", "a.position", "b.firstname", "b.middlename", "b.lastname", "a.type");
 
-            $sql = "a.id, a.status, a.company, a.department, b.firstname, b.middlename, b.lastname, b.suffix, a.position, a.nature, a.reason, a.date_from, a.date_to, a.reference_no, a.type";
+            $sql = "a.id, a.status, a.company as file, a.company, a.department, b.firstname, b.middlename, b.lastname, b.suffix, a.position, a.nature, a.reason, a.date_from, a.date_to, a.reference_no, a.type";
 
             $this->db->select($sql);
             $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
@@ -112,7 +112,7 @@
                     $rs->department = (is_numeric($rs->department)) ? $this->getDepartment($rs->department) : $rs->department;
                     $rs->position = (is_numeric($rs->position)) ? $this->getPosition($rs->position) : $rs->position;
 
-                    $rs->file = "<b>".$rs->company."</b><br>".$rs->department;
+                    $rs->file = $rs->company ? "<b>".$rs->company."</b><br>".$rs->department : '<b>No Company Name</b>';
                     $tempRs = (array) $rs;
                     $fullname = $this->core_layout->getDisplayName($tempRs);
                     $tempFullname = (object) $fullname;
@@ -787,7 +787,7 @@
 
             $this->db->reset_query();
             
-            $this->db->select('firstname, lastname, middlename, suffix');
+            $this->db->select('id, firstname, lastname, middlename, suffix');
             $this->db->from('gccmaster.tblemployees');
             $this->db->where('employee_status', 'Active');
             $this->db->where('id', $id);
