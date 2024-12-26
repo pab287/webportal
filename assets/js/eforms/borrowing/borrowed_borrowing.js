@@ -58,7 +58,21 @@ var tblBorrowing = $("#table-borrowing").DataTable({
                 return html;
             }
         },
-        { data: "firstname", render: function (data, type, row, meta) { return displayName(row.display_name) } },
+        // { data: "firstname", render: function (data, type, row, meta) { return displayName(row.display_name) } },
+        { data: "display_name", 
+            render: function (data, type, row, meta) { 
+                var html = ``;
+
+                if(data){
+                    html += `<b>${ data }</b>`;
+                    html += `<p class="m-0">${ row.company }</p>`;
+                    html += `<p class="m-0">${ row.department }</p>`;
+                    html += `<p class="m-0">${ row.position }</p>`;
+                }
+
+                return html;
+            } 
+        },
         { data: "asset" },
         { data: "date_borrowed", render: function (data) { return formatCalendarDate(data) } },
         { data: "date_due", render: function (data) { return formatCalendarDateDue( data) } },
@@ -220,6 +234,8 @@ function mass_open() {
     document.getElementById('btnSave2').style.removeProperty('display');
     $('#modal_form_return').modal('show'); // show bootstrap modal
     $('.modal-title').text('Return Item'); // Set Title to Bootstrap modal title
+
+    $("#form_return").trigger("reset");
 }
 function open_return($id) {
     document.getElementById('btnSave').style.removeProperty('display');
@@ -264,28 +280,41 @@ function return_item() {
     });
 }
 function mass_return_item() {
+    let checked = [];
 
     $.validate({
         form: '#form_return',
         lang: 'en',
         onSuccess: function (form) {
-            $.ajax({
-                url: baseUrl("eforms/borrowing/return_item/"),
-                type: "POST",
-                data: $('#form_return').serialize(),
-                dataType: "JSON",
-
-                success: function (data) {
-                    if (data.status) {
-
-                        tblBorrowing.ajax.reload();
-                        $('#modal_form_return').modal("hide");
-                    } else {
-                        alert('Error get data from ajax');
-                    }
-
-                }
+            $("#table-borrowing tbody input[type='checkbox']:checked").each(function () {
+                checked.push($(this).val());
             });
+
+            let data = $('#form_return').serialize();
+            data += "&checked=" + JSON.stringify(checked);
+
+            if (checked.length > 0){
+                $.ajax({
+                    url: baseUrl("eforms/borrowing/mass_return_item/"),
+                    type: "POST",
+                    data: data,
+                    dataType: "JSON",
+                    success: function (data) {
+                        if (data.status) {
+    
+                            tblBorrowing.ajax.reload();
+                            $('#modal_form_return').modal("hide");
+                            $("#form_return").trigger('reset');
+                        } else {
+                            alert('Error get data from ajax');
+                        }
+    
+                    }
+                });
+            } else {
+                toastr.warning("Mass Action", "No item selected! Please select an item.", 5000);
+            }
+
             return false;
         },
     });
@@ -326,7 +355,7 @@ $(document).ready(function () {
     $('#query-builder').queryBuilder({
         'bt-tooltip-errors': {delay: 100},
         filters: [
-            {id: 'a.id', label: 'ID #', type: 'integer'},
+            // {id: 'a.id', label: 'ID #', type: 'integer'},
             {id: 'c.reference_no', label: 'Reference #', type: 'string'},
             {id: 'firstname', label: 'Firstname', type: 'string'},
             {id: 'middlename', label: 'Middlename', type: 'string'},
@@ -371,3 +400,14 @@ function clear_query_builder(){
     tblBorrowing.ajax.reload();
 }
 
+$("#selectall").click(function () {
+    $('#table-borrowing tbody input[type="checkbox"]').prop('checked', this.checked);
+});
+
+$("#table-borrowing")
+    .on("click", "tbody input[type='checkbox']", function () {
+        const allCheckboxes = $("#table-borrowing tbody input[type='checkbox']").length;
+        const checkedCheckboxes = $("#table-borrowing tbody input[type='checkbox']:checked").length;
+        const checked = allCheckboxes <= checkedCheckboxes;
+        $('#selectall').prop('checked', checked);
+    });

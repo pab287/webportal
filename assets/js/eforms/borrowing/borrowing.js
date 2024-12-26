@@ -42,7 +42,19 @@ var tblBorrowing = $("#table-borrowing").DataTable({
         { data: "status",render: function (data) {return renderStatusHtml(data)}},
         { data: "reference_no"},
         { data: "company", width: "10%"},
-        { data: "firstname", render: function (data, type, row, meta) {return displayName(row.display_name)}},
+        { data: "display_name", // data: firstname
+            render: function (data, type, row, meta) {
+                // return displayName(row.display_name)
+                var html = ``;
+
+                if(data){
+                    html += `<b>${data}</b>`;
+                    html += `<p class="m-0">${ row.position }</p>`;
+                }
+
+                return html;
+            }
+        },
         { data: "asset_name", width: "30%"},
         { data: "date_trans", width: "12%", render: function (data) {return formatCalendarDate(data)}},
         { data: null, width: "8%", className: "text-center"},
@@ -190,7 +202,7 @@ $(document).ready(function () {
     $('#query-builder').queryBuilder({
         'bt-tooltip-errors': {delay: 100},
         filters: [
-            {id: 'a.id', label: 'ID #', type: 'integer'},
+            // {id: 'a.id', label: 'ID #', type: 'integer'},
             {
                 id: 'a.status', 
                 label: 'Status', 
@@ -199,7 +211,7 @@ $(document).ready(function () {
                 plugin: 'select2',
                 plugin_config: {
                     placeholder: 'Select. .',
-                    width: '110%',
+                    width: '150px',
                     data: [
                         {
                           id: "Pending",
@@ -211,6 +223,9 @@ $(document).ready(function () {
                             id: "Disapproved",
                             text: "Disapproved"
                         },{
+                            id: "Released",
+                            text: "Released"
+                        },{
                             id: "HR Noted",
                             text: "HR Noted"
                         }
@@ -218,15 +233,16 @@ $(document).ready(function () {
                 },
                 operators: ['equal', 'not_equal']
             },
-            {id: 'reference_no', label: 'Reference #', type: 'string'},
-            {id: 'company', label: 'File Under', type: 'string'},
-            {id: 'firstname', label: 'Firstname', type: 'string'},
-            {id: 'middlename', label: 'Middlename', type: 'string'},
-            {id: 'lastname', label: 'Lastname', type: 'string'},
-            {id: 'suffix', label: 'Suffix', type: 'string'},
-            {id: 'asset_name', label: 'Item', type: 'string', operators : ['contains', 'not_contains', 'begins_with','not_begins_with', 'is_empty', 'is_not_empty']},
+            {id: 'a.reference_no', label: 'Reference #', type: 'string'},
+            // {id: 'company', label: 'File Under', type: 'string'},
+            {id: 'comp.code', label: 'File Under', type: 'string'},
+            {id: 'b.firstname', label: 'Firstname', type: 'string'},
+            {id: 'b.middlename', label: 'Middlename', type: 'string'},
+            {id: 'b.lastname', label: 'Lastname', type: 'string'},
+            {id: 'b.suffix', label: 'Suffix', type: 'string'},
+            {id: 'c.asset_name', label: 'Item', type: 'string', operators : ['contains', 'not_contains', 'begins_with','not_begins_with', 'is_empty', 'is_not_empty']},
             {
-                id: 'date_trans',
+                id: 'a.date_trans',
                 label: 'Transaction Date',
                 type: 'date',
                 plugin: 'datepicker',
