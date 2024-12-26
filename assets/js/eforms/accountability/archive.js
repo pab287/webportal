@@ -181,7 +181,7 @@ function formatCalendarDate(data){
 function itemDatatableActions($id){
 	if($id){
 		var _actionButton ="";
-			_actionButton += " <a class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='"+baseUrl('eforms/accountability/view_accountability?id=')+$id+"' target='__blank'><i class='la la-pencil-square'></i></a>";				
+			_actionButton += " <a class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='"+baseUrl('eforms/accountability/view_accountability?id=')+$id+"&page=archive' target='__blank'><i class='la la-pencil-square'></i></a>";				
 		return _actionButton;
 	}else{ return false; }
 }
@@ -213,12 +213,12 @@ $("#issued_to").select2({
 });
 
 /* ADVANCE SEARCH MODAL */
-$("#status").select2({placeholder: "SELECT STATUS", width: "100%", dropdownParent: $("#modal-advance-search")});
+// $("#status").select2({placeholder: "SELECT STATUS", width: "100%", dropdownParent: $("#modal-advance-search")});
 $("#company").select2({placeholder: "SELECT COMPANY", width: "100%", dropdownParent: $("#modal-advance-search")});
 /* END ADVANCE SEARCH MODAL*/
 
 $('#advanced_search').on("click", function (callback) {
-    advanced_search['status'] = $("#status").val();
+    // advanced_search['status'] = $("#status").val();
     advanced_search['reference_no'] = $("#reference_no").val();
     advanced_search['company'] = $("#company").val();
     advanced_search['issued_to'] = $("#issued_to").val();
@@ -298,3 +298,12 @@ function clear_query_builder(){
     tblAccountability.ajax.reload();
 }
 
+$("#refresh").on('click', function () {
+    $("#frm-advance-search").trigger('reset');
+    $("#company").val('').trigger('change');
+    $("#issued_to").val('').trigger('change');
+
+    advanced_search = {};
+
+    tblAccountability.ajax.reload();
+});

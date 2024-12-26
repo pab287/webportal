@@ -355,4 +355,12 @@ function clear_query_builder() {
     tblAccountability.ajax.reload();
 }
 
+$("#refresh").on('click', function () {
+    $("#frm-advance-search").trigger('reset');
+    $("#status").val('').trigger('change');
+    $("#company").val('').trigger('change');
+    $("#issued_to").val('').trigger('change');
 
+    advanced_search = {};
+    tblAccountability.ajax.reload();
+});

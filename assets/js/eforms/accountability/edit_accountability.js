@@ -17,77 +17,160 @@ $.ajax({
     url: baseUrl("eforms/accountability/content_detail/") + param_id,
     type: "get",
     success: function (data) {
-        if (data.is_urgent == 1) {
+        if (data[0].is_urgent == 1) {
             $("#urgent").prop('checked', true);
         }
 
-        if (data.is_contract == 0) {
-            var issued_to = new Option(data.display_name, data.issued_to, true, true);
-            $('#issued_to').append(issued_to).trigger('change');
-            $('#issued_to').removeAttr("disabled");
-            $('#contractor').attr("disabled", "disabled");
+        var type = data[0].is_contract == 0 ? 'employee' : 'contractor';
+
+        var tempdata = { issued_to: data[0].issued_to, name: data[0].display_name };
+        select2Employee("#issued_to", true, type, tempdata);
+
+        if (data[0].is_contract == 0) {
+            // var issued_to = new Option(data.display_name, data.issued_to, true, true);
+            // $('#issued_to').append(issued_to).trigger('change');
+            // $('#issued_to').removeAttr("disabled");
+            // $('#contractor').attr("disabled", "disabled");
+
+            // select2Employee("#issued_to", true, 'employee');
+            $("#issued_to").attr('name', 'issued_to');
 
         } else {
-            var contractor = new Option(data.contractor, data.issued_to, true, true);
-            $('#contractor').append(contractor).trigger('change');
+            // var contractor = new Option(data.contractor, data.issued_to, true, true);
+            // $('#contractor').append(contractor).trigger('change');
+            // $('#issued_to').append(contractor).trigger('change');
             $('#con_but').hide();
             $('#emp_but').show();
-            $('#contractor').removeAttr("disabled");
-            $('#issued_to').attr("disabled", "disabled");
+
+            $("#issued_to").attr('name', 'contractor');
+            // $('#contractor').removeAttr("disabled");
+            // $('#issued_to').attr("disabled", "disabled");
             $('#contract_check').val(1);
         }
-        $("#issue_dt").val(moment(data.date_issued).format("MM/DD/Y"));
-        $("#company_to").val(data.company);
-        $("#department_to").val(data.department);
+
+        $("#issue_dt").val(moment(data[0].date_issued).format("MM/DD/Y"));
+        $("#company_to").val(data[0].company);
+        $("#department_to").val(data[0].department);
     }
 })
 
-$("#issued_to").select2({
-    placeholder: 'Select. .',
-    width: '100%',
-    ajax: {
-        url: baseUrl("eforms/accountability/issued_to_lookup"),
-        dataType: "json",
-        global: false,
-        delay: 250,
-        processResults: function (data) {
-            return data;
-        }
+// $("#issued_to").select2({
+//     placeholder: 'Select. .',
+//     width: '100%',
+//     ajax: {
+//         url: baseUrl("eforms/accountability/issued_to_lookup"),
+//         dataType: "json",
+//         global: false,
+//         delay: 250,
+//         processResults: function (data) {
+//             return data;
+//         }
+//     }
+// });
+
+// $("#issued_to").on("select2:select", function () {
+//     $.ajax({
+//         type: "GET",
+//         data: { data: $("#issued_to option:selected").attr("value") },
+//         url: baseUrl("eforms/accountability/get_file_under"),
+//         dataType: "json",
+//         success: function (json) {
+//             $("#company_to").val(json.company);
+//             $("#department_to").val(json.department);
+//         }
+//     });
+// });
+
+// $("#contractor").select2({
+//     placeholder: 'Select. .',
+//     width: '100%',
+//     ajax: {
+//         url: baseUrl("eforms/accountability/contractor_lookup"),
+//         dataType: "json",
+//         global: false,
+//         delay: 250,
+//         processResults: function (data) {
+//             return data;
+//         }
+//     }
+// });
+
+// $("#contractor").on("select2:select", function () {
+//     $("#company_to").val("CONTRACTOR");
+//     $("#department_to").val("CONTRACTOR");
+// });
+
+select2Employee("#issued_to");
+
+
+function select2Employee(targetElement, destroy = false, type = 'employee', formData = {}) {
+    let ajax = {};
+
+    if (destroy) {
+        $(targetElement).empty();
+        $(targetElement).select2("destroy");
+        $(targetElement).off('select2:select');
     }
-});
 
-$("#issued_to").on("select2:select", function () {
-    $.ajax({
-        type: "GET",
-        data: { data: $("#issued_to option:selected").attr("value") },
-        url: baseUrl("eforms/accountability/get_file_under"),
-        dataType: "json",
-        success: function (json) {
-            $("#company_to").val(json.company);
-            $("#department_to").val(json.department);
-        }
-    });
-});
-
-$("#contractor").select2({
-    placeholder: 'Select. .',
-    width: '100%',
-    ajax: {
-        url: baseUrl("eforms/accountability/contractor_lookup"),
-        dataType: "json",
-        global: false,
-        delay: 250,
-        processResults: function (data) {
-            return data;
-        }
+    if (typeof formData != 'undefined' && formData) {
+        $(targetElement).append(new Option(formData.name, formData.issued_to, true, true)).trigger('change');        
     }
-});
 
-$("#contractor").on("select2:select", function () {
-    $("#company_to").val("CONTRACTOR");
-    $("#department_to").val("CONTRACTOR");
-});
+    if (type == 'employee'){
+        ajax = {
+            url: baseUrl("eforms/accountability/issued_to_lookup"),  
+            delay: 500,
+            processResults: function (data) {
+                return data;
+            }
+        };
+    } else {
+        ajax = {
+            url: baseUrl("eforms/accountability/contractor_lookup"),
+            dataType: "json",
+            delay: 500,
+            global: false,
+            processResults: function (data) {
+                return data;
+            }
+        };
+    }
 
+    $(targetElement).select2({
+        placeholder: 'Select. .',
+        width: '100%',
+        minimumInputLength: 3,
+        ajax: ajax,
+    }).on("select2:select", function (e) {
+        var data = e.params.data;
+
+        console.log(type);
+
+        if (type == 'employee') {
+            $.ajax({
+                type: "GET",
+                data: { 
+                    data: data.id 
+                },
+                url: baseUrl("eforms/accountability/get_file_under"),
+                dataType: "json",
+                success: function (json) {
+                    $("#company_to").val(json.company);
+                    $("#department_to").val(json.department);
+                }
+            });
+        } else {
+            $("#company_to").val("CONTRACTOR");
+            $("#department_to").val("CONTRACTOR");
+        }
+    }); 
+
+    if (!destroy) {
+        $(targetElement).val('').trigger('change');
+    }
+}
+
+var maxDate = moment().format('MM/DD/YYYY');
 $('#issue_dtpicker').datetimepicker({
     todayHighlight: true,
     autoclose: true,
@@ -96,6 +179,7 @@ $('#issue_dtpicker').datetimepicker({
     todayBtn: true,
     maxView: 4,
     minView: 2,
+    endDate: maxDate,
     format: 'mm/dd/yyyy',
 });
 
@@ -103,8 +187,11 @@ $('#emp_but').hide();
 $('#con_but').on("click", function () {
     $('#con_but').hide();
     $('#emp_but').show();
-    $('#contractor').removeAttr("disabled");
-    $('#issued_to').attr("disabled", "disabled");
+    // $('#contractor').removeAttr("disabled");
+    // $('#issued_to').attr("disabled", "disabled");
+
+    select2Employee("#issued_to", true, 'contractor');
+    $("#issued_to").attr('name', 'contractor');
     $('#contract_check').val(1);
     $('#issued_to').val("");
     $('#issued_to').text("");
@@ -113,8 +200,11 @@ $('#con_but').on("click", function () {
 $('#emp_but').on("click", function () {
     $('#emp_but').hide();
     $('#con_but').show();
-    $('#issued_to').removeAttr("disabled");
-    $('#contractor').attr("disabled", "disabled");
+    // $('#issued_to').removeAttr("disabled");
+    // $('#contractor').attr("disabled", "disabled");
+
+    select2Employee("#issued_to", true, 'employee');
+    $("#issued_to").attr('name', 'issued_to');
     $('#contract_check').val(0);
     $('#contractor').val("");
     $('#contractor').text("");

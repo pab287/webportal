@@ -13,6 +13,10 @@
         #fix-mobile button, #fix-mobile a{
             margin-bottom: 10px;
         }
+
+        span.help-block.form-error{
+            width: 100% !important;
+        }
     }
 
     @media screen and (max-width: 575px){
@@ -30,6 +34,10 @@
             float: unset;
             margin: 0 15px;
         }
+    }
+
+    span.help-block.form-error{
+        width: 32.5% !important;
     }
 </style>
 
@@ -67,18 +75,18 @@
                                         Issued to
                                     </label>
                                     <div class="col-md-7 col-lg-7 col-sm-12">
-                                        <select id="issued_to" name="issued_to"></select>
-                                        <select disabled id="contractor" name="contractor"></select>
+                                        <select id="issued_to" name="issued_to" data-validation="required"></select>
+                                        <!-- <select disabled id="contractor" name="contractor"></select> -->
                                     </div>
-                                    <div class="col-md-2 col-lg-2 col-sm-12" id='toogle_but'>
-                                        <button id='con_but' type='button' class="btn m-btn--sm btn-primary btn-block btnEdit">Contractor</button>
-                                        <button id='emp_but' type='button' style='margin-top:0px' class="btn m-btn--sm btn-success btn-block btnEdit">Employee</button>
+                                    <div class="col-md-3 col-lg-3 col-sm-12" id='toogle_but'>
+                                        <button id='con_but' type='button' class="btn m-btn--sm btn-primary btn-block btnEdit">Change to Contractor</button>
+                                        <button id='emp_but' type='button' style='margin-top:0px' class="btn m-btn--sm btn-success btn-block btnEdit">Change to Employee</button>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-md-2 col-lg-2 col-sm-12 col-form-label">Date Issued</label>
                                     <div class="col-md-3 col-lg-3 col-sm-3 col-xs-12 input-group date" id="issue_dtpicker">
-                                        <input class="form-control m-input" type="text" name="issue_dt" id="issue_dt" maxlength="22" autocomplete="off" />
+                                        <input class="form-control m-input" type="text" name="issue_dt" id="issue_dt" maxlength="22" autocomplete="off" data-validation="required" />
                                         <span class="input-group-addon"><i class="la la-calendar glyphicon-th"></i></span>
                                     </div>
                                     <div class='col-md-3 col-lg-3 col-sm-3 col-xs-12 m-checkbox-list'>
