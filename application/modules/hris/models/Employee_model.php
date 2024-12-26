@@ -6908,6 +6908,7 @@
             $this->db->update("gcchris.tblperformance_rating", array("current" => 0), array("emp_id" => $post["emp_id"]));
             $this->db->reset_query();
             }
+            $empName = $this->getEmployeeName($post['emp_id']);
             $resultSet = array();
             if($post['purpose'] == "1"){
                 $empRating_array = array(
@@ -6924,7 +6925,7 @@
                 $resultSet["success"] = true;
                 $resultSet["message"] = "Performance rating temporarily saved!";
                 $resultSet["title"] = "Saved";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " temporarily updated performance rating details of employee db id #".$post["emp_id"],"update", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " temporarily updated performance rating details of employee: ".$empName['name']." with remarks ".$post['remarks'],"update", "success", "gcchris", "user");
             }else{
                 unset($post['purpose'],$post['for_rehire']);
                 if ($this->db->insert("gcchris.tblperformance_rating", $post)) {
