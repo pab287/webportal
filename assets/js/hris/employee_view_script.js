@@ -70,17 +70,17 @@ let employeeDataSheet = new Vue({
             }
     },
     created() {
-        Object.keys(employeeData).forEach(key => {
-            this.$set(this.main, key,"");
-        });
+        // Object.keys(employeeData).forEach(key => {
+        //     this.$set(this.main, key,"");
+        // });
     },
     mounted(){
+        this.getSidebarData();
         if (_tempContentData.tab == null){
             this.$data.activeSection = "personalInfo"
         }else{
             this.$data.activeSection =  _tempContentData.tab
         }
-
         switch (this.$data.activeSection) {
             case "personalInfo":
                 this.getPersonalInformation();
@@ -141,8 +141,15 @@ let employeeDataSheet = new Vue({
     },
 
     methods:{
-        getPersonalInformation(){
+        getSidebarData(){
             this.main = { ...this.$data.main, ..._tempContentData.data.main };
+            console.log("this.main", this.main);
+        },
+        getPersonalInformation(){
+            if (!hasValue(this.main)) {
+                this.main = { ...this.$data.main, ..._tempContentData.data.main };
+                console.log("Getting personal info");
+            }
         },
         calculateAge(birthdate){
             if (!birthdate || birthdate == '0000-00-00') {
@@ -655,8 +662,10 @@ function printFetch(element, avatar, info, user, timestamp){
         global: false,
         success: function(response) {
             if(response){
-
+                console.log("PrintData",employeeDataSheet.$data.printData);
+                console.log("ResponseData", response.data);
                 employeeDataSheet.$data.printData = { ...employeeDataSheet.$data.printData, ...response.data };
+
                 if (actions.includes("view_own_request") && employeeDataSheet.$data.printData.main.id !== session_id) {
                     employeeDataSheet.$data.printData.salaries = "not_allowed";
                 }

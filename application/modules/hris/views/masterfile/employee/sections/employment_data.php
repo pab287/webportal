@@ -684,7 +684,13 @@
     <tbody>
         <tr>
         <td data-label="CURRENT STATION / LOCATION">
-            <span v-text="printData.default_station.description || 'N/A'"></span>
+            <template v-if="printData.default_station != null">
+                <span v-text="printData.default_station.description"></span>
+            </template>
+            <template v-else>
+                <span v-text="'N/A'"></span>
+            </template>
+
         </td>
         <td data-label="STATIONS">
             <ul class="row">

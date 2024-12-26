@@ -420,18 +420,15 @@
                     </div>
                 </div>
                 <div id="data-sheet" class="m-portlet__body data-sheet">
-                    <!-- for 201 printing -->
                     <div class="m-portlet__section web-view" id="to-print">
-                    <?php $this->load->view("hris/masterfile/employee/sections/personal_information"); ?>
+                        <?php $this->load->view("hris/masterfile/employee/sections/personal_information"); ?>
                     </div>
                     <div class="m-portlet__section web-view" id="to-print">
                         <?php $this->load->view("hris/masterfile/employee/sections/employment_data"); ?>
                     </div>
-                    <!-- for 201 printing -->
                     <div id="hide-in-print" class="m-portlet__section web-view">
                         <?php $this->load->view("hris/masterfile/employee/sections/employee_data_web", $data, FALSE); ?>
                     </div>
-
                     <div class="m-portlet__section mobile-view" style="display: none">
                         <?php $this->load->view("hris/masterfile/employee/sections/employee_data", $data, FALSE); ?>
                     </div>
