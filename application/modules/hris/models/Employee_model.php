@@ -7933,15 +7933,15 @@
             $data["rate"] = $post["rate"];
 
             $query = $this->db->insert("gcchris.benefits", $data);
-
+            $empName = $this->getEmployeeName($post['emp_id']);
             if ($query) {
                 $resultarray["status"] = TRUE;
                 $resultarray["response"] = "Data successfully saved!";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has inserted new benefit for employee with db id ".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has inserted new benefit for employee: ".$empName['name']." with rate: ".$post["rate"],"insert", "success", "gcchris", "user");
             } else {
                 $resultarray["status"] = FALSE;
                 $resultarray["response"] = $this->db->error();
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed inserting new benefit for employee with db id ".$this->db->insert_id(),"insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed inserting new benefit for employee: ".$empName['name']." with rate: ".$post["rate"],"insert", "error", "gcchris", "user");
             }
 
             return $resultarray;
@@ -8928,9 +8928,25 @@
             $resultSet["message"] = $update ? "Benefits was successfully updated." : $this->db->error()["message"];
             $resultSet["title"] = $update ? "Benefits updated." : "Error";
             $resultSet["toast"] = $update ? "success" : "error";
-
+            $empName = $this->getEmployeeName($post['emp_id']);
             //exec log event for benefits
-            $update ? $this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated employee benefits data with db id no. ".$id,"update", "success", "gcchris", "user") : $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating employee benefits data with db id no. ".$id,"insert", "error", "gcchris", "user");
+            if ($update) {
+                $this->core_layout->setEventLog(
+                    "User {$this->loggedInUsername} updated employee benefits data for employee: {$empName['name']}",
+                    "update",
+                    "success",
+                    "gcchris",
+                    "user"
+                );
+            } else {
+                $this->core_layout->setEventLog(
+                    "User {$this->loggedInUsername} failed updating employee benefits data for employee: {$empName['name']}",
+                    "update",
+                    "error",
+                    "gcchris",
+                    "system"
+                );
+            }
 
             return $resultSet;
         }
