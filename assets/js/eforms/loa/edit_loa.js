@@ -179,6 +179,10 @@ var vmTab1 = new Vue({
                 currentValue = currentValue.trim();
                 _this.val(currentValue);
             });
+        }, isNumber: function (evt) {
+            const char = String.fromCharCode(evt.which);
+            if(!(/[0-9+]/.test(char)))
+                evt.preventDefault();
         }
     },
     mounted: function () {
@@ -312,8 +316,12 @@ $.validate({
         //         }
         //       })
         // }
-
-        if (parseInt($("#reason").val().length) < 30) {
+        if (parseInt($("#phone_on_leave").val().length) < 11){
+            toastr.error("Invalid phone number. Number must be 11 digits. (09———)", "Error!", 5000);
+        } else if (parseInt($("#phone_on_leave").val().length) > 11) {
+            toastr.error("Invalid phone number. Number must not be more than 11 digits. (09———)", "Error!", 5000);
+        } else {
+            if (parseInt($("#reason").val().length) < 30) {
                 alert_function("Must have minimum of 30 characters.");
             }else{
                 $.ajax({
@@ -327,7 +335,7 @@ $.validate({
                         if (data.reps!=="error") {
                             alert_function("Invalid Reason!");
                         } else {
-
+    
                             $.ajax({
                                 url: baseUrl("eforms/loa/update_loa/") + param_id,
                                 type: "POST",
@@ -338,7 +346,8 @@ $.validate({
                                         toastr.success("LOA successfully updated!");
                                         window.location.replace(baseUrl("eforms/loa/view_loa?id=") + param_id);
                                     } else {
-                                        toastr.danger("Error processing request!");
+                                        toastr.error("Failed to save LOA. `FROM DATE` must be less than `TO DATE`.", "Error!", 5000);
+                                        $("#btnSaveLoa").attr('disabled', false);
                                     }
                                 }
                             });
@@ -346,6 +355,7 @@ $.validate({
                     }
                 })
             }
+        }
         /*** $('#reason_v').empty();
         if ($('[name="reason"]').val().length < 30 && $('[name="reason"]').val().length > 255) {
             if ($('[name="reason"]').val().length < 30) {

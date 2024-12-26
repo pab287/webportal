@@ -191,6 +191,11 @@ $.validate({
 		var currentForm = form[0];
 		var formData = $(currentForm).serialize();
 		//var disabled = $('#form_loa').find('textarea:disabled').removeAttr('disabled');
+		if (parseInt($("#phone").val().length) < 11){
+			toastr.error("Invalid phone number. Number must be 11 digits. (09———)", "Error!", 5000);
+		} else if (parseInt($("#phone").val().length) > 11){
+			toastr.error("Invalid phone number. Number must not be more than 11 digits. (09———)", "Error!", 5000);
+		} else {
 			if (parseInt($("#reason").val().length) < 30) {
 				alert_function("Must have minimum of 30 characters.");
 			}else{
@@ -226,6 +231,7 @@ $.validate({
 					}
 				});
 			}
+		}
 							
 
 
@@ -330,8 +336,15 @@ $(document).ready(function () {
 });
 
 function alert_function(msg){
-		setTimeout(function(){
-			$('#reason_v').html('<span class="help-block form-error" ><font color="#FF0000">'+msg+'</font></span>');
-			$('#reason').attr("style","border-color: rgb(185, 74, 72)");	
-		},100);
+	setTimeout(function(){
+		$('#reason_v').html('<span class="help-block form-error" ><font color="#FF0000">'+msg+'</font></span>');
+		$('#reason').attr("style","border-color: rgb(185, 74, 72)");	
+	},100);
+}
+
+function isNumberKey(evt) {
+	const char = String.fromCharCode(evt.which);
+	if(!(/[0-9+]/.test(char))){
+		evt.preventDefault();
 	}
+}

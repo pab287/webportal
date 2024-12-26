@@ -101,9 +101,7 @@
                                         Phone on Leave
                                     </label>
                                     <div class="col-md-9 col-xs-12">
-                                        <input class="form-control m-input" name="phone" type="number"
-                                            autocomplete="off"
-                                            data-validation="required"/>
+                                        <input class="form-control m-input" id="phone" name="phone" type="text" autocomplete="off" data-validation="required" onkeypress="isNumberKey(event)" />
                                     </div>
                                 </div>
                             </div>

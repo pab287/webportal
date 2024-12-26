@@ -296,6 +296,7 @@
             $user_id = $this->core_layout->getCurrentEmployeeId();
             date_default_timezone_set('Asia/Singapore');
             $date = date('Y-m-d H:i:s');
+            $isValidDate = false;
 
             $x = explode("\n", $this->input->post('company'));
             $company = trim($x[0]);
@@ -340,13 +341,29 @@
                 'last_edited_dt' => $date,
 
             );
-            $reference_no = $this->db->get_where("gcceforms.loa", array("id"=>$id))->row('reference_no');
-            if($this->loa->update(array('id' => $id), $data)){
-                $this->core_layout->setEventLog("Updated ".$reference_no.".","update", "success", "gcceforms", "user");
-            }else{
-                $this->core_layout->setEventLog("Failed updating ".$reference_no.".","update", "error", "gcceforms", "system");
+
+            if ($this->input->post('type') == "4") {
+                if (date('Y-m-d', strtotime($this->input->post('date_from'))) > date('Y-m-d', strtotime($this->input->post('date_to')))) {
+                    $isValidDate = false;
+                } else {
+                    $isValidDate = true;
+                }
+            } else {
+                $isValidDate = true;
             }
-            echo json_encode(array("status" => TRUE));
+
+            $reference_no = $this->db->get_where("gcceforms.loa", array("id"=>$id))->row('reference_no');
+
+            if ($isValidDate) {
+                if($this->loa->update(array('id' => $id), $data)){
+                    $this->core_layout->setEventLog("Updated ".$reference_no.".","update", "success", "gcceforms", "user");
+                }else{
+                    $this->core_layout->setEventLog("Failed updating ".$reference_no.".","update", "error", "gcceforms", "system");
+                }
+                echo json_encode(array("status" => TRUE));
+            } else {
+                echo json_encode(array("status" => FALSE));
+            }
         }
 
         public function ajax_loa_details($id)

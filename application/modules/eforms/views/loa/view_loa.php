@@ -134,7 +134,7 @@
             <br><br>
             <div class="form-group m-form__group row">
               <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12"> Reason for Leave </label>
-              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" style="word-wrap: break-word">
                 <b v-text="vm_tab1.reason"></b>
               </div>
             </div>
