@@ -57,7 +57,11 @@ var tblAccountability = $("#table-accountability").DataTable({
         //         return empName(row.display_name, row.contractor, row.is_contract)
         //     }
         // },
-        { data: "display_name" },
+        { data: "firstname", 
+            render: function (data, type, row, meta ) {
+                return row.display_name && row.display_name !== ' ' ? row.display_name : 'No Employee Name';
+            }
+        },
         {
             data: "asset_name", orderable: false,
             render: function (data, type, row, meta) {
