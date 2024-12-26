@@ -217,23 +217,22 @@ class Company_model extends CI_Model{
 					}
 					$resultset["response"] = true;
 					$resultset["toastr_msg"] = "Company data has been added.";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new company with db id no. ".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new company with code: ".$post["code"],"insert", "success", "gcchris", "user");
 				}else{
 					$resultset["response"] = false;
 					$resultset["toastr_msg"] = "Failed saving company data!";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has error inserting company details","insert", "error", "gcchris", "user");
+					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has error inserting company details for company code: ".$post["code"],"insert", "error", "gcchris", "system");
 				}
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Company code already exist!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has error inserting company already exist.","insert", "error", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has error inserting company already exist for company code: ".$post["code"],"insert", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
 			$resultset["toastr_msg"] = "No post data found!";
-			$this->core_layout->setEventLog("Company masterfile - Error, No post data found.","insert", "error", "gcchris", "user");
+			$this->core_layout->setEventLog("Company masterfile - Error, No post data found.","insert", "error", "gcchris", "system");
 		}
-        
         return $resultset;
 	}
 	
