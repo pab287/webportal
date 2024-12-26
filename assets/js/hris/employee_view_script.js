@@ -70,9 +70,7 @@ let employeeDataSheet = new Vue({
             }
     },
     created() {
-        // Object.keys(employeeData).forEach(key => {
-        //     this.$set(this.main, key,"");
-        // });
+
     },
     mounted(){
         this.getSidebarData();
@@ -143,12 +141,10 @@ let employeeDataSheet = new Vue({
     methods:{
         getSidebarData(){
             this.main = { ...this.$data.main, ..._tempContentData.data.main };
-            console.log("this.main", this.main);
         },
         getPersonalInformation(){
             if (!hasValue(this.main)) {
                 this.main = { ...this.$data.main, ..._tempContentData.data.main };
-                console.log("Getting personal info");
             }
         },
         calculateAge(birthdate){
@@ -562,8 +558,6 @@ function getAccountability(){
                 employeeDataSheet.$data.accountability = false;
             } else {
                 employeeDataSheet.$data.accountability = { ...employeeDataSheet.$data.accountability, ...response.accountability };
-
-                console.log(employeeDataSheet.$data.accountability);
                 $("#accountability_table_mobile").dataTable({
                     pageLength : 5,
                     bLengthChange : false,
@@ -572,18 +566,18 @@ function getAccountability(){
                         { data: 'status' },
                         { data: null, 
                             render: function(data, type, row) {
-                                // Format amount with two decimal places and comma as thousand separator
+
                                 const formattedAmount = parseFloat(row.amount).toLocaleString('en-US', {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2
                                 });
                 
-                                // Format return status
+
                                 const returnStatus = parseInt(row.is_returned) === 1 
                                     ? '<span class="m-badge m-badge--success px-2 m--font-bolder">Yes</span>'
                                     : '<span class="m-badge m-badge--danger px-2 m--font-bolder">No</span>';
                 
-                                // Format date
+     
                                 const formattedDate = row.date_returned && row.date_returned !== "0000-00-00" 
                                     ? new Date(row.date_returned).toLocaleDateString('en-US', {
                                         month: 'short',
@@ -662,8 +656,6 @@ function printFetch(element, avatar, info, user, timestamp){
         global: false,
         success: function(response) {
             if(response){
-                console.log("PrintData",employeeDataSheet.$data.printData);
-                console.log("ResponseData", response.data);
                 employeeDataSheet.$data.printData = { ...employeeDataSheet.$data.printData, ...response.data };
 
                 if (actions.includes("view_own_request") && employeeDataSheet.$data.printData.main.id !== session_id) {
