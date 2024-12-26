@@ -1068,13 +1068,21 @@ class Reports_model extends CI_Model{
         return $resultarray;
     }
 
-    public function generateLateReport(){
-        $post = $this->input->post();
+    protected function getTimesheetMaxDate($verified = 0){
+        $this->db->select("MAX(date) as max_date");
+        $this->db->from("gcctimeutility.timesheet");
+        $this->db->where("has_shift", 1);
+        if(intval($verified) == 1){  $this->db->where("verified", 1); }
+        $this->db->limit(1);
+        $qTempMax = $this->db->get();
+       return $qTempMax->row()->max_date ? $qTempMax->row()->max_date: null;
+    }
+
+    protected function generateLateReport($post = array()){
         $resultset = array();
         $arrFilter = array();
 
         $hasDepartment = isset($post["department"]) && $post["department"];
-
         if(isset($post["company"]) && $post["company"]){
             $empIds = array();
             $this->db->select("emp.id");
@@ -1136,19 +1144,13 @@ class Reports_model extends CI_Model{
                 $endDate = Date("Y-m-d", strtotime("last day of this month", $timeStamp));
                 $arrFilter["filter_by"] = "Month";
             }
-            
+
             if($startDate && $endDate && (is_array($employeeIds) && count($employeeIds) > 0)){
                 $fsDate = Date("F d, Y", strtotime($startDate));
                 $feDate = Date("F d, Y", strtotime($endDate));
                 $arrFilter["filter_date"] = "{$fsDate} - {$feDate}";
 
-                $this->db->select("MAX(date) as max_date");
-                $this->db->from("gcctimeutility.timesheet");
-                $this->db->where("has_shift", 1);
-                /*** $this->db->where("verified", 1); ***/
-                $this->db->limit(1);
-                $qTempMax = $this->db->get();
-                $tempMaxDate = $qTempMax->row()->max_date ? $qTempMax->row()->max_date: null;
+                $tempMaxDate = $this->getTimesheetMaxDate();
                 $this->db->reset_query();
 
                 $this->db->select("CONCAT(UPPER(TRIM(emp.firstname)), ' ',
@@ -1160,7 +1162,7 @@ class Reports_model extends CI_Model{
                     UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
                     emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
                 END) as employee_name, emp.idno, IFNULL(UPPER(pos.name), 'NO ASSIGNED POSITION') as position,
-                COALESCE(SUM(IF(ts.date >= emp.date_start && ts.am_late > 0, 1, 0))) + COALESCE(SUM(IF(ts.date >= emp.date_start && ts.pm_late > 0, 1, 0))) as late_total, 
+                COALESCE(SUM(IF(ts.date >= emp.date_start && ts.am_late > 0, 1, 0))) + COALESCE(SUM(IF(ts.date >= emp.date_start && ts.pm_late > 0, 1, 0))) as reports_total,
                 CONCAT(
                     GROUP_CONCAT(DISTINCT IF(ts.date >= emp.date_start && ts.am_late > 0, CONCAT(ts.date, ' ', ts.am_in), '')),
                     GROUP_CONCAT(DISTINCT IF(ts.date >= emp.date_start && ts.pm_late > 0, CONCAT(ts.date, ' ', ts.pm_in), ''))
@@ -1200,6 +1202,24 @@ class Reports_model extends CI_Model{
         }
 
         return $resultset;
+    }
+
+    public function generateLateAbsenteeReport(){
+        $post = $this->input->post();
+        $reportType = $post["report_type"];
+        unset($post["report_type"]);
+        $arrResponse = array();
+
+        if ($reportType == "late"){
+            $arrResponse = $this->generateLateReport($post);
+            $arrResponse["filters"]["report_type"] = "Attendance Late Report";
+        }
+        elseif ($reportType == "absentee"){
+            $arrResponse = $this->generateAbsenteeReport($post);
+            $arrResponse["filters"]["report_type"] = "Attendance Absentee Report";
+        }
+
+        return $arrResponse;
     }
 
     public function selectPayrollGroup(){
@@ -1249,14 +1269,11 @@ class Reports_model extends CI_Model{
         return $resultset;
     }
 
-    public function generateAbsenteeReport(){
+    public function generateAbsenteeReport($post = array()){
         $this->load->model("gcctime/timesheet_model", "ts_model");
-        $post = $this->input->post();
         $resultset = array();
         $arrFilter = array();
-
         $hasDepartment = isset($post["department"]) && $post["department"];
-
         if(isset($post["company"]) && $post["company"]){
             $empIds = array();
             $this->db->select("emp.id");
@@ -1279,10 +1296,9 @@ class Reports_model extends CI_Model{
         if(isset($post["employee"]) && $post["employee"]){
             $filterBy = $post["filter_by"];
             $employeeIds = $post["employee"];
-
             $startDate = null;
             $endDate = null;
-
+            
             if(isset($post["company"]) && $post["company"]){
                 $qCompany = $this->db->get_where("gcchris.tblcompanies", array("id"=>$post["company"]));
                 if($qCompany->num_rows() == 1){
@@ -1320,15 +1336,9 @@ class Reports_model extends CI_Model{
                 $endDate = Date("Y-m-d", strtotime("last day of this month", $timeStamp));
                 $arrFilter["filter_by"] = "Month";
             }
-    
+
             if($startDate && $endDate && (is_array($employeeIds) && count($employeeIds) > 0)){
-                $this->db->select("MAX(date) as max_date");
-                $this->db->from("gcctimeutility.timesheet");
-                $this->db->where("has_shift", 1);
-                /*** $this->db->where("verified", 1); ***/
-                $this->db->limit(1);
-                $qTempMax = $this->db->get();
-                $tempMaxDate = $qTempMax->row()->max_date ? $qTempMax->row()->max_date: null;
+                $tempMaxDate = $this->getTimesheetMaxDate();
                 $this->db->reset_query();
 
                 $employeeShiftRecord = array();
@@ -1497,7 +1507,7 @@ class Reports_model extends CI_Model{
                     IF(ts.date >= emp.date_start,
                         IF(ISNULL(ts.shift_pm_start) && ISNULL(ts.shift_pm_end), 0, IF(ISNULL(ts.pm_in) && ISNULL(ts.pm_out), '0.5', 0))
                     , 0)
-                )) as absentee_total,
+                )) as reports_total,
                 CONCAT(
                     GROUP_CONCAT(DISTINCT
                         IF(ts.date >= emp.date_start && ISNULL(ts.shift_am_start) && ISNULL(ts.shift_am_end), '', IF(ISNULL(ts.am_in) && ISNULL(ts.am_out),
@@ -1608,7 +1618,7 @@ class Reports_model extends CI_Model{
 
                         $attx->attendance_logs = implode(",", $newLogs00x);
                         $attx->attendance_dates = implode(",", $attDatex);
-                        $attx->absentee_total += $tempTotal;
+                        $attx->reports_total += $tempTotal;
                         $qData[] = $attx;
                     }
 

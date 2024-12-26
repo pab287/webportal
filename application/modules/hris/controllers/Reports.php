@@ -335,18 +335,13 @@ class Reports extends MY_Controller{
         echo json_encode($data);
     }
 
-    public function generate_late_report(){
-        $data = $this->report->generateLateReport();
+    public function generate_late_absentee_report(){
+        $data = $this->report->generateLateAbsenteeReport();
         echo json_encode($data);
     }
 
     public function select_payroll_group(){
         $data = $this->report->selectPayrollGroup();
-        echo json_encode($data);
-    }
-
-    public function generate_absentee_report(){
-        $data = $this->report->generateAbsenteeReport();
         echo json_encode($data);
     }
 
