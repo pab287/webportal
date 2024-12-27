@@ -82,10 +82,17 @@ function select2Department(targetElement, destroy = false, id = 0) {
     currentTarget.select2({
         placeholder: 'SELECT AN OPTION',
         width: '100%',
+        allowClear: true,
         ajax: {
-            url: baseUrl("eforms/transmittal/get_department_collection/" + id),
+            url: baseUrl("eforms/transmittal/get_department_collection"),
             global: false,
             delay: 250,
+            data: function ({ term }) {
+                return {
+                    q: term,
+                    company_id: id
+                }  
+            },
             processResults: function (data) {
                 return data;
             }

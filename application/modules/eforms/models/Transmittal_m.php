@@ -125,7 +125,7 @@
             $this->db->join("gccmaster.tblemployees e", "e.id = a.ship_to", "LEFT");
             $this->db->join("gccmaster.tblemployees cr", "cr.id = a.created_by", "LEFT");
             $this->db->where('status != ', 'Cancelled');
-            $this->db->where('DATE(a.ship_date) >= ', $check);
+            // $this->db->where('DATE(a.ship_date) >= ', $check);
 
             if($query_builder){
                 $this->db->where($query_builder);
@@ -252,7 +252,7 @@
             $this->db->join("gccmaster.tblemployees e", "e.id = a.ship_to", "LEFT");
             $this->db->join("gccmaster.tblemployees cr", "cr.id = a.created_by", "LEFT");
             $this->db->where('status != ', 'Cancelled');
-            $this->db->where('DATE(a.ship_date) >= ', $check);
+            // $this->db->where('DATE(a.ship_date) >= ', $check);
 
             if($query_builder){
                 $this->db->where($query_builder);
@@ -1098,32 +1098,55 @@
 
         function getDepartmentCollection() {
             $get = $this->input->get();
-            $resultarray = array();
+            $resultarray["results"] = array();
             // if (isset($get['q'])) {
             //     $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tbldepartments WHERE `description` LIKE '%{$get['q']}%' ORDER BY `description` ASC");
             // } else {
             //     $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tbldepartments ORDER BY `description` ASC");
             // }
 
-            $this->db->select('id, description');
-            $this->db->from('gcchris.tbldepartments');
+            // $this->db->select('id, description');
+            // $this->db->from('gcchris.tbldepartments');
             
-            if (isset($get['q']) && $get['q']) {
-                $this->db->like('description', $get['q'], 'both');
-            }
+            // if (isset($get['q']) && $get['q']) {
+            //     $this->db->like('description', $get['q'], 'both');
+            // }
 
-            $this->db->order_by('description', 'ASC');
-            $query = $this->db->get();
+            // $this->db->order_by('description', 'ASC');
+            // $query = $this->db->get();
 
-            if ($query->num_rows() > 0) {
-                foreach ($query->result_array() as $_query) {
-                    $data = array();
-                    $data["id"] = $_query["id"];
-                    $data["text"] = $_query["description"];
-                    $resultarray[] = $data;
+            // if ($query->num_rows() > 0) {
+            //     foreach ($query->result_array() as $_query) {
+            //         $data = array();
+            //         $data["id"] = $_query["id"];
+            //         $data["text"] = $_query["description"];
+            //         $resultarray[] = $data;
+            //     }
+            // }
+            // return array("results" => $resultarray);
+
+            if(isset($get["company_id"]) && $get["company_id"]){
+                $this->db->select("a.id, UPPER(IF(a.`code` = a.`description`, TRIM(a.`description`), TRIM(CONCAT(a.`code`,' | ', a.`description`)))) as text");
+                $this->db->from("gcchris.tbldepartments a");
+                $this->db->join("gccmaster.tblemployees b", "b.department_id = a.id", "INNER");
+                $this->db->join("gcchris.tblcompanies c", "c.id = b.company_id", "INNER");
+                $this->db->where("b.employee_status", "Active");
+                $this->db->where("c.id", $get["company_id"]);
+                if (isset($get['q']) && $get['q']) {
+                    $this->db->group_start();
+                    $this->db->like("a.code", $get['q'], "both");
+                    $this->db->or_like("a.description", $get['q'], "both");
+                    $this->db->group_end();
                 }
+                $this->db->limit(25);
+                $this->db->group_by("a.id");
+                $this->db->order_by("trim(a.code)", "ASC");
+                $query = $this->db->get();
+
+                if ($query->num_rows() > 0) { $resultarray["results"] = $query->result_array(); }
             }
-            return array("results" => $resultarray);
+
+            return $resultarray;
         }
 
         function getEmployeeCollection() {

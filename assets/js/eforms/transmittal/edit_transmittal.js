@@ -20,6 +20,7 @@ var name;
 var deliver;
 var vehicle;
 var tempData = {};
+
 $.ajax({
   url: baseUrl("eforms/transmittal/ajax_transmittal_details2/") + param_id,
   type: "GET",
@@ -32,8 +33,10 @@ $.ajax({
     var company_from = new Option(company_desc, data.data.company_from, true, true);
     $('#select2_file').append(company_from).trigger('change');
 
-    var department_from = new Option(data.department_desc, data.data.department_from, true, true);
-    $('#select2_dep').append(department_from).trigger('change');
+    vmTab1.select2Department('#select2_dep', true, data.data.company_from, { id: data.data.department_from, text: data.department_desc });
+    
+    // var department_from = new Option(data.department_desc, data.data.department_from, true, true);
+    // $('#select2_dep').append(department_from).trigger('change');
 
     var requested_by = new Option(name, data.data.requested_by, true, true);
     $('#select2_requested').append(requested_by).trigger('change');
@@ -111,7 +114,6 @@ $.ajax({
   }
 });
 
-
 var vmTab1 = new Vue({
   el: "#form_transmittal",
   data: { vm_tab1: {} },
@@ -165,20 +167,20 @@ var vmTab1 = new Vue({
       data: data2
     });
 
+    // var department = $("#select2_dep").select2({
+    //   placeholder: 'SELECT AN OPTION',
+    //   width: '100%',
+    //   ajax: {
+    //     url: baseUrl("eforms/transmittal/get_department_collection"),
+    //     global: false,
+    //     delay: 250,
+    //     processResults: function (data) {
+    //       return data;
+    //     }
+    //   }
+    // })
 
-
-    var department = $("#select2_dep").select2({
-      placeholder: 'SELECT AN OPTION',
-      width: '100%',
-      ajax: {
-        url: baseUrl("eforms/transmittal/get_department_collection"),
-        global: false,
-        delay: 250,
-        processResults: function (data) {
-          return data;
-        }
-      }
-    })
+    this.select2Department('#select2_dep', true);
 
     var requested_by = $("#select2_requested").select2({
       placeholder: 'SELECT AN OPTION',
@@ -224,6 +226,51 @@ var vmTab1 = new Vue({
     setTimeout(function () {
       var vmData = this.vmTab1.vm_tab1;
     }, 400);
+
+  },
+  methods: {
+    select2Department (targetElement, destroy = false, id = 0, formData = {}){
+      const currentTarget = $(targetElement);
+      const select2Init = currentTarget.data('select2');
+
+      if (destroy) {
+        currentTarget.empty();
+        if (typeof select2Init !== 'undefined') { select2Init.destroy(); }
+        currentTarget.off('select2:select');
+      }
+
+      if (typeof formData !== 'undefined' && formData) {
+        var department_from = new Option(formData.text, formData.id, true, true);
+        $('#select2_dep').append(department_from).trigger('change');
+      }
+
+      var isDisabled = id == 0 ? true : false;
+
+      currentTarget.prop('disabled', isDisabled);
+
+      currentTarget.select2({
+        placeholder: 'SELECT AN OPTION',
+        width: '100%',
+        allowClear: true,
+        ajax: {
+          url: baseUrl("eforms/transmittal/get_department_collection"),
+          global: false,
+          delay: 250,
+          data: function ({ term }) {
+            return {
+              q: term,
+              company_id: id
+            }  
+          },
+          processResults: function (data) {
+            return data;
+          }
+        }
+      }).on("select2:select", function (e) {
+        var self = $(e.target);
+        self.validate();
+      });
+    }
   }
 });
 
