@@ -44,21 +44,57 @@ var file_under = $("#select2_file").select2({
             return data;
         }
     }
+}).on('select2:select', function (e) {
+    var data = e.params.data;
+
+    select2Department('#select2_dep', true, data.id);
 });
 
 
-var department = $("#select2_dep").select2({
-    placeholder: 'SELECT AN OPTION',
-    width: '100%',
-    ajax: {
-        url: baseUrl("eforms/transmittal/get_department_collection"),
-        global: false,
-        delay: 250,
-        processResults: function (data) {
-            return data;
-        }
+// var department = $("#select2_dep").select2({
+//     placeholder: 'SELECT AN OPTION',
+//     width: '100%',
+//     ajax: {
+//         url: baseUrl("eforms/transmittal/get_department_collection"),
+//         global: false,
+//         delay: 250,
+//         processResults: function (data) {
+//             return data;
+//         }
+//     }
+// });
+select2Department('#select2_dep', true);
+
+function select2Department(targetElement, destroy = false, id = 0) {
+    const currentTarget = $(targetElement);
+    const select2Init = currentTarget.data('select2');
+
+    if (destroy) {
+        currentTarget.empty();
+        if (typeof select2Init !== 'undefined') { select2Init.destroy(); }
+        currentTarget.off('select2:select');
     }
-});
+
+    var isDisabled = id == 0 ? true : false;
+
+    currentTarget.prop('disabled', isDisabled);
+
+    currentTarget.select2({
+        placeholder: 'SELECT AN OPTION',
+        width: '100%',
+        ajax: {
+            url: baseUrl("eforms/transmittal/get_department_collection/" + id),
+            global: false,
+            delay: 250,
+            processResults: function (data) {
+                return data;
+            }
+        }
+    }).on("select2:select", function (e) {
+        var self = $(e.target);
+        self.validate();
+    });
+}
 
 var requested_by = $("#select2_requested").select2({
     placeholder: 'SELECT AN OPTION',
@@ -324,10 +360,10 @@ function add_transmittal() {
         self.validate();
     });
 
-    department.on("change", function (e) {
-        var self = $(e.target);
-        self.validate();
-    });
+    // department.on("change", function (e) {
+    //     var self = $(e.target);
+    //     self.validate();
+    // });
 
     requested_by.on("change", function (e) {
         var self = $(e.target);
