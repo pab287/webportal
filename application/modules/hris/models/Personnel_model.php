@@ -668,19 +668,22 @@
                 $post["status"] = "forApproval";
 
                 $insert = $this->db->insert($this->applicationTable, $post);
+                $position = $this->getPositionById($post['position_id']);
+                $requestedBy = $this->getEmployeeNameById($post["requested_by"]);
+                $company = $this->getCompanyById($post["company_id"]);
                 if ($insert) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Personnel request data has been added.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new personnel request data with db id no. ".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " added new personnel request: ".$position->name." requested by ".$requestedBy." for company: ".$company->description,"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed saving personnel request data!";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting new personnel request data","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting new personnel request data","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "No post data found!";
-                $this->core_layout->setEventLog("Personnel request - Error, No post data found.","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Personnel request - Error, No post data found.","insert", "error", "gcchris", "system");
             }
 
             return $resultset;
@@ -722,17 +725,17 @@
                     unset($post['qualification']);
                     unset($post['job_description']);
                     $changes = $this->logChanges($currentPersonnelData ,$post);
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated personnel request data with db id no. ".$id." ".$changes,"update", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated personnel request:  ".$currentPersonnelData->position_name." ".$changes,"update", "success", "gcchris", "user");
                     $resultset["data"] = $data;
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to update personnel request data!";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating personnel request data with db id no. ".$id,"update", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating personnel request: ".$currentPersonnelData->position_name,"update", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "No post data found!";
-                $this->core_layout->setEventLog("Personnel request - Error, No post data found.","update", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Personnel request - Error, No post data found.","update", "error", "gcchris", "system");
             }
 
             return $resultset;
@@ -1066,6 +1069,7 @@
                 }
 
                 $update = $this->db->update($this->applicationTable, $post, $where);
+                $personnelData = $this->getPersonnelData($id);
                 if ($update) {
                     if ($post["status"] == "Denied") {
                         $arrDatax = array();
@@ -1101,19 +1105,20 @@
                     }
 
                     $data = $this->getCurrentPersonnelRequest($id);
+        
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Personnel request approval has been proccessed successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has approved personnel request with db id no. ".$id,"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has approved personnel request: ".$personnelData->position_name,"insert", "success", "gcchris", "user");
                     $resultset["data"] = $data;
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to proccess personnel request approval!";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed to proccess personnel request approval with db id no. ".$id,"insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed to proccess personnel request approval for ".$personnelData->position_name,"insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "No post data found!";
-                $this->core_layout->setEventLog("Persnonnel request - Error, No post data found.","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Persnonnel request - Error, No post data found.","insert", "error", "gcchris", "system");
             }
 
             return $resultset;
@@ -1135,6 +1140,7 @@
                 $post["modify_by"] = $session["emp_id"];
 
                 $update = $this->db->update($this->applicationTable, $post, $where);
+                $personnelData = $this->getPersonnelData($id);
                 if ($update) {
                     $metaData = array();
 
@@ -1175,17 +1181,17 @@
                     $data = $this->getCurrentPersonnelRequest($id);
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Personnel request status has been proccessed successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has changed the status of personnel request with db id no. ".$id,"update", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has changed the status of personnel request: ".$personnelData->position_name." to ".$post["status"],"update", "success", "gcchris", "user");
                     $resultset["data"] = $data;
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to proccess personnel request status!";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating personnel request with db id no. ".$id,"update", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating personnel request: ".$personnelData->position_name,"update", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "No post data found!";
-                $this->core_layout->setEventLog("Personnel request - Error, No post data found.","update", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Personnel request - Error, No post data found.","update", "error", "gcchris", "system");
             }
 
             return $resultset;
@@ -1198,16 +1204,16 @@
             $this->db->set("archive_remarks", $post->archive_remarks);
             $this->db->set("is_archived", 1);
             $this->db->where("id", $post->id);
-
+            $personnelData = $this->getPersonnelData($post->id);
             if ($this->db->update($this->applicationTable)) {
                 $this->adm_employee->logArchive($this->applicationTable, $post->id, 1);
                 $resultSet["success"] = true;
                 $resultSet["message"] = "Personnel request was archived.";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has archived personnel request with db id no. ".$post->id,"archive", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has archived personnel request: ".$personnelData->position_name,"archive", "success", "gcchris", "user");
             } else {
                 $resultSet["success"] = false;
                 $resultSet["message"] = $this->db->error();
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed archiving personnel request with db id no. ".$post->id,"archive", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed archiving personnel request: ".$personnelData->position_name,"archive", "error", "gcchris", "system");
             }
 
             return $resultSet;
@@ -1225,17 +1231,90 @@
                 }
             }
             foreach ($changes as $field => $change) {
-                $changesString.= " Field: $field, from: $change[old], to: $change[new]\n";
+                if (strtolower($field) == 'department_id'){
+                    $changesString.= " Field: $field, from: ". $this->getDepartmentById($change['old'])->description. ", to: ". $this->getDepartmentById($change['new'])->description. "\n";
+                }
+                else if (strtolower($field) == 'position_id'){
+                    $changesString.= " Field: $field, from: ". $this->getPositionById($change['old'])->name. ", to: ". $this->getPositionById($change['new'])->name. "\n";
+                }
+                else if (strtolower($field) == 'salary_id'){
+                    $changesString.= " Field: $field, from: ". $this->getSalaryById($change['old'])->description. ", to: ". $this->getSalaryById($change['new'])->description. "\n";
+                }
+                else if (strtolower($field) == 'requested_by'){
+                    $changesString.= " Field: $field, from: ". $this->getEmployeeNameById($change['old']). ", to: ". $this->getEmployeeNameById($change['new']). "\n";
+                }
+                else{
+                    $changesString.= " Field: $field, from: $change[old], to: $change[new]\n";
+                }
             }
             return $changesString;
         }
 
         private function getPersonnelData($id) {
-            $this->db->select("*");
-            $this->db->from($this->applicationTable);
-            $this->db->where('id', $id);
+            $this->db->select("app.*, pos.name as position_name");
+            $this->db->from($this->applicationTable.' as app');
+            $this->db->join($this->positionTable .' as pos', 'pos.id = app.position_id', 'LEFT');
+            $this->db->where('app.id', $id);
             $query = $this->db->get(); 
             return $query->row();
+        }
+
+        private function getPositionById($id){
+            $this->db->select("name");
+            $this->db->from($this->positionTable);
+            $this->db->where('id', $id);
+            $query = $this->db->get(); 
+            $result = $query->row();
+            $this->db->reset_query();
+            return $result;
+        }
+
+        private function getDepartmentById($id){
+            $this->db->select("description");
+            $this->db->from($this->departmentTable);
+            $this->db->where('id', $id);
+            $query = $this->db->get(); 
+            $result = $query->row();
+            $this->db->reset_query();
+            return $result;
+        }
+
+        private function getSalaryById($id){
+            $this->db->select("description");
+            $this->db->from($this->salaryTable);
+            $this->db->where('id', $id);
+            $query = $this->db->get(); 
+            $result = $query->row();
+            $this->db->reset_query();
+            return $result;
+        }
+
+        private function getCompanyById($id){
+            $this->db->select("description");
+            $this->db->from($this->companyTable);
+            $this->db->where('id', $id);
+            $query = $this->db->get(); 
+            $result = $query->row();
+            $this->db->reset_query();
+            return $result;
+        }
+
+        private function getEmployeeNameById($id){
+            $result = null;
+            $this->db->select("lastname, firstname, middlename, suffix");
+            $this->db->from($this->employeeTable);
+            $this->db->where("employee_status", "Active");
+            $this->db->where('id', $id);
+            $query = $this->db->get();
+            if ($query->num_rows() > 0) {
+                $employeeData = $query->row_array();
+                $displayName = $this->core_layout->getDisplayName($employeeData);
+                $result = $displayName['display_name_1'] ?? "No Assigned Name";
+            } else {
+                $result = "No Employee Found";
+            }
+            $this->db->reset_query();
+            return $result;
         }
 
     }
