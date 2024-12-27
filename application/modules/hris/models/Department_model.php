@@ -135,21 +135,21 @@ class Department_model extends CI_Model{
 				if($insert){
 					$resultset["response"] = true;
 					$resultset["toastr_msg"] = "Department data has been added.";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new department with db id no. ".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new department: ".$post['description'],"insert", "success", "gcchris", "user");
 				}else{
 					$resultset["response"] = false;
 					$resultset["toastr_msg"] = "Failed saving department data!";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting new department","insert", "error", "gcchris", "user");
+					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting new department","insert", "error", "gcchris", "system");
 				}
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Department code already exist!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting existing department","insert", "error", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting existing department","insert", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
 			$resultset["toastr_msg"] = "No post data found!";
-			$this->core_layout->setEventLog("Department masterfile - Error, No post data found.","insert", "error", "gcchris", "user");
+			$this->core_layout->setEventLog("Department masterfile - Error, No post data found.","insert", "error", "gcchris", "system");
 		}
         
         return $resultset;
@@ -190,16 +190,16 @@ class Department_model extends CI_Model{
                 unset($post['update_by']);
 				$changes = $this->logChanges($currentDeptData,$post);
 				$resultset['changes'] = $changes;
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated department with db id no. ".$id." ".$changes,"update", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated department: ".$post['description']." ".$changes,"update", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed updating department data!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating department with db id no. ".$id,"update", "error", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating department: ".$post['description'],"update", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
 			$resultset["toastr_msg"] = "No post data found!";
-			$this->core_layout->setEventLog("Department masterfile - Error, No post data found.","update", "error", "gcchris", "user");
+			$this->core_layout->setEventLog("Department masterfile - Error, No post data found.","update", "error", "gcchris", "system");
 		}
         
         return $resultset;
@@ -208,6 +208,7 @@ class Department_model extends CI_Model{
 	function removeCurrentDepartment(){
 		$resultset = array();
 		$post = $this->input->post();
+		$currentDeptData = $this->getDepartmentData($post["id"]);
 		if(isset($post) && $post){
 			unset($post["csrf_token"]);
 			$updated = $this->db->update($this->departmentTable, array("is_archived"=>1), $post);
@@ -223,16 +224,16 @@ class Department_model extends CI_Model{
 					
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Department has been removed.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has archived department with db id no. ".$post["id"],"archive", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has archived department: ".$currentDeptData->description,"archive", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed to remove department!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed archiving department with db id no. ".$post["id"],"archive", "error", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed archiving department: ".$currentDeptData->description,"archive", "error", "gcchris", "system");
 			}
 		}else{
 			$resultset["response"] = false;
 			$resultset["toastr_msg"] = "No post data found!";
-			$this->core_layout->setEventLog("Department masterfile - Error, No post data found.","archive", "error", "gcchris", "user");
+			$this->core_layout->setEventLog("Department masterfile - Error, No post data found.","archive", "error", "gcchris", "system");
 		}
 
 		return $resultset;
@@ -300,6 +301,7 @@ class Department_model extends CI_Model{
 	function restoreCurrentDepartment(){
 		$resultset = array();
 		$post = $this->input->post();
+		$currentDeptData = $this->getDepartmentData($post["id"]);
 		if(isset($post) && $post){
 			unset($post["csrf_token"]);
 			$updated = $this->db->update($this->departmentTable, array("is_archived"=>0), $post);
@@ -315,11 +317,11 @@ class Department_model extends CI_Model{
 					
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Department has been restored.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has restored department with db id no. ".$post["id"],"restore", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has restored department: ".$currentDeptData->description,"restore", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed to restore department!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed restoring department with db id no. ".$post["id"],"restore", "error", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed restoring department: ".$currentDeptData->description,"restore", "error", "gcchris", "user");
 			}
 		}else{
 			$resultset["response"] = false;
