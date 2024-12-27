@@ -5,7 +5,6 @@ let user_name = _tempContentData.data.user.display_name;
 let id = employeeData.id;
 let today = _tempContentData.data.timestamp;
 $(document).ready(function(){
-    getPerformanceRating(id);
     $('#column-options').on('click', function (e) {
         e.stopPropagation();
     });
@@ -79,6 +78,7 @@ let employeeDataSheet = new Vue({
     },
     mounted(){
         this.getSidebarData();
+        getPerformanceRating(id);
         if (_tempContentData.tab == null){
             this.$data.activeSection = "personalInfo"
         }else{
