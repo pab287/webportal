@@ -81,6 +81,13 @@ function tblReleased() {
         tblReleased.ajax.reload();
     }, 1000, 3);
 
+    $('#generalSearch').on('keyup', function(e) {
+        if ($(this).val() == 0) {
+            search_val = "";
+            tblReleased.ajax.reload();
+        }
+    });
+
     $("#reload_dtTbl").on("click", function () {
         tblReleased.ajax.reload();
     });
@@ -199,6 +206,13 @@ function assetsTab(evt, tabName) {
             search_val = $(this).val();
             tblReturned.ajax.reload();
         }, 1000, 3);
+
+        $('#generalSearch2').on('keyup', function(e) {
+            if ($(this).val() == 0) {
+                search_val = "";
+                tblReturned.ajax.reload();
+            }
+        });
 
         $("#reload_dtTbl").on("click", function () {
             tblReturned.ajax.reload();

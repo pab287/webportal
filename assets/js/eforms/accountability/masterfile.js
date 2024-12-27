@@ -252,6 +252,13 @@ $('#generalSearch').donetyping(function (callback) {
     tblAccountability.ajax.reload();
 }, 1000, 3);
 
+$('#generalSearch').on('keyup', function(e) {
+    if ($(this).val() == 0) {
+        search_val = "";
+        tblAccountability.ajax.reload();
+    }
+});
+
 //refresh datatable 
 $("#reload_dtTbl").on("click", function () {
     tblAccountability.ajax.reload();
