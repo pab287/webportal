@@ -11,6 +11,12 @@
         }
     }
 
+    @media screen and (max-width: 1500px){
+        .date-issue > span.help-block.form-error{
+            width: 37.5% !important;
+        }
+    }
+
     @media screen and (max-width: 690px){
         #fix-mobile{
             display: flex;
