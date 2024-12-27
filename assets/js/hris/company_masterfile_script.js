@@ -2,7 +2,7 @@ var modalWindow = $("#modalTempContent");
 var tableCompanyList = $("#table-company");
 var tableArchivedCompanyList = $("#table-archive-company");
 var search_val = "";
-
+var description = "";
 if (typeof tableCompanyList !== "undefined") {
     var search_val = "";
     var dtCompany = tableCompanyList.DataTable({
@@ -73,7 +73,7 @@ if (typeof tableCompanyList !== "undefined") {
                 targets: -1,
                 orderable: false,
                 render: function (data, type, row, meta) {
-                    return employeeDataTableActions(row.id);
+                    return employeeDataTableActions(row.id,row.description);
                 }
             },
             // {
@@ -107,7 +107,7 @@ if (typeof tableCompanyList !== "undefined") {
         ]
     });
 
-    function employeeDataTableActions($id) {
+    function employeeDataTableActions($id,$code) {
         if ($id) {
             var _actionButton = "";
             _actionButton +=
@@ -129,6 +129,7 @@ if (typeof tableCompanyList !== "undefined") {
                 "   data-original-title='Archive Company'" +
                 "   data-delay='{\"show\": 300}' data-id='" +
                 $id +
+                "' data-code='" + $code +
                 "'><i class='la la-file-archive-o'></i></button>";
 
             return _actionButton;
@@ -147,6 +148,7 @@ if (typeof tableCompanyList !== "undefined") {
 $(document).on("click", ".btnRemoveCompany", function () {
     var _self = $(this);
     var dataId = _self.data("id");
+    description = _self.data("code");
     var modalWindowRemove = $("#modalRemoveCompany");
     modalWindowRemove.find("input#companyId").val(dataId);
     modalWindowRemove.modal("show");
@@ -159,7 +161,7 @@ $(document).on("click", ".btnRemoveCurrentCompany", function () {
             url: baseUrl("hris/masterfile/remove_current_company"),
             type: "post",
             dataType: "json",
-            data: {csrf_token: _csrf_hash, id: dataId},
+            data: {csrf_token: _csrf_hash, id: dataId, company: description},
             beforeSend: function () {
                 $("#modalRemoveCompany")
                     .find(".btn-submit")
