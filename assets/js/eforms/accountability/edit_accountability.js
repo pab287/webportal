@@ -180,6 +180,7 @@ $('#issue_dtpicker').datetimepicker({
     maxView: 4,
     minView: 2,
     endDate: maxDate,
+    timepicker: false,
     format: 'mm/dd/yyyy',
 });
 
@@ -1069,3 +1070,8 @@ function isNumberKey(evt) {
 		evt.preventDefault();
 	}
 }
+
+$("#issue_dt").inputmask({
+    mask : '99/99/9999',
+    placeholder : 'mm/dd/yyyy'
+});
