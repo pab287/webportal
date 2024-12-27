@@ -125,7 +125,7 @@
             $this->db->join("gccmaster.tblemployees e", "e.id = a.ship_to", "LEFT");
             $this->db->join("gccmaster.tblemployees cr", "cr.id = a.created_by", "LEFT");
             $this->db->where('status != ', 'Cancelled');
-            // $this->db->where('DATE(a.ship_date) >= ', $check);
+            $this->db->where('DATE(a.ship_date) >= ', $check);
 
             if($query_builder){
                 $this->db->where($query_builder);
@@ -252,7 +252,7 @@
             $this->db->join("gccmaster.tblemployees e", "e.id = a.ship_to", "LEFT");
             $this->db->join("gccmaster.tblemployees cr", "cr.id = a.created_by", "LEFT");
             $this->db->where('status != ', 'Cancelled');
-            // $this->db->where('DATE(a.ship_date) >= ', $check);
+            $this->db->where('DATE(a.ship_date) >= ', $check);
 
             if($query_builder){
                 $this->db->where($query_builder);
