@@ -85,7 +85,7 @@ class Position_model extends CI_Model{
                     "draw" => intval($draw),  
                     "recordsTotal" => intval($totalData),  
                     "recordsFiltered" => intval($totalFiltered), 
-                    "data"            => $data,   
+                    "data"            => $data,  
                     );
 		}else{
 			return array(
@@ -147,21 +147,21 @@ class Position_model extends CI_Model{
 				if($insert){
 					$resultset["response"] = true;
 					$resultset["toastr_msg"] = "Position data has been added.";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new position with db id no. ".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new position: ".$post['name'],"insert", "success", "gcchris", "user");
 				}else{
 					$resultset["response"] = false;
 					$resultset["toastr_msg"] = "Failed saving position data!";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting new position","insert", "error", "gcchris", "user");
+					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting new position","insert", "error", "gcchris", "system");
 				}
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Position name already exist!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting existing position","insert", "error", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting existing position","insert", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
 			$resultset["toastr_msg"] = "No post data found!";
-			$this->core_layout->setEventLog("Position masterfile - Error, No post data found.","insert", "error", "gcchris", "user");
+			$this->core_layout->setEventLog("Position masterfile - Error, No post data found.","insert", "error", "gcchris", "system");
 		}
         
         return $resultset;
@@ -180,20 +180,21 @@ class Position_model extends CI_Model{
             $post["modify_by"] = $session["emp_id"];
 			$currentPositionData = $this->getPositionData($id);
 			$update = $this->db->update($this->positionTable, $post, array("id"=>$id));
+			unset($post["modify_by"],$post["modify_dt"]);
 			if($update){
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Position data has been updated.";
 				$changes = $this->logChanges($currentPositionData ,$post);
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated position with db id no. ".$id." ".$changes,"update", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated position: ".$currentPositionData->name." ".$changes,"update", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed updating position data!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating position with db id no. ".$id,"update", "error", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating position with db id no. ".$id,"update", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
 			$resultset["toastr_msg"] = "No post data found!";
-			$this->core_layout->setEventLog("Position masterfile - Error, No post data found.","update", "error", "gcchris", "user");
+			$this->core_layout->setEventLog("Position masterfile - Error, No post data found.","update", "error", "gcchris", "system");
 		}
         
         return $resultset;
@@ -205,6 +206,7 @@ class Position_model extends CI_Model{
 		if(isset($post) && $post){
 			unset($post["csrf_token"]);
 			$updated = $this->db->update($this->positionTable, array("is_archived"=>1), $post);
+			$currentPositionData = $this->getPositionData($post["id"]);
 			if($updated){
 				$session = $this->core_layout->getCurrentSession();
 				$data = array(
@@ -217,17 +219,17 @@ class Position_model extends CI_Model{
 
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Position has been removed.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has archived position with db id no. ".$post["id"],"archive", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has archived position: ".$currentPositionData->name,"archive", "success", "gcchris", "user");
 				
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed to remove position!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed archiving position with db id no. ".$post["id"],"archive", "error", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed archiving position: ".$currentPositionData->name,"archive", "error", "gcchris", "system");
 			}
 		}else{
 			$resultset["response"] = false;
 			$resultset["toastr_msg"] = "No post data found!";
-			$this->core_layout->setEventLog("Position masterfile - Error, No post data found.","archive", "error", "gcchris", "user");
+			$this->core_layout->setEventLog("Position masterfile - Error, No post data found.","archive", "error", "gcchris", "system");
 		}
 
 		return $resultset;
@@ -318,6 +320,7 @@ class Position_model extends CI_Model{
 		if(isset($post) && $post){
 			unset($post["csrf_token"]);
 			$updated = $this->db->update($this->positionTable, array("is_archived"=>0), $post);
+			$currentPositionData = $this->getPositionData($post["id"]);
 			if($updated){
 				// $session = $this->core_layout->getCurrentSession();
 				// $data = array(
@@ -330,17 +333,17 @@ class Position_model extends CI_Model{
 
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Position has been restored.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has restored position with db id no. ".$post["id"],"restore", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has restored position: ".$currentPositionData->name,"restore", "success", "gcchris", "user");
 				
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed to restore position!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed restoring position with db id no. ".$post["id"],"restore", "error", "gcchris", "user");
+				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed restoring position: ".$currentPositionData->name,"restore", "error", "gcchris", "system");
 			}
 		}else{
 			$resultset["response"] = false;
 			$resultset["toastr_msg"] = "No post data found!";
-			$this->core_layout->setEventLog("Position masterfile - Error, No post data found.","archive", "error", "gcchris", "user");
+			$this->core_layout->setEventLog("Position masterfile - Error, No post data found.","restore", "error", "gcchris", "system");
 		}
 
 		return $resultset;
