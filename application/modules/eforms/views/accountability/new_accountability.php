@@ -31,6 +31,10 @@
             margin: 0 15px;
         }
     }
+
+    span.help-block.form-error{
+        text-align: left !important;
+    }
 </style>
 <div class="m-content">
     <div class="row">
@@ -69,11 +73,13 @@
                                         <button id='emp_but' type='button' style='margin-top:0px' class="btn m-btn--sm btn-success btn-block btnEdit">Change to Employee</button>
                                     </div>
                                 </div>
-                                <div class="form-group m-form__group row">
+                                <div class="row">
                                     <label class="col-md-2 col-lg-2 col-sm-12 col-form-label required">Date Issued</label>
-                                    <div class="col-md-3 col-lg-3 col-sm-3 col-xs-12 input-group date" id="issue_dtpicker">
-                                        <input class="form-control m-input" type="text" name="issue_dt" id="issue_dt" maxlength="22" autocomplete="off" data-validation="required" onkeypress="isNumberKey(event)" />
-                                        <span class="input-group-addon"><i class="la la-calendar glyphicon-th"></i></span>
+                                    <div class="col-md-3 col-lg-3 col-sm-3 col-xs-12 " >
+                                        <div id="issue_dtpicker" class="input-group date form-group m-form__group">
+                                            <input class="form-control m-input" type="text" name="issue_dt" id="issue_dt" maxlength="22" autocomplete="off" data-validation="required" onkeypress="isNumberKey(event)" />
+                                            <span class="input-group-addon"><i class="la la-calendar glyphicon-th"></i></span>
+                                        </div>
                                         <span class="help-block form-error text-left"></span>
                                     </div>
                                     <div class='col-md-3 col-lg-3 col-sm-3 col-xs-12 m-checkbox-list'>
