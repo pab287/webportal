@@ -58,7 +58,7 @@
                                 <input id="department_to" name="department_to" placeholder="" class="form-control" type="hidden" readonly>
                                 <input id="contract_check" name="contract_check" placeholder="" class="form-control" value='0' type="hidden" readonly>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-lg-2 col-md-2 col-sm-2 col-xs-12 col-form-label">Issued to</label>
+                                    <label class="col-lg-2 col-md-2 col-sm-2 col-xs-12 col-form-label required">Issued to</label>
                                     <div class="col-lg-7 col-md-6 col-sm-6 col-xs-12">
                                         <select id="issued_to" name="issued_to" data-validation="required"></select>
                                         <!-- <select disabled id="contractor" name="contractor"></select> -->
@@ -70,7 +70,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-lg-2 col-sm-12 col-form-label">Date Issued</label>
+                                    <label class="col-md-2 col-lg-2 col-sm-12 col-form-label required">Date Issued</label>
                                     <div class="col-md-3 col-lg-3 col-sm-3 col-xs-12 input-group date" id="issue_dtpicker">
                                         <input class="form-control m-input" type="text" name="issue_dt" id="issue_dt" maxlength="22" autocomplete="off" data-validation="required" onkeypress="isNumberKey(event)" />
                                         <span class="input-group-addon"><i class="la la-calendar glyphicon-th"></i></span>
