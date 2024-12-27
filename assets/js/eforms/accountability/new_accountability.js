@@ -1036,3 +1036,10 @@ $("#add_multiple_modal").on('shown.bs.modal', function () {
         $("#tbladdedlist").DataTable({ destroy: true, data: true });
     }
 });
+
+function isNumberKey(evt) {
+	const char = String.fromCharCode(evt.which);
+	if(!(/[0-9+/]/.test(char))){
+		evt.preventDefault();
+	}
+}
