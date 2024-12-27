@@ -22,7 +22,11 @@ function tblReleased() {
         searching: false,
         columns: [
             { data: "status", width: "5%", className: "text-center", render: function () { return renderStatusHtml() } },
-            { data: "company" },
+            { data: "company",
+                render: function (data, type, row, meta) {
+                    return data ? data : 'No Company';
+                }
+            },
             { data: "reference_no" },
             // { data: "firstname", render: function (data, type, row, meta) { return empName(row.display_name, row.contractor, row.is_contract) } },
             { data: "firstname",
@@ -32,7 +36,11 @@ function tblReleased() {
             },
             { data: "asset_code" },
             // { data: "asset_name", render: function (data, type, row, meta) { return itemName(row.vehicle_name, row.asset_name, row.type) } },
-            { data: "asset_name", orderable: false },
+            { data: "asset_name", orderable: false,
+                render: function (data, type, row, meta) {
+                    return data ? data : 'No Asset Name';
+                }
+            },
             { data: "amount", className: "text-right" },
             { data: null, width: "5%", className: "text-center" },
         ],
@@ -149,7 +157,11 @@ function assetsTab(evt, tabName) {
             searching: false,
             columns: [
                 { data: "reference_no" },
-                { data: "company" },
+                { data: "company",
+                    render: function (data) {
+                        return data ? data : 'No Company';
+                    }
+                },
                 // { data: "firstname", render: function (data, type, row, meta) { return empName(row.display_name, row.contractor, row.is_contract) } },
                 { data: "firstname",
                     render: function (data, type, row, meta) {
@@ -158,7 +170,11 @@ function assetsTab(evt, tabName) {
                 },
                 { data: "asset_code" },
                 // { data: "asset_name", render: function (data, type, row, meta) { return itemName(row.vehicle_name, row.asset_name, row.type) } },
-                { data: "asset_name", orderable: false },
+                { data: "asset_name", orderable: false,
+                    render: function (data, type, row, meta) {
+                        return data ? data : 'No Asset Name';
+                    }
+                },
                 { data: "amount", className: "text-right" },
                 { data: null, width: "5%", className: "text-center" },
             ],

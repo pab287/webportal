@@ -4246,7 +4246,7 @@ class Accountability_m extends CI_Model {
         $sqlSelect = "a.id as acc_id, a.reference_no, a.is_contract, a.issued_to, b.asset_code, b.asset_id, b.amount, b.type, c.firstname, c.middlename, c.lastname, c.suffix, d.contractor, 
             IF(a.is_contract = '1', 
                 IFNULL(d.company, IFNULL(a.company, e.description)), 
-                IFNULL(a.company, e.description)) as company";
+                IFNULL(a.company, e.description)) as company, a.status";
 
         $this->db->select($sqlSelect);
         $this->db->from('gcceforms.accountability a');
