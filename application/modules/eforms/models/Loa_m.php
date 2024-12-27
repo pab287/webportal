@@ -924,7 +924,7 @@
             }
         }
 
-        public function loa_details($id) {
+        public function loa_details($id, $type = null) {
             $this->db->from('gcceforms.loa');
             $this->db->where('id', $id);
             $query = $this->db->get();
@@ -936,6 +936,10 @@
                     $rs->company = is_numeric($rs->company) ? $this->getCompany($rs->company) : $rs->company;
                     $rs->department = is_numeric($rs->department) ? $this->getDepartment($rs->department) : $rs->department;
                     $rs->position = is_numeric($rs->position) ? $this->getPosition($rs->position) : $rs->position;
+
+                    if ($type == 'edit') { 
+                        $rs->phone = strlen($rs->phone) == 11 ? ltrim($rs->phone, '0') : $rs->phone;
+                    }
                     // if(is_numeric($rs->company)){
                     //     $rs->company = $this->getCompany($rs->company);
                       

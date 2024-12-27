@@ -184,6 +184,8 @@
                 $series = '0001';
             }
 
+            $phone = str_pad($this->input->post('phone'), 11, '0', STR_PAD_LEFT);
+
             $x = explode("\n", $this->input->post('company'));
             $company = trim($x[0]);
             $department = trim($x[1]);
@@ -220,7 +222,7 @@
                 'nature' => $this->input->post('nature'),
                 'address' => $this->input->post('address'),
                 'reason' => $this->input->post('reason'),
-                'phone' => $this->input->post('phone'),
+                'phone' => $phone,
                 'date_from' => $from,
                 'date_to' => $to,
                 'status' => 'Pending',
@@ -232,6 +234,12 @@
 
             if ($this->input->post('type') == "4") {
                 if (date('Y-m-d', strtotime($this->input->post('date_from'))) > date('Y-m-d', strtotime($this->input->post('date_to')))) {
+                    $isValidDate = false;
+                } else {
+                    $isValidDate = true;
+                }
+            } else if ($this->input->post('type') == "1") {
+                if (date('Y-m-d H:i', strtotime($from)) > date('Y-m-d H:i', strtotime($to))) {
                     $isValidDate = false;
                 } else {
                     $isValidDate = true;
@@ -325,6 +333,9 @@
                 $from = $this->input->post('date_from');
                 $to = $this->input->post('date_to');
             }
+
+            $phone = str_pad($this->input->post('phone'), 11, '0', STR_PAD_LEFT);
+
             $data = array(
                 'employee' => $this->input->post('employee'),
                 'company' => $company,
@@ -333,7 +344,7 @@
                 'nature' => $this->input->post('nature'),
                 'address' => $this->input->post('address'),
                 'reason' => $this->input->post('reason'),
-                'phone' => $this->input->post('phone'),
+                'phone' => $phone,
                 'date_from' => $from,
                 'date_to' => $to,
                 'type' => $this->input->post('type'),
@@ -343,7 +354,13 @@
             );
 
             if ($this->input->post('type') == "4") {
-                if (date('Y-m-d', strtotime($this->input->post('date_from'))) > date('Y-m-d', strtotime($this->input->post('date_to')))) {
+                if (date('Y-m-d H:i', strtotime($this->input->post('date_from'))) > date('Y-m-d H:i', strtotime($this->input->post('date_to')))) {
+                    $isValidDate = false;
+                } else {
+                    $isValidDate = true;
+                }
+            } else if ($this->input->post('type') == "1") {
+                if (date('Y-m-d H:i', strtotime($from)) > date('Y-m-d H:i', strtotime($to))) {
                     $isValidDate = false;
                 } else {
                     $isValidDate = true;
@@ -366,11 +383,11 @@
             }
         }
 
-        public function ajax_loa_details($id)
+        public function ajax_loa_details($id, $type = null)
         {
             $temp = strtotime("-1 year", time());
             $check = date("Y-m-d", $temp);
-            $data = $this->loa->loa_details($id);
+            $data = $this->loa->loa_details($id, $type);
 
             $name = $this->loa->employee_details($data->employee);
             $name = $name->display_name;

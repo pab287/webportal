@@ -20,6 +20,11 @@ $("#reason").on("blur", function (e) {
 // 	}
 // });
 
+$("#phone").inputmask({
+	mask: "(09) 9999-99999",
+	removeMaskOnSubmit: true,
+});
+
 $("#select2_employee").select2({
 	placeholder: 'SELECT AN OPTION',
 	width: '100%',
@@ -191,10 +196,11 @@ $.validate({
 		var currentForm = form[0];
 		var formData = $(currentForm).serialize();
 		//var disabled = $('#form_loa').find('textarea:disabled').removeAttr('disabled');
-		if (parseInt($("#phone").val().length) < 11){
+
+		var phone = '0' + $("#phone").val();
+
+		if (parseInt(phone.length) < 11){
 			toastr.error("Invalid phone number. Number must be 11 digits. (09———)", "Error!", 5000);
-		} else if (parseInt($("#phone").val().length) > 11){
-			toastr.error("Invalid phone number. Number must not be more than 11 digits. (09———)", "Error!", 5000);
 		} else {
 			if (parseInt($("#reason").val().length) < 30) {
 				alert_function("Must have minimum of 30 characters.");

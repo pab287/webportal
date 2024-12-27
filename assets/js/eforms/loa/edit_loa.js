@@ -20,7 +20,7 @@ param_id = getUrlParameter("id");
 var name = null;
 
 $.ajax({
-    url: baseUrl("eforms/loa/ajax_loa_details/") + param_id,
+    url: baseUrl("eforms/loa/ajax_loa_details/") + param_id + '/edit',
     type: "GET",
     dataType: "JSON",
     success: function (data) {
@@ -134,6 +134,11 @@ $.ajax({
             moment(e.date).format("yyyy/mm/dd hh:ii");
             var self = $(e.target);
             self.validate();
+        });
+
+        $("#phone_on_leave").inputmask({
+            mask: "(09) 9999-99999",
+            removeMaskOnSubmit: true,
         });
     },
     error: function (jqXHR, textStatus, errorThrown) {
@@ -316,10 +321,11 @@ $.validate({
         //         }
         //       })
         // }
-        if (parseInt($("#phone_on_leave").val().length) < 11){
+
+        var phone = '0' + $("#phone_on_leave").val();
+
+        if (phone.length < 11){
             toastr.error("Invalid phone number. Number must be 11 digits. (09———)", "Error!", 5000);
-        } else if (parseInt($("#phone_on_leave").val().length) > 11) {
-            toastr.error("Invalid phone number. Number must not be more than 11 digits. (09———)", "Error!", 5000);
         } else {
             if (parseInt($("#reason").val().length) < 30) {
                 alert_function("Must have minimum of 30 characters.");
@@ -346,7 +352,7 @@ $.validate({
                                         toastr.success("LOA successfully updated!");
                                         window.location.replace(baseUrl("eforms/loa/view_loa?id=") + param_id);
                                     } else {
-                                        toastr.error("Failed to save LOA. `FROM DATE` must be less than `TO DATE`.", "Error!", 5000);
+                                        toastr.error("Failed to update LOA. `FROM DATE` must be less than `TO DATE`.", "Error!", 5000);
                                         $("#btnSaveLoa").attr('disabled', false);
                                     }
                                 }
