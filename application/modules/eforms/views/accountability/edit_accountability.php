@@ -1,22 +1,4 @@
 <style>
-    @media screen and (max-width: 1800px){
-        .date-issue > span.help-block.form-error{
-            width: 33.5% !important;
-        }
-    }
-
-    @media screen and (max-width: 1600px){
-        .date-issue > span.help-block.form-error{
-            width: 36% !important;
-        }
-    }
-
-    @media screen and (max-width: 1500px){
-        .date-issue > span.help-block.form-error{
-            width: 37.5% !important;
-        }
-    }
-
     @media screen and (max-width: 690px){
         #fix-mobile{
             display: flex;
@@ -50,8 +32,8 @@
         }
     }
 
-    .date-issue > span.help-block.form-error{
-        width: 32.5% !important;
+    span.help-block.form-error{
+        text-align: left !important;
     }
 </style>
 
@@ -95,12 +77,14 @@
                                         <button id='emp_but' type='button' style='margin-top:0px' class="btn m-btn--sm btn-success btn-block btnEdit">Change to Employee</button>
                                     </div>
                                 </div>
-                                <div class="form-group m-form__group row date-issue">
+                                <div class="row date-issue">
                                     <label class="col-md-2 col-lg-2 col-sm-12 col-form-label required">Date Issued</label>
-                                    <div class="col-md-3 col-lg-3 col-sm-3 col-xs-12 input-group date" id="issue_dtpicker">
-                                        <input class="form-control m-input" type="text" name="issue_dt" id="issue_dt" maxlength="22" autocomplete="off" data-validation="required" onkeypress="isNumberKey(event)" />
-                                        <span class="input-group-addon"><i class="la la-calendar glyphicon-th"></i></span>
-                                        <span class="help-block form-error"></span>
+                                    <div class="col-md-3 col-lg-3 col-sm-3 col-xs-12 " >
+                                        <div id="issue_dtpicker" class="input-group date form-group m-form__group">
+                                            <input class="form-control m-input" type="text" name="issue_dt" id="issue_dt" maxlength="22" autocomplete="off" data-validation="required" onkeypress="isNumberKey(event)" />
+                                            <span class="input-group-addon"><i class="la la-calendar glyphicon-th"></i></span>
+                                            <span class="help-block form-error"></span>
+                                        </div>
                                     </div>
                                     <div class='col-md-3 col-lg-3 col-sm-3 col-xs-12 m-checkbox-list'>
                                         <label class='m-checkbox m-checkbox--success m--margin-top-5 m--font-boldest pull-right'>
