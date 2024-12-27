@@ -381,6 +381,7 @@ function clear_temp() {
                     if (data) {
                         $('#clear_asset_modal').modal('hide');
                         tblTemp.ajax.reload();
+                        $("#tbladdedlist").DataTable({ destroy: true, data: true });
                         toastr.success(data.toastr_msg, "Removed successfully", 5000);
                     } else {
                         toastr.error(data.toastr_msg, "Error removing items!", 5000);
@@ -891,8 +892,6 @@ function multipleAssetDetail($id, $component) {
             { data: "asset_code", width: "20%" },
             {
                 data: "description", render: function (data, type, row, meta) {
-
-                    console.log(row.desc);
                     return descriptionDetail(row.description, row.brand, row.modelno, row.serialno, row.plateno, row.engineno, row.chasisno, row.type, row.desc);
                 }
             },
@@ -1027,4 +1026,13 @@ $.validate({
         }
         return false;
     },
+});
+
+$("#add_multiple_modal").on('shown.bs.modal', function () {
+    if (tblTemp.data().length > 0) {
+        var data = tblTemp.data();
+        tblAddedList.clear().rows(data).draw();
+    } else {
+        $("#tbladdedlist").DataTable({ destroy: true, data: true });
+    }
 });

@@ -920,11 +920,10 @@ function multipleAssetDetail($id, $component) {
         searching: false,
         order: [[0, "desc"]],
         columns: [
-            { data: 'id', visible: false },
             { data: "asset_code", width: "20%" },
             {
                 data: "description", render: function (data, type, row, meta) {
-                    return descriptionDetail(row.description, row.brand, row.modelno, row.serialno, row.plateno, row.engineno, row.chasisno, row.type);
+                    return descriptionDetail(row.description, row.brand, row.modelno, row.serialno, row.plateno, row.engineno, row.chasisno, row.type, row.desc);
                 }
             },
             { data: "amount", width: "20%", className: "text-right" },
@@ -1053,4 +1052,13 @@ $.validate({
         });
         return false;
     },
+});
+
+$("#add_multiple_modal").on('shown.bs.modal', function () {
+    if (tblTemp.data().length > 0) {
+        var data = tblTemp.data();
+        tblAddedList.clear().rows(data).draw();
+    } else {
+        $("#tbladdedlist").DataTable({ destroy: true, data: true });
+    }
 });
