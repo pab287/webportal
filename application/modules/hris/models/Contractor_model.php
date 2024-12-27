@@ -134,21 +134,21 @@ class Contractor_model extends CI_Model
                 if ($insert) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Contractor data has been added.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new contractor with db id no. ".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new contractor: ".$post['contractor'],"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed saving contractor data!";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting new contractor","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting new contractor","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Contractor already exist!";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting existing contractor","insert", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting existing contractor","insert", "error", "gcchris", "system");
             }
         } else {
             $resultset["response"] = false;
             $resultset["toastr_msg"] = "No post data found!";
-            $this->core_layout->setEventLog("Contractor masterfile - Error, No post data found.","insert", "error", "gcchris", "user");
+            $this->core_layout->setEventLog("Contractor masterfile - Error, No post data found.","insert", "error", "gcchris", "system");
         }
 
         return $resultset;
@@ -174,16 +174,16 @@ class Contractor_model extends CI_Model
                 unset($post['modify_dt']); 
                 unset($post['modify_by']);
                 $changes = $this->logChanges($currentContractData ,$post);
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated contractor with db id no. ".$id." ".$changes,"update", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated contractor: ".$currentContractData->contractor." ".$changes,"update", "success", "gcchris", "user");
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Failed updating contractor data!";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating contractor with db id no. ".$id,"update", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating contractor: ".$currentContractData->contractor,"update", "error", "gcchris", "system");
             }
         } else {
             $resultset["response"] = false;
             $resultset["toastr_msg"] = "No post data found!";
-            $this->core_layout->setEventLog("Contractor masterfile - Error, No post data found.","update", "error", "gcchris", "user");
+            $this->core_layout->setEventLog("Contractor masterfile - Error, No post data found.","update", "error", "gcchris", "system");
         }
 
         return $resultset;
@@ -196,6 +196,7 @@ class Contractor_model extends CI_Model
         if (isset($post) && $post) {
             unset($post["csrf_token"]);
             $updated = $this->db->update($this->contractorTable, array("is_archived" => 1), $post);
+            $currentContractData = $this->getContractorData($post["id"]);
             if ($updated) {
                 $session = $this->core_layout->getCurrentSession();
                 $data = array(
@@ -208,16 +209,16 @@ class Contractor_model extends CI_Model
 
                 $resultset["response"] = true;
                 $resultset["toastr_msg"] = "Contractor has been removed.";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has archived contractor with db id no. ".$post["id"],"archive", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has archived contractor: ".$currentContractData->contractor,"archive", "success", "gcchris", "user");
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Failed to remove contractor!";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed archiving contractor with db id no. ".$post["id"],"archive", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed archiving contractor:  ".$currentContractData->contractor,"archive", "error", "gcchris", "system");
             }
         } else {
             $resultset["response"] = false;
             $resultset["toastr_msg"] = "No post data found!";
-            $this->core_layout->setEventLog("Contractor masterfile - Error, No post data found.","archive", "error", "gcchris", "user");
+            $this->core_layout->setEventLog("Contractor masterfile - Error, No post data found.","archive", "error", "gcchris", "system");
         }
 
         return $resultset;
@@ -240,6 +241,7 @@ class Contractor_model extends CI_Model
         if (isset($post) && $post) {
             unset($post["csrf_token"]);
             $updated = $this->db->update($this->contractorTable, array("is_archived" => 0), $post);
+            $currentContractData = $this->getContractorData($post["id"]);
             if ($updated) {
                 // $session = $this->core_layout->getCurrentSession();
                 // $data = array(
@@ -252,16 +254,16 @@ class Contractor_model extends CI_Model
 
                 $resultset["response"] = true;
                 $resultset["toastr_msg"] = "Contractor has been restored.";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has restored contractor with db id no. ".$post["id"],"restore", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has restored contractor: ".$currentContractData->contractor,"restore", "success", "gcchris", "user");
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Failed to restore contractor!";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed restoring contractor with db id no. ".$post["id"],"restore", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed restoring contractor: ".$currentContractData->contractor,"restore", "error", "gcchris", "system");
             }
         } else {
             $resultset["response"] = false;
             $resultset["toastr_msg"] = "No post data found!";
-            $this->core_layout->setEventLog("Contractor masterfile - Error, No post data found.","restore", "error", "gcchris", "user");
+            $this->core_layout->setEventLog("Contractor masterfile - Error, No post data found.","restore", "error", "gcchris", "system");
         }
 
         return $resultset;
