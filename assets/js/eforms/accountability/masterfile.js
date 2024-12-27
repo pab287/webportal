@@ -52,14 +52,29 @@ var tblAccountability = $("#table-accountability").DataTable({
         },
         { data: "reference_no" },
         { data: "company" },
-        {
-            data: "firstname", render: function (data, type, row, meta) {
-                return empName(row.display_name, row.contractor, row.is_contract)
+        // {
+        //     data: "firstname", render: function (data, type, row, meta) {
+        //         return empName(row.display_name, row.contractor, row.is_contract)
+        //     }
+        // },
+        { data: "firstname", 
+            render: function (data, type, row, meta ) {
+                return row.display_name && row.display_name !== ' ' ? row.display_name : 'No Employee Name';
             }
         },
         {
-            data: "asset_name", render: function (data, type, row, meta) {
-                return itemName(row.vehicle_name, row.asset_name, row.type)
+            data: "asset_name", orderable: false,
+            render: function (data, type, row, meta) {
+                var html = ``;
+
+                if(row.type == 'Asset'){
+                    html = data ? row.asset_code + " | " + data : 'No Asset Name';
+                }else{
+                    html = data ? row.asset_code + " | " + data : 'No Vehicle Name';
+                }
+
+                return html;
+                // return itemName(row.vehicle_name, row.asset_name, row.type)
             }
         },
         {
@@ -235,6 +250,13 @@ function redirectTo(id) {
 $('#generalSearch').donetyping(function (callback) {
     search_val = $(this).val();
     tblAccountability.ajax.reload();
+}, 1000, 3);
+
+$('#generalSearch').on('keyup', function(e) {
+    if ($(this).val() == 0) {
+        search_val = "";
+        tblAccountability.ajax.reload();
+    }
 });
 
 //refresh datatable 
@@ -276,7 +298,7 @@ $(document).ready(function () {
     $('#query-builder').queryBuilder({
         'bt-tooltip-errors': { delay: 100 },
         filters: [
-            { id: 'a.id', label: 'ID #', type: 'integer' },
+            // { id: 'a.id', label: 'ID #', type: 'integer' },
             {
                 id: 'a.status',
                 label: 'Status',
@@ -340,4 +362,12 @@ function clear_query_builder() {
     tblAccountability.ajax.reload();
 }
 
+$("#refresh").on('click', function () {
+    $("#frm-advance-search").trigger('reset');
+    $("#status").val('').trigger('change');
+    $("#company").val('').trigger('change');
+    $("#issued_to").val('').trigger('change');
 
+    advanced_search = {};
+    tblAccountability.ajax.reload();
+});

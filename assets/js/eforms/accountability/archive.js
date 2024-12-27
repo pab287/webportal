@@ -23,8 +23,26 @@ var tblAccountability = $("#table-accountability").DataTable({
         { data: "status",  width: "14%", className: "text-center", render: function (data) {return renderStatusHtml(data)}},
         { data: "reference_no"},
         { data: "company"},
-        { data: "firstname", render: function (data, type, row, meta) {return empName(row.display_name, row.contractor, row.is_contract)}},
-        { data: "asset_name", render: function (data, type, row, meta) {return itemName(row.vehicle_name, row.asset_name, row.type)}},
+        // { data: "firstname", render: function (data, type, row, meta) {return empName(row.display_name, row.contractor, row.is_contract)}},
+        // { data: "asset_name", render: function (data, type, row, meta) {return itemName(row.vehicle_name, row.asset_name, row.type)}},
+        { data: "firstname",
+            render: function(data, type, row, meta){
+                return row.display_name && row.display_name !== ' ' ? row.display_name : 'No Employee Name';
+            }
+        },
+        { data: "asset_name", orderable: false,
+            render: function(data, type, row, meta){
+                var html = ``;
+
+                if(row.type == 'Asset'){
+                    html = data ? data : 'No Asset Name';
+                }else{
+                    html = data ? data : 'No Vehicle Name';
+                }
+
+                return html;
+            }
+        },
         { data: "date_issued", render: function (data) {return formatCalendarDate(data)}},
         { data: null, width: "5%", className: "text-center"},
     ],
@@ -163,7 +181,7 @@ function formatCalendarDate(data){
 function itemDatatableActions($id){
 	if($id){
 		var _actionButton ="";
-			_actionButton += " <a class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='"+baseUrl('eforms/accountability/view_accountability?id=')+$id+"' target='__blank'><i class='la la-pencil-square'></i></a>";				
+			_actionButton += " <a class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='"+baseUrl('eforms/accountability/view_accountability?id=')+$id+"&page=archive' target='__blank'><i class='la la-pencil-square'></i></a>";				
 		return _actionButton;
 	}else{ return false; }
 }
@@ -172,6 +190,13 @@ function itemDatatableActions($id){
 $('#generalSearch').donetyping(function(callback) {
 	search_val = $(this).val();
     tblAccountability.ajax.reload();
+}, 1000, 3);
+
+$('#generalSearch').on('keyup', function(e) {
+    if ($(this).val() == 0) {
+        search_val = "";
+        tblAccountability.ajax.reload();
+    }
 });
 
 //refresh datatable 
@@ -183,6 +208,7 @@ $("#issued_to").select2({
     dropdownParent: $("#modal-advance-search"),
     placeholder: 'Select. .',
     width: '100%',
+    minimumInputLength: 3,
     ajax: {
         url: baseUrl("eforms/accountability/issued_to_lookup"),
         dataType: "json",
@@ -194,12 +220,12 @@ $("#issued_to").select2({
 });
 
 /* ADVANCE SEARCH MODAL */
-$("#status").select2({placeholder: "SELECT STATUS", width: "100%", dropdownParent: $("#modal-advance-search")});
+// $("#status").select2({placeholder: "SELECT STATUS", width: "100%", dropdownParent: $("#modal-advance-search")});
 $("#company").select2({placeholder: "SELECT COMPANY", width: "100%", dropdownParent: $("#modal-advance-search")});
 /* END ADVANCE SEARCH MODAL*/
 
 $('#advanced_search').on("click", function (callback) {
-    advanced_search['status'] = $("#status").val();
+    // advanced_search['status'] = $("#status").val();
     advanced_search['reference_no'] = $("#reference_no").val();
     advanced_search['company'] = $("#company").val();
     advanced_search['issued_to'] = $("#issued_to").val();
@@ -212,7 +238,7 @@ $(document).ready(function () {
     $('#query-builder').queryBuilder({
         'bt-tooltip-errors': {delay: 100},
         filters: [
-            {id: 'a.id', label: 'ID #', type: 'integer'},
+            // {id: 'a.id', label: 'ID #', type: 'integer'},
             {
                 id: 'a.status', 
                 label: 'Status', 
@@ -279,3 +305,12 @@ function clear_query_builder(){
     tblAccountability.ajax.reload();
 }
 
+$("#refresh").on('click', function () {
+    $("#frm-advance-search").trigger('reset');
+    $("#company").val('').trigger('change');
+    $("#issued_to").val('').trigger('change');
+
+    advanced_search = {};
+
+    tblAccountability.ajax.reload();
+});
