@@ -2,7 +2,7 @@ let dropdownEl = null;
 let search_val = "";
 let tblEmployeeSalaryRange = $('#table-employee-salary-range')
     .DataTable({
-        dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'f>>" +
+        dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'f>>" +
             "<'row'<'col-12'rt>>" +
             "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
         buttons: [
@@ -105,6 +105,19 @@ function filterEmployeesOfSalaryRange(form) {
                     {
                         extend: 'excelHtml5',
                         title: 'EMPLOYEES SALARY RANGE REPORT',
+                        exportOptions: {
+                            columns: function (settings, cols) {
+                                return cols.map(function (idx, col) {
+                                    return { title: col.title };
+                                });
+                            },
+                            format: {
+                                body: function (data, row, column, node) {
+                                    // Capitalize all text in the cell
+                                    return data.toString().toUpperCase();
+                                }
+                            }
+                        },
                         action: function (e, dt, node, config) {
                             const self = this;
                             getExportData(e, dt, node, config, self, `${url}/1`, 'excelHtml5')
@@ -279,20 +292,13 @@ function exportAs(type) {
 
 async function getExportData(e, dt, node, config, self, url, type) {
     const data = dt.ajax.params();
+    data['exportType'] = type; 
     const result = await $.ajax({
         url,
         type: "POST",
         dataType: "JSON",
         data,
         success: function (response) {
-            const capitalizedData = response.data.map(row => {
-                return Object.keys(row).reduce((acc, key) => {
-                    acc[key] = typeof row[key] === 'string' ? row[key].toUpperCase() : row[key];
-                    return acc;
-                }, {});
-            });
-            dt.rows().remove();
-            dt.rows.add(capitalizedData).draw();
             $.fn.dataTable.ext.buttons[type].action.call(self, e, dt, node, config);
         }
     });
