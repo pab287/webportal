@@ -234,7 +234,7 @@
             );
 
             if ($this->input->post('type') == "4") {
-                if (date('Y-m-d H:i', strtotime($this->input->post('date_from'))) > date('Y-m-d  H:i', strtotime($this->input->post('date_to')))) {
+                if (date('Y-m-d H:i', strtotime($this->input->post('date_from'))) > date('Y-m-d H:i', strtotime($this->input->post('date_to')))) {
                     $isValidDate = false;
                 } else {
                     $isValidDate = true;
