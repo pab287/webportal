@@ -137,8 +137,9 @@ $.ajax({
         });
 
         $("#phone_on_leave").inputmask({
-            mask: "(09) 9999-99999",
-            removeMaskOnSubmit: true,
+            mask: "(0\\9) 9999-99999",
+            // removeMaskOnSubmit: true,
+            alias: 'phonenumber'
         });
     },
     error: function (jqXHR, textStatus, errorThrown) {
@@ -322,9 +323,10 @@ $.validate({
         //       })
         // }
 
-        var phone = '0' + $("#phone_on_leave").val();
+        var phone = $("#phone_on_leave").val();
+        var rawPhone = phone.replace(/\D/g, "");
 
-        if (phone.length < 11){
+        if (rawPhone.length < 11){
             toastr.error("Invalid phone number. Number must be 11 digits. (09———)", "Error!", 5000);
         } else {
             if (parseInt($("#reason").val().length) < 30) {
@@ -337,7 +339,7 @@ $.validate({
                     global: false,
                     data: {reason:$("#reason").val(), csrf_token: _csrf_hash},
                     success: function (data) {
-                        console.log(data);
+                        
                         if (data.reps!=="error") {
                             alert_function("Invalid Reason!");
                         } else {

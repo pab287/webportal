@@ -184,7 +184,8 @@
                 $series = '0001';
             }
 
-            $phone = str_pad($this->input->post('phone'), 11, '0', STR_PAD_LEFT);
+            // $phone = str_pad($this->input->post('phone'), 11, '0', STR_PAD_LEFT);
+            $phone = preg_replace('/[^a-zA-Z0-9]+/', '', $this->input->post('phone')); //removes special characters caused by inputmask
 
             $x = explode("\n", $this->input->post('company'));
             $company = trim($x[0]);
@@ -233,7 +234,7 @@
             );
 
             if ($this->input->post('type') == "4") {
-                if (date('Y-m-d', strtotime($this->input->post('date_from'))) > date('Y-m-d', strtotime($this->input->post('date_to')))) {
+                if (date('Y-m-d H:i', strtotime($this->input->post('date_from'))) > date('Y-m-d  H:i', strtotime($this->input->post('date_to')))) {
                     $isValidDate = false;
                 } else {
                     $isValidDate = true;
@@ -334,7 +335,8 @@
                 $to = $this->input->post('date_to');
             }
 
-            $phone = str_pad($this->input->post('phone'), 11, '0', STR_PAD_LEFT);
+            // $phone = str_pad($this->input->post('phone'), 11, '0', STR_PAD_LEFT);
+            $phone = preg_replace('/[^a-zA-Z0-9]+/', '', $this->input->post('phone')); //removes special characters caused by inputmask
 
             $data = array(
                 'employee' => $this->input->post('employee'),

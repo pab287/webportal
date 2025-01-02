@@ -938,7 +938,7 @@
                     $rs->position = is_numeric($rs->position) ? $this->getPosition($rs->position) : $rs->position;
 
                     if ($type == 'edit') { 
-                        $rs->phone = strlen($rs->phone) == 11 ? ltrim($rs->phone, '0') : $rs->phone;
+                        $rs->phone = strlen($rs->phone) == 11 ? ltrim($rs->phone, '09') : $rs->phone;
                     }
                     // if(is_numeric($rs->company)){
                     //     $rs->company = $this->getCompany($rs->company);
