@@ -1,4 +1,5 @@
 let dropdownEl = null;
+let search_val = "";
 let tblEmployeeSalaryRange = $('#table-employee-salary-range')
     .DataTable({
         dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'f>>" +
@@ -20,6 +21,7 @@ let tblEmployeeSalaryRange = $('#table-employee-salary-range')
         ],
         serverSide: false,
         ordering: true,
+        searching: false,
         initComplete: function () {
             $("#table-employee-salary-range_filter input[type='search']")
                 .removeClass("form-control-sm");
@@ -82,36 +84,6 @@ $('#employee_status')
         placeholder: 'Select Status'
     });
 
-// $('#company')
-//     .select2({
-//         width: '100%',
-//         placeholder: 'Select Company',
-//         allowClear: true,
-//         ajax: {
-//             url: baseUrl('hris/reports/get_company_collection'),
-//             delay: 500,
-//             dataType: 'JSON',
-//             processResults: function (data) {
-//                 return data;
-//             }
-//         }
-//     });
-
-// $('#department')
-//     .select2({
-//         width: '100%',
-//         placeholder: 'Select Department',
-//         allowClear: true,
-//         ajax: {
-//             url: baseUrl('hris/reports/get_department_collection'),
-//             delay: 500,
-//             dataType: 'JSON',
-//             processResults: function (data) {
-//                 return data;
-//             }
-//         }
-//     });
-
 
 function filterEmployeesOfSalaryRange(form) {
     const _form = $(form);
@@ -126,7 +98,7 @@ function filterEmployeesOfSalaryRange(form) {
         $('#table-employee-salary-range').DataTable().destroy();
         tblEmployeeSalaryRange = $('#table-employee-salary-range')
             .DataTable({
-                dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'f>>" +
+                dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportSearch'f>>" +
                     "<'row'<'col-12'rt>>" +
                     "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
                 buttons: [
@@ -166,7 +138,7 @@ function filterEmployeesOfSalaryRange(form) {
                 ],
                 serverSide: true,
                 processing: true,
-                searching: true,
+                searching: false,
                 ordering: true,
                 ajax: {
                     url,
@@ -175,6 +147,7 @@ function filterEmployeesOfSalaryRange(form) {
                     data: function (d) {
                         d.csrf_token = _csrf_hash;
                         d.filter = objFormValues;
+                        d.search['value'] = search_val
                     },
                     global: false
                 },
@@ -261,6 +234,25 @@ function filterEmployeesOfSalaryRange(form) {
 
                     $(dropdown).appendTo("#table-employee-salary-range_wrapper .exportDropdown");
                     dropdownEl = $(".m-dropdown__toggle.export-as");
+                    const filterDiv = $('<div>').addClass('dataTables_filter');
+                    const searchInput = $('<input>')
+                        .attr('type', 'text')
+                        .addClass('form-control')
+                        .attr('placeholder', 'Search...')
+                        .attr('id', 'generalSearch');
+                    filterDiv.append(searchInput);
+                    $(filterDiv).appendTo("#table-employee-salary-range_wrapper .exportSearch");
+                    $('#generalSearch').donetyping(function(callback) {
+                        search_val = $(this).val();
+                        tblEmployeeSalaryRange.ajax.reload();
+                      },1000,3);
+                      $("#generalSearch").on('keyup', function (e) {
+                        var val = $(this).val();
+                        if (val == ""){
+                            search_val="";
+                            tblEmployeeSalaryRange.ajax.reload();
+                        }
+                    });
                 },
             });
     }
