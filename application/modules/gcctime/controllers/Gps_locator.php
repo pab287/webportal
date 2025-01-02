@@ -2,6 +2,8 @@
 include(dirname(__DIR__).'/src/AbstractGeocoder.php');
 include(dirname(__DIR__).'/src/Geocoder.php');
 class Gps_locator extends MY_Controller {
+	protected $eformsKey;
+
 	function __construct(){
         parent::__construct();
         $this->authenticate->setModuleAccess("time");
@@ -9,12 +11,15 @@ class Gps_locator extends MY_Controller {
 		$this->load->model("Crudv2_model","crud2");
 		$this->core_layout->setBodyClass("attendance");
 		$this->core_layout->setPrivilegeName("gps");
+
+		$this->eformsKey = $_ENV['PROD_MAP_KEY']; 
     }
 
 	public function index(){
 		// $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyD2szEzfIU7_Hec55jNy8JtoNr_uj8R2_M&callback=initMapTemp&libraries=places,drawing&v=weekly";
 		// $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCTzlKHdtvrOuKv7LEQjW8HVmy1QFFgalM&callback=initMapTemp&libraries=places,drawing&v=weekly";
-		$externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCm_pTwQzhaAKspErhW9ptpubv_ATLrpgE&callback=initMapTemp&libraries=places,drawing&v=weekly";
+		// $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCm_pTwQzhaAKspErhW9ptpubv_ATLrpgE&callback=initMapTemp&libraries=places,drawing&v=weekly";
+		$externalUrl = "https://maps.googleapis.com/maps/api/js?key=" . $this->eformsKey . "&callback=initMapTemp&libraries=places,drawing&v=weekly";
 		$arrData = array();
 		$arrData["script_attribute"] = array("async");
 		$this->core_layout->addExternalJs($externalUrl, true, $arrData);
@@ -84,7 +89,8 @@ class Gps_locator extends MY_Controller {
 
 	public function geo2address($long,$lat) {
 	    // $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=".$lat.",".$long."&language=en-EN&sensor=false&key=AIzaSyCTzlKHdtvrOuKv7LEQjW8HVmy1QFFgalM";
-	    $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=".$lat.",".$long."&language=en-EN&sensor=false&key=AIzaSyB0P6151i4JuPBG79VhRhaiEzqR4Awmnmw";
+	    // $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=".$lat.",".$long."&language=en-EN&sensor=false&key=AIzaSyB0P6151i4JuPBG79VhRhaiEzqR4Awmnmw";
+	    $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=".$lat.",".$long."&language=en-EN&sensor=false&key=".$this->mapKey;
 	    $curlData=file_get_contents($url);
 	    $address = json_decode($curlData);
 	    $a=$address->results[0];

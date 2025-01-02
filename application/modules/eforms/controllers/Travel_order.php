@@ -2,6 +2,7 @@
 
 class Travel_order extends MY_Controller
 {
+    protected $eformsKey;
     public function __construct()
     {
         parent::__construct();
@@ -10,6 +11,7 @@ class Travel_order extends MY_Controller
         $this->authenticate->doRedirect();
         $this->load->model("Travel_order_m", "travel_order");
         $this->user_data = $this->session->userdata("logged_in");
+        $this->eformsKey = $_ENV['PROD_MAP_KEY']; 
     }
 
     public function index()
@@ -143,11 +145,8 @@ class Travel_order extends MY_Controller
             ->set_output(json_encode($data));
     }
 
-    function new_travel_order()
-    {
-        // $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyD2szEzfIU7_Hec55jNy8JtoNr_uj8R2_M&callback=initMapTemp&libraries=places,drawing&v=weekly";
-        // $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCTzlKHdtvrOuKv7LEQjW8HVmy1QFFgalM&callback=initMapTemp&libraries=places,drawing&v=weekly";
-        $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCm_pTwQzhaAKspErhW9ptpubv_ATLrpgE&callback=initMapTemp&libraries=places,drawing&v=weekly";
+    function new_travel_order() {
+        $externalUrl = "https://maps.googleapis.com/maps/api/js?key=" . $this->eformsKey . "&callback=initMapTemp&libraries=places,drawing&v=weekly";
         
         /*** service vehicle option for logistics and administrator role ***/
         $allowServiceVehicle = false;
@@ -187,11 +186,8 @@ class Travel_order extends MY_Controller
         $this->load->view('core/templates/footer');
     }
 
-    function edit_travel_order()
-    {
-        // $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyD2szEzfIU7_Hec55jNy8JtoNr_uj8R2_M&callback=initMapTemp&libraries=places,drawing&v=weekly";
-        // $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCTzlKHdtvrOuKv7LEQjW8HVmy1QFFgalM&callback=initMapTemp&libraries=places,drawing&v=weekly";
-        $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCm_pTwQzhaAKspErhW9ptpubv_ATLrpgE&callback=initMapTemp&libraries=places,drawing&v=weekly";
+    function edit_travel_order() {
+        $externalUrl = "https://maps.googleapis.com/maps/api/js?key=" . $this->eformsKey . "&callback=initMapTemp&libraries=places,drawing&v=weekly";
 		$arrData = array();
 		$arrData["script_attribute"] = array("async");
 		$this->core_layout->addExternalJs($externalUrl, true, $arrData);

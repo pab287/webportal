@@ -2,6 +2,8 @@
 
 class Maintenance extends MY_Controller
 {
+
+    protected $eformsKey;
     public function __construct()
     {
         parent::__construct();
@@ -10,6 +12,7 @@ class Maintenance extends MY_Controller
         $this->load->model("Maintenance_model", "maintenance");
 
         $this->core_layout->setPrivilegeName("fixed_masterfile");
+        $this->eformsKey = $_ENV['PROD_MAP_KEY']; 
     }
 
     public function category()
@@ -181,7 +184,8 @@ class Maintenance extends MY_Controller
     {
         // $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyD2szEzfIU7_Hec55jNy8JtoNr_uj8R2_M&callback=initMap&libraries=places,drawing";
         // $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCTzlKHdtvrOuKv7LEQjW8HVmy1QFFgalM&callback=initMap&libraries=places,drawing";
-        $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCm_pTwQzhaAKspErhW9ptpubv_ATLrpgE&callback=initMap&libraries=places,drawing";
+        // $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCm_pTwQzhaAKspErhW9ptpubv_ATLrpgE&callback=initMap&libraries=places,drawing";
+        $externalUrl = "https://maps.googleapis.com/maps/api/js?key=" . $this->eformsKey . "&callback=initMap&libraries=places,drawing";
 
         $this->core_layout->addJs("js/ams/location.js", true);
         $arrData = array();
