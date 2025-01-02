@@ -253,6 +253,8 @@
                                 </div>
                             </div>
                         </div>
+                        <input type="hidden" id="date-from-hidden">
+                        <input type="hidden" id="date-to-hidden">
                         <div class="modal-footer">
                             <button type="submit" id="btnSaveLoa"
                                     class="btn btn-info m-btn m-btn--custom m-btn--icon m-btn--air m-btn--box btn-submit btnUpdate">

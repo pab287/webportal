@@ -386,12 +386,104 @@ $("#choice").select2({
     var rowcollection = tblLoa.$(".call-checkbox:not(.has-checked):checked", { "page": "all" });
 
     if (rowcollection.length > 0) {
-        isUpdated = massAction(rowcollection, type);
+        if (type == 1) {
+            $("#modal_form_approve").modal();
 
-        if (isUpdated) {
-            tblLoa.ajax.reload();
-            $("#choice").val(null).trigger("change");
+            $.validate({
+                el: '#form_approve',
+                lang: 'en',
+                onSuccess: function(form){
+                    var currentForm = form[0];
+                    var formData = $(currentForm).serialize();
+            
+                    var rowcollection = tblLoa.$(".call-checkbox:not(.has-checked):checked", { "page": "all" });
+                    let checked = [];
+            
+                    rowcollection.each(function (index, elem) {
+                        var checkbox_value = $(elem).val();
+            
+                        checked.push(checkbox_value);
+                    });
+            
+                    formData += '&checked=' + JSON.stringify(checked) + '&type=1';
+            
+                    $.ajax({
+                        url: baseUrl("eforms/loa/mass_action_loa"),
+                        type: "POST",
+                        dataType: "JSON",
+                        data: formData,
+                        success: function (data) {
+                            if(data.status && data.status == true){
+                                tblLoa.ajax.reload();
+                                $("#choice").val(null).trigger("change");
+                                toastr.success(data.message, "Successfully Approved!", 5000);
+                                $("#modal_form_approve").modal("hide");
+                            } else {
+                                toastr.error(data.message, "Failed to Approve!", 5000);
+                            }
+            
+                        }, error: function (jqXHR, textStatus, errorThrown) {
+                            toastr.error("Failed to Approve selected LOA.", "Error!", 5000);
+                        }
+                    })
+            
+                    return false;
+                }
+            });
+
+        } else {
+            $("#modal_form_disapprove").modal();
+
+            $.validate({
+                el: '#form_disapprove',
+                lang: 'en',
+                onSuccess: function(form){
+                    var currentForm = form[0];
+                    var formData = $(currentForm).serialize();
+            
+                    var rowcollection = tblLoa.$(".call-checkbox:not(.has-checked):checked", { "page": "all" });
+                    let checked = [];
+            
+                    rowcollection.each(function (index, elem) {
+                        var checkbox_value = $(elem).val();
+            
+                        checked.push(checkbox_value);
+                    });
+            
+                    formData += '&checked=' + JSON.stringify(checked) + '&type=1';
+            
+                    $.ajax({
+                        url: baseUrl("eforms/loa/mass_action_loa"),
+                        type: "POST",
+                        dataType: "JSON",
+                        data: formData,
+                        success: function (data) {
+                            if(data.status && data.status == true){
+                                tblLoa.ajax.reload();
+            
+                                $("#modal_form_disapprove").modal("hide");
+                                $("#choice").val(null).trigger("change");
+                                toastr.success(data.message, "Successfully Disapproved!", 5000);
+                            } else {
+                                toastr.error(data.message, "Failed to Disapprove!", 5000);
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            toastr.error("Failed to Disapprove selected LOA.", "Error!", 5000);
+                        }
+                    })
+            
+                    return false;
+                }
+            });
         }
+
+        // isUpdated = massAction(rowcollection, type);
+
+        // if (isUpdated) {
+        //     tblLoa.ajax.reload();
+        //     $("#choice").val(null).trigger("change");
+        // }
     } else{
         $("#choice").val(null).trigger("change");
         toastr.warning("Please select at least one record", "Mass Action", 5000);

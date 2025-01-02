@@ -237,3 +237,59 @@
 		</div>
 	</form>
 </div>
+
+<div class="modal fade" id="modal_form_approve" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content form">
+            <div class="modal-header">
+                <h3 class="modal-title">Approve Leave of Absence</h3>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+
+            <form action="#" id="form_approve" class="form-horizontal">
+                <div class="modal-body ">
+                    <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+
+                    <div class="form-group">
+                        <label class="control-label col-md-2">Remarks</label>
+                        <div class="col-md-12">
+                            <textarea name="remarks"  class="form-control" data-validation="required"> </textarea> 
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" id="btnSave" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
+                    <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon  btnClose" data-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div><!-- /.modal-content -->
+    </div>
+</div>
+
+<div class="modal fade" id="modal_form_disapprove" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content form">
+            <div class="modal-header">
+                <h3 class="modal-title">Disapprove Leave of Absence</h3>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+
+            <form id="form_disapprove" class="form-horizontal">
+                <div class="modal-body ">
+                    <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                    <div class="form-group">
+                        <label class="control-label col-md-2">Remarks</label>
+                        <div class="col-md-12">
+                        <textarea name="remarks" class="form-control" data-validation="required"> </textarea> 
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" id="btnSave" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
+                    <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon btnClose" style="color: #FFFFFF;" data-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div><!-- /.modal-content -->
+    </div>
+</div>

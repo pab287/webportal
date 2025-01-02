@@ -723,4 +723,71 @@
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
         }
+
+        function mass_action_loa(){
+            $post = $this->input->post();
+
+            $type = $post['type'];
+
+            $user_id = $this->core_layout->getCurrentEmployeeId();
+            $date = date('Y-m-d H:i:s');
+            $ids = json_decode($post['checked']);
+
+            if ($type == 1) {
+                $data = array(
+                    'status' => 'Approved',
+                    'approved_remarks' => $post['remarks'],
+                    'approved_by' => $user_id,
+                    'approved_dt' => $date,
+                );
+            } else {
+                $data = array(
+                    'status' => 'Disapproved',
+                    'disapproved_remarks' => $post['remarks'],
+                    'disapproved_by' => $user_id,
+                    'disapproved_dt' => $date,
+                );
+            }
+
+            $this->db->where_in('id', $ids);
+            $query = $this->db->update('gcceforms.loa', $data);
+
+            $this->db->reset_query();
+
+            $this->db->select('reference_no');
+            $this->db->where_in('id', $ids);
+            $this->db->from('gcceforms.loa');
+            $q = $this->db->get();
+
+            $ref_no = array();
+            if ($q->num_rows() > 0) {
+                foreach ($q->result() as $row) {
+                    array_push($ref_no, $row->reference_no);
+                }
+            }
+
+            $refs = implode(', ', $ref_no);
+
+            if ($query) {
+                $status = true;
+                $message = 'Successfully ' . ($type == 1 ? 'Approved' : 'Disapproved') . ' selected LOA request.';
+
+                if ($type == 1){
+                    $this->core_layout->setEventLog("Approved selected LOA with reference number of `".$refs."`.","update", "success", "gcceforms", "user");
+                } else {
+                    $this->core_layout->setEventLog("Disapproved selected LOA with reference number of `".$refs."`.","update", "success", "gcceforms", "user");
+                }
+            } else {
+                $status = false;
+                $message = 'Failed to ' . ($type == 1 ? 'Approve' : 'Disapprove') . ' selected LOA request.';
+
+                if ($type == 1){
+                    $this->core_layout->setEventLog("Failed to approve selected LOA with reference number of `".$refs."`.","update", "error", "gcceforms", "system");
+                } else {
+                    $this->core_layout->setEventLog("Failed disapprove selected LOA with reference number of `".$refs."`.","update", "error", "gcceforms", "system");
+                }
+            }
+
+            echo json_encode(array("status" => $status, 'message' => $message));
+        }
     }

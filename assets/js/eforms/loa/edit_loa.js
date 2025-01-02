@@ -32,6 +32,9 @@ $.ajax({
                 dt = data.data.date_to;
                 $('[name="under_from"]').val(data.data.date_from);
                 $('[name="under_to"]').val(dt.substr(11, 8));
+
+                $('#date-from-hidden').val(data.data.date_from);
+                $('#date-to-hidden').val(data.data.date_to);
                 break;
             case "2":
                 $('[name="type"]').val('2').trigger("change");
@@ -53,6 +56,9 @@ $.ajax({
                 $('[name="type"]').val('4').trigger("change");
                 $('[name="date_from"]').val(data.data.date_from);
                 $('[name="date_to"]').val(data.data.date_to);
+
+                $('#date-from-hidden').val(data.data.date_from);
+                $('#date-to-hidden').val(data.data.date_to);
                 break;
 
         }
@@ -78,13 +84,23 @@ $.ajax({
             moment(e.date).format("yyyy/mm/dd hh:ii tt");
             var self = $(e.target);
             self.validate();
-        });;
+
+            $("#date-from-hidden").val(moment(e.date).format("YYYY/MM/DD HH:mm"));
+        });
 
         $('#under_to').timepicker({
             minuteStep: 1,
             showMeridian: false,
             use24hours: false,
             defaultTime: null,
+        }).on('change', function (e) {
+            var fromDate = $("#date-from-hidden").val();
+            fromDate = new Date(fromDate);
+        
+            fromDate = moment(fromDate).format("YYYY/MM/DD");
+        
+            var toDate = new Date(fromDate + " " + e.target.value);
+            $("#date-to-hidden").val(moment(toDate).format("YYYY/MM/DD HH:mm"));
         });
 
         $('#half_from').datepicker({
@@ -121,6 +137,8 @@ $.ajax({
             moment(e.date).format("yyyy/mm/dd hh:ii");
             var self = $(e.target);
             self.validate();
+
+            $("#date-from-hidden").val(moment(e.date).format("YYYY-MM-DD HH:mm"));
         });
 
         $('#date_to').datetimepicker({
@@ -134,6 +152,8 @@ $.ajax({
             moment(e.date).format("yyyy/mm/dd hh:ii");
             var self = $(e.target);
             self.validate();
+
+            $("#date-to-hidden").val(moment(e.date).format("YYYY-MM-DD HH:mm"));
         });
 
         $("#phone_on_leave").inputmask({
@@ -272,6 +292,9 @@ function type_change() {
         document.getElementById('whole').style.display = 'none';
         document.getElementById('other_date').style.removeProperty('display');
     }
+
+    $("#date-from-hidden").val('');
+	$("#date-to-hidden").val('');
 }
 
 function view_back() {
@@ -326,43 +349,78 @@ $.validate({
         var phone = $("#phone_on_leave").val();
         var rawPhone = phone.replace(/\D/g, "");
 
-        if (rawPhone.length < 11){
-            toastr.error("Invalid phone number. Number must be 11 digits. (09———)", "Error!", 5000);
-        } else {
-            if (parseInt($("#reason").val().length) < 30) {
-                alert_function("Must have minimum of 30 characters.");
-            }else{
-                $.ajax({
-                    url: baseUrl("eforms/loa/check_reason"),
-                    type: "POST",
-                    dataType: "JSON",
-                    global: false,
-                    data: {reason:$("#reason").val(), csrf_token: _csrf_hash},
-                    success: function (data) {
-                        
-                        if (data.reps!=="error") {
-                            alert_function("Invalid Reason!");
-                        } else {
-    
-                            $.ajax({
-                                url: baseUrl("eforms/loa/update_loa/") + param_id,
-                                type: "POST",
-                                dataType: "JSON",
-                                data: formData,
-                                success: function (data) {
-                                    if (data.status) {
-                                        toastr.success("LOA successfully updated!");
-                                        window.location.replace(baseUrl("eforms/loa/view_loa?id=") + param_id);
-                                    } else {
-                                        toastr.error("Failed to update LOA. `FROM DATE` must be less than `TO DATE`.", "Error!", 5000);
-                                        $("#btnSaveLoa").attr('disabled', false);
+        var type = $('#type').val();
+		var hasTo = false;
+		var message = "";
+
+        if (type == 1 || type == 4) {
+			var date_from = $("#date-from-hidden").val();
+			var date_to = $("#date-to-hidden").val();
+
+			date_from = new Date(date_from);
+			date_to = new Date(date_to);
+
+			date_from = moment(date_from);
+			date_to = moment(date_to);
+
+			var duration = moment.duration(date_to.diff(date_from));
+			var minutes = duration.asMinutes();
+
+			if (minutes < -1){ 
+				hasTo = true;
+				message = 'Invalid Date! `TO DATE` cannot be the less than the `FROM DATE`.';
+			} else if (minutes == 0) {
+				hasTo = true;
+				message = 'Invalid Date! `TO DATE` cannot be the same as `FROM DATE`.';
+			} else if (minutes < 30) {
+				hasTo = true;
+				message = "LOA Must have a minimum of 30 minutes.";
+			} else {
+				hasTo = false;
+			}
+		}
+
+        if (!hasTo) {
+            if (rawPhone.length < 11){
+                toastr.error("Invalid phone number. Number must be 11 digits. (09———)", "Error!", 5000);
+            } else {
+                if (parseInt($("#reason").val().length) < 30) {
+                    alert_function("Must have minimum of 30 characters.");
+                }else{
+                    $.ajax({
+                        url: baseUrl("eforms/loa/check_reason"),
+                        type: "POST",
+                        dataType: "JSON",
+                        global: false,
+                        data: {reason:$("#reason").val(), csrf_token: _csrf_hash},
+                        success: function (data) {
+                            
+                            if (data.reps!=="error") {
+                                alert_function("Invalid Reason!");
+                            } else {
+        
+                                $.ajax({
+                                    url: baseUrl("eforms/loa/update_loa/") + param_id,
+                                    type: "POST",
+                                    dataType: "JSON",
+                                    data: formData,
+                                    success: function (data) {
+                                        if (data.status) {
+                                            toastr.success("LOA successfully updated!");
+                                            window.location.replace(baseUrl("eforms/loa/view_loa?id=") + param_id);
+                                        } else {
+                                            toastr.error("Failed to update LOA. `FROM DATE` must be less than `TO DATE`.", "Error!", 5000);
+                                            $("#btnSaveLoa").attr('disabled', false);
+                                        }
                                     }
-                                }
-                            });
+                                });
+                            }
                         }
-                    }
-                })
+                    })
+                }
             }
+        } else {
+            toastr.error(message, "Error!", 5000);
         }
         /*** $('#reason_v').empty();
         if ($('[name="reason"]').val().length < 30 && $('[name="reason"]').val().length > 255) {

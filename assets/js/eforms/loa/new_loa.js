@@ -76,6 +76,8 @@ $('#under_from').datetimepicker({
     moment(e.date).format("yyyy/mm/dd hh:ii tt");
     var self = $(e.target);
     self.validate();
+
+	$("#date-from-hidden").val(moment(e.date).format("YYYY/MM/DD HH:mm"));
 });
 
 $('#under_to').timepicker({
@@ -83,6 +85,14 @@ $('#under_to').timepicker({
 	showMeridian: false,
 	use24hours: false,
 	defaultTime: null,
+}).on('change', function (e) {
+	var fromDate = $("#date-from-hidden").val();
+	fromDate = new Date(fromDate);
+
+	fromDate = moment(fromDate).format("YYYY/MM/DD");
+
+	var toDate = new Date(fromDate + " " + e.target.value);
+	$("#date-to-hidden").val(moment(toDate).format("YYYY/MM/DD HH:mm"));
 });
 
 $('#half_from').datepicker({
@@ -121,6 +131,8 @@ $('#date_from').datetimepicker({
     moment(e.date).format("yyyy/mm/dd hh:ii");
     var self = $(e.target);
     self.validate();
+
+	$("#date-from-hidden").val(moment(e.date).format("YYYY-MM-DD HH:mm"));
 });
 
 $('#date_to').datetimepicker({
@@ -133,6 +145,8 @@ $('#date_to').datetimepicker({
     moment(e.date).format("yyyy/mm/dd hh:ii");
     var self = $(e.target);
     self.validate();
+
+	$("#date-to-hidden").val(moment(e.date).format("YYYY-MM-DD HH:mm"));
 });
 
 function emp_details() {
@@ -189,7 +203,11 @@ function type_change() {
 		document.getElementById('whole').style.display = 'none';
 		document.getElementById('other_date').style.removeProperty('display');
 	}
+
+	$("#date-from-hidden").val('');
+	$("#date-to-hidden").val('');
 }
+
 $.validate({
 	form: '#form_loa',
 	lang: 'en',
@@ -200,60 +218,95 @@ $.validate({
 
 		var phone = $("#phone").val();
 		var rawPhone = phone.replace(/\D/g, "");
+		var type = $('[name="type"]').val();
+		var hasTo = false;
+		var message = "";
 
-		if (parseInt(rawPhone.length) < 11){
-			toastr.error("Invalid phone number. Number must be 11 digits. (09———)", "Error!", 5000);
-		} else {
-			if (parseInt($("#reason").val().length) < 30) {
-				alert_function("Must have minimum of 30 characters.");
-			}else{
-				$("#btnSaveLoa").attr('disabled', true);
-				$.ajax({
-					url: baseUrl("eforms/loa/check_reason"),
-					type: "POST",
-					dataType: "JSON",
-					global: false,
-					data: {reason:$("#reason").val(), csrf_token: _csrf_hash},
-					success: function (data) {
-						
-						if (data.reps!=="error") {
-							alert_function("Invalid Reason!");
-						} else {
-							$.ajax({
-								url: baseUrl("eforms/loa/add_loa"),
-								type: "POST",
-								dataType: "JSON",
-								data: formData,
-								success: function (data) {
-									if (data.status) {
-										//disabled.attr('disabled','disabled');
-										toastr.success(data.toastr_msg, "Successfully saved!", 5000)
-										window.location.replace(baseUrl("eforms/loa/masterfile"));
-									} else {
-										toastr.error("Failed to save LOA. `FROM DATE` must be less than `TO DATE`.", "Error!", 5000);
-										$("#btnSaveLoa").attr('disabled', false);
-									}
-								}
-							});
-						}
-					}
-				});
+
+		if (type == 1 || type == 4) {
+			var date_from = $("#date-from-hidden").val();
+			var date_to = $("#date-to-hidden").val();
+
+			date_from = new Date(date_from);
+			date_to = new Date(date_to);
+
+			date_from = moment(date_from);
+			date_to = moment(date_to);
+
+			var duration = moment.duration(date_to.diff(date_from));
+			var minutes = duration.asMinutes();
+
+			if (minutes < -1){ 
+				hasTo = true;
+				message = 'Invalid Date! `TO DATE` cannot be the less than the `FROM DATE`.';
+			} else if (minutes == 0) {
+				hasTo = true;
+				message = 'Invalid Date! `TO DATE` cannot be the same as `FROM DATE`.';
+			} else if (minutes < 30) {
+				hasTo = true;
+				message = "LOA Must have a minimum of 30 minutes.";
+			} else {
+				hasTo = false;
 			}
+		}
+
+		if (!hasTo) {
+			if (parseInt(rawPhone.length) < 11){
+				toastr.error("Invalid phone number. Number must be 11 digits. (09———)", "Error!", 5000);
+			} else {
+				if (parseInt($("#reason").val().length) < 30) {
+					alert_function("Must have minimum of 30 characters.");
+				}else{
+					$("#btnSaveLoa").attr('disabled', true);
+					$.ajax({
+						url: baseUrl("eforms/loa/check_reason"),
+						type: "POST",
+						dataType: "JSON",
+						global: false,
+						data: {reason:$("#reason").val(), csrf_token: _csrf_hash},
+						success: function (data) {
+							
+							if (data.reps!=="error") {
+								alert_function("Invalid Reason!");
+							} else {
+								$.ajax({
+									url: baseUrl("eforms/loa/add_loa"),
+									type: "POST",
+									dataType: "JSON",
+									data: formData,
+									success: function (data) {
+										if (data.status) {
+											//disabled.attr('disabled','disabled');
+											toastr.success(data.toastr_msg, "Successfully saved!", 5000)
+											window.location.replace(baseUrl("eforms/loa/masterfile"));
+										} else {
+											toastr.error("Failed to save LOA. `FROM DATE` must be less than `TO DATE`.", "Error!", 5000);
+											$("#btnSaveLoa").attr('disabled', false);
+										}
+									}
+								});
+							}
+						}
+					});
+				}
+			}
+		} else {
+			toastr.error(message, "Error!", 5000);
 		}
 							
 
 
-			//$('#reason_v').empty();
-		 
-			
-			// else if (parseInt($("#reason").val().length) > 255) {
-			// 	alert_function("Must have maximum of 255 characters.");
-			// }
+		//$('#reason_v').empty();
+		
+		
+		// else if (parseInt($("#reason").val().length) > 255) {
+		// 	alert_function("Must have maximum of 255 characters.");
+		// }
 
-			//  else {
-			 				
-				
-			// }
+		//  else {
+						
+			
+		// }
 		return false;
 	}
 });
