@@ -266,7 +266,7 @@ class Reports_model extends CI_Model{
             $this->core_layout->setEventLog($logMessage, "export", 'success', "gcchris", 'user');
         }
         if ($search && $search != '') {
-            $this->core_layout->setEventLog("User searched for: ".$search." in Expiring Probationary Employees. System found: ".$resultSet['recordsTotal']." results.", "search", 'success', "gcchris", 'user');
+            $this->core_layout->setEventLog("User searched for: "."'<strong>".$search."</strong>'"." in <strong>Expiring Probationary Employees</strong>. System found: <strong>".$resultSet['recordsTotal']." results.</strong>", "search", 'success', "gcchris", 'user');
         }
         return $resultSet;
     }
