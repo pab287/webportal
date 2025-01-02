@@ -11,7 +11,7 @@ class Travel_order extends MY_Controller
         $this->authenticate->doRedirect();
         $this->load->model("Travel_order_m", "travel_order");
         $this->user_data = $this->session->userdata("logged_in");
-        $this->eformsKey = $_ENV['EFORMS_MAP_KEY']; 
+        $this->eformsKey = $_ENV['PROD_MAP_KEY']; 
     }
 
     public function index()

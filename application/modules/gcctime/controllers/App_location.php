@@ -1,19 +1,24 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
     class App_location extends MY_Controller {
+        protected $eformsKey;
+
         public function __construct() {
             parent::__construct();
             $this->authenticate->setModuleAccess("time");
             $this->authenticate->doRedirect();
             
             $this->load->model("Gcctime_location_model", "location_model");
+            $this->eformsKey = $_ENV['PROD_MAP_KEY']; 
         }
 
         public function index(){
             
             // $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyD2szEzfIU7_Hec55jNy8JtoNr_uj8R2_M&callback=initMapTemp&libraries=places,drawing&v=weekly";
             // $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCTzlKHdtvrOuKv7LEQjW8HVmy1QFFgalM&callback=initMapTemp&libraries=places,drawing&v=weekly";
-            $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCm_pTwQzhaAKspErhW9ptpubv_ATLrpgE&callback=initMapTemp&libraries=places,drawing&v=weekly";
+            // $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCm_pTwQzhaAKspErhW9ptpubv_ATLrpgE&callback=initMapTemp&libraries=places,drawing&v=weekly";
+            $externalUrl = "https://maps.googleapis.com/maps/api/js?key=" . $this->eformsKey . "&callback=initMapTemp&libraries=places,drawing&v=weekly";
+
             $arrData["script_attribute"] = array("async");
             $this->core_layout->addExternalJs($externalUrl, true, $arrData);
             $this->core_layout->setPrivilegeName("app_location");

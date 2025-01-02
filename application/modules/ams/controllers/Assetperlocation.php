@@ -2,12 +2,15 @@
 
     class Assetperlocation extends MY_Controller
     {
+
+        protected $eformsKey;
         public function __construct()
         {
             parent::__construct();
             $this->authenticate->setModuleAccess("ams");
             $this->authenticate->doRedirect();
             $this->load->model("Assetperlocation_model", "asset_per_location");
+            $this->eformsKey = $_ENV['PROD_MAP_KEY']; 
         }
 
         public function masterfile()
@@ -82,7 +85,8 @@
         }
 
         function assets_location(){
-            $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCm_pTwQzhaAKspErhW9ptpubv_ATLrpgE&callback=initMap&libraries=places,drawing";
+            // $externalUrl = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCm_pTwQzhaAKspErhW9ptpubv_ATLrpgE&callback=initMap&libraries=places,drawing";
+            $externalUrl = "https://maps.googleapis.com/maps/api/js?key=" . $this->eformsKey . "&callback=initMap&libraries=places,drawing";
 
             $this->core_layout->setPrivilegeName("assetperlocation");
             $this->core_layout->addJs("js/ams/assets_location.js", true);
