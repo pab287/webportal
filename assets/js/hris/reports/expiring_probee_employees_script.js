@@ -1,6 +1,6 @@
 let tblExpiringProbees = null;
 let dropdownEl = null;
-
+var search_val = "";
 tblExpiringProbees = $('#table-expiring-probees')
     .DataTable({
         dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'f>>" +
@@ -44,7 +44,7 @@ tblExpiringProbees = $('#table-expiring-probees')
         ],
         serverSide: true,
         processing: true,
-        searching: true,
+        searching: false,
         ordering: true,
         destroy: true,
         ajax: {
@@ -53,6 +53,7 @@ tblExpiringProbees = $('#table-expiring-probees')
             dataType: 'json',
             data: function (d) {
                 d.csrf_token = _csrf_hash;
+                d.search['value'] = search_val
             },
             global: false
         },
@@ -120,8 +121,8 @@ tblExpiringProbees = $('#table-expiring-probees')
         order: [[5, 'asc']],
         pageLength: 50,
         initComplete: function () {
-            $("#table-expiring-probees_filter input[type='search']")
-                .removeClass("form-control-sm");
+            // $("#table-expiring-probees_filter input[type='search']")
+            //     .removeClass("form-control-sm");
 
             const dropdown = '' +
                 '       <div class="m-dropdown m-dropdown--inline m-dropdown--align-left" ' +
@@ -170,6 +171,14 @@ tblExpiringProbees = $('#table-expiring-probees')
 
             $(dropdown).appendTo("#table-expiring-probees_wrapper .exportDropdown");
             dropdownEl = $(".m-dropdown__toggle.export-as");
+            
+            const searchInput = $('<input>')
+            .attr('type', 'text')
+            .addClass('form-control')
+            .attr('placeholder', 'Search...')
+            .attr('id', 'custom-search-input');
+            $(searchInput).appendTo("#table-expiring-probees_wrapper .exportSearch");
+
         },
     });
 
@@ -208,3 +217,8 @@ async function getExportData(e, dt, node, config, self, url, type) {
 
     return result;
 }
+
+$('#generalSearch').donetyping(function(callback) {
+    search_val = $(this).val();
+    tblExpiringProbees.ajax.reload();
+  },1000,3);
