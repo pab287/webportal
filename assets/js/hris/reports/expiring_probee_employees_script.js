@@ -1,6 +1,6 @@
 let tblExpiringProbees = null;
 let dropdownEl = null;
-var search_val = "";
+let search_val = "";
 tblExpiringProbees = $('#table-expiring-probees')
     .DataTable({
         dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportSearch'f>>" +
@@ -121,9 +121,6 @@ tblExpiringProbees = $('#table-expiring-probees')
         order: [[5, 'asc']],
         pageLength: 50,
         initComplete: function () {
-            // $("#table-expiring-probees_filter input[type='search']")
-            //     .removeClass("form-control-sm");
-
             const dropdown = '' +
                 '       <div class="m-dropdown m-dropdown--inline m-dropdown--align-left" ' +
                 '             data-dropdown-toggle="hover" aria-expanded="true">' +
@@ -185,7 +182,7 @@ tblExpiringProbees = $('#table-expiring-probees')
               },1000,3);
               $("#generalSearch").on('keyup', function (e) {
                 var val = $(this).val();
-                if (val == 0){
+                if (val == ""){
                     search_val="";
                     tblExpiringProbees.ajax.reload();
                 }
@@ -221,8 +218,6 @@ async function getExportData(e, dt, node, config, self, url, type) {
         dataType: "JSON",
         data,
         success: function (response) {
-            dt.rows().remove();
-            dt.rows.add(response.data).draw();
             $.fn.dataTable.ext.buttons[type].action.call(self, e, dt, node, config);
         }
     });

@@ -258,7 +258,7 @@ class Reports extends MY_Controller{
     {
         $work_status = isset($_GET['work_status']) ? $_GET['work_status'] : null;
         $data = $this->report->getExpiringEmployees($export, $work_status);
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function get_company_collection()
