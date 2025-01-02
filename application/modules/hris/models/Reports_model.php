@@ -261,7 +261,13 @@ class Reports_model extends CI_Model{
         $resultSet['data'] = $this->db->get($this->tblEmployees . " emp")->result();
         $resultSet['recordsTotal'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $searchFields, $joinArr);
         $resultSet['recordsFiltered'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $searchFields, $joinArr);
-
+        if (intval($export) == 1){
+            $logMessage = "Exported Expiring Probationary Employees as ".$tableConfig['exportType']." count: ".$resultSet['recordsTotal'];
+            $this->core_layout->setEventLog($logMessage, "export", 'success', "gcchris", 'user');
+        }
+        if ($search && $search != '') {
+            $this->core_layout->setEventLog("User searched for: ".$search." in Expiring Probationary Employees. System found: ".$resultSet['recordsTotal']." results.", "search", 'success', "gcchris", 'user');
+        }
         return $resultSet;
     }
 

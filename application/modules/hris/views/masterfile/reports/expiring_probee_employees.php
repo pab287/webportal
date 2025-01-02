@@ -10,14 +10,6 @@
             </div>
         </div>
         <div class="m-portlet__body">
-            <!-- <div class="m-input-icon m-input-icon--left mb-3" style="border: 1px solid #c3c3c3;">
-                <input type="text" class="form-control m-input m-input--solid" placeholder="Search..." id="generalSearch">
-                <span class="m-input-icon__icon m-input-icon__icon--left">
-                    <span>
-                        <i class="la la-search"></i>
-                    </span>
-                </span>
-            </div> -->
             <div class="table-responsive">
                 <table class="table table-bordered table-hover" id="table-expiring-probees" width="100%">
                     <thead>

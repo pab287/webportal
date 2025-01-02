@@ -214,6 +214,7 @@ function exportAs(type) {
 
 async function getExportData(e, dt, node, config, self, url, type) {
     const data = dt.ajax.params();
+    data['exportType'] = type;
     const result = await $.ajax({
         url,
         type: "POST",
