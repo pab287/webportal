@@ -3325,13 +3325,15 @@
             //     return $all_data;
             // }
 
-            $this->db->select("site_name, latitude, longtitude");
+            $this->db->select("id, site_name, latitude, longtitude");
 
             if(isset($post['sites_id']) && $post['sites_id'] != null){
                 $this->db->where("id", $post['sites_id']);
             }
 
-            $all_data = $this->db->get("gcctimeutility.app_location_sites")->result_array();
+            $query = $this->db->get("gcctimeutility.app_location_sites");
+
+            $all_data = isset($post['sites_id']) && $post['sites_id'] != null ? $query->row_array() : $query->result_array();
             return $all_data;
         }
 
