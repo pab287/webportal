@@ -20,6 +20,10 @@
             max-width: 100%;
         }
     }
+
+    .travel-order-control .icon-control{
+        height: 32px !important;
+    }
 </style>
 
 <div class="m-content">
@@ -318,7 +322,7 @@
                                 </div>
                             </div>
                             <div class="col-lg-6 col-sm-12">
-                                <div class="form-group">
+                                <div class="form-group m-form__group">
                                     <label class="control-label col-md-2 m--font-bolder">To</label>
                                     <div class="col-md-12 travel-order-control">
                                         <div class="col-md-12 p-0 input-control">

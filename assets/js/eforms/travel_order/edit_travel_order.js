@@ -1412,21 +1412,22 @@ $("#travelOrderFromIcon .icon").on("click", function(){
     $("#travelOrderOptionFrom").hide();
   }else{
     $("#travelOrderOptionFrom").show();
+    
+    $.ajax({
+      url: baseUrl("eforms/travel_order/sites_options/"),
+      type: "GET",
+      dataType: "JSON",
+      success: function(resp){
+        if(resp.length > 0){
+          vmTab3.checker = true;
+        }else{
+          vmTab3.checker = false;
+        }
+        vmTab3.vm_tab3 = Object.assign({}, resp);
+      }
+    });
   }
 
-  $.ajax({
-    url: baseUrl("eforms/travel_order/sites_options/"),
-    type: "GET",
-    dataType: "JSON",
-    success: function(resp){
-      if(resp.length > 0){
-        vmTab3.checker = true;
-      }else{
-        vmTab3.checker = false;
-      }
-      vmTab3.vm_tab3 = Object.assign({}, resp);
-    }
-  });
 });
 
 var vmTab3 = new Vue({
@@ -1524,21 +1525,22 @@ $("#travelOrderToIcon .icon").on("click", function(){
     $("#travelOrderOptionTo").hide();
   }else{
     $("#travelOrderOptionTo").show();
+    
+    $.ajax({
+      url: baseUrl("eforms/travel_order/sites_options/"),
+      type: "GET",
+      dataType: "JSON",
+      success: function(resp){
+        if(resp.length > 0){
+          vmTab2.checker = true;
+        }else{
+          vmTab2.checker = false;
+        }
+        vmTab2.vm_tab2 = Object.assign({}, resp);
+      }
+    });
   }
 
-  $.ajax({
-    url: baseUrl("eforms/travel_order/sites_options/"),
-    type: "GET",
-    dataType: "JSON",
-    success: function(resp){
-      if(resp.length > 0){
-        vmTab2.checker = true;
-      }else{
-        vmTab2.checker = false;
-      }
-      vmTab2.vm_tab2 = Object.assign({}, resp);
-    }
-  });
 });
 
 var vmTab2 = new Vue({

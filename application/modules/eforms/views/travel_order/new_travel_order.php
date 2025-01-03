@@ -1,3 +1,9 @@
+<style>
+    .travel-order-control .icon-control{
+        height: 32px !important;
+    }
+</style>
+
 <div class="m-content">
     <div class="row">
         <div class="col-lg-12">
