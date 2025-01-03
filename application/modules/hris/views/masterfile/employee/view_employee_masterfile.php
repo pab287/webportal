@@ -21,44 +21,40 @@
         .mobile-view{ position: relative; }
     }
 
+    .bg-a9{
+        background: #a9a8a8;
+        border-color: #a9a8a8;
+        border: 1px solid #a9a8a8 !important;
+    }
+
+    .bg-a9 .m-portlet__head {
+        background-color: #a9a8a8;
+        border-color: #a9a8a8;
+    }
+
+    .bg-a9 .m-portlet__head-text{
+        color: #fff !important;
+    }
+
     table tbody tr.highlight td { font-weight: 600; }
     table tbody tr.highlight { background-color: #F2F3F88F; }
 </style>
-<?php
-    $name = $this->core_layout->getDisplayName(
-    array("lastname" => $data->main->lastname,
-    "firstname" => $data->main->firstname,
-    "middlename" => $data->main->middlename,
-    "suffix" => $data->main->suffix));
 
-    $path = "uploads/files/images/employee_files/empcode_" . $data->main->id . "/" . $data->main->pic_filename;
-    $avatar = base_url($path);
-    if (!file_exists(realpath($path))) { $avatar = base_url("assets/images/profile/no_image.jpg"); }
-    $timestamp = date('M-d-Y h:i:s A');
-?>
-<script>
-    let info = <?php echo json_encode($data->main); ?>;
-    Object.assign(info, {
-        user: "<?= $data->user->display_name  ?>",
-        avatar: "<?= $avatar ?>",
-    });
-</script>
-
-<div class="m-content">
+<div class="m-content" id="m-content">
     <div class="row">
         <div class="col-lg-10 offset-lg-1 col-xl-3 offset-xl-0">
             <div class="m-portlet">
                 <div class="m-portlet__body">
                     <div id="left_pane-card" class="m-card-profile">
-                    <input type="hidden" id="employee_id" value="<?= $data->main->id?>">
+                    <input type="hidden" id="employee_id" v-text="main.id">
                         <div class="m-card-profile__title m--hide">Title Profile</div>
                         <div class="m-card-profile__pic m-card-user__pic">
                             <div class="m-card-profile__pic-wrapper position-relative">
-                                <img id="image--holder" src="<?= $avatar ?>" alt="<?= $data->main->firstname ?>">
+                                <img id="image--holder" :src="path" :alt="main.firstname">
                             </div>
                             <div class="m-card-profile__details">
-                                <span class="m-card-profile__name">
-                                    <?= $name["display_name_1"] ?>
+                                <span class="m-card-profile__name" v-text="getDisplayName().display_name_1">
+
                                 </span>
                             </div>
                             
@@ -79,7 +75,7 @@
                                             <span>ID No.</span>
                                         </div>
                                         <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
-                                            <span class="m--font-bolder"><?= $data->main->idno ?></span>
+                                            <span class="m--font-bolder" v-text="main.idno"></span>
                                         </div>
                                     </div>
                                     <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
@@ -87,7 +83,7 @@
                                             <span>Biometric No.</span>
                                         </div>
                                         <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
-                                            <span class="m--font-bolder"><?= $data->main->biometricno ?></span>
+                                            <span class="m--font-bolder" v-text="main.biometricno"></span>
                                         </div>
                                     </div>
                                     <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
@@ -95,7 +91,7 @@
                                             <span>Position:</span>
                                         </div>
                                         <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
-                                            <span class="m--font-bolder"><?= str_replace('/','/ ',$data->main->position) ?></span>
+                                            <span class="m--font-bolder" v-text="main.position"></span>
                                         </div>
                                     </div>
                                     <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
@@ -103,7 +99,7 @@
                                             <span>Status:</span>
                                         </div>
                                         <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
-                                            <span class="m--font-bolder"><?= $data->main->work_status ?></span>
+                                            <span class="m--font-bolder" v-text="main.work_status"></span>
                                         </div>
                                     </div>
                                     <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
@@ -111,7 +107,7 @@
                                             <span>Employee Status:</span>
                                         </div>
                                         <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
-                                            <span class="m--font-bolder"><?= $data->main->employee_status ?></span>
+                                            <span class="m--font-bolder" v-text="main.employee_status"></span>
                                         </div>
                                     </div>
                                     <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
@@ -119,12 +115,7 @@
                                             <span>Date Started:</span>
                                         </div>
                                         <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
-                                            <span class="m--font-bolder">
-                                            <?php
-                                                $date_start = $data->main->date_start != '0000-00-00' ? new DateTime($data->main->date_start) : "";
-                                                echo !empty($date_start) ? $date_start->format("M d, Y") : "N/A";
-                                            ?>
-                                            </span>
+                                            <span class="m--font-bolder" v-text="formatStartDate(main.date_start)"></span>
                                         </div>
                                     </div>
                                     <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
@@ -132,14 +123,7 @@
                                             <span>Date Ended:</span>
                                         </div>
                                         <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
-                                            <span class="m--font-bolder">
-                                                <?php
-                                                    $date_end = new DateTime($data->main->date_end);
-                                                    if($data->main->date_end == '0000-00-00' || $data->main->date_end == null || $data->main->employee_status == 'Active'){
-                                                        echo "N/A";
-                                                    }else{ echo $date_end->format("M d, Y"); }
-                                                ?>
-                                            </span>
+                                            <span class="m--font-bolder" v-text="formatStartDate(main.date_end)"></span>
                                         </div>
                                     </div>
                                     <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
@@ -147,37 +131,37 @@
                                             <span>Company:</span>
                                         </div>
                                         <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
-                                            <span class="m--font-bolder"><?= $data->main->company_id ?></span>
+                                            <span class="m--font-bolder" v-text="main.company_id"></span>
                                         </div>
                                     </div>
-                                    <?php if ($data->main->position == 'owner'): ?>
+                                    <template>
                                         <div>
-                                        </div>
-                                    <?php else: ?>
-                                        <?php if ($data->main->level == 'SUPERVISORY' || $data->main->level == 'MANAGERIAL' || $data->main->level == 'EXECUTIVE' ): ?>
-                                            <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
-                                                <div class="col-xl-6">
-                                                    <span>Head/Supervisor:</span>
-                                                </div>
-                                                <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
-                                                    <span class="m--font-bolder">Charles Anthony M. Dumancas</span>
-                                                </div>
+                                            <div v-if="main.position === 'owner'">
                                             </div>
-                                        <?php else: ?>
-                                            <?php if (empty($data->supervisor)): ?>
-                                                <div></div>
-                                            <?php else: ?>
-                                                <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                            <template v-else>
+                                                <div v-if="['SUPERVISORY', 'MANAGERIAL', 'EXECUTIVE'].includes(main.level)" class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                                    <div class="col-xl-6">
+                                                        <span>Head/Supervisor:</span>
+                                                    </div>
+                                                    <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
+                                                        <span class="m--font-bolder">Charles Anthony M. Dumancas</span>
+                                                    </div>
+                                                </div>
+                                            <template v-else>
+                                                <div v-if="!supervisor">
+                                                </div>
+                                                <div v-else class="mt-1 text-sm-center text-xl-left text-lg-left row">
                                                     <div class="col-xl-6">
                                                         <span>Head/Supervisor</span>
                                                     </div>
                                                     <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
-                                                        <span class="m--font-bolder"><?=($data->supervisor) ?></span>
+                                                        <span class="m--font-bolder" v-text="supervisor"></span>
                                                     </div>
                                                 </div>
-                                            <?php endif; ?>
-                                        <?php endif; ?>
-                                    <?php endif; ?>
+                                            </template>
+                                            </template>
+                                        </div>
+                                    </template>
                                 </div>
                             </div>
                         </div>
@@ -185,26 +169,22 @@
                             <li class="m-nav__separator m-nav__separator--fit"></li>
                             <li class="m-nav__item">
                                 <a class="m-nav__link btnEdit"
-                                   href="<?= base_url("hris/masterfile/edit_employee_masterfile/" . $data->main->id) ?>">
+                                :href="baseUrl() + '/hris/masterfile/edit_employee_masterfile/' + main.id">
                                     <i class="m-nav__link-icon flaticon-edit"></i>
                                     <span class="m-nav__link-text">Edit Employee Profile</span>
                                 </a>
                             </li>
                             <li class="m-nav__item">
                                 <a class="m-nav__link btnBack"
-                                   href="<?php echo base_url("hris/masterfile/employee"); ?>">
+                                   :href="baseUrl('hris/masterfile/employee')">
                                     <i class="m-nav__link-icon fa fa-arrow-left"></i>
                                     <span class="m-nav__link-text">Back to Employee List</span>
                                 </a>
                             </li>
                             <li class="m-nav__item">
-                                <!-- a class="m-nav__link btnPrint" id="printDataSheet" href="javascript:void(0)"
-                                   onclick="event.preventDefault(); printEmployeeDataSheet(this, '<?= $avatar ?>', info, '<?= $data->user->display_name ?>', '<?= $timestamp ?>')">
-                                    <i class="m-nav__link-icon la la-print"></i>
-                                    <span class="m-nav__link-text">Print Data Sheet</span>
-                                </a -->
-                                <a class="m-nav__link btnPrint" id="printDataSheet" href="javascript:void(0)"
-                                   onclick="event.preventDefault(); printEmployeeDataSheet(this, '<?= $avatar ?>', info, '<?= $data->user->display_name ?>', '<?= $timestamp ?>')">
+                                <a class="m-nav__link btnPrint"
+                                   href=""
+                                   onclick="event.preventDefault(); printFetch()">
                                     <i class="m-nav__link-icon la la-print"></i>
                                     <span class="m-nav__link-text">Print Data Sheet</span>
                                 </a>
@@ -324,21 +304,16 @@
                         </div>
                     </div>
                 </div>
-                <div class="m-portlet__body data-sheet">
-
-                    <!-- for 201 printing -->
+                <div id="data-sheet" class="m-portlet__body data-sheet">
                     <div class="m-portlet__section web-view" id="to-print">
-                        <?php $this->load->view("hris/masterfile/employee/sections/personal_information", $data, false); ?>
+                        <?php $this->load->view("hris/masterfile/employee/sections/personal_information"); ?>
                     </div>
                     <div class="m-portlet__section web-view" id="to-print">
-                        <?php $this->load->view("hris/masterfile/employee/sections/employment_data", $data, false); ?>
+                        <?php $this->load->view("hris/masterfile/employee/sections/employment_data"); ?>
                     </div>
-                    <!-- for 201 printing -->
-
                     <div id="hide-in-print" class="m-portlet__section web-view">
                         <?php $this->load->view("hris/masterfile/employee/sections/employee_data_web", $data, false); ?>
                     </div>
-
                     <div class="m-portlet__section mobile-view" style="display: none">
                         <?php $this->load->view("hris/masterfile/employee/sections/employee_data", $data, false); ?>
                     </div>

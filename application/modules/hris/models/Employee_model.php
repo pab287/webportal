@@ -4175,6 +4175,32 @@
             return $arrData;
         }
 
+        function getEmployeeDataDetails($employee_id){
+            $main = $this->getEmployee($employee_id);
+            $supervisorId = $main->supervisor;
+            $path = "uploads/files/images/employee_files/empcode_" . $main->id . "/" . $main->pic_filename;
+            $avatar = base_url($path);
+            $timestamp = date('M-d-Y h:i:s a');
+            if (!file_exists(realpath($path))) {
+                $avatar = base_url("assets/images/profile/no_image.jpg");
+            }
+            $result = $this->db->select("
+                CASE 
+                    WHEN LENGTH(middlename) > 1 THEN CONCAT(firstname, ' ', SUBSTRING(middlename, 1, 1), '. ', lastname)
+                    ELSE CONCAT(firstname, ' ', middlename, ' ', lastname)
+                END AS name
+            ")->from($this->employeeTable)->where("id", $supervisorId)->get()->result();
+            $supervisorName = empty($result)? false : $result[0]->name;
+            return
+            array(
+                "supervisor" => $supervisorName,
+                "timestamp" => $timestamp,
+                "main" => $main,
+                "path" => $avatar,
+                "user" => $this->core_layout->getUserLoggedIn(),
+            );
+        }
+
         function getEmployeeDataSheetDetails($employee_id) {
             $main = $this->core_layout->getEmployee($employee_id);
             $supervisorId = $main->supervisor;
@@ -10958,4 +10984,146 @@
 
             return $result;
         }
+
+        public function getAddtionalInfo($id){
+            $data['dependents'] = $this->db->select("dep_name , dep_relation, dep_birthdate")->get_where($this->employeeDependentsTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            $this->db->reset_query();
+            return $data;
+        }
+
+        public function getEducationBackground($id){
+            $data['educations'] = $this->db->order_by('educ_to', 'DESC')->get_where($this->employeeEducationTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            return $data;
+        }
+
+        public function getLicenseAndCerts($id){
+            $data['licenses'] = $this->db->get_where($this->employeeLicensureTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            $this->db->reset_query();
+            $data['driverlicenses'] = $this->db->get_where($this->employeeDriverLicenseTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            $this->db->reset_query();
+            $if_driver = $this->db->select("emp.position as position")->get_where($this->employeeTable . " emp", array("emp.id" => $id))->row_array();
+            $this->db->reset_query();
+            if(is_numeric($if_driver['position'])){
+                $driver = $this->db
+                ->group_start()
+                ->like("pos.name","driver")
+                ->or_like("pos.name","operator")
+                ->group_end()
+                ->from("gcchris.tblposition pos")
+                ->join("gccmaster.tblemployees emp","emp.position = pos.id")
+                ->where("emp.id",$id)
+                ->count_all_results();
+                $this->db->reset_query();
+
+            }else{
+                $driver = $this->db
+                ->group_start()
+                ->like("emp.position","driver")
+                ->or_like("emp.position","operator")
+                ->group_end()
+                ->from("gccmaster.tblemployees emp")
+                ->where("emp.id",$id)
+                ->count_all_results();
+                $this->db->reset_query();
+            }
+            $data['if_driver'] = $driver;
+            return $data;
+        }
+
+        public function getEmpWorkExperience($id){
+            $this->db->select("xps.id, xps.emp_id, xps.work_to,
+                               xps.work_company, xps.work_status, xps.work_reason, xps.work_from, old_idno,
+                               IF(pos.id IS NULL, xps.work_position, pos.`name`) work_position");
+            $this->db->from($this->employeeWorkExperienceTable . " xps");
+            $this->db->join($this->positionTable . " pos", "pos.id = xps.work_position", "LEFT");
+            $this->db->where('xps.emp_id', $id);
+            $this->db->order_by("xps.work_from DESC, xps.work_to DESC");
+            $query = $this->db->get();
+            return ['works' => $query->result()];
+        }
+
+
+        public function getAwardsAndAchievements($id){  
+            $data['awards'] = $this->db->order_by("award_date", "desc")->get_where($this->employeeAwardsTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            $this->db->reset_query();
+            return $data;
+        }
+
+        public function getEmpSkills($id){
+            $data['skillset'] = $this->db->select('id,skills')->get_where($this->employeeSkillsTable, array("emp_id" => $id,"is_archived" => 0))->result();            
+            return $data;
+        }
+
+        public function getOrgs($id){
+            $data['organizations'] = $this->db->order_by("org_to","desc")->get_where($this->employeeOrganizationTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            return $data;
+        }
+
+        public function getTrainingsAndSeminars($id){
+            $data['trainings'] = $this->db->order_by("train_to","desc")->get_where($this->employeeTrainingsTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            return $data;
+        }
+
+        public function getPersonalReferences($id){
+            $data['references'] = $this->db->get_where($this->employeeReferencesTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            return $data;
+        }
+
+        public function getEmpMedicalHistory($id){
+            $data['medicals'] = $this->db->order_by("med_date","desc")->get_where($this->employeeMedicalHistoryTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            return $data;
+        }
+
+        public function getLegalHistory($id){
+            $data['legals'] = $this->db->order_by("leg_case_date","desc")->get_where($this->employeeLegalHistoryTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            return $data;
+        }
+
+        public function getAccountability($id){
+            $data['accountability'] = $this->getEmployeeAccountability(0, $id);
+            return $data;
+        }
+
+        public function getEmploymentInformation($id){
+            $post = $this->input->post();
+            $data['offenses'] =  $this->db->order_by('offcom_date', 'DESC')->get_where($this->employeeOffensesTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            $this->db->reset_query();
+            $data['salaries'] = $this->db
+                ->select("sal.id,sal.add_date, sal.sal_date, sal.sal_rate, sal.sal_remarks, IF(pos.id IS NULL, sal.sal_position, pos.name) sal_position")
+                ->join("gcchris.tblposition pos", "pos.id = sal.sal_position", "LEFT")
+                ->order_by("sal.add_date", "desc")
+                ->get_where($this->employeeSalaryTable . " sal", array("sal.emp_id" => $id, "sal.is_archived" => 0))
+                ->result();
+            $this->db->reset_query();
+            $personnelId = $this->getEmpLocation($post['biono']);
+            $this->db->reset_query();
+            $data['stations'] = $this->db->order_by('id', 'DESC')->get_where($this->tblPersonnelLocation, array("personnel_id" => $personnelId))->result();
+            $this->db->reset_query();
+            $data['default_station'] = $this->db->select("UPPER(TRIM(station_description)) as description")->order_by('id', 'DESC')->get_where($this->defaultStationTable, array("employee_id" => $id))->row();
+            $this->db->reset_query();
+            return $data;
+        }
+
+        public function getEmployee($emp_id){
+            $data = array();
+            $this->db->select("emp.id, emp.lastname, emp.firstname, emp.middlename, emp.suffix, emp.curr_addr, emp.prov_addr, emp.citizenship, emp.religion, emp.languages, emp.email, emp.gender, emp.civil_stat, emp.bday, emp.birthplace, emp.bloodtype, emp.height, emp.weight, emp.hair_color, emp.complexion, emp.tel_no, emp.mobile_no, 
+            emp.pic_filename, emp.idno, emp.biometricno, pos.name as position ,pos.id as position_id, emp.work_status, emp.employee_status, emp.date_start, emp.date_end, com.code as company_id, emp.level, emp.date_regular, emp.date_end_prob, emp.resign_reason, pos.job_desc, emp.supervisor, emp.ques1, emp.ques2, emp.ques3, emp.ques4, emp.ques5, emp.ques6, emp.ques7, emp.ques8, emp.ques9,
+            emp.email, emp.tax_status, emp.tin_no, emp.phealth_no, emp.pagibig_no, emp.sss_no,
+            emp.fat_name, emp.mot_name, emp.partner_type, emp.spo_deceased, emp.partners_deceased, emp.spo_name, emp.partners_name, emp.fat_addr, emp.mot_addr, emp.spo_addr, emp.partners_addr, emp.fat_company, emp.mot_company, emp.spo_company, emp.partners_company, emp.fat_occupation, emp.mot_occupation, emp.spo_occupation, emp.partners_occupation, emp.fat_contact, emp.mot_contact, emp.spo_contact, emp.partners_contact, emp.emer_addr, emp.emer_contact, emp.emer_name, 
+            dept.description as department_description, emp.work_mode, emp.payroll_type
+            ");
+            $this->db->from($this->employeeTable." as emp");
+            $this->db->join($this->positionTable." as pos", "pos.id = emp.position", "LEFT");
+            $this->db->join($this->companyTable." as com", "com.id = emp.company_id", "LEFT");
+            $this->db->join($this->departmentTable." as dept", "dept.id = emp.department_id", "LEFT");
+            $this->db->where("emp.id", $emp_id);
+            $data = $this->db->get()->row();
+            return $data;
+        }
+
+        public function getEmpJobDescription($id){
+            $data = $this->db->select('job_desc')->get_where($this->positionTable, array("id" => $id))->row();
+            return $data;
+        }
+
     }

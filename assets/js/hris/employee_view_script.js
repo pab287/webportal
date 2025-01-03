@@ -1,15 +1,418 @@
+let actions = _currentActions;
+let session_id = $("#user_id").val();
+let employeeData = _tempContentData.data.main;
+let user_name = _tempContentData.data.user.display_name;
+let id = employeeData.id;
+let today = _tempContentData.data.timestamp;
 $(document).ready(function(){
-    var id = $("#employee_id").val();
-    getPerformanceRating(id);
-
     $('#column-options').on('click', function (e) {
         e.stopPropagation();
     });
 });
 
+let employeeDataSheet = new Vue({
+    el:"#m-content",
+    data:{ 
+            activeSection:"",
+            main:[],
+            supervisor:"",
+            path:"",
+            dependents:[],
+            job_desc:"",
+            questions:{
+                ques1: "HAVE YOU EVER BEEN EMPLOYED BY US BEFORE? IN WHAT BRANCH AND WHAT POSITION?",
+                ques2: "WHO REFERRED YOU TO OUR COMPANY?",
+                ques3: "NAME OF FRIENDS/RELATIVES EMPLOYED IN THIS COMPANY",
+                ques4: "WHERE DID YOU LEARN OF THE VACANCY? ADVERTISING / WALK IN / REFERRAL / SCHOOL PLACEMENT / OTHERS (PLS. SPECIFY)?",
+                ques5: "DO YOU HAVE ANY CURRENT ILLNESS OR PHYSICAL DEFECTS? IF YES, PLEASE DESCRIBE.",
+                ques6: "HAVE YOU BEEN HOSPITALIZED FOR THE PAST 12 MONTHS? IF YES, STATE WHAT ILLNESS, DATE OF CONFINEMENT AND NAME OF HOSPITAL.",
+                ques7: "HAVE YOU BEEN CHARGED OF ANY CRIMINAL, CIVIL, OR ADMINISTRATIVE OFFENSE? IF YES, PLEASE DESCRIBE.",
+                ques8: "HAVE YOU FILED ANY LABOR CASE AGAINST PREVIOUS EMPLOYERS? IF YES, WHAT TYPE DOLE,NLRC OR OTHER, PLEASE DESCRIBE.",
+                ques9: "WERE YOU INVOLVED OR HAVE PREVIOUSLY PARTICIPATED IN ANY LABOR STRIKE? IF YES, PLEASE DESCRIBE."
+            },
+            educations:"",
+            licensesAndCerts:{
+                licenses:"",
+                driverlicenses:"",
+                if_driver:"",
+            },
+            works:[],
+            awards:[],
+            skillset:[],
+            organizations: [],
+            trainings:[],
+            references:[],
+            medicals:[],
+            legals:[],
+            accountability:[],
+            offenses:[],
+            salaries:[],
+            stations:[],
+            default_station:[],
+            printData:{
+                main : {},
+                dependents:{},
+                licensesAndCerts:{
+                    licenses:"",
+                    driverlicenses:"",
+                    if_driver:"",
+                },
+                experiences:[],
+                awards:[],
+                skillset:[],
+                organizations: [],
+                trainings:[],
+                references:[],
+                medicals:[],
+                legals:[],
+                accountability:[],
+                offenses:[],
+                salaries:[],
+                stations:[],
+                default_station:[],
+                return_to_work:[],
+            }
+    },
+    created() {
+
+    },
+    mounted(){
+        this.getSidebarData();
+        getPerformanceRating(id);
+        if (_tempContentData.tab == null){
+            this.$data.activeSection = "personalInfo"
+        }else{
+            this.$data.activeSection =  _tempContentData.tab
+        }
+        switch (this.$data.activeSection) {
+            case "personalInfo":
+                this.getPersonalInformation();
+                break;
+            case "additionalInfo":
+                this.getPersonalInformation();
+                getAdditionalInformation();
+                break;
+            case "employmentQuestion":
+                this.getPersonalInformation();
+                break;
+            case "educBackground":
+                getEducationBackground();
+                break;
+            case "licenseAndCert":
+                getLicenseAndCert();
+                break;
+            case "workExperience":
+                getWorkExperience();
+                break;
+            case "employeeAwards":
+                getAwardsAndAchievements();
+                break;
+            case "empSkills":
+                getEmpSkills();
+                break;
+            case "empOrg":
+                getEmpOrgs();
+                break;
+            case "empTrainings":
+                getTrainingsAndSeminars();
+                break;
+            case "empPersonalReferences":
+                getPersonalReferences();
+                break;
+            case "empMedicalHistory":
+                getMedicalHistory();
+                break;
+            case "empLegalHistory":
+                getLegalHistory();
+                break;
+            case "empAccountability":
+                getAccountability();
+                break;
+            case "empEmploymentInfo":
+                this.getPersonalInformation();
+                getEmploymentInformation();
+                break;
+            case "jobDescription":
+                getJobDescription();
+                break;
+            default:
+             {
+                this.$data.activeSection = "personalInfo"
+                this.getPersonalInformation();
+             }
+        }
+    },
+
+    methods:{
+        getSidebarData(){
+            this.main = { ...this.$data.main, ..._tempContentData.data.main };
+            this.path = _tempContentData.data.path;
+            this.supervisor = _tempContentData.data.supervisor;
+        },
+        getDisplayName() {
+            const { firstname, middlename, lastname, suffix } = this.main;
+      
+            let displayName1 = '';
+            let displayName2 = '';
+      
+            const middleInitial = middlename && !['', 'N/A', 'NONE'].includes(middlename.toUpperCase()) 
+              ? middlename.trim()[0].toUpperCase() + '.'
+              : '';
+      
+            const formattedSuffix = suffix && !['', 'N/A', 'NONE'].includes(suffix.toUpperCase()) 
+              ? suffix.toUpperCase()
+              : '';
+      
+            if (middleInitial && formattedSuffix) {
+              displayName1 = `${lastname}, ${firstname} ${middleInitial} ${formattedSuffix}`;
+              displayName2 = `${firstname} ${middleInitial} ${lastname} ${formattedSuffix}`;
+            } else if (formattedSuffix) {
+              displayName1 = `${lastname}, ${firstname} ${formattedSuffix}`;
+              displayName2 = `${firstname} ${lastname} ${formattedSuffix}`;
+            } else if (middleInitial) {
+              displayName1 = `${lastname}, ${firstname} ${middleInitial}`;
+              displayName2 = `${firstname} ${middleInitial} ${lastname}`;
+            } else {
+              displayName1 = `${lastname}, ${firstname}`;
+              displayName2 = `${firstname} ${lastname}`;
+            }
+      
+            displayName1 = displayName1.toUpperCase();
+            displayName2 = displayName2.toUpperCase();
+      
+            return {
+              display_name_0: displayName1,
+              display_name_1: displayName2
+            };
+          },
+        getPersonalInformation(){
+            if (!hasValue(this.main)) {
+                this.main = { ...this.$data.main, ..._tempContentData.data.main };
+            }
+        },
+        calculateAge(birthdate){
+            if (!birthdate || birthdate == '0000-00-00') {
+                return '---';
+              }
+            const currentDate = new Date();
+            const birthdateObj = new Date(birthdate);
+            const diffMs = currentDate - birthdateObj;
+            const diffYears = currentDate.getFullYear() - birthdateObj.getFullYear();
+            const diffMonths = currentDate.getMonth() - birthdateObj.getMonth();
+            const diffDays = currentDate.getDate() - birthdateObj.getDate();
+    
+            if (diffYears == 0 && diffMonths == 0) {
+                const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                return days > 1 ? `${days} Days Old` : '1 Day Old';
+            } else if (diffYears == 0) {
+                const months = diffMonths >= 0 ? diffMonths : diffMonths + 12;
+                return months > 1 ? `${months} Months Old` : '1 Month Old';
+            } else {
+                return diffYears > 1 ? `${diffYears} Years Old` : '1 Year Old';
+            }
+        },
+        displayName(lastname, firstname, middlename, suffix) {
+            const middleInitial = middlename?.trim()?.[0]?.toUpperCase() || '';
+            const formattedSuffix = suffix?.toLowerCase() === suffix?.toUpperCase() ? '' : suffix.toUpperCase();
+          
+            return [
+              `${lastname.toUpperCase()}, ${firstname.toUpperCase()}${middleInitial}${formattedSuffix}`,
+              `${firstname.toUpperCase()}${middleInitial} ${lastname.toUpperCase()}${formattedSuffix}`
+            ];
+          },
+        formatDate(empdate) {
+            if (!empdate || empdate == '0000-00-00') {
+                return '---';
+              }
+            const date = new Date(empdate);
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: '2-digit', 
+                year: 'numeric' 
+              });
+        },
+        formatStartDate(empdate) {
+            if (!empdate || empdate == '0000-00-00') {
+                return 'N/A';
+              }
+            const date = new Date(empdate);
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: '2-digit', 
+                year: 'numeric' 
+              });
+        },
+        hasAnswer(question) {
+            const answerKey = this.main[question];
+            return answerKey != null && (typeof answerKey !== 'string' || answerKey.trim()) &&
+                   (typeof answerKey !== 'object' || Object.keys(answerKey).length) &&
+                   (Array.isArray(answerKey) ? answerKey.length : true)
+                ? answerKey
+                : "N/A";
+        },
+
+        getExpirationClass(expirationDate) {
+            const today = new Date();
+            const expirationDateObj = new Date(expirationDate);
+            return expirationDateObj > today ? 'm-badge--success' : 'm-badge--danger';
+        },
+
+        formatAmount(amount) {
+            return new Intl.NumberFormat('en-PH', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }).format(amount);
+          },
+    
+          isReturned(acct) {
+            return parseInt(acct.is_returned) == 1;
+          },
+          hasRemarks(acct) {
+            return !!acct.remarks_returned
+          },
+          formatSalaryRate(rate) {
+            if (!rate || rate == '') return 'NONE';
+
+            const formattedRate = new Intl.NumberFormat('en-PH', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }).format(parseFloat(rate.replace(',', '')));
+            
+            return formattedRate;
+          },
+          isCurrentSalary(salary, index) {
+            const grandTotal = parseFloat(this.data.grandTotal);
+            return salary.sal_rate == grandTotal && index == 0;
+          },
+          formattedJobDesc() {
+            if (!this.job_desc) return '';
+            
+            // Create a temporary div to parse HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = this.job_desc;
+            
+            // Check if there are any li elements
+            const hasListItems = tempDiv.getElementsByTagName('li').length > 0;
+            
+            // If it has list items, return the HTML as is
+            // If not, convert newlines to <br>
+            return hasListItems 
+              ? this.job_desc 
+              : this.job_desc.replace(/\n/g, '<br>');
+          },
+    }
+})
+
+$('#personalInfo-body, #collapsePersonal').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.main)) {
+        employeeDataSheet.getPersonalInformation();
+    }
+})
+
+$('#additionalInfo-body, #collapseAdditional').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.main) || !hasValue(employeeDataSheet.dependents)) {
+        employeeDataSheet.getPersonalInformation();
+        getAdditionalInformation();
+    } 
+});
+
+$('#employmentQuestion-body, #collapseQuestion').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.main)) {
+        employeeDataSheet.getPersonalInformation();
+    }
+});
+
+$('#educBackground-body, #collapseEducation').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.educations)) {
+        getEducationBackground();
+    }
+});
+
+$('#licenseAndCert-body, #collapseLicense').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.licensesAndCerts)) {
+        getLicenseAndCert();
+    }
+});
+
+$('#workExperience-body, #collapseWork').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.works)) {
+        getWorkExperience();
+    }
+});
+
+$('#employeeAwards-body, #collapseAwards').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.awards)) {
+        getAwardsAndAchievements();
+    }
+});
+
+$('#empSkills-body, #collapseSkill').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.skillset)) {
+        getEmpSkills();
+    }
+});
+
+$('#empOrg-body, #collapseOrg').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.organizations)) {
+        getEmpOrgs();
+    }
+});
+
+$('#empTrainings-body, #collapseTrain').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.trainings)) {
+        getTrainingsAndSeminars();
+    }
+});
+
+$('#empPersonalReferences-body, #collapseRef').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.references)) {
+        getPersonalReferences();
+    }
+});
+
+$('#empMedicalHistory-body, #collapseMed').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.medicals)) {
+        getMedicalHistory();
+    }
+});
+
+$('#empLegalHistory-body, #collapseLegal').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.legals)) {
+        getLegalHistory();
+    }
+});
+
+$('#empAccountability-body, #collapseAccountability').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.accountability)) {
+        getAccountability();
+    }
+});
+
+$('#empEmploymentInfo-body, #collapseEmployment').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.main) || !hasValue(employeeDataSheet.offenses)) {
+        employeeDataSheet.getPersonalInformation();
+        getEmploymentInformation();
+    } 
+});
+
+$('#jobDescription-body, #collapseEmployment').on('show.bs.collapse', function () {
+    if (!hasValue(employeeDataSheet.job_desc)) {
+        getJobDescription();
+    }
+})
+
+function hasValue(obj) {
+    return Object.values(obj).some(value => {
+        if (value !== null && value !== undefined) {
+            return Boolean(value);
+        }
+        return false;
+    });
+}
+
 function getPerformanceRating(id){
     $("#performance-rating").starRating({
-        readOnly: true,
+        readOnly: true, 
         totalStars: 5,
         starShape: 'rounded',
         starSize: 25,
@@ -25,6 +428,7 @@ function getPerformanceRating(id){
         url: baseUrl("core/profile/get_employee_rating_remarks/" + id),
         type: "post",
         dataType: "json",
+        global: false,
         data: { csrf_token: _csrf_hash},
         success: function (response) {
             if(response){
@@ -34,20 +438,328 @@ function getPerformanceRating(id){
                 $("#performance-rating").starRating('setRating', 0);
                 $("#performance-rating-description").html("");
             }
-            
-           
         }
     });
     
 }
 
-$(document).on("click", "#printDataSheet", function (e) {
-    e.preventDefault();
-    const currentTimestamp = moment().format('LLL');
-    const { avatar, user } = info;
+function showRemarks(remarks) {
+    $('#remarksText').text(remarks);
+    $('#remarksModal').modal('show');
+}
 
-    printEmployeeDataSheet(avatar, info, user, currentTimestamp);
-});
+function getAdditionalInformation(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_additional_info/")+id,
+        type: "GET",
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            if (!response.dependents || Object.keys(response.dependents).length == 0) {
+                employeeDataSheet.$data.dependents = false;
+            } else {
+                employeeDataSheet.$data.dependents = { ...employeeDataSheet.$data.dependents, ...response.dependents};
+            }
+        }
+    });
+}
+
+function getEducationBackground(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_education_background/")+id,
+        type: "GET",
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            if (!response.educations || Object.keys(response.educations).length == 0) {
+                employeeDataSheet.$data.educations = false;
+            } else {
+                employeeDataSheet.$data.educations = { ...employeeDataSheet.$data.educations, ...response.educations 
+                };
+            }
+        }
+    });
+}
+
+function getLicenseAndCert(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_license_and_cert/")+id,
+        type: "GET",
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            employeeDataSheet.$data.licensesAndCerts = { ...employeeDataSheet.$data.licensesAndCerts, ...response };
+        }
+    });
+}
+
+function getWorkExperience(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_work_experience/")+id,
+        type: "GET",
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            if (!response.works || Object.keys(response.works).length == 0) {
+                employeeDataSheet.$data.works = false;
+            } else {
+                employeeDataSheet.$data.works = { ...employeeDataSheet.$data.works, ...response.works };
+            }
+        }
+    });
+}
+
+
+function getAwardsAndAchievements(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_awards_and_achievements/")+id,
+        type: "GET",
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            if (!response || Object.keys(response.awards).length == 0) {
+                employeeDataSheet.$data.awards = false;
+            } else {
+                employeeDataSheet.$data.awards = { ...employeeDataSheet.$data.awards, ...response.awards };
+            }
+        }
+    });
+}
+
+function getEmpSkills(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_emp_skills/")+id,
+        type: "GET",
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            if (!response || Object.keys(response.skillset).length == 0) {
+                employeeDataSheet.$data.skillset = false;
+            } else {
+                employeeDataSheet.$data.skillset = { ...employeeDataSheet.$data.skillset, ...response.skillset };
+            }
+        }
+    });
+}
+
+function getEmpOrgs(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_orgs/")+id,
+        type: "GET",
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            if (!response || Object.keys(response.organizations).length == 0) {
+                employeeDataSheet.$data.organizations = false;
+            } else {
+                employeeDataSheet.$data.organizations = { ...employeeDataSheet.$data.organizations, ...response.organizations };
+            }
+        }
+    });
+}
+
+function getTrainingsAndSeminars(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_trainings_and_seminars/")+id,
+        type: "GET",
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            if (!response || Object.keys(response.trainings).length == 0) {
+                employeeDataSheet.$data.trainings = false;
+            } else {
+                employeeDataSheet.$data.trainings = { ...employeeDataSheet.$data.trainings, ...response.trainings };
+            }
+        }
+    });
+}
+
+
+function getPersonalReferences(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_personal_references/")+id,
+        type: "GET",
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            if (!response || Object.keys(response.references).length == 0) {
+                employeeDataSheet.$data.references = false;
+            } else {
+                employeeDataSheet.$data.references = { ...employeeDataSheet.$data.references, ...response.references };
+            }
+        }
+    });
+}
+
+function getMedicalHistory(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_medical_history/")+id,
+        type: "GET",
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            if (!response || Object.keys(response.medicals).length == 0) {
+                employeeDataSheet.$data.medicals = false;
+            } else {
+                employeeDataSheet.$data.medicals = { ...employeeDataSheet.$data.medicals, ...response.medicals };
+            }
+        }
+    });
+}
+
+function getLegalHistory(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_legal_history/")+id,
+        type: "GET",
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            if (!response || Object.keys(response.legals).length == 0) {
+                employeeDataSheet.$data.legals = false;
+            } else {
+                employeeDataSheet.$data.legals = { ...employeeDataSheet.$data.legals, ...response.legals };
+            }   
+        }
+    });
+}
+
+function getAccountability(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_accountability/")+id,
+        type: "GET",
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            if (!response || Object.keys(response.accountability).length == 0) {
+                employeeDataSheet.$data.accountability = false;
+            } else {
+                employeeDataSheet.$data.accountability = { ...employeeDataSheet.$data.accountability, ...response.accountability };
+                $("#accountability_table_mobile").dataTable({
+                    pageLength : 5,
+                    bLengthChange : false,
+                    data: Object.values(employeeDataSheet.$data.accountability),
+                    columns:[
+                        { data: 'status' },
+                        { data: null, 
+                            render: function(data, type, row) {
+
+                                const formattedAmount = parseFloat(row.amount).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                
+
+                                const returnStatus = parseInt(row.is_returned) === 1 
+                                    ? '<span class="m-badge m-badge--success px-2 m--font-bolder">Yes</span>'
+                                    : '<span class="m-badge m-badge--danger px-2 m--font-bolder">No</span>';
+                
+     
+                                const formattedDate = row.date_returned && row.date_returned !== "0000-00-00" 
+                                    ? new Date(row.date_returned).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric'
+                                    })
+                                    : 'N/A';
+                
+                                return `
+                                    <div style="font-size: 0.8em">
+                                        <p style="margin-bottom: 0.3rem"><b>Ref. No:</b> <span>${row.reference_no}</span></p>
+                                        <p style="margin-bottom: 0.3rem"><b>Asset Code:</b> <span>${row.asset_code}</span></p>
+                                        <p style="margin-bottom: 0.3rem"><b>Asset Name:</b> <span>${row.aname}</span></p>
+                                        <p style="margin-bottom: 0.3rem"><b>Amount:</b> <span>${formattedAmount}</span></p>
+                                        <p style="margin-bottom: 0.3rem">
+                                            <b>Returned:</b> ${returnStatus}
+                                        </p>
+                                        <p style="margin-bottom: 0.3rem"><b>Date:</b> <span>${formattedDate}</span></p>
+                                    </div>
+                                `;
+                            }
+                        }
+                    ]
+                });
+
+            }
+        }
+    });
+}
+
+function getEmploymentInformation(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_employment_information/")+id,
+        type: "post",
+        data:{csrf_token: _csrf_hash,biono : employeeData.biometricno},
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            if (actions.includes("view_own_request") && employeeDataSheet.$data.main.id !== session_id) {
+                employeeDataSheet.$data.salaries = "not_allowed";
+            }else{
+                if (!response || Object.keys(response.salaries).length == 0) {
+                    employeeDataSheet.$data.salaries = false;
+                } else {
+                    employeeDataSheet.$data.salaries = { ...employeeDataSheet.$data.salaries, ...response.salaries };
+                }
+            }
+            if (!response || Object.keys(response.offenses).length == 0) {
+                employeeDataSheet.$data.offenses = false;
+            } else {
+                employeeDataSheet.$data.offenses = { ...employeeDataSheet.$data.offenses, ...response.offenses };
+            }
+
+            if (!response || Object.keys(response.stations).length == 0) {
+                employeeDataSheet.$data.stations = false;
+            } else {
+                employeeDataSheet.$data.stations = { ...employeeDataSheet.$data.stations, ...response.stations };
+            }
+
+            if (!response || response.default_station == null) {
+                employeeDataSheet.$data.default_station = false;
+            } else {
+                employeeDataSheet.$data.default_station = { ...employeeDataSheet.$data.default_station, ...response.default_station };
+            }
+
+        }
+    });
+}
+
+function getJobDescription(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_job_description/")+employeeDataSheet.$data.main.position_id,
+        type: "post",
+        data:{csrf_token: _csrf_hash},
+        dataType: "JSON",
+        global: false,
+        success: function(response) {            
+            if (!response || response.job_desc == null) {
+                employeeDataSheet.$data.job_desc = false;
+            } else {
+                employeeDataSheet.$data.job_desc =  response.job_desc;
+            }
+        }
+    });
+}
+
+function printFetch(){
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_print_data/")+id,
+        type: "post",
+        data:{csrf_token: _csrf_hash},
+        dataType: "JSON",
+        global: false,
+        success: function(response) {
+            if(response){
+                employeeDataSheet.$data.printData = { ...employeeDataSheet.$data.printData, ...response.data };
+                if (actions.includes("view_own_request") && employeeDataSheet.$data.printData.main.id !== session_id) {
+                    employeeDataSheet.$data.printData.salaries = "not_allowed";
+                }
+                Vue.nextTick(() => {
+                    printEmployeeDataSheet(employeeDataSheet.path, employeeDataSheet.$data.printData, user_name ,today)
+                });
+            }
+        }
+    })
+}
 
 function printEmployeeDataSheet(avatar, info, user, timestamp) {
     const divToPrint = $(".data-sheet").html();
@@ -210,8 +922,8 @@ function printEmployeeDataSheet(avatar, info, user, timestamp) {
         '               <td>' +
         '                   <div style="display: block;">' +
         '                       <div class="avatar"></div>' +
-        '                       <p style="margin: 8px 0 0; font-size: 14px;">ID No.: ' + info.idno + '</p>' +
-        '                       <p style="margin: 2px 0 0; font-size: 14px;">Biometric No.: ' + info.biometricno + '</p>' +
+        '                       <p style="margin: 8px 0 0; font-size: 14px;">ID No.: ' + info.main.idno + '</p>' +
+        '                       <p style="margin: 2px 0 0; font-size: 14px;">Biometric No.: ' + info.main.biometricno + '</p>' +
         '                   </div>' +
         '               </td>' +
         '           </tr>' +
@@ -248,11 +960,7 @@ function printEmployeeDataSheet(avatar, info, user, timestamp) {
     setTimeout(function () {
         newWin.close();
     }, 1500);
-    
 }
 
-function showRemarks(remarks) {
-    $('#remarksText').text(remarks);
-    $('#remarksModal').modal('show');
-}
+
 
