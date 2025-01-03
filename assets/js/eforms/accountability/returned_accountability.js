@@ -22,11 +22,25 @@ function tblReleased() {
         searching: false,
         columns: [
             { data: "status", width: "5%", className: "text-center", render: function () { return renderStatusHtml() } },
-            { data: "company" },
+            { data: "company",
+                render: function (data, type, row, meta) {
+                    return data ? data : 'No Company';
+                }
+            },
             { data: "reference_no" },
-            { data: "firstname", render: function (data, type, row, meta) { return empName(row.display_name, row.contractor, row.is_contract) } },
+            // { data: "firstname", render: function (data, type, row, meta) { return empName(row.display_name, row.contractor, row.is_contract) } },
+            { data: "firstname",
+                render: function (data, type, row, meta) {
+                    return row.display_name && row.display_name !== ' ' ? row.display_name : 'No Employee Name';
+                }
+            },
             { data: "asset_code" },
-            { data: "asset_name", render: function (data, type, row, meta) { return itemName(row.vehicle_name, row.asset_name, row.type) } },
+            // { data: "asset_name", render: function (data, type, row, meta) { return itemName(row.vehicle_name, row.asset_name, row.type) } },
+            { data: "asset_name", orderable: false,
+                render: function (data, type, row, meta) {
+                    return data ? data : 'No Asset Name';
+                }
+            },
             { data: "amount", className: "text-right" },
             { data: null, width: "5%", className: "text-center" },
         ],
@@ -73,6 +87,13 @@ function tblReleased() {
     $('#generalSearch').donetyping(function (callback) {
         search_val = $(this).val();
         tblReleased.ajax.reload();
+    }, 1000, 3);
+
+    $('#generalSearch').on('keyup', function(e) {
+        if ($(this).val() == 0) {
+            search_val = "";
+            tblReleased.ajax.reload();
+        }
     });
 
     $("#reload_dtTbl").on("click", function () {
@@ -136,10 +157,24 @@ function assetsTab(evt, tabName) {
             searching: false,
             columns: [
                 { data: "reference_no" },
-                { data: "company" },
-                { data: "firstname", render: function (data, type, row, meta) { return empName(row.display_name, row.contractor, row.is_contract) } },
+                { data: "company",
+                    render: function (data) {
+                        return data ? data : 'No Company';
+                    }
+                },
+                // { data: "firstname", render: function (data, type, row, meta) { return empName(row.display_name, row.contractor, row.is_contract) } },
+                { data: "firstname",
+                    render: function (data, type, row, meta) {
+                        return row.display_name && row.display_name !== ' ' ? row.display_name : 'No Employee Name';
+                    }
+                },
                 { data: "asset_code" },
-                { data: "asset_name", render: function (data, type, row, meta) { return itemName(row.vehicle_name, row.asset_name, row.type) } },
+                // { data: "asset_name", render: function (data, type, row, meta) { return itemName(row.vehicle_name, row.asset_name, row.type) } },
+                { data: "asset_name", orderable: false,
+                    render: function (data, type, row, meta) {
+                        return data ? data : 'No Asset Name';
+                    }
+                },
                 { data: "amount", className: "text-right" },
                 { data: null, width: "5%", className: "text-center" },
             ],
@@ -186,6 +221,13 @@ function assetsTab(evt, tabName) {
         $('#generalSearch2').donetyping(function (callback) {
             search_val = $(this).val();
             tblReturned.ajax.reload();
+        }, 1000, 3);
+
+        $('#generalSearch2').on('keyup', function(e) {
+            if ($(this).val() == 0) {
+                search_val = "";
+                tblReturned.ajax.reload();
+            }
         });
 
         $("#reload_dtTbl").on("click", function () {
@@ -271,7 +313,7 @@ $(document).ready(function () {
     $('#query-builder').queryBuilder({
         'bt-tooltip-errors': { delay: 100 },
         filters: [
-            { id: 'a.id', label: 'ID #', type: 'integer' },
+            // { id: 'a.id', label: 'ID #', type: 'integer' },
             { id: 'a.company', label: 'File Under', type: 'string' },
             { id: 'd.company', label: 'Contractor Company', type: 'string' },
             { id: 'reference_no', label: 'Reference #', type: 'string' },

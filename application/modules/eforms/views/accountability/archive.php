@@ -112,7 +112,7 @@
 						</button>
 					</div>
 					<div class="modal-body">
-						<div class="form-group">
+						<!-- <div class="form-group">
 							<label for="">Status</label>
 							<select name="status" id="status" class="form-control">
 								<option value=""></option>
@@ -120,7 +120,7 @@
 								<option value="Pending Accounting Notes">PENDING ACCOUNTING NOTES</option>
 								<option value="Pending HR Notes">PENDING HR NOTES</option>
 							</select>
-						</div>
+						</div> -->
 
 						<div class="form-group pt-3">
 							<label for="">Reference No.</label>
@@ -149,6 +149,7 @@
 						</div>
 					</div>
 					<div class="modal-footer">
+						<button type="button" id="refresh" class="btn btn-info btnView" data-dismiss="modal">Refresh</button>
 						<button type="button" id="advanced_search" class="btn btn-primary btnAdvance_search">Search</button>
 						<button type="button" class="btn btn-secondary btnAdvance_search" data-dismiss="modal">Close
 						</button>

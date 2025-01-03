@@ -157,7 +157,6 @@ function loadEmployees(employee_status = "All") {
                             var _html = "";
 
                             const ids = row.id;
-                            // console.log(ids);
                             $("#table-employee.grid tbody td:first-child").addClass('btnViewEmployee201').prop('data-id', ids);
                             
                             _html += '<div id="details" style="padding: 10px">';
@@ -207,6 +206,17 @@ function loadEmployees(employee_status = "All") {
                 drawCallback: function () {
                     const data = dtEmployee.data();
                     setPerformanceRating(data);
+
+                    if(clickedView == 'grid'){
+                        $("#table-employee tbody td #details #grid .custom-fullname a").removeAttr('target');
+                        $("#table-employee.grid tbody td:first-child").addClass('btnViewEmployee201');
+                    }
+
+                    if (data.length == 0) {
+                        $("#table-employee.grid .grid").css('justify-content', 'center');
+                    } else {
+                        $("#table-employee.grid .grid").css('justify-content', 'flex-start');
+                    }
                 },
                 initComplete: function () {
                     $(document)
@@ -5933,6 +5943,7 @@ $("#view-btn button").on('click', function(){
             $("#table-employee tbody").addClass('list').removeClass('grid');
             $("#table-employee tbody td #details #grid").css('display', 'none');
             $("#table-employee tbody td #details #list").css('display', 'block');
+            $("#table-employee tbody td #details #grid .custom-fullname a").attr('target', '_blank');
 
             $("#table-employee tbody td:first-child").removeClass('btnViewEmployee201');
         }else{
@@ -5943,6 +5954,7 @@ $("#view-btn button").on('click', function(){
             $("#table-employee tbody").addClass('grid').removeClass('list');
             $("#table-employee tbody td #details #grid").css('display', 'flex');
             $("#table-employee tbody td #details #list").css('display', 'none');
+            $("#table-employee tbody td #details #grid .custom-fullname a").removeAttr('target');
 
             $("#table-employee tbody td:first-child").addClass('btnViewEmployee201');
         }

@@ -676,6 +676,13 @@ $('#query-builder-btn').on('click', function () {
     var result = $('#query-builder').queryBuilder('getSQL');
 
     if (!$.isEmptyObject(result)) {
+
+        // added to replace a.status to a.accomplished as the portal only tagged accomplished with the status of approved.
+        if(result.sql.includes('Accomplished')){
+            result.sql = result.sql.replace('a.status', 'a.accomplished');
+            result.sql = result.sql.replace('Accomplished', '1');
+        }
+
         query_builder = result;
         loadTravelOrder();
         $("#modal-query-builder").modal("hide");

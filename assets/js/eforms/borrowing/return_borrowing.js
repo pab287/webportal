@@ -19,7 +19,21 @@ var tblBorrowing = $("#table-borrowing").DataTable({
     searching: true,
     columns: [
         { data: "reference_no"},        
-        { data: "firstname", render: function (data, type, row, meta) {return displayName(row.display_name)}},
+        { data: "display_name", // data: "firstname"
+            render: function (data, type, row, meta) {
+                var html = ``;
+                // return displayName(row.display_name)
+
+                if(data){
+                    html += `<b>${ data }</b>`;
+                    html += `<p class="m-0">${ row.company }</p>`;
+                    html += `<p class="m-0">${ row.department }</p>`;
+                    html += `<p class="m-0">${ row.position }</p>`;
+                }
+
+                return html;
+            }
+        },
         { data: "asset"},
         { data: "date_borrowed", render: function (data) {return formatCalendarDate(data)}},
         { data: "date_due", render: function ( data, type, row, meta ) {return formatCalendarDateDue(data,row)}},
@@ -103,17 +117,16 @@ function formatCalendarDate(data){
 function formatCalendarDateDue(data,row){
     if(data=="0000-00-00 00:00:00"){
         return "";
-    }
-    else{
+    } else{
+    
         var date_ret = new Date(row.date_returned);
         var due = new Date(data);
         
-if(date_ret<due){
-   
-    return moment(data).format("MM/DD/YYYY").fontcolor( "red" );
-}else{
-    return moment(data).format("MM/DD/YYYY");
-}
+        if (date_ret <= due) {
+            return moment(data).format("MM/DD/YYYY");
+        } else {
+            return moment(data).format("MM/DD/YYYY").fontcolor( "red" );
+        }
         
     }
   
@@ -121,17 +134,15 @@ if(date_ret<due){
 function formatCalendarDateReturn(data,row){
     if(data=="0000-00-00 00:00:00"){
         return "";
-    }
-    else{
+    } else {
         var date_ret = new Date(data);
         var due = new Date(row.date_due);
-        
-if(date_ret<due){
-   
-    return moment(data).format("MM/DD/YYYY").fontcolor( "red" );
-}else{
-    return moment(data).format("MM/DD/YYYY");
-}
+
+        if(date_ret <= due){
+            return moment(data).format("MM/DD/YYYY");
+        }else{
+            return moment(data).format("MM/DD/YYYY").fontcolor( "red" );
+        }
         
     }
   
@@ -199,7 +210,7 @@ $(document).ready(function () {
     $('#query-builder').queryBuilder({
         'bt-tooltip-errors': {delay: 100},
         filters: [
-            {id: 'a.id', label: 'ID #', type: 'integer'},
+            // {id: 'a.id', label: 'ID #', type: 'integer'},
             {id: 'c.reference_no', label: 'Reference #', type: 'string'},
             {id: 'firstname', label: 'Firstname', type: 'string'},
             {id: 'middlename', label: 'Middlename', type: 'string'},

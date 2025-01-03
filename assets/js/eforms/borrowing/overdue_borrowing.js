@@ -169,15 +169,15 @@ $(document).ready(function () {
     $('#query-builder').queryBuilder({
         'bt-tooltip-errors': { delay: 100 },
         filters: [
-            { id: 'a.id', label: 'ID #', type: 'integer' },
+            // { id: 'a.id', label: 'ID #', type: 'integer' },
             { id: 'c.reference_no', label: 'Reference #', type: 'string' },
-            { id: 'firstname', label: 'Firstname', type: 'string' },
-            { id: 'middlename', label: 'Middlename', type: 'string' },
-            { id: 'lastname', label: 'Lastname', type: 'string' },
-            { id: 'suffix', label: 'Suffix', type: 'string' },
-            { id: 'company', label: 'Company', type: 'string' },
-            { id: 'asset_code', label: 'Asset Code', type: 'string', operators: ['contains', 'not_contains', 'begins_with', 'not_begins_with', 'is_empty', 'is_not_empty'] },
-            { id: 'asset_name', label: 'Asset Name', type: 'string', operators: ['contains', 'not_contains', 'begins_with', 'not_begins_with', 'is_empty', 'is_not_empty'] },
+            { id: 'b.firstname', label: 'Firstname', type: 'string' },
+            { id: 'b.middlename', label: 'Middlename', type: 'string' },
+            { id: 'b.lastname', label: 'Lastname', type: 'string' },
+            { id: 'b.suffix', label: 'Suffix', type: 'string' },
+            { id: 'comp.code', label: 'Company', type: 'string' },
+            { id: 'a.asset_code', label: 'Asset Code', type: 'string', operators: ['contains', 'not_contains', 'begins_with', 'not_begins_with', 'is_empty', 'is_not_empty'] },
+            { id: 'a.asset_name', label: 'Asset Name', type: 'string', operators: ['contains', 'not_contains', 'begins_with', 'not_begins_with', 'is_empty', 'is_not_empty'] },
             {
                 id: 'date_borrowed',
                 label: 'Date Borrowed',

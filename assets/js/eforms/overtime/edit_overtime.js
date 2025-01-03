@@ -16,7 +16,13 @@ param_id = getUrlParameter("id");
 
 var vmTab1 = new Vue({
   el: "#form_overtime",
-  data: { vm_tab1: {} }
+  data: { 
+    vm_tab1: {
+      company: '',
+      department: '',
+      position: '',
+    } 
+  }
 });
 
 $.ajax({

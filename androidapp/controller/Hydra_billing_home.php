@@ -1,5 +1,4 @@
 <?php
-// defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Hydra_billing_home extends Dbase{
     private $hydra_billing_home_m;

@@ -103,7 +103,7 @@
 </div>
 
 <script type="text/javascript">
-
+	var mapKey = "<?php echo $_ENV['PROD_MAP_KEY']; ?>";
 	var search_val = "";
 	var table = $("#table").DataTable({
 		dom: '<"toolbar">rtlip',
@@ -190,7 +190,7 @@
 
 	function getPinnedCoordinate(lng, long, location){
 		$("#loc-name").text(location);
-		$("#view-coordinate").attr('src', `https://maps.googleapis.com/maps/embed/v1/place?q=${lng},${long}&zoom=20&maptype=satellite&key=AIzaSyCm_pTwQzhaAKspErhW9ptpubv_ATLrpgE`);
+		$("#view-coordinate").attr('src', `https://maps.googleapis.com/maps/embed/v1/place?q=${lng},${long}&zoom=20&maptype=satellite&key=${mapKey}`);
 
 		$("#view-map").modal();
 	}

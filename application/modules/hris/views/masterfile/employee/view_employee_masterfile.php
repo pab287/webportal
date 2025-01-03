@@ -4,41 +4,21 @@
         width: 80px;
     }
 
-    tbody > tr > td[data-label] {
-        word-break: break-word;
-    }
+    tbody > tr > td[data-label] { word-break: break-word; }
+    @supports (-moz-appearance:none) {}
+    .moz-text-center{ align: center; }
+    #mobile-search{ display: none; }
+    #to-print{ display: none; }
 
-    @supports (-moz-appearance:none) { 
-        
-    }
-    .moz-text-center{
-      align: center;
-    }
-
-    #mobile-search{
-        display: none;
-    }
-
-    #to-print{
-        display: none
-    }
-
-    .search-with-dropdown-container .search-with-dropdown-suggestion-list, .search-with-mobile-dropdown-container .search-with-mobile-dropdown-suggestion-list{
-            z-index: 40;
-        }
+    .search-with-dropdown-container .search-with-dropdown-suggestion-list, .search-with-mobile-dropdown-container .search-with-mobile-dropdown-suggestion-list{ z-index: 40; }
 
     @media screen and (max-width: 520px){
         #mobile-search{
             display: block !important;
             margin-top: 1rem !important;
         }
-        #web-search{
-            display: none !important;
-        }
-
-        .mobile-view{
-            position: relative;
-        }
+        #web-search{ display: none !important; }
+        .mobile-view{ position: relative; }
     }
 
     .bg-a9{
@@ -59,6 +39,7 @@
     table tbody tr.highlight td { font-weight: 600; }
     table tbody tr.highlight { background-color: #F2F3F88F; }
 </style>
+
 <div class="m-content" id="m-content">
     <div class="row">
         <div class="col-lg-10 offset-lg-1 col-xl-3 offset-xl-0">
@@ -88,10 +69,6 @@
                             </div>
 
                             <div class=" mt-3 moz-text-center">
-                                <!-- <div class="flex-shrink-1 flex-grow-0">
-                                    <img class="company-logo pt-1" src="<? /*= base_url($data->company_logo) */ ?>"
-                                         alt="">
-                                </div> -->
                                 <div class="d-flex flex-shrink-1 flex-grow-1 pl-4 flex-column">
                                     <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
                                         <div class="col-xl-6">
@@ -218,28 +195,6 @@
             </div>
         </div>
         <div class="col-xl-9 offset-xl-0 col-lg-10 offset-lg-1">
-            <!--<div class="row mb-3 search-div">
-                <div class="col-xl-7 col-lg-7 col-md-7 col-sm-12"></div>
-                <div class="col-xl-5 col-lg-5 col-md-5 col-sm-12">
-                    <div class="form-group m-form__group mb-0" id="search">
-                        <div class="m-input-icon m-input-icon--left position-relative search-with-dropdown-container">
-                            <input class="form-control m-input form-control-lg search-with-dropdown"
-                                   placeholder="Looking for someone?"
-                                   style="height: auto; text-transform: none;">
-                            <span class="m-input-icon__icon m-input-icon__icon--left">
-                                <span>
-                                    <i class="fa fa-search"></i>
-                                </span>
-                            </span>
-
-                            <div class="position-absolute options-container invisible search-with-dropdown-suggestion-list">
-                                <ul class="employee-suggestion mb-0">
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>-->
 
             <div class="m-portlet">
                 <div class="m-portlet__head pt-4 pb-4">
@@ -251,89 +206,54 @@
                             <h3 class="m-portlet__head-text">Employee Data Sheet</h3>
                         </div>
                         <div id="mobile-search" class="search-div row">
-
                             <?php if(in_array(strtolower("HR_201_SEARCH"),$this->core_layout->getCurrentActions())): ?>
                                 <!-- for SEARCH privilege HEAD DEPARTMENT-->
-                            
                             <div class="col-xl-8 col-lg-8 col-md-8 col-sm-12 offset-xl-4 offset-lg-4 offset-md-4 offset-sm-0 btnHr_201_search">
-                                    <div class="form-group m-form__group mb-0" id="search">
-                                        <div class="m-input-icon m-input-icon--left position-relative search-with-mobile-dropdown-container">
-                                            <input class="form-control m-input form-control-lg search-with-mobile-dropdown"
-                                                placeholder="Looking for someone?"
-                                                style="height: auto; text-transform: none; border-radius: 3em; padding-left: 3.5rem;">
-                                            <span class="m-input-icon__icon m-input-icon__icon--left"
-                                                style="width: 4em;">
-                                                <span>
-                                                    <i class="fa fa-search"></i>
-                                                </span>
+                                <div class="form-group m-form__group mb-0" id="search">
+                                    <div class="m-input-icon m-input-icon--left position-relative search-with-mobile-dropdown-container">
+                                        <input class="form-control m-input form-control-lg search-with-mobile-dropdown"
+                                            placeholder="Looking for someone?"
+                                            style="height: auto; text-transform: none; border-radius: 3em; padding-left: 3.5rem;">
+                                        <span class="m-input-icon__icon m-input-icon__icon--left"
+                                            style="width: 4em;">
+                                            <span>
+                                                <i class="fa fa-search"></i>
                                             </span>
-                                            <span class="m-input-icon__icon m-input-icon__icon--right" style="cursor: pointer;">
-                                                <span>
-                                                    <i class="fa fa-caret-down" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
-                                                    <ul class="dropdown-menu dropdown-menu-right" id="column-options" aria-labelledby="btnGroupDrop1" x-placement="bottom-end" style="position: absolute; transform: translate3d(-121px, 36px, 0px); top: 0px; left: 0px; will-change: transform;">
-                                                        <li class="dropdown-item">
-                                                            <label class="m-checkbox mb-0">
-                                                                <input type="checkbox" name="search_filter" oninput="checkFilter()" value="skills">
-                                                                SKILLS
-                                                                <span></span>
-                                                            </label>
-                                                        </li>
-                                                        <li class="dropdown-item">
-                                                            <label class="m-checkbox mb-0">
-                                                                <input type="checkbox" name="search_filter" oninput="checkFilter()" value="education">
-                                                                EDUCATION
-                                                                <span></span>
-                                                            </label>
-                                                        </li>
-                                                    </ul>
-                                                </span>
-                                            </span>
-
-                                            <div class="position-absolute options-container invisible search-with-mobile-dropdown-suggestion-list">
-                                                <ul class="employee-suggestion mb-0">
+                                        </span>
+                                        <span class="m-input-icon__icon m-input-icon__icon--right" style="cursor: pointer;">
+                                            <span>
+                                                <i class="fa fa-caret-down" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
+                                                <ul class="dropdown-menu dropdown-menu-right" id="column-options" aria-labelledby="btnGroupDrop1" x-placement="bottom-end" style="position: absolute; transform: translate3d(-121px, 36px, 0px); top: 0px; left: 0px; will-change: transform;">
+                                                    <li class="dropdown-item">
+                                                        <label class="m-checkbox mb-0">
+                                                            <input type="checkbox" name="search_filter" oninput="checkFilter()" value="skills">
+                                                            SKILLS
+                                                            <span></span>
+                                                        </label>
+                                                    </li>
+                                                    <li class="dropdown-item">
+                                                        <label class="m-checkbox mb-0">
+                                                            <input type="checkbox" name="search_filter" oninput="checkFilter()" value="education">
+                                                            EDUCATION
+                                                            <span></span>
+                                                        </label>
+                                                    </li>
                                                 </ul>
-                                            </div>
+                                            </span>
+                                        </span>
+
+                                        <div class="position-absolute options-container invisible search-with-mobile-dropdown-suggestion-list">
+                                            <ul class="employee-suggestion mb-0">
+                                            </ul>
                                         </div>
                                     </div>
+                                </div>
                             </div>
-
-                            <?php endif;?>
-
+                            <?php endif; ?>
                         </div>
                     </div>
                     <div id="web-search" class="m-portlet__head-tools">
                         <div class="search-div row">
-                            <!-- <div class="form-group form-group-lg m-form__group">
-                                <div class="m-inputinput-group m-input-input-group-lg m-input-group m-input-group--pill">
-                                    <span class="m-input-icon__icon m-input-icon__icon--left">
-                                        <span>
-                                            <i class="la la-search"></i>
-                                        </span>
-                                    </span>
-                                    <input type="text" class="form-control form-control-lg" aria-label="Text input with dropdown button">
-                                    <div class="input-group-btn">
-                                        <button type="button" class="btn btn-success dropdown-toggle btnNew" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            Action
-                                        </button>
-                                        <div class="dropdown-menu">
-                                            <a class="dropdown-item" href="http://bcd.gccph.com/metronics/theme/default/dist/default/components/forms/controls/input-group.html#">
-                                                Action
-                                            </a>
-                                            <a class="dropdown-item" href="http://bcd.gccph.com/metronics/theme/default/dist/default/components/forms/controls/input-group.html#">
-                                                Another action
-                                            </a>
-                                            <a class="dropdown-item" href="http://bcd.gccph.com/metronics/theme/default/dist/default/components/forms/controls/input-group.html#">
-                                                Something else here
-                                            </a>
-                                            <div role="separator" class="dropdown-divider"></div>
-                                            <a class="dropdown-item" href="http://bcd.gccph.com/metronics/theme/default/dist/default/components/forms/controls/input-group.html#">
-                                                Separated link
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div> -->
-
                             <?php if(in_array(strtolower("HR_201_SEARCH"),$this->core_layout->getCurrentActions())): ?>
                                 <!-- for SEARCH privilege HEAD DEPARTMENT-->
                             
@@ -392,15 +312,15 @@
                         <?php $this->load->view("hris/masterfile/employee/sections/employment_data"); ?>
                     </div>
                     <div id="hide-in-print" class="m-portlet__section web-view">
-                        <?php $this->load->view("hris/masterfile/employee/sections/employee_data_web", $data, FALSE); ?>
+                        <?php $this->load->view("hris/masterfile/employee/sections/employee_data_web", $data, false); ?>
                     </div>
                     <div class="m-portlet__section mobile-view" style="display: none">
-                        <?php $this->load->view("hris/masterfile/employee/sections/employee_data", $data, FALSE); ?>
+                        <?php $this->load->view("hris/masterfile/employee/sections/employee_data", $data, false); ?>
                     </div>
                 </div>
             </div>
-            
-            <?php if(isset($profile_payroll_sheet) && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0)): ?>
+
+            <?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0)): ?>
             <div class="m-portlet">
                 <div class="m-portlet__head pt-4 pb-4">
                     <div class="m-portlet__head-caption">
@@ -416,15 +336,15 @@
                 <div class="row">
                         <div class="col-12 col-md-12 col-lg-12 col-xl-12">
                             <div class="table-responsive-sm">
-                                <table class="table table-bordered" id="table-payroll_sheet-payslip"
-                                    width="100%">
+                                <table class="table table-bordered" id="table-payroll_sheet-payslip" style="width: 100%">
                                     <thead>
-                                    <tr>
-                                        <th>Pay Date</th>
-                                        <th>Coverage Date</th>
-                                        <th class="text-right">Gross Pay</th>
-                                        <th class="text-right">Net Pay</th>
-                                    </tr>
+                                        <tr>
+                                            <th>Pay Date</th>
+                                            <th>Coverage Date</th>
+                                            <th class="text-right">Gross Pay</th>
+                                            <th class="text-right">Net Pay</th>
+                                            <th class="text-center">&nbsp;</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
                                         <?php if(isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0): ?>
@@ -432,13 +352,6 @@
                                                 <tr class="<?php echo $value->id == $payroll_sheet_max_id ? "highlight":"" ?>">
                                                     <td>
                                                         <p class="mb-0">
-                                                            <?php if($value->is_bonus == 0): ?>
-                                                                <a href="javascript:void(0);" style="text-decoration:none;" onClick="getPayrollSheetData(<?= $value->id; ?>)">
-                                                                    <i class="la la-file-text"></i>
-                                                                </a>
-                                                            <?php else: ?>
-                                                                <i class="la la-file"></i>
-                                                            <?php endif; ?>
                                                             <span><?php echo date("F d, Y", strtotime($value->pay_date)); ?></span>
                                                             <?php if($value->bonus_code): ?>
                                                                 <span class="m-badge m-badge--danger m-badge--wide ml-2 m--regular-font-size-sm5"><?php echo $value->bonus_code; ?></span>
@@ -451,6 +364,13 @@
                                                     <td><?php echo date("F d, Y", strtotime($value->date_start)) ." ~ ". date("F d, Y", strtotime($value->date_end)); ?></td>
                                                     <td class="text-right"><?php echo number_format($value->gross_pay, 2, ".", ","); ?></td>
                                                     <td class="text-right"><?php echo number_format($value->net_pay, 2, ".", ","); ?></td>
+                                                    <td class="text-center">
+                                                    <?php if($value->is_bonus == 0): ?>
+                                                        <button type="button" class="btn btn-secondary btn-sm m-btn m-btn--icon m-btn--icon-only btnView_own_request" onClick="getPayrollSheetData(<?= $value->id; ?>)"><i class="la la-file-text"></i></button>
+                                                    <?php else: ?>
+                                                        <i class="la la-file-text"></i>
+                                                    <?php endif; ?>
+                                                    </td>
                                                 </tr>
                                             <?php endforeach; ?>
                                         <?php endif; ?>

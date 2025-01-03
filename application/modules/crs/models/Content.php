@@ -12,10 +12,10 @@
 	<?php if($primaryImage): ?>
 	<input type="hidden" class="primary-image" name="primary_image" value="<?php echo $primaryImage; ?>" />
 	<a data-lightbox='roadtrip' data-title='<?php echo $primaryImage; ?>' href='<?php echo base_url("uploads/module/crs/files/temp_files/temp{$getUserData['id']}/{$primaryImage}"); ?>'>
-		<img id='img_prim' class='img-responsive' style="max-width: 486px; margin: 0 auto;" src='<?php echo $primaryImageUrl; ?>' />
+		<img id='img_prim' alt="" class='img-responsive' style="max-width: 486px; margin: 0 auto;" src='<?php echo $primaryImageUrl; ?>' />
 	</a>
 	<?php else: ?>
-		<img id='img_prim' class='img-responsive' style="max-width: 486px; margin: 0 auto;" src='<?php echo $primaryImageUrl; ?>' />
+		<img id='img_prim' alt="" class='img-responsive' style="max-width: 486px; margin: 0 auto;" src='<?php echo $primaryImageUrl; ?>' />
 	<?php endif; ?>
 	<br />
 	<button type="button" style="margin: 0 auto; width: auto;" class="btn btn-sm btn-success btnChange" data-toggle="modal" data-target="#modalUploadImage"><i class="fa fa-camera"></i> Change</button>
@@ -24,7 +24,7 @@
 
 	<?php if(isset($data["name"][$index]) && $data["name"][$index] && $data["name"][$index] !== $primaryImage): ?>
 		<a data-lightbox='roadtrip' data-title='<?php echo $data["name"][$index]; ?>' href='<?php echo $data["url"][$index]; ?>'>
-			<img src="<?php echo $url; ?>" />
+			<img alt="" src="<?php echo $url; ?>" />
 		</a>
 		<input type="hidden" class="uploaded-images" name="uploaded_image[]" value="<?php echo $data["name"][$index]; ?>" />
 	<?php endif; ?>
