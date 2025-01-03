@@ -292,7 +292,7 @@ class Reports extends MY_Controller{
 
     public function generate_comprehensive_report(){
         $data = $this->report->generateComprehensiveReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_manpower_report(){
@@ -404,4 +404,10 @@ class Reports extends MY_Controller{
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
+
+    public function log_export(){
+        $data = $this->report->logExport();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }

@@ -4,7 +4,7 @@ const filterHired = $("#tempFilter");
 const filterCertificate = $("#tempFilterCertificate");
 let globalDepartmentId = 0;
 let _companies = [], _departments = [], _positions = [];
-
+let filters ={};
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){ _companies = _tempContentData.company; }
     if(typeof _tempContentData.department !== "undefined" && _tempContentData.department.length > 0){ _departments = _tempContentData.department; }
@@ -31,6 +31,9 @@ $("#date-range", filterHired).val("");
             $("#date-range", filterHired)
             .val(picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY'))
             .validate();
+            filters.date_range = $("#date-range", filterHired).val();
+        }).on('cancel.daterangepicker', function (ev, picker) {
+            filters.date_range = "";
         });
     }
     $("#company", filterHired).select2({
@@ -40,6 +43,9 @@ $("#date-range", filterHired).val("");
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filters.company = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filters.company = "";
     });
 
     $("#department", filterHired).select2({
@@ -49,6 +55,9 @@ $("#date-range", filterHired).val("");
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filters.department = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filters.department = "";
     });
 
     $("#position", filterHired).select2({
@@ -58,6 +67,9 @@ $("#date-range", filterHired).val("");
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filters.position = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filters.position = "";
     });
 
     const temporaryFilterByHired = new Vue({
@@ -679,6 +691,7 @@ const vmFilteredContent = new Vue({
                             $(tempTable).removeClass("table-bordered");
                             const tempTHead = $(tempTable).find("thead th:not(:first-child)");
                             tempTHead.removeClass("text-right").addClass("text-center");
+                            export_log(filters,"Hired/Separated Employee Report", "print",vmFilteredContent.count);
                         }
                     }, { extend: 'excel' }]
                 });
@@ -707,6 +720,7 @@ const vmFilteredContent = new Vue({
                 $("i", e).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
                 $("i", e).css({ top: "50%", left: "50%" });
             }, 150);
+            export_log(filters,"Hired/Separated Employee Report", "excel",vmFilteredContent.count);
         }
     }
 });
@@ -857,7 +871,8 @@ $.validate({
         var currentForm = form[0];
         var formMethod = currentForm.method;
         var formData = $(currentForm).serialize();
-
+        filters.filter_by = $('input[name="filter_by"]:checked').val();
+        filters.filter_type = $('input[name="filter_type"]:checked').val();
         $.ajax({
             url: siteUrl("hris/reports/generate_comprehensive_report"),
             type: formMethod,
@@ -1040,3 +1055,14 @@ $.validate({
         return false;
     }
 });
+
+function export_log(filters, type, name,count) {
+    $.ajax({
+        url: siteUrl("hris/reports/log_export"),
+        type: "POST",
+        data: { filters,type:type,name:name,count:count,csrf_token : _csrf_hash },
+        success: function(response) {
+            console.log(response);
+        }
+    });
+}

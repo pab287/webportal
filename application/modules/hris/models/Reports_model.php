@@ -426,17 +426,18 @@ class Reports_model extends CI_Model{
     }
 
     public function generateComprehensiveReport(){
+        $resultFilter = "Filter applied: ";
         $resultset = array();
         $post = $this->input->post();
         
         if(isset($post["filter_by"]) && $post["filter_by"]){
             $additionalFilters = array();
-            if(isset($post["company"]) && $post["company"]){ $additionalFilters["comp.id"] = $post["company"]; }
-            if(isset($post["department"]) && $post["department"]){ $additionalFilters["dept.id"] = $post["department"]; }
-            if(isset($post["position"]) && $post["position"]){ $additionalFilters["pos.id"] = $post["position"]; }
+            if(isset($post["company"]) && $post["company"]){ $additionalFilters["comp.id"] = $post["company"]; $resultFilter .= "Company: <strong>" . $this->getCompanyById($post["company"])->description."</strong> "; }
+            if(isset($post["department"]) && $post["department"]){ $additionalFilters["dept.id"] = $post["department"]; $resultFilter .= "Department: <strong>" . $this->getDepartmentById($post["department"])->description."</strong> "; }
+            if(isset($post["position"]) && $post["position"]){ $additionalFilters["pos.id"] = $post["position"]; $resultFilter .= "Position: <strong>" . $this->getPositionById($post["position"])->name."</strong> "; }
             if(isset($post["sort_by"]) && $post["sort_by"]){ $sortOrder["sort_by"] = $post["sort_by"]; }
             if(isset($post["sort_order"]) && $post["sort_order"]){ $sortOrder["sort_order"] = $post["sort_order"]; }
-
+            if($resultFilter == "Filter applied: "){ $resultFilter = ""; }
             $tempFilterBy = $post["filter_by"];
             $filteredOptions = array();
             $filteredOptions["filter_by"] = $tempFilterBy;
@@ -475,10 +476,10 @@ class Reports_model extends CI_Model{
                             $resultset["count"] = $numRows;
                             $filteredOptions["total_entries"] = $numRows;
                             $resultset["filtered_options"] = $filteredOptions;
-                            $resultset["toastr_msg"] = "Generate comprehensive report for `{$_filteredOption}` employees by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}`, a total of {$numRows} record(s) found.";
+                            $resultset["toastr_msg"] = "Generate comprehensive report for `{$_filteredOption}` employees by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}` {$resultFilter}, a total of {$numRows} record(s) found.";
                         }else{
                             $resultset["response"] = false;
-                            $resultset["toastr_msg"] = "Generate comprehensive report for `{$_filteredOption}` employees by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}`, no filtered data found!";
+                            $resultset["toastr_msg"] = "Generate comprehensive report for `{$_filteredOption}` employees by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}` {$resultFilter}, no filtered data found!";
                         }
                     }else{
                         $resultset["response"] = false;
@@ -509,7 +510,7 @@ class Reports_model extends CI_Model{
                     $resultset["count"] = $numRows;
                     $filteredOptions["total_entries"] = $numRows;
                     $resultset["filtered_options"] = $filteredOptions;
-                    $resultset["toastr_msg"] = "Generate all hired/separated employee report for `{$_filteredOption}`, a total of {$numRows} record(s) found.";
+                    $resultset["toastr_msg"] = "Generate all hired/separated employee report for `{$_filteredOption}` {$resultFilter}, a total of {$numRows} record(s) found.";
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Generate all hired/separated employee report for `{$_filteredOption}`, no filtered data found!";
@@ -2136,4 +2137,68 @@ class Reports_model extends CI_Model{
         $this->core_layout->setEventLog("$action {$post['type']} with filters: $filters", "generate", "success", "gcchris", "user");
         return $post;
     }
+
+    private function getPositionById($id){
+        $this->db->select("name");
+        $this->db->from($this->positionTable);
+        $this->db->where('id', $id);
+        $query = $this->db->get(); 
+        $result = $query->row();
+        $this->db->reset_query();
+        return $result;
+    }
+
+    private function getDepartmentById($id){
+        $this->db->select("description");
+        $this->db->from($this->departmentTable);
+        $this->db->where('id', $id);
+        $query = $this->db->get(); 
+        $result = $query->row();
+        $this->db->reset_query();
+        return $result;
+    }
+    
+    private function getCompanyById($id){
+        $this->db->select("description");
+        $this->db->from($this->companyTable);
+        $this->db->where('id', $id);
+        $query = $this->db->get(); 
+        $result = $query->row();
+        $this->db->reset_query();
+        return $result;
+    }
+
+
+    public function logExport(){
+        $post = $this->input->post();
+        $filters = "Filters applied: ";
+        $company_id = isset($post['filters']['company']) ? intval($post['filters']['company']) : 0;
+        $department_id = isset($post['filters']['department']) ? intval($post['filters']['department']) : 0;
+        $position_id = isset($post['filters']['position']) ? intval($post['filters']['position']) : 0;
+        if ($company_id > 0) {
+            $filters .= "Company: <strong>" . $this->getCompanyById($company_id)->description . "</strong> ";
+        }
+        if ($department_id > 0) {
+            $filters .= "Department: <strong>" . $this->getDepartmentById($department_id)->description . "</strong> ";
+        }
+        if ($position_id > 0) {
+            $filters .= "Position: <strong>" . $this->getPositionById($position_id)->name . "</strong> ";
+        }
+        $filter_by = isset($post['filters']['filter_by']) ? $post['filters']['filter_by'] : '';
+        $filter_type = isset($post['filters']['filter_type']) ? $post['filters']['filter_type'] : '';
+        if ($filters == "Filters applied: ") {
+            $filters .= "<strong>NONE. </strong>";
+        }
+        if ($filter_type == "emp.date_start") {
+            $filters .= "Hired Employees, ";
+        } elseif ($filter_type) {
+            $filters .= "Separated Employees, ";
+        }
+        if ($filter_by != "all") {
+            $filters  .= "Between <strong>{$post['filters']['date_range']} </strong> ";
+        }
+        $this->core_layout->setEventLog("Exported using {$post['name']} {$post['type']} {$filters} results found: <strong>{$post['count']}</strong>", "export", 'success', "gcchris");
+        return true;
+    }
+
 }
