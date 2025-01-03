@@ -450,7 +450,7 @@ $("#choice").select2({
                         checked.push(checkbox_value);
                     });
             
-                    formData += '&checked=' + JSON.stringify(checked) + '&type=1';
+                    formData += '&checked=' + JSON.stringify(checked) + '&type=2';
             
                     $.ajax({
                         url: baseUrl("eforms/loa/mass_action_loa"),
