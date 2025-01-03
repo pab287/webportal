@@ -73,6 +73,9 @@ var tblTransmittal = $("#table-transmittal")
                 }
             },
             {
+                data: "trans_desc", visible: false,
+            },
+            {
                 data: "ship_date", render: function (data) {
                     return formatCalendarDate(data)
                 }
@@ -120,7 +123,8 @@ var tblTransmittal = $("#table-transmittal")
             }, { 
                 extend: 'pdf',
                 exportOptions: {
-                    columns: "thead th:not(.notExport)"
+                    // columns: "thead th:not(.notExport)"
+                    columns: [2, 3, 4, 6, 7] 
                 }
             }
         ]
