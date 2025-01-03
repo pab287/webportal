@@ -307,17 +307,17 @@ class Reports extends MY_Controller{
 
     public function generate_training_seminars_report(){
         $data = $this->report->generateTrainingSeminarsReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_drivers_license_report(){
         $data = $this->report->generateDriversLicenseReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_licenses_certificate_report(){
         $data = $this->report->generateCertificateReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function get_salary_payinfo_datatable_request(){

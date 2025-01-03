@@ -5,7 +5,7 @@ class Reports_model extends CI_Model{
     protected $companyTable = "gcchris.tblcompanies";
     protected $departmentTable = "gcchris.tbldepartments";
     protected $positionTable = "gcchris.tblposition";
-
+    protected $employeeTrainingsTable = "gcchris.tbltrainings";
     protected $defaultStationTable = "gcchris.default_station_location";
     protected $tblAppLocationSites = "gcctimeutility.app_location_sites";
 
@@ -476,7 +476,7 @@ class Reports_model extends CI_Model{
                             $resultset["count"] = $numRows;
                             $filteredOptions["total_entries"] = $numRows;
                             $resultset["filtered_options"] = $filteredOptions;
-                            $resultset["toastr_msg"] = "Generate comprehensive report for `{$_filteredOption}` employees by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}` {$resultFilter}, a total of {$numRows} record(s) found.";
+                            $resultset["toastr_msg"] = "Generate comprehensive report for `{$_filteredOption}` employees by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}` {$resultFilter}, a total of <strong>{$numRows}</strong> record(s) found.";
                         }else{
                             $resultset["response"] = false;
                             $resultset["toastr_msg"] = "Generate comprehensive report for `{$_filteredOption}` employees by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}` {$resultFilter}, no filtered data found!";
@@ -510,7 +510,7 @@ class Reports_model extends CI_Model{
                     $resultset["count"] = $numRows;
                     $filteredOptions["total_entries"] = $numRows;
                     $resultset["filtered_options"] = $filteredOptions;
-                    $resultset["toastr_msg"] = "Generate all hired/separated employee report for `{$_filteredOption}` {$resultFilter}, a total of {$numRows} record(s) found.";
+                    $resultset["toastr_msg"] = "Generate all hired/separated employee report for `{$_filteredOption}` {$resultFilter}, a total of <strong>{$numRows}</strong> record(s) found.";
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Generate all hired/separated employee report for `{$_filteredOption}`, no filtered data found!";
@@ -586,7 +586,7 @@ class Reports_model extends CI_Model{
                             $resultset["data"] = $arr;
                             $resultset["count"] = $numRows;
                             $resultset["filtered_options"] = $filteredOptions;
-                            $resultset["toastr_msg"] = "Generate active manpower report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}`, a total of {$numRows} record(s) found.";
+                            $resultset["toastr_msg"] = "Generate active manpower report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}`, a total of <strong>{$numRows}</strong> record(s) found.";
                         }else{
                             $resultset["response"] = false;
                             $resultset["toastr_msg"] = "Generate active manpower report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}`, no filtered data found!";
@@ -628,7 +628,7 @@ class Reports_model extends CI_Model{
                     $resultset["data"] = $arr;
                     $resultset["count"] = $numRows;
                     $resultset["filtered_options"] = $filteredOptions;
-                    $resultset["toastr_msg"] = "Generate all active manpower report, a total of ({$numRows} record(s) found.)";
+                    $resultset["toastr_msg"] = "Generate all active manpower report, a total of (<strong>{$numRows}</strong> record(s) found.)";
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Generate all active manpower report, no filtered data found!";
@@ -674,15 +674,16 @@ class Reports_model extends CI_Model{
     }
 
     public function generateTrainingSeminarsReport(){
+        $resultFilter = "Filter applied: ";
         $resultset = array();
         $post = $this->input->post();
         if(isset($post["filter_by"]) && $post["filter_by"]){
             $additionalFilters = array();
-            if(isset($post["company"]) && $post["company"]){ $additionalFilters["comp.id"] = $post["company"]; }
-            if(isset($post["department"]) && $post["department"]){ $additionalFilters["dept.id"] = $post["department"]; }
-            if(isset($post["position"]) && $post["position"]){ $additionalFilters["pos.id"] = $post["position"]; }
-            if(isset($post["training"]) && $post["training"]){ $additionalFilters["trn.training"] = $post["training"]; }
-
+            if(isset($post["company"]) && $post["company"]){ $additionalFilters["comp.id"] = $post["company"]; $resultFilter .= "Company: <strong>" . $this->getCompanyById($post["company"])->description."</strong> "; }
+            if(isset($post["department"]) && $post["department"]){ $additionalFilters["dept.id"] = $post["department"]; $resultFilter .= "Department: <strong>" . $this->getDepartmentById($post["department"])->description."</strong> "; }
+            if(isset($post["position"]) && $post["position"]){ $additionalFilters["pos.id"] = $post["position"]; $resultFilter .= "Position: <strong>" . $this->getPositionById($post["position"])->name."</strong> "; }
+            if(isset($post["training"]) && $post["training"]){ $additionalFilters["trn.training"] = $post["training"]; $resultFilter .= "Training: <strong>" . $post["training"]." </strong> "; }
+            if($resultFilter == "Filter applied: "){ $resultFilter = ""; }
             $tempFilterBy = $post["filter_by"];
             $filteredOptions = array();
             $filteredOptions["filter_by"] = $tempFilterBy;
@@ -708,10 +709,10 @@ class Reports_model extends CI_Model{
                             $resultset["count"] = $numRows;
                             $filteredOptions["total_entries"] = $numRows;
                             $resultset["filtered_options"] = $filteredOptions;
-                            $resultset["toastr_msg"] = "Generate trainings and seminars report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}`, a total of {$numRows} record(s) found.";
+                            $resultset["toastr_msg"] = "Generate trainings and seminars report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}` {$resultFilter}, a total of <strong>{$numRows}</strong> record(s) found.";
                         }else{
                             $resultset["response"] = false;
-                            $resultset["toastr_msg"] = "Generate trainings and seminars report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}`, no filtered data found!";
+                            $resultset["toastr_msg"] = "Generate trainings and seminars report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}` {$resultFilter}, no filtered data found!";
                         }
                     }else{
                         $resultset["response"] = false;
@@ -730,7 +731,7 @@ class Reports_model extends CI_Model{
                     $resultset["count"] = $numRows;
                     $filteredOptions["total_entries"] = $numRows;
                     $resultset["filtered_options"] = $filteredOptions;
-                    $resultset["toastr_msg"] = "Generate all trainings and seminars report, a total of {$numRows} record(s) found.";
+                    $resultset["toastr_msg"] = "Generate all trainings and seminars report {$resultFilter}, a total of <strong>{$numRows}</strong> record(s) found.";
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Generate all trainings and seminars report, no filtered data found!";
@@ -751,12 +752,13 @@ class Reports_model extends CI_Model{
     public function generateDriversLicenseReport(){
         $resultset = array();
         $post = $this->input->post();
+        $resultFilter = "Filter applied: ";
         if(isset($post["filter_by"]) && $post["filter_by"]){
             $additionalFilters = array();
-            if(isset($post["company"]) && $post["company"]){ $additionalFilters["comp.id"] = $post["company"]; }
-            if(isset($post["department"]) && $post["department"]){ $additionalFilters["dept.id"] = $post["department"]; }
-            if(isset($post["position"]) && $post["position"]){ $additionalFilters["pos.id"] = $post["position"]; }
-            
+            if(isset($post["company"]) && $post["company"]){ $additionalFilters["comp.id"] = $post["company"]; $resultFilter .= "Company: <strong>" . $this->getCompanyById($post["company"])->description."</strong> "; }
+            if(isset($post["department"]) && $post["department"]){ $additionalFilters["dept.id"] = $post["department"]; $resultFilter .= "Department: <strong>" . $this->getDepartmentById($post["department"])->description."</strong> "; }
+            if(isset($post["position"]) && $post["position"]){ $additionalFilters["pos.id"] = $post["position"]; $resultFilter .= "Position: <strong>" . $this->getPositionById($post["position"])->name."</strong> "; }
+            if($resultFilter == "Filter applied: "){ $resultFilter = ""; }
             $tempFilterBy = $post["filter_by"];
             $filteredOptions = array();
             $filteredOptions["filter_by"] = $tempFilterBy;
@@ -783,10 +785,10 @@ class Reports_model extends CI_Model{
                             $resultset["count"] = $numRows;
                             $filteredOptions["total_entries"] = $numRows;
                             $resultset["filtered_options"] = $filteredOptions;
-                            $resultset["toastr_msg"] = "Generate drivers license report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}`, a total of {$numRows} record(s) found.";
+                            $resultset["toastr_msg"] = "Generate drivers license report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}` {$resultFilter}, a total of <strong>{$numRows}</strong> record(s) found.";
                         }else{
                             $resultset["response"] = false;
-                            $resultset["toastr_msg"] = "Generate drivers license report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}`, no filtered data found!";
+                            $resultset["toastr_msg"] = "Generate drivers license report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}` {$resultFilter}, no filtered data found!";
                         }
                     }else{
                         $resultset["response"] = false;
@@ -805,7 +807,7 @@ class Reports_model extends CI_Model{
                     $resultset["count"] = $numRows;
                     $filteredOptions["total_entries"] = $numRows;
                     $resultset["filtered_options"] = $filteredOptions;
-                    $resultset["toastr_msg"] = "Generate all drivers license report, a total of {$numRows} record(s) found.";
+                    $resultset["toastr_msg"] = "Generate all drivers license report {$resultFilter}, a total of <strong>{$numRows}</strong> record(s) found.";
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Generate all drivers license report, no filtered data found!";
@@ -825,15 +827,16 @@ class Reports_model extends CI_Model{
 
     public function generateCertificateReport(){
         $resultset = array();
+        $resultFilter = "Filter applied: ";
         $post = $this->input->post();
         if(isset($post["filter_by"]) && $post["filter_by"]){
             $additionalFilters = array();
-            if(isset($post["company"]) && $post["company"]){ $additionalFilters["comp.id"] = $post["company"]; }
-            if(isset($post["department"]) && $post["department"]){ $additionalFilters["dept.id"] = $post["department"]; }
-            if(isset($post["position"]) && $post["position"]){ $additionalFilters["pos.id"] = $post["position"]; }
-            if(isset($post["type"]) && $post["type"]){ $additionalFilters["licenses.type"] = $post["type"]; }
-            if(isset($post["licenses"]) && $post["licenses"]){ $additionalFilters["cert.license_type"] = $post["licenses"]; }
-
+            if(isset($post["company"]) && $post["company"]){ $additionalFilters["comp.id"] = $post["company"]; $resultFilter .= "Company: <strong>" . $this->getCompanyById($post["company"])->description."</strong> "; }
+            if(isset($post["department"]) && $post["department"]){ $additionalFilters["dept.id"] = $post["department"]; $resultFilter .= "Department: <strong>" . $this->getDepartmentById($post["department"])->description."</strong> "; }
+            if(isset($post["position"]) && $post["position"]){ $additionalFilters["pos.id"] = $post["position"]; $resultFilter .= "Position: <strong>" . $this->getPositionById($post["position"])->name."</strong> "; }
+            if(isset($post["type"]) && $post["type"]){ $additionalFilters["licenses.type"] = $post["type"]; $resultFilter .="License type: <strong>" . $post["type"]. "</strong> "; }
+            if(isset($post["licenses"]) && $post["licenses"]){ $additionalFilters["cert.license_type"] = $post["licenses"]; $resultFilter .="License: <strong>" . $post["licenses"]. "</strong> "; }
+            if($resultFilter == "Filter applied: "){ $resultFilter = ""; }
             $tempFilterBy = $post["filter_by"];
             $filteredOptions = array();
             $filteredOptions["filter_by"] = $tempFilterBy;
@@ -859,10 +862,10 @@ class Reports_model extends CI_Model{
                             $resultset["count"] = $numRows;
                             $filteredOptions["total_entries"] = $numRows;
                             $resultset["filtered_options"] = $filteredOptions;
-                            $resultset["toastr_msg"] = "Generate license and certification report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}`, a total of {$numRows} record(s) found.";
+                            $resultset["toastr_msg"] = "Generate license and certification report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}` {$resultFilter}, a total of <strong>{$numRows}</strong> record(s) found.";
                         }else{
                             $resultset["response"] = false;
-                            $resultset["toastr_msg"] = "Generate license and certification report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}`, no filtered data found!";
+                            $resultset["toastr_msg"] = "Generate license and certification report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}` {$resultFilter}, no filtered data found!";
                         }
                     }else{
                         $resultset["response"] = false;
@@ -881,7 +884,7 @@ class Reports_model extends CI_Model{
                     $resultset["count"] = $numRows;
                     $filteredOptions["total_entries"] = $numRows;
                     $resultset["filtered_options"] = $filteredOptions;
-                    $resultset["toastr_msg"] = "Generate all license and certification report, a total of {$numRows} record(s) found.";
+                    $resultset["toastr_msg"] = "Generate all license and certification report {$resultFilter}, a total of <strong>{$numRows}</strong> record(s) found.";
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Generate all license and certification report, no filtered data found!";
@@ -2175,6 +2178,15 @@ class Reports_model extends CI_Model{
         $company_id = isset($post['filters']['company']) ? intval($post['filters']['company']) : 0;
         $department_id = isset($post['filters']['department']) ? intval($post['filters']['department']) : 0;
         $position_id = isset($post['filters']['position']) ? intval($post['filters']['position']) : 0;
+        $training = isset($post['filters']['training']) ? $post['filters']['training'] : '';
+        $title = isset($post['filters']['title']) ? $post['filters']['title'] : '';
+
+        if(!empty($title)){
+            $filters .= "LIcense and certificate title: <strong>" . $title . "</strong> ";
+        }
+        if(!empty($training)){
+            $filters .= "Training title: <strong>" . $training . "</strong> ";
+        }
         if ($company_id > 0) {
             $filters .= "Company: <strong>" . $this->getCompanyById($company_id)->description . "</strong> ";
         }
@@ -2197,7 +2209,7 @@ class Reports_model extends CI_Model{
         if ($filter_by != "all") {
             $filters  .= "Between <strong>{$post['filters']['date_range']} </strong> ";
         }
-        $this->core_layout->setEventLog("Exported using {$post['name']} {$post['type']} {$filters} results found: <strong>{$post['count']}</strong>", "export", 'success', "gcchris");
+        $this->core_layout->setEventLog("Exported using {$post['name']}. {$post['type']} {$filters} results found: <strong>{$post['count']}</strong>", "export", 'success', "gcchris");
         return true;
     }
 
