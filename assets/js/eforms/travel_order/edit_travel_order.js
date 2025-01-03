@@ -245,7 +245,7 @@ var emp = $("#select2_emp").select2({
 var req = $("#select2_req").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
-  dropdownParent: $("#modal_form_destination"),
+  dropdownParent: $("#requested-by"),
   ajax: {
     url: baseUrl("eforms/Travel_order/get_request_collection"),
     dataType: "json",
@@ -594,9 +594,38 @@ function save_destination() {
 }
 
 $.validate({
-    form: '#form_destination',
-    lang: 'en',
-    onSuccess: function (form) {
+  form: '#form_destination',
+  lang: 'en',
+  onSuccess: function (form) {
+    var isValidDate = false;
+    var message = "";
+    
+    var date_from = $("input[name='date_from']").val();
+    var date_to = $("input[name='date_to']").val();
+
+    date_from = new Date(date_from);
+    date_to = new Date(date_to);
+
+    date_from = moment(date_from);
+    date_to = moment(date_to);
+
+    var duration = moment.duration(date_to.diff(date_from));
+		var minutes = duration.asMinutes();
+
+    if (minutes < -1) {
+      isValidDate = false;
+      message = 'Invalid Date! `Date To` cannot be earlier than `Date From`.';
+    } else if (minutes == 0) {
+      isValidDate = false;
+      message = 'Invalid Date! `Date From` and `Date To` cannot be the same.';
+    } else if (minutes <= 30) {
+      isValidDate = false;
+      message = 'Invalid Date! `Date From` and `Date To` cannot be less than 30 minutes.';
+    } else {
+      isValidDate = true;
+    }
+
+    if (isValidDate) {
       $.ajax({
         url: url,
         type: "POST",
@@ -618,9 +647,12 @@ $.validate({
           }
         }
       });
-      return false;
-    },
-  });
+    } else {
+      toastr.warning(message, "Error!", 5000);
+    }
+    return false;
+  },
+});
 
 // $(document).ready(function(){
 //   $.ajax({

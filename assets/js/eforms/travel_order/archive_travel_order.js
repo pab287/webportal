@@ -219,7 +219,7 @@ function formatCalendarDate(data) {
 function itemDatatableActions($id) {
     if ($id) {
         var _actionButton = "";
-        _actionButton += " <a class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='" + baseUrl('eforms/travel_order/view_travel_order?id=') + $id + "' target='__blank'><i class='la la-pencil-square'></i></a>";
+        _actionButton += " <a class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='" + baseUrl('eforms/travel_order/view_travel_order?id=') + $id + "&page=archive' target='__blank'><i class='la la-pencil-square'></i></a>";
         return _actionButton;
     } else { return false; }
 }

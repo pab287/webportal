@@ -44,7 +44,7 @@
                     <div class="m-portlet__head-caption">
                         <div class="m-portlet__head-title">
                             <span class="m-portlet__head-icon">
-                                <a type="button" href="masterfile" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnBack">
+                                <a type="button" href="<?=isset($_GET['page']) && $_GET['page'] == 'archive' ? 'archive_travel_order' : 'masterfile' ?>" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnBack">
                                     <i class="la la-arrow-left"></i>
                                 </a>
                             </span>

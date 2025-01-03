@@ -371,7 +371,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
-                                    <div class="form-group">
+                                    <div class="form-group" id="to-date-from">
                                         <label class="control-label col-md-3 col-sm-3 col-xs-12 m--font-bolder">Date From</label>
                                         <div class="col-12 input-group date" id="date_from">
                                             <input readonly class="form-control m-input" type="text" name="date_from" id="issue_dt" data-validation="required" maxlength="22" />

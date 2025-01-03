@@ -336,7 +336,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="requested-by">
                             <label class="control-label col-md-4 m--font-bolder">Requested By</label>
                             <div class="col-md-12">
                                 <select id="select2_req" name="requested_by" data-validation="required" ></select> 
