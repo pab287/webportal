@@ -72,63 +72,55 @@
 
             $sql = "a.id, a.status, a.priority, a.reference_no, a.company_from,a.ship_to, a.ship_date, c.description as trans_desc, a.created_by, a.created_dt, e.firstname, e.middlename, e.lastname,e.suffix, IF(comp.id IS NULL, a.company_to, comp.code) company_to, IF(dep.id IS NULL, a.department_to, dep.code) department_to, a.ship_to_address, a.ship_to_address";
 
-            if ($isAdvanceSearch) {
-                foreach ($_data as $key => $value) {
-                    if (!empty($value)) {
-                        if ($key === 'description') {
-                            $this->db->like($key, $value, 'both');
-                        } elseif ($key === 'company_from') {
-                            $this->db->select("code");
-                            $this->db->where('id', $value);
-                            $this->db->from("gcchris.tblcompanies");
-                            $company_name = $this->db->get()->row();
-
-                            $this->db->reset_query();
-
-                            $this->db->group_start();
-                                $this->db->where($key, $company_name->code);
-                                $this->db->or_where($key, $value);
-                            $this->db->group_end();
-                        } elseif ($key === 'delivered_to') {
-                            $this->db->like("CONCAT(ship_to, company_to, department_to, position_to, ship_to_address)", $value, "BOTH");
-                        } elseif ($key === 'created_by') {
-                            $this->db->select("CONCAT(firstname, ' ', lastname) fname");
-                            $this->db->where('id', $value);
-                            $this->db->from("gccmaster.tblemployees");
-                            $employee_name = $this->db->get()->row();
-
-                            $this->db->reset_query();
-
-                            if (empty($employee_name)) {
-                                $this->db->group_start();
-                                    $this->db->or_like($key, $value, "BOTH");
-                                    $this->db->like($key, $employee_name->fname, "BOTH");
-                                $this->db->group_end();
-                            } else{
-                                $this->db->like($key, $value, "BOTH");
-                            }
-                        } elseif ($key === 'ship_date' || $key === 'created_dt') {
-                            $this->db->where(`DATE($key)`, date('Y-m-d', strtotime($value)));
-                        } else {
-                            $this->db->where($key, $value);
-                            $this->db->where('DATE(a.ship_date) >= ', $check);
-                        }
-                    }
-                }
-            }
-
             $this->db->select($sql);
             $this->db->from("gcceforms.transmittal a");
             $this->db->join("gcceforms.transmittal_body c", "a.id = c.transmittal_id", "LEFT");
+            $this->db->join("gccmaster.tblemployees e", "e.id = a.ship_to", "LEFT");
             $this->db->join("gcchris.tblcompanies comp", "comp.id = a.company_to", "LEFT");
             $this->db->join("gcchris.tbldepartments dep", "dep.id = a.department_to", "LEFT");
-            $this->db->join("gccmaster.tblemployees e", "e.id = a.ship_to", "LEFT");
             $this->db->join("gccmaster.tblemployees cr", "cr.id = a.created_by", "LEFT");
+
             $this->db->where('status != ', 'Cancelled');
             $this->db->where('DATE(a.ship_date) >= ', $check);
 
             if($query_builder){
                 $this->db->where($query_builder);
+            }
+
+            if ($isAdvanceSearch) {
+                if (isset($_data['description']) && $_data['description']) {
+                    $this->db->like('c.description', $_data['description'], 'both');
+                }
+                
+                if (isset($_data['company_from']) && $_data['company_from']) {
+                    $this->db->where('c.company_from', $_data['company_from']);
+                }
+                
+                if (isset($_data['delivered_to']) && $_data['delivered_to']) {
+                    $this->db->like('CONCAT(c.ship_to, c.company_to, c.department_to, c.position_to, c.ship_to_address)', $_data['delivered_to'], 'both');
+                }
+
+                if (isset($_data['created_by']) && $_data['created_by']) {
+                    $this->db->like('CONCAT(cr.lastname, cr.firstname)', $_data['created_by'], 'both');
+                }
+
+                if (isset($_data['ship_date']) && $_data['ship_date'] || isset($_data['created_dt']) && $_data['created_dt']) {
+                    $key = isset($_data['ship_date']) && $_data['ship_date'] ? 'c.ship_date' : 'c.created_dt';
+                    $value = isset($_data['ship_date']) && $_data['ship_date'] ? $_data['ship_date'] : $_data['created_dt'];
+                    $this->db->where(`DATE($key)`, date('Y-m-d', strtotime($value)));
+                }
+
+                if (isset($_data['status']) && $_data['status']) {
+                    $this->db->where('a.status', $_data['status']);
+                }
+
+                if (isset($_data['priority']) && $_data['priority']) {
+                    $this->db->where('a.priority', $_data['priority']);
+                }
+
+                if (isset($_data['reference_no']) && $_data['reference_no']) {
+                    $this->db->where('a.reference_no', $_data['reference_no']);
+                }
             }
 
             if (isset($search) && $search) {
@@ -199,63 +191,55 @@
 
             $sql = "a.id, a.status, a.priority, a.reference_no, a.company_from,a.ship_to, a.ship_date, c.description as trans_desc, a.created_by, a.created_dt, e.firstname, e.middlename, e.lastname,e.suffix, IF(comp.id IS NULL, a.company_to, comp.code) company_to, IF(dep.id IS NULL, a.department_to, dep.code) department_to, a.ship_to_address, a.ship_to_address";
 
-            if ($isAdvanceSearch) {
-                foreach ($_data as $key => $value) {
-                    if (!empty($value)) {
-                        if ($key === 'description') {
-                            $this->db->like($key, $value, 'both');
-                        } elseif ($key === 'company_from') {
-                            $this->db->select("code");
-                            $this->db->where('id', $value);
-                            $this->db->from("gcchris.tblcompanies");
-                            $company_name = $this->db->get()->row();
-
-                            $this->db->reset_query();
-
-                            $this->db->group_start();
-                                $this->db->where($key, $company_name->code);
-                                $this->db->or_where($key, $value);
-                            $this->db->group_end();
-                        } elseif ($key === 'delivered_to') {
-                            $this->db->like("CONCAT(ship_to, company_to, department_to, position_to, ship_to_address)", $value, "BOTH");
-                        } elseif ($key === 'created_by') {
-                            $this->db->select("CONCAT(firstname, ' ', lastname) fname");
-                            $this->db->where('id', $value);
-                            $this->db->from("gccmaster.tblemployees");
-                            $employee_name = $this->db->get()->row();
-
-                            $this->db->reset_query();
-
-                            if (empty($employee_name)) {
-                                $this->db->group_start();
-                                    $this->db->or_like($key, $value, "BOTH");
-                                    $this->db->like($key, $employee_name->fname, "BOTH");
-                                $this->db->group_end();
-                            } else{
-                                $this->db->like($key, $value, "BOTH");
-                            }
-                        } elseif ($key === 'ship_date' || $key === 'created_dt') {
-                            $this->db->where(`DATE($key)`, date('Y-m-d', strtotime($value)));
-                        } else {
-                            $this->db->where($key, $value);
-                            $this->db->where('DATE(a.ship_date) >= ', $check);
-                        }
-                    }
-                }
-            }
-
             $this->db->select($sql);
             $this->db->from("gcceforms.transmittal a");
             $this->db->join("gcceforms.transmittal_body c", "a.id = c.transmittal_id", "LEFT");
+            $this->db->join("gccmaster.tblemployees e", "e.id = a.ship_to", "LEFT");
             $this->db->join("gcchris.tblcompanies comp", "comp.id = a.company_to", "LEFT");
             $this->db->join("gcchris.tbldepartments dep", "dep.id = a.department_to", "LEFT");
-            $this->db->join("gccmaster.tblemployees e", "e.id = a.ship_to", "LEFT");
             $this->db->join("gccmaster.tblemployees cr", "cr.id = a.created_by", "LEFT");
+
             $this->db->where('status != ', 'Cancelled');
             $this->db->where('DATE(a.ship_date) >= ', $check);
 
             if($query_builder){
                 $this->db->where($query_builder);
+            }
+
+            if ($isAdvanceSearch) {
+                if (isset($_data['description']) && $_data['description']) {
+                    $this->db->like('c.description', $_data['description'], 'both');
+                }
+                
+                if (isset($_data['company_from']) && $_data['company_from']) {
+                    $this->db->where('c.company_from', $_data['company_from']);
+                }
+                
+                if (isset($_data['delivered_to']) && $_data['delivered_to']) {
+                    $this->db->like('CONCAT(c.ship_to, c.company_to, c.department_to, c.position_to, c.ship_to_address)', $_data['delivered_to'], 'both');
+                }
+
+                if (isset($_data['created_by']) && $_data['created_by']) {
+                    $this->db->like('CONCAT(cr.lastname, cr.firstname)', $_data['created_by'], 'both');
+                }
+
+                if (isset($_data['ship_date']) && $_data['ship_date'] || isset($_data['created_dt']) && $_data['created_dt']) {
+                    $key = isset($_data['ship_date']) && $_data['ship_date'] ? 'c.ship_date' : 'c.created_dt';
+                    $value = isset($_data['ship_date']) && $_data['ship_date'] ? $_data['ship_date'] : $_data['created_dt'];
+                    $this->db->where(`DATE($key)`, date('Y-m-d', strtotime($value)));
+                }
+
+                if (isset($_data['status']) && $_data['status']) {
+                    $this->db->where('a.status', $_data['status']);
+                }
+
+                if (isset($_data['priority']) && $_data['priority']) {
+                    $this->db->where('a.priority', $_data['priority']);
+                }
+
+                if (isset($_data['reference_no']) && $_data['reference_no']) {
+                    $this->db->where('a.reference_no', $_data['reference_no']);
+                }
             }
 
             if (isset($search) && $search) {

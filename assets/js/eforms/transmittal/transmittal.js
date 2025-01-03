@@ -279,6 +279,7 @@ modalAdvanceSearch
                 width: "100%",
                 dropdownParent: $(this),
                 allowClear: true,
+                minimumInputLength: 3,
                 ajax: {
                     url: baseUrl("eforms/transmittal/get_transmittal_creators"),
                     dataType: "JSON",
@@ -323,6 +324,7 @@ function clearAdvanceSearch() {
     const form = $("#frm-advance-search");
     form.resetForm();
     form.find(".s2").val('').trigger('change');
+    form.find('select[name="company_from"]').val('').trigger('change')
     advanceSearch = false;
     advanceSearchData = {
         priority: null,
@@ -342,7 +344,7 @@ $(document).ready(function () {
     $('#query-builder').queryBuilder({
         'bt-tooltip-errors': {delay: 100},
         filters: [
-            {id: 'a.id', label: 'ID #', type: 'integer'},
+            // {id: 'a.id', label: 'ID #', type: 'integer'},
             {
                 id: 'a.cat',
                 label: 'Type',
