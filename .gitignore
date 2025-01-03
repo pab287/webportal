@@ -39,3 +39,5 @@ vendor/
 vendor/*
 
 .env
+composer.json
+composer.lock
