@@ -27,6 +27,8 @@ defaultRedirect = param_id ? viewRedirect: defaultRedirect;
 const isView = typeof getUrlParameter("view") !== "undefined" ? JSON.parse(getUrlParameter("view")): false;
 if(isView){ $("form#form_travel_order a.btnCancel").prop("href", viewRedirect); }
 
+select2Department('#select2_dep');
+
 var tempData = {};
 $.ajax({
   url: baseUrl("eforms/travel_order/ajax_travel_order_details/") + param_id,
@@ -153,8 +155,12 @@ $.ajax({
     if(data.data.vehicle_id > 0){ $('#select2_vehicle').append(newOption).trigger('change'); }
     var newOption = new Option(data.company_desc, data.data.company, true, true);
     $('#select2_file').append(newOption).trigger('change');
-    newOption = new Option(data.department_desc, data.data.department, true, true);
-    $('#select2_dep').append(newOption).trigger('change');
+
+    // newOption = new Option(data.department_desc, data.data.department, true, true);
+    // $('#select2_dep').append(newOption).trigger('change');
+
+    select2Department('#select2_dep', true, { text : data.department_desc, id: data.data.department }, data.data.company );
+    
     newOption = new Option(data.data.driver, data.data.driver_id, true, true);
     if(data.data.driver_id > 0){ $('#driver').append(newOption).trigger('change'); }
     vmTab1.vm_tab1 = Object.assign({}, data.data);
@@ -197,19 +203,61 @@ var file_under = $("#select2_file").select2({
   }
 });
 
-var department = $("#select2_dep").select2({
-  placeholder: 'SELECT AN OPTION',
-  width: '100%',
-  ajax: {
-    url: baseUrl("eforms/Travel_order/get_department_collection"),
-    dataType: "json",
-    global: false,
-    delay: 500,
-    processResults: function (data) {
-      return data;
-    }
+// var department = $("#select2_dep").select2({
+//   placeholder: 'SELECT AN OPTION',
+//   width: '100%',
+//   ajax: {
+//     url: baseUrl("eforms/Travel_order/get_department_collection"),
+//     dataType: "json",
+//     global: false,
+//     delay: 500,
+//     processResults: function (data) {
+//       return data;
+//     }
+//   }
+// });
+
+function select2Department(targetElement, destroy = false, formData = {}, id = 0) {
+  const currentTarget = $(targetElement);
+  const select2Init = currentTarget.data('select2');
+
+  if (destroy) {
+    currentTarget.empty();
+    if (typeof select2Init !== 'undefined') { select2Init.destroy(); }
+    $("#select2_dep").off('select2:select');
   }
-});
+
+  if (formData) {
+    newOption = new Option(formData.text, formData.id, true, true);
+    currentTarget.append(newOption).trigger('change');
+  }
+
+  // var isDisabled = id == 0 ? true : false;
+  // currentTarget.prop('disabled', isDisabled);
+
+  currentTarget.select2({
+    placeholder: 'SELECT AN OPTION',
+    width: '100%',
+    ajax: {
+      url: baseUrl("eforms/Travel_order/get_department_collection"),
+      dataType: "json",
+      global: false,
+      delay: 500,
+      data: function ({ term }) {
+        return {
+          q: term,
+          company: id
+        }  
+      },
+      processResults: function (data) {
+        return data;
+      }
+    }
+  }).on("select2:select", function (e) {
+    var self = $(e.target);
+    self.validate();
+  });
+}
 
 var vehicle = $("#select2_vehicle").select2({
   placeholder: 'SELECT AN OPTION',
@@ -1015,15 +1063,15 @@ function update_travel_order(recommend=false) {
   displayRequiredPersonel();
   displayRequiredDestinations();
 
-  file_under.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });  
+  // file_under.on("change", function (e) {
+  //   var self = $(e.target);
+  //   self.validate();
+  // });  
  
-  department.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });  
+  // department.on("change", function (e) {
+  //   var self = $(e.target);
+  //   self.validate();
+  // });  
  
   vehicle.on("change", function (e) {
     var self = $(e.target);

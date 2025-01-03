@@ -77,9 +77,44 @@ var file_under = $("#select2_file").select2({
       return data;
     }
   }
+}).on("change", function (e) {
+  var self = $(e.target);
+  self.validate();
+  var data = $(e.target).val();
+
+  select2Department('#select2_dep', true, data);
 });
 
-var department = $("#select2_dep").select2({
+// var department = $("#select2_dep").select2({
+//     placeholder: 'SELECT AN OPTION',
+//     width: '100%',
+//     ajax: {
+//       url: baseUrl("eforms/Travel_order/get_department_collection"),
+//       dataType: "json",
+//       global: false,
+//       delay: 500,
+//       processResults: function (data) {
+//         return data;
+//       }
+//     }
+// });
+
+select2Department('#select2_dep', true);
+
+function select2Department(targetElement, destroy = false, id = 0) {
+  const currentTarget = $(targetElement);
+  const select2Init = currentTarget.data('select2');
+
+  if (destroy) {
+    currentTarget.empty();
+    if (typeof select2Init !== 'undefined') { select2Init.destroy(); }
+    currentTarget.off('select2:select');
+  }
+
+  var isDisabled = id == 0 ? true : false;
+  currentTarget.prop('disabled', isDisabled);
+
+  $("#select2_dep").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
     ajax: {
@@ -87,11 +122,21 @@ var department = $("#select2_dep").select2({
       dataType: "json",
       global: false,
       delay: 500,
+      data: function ({ term }) {
+        return {
+          q: term,
+          company: id
+        }  
+      },
       processResults: function (data) {
         return data;
       }
     }
-});
+  }).on("select2:select", function (e) {
+    var self = $(e.target);
+    self.validate();
+  });
+}
 
 vehicle = initVehicleSelect2();
 driver = initDriverSelect2();
@@ -654,15 +699,15 @@ function add_travel_order(){
     displayRequiredPersonel();
     displayRequiredDestinations();
 
-    file_under.on("change", function (e) {
-      var self = $(e.target);
-      self.validate();
-    });
+    // file_under.on("change", function (e) {
+    //   var self = $(e.target);
+    //   self.validate();
+    // });
 
-    department.on("change", function (e) {
-      var self = $(e.target);
-      self.validate();
-    });  
+    // department.on("change", function (e) {
+    //   var self = $(e.target);
+    //   self.validate();
+    // });  
                   
     $.validate({
       form : '#form_travel_order',
