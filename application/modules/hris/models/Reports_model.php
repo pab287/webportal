@@ -530,18 +530,19 @@ class Reports_model extends CI_Model{
     }
 
     public function generateManpowerReport(){
+        $resultFilter = "Filter applied: ";
         $resultset = array();
         $arrData = array();
         $arr = array();
         $post = $this->input->post();
         if(isset($post["filter_by"]) && $post["filter_by"]){
             $additionalFilters = array();
-            if(isset($post["company"]) && $post["company"]){ $additionalFilters["comp.id"] = $post["company"]; }
-            if(isset($post["department"]) && $post["department"]){ $additionalFilters["dept.id"] = $post["department"]; }
+            if(isset($post["company"]) && $post["company"]){ $additionalFilters["comp.id"] = $post["company"]; $resultFilter .= "Company: <strong>" . $this->getCompanyById($post["company"])->description."</strong> "; }
+            if(isset($post["department"]) && $post["department"]){ $additionalFilters["dept.id"] = $post["department"]; $resultFilter .= "Department: <strong>" . $this->getDepartmentById($post["department"])->description."</strong> "; }
 
             /*** if(isset($post["station"]) && $post["station"]){ $additionalFilters["loc.location_name"] = $post["station"]; } ***/
-            if(isset($post["station"]) && $post["station"]){ $additionalFilters["dsl.station_id"] = $post["station"]; }
-
+            if(isset($post["station"]) && $post["station"]){ $additionalFilters["dsl.station_id"] = $post["station"]; $resultFilter .= "Station: <strong>" . $this->getStationById($post["station"])->site_name."</strong> "; }
+            if($resultFilter == "Filter applied: "){ $resultFilter = ""; }
             $filterType = $post["filter_by"];
             $filteredOptions = array();
             $filteredOptions["filter_by"] = $filterType;
@@ -586,10 +587,10 @@ class Reports_model extends CI_Model{
                             $resultset["data"] = $arr;
                             $resultset["count"] = $numRows;
                             $resultset["filtered_options"] = $filteredOptions;
-                            $resultset["toastr_msg"] = "Generate active manpower report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}`, a total of <strong>{$numRows}</strong> record(s) found.";
+                            $resultset["toastr_msg"] = "Generate active manpower report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}` {$resultFilter}, a total of <strong>{$numRows}</strong> record(s) found.";
                         }else{
                             $resultset["response"] = false;
-                            $resultset["toastr_msg"] = "Generate active manpower report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}`, no filtered data found!";
+                            $resultset["toastr_msg"] = "Generate active manpower report by date range from `{$_filteredStartDate}` to `{$_filteredEndDate}` {$resultFilter}, no filtered data found!";
                         }
                     }else{
                         $resultset["response"] = false;
@@ -628,7 +629,7 @@ class Reports_model extends CI_Model{
                     $resultset["data"] = $arr;
                     $resultset["count"] = $numRows;
                     $resultset["filtered_options"] = $filteredOptions;
-                    $resultset["toastr_msg"] = "Generate all active manpower report, a total of (<strong>{$numRows}</strong> record(s) found.)";
+                    $resultset["toastr_msg"] = "Generate all active manpower report {$resultFilter}, a total of (<strong>{$numRows}</strong> record(s) found.)";
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Generate all active manpower report, no filtered data found!";
@@ -2171,6 +2172,16 @@ class Reports_model extends CI_Model{
         return $result;
     }
 
+    private function getStationById($id){
+        $this->db->select("site_name");
+        $this->db->from($this->tblAppLocationSites);
+        $this->db->where('id', $id);
+        $query = $this->db->get(); 
+        $result = $query->row();
+        $this->db->reset_query();
+        return $result;
+    }
+
 
     public function logExport(){
         $post = $this->input->post();
@@ -2178,6 +2189,7 @@ class Reports_model extends CI_Model{
         $company_id = isset($post['filters']['company']) ? intval($post['filters']['company']) : 0;
         $department_id = isset($post['filters']['department']) ? intval($post['filters']['department']) : 0;
         $position_id = isset($post['filters']['position']) ? intval($post['filters']['position']) : 0;
+        $station_id = isset($post['filters']['station']) ? intval($post['filters']['station']) : 0;
         $training = isset($post['filters']['training']) ? $post['filters']['training'] : '';
         $title = isset($post['filters']['title']) ? $post['filters']['title'] : '';
 
@@ -2196,6 +2208,9 @@ class Reports_model extends CI_Model{
         if ($position_id > 0) {
             $filters .= "Position: <strong>" . $this->getPositionById($position_id)->name . "</strong> ";
         }
+        if ($station_id > 0) {
+            $filters .= "Station: <strong>" . $this->getStationById($station_id)->site_name . "</strong> ";
+        }
         $filter_by = isset($post['filters']['filter_by']) ? $post['filters']['filter_by'] : '';
         $filter_type = isset($post['filters']['filter_type']) ? $post['filters']['filter_type'] : '';
         if ($filters == "Filters applied: ") {
@@ -2206,7 +2221,7 @@ class Reports_model extends CI_Model{
         } elseif ($filter_type) {
             $filters .= "Separated Employees, ";
         }
-        if ($filter_by != "all") {
+        if ($filter_by == "date_range") {
             $filters  .= "Between <strong>{$post['filters']['date_range']} </strong> ";
         }
         $this->core_layout->setEventLog("Exported using {$post['name']}. {$post['type']} {$filters} results found: <strong>{$post['count']}</strong>", "export", 'success', "gcchris");

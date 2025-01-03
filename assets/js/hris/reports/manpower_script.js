@@ -1,7 +1,7 @@
 let _companies = [];
 let _departments = [];
 let _stations = [];
-
+let filters ={};
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){ _companies = _tempContentData.company; }
     if(typeof _tempContentData.department !== "undefined" && _tempContentData.department.length > 0){ _departments = _tempContentData.department; }
@@ -37,9 +37,11 @@ $("#company").select2({
     allowClear: true,
 }).on("select2:select", function (e) {
     $(e.target).validate();
+    filters.company = $(e.target).val();
 }).on("select2:unselect", function (e) {
     globalCompanyId = 0;
     globalDepartmentId = 0;
+    filters.company = "";
 }).on("change", function (e) {});
 
 $("#department").select2({
@@ -49,9 +51,11 @@ $("#department").select2({
     allowClear: true,
 }).on("select2:select", function (e) {
     $(e.target).validate();
+    filters.department = $(e.target).val();
 }).on("select2:unselect", function (e) {
     globalCompanyId = 0;
     globalDepartmentId = 0;
+    filters.company ="";
 }).on("change", function (e) {});
 
 $("#station").select2({
@@ -61,6 +65,9 @@ $("#station").select2({
     allowClear: true,
 }).on("select2:select", function (e) {
     $(e.target).validate();
+    filters.station = $(e.target).val();
+}).on("select2:unselect", function (e) {
+    filters.station = "";
 }).on("change", function (e) {});
 
 var resetFilter = function (event) {
@@ -204,6 +211,8 @@ const vmRenderedContent = new Vue({
                                             },
                                             exportOptions: { stripHtml: false },
                                             customize: function (win) {
+                                                const company = vv.company;
+                                                const totalEntries = vv.regular.count;
                                                 var css = `@page { size: landscape; margin: 0.5cm; } 
                                                     .dt-print-view table { font-size: 10px; } 
                                                     .dt-print-view table.dataTable tfoot tr:first-child th{ border-top: 1px solid #000000; }
@@ -225,8 +234,15 @@ const vmRenderedContent = new Vue({
                     
                                                 const tempTable = win.document.getElementsByClassName('dataTable')[0];
                                                 $(tempTable).removeClass("table-bordered");
+                                                export_log(filters,"Manpower Report "+company, "print",totalEntries);
                                             }
-                                        }, { extend: 'excel' }]
+                                        }, { extend: 'excel',
+                                            customize: function (){
+                                                const company = vv.company;
+                                                const totalEntries = vv.regular.count;
+                                                export_log(filters,"Manpower Report "+company, "excel",totalEntries);
+                                            }
+                                        }]
                                     });
                                     tempInstances["regular_"+kk].clear();
                                     tempInstances["regular_"+kk].rows.add(vv.regular.rows).draw();
@@ -258,6 +274,8 @@ const vmRenderedContent = new Vue({
                                             },
                                             exportOptions: { stripHtml: false },
                                             customize: function (win) {
+                                                const company = vv.company;
+                                                const totalEntries = vv.regular.count;
                                                 var css = `@page { size: landscape; margin: 0.5cm; } 
                                                     .dt-print-view table { font-size: 11px; } 
                                                     .dt-print-view table.dataTable tfoot tr:first-child th{ border-top: 1px solid #000000; }
@@ -279,8 +297,15 @@ const vmRenderedContent = new Vue({
                     
                                                 const tempTable = win.document.getElementsByClassName('dataTable')[0];
                                                 $(tempTable).removeClass("table-bordered");
+                                                export_log(filters,"Manpower Report "+company, "print",totalEntries);
                                             }
-                                        }, { extend: 'excel' }]
+                                        }, { extend: 'excel',
+                                            customize: function (){
+                                                const company = vv.company;
+                                                const totalEntries = vv.regular.count;
+                                                export_log(filters,"Manpower Report "+company, "excel",totalEntries);
+                                            }
+                                        }]
                                     });
                                     tempInstances["weekly_"+kk].clear();
                                     tempInstances["weekly_"+kk].rows.add(vv.weekly.rows).draw();
@@ -322,6 +347,8 @@ const vmRenderedContent = new Vue({
                                             },
                                             exportOptions: { stripHtml: false },
                                             customize: function (win) {
+                                                const company = vv.company;
+                                                const totalEntries = vv.regular.count;
                                                 var css = `@page { size: landscape; margin: 0.5cm; } 
                                                     .dt-print-view table { font-size: 10px; } 
                                                     .dt-print-view table.dataTable tfoot tr:first-child th{ border-top: 1px solid #000000; }
@@ -343,8 +370,15 @@ const vmRenderedContent = new Vue({
                     
                                                 const tempTable = win.document.getElementsByClassName('dataTable')[0];
                                                 $(tempTable).removeClass("table-bordered");
+                                                export_log(filters,"Manpower Report "+company, "print",totalEntries);
                                             }
-                                        }, { extend: 'excel' }]
+                                        }, { extend: 'excel' ,
+                                            customize: function (){
+                                                const company = vv.company;
+                                                const totalEntries = vv.regular.count;
+                                                export_log(filters,"Manpower Report "+company, "excel",totalEntries);
+                                            }
+                                        }]
                                     });
 
                                     tempInstances["salary_history_"+kk].clear();
@@ -466,6 +500,8 @@ const vmFilteredContent = new Vue({
                             $(tempTable).removeClass("table-bordered");
                             const tempTHead = $(tempTable).find("thead th:not(:first-child)");
                             tempTHead.removeClass("text-right").addClass("text-center");
+                            console.log("Print Clicked");
+                            export_log(filters,"Manpower Report", "print",vmFilteredContent.count);
                         }
                     }, { extend: 'excel' }],
                     footerCallback: function(){
@@ -523,6 +559,7 @@ const vmFilteredContent = new Vue({
                 $("i", e).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
                 $("i", e).css({ top: "50%", left: "50%" });
             }, 150);
+            export_log(filters,"Manpower Report", "excel",vmFilteredContent.count);
         }
     }
 });
@@ -600,3 +637,24 @@ $.validate({
         return false;
     }
 });
+
+async function export_log(filters, type, name, count) {
+    try {
+        const response = await $.ajax({
+            url: siteUrl("hris/reports/log_export"),
+            type: "POST",
+            data: { 
+                filters,
+                type: type,
+                name: name,
+                count: count,
+                csrf_token: _csrf_hash 
+            },
+            dataType: 'json'
+        });
+        return response;
+    } catch (error) {
+        console.error('Error exporting log:', error);
+        throw error;
+    }
+}

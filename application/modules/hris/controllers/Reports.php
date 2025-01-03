@@ -297,12 +297,12 @@ class Reports extends MY_Controller{
 
     public function generate_manpower_report(){
         $data = $this->report->generateManpowerReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_manpower_by_company_report(){
         $data = $this->report->generateManpowerByCompanyReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_training_seminars_report(){
