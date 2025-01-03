@@ -2,7 +2,7 @@
     class Time_in_out_model extends Dbase{
         use Logs_maker;
 
-        protected $mapKey;
+        protected $mapKey; 
 
 
         private function store_logs($post, $emp_id){
