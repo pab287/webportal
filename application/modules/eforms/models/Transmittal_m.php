@@ -70,7 +70,7 @@
 
             $filterFields = array("a.id", " a.status", "a.priority", "a.reference_no", "a.company_from", "a.ship_date", "c.description", "a.created_by", "a.created_dt", "a.ship_to", "a.company_to", "a.department_to", "a.ship_to_address", "e.firstname", "e.lastname", "cr.lastname", "cr.firstname");
 
-            $sql = "a.id, a.status, a.priority, a.reference_no, a.company_from,a.ship_to, a.ship_date, c.description as trans_desc, a.created_by, a.created_dt, e.firstname, e.middlename, e.lastname,e.suffix, IF(comp.id IS NULL, a.company_to, comp.code) company_to, IF(dep.id IS NULL, a.department_to, dep.code) department_to, a.ship_to_address, a.ship_to_address";
+            $sql = "a.id, a.status, a.priority, a.reference_no, a.company_from, a.ship_to, a.ship_date, UPPER(c.description) as trans_desc, a.created_by, a.created_dt, e.firstname, e.middlename, e.lastname,e.suffix, IF(comp.id IS NULL, a.company_to, comp.code) company_to, IF(dep.id IS NULL, a.department_to, dep.code) department_to, a.ship_to_address, a.ship_to_address";
 
             $this->db->select($sql);
             $this->db->from("gcceforms.transmittal a");
@@ -93,7 +93,7 @@
                 }
                 
                 if (isset($_data['company_from']) && $_data['company_from']) {
-                    $this->db->where('c.company_from', $_data['company_from']);
+                    $this->db->where('a.company_from', $_data['company_from']);
                 }
                 
                 if (isset($_data['delivered_to']) && $_data['delivered_to']) {
@@ -148,30 +148,37 @@
             }
 
             $i = $sortOrder[0]['column'];
-            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
-            
             if ($sortBy[$i]['data'] == "firstname") {
                 $this->db->order_by("a.ship_to", $sortOrder[0]['dir']);
+            } else {
+                $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
             }
 
             $query = $this->db->get();
 
             if ($query->num_rows() > 0) {
                 $arrData = array();
-
+                
                 foreach ($query->result() as $key => $rs) {
                     $rs->company_from = (is_numeric($rs->company_from)) ? $this->companyFrom($rs->company_from) : $rs->company_from;
                     $rs->created_by = (is_numeric($rs->created_by)) ? $this->createdBy($rs->created_by) : $rs->created_by;
 
-                    if (is_numeric($rs->ship_to)) {
-                        $tempRs = (array)$rs;
-                        $fullname = $this->core_layout->getDisplayName($tempRs);
-                        $tempFullname = (object)$fullname;
-                        $rs->display_name = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
-                        $rs->display_name = "<b>" . $rs->display_name . "</b><br>" . $rs->company_to . "<br>" . $rs->department_to . "<br>" . $rs->ship_to_address;
-                    } else {
-                        $rs->display_name = "<b>" . $rs->ship_to . "</b><br>" . $rs->company_to . "<br>" . $rs->department_to . "<br>" . $rs->ship_to_address;
-                    }
+                    $tempRs = (array)$rs;
+                    $fullname = $this->core_layout->getDisplayName($tempRs);
+                    $tempFullname = (object)$fullname;
+                    $_name = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                    $tempName = is_numeric($rs->ship_to) ? $_name : $rs->ship_to;
+                    $rs->display_name = $tempName;
+
+                    // if (is_numeric($rs->ship_to)) {
+                    //     $tempRs = (array)$rs;
+                    //     $fullname = $this->core_layout->getDisplayName($tempRs);
+                    //     $tempFullname = (object)$fullname;
+                    //     $rs->display_name = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                    //     $rs->display_name = "<b>" . $rs->display_name . "</b><br>" . $rs->company_to . "<br>" . $rs->department_to . "<br>" . $rs->ship_to_address;
+                    // } else {
+                    //     $rs->display_name = "<b>" . $rs->ship_to . "</b><br>" . $rs->company_to . "<br>" . $rs->department_to . "<br>" . $rs->ship_to_address;
+                    // }
                     
                     $arrData[$key] = $rs;
                 }
@@ -212,7 +219,7 @@
                 }
                 
                 if (isset($_data['company_from']) && $_data['company_from']) {
-                    $this->db->where('c.company_from', $_data['company_from']);
+                    $this->db->where('a.company_from', $_data['company_from']);
                 }
                 
                 if (isset($_data['delivered_to']) && $_data['delivered_to']) {

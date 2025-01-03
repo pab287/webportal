@@ -61,19 +61,38 @@ var tblTransmittal = $("#table-transmittal")
             },
             {data: "priority"},
             {data: "reference_no"},
-            {data: "company_from"},
+            {data: "company_from",
+                render: function (data) {
+                    return data.toUpperCase();
+                }
+            },
             {
                 data: "firstname", render: function (data, type, row, meta) {
-                    return displayName(row.display_name)
+                    // return displayName(row.display_name)
+                    var html = ``;
+                    var _name = row.display_name && row.display_name != '' ? row.display_name : row.ship_to;
+
+                    html += `<p class="m-0"><b>${ _name.toUpperCase() }</b></p>\n`;
+                    
+                    if (row.company_to) {
+                        html += `<p class="m-0">${ row.company_to.toUpperCase() }</p>\n`;
+                    }
+
+                    html += `<p class="m-0">${ row.department_to.toUpperCase() }</p>\n`;
+                    html += `<p class="m-0">${ row.ship_to_address.toUpperCase() }</p>\n`;
+
+                    return html;
                 }
             },
             {
                 data: "trans_desc", render: function (data) {
-                    return formatContent(data)
+                    return formatContent(data).toUpperCase();
                 }
             },
             {
-                data: "trans_desc", visible: false,
+                data: "trans_desc", visible: false, function (data) {
+                    return data.toUpperCase();
+                }
             },
             {
                 data: "ship_date", render: function (data) {
@@ -121,10 +140,24 @@ var tblTransmittal = $("#table-transmittal")
                     columns: "thead th:not(.notExport)"
                 }
             }, { 
-                extend: 'pdf',
+                extend: 'pdfHtml5',
                 exportOptions: {
                     // columns: "thead th:not(.notExport)"
-                    columns: [2, 3, 4, 6, 7] 
+                    columns: [2, 3, 4, 6, 7],
+                    stripNewlines: false
+                    // stripHtml: false
+                },
+                customize: function (doc) {
+                    doc.content[1].table.widths = ['13%', '16%', '29%', '29%', '13%'];
+
+                    const rowCount = doc.content[1].table.body.length;
+                    for (i = 1; i < rowCount; i++) {
+                        doc.content[1].table.body[i][0].alignment = 'left';
+                        doc.content[1].table.body[i][1].alignment = 'center';
+                        doc.content[1].table.body[i][2].alignment = 'left';
+                        doc.content[1].table.body[i][3].alignment = 'left';
+                        doc.content[1].table.body[i][4].alignment = 'center';
+                    }
                 }
             }
         ]
@@ -273,7 +306,7 @@ modalAdvanceSearch
                 ajax: {
                     url: baseUrl("eforms/transmittal/get_company_collection"),
                     dataType: "JSON",
-                    delay: 500
+                    delay: 1000
                 }
             });
 
