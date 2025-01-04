@@ -203,6 +203,7 @@
                     }
                     $destination = $this->db->get();
                     $destinationDateTime = array();
+                    $tempDates = array();
         
                     if ($destination->num_rows() > 0) {
                         $des_num = 0;
@@ -227,6 +228,7 @@
         
                             $date = $date_start . "-" . $date_end;
                             array_push($destinationDateTime, $date);
+                            array_push($tempDates, $vx->date_to);
                         }
                     } else {
                         return array();
@@ -241,6 +243,7 @@
                     $rs->company_detail = $this->getCompany($rs->company);
                     $rs->user_role_id = $this->authenticate->getRoleId();
                     $rs->created_dt = date("m-d-Y h:i A", strtotime( $rs->created_dt));
+                    $rs->tempDates = (Object) $tempDates;
                     $arrData[] = $rs;
                 }
             }

@@ -867,15 +867,20 @@ function open_accomplish(){
   var _time = "";
   var now = moment().format('YYYY-MM-DD');
   var max = "";
+  var min = "";
 
   if (uniqueArray.length == 1) {
     _date = new Date(uniqueArray[0]);
+    min = moment(_date).format('YYYY-MM-DD');
     _date = moment(_date, 'YYYY-MM-DD HH:mm:ss').add(15, 'days');
   } else {
+    min = dates.reduce(function (a, b) { return a < b ? a : b; });
     max = dates.reduce(function (a, b) { return a > b ? a : b; });
 
     _date = new Date(max);
     _date = moment(_date, 'YYYY-MM-DD HH:mm:ss').add(15, 'days');
+
+    min = moment(min).format('YYYY-MM-DD');
   }
 
   if (now <= moment(_date).format('YYYY-MM-DD')) {
@@ -889,6 +894,7 @@ function open_accomplish(){
     pickerPosition: 'bottom-left',
     todayBtn: true,
     format: 'yyyy/mm/dd hh:ii:ss',
+    startDate: moment(min).format('YYYY/MM/DD HH:mm:ss'),
     endDate: moment(_date).format('YYYY/MM/DD HH:mm:ss'),
   });
 

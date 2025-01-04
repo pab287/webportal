@@ -22,11 +22,15 @@ $(document).ready(function(){
     // here
     $(document).on("click","#cb-select-all",function(){
         var isChecked = $(this).is(':checked');
-        $(".selectedTravelOrder:not(.not-checkbox)").each(function(){
-            $(this).prop('checked', isChecked);
-        })
+        $(".selectedTravelOrder").each(function(){
+            if ($(this).hasClass('approved-to')) {
+                $(this).prop('checked', isChecked);
+            }
+        });
+
         isAccomplishModalOpen = $('.selectedTravelOrder:checked').length > 0;
-    })
+    });
+    
     $(document).on("click","#selectedTravelOrder",function(){
         if ( $('.selectedTravelOrder:checked').length !== $('.selectedTravelOrder').length) {
             var isChecked = $("#cb-select-all").is(':checked');
@@ -35,7 +39,8 @@ $(document).ready(function(){
             $("#cb-select-all").prop('checked', true);
         }
         isAccomplishModalOpen = $('.selectedTravelOrder:checked').length > 0;
-    })
+    });
+
     $(document).on("click",".submit_approval",function(){
         var accomplishment_dt = $("#accomplishment_dt").val();
         if (accomplishment_dt.length<=0) {
@@ -92,6 +97,12 @@ $(document).ready(function(){
     // setInterval(loadTravelOrder, 5000);
     
 })
+
+function unique(array){
+    return array.filter(function(el, index, arr) {
+        return index == arr.indexOf(el);
+    });
+}
 
 $('#due_dt').datetimepicker({
   todayHighlight: true,
@@ -196,17 +207,19 @@ var tblTravelOrder = $("#table-travel_order").DataTable({
             orderable: false,
             data: null,
             className: 'text-center',
+            visible: false, // hide column to prevent mass action
             render: function (data, type, row) {
                 if (typeof row.status !=="undefined") {
                     if (row.accomplishment_dt === "0000-00-00 00:00:00" && row.status !=="Pending" || (row.accomplished == 0 && row.accomplished)) {
                         if(row.status == 'Approved'){
+                            var dates = JSON.stringify(row.tempDates);
                             return ` <label class="m-checkbox m-checkbox--air m-checkbox--state-success cb${row.id}">
-                            <input type="checkbox" class="selectedTravelOrder " id="selectedTravelOrder" name="selected[]" value="${row.id}" reference_no="${row.reference_no}"
-                                id="cb${row.id}"><span></span></label>
+                            <input type="checkbox" class="selectedTravelOrder approved-to" id="selectedTravelOrder" name="selected[]" value="${row.id}" reference_no="${row.reference_no}"
+                                id="cb${row.id}" data-date='${ dates }'><span></span></label>
                             `;
                         }else{
                             return ` <label class="m-checkbox m-checkbox--air m-checkbox--state-success cb${row.id}">
-                            <input type="checkbox" class="selectedTravelOrder no-checkbox" id="selectedTravelOrder" name="selected[]" value="${row.id}" reference_no="${row.reference_no}"
+                            <input type="checkbox" class="selectedTravelOrder" id="selectedTravelOrder" name="selected[]" value="${row.id}" reference_no="${row.reference_no}"
                                 id="cb${row.id}" disabled><span></span></label>
                             `;
                         }
@@ -362,7 +375,8 @@ var tblTravelOrder = $("#table-travel_order").DataTable({
         }, {
             extend: 'pdf',
             exportOptions: {
-                columns: "thead th:not(.notExport)"
+                columns: "thead th:not(.notExport)",
+                stripNewlines: false
             }
         }
     ]
@@ -424,34 +438,34 @@ function renderStatusHtml(data, row) {
     var action= '';
     switch (data) {
         case "Pending":
-            action += '<div class="m-badge m-badge--warning text-white m-badge--wide " role="alert"><small><strong>For Recommendation</strong></small></div>';
+            action += '<div class="m-badge m-badge--warning text-white m-badge--wide " role="alert"><small><strong>For Recommendation</strong></small></div>\n';
             break;
         case "Recommend_Approved":
-            action += '<div class="m-badge m-badge--info text-white m-badge--wide " role="alert"><small><strong>Pending Approval</strong></small></div>';
+            action += '<div class="m-badge m-badge--info text-white m-badge--wide " role="alert"><small><strong>Pending Approval</strong></small></div>\n';
             break;
         case "Approved":
             if (row.accomplishment_dt == "0000-00-00 00:00:00" || (row.accomplished == 0 && row.accomplished)) {
-                action += '<div class="m-badge m-badge--accent m-badge--wide accomplishment_'+row.id+'" role="alert"><small><strong>Approved</strong></small></div>';
+                action += '<div class="m-badge m-badge--accent m-badge--wide accomplishment_'+row.id+'" role="alert"><small><strong>Approved</strong></small></div>\n';
                 // action += '<div class="m-badge m-badge--success m-badge--wide accomplishment_'+row.id+'" role="alert"><small><strong>Approved</strong></small></div>';
             } else {
-                action += '<div class="m-badge m-badge--success m-badge--wide" role="alert"><small><strong>Accomplished</strong></small></div>';
+                action += '<div class="m-badge m-badge--success m-badge--wide" role="alert"><small><strong>Accomplished</strong></small></div>\n';
             }
             break;
         case "Disapproved":
-            action += '<div class="m-badge m-badge--danger m-badge--wide" role="alert"><small><strong>Disapproved</strong></small></div>';
+            action += '<div class="m-badge m-badge--danger m-badge--wide" role="alert"><small><strong>Disapproved</strong></small></div>\n';
             break;
         case "HR Noted":
-            action += '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><small><strong>HR Noted</strong></small></div>';
+            action += '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><small><strong>HR Noted</strong></small></div>\n';
             break;
         case "Received":
-            action += '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><small><strong>Received</strong></small></div>';
+            action += '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><small><strong>Received</strong></small></div>\n';
             break;
         default:
-            action += '<div class="m-badge m-badge--metal text-white m-badge--wide" role="alert"><small><strong>Cancelled</strong></small></div>';
+            action += '<div class="m-badge m-badge--metal text-white m-badge--wide" role="alert"><small><strong>Cancelled</strong></small></div>\n';
             break;
     }
 
-    action += '<div style="line-height: 1.1"><p class="mt-2 mb-0 m-font-3"><small><b>Reference no: '+row.reference_no+'</b></small></p>';
+    action += '<div style="line-height: 1.1"><p class="mt-2 mb-0 m-font-3"><small><b>Reference no: '+row.reference_no+'</b></small></p>\n';
     action += '<p class="mb-0 m-font-3"><small><b>File Under:</b> '+row.company+'</small></p>';
     /*** action += '<p class="mb-0 m-font-3"><small><b>Date Created:</b> '+row.created_dt+'</small></p></div>';    ***/
 
