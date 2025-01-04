@@ -32,7 +32,7 @@ $.ajax({
    
     data.data.ref_yr = data.name;
     data.data.created_by = data.created_by+' on '+data.data.created_dt;
-    data.data.last_edited_by = data.last_edited_by+' on '+data.data.last_edited_dt;
+    data.data.last_edited_by = data.last_edited_by ? data.last_edited_by+' on '+data.data.last_edited_dt : '';
     data.data.approved_by = data.approved_by+' on '+data.data.approved_dt;
     data.data.disapproved_by = data.disapproved_by+' on '+data.data.disapproved_dt;
     data.data.cancelled_by = data.cancelled_by+' on '+data.data.cancelled_dt;
@@ -200,7 +200,7 @@ function formatDifference(data,row){
     switch(data){
         case "1":
         var datefrom = new Date(row.date_from);
-var dateto = new Date(row.date_to);
+        var dateto = new Date(row.date_to);
         var hours =Math.abs(dateto - datefrom)/36e5;
         var hours= (hours).toFixed(0);
             return hours +" HOURS";
@@ -213,10 +213,19 @@ var dateto = new Date(row.date_to);
         break;
         default:
              var datefrom = new Date(row.date_from);
-var dateto = new Date(row.date_to);
-        var hours = Math.abs(dateto - datefrom)/ 36e5;
-        var temp=hours%24
-         var temp2=Math.floor(hours/24);
+            var dateto = new Date(row.date_to);
+            var hours = Math.abs(dateto - datefrom)/ 36e5;
+            var temp=hours%24
+            var temp2=Math.floor(hours/24);
+
+            var _temp = parseFloat(temp).toFixed(1);
+            var _split = _temp.split('.')[1];
+
+            if (_split > 0) {
+                temp = _temp;
+            } else {
+                temp = parseFloat(temp).toFixed(0);
+            }
 
             return temp2 +" Days "+ temp +" HOURS";
         break;

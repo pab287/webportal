@@ -66,7 +66,7 @@
                 <b v-text="vm_tab1.created_by"></b>
               </div>
             </div>
-            <div class="form-group m-form__group row">
+            <div class="form-group m-form__group row" v-if="vm_tab1.last_edited_by && vm_tab1.last_edited_by != ''">
               <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12"> Last Edited By </label>
               <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                 <b v-text="vm_tab1.last_edited_by"></b>
@@ -78,7 +78,7 @@
                 <b v-text="vm_tab1.approved_by"></b>
               </div>
               <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12"></label>
-              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" v-if="vm_tab1.approved_remarks && vm_tab1.approved_remarks != ''">
                 Remarks: <b v-text="vm_tab1.approved_remarks"></b>
               </div>
             </div>
@@ -88,7 +88,7 @@
                 <b v-text="vm_tab1.disapproved_by"></b>
               </div>
               <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12"></label>
-              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" v-if="vm_tab1.disapproved_remarks && vm_tab1.disapproved_remarks != ''">
                 Remarks: <b v-text="vm_tab1.disapproved_remarks"></b>
               </div>
             </div>
@@ -98,7 +98,7 @@
                 <b v-text="vm_tab1.cancelled_by"></b>
               </div>
               <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12"></label>
-              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" v-if="vm_tab1.cancelled_remarks && vm_tab1.cancelled_remarks != ''">
                 Reason: <b v-text="vm_tab1.cancelled_remarks"></b>
               </div>
             </div>
@@ -108,7 +108,7 @@
                 <b v-text="vm_tab1.hr_noted_by"></b>
               </div>
               <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12"></label>
-              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" v-if="vm_tab1.hr_noted_remarks && vm_tab1.hr_noted_remarks != ''">
                 HR Remarks: <b v-text="vm_tab1.hr_noted_remarks"></b>
               </div>
             </div>
@@ -243,8 +243,8 @@
                   <tr>
                     <th>Nature</th>
                     <th>Type</th>
-                    <th>Date & Time</th>
                     <th>Duration</th>
+                    <th>Date & Time</th>
                     <th>Status</th>
                   </tr>
                 </thead>
