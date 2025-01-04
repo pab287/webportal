@@ -13,6 +13,7 @@ class Profile extends MY_Controller {
 		$this->load->model("hris/contractor_model");
 		$this->load->model("hris/personnel_model");
 		$this->load->model("ams/Utilities_model", "utilities");
+		$this->load->model("core/Profile_model", "profile");
 	}
 
 	public function index(){
@@ -44,7 +45,7 @@ class Profile extends MY_Controller {
 		$this->core_layout->addJs("plugins/star-rating/js/jquery.star-rating-svg.min.js", true);
 		$this->core_layout->addCss("plugins/star-rating/css/star-rating-svg.css", true);
 
-		$this->core_layout->addJs("js/hris/employee_view_script.js",true,$data);
+		$this->core_layout->addJs("js/hris/profile_view_script.js",true,$data);
 		$this->core_layout->addCss('css/hris/index.css', true);
 
 		$this->core_layout->addCss('css/hris/view_profile.css', true);
@@ -89,4 +90,76 @@ class Profile extends MY_Controller {
 		$resultset = $this->payroll_m->getCurrentPayrollPayslip($id);
 		echo json_encode($resultset);
 	}
+	
+	public function get_additional_info($id){
+		$data = $this->profile->getAddtionalInfo($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_education_background($id){
+		$data = $this->profile->getEducationBackground($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_license_and_cert($id){
+		$data = $this->profile->getLicenseAndCerts($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_work_experience($id){
+		$data = $this->profile->getEmpWorkExperience($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_awards_and_achievements($id){
+		$data = $this->profile->getAwardsAndAchievements($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_emp_skills($id){
+		$data = $this->profile->getEmpSkills($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_orgs($id){
+		$data = $this->profile->getOrgs($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_trainings_and_seminars($id){
+		$data = $this->profile->getTrainingsAndSeminars($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_personal_references($id){
+		$data = $this->profile->getPersonalReferences($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_medical_history($id){
+		$data = $this->profile->getEmpMedicalHistory($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_legal_history($id){
+		$data = $this->profile->getLegalHistory($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_accountability($id){
+		$data = $this->profile->getAccountability($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_employment_information($id){
+		$data = $this->profile->getEmploymentInformation($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_job_description($id){
+		$data = $this->profile->getEmpJobDescription($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+
 }
