@@ -19,9 +19,10 @@ if(typeof getUrlParameter('status') !== 'undefined'){
 }
 
 $(document).ready(function(){
+    // here
     $(document).on("click","#cb-select-all",function(){
         var isChecked = $(this).is(':checked');
-        $(".selectedTravelOrder").each(function(){
+        $(".selectedTravelOrder:not(.not-checkbox)").each(function(){
             $(this).prop('checked', isChecked);
         })
         isAccomplishModalOpen = $('.selectedTravelOrder:checked').length > 0;
@@ -205,7 +206,7 @@ var tblTravelOrder = $("#table-travel_order").DataTable({
                             `;
                         }else{
                             return ` <label class="m-checkbox m-checkbox--air m-checkbox--state-success cb${row.id}">
-                            <input type="checkbox" class="selectedTravelOrder " id="selectedTravelOrder" name="selected[]" value="${row.id}" reference_no="${row.reference_no}"
+                            <input type="checkbox" class="selectedTravelOrder no-checkbox" id="selectedTravelOrder" name="selected[]" value="${row.id}" reference_no="${row.reference_no}"
                                 id="cb${row.id}" disabled><span></span></label>
                             `;
                         }

@@ -2220,7 +2220,7 @@
             // return array("results" => $resultarray);
 
             if(isset($get["company"]) && $get["company"]){
-                $this->db->select("a.id, UPPER(IF(a.`code` = a.`description`, TRIM(a.`description`), TRIM(CONCAT(a.`code`,' | ', a.`description`)))) as text");
+                $this->db->select("a.description as id, UPPER(IF(a.`code` = a.`description`, TRIM(a.`description`), TRIM(CONCAT(a.`code`,' | ', a.`description`)))) as text");
                 $this->db->from("gcchris.tbldepartments a");
                 $this->db->join("gccmaster.tblemployees b", "b.department_id = a.id", "INNER");
                 $this->db->join("gcchris.tblcompanies c", "c.id = b.company_id", "INNER");

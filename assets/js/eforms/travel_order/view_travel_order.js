@@ -101,7 +101,7 @@ var tblDestination = $("#table-destination").DataTable({
             toggleAccomplishDisable(true);
           }
 
-          return `<label class="m-checkbox m-checkbox--air m-checkbox--state-primary" title='Check to Print'> <input `+isCheck+` id="selectedReading" type="checkbox" class="text-gray chckBox" value="`+row.id+`" name="selected"><span></span></label>`;
+          return `<label class="m-checkbox m-checkbox--air m-checkbox--state-primary" title='Check to Print'> <input `+isCheck+` id="selectedReading" type="checkbox" class="text-gray chckBox" value="`+row.id+`" name="selected" data-date="`+row.date_to+`"><span></span></label>`;
       }
     },
     // { data: "id", render: function ( data, type, row, meta ) {
@@ -823,13 +823,17 @@ $(document).ready(function(){
 function open_accomplish(){
   globalTemp = [];
   globalTempSelected = [];
+  let dates = [];
   $(".chckBox").each(function(i){
         var trig = $(this).is(":checked");
+        var date = $(this).data("date");
         if(trig){
           globalTempSelected.push($(this).attr("value"));
         } else {
           globalTemp.push(globalDTdata[i]);
         }
+
+        dates.push(date);
   });
   
   if(globalTemp.length > 0){
@@ -858,10 +862,46 @@ function open_accomplish(){
     $("#modal_form_accomplish #remarks").hide();
   }
 
+  const uniqueArray = unique(dates);
+  var _date = "";
+  var _time = "";
+  var now = moment().format('YYYY-MM-DD');
+  var max = "";
+
+  if (uniqueArray.length == 1) {
+    _date = new Date(uniqueArray[0]);
+    _date = moment(_date, 'YYYY-MM-DD HH:mm:ss').add(15, 'days');
+  } else {
+    max = dates.reduce(function (a, b) { return a > b ? a : b; });
+
+    _date = new Date(max);
+    _date = moment(_date, 'YYYY-MM-DD HH:mm:ss').add(15, 'days');
+  }
+
+  if (now <= moment(_date).format('YYYY-MM-DD')) {
+    time = moment(_date).format('HH:mm:ss');
+    _date = now + " " + time;
+  }
+
+  $('#due_dt').datetimepicker({
+    todayHighlight: true,
+    autoclose: true,
+    pickerPosition: 'bottom-left',
+    todayBtn: true,
+    format: 'yyyy/mm/dd hh:ii:ss',
+    endDate: moment(_date).format('YYYY/MM/DD HH:mm:ss'),
+  });
+
   $("#modal_form_accomplish input[name=param_id]").val(param_id);
   $("#modal_form_accomplish input[name=globalTempSelected]").val(globalTempSelected);
   $('#modal_form_accomplish').modal('show');
   $('#modal_form_accomplish .modal-title').text('Accomplishment Report');
+}
+
+function unique(array){
+  return array.filter(function(el, index, arr) {
+      return index == arr.indexOf(el);
+  });
 }
 
 $.validate({
@@ -1019,13 +1059,13 @@ $("#undo_disapprove_modal").hide();
 $("#undo_hr_modal").hide();
 $("#undo_accomplishments_modal").hide();
 
-$('#due_dt').datetimepicker({
-  todayHighlight: true,
-  autoclose: true,
-  pickerPosition: 'bottom-left',
-  todayBtn: true,
-  format: 'yyyy/mm/dd hh:ii:ss',
-});
+// $('#due_dt').datetimepicker({
+//   todayHighlight: true,
+//   autoclose: true,
+//   pickerPosition: 'bottom-left',
+//   todayBtn: true,
+//   format: 'yyyy/mm/dd hh:ii:ss',
+// });
 
 
 function printArea(){
