@@ -427,6 +427,10 @@
                             <span class="input-group-addon">
                                     <i class="la la-calendar glyphicon-th"></i>
                             </span>
+
+                        </div>
+                        <div class="col-12 mt-1">
+                            <small class="m--font-danger"><i style="font-weight: bold;">Note:</i> Travel Orders cannot be accomplished if not completed within 15 days of the specified date and time.</small>
                         </div>
                     </div>
                     <div class="m_datatable  m-datatable--default  m-datatable--scroll col-12 table-responsive-sm">
