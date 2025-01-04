@@ -360,7 +360,8 @@
                     <div class="form-group">
                     <label class="control-label col-md-2 col-lg-2 col-sm-2 col-xs-12">Remarks</label>
                     <div class="col-md-12">
-                     <textarea name="approve_remarks"  class="form-control" data-validation="required"> </textarea> 
+                     <!-- <textarea name="approve_remarks"  class="form-control" data-validation="required"> </textarea>  -->
+                     <textarea name="approve_remarks"  class="form-control"> </textarea> 
                     </div>
                     </div>
                     
@@ -392,7 +393,8 @@
                     <div class="form-group">
                     <label class="control-label col-md-2 col-lg-2 col-sm-2 col-xs-12">Reason</label>
                     <div class="col-md-12">
-                     <textarea name="cancelled_remarks"  class="form-control" data-validation="required"> </textarea> 
+                     <!-- <textarea name="cancelled_remarks"  class="form-control" data-validation="required"> </textarea>  -->
+                     <textarea name="cancelled_remarks"  class="form-control"> </textarea> 
                     </div>
                     </div>
                     
@@ -482,7 +484,8 @@
           <div class="form-group">
             <label class="control-label col-md-2 col-lg-2 col-sm-2 col-xs-12">Remarks</label>
             <div class="col-md-12">
-              <textarea name="disapproved_remarks"  class="form-control" data-validation="required"> </textarea> 
+              <!-- <textarea name="disapproved_remarks"  class="form-control" data-validation="required"> </textarea>  -->
+              <textarea name="disapproved_remarks"  class="form-control"> </textarea> 
             </div>
           </div>
                      
