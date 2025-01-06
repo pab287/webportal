@@ -882,8 +882,8 @@ function initMapTemp(id = "") {
         title = "From";
         coordsInput = "formNewTravelFrom";
         searchMap(input, coordsInput, title, map);
-        var self = $(this);
-        self.validate();
+        // var self = $(this);
+        // self.validate();
     });
 
     $("#travelTo").on('focus', function () {
@@ -893,8 +893,8 @@ function initMapTemp(id = "") {
         title = "To";
         coordsInput = "formNewTravelTo";
         searchMap(input, coordsInput, title, map);
-        var self = $(this);
-        self.validate();
+        // var self = $(this);
+        // self.validate();
     });
 
     map.addListener("click", (mapsMouseEvent) => {
@@ -1193,21 +1193,22 @@ $("#travelOrderFromIcon .icon").on("click", function(){
       $("#travelOrderOptionFrom").hide();
     }else{
       $("#travelOrderOptionFrom").show();
+      
+      $.ajax({
+        url: baseUrl("eforms/travel_order/sites_options/"),
+        type: "GET",
+        dataType: "JSON",
+        success: function(resp){
+          if(resp.length > 0){
+            vmTab3.checker = true;
+          }else{
+            vmTab3.checker = false;
+          }
+          vmTab3.vm_tab3 = Object.assign({}, resp);
+        }
+      });
     }
 
-    $.ajax({
-      url: baseUrl("eforms/travel_order/sites_options/"),
-      type: "GET",
-      dataType: "JSON",
-      success: function(resp){
-        if(resp.length > 0){
-          vmTab3.checker = true;
-        }else{
-          vmTab3.checker = false;
-        }
-        vmTab3.vm_tab3 = Object.assign({}, resp);
-      }
-    });
 });
 
 var vmTab3 = new Vue({
@@ -1310,6 +1311,8 @@ var vmTab3 = new Vue({
                   Object.assign(pointer_name,{"to": informationTo});
               }
           }
+
+          $('#travelFrom').validate();
         } 
       });
     }
@@ -1427,6 +1430,8 @@ var vmTab2 = new Vue({
                     Object.assign(pointer_name,{"to": informationTo});
                 }
             }
+
+            $('#travelTo').validate();
         } 
       });
     }

@@ -53,7 +53,7 @@
                         <div class="row" id="layout_content" style="pointer-events: none;">
                             <div class="col-md-6 col-sm-12">
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label m--font-bolder">
+                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label m--font-bolder required">
                                         File Under
                                     </label>
                                     <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
@@ -63,7 +63,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label m--font-bolder">
+                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label m--font-bolder required">
                                         Department
                                     </label>
                                     <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
@@ -73,7 +73,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label m--font-bolder">
+                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label m--font-bolder required">
                                         Type
                                     </label>
                                     <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
@@ -97,7 +97,7 @@
                             </div>
                             <div class="col-md-6 col-sm-12">
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-xs-12 col-form-label m--font-bolder">
+                                    <label class="col-md-3 col-lg-3 col-xs-12 col-form-label m--font-bolder required">
                                         Official Station
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -127,7 +127,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="service_veh">
-                                    <label class="col-md-3 col-lg-3 col-xs-12 col-form-label m--font-bolder">
+                                    <label class="col-md-3 col-lg-3 col-xs-12 col-form-label m--font-bolder required">
                                         Service Vehicle
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -137,7 +137,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="service_driver">
-                                    <label class="col-md-3 col-lg-3 col-xs-12 col-form-label m--font-bolder">
+                                    <label class="col-md-3 col-lg-3 col-xs-12 col-form-label m--font-bolder required">
                                         Driver
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -147,7 +147,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="other_remark" style="display: none;">
-                                    <label class="col-md-3 col-lg-3 col-xs-12 col-form-label m--font-bolder">
+                                    <label class="col-md-3 col-lg-3 col-xs-12 col-form-label m--font-bolder required">
                                         Remarks
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -269,7 +269,7 @@
                     <input type="hidden" value="" name="id_personnel"/> 
                     <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                         <div class="form-group">
-                            <label class="control-label col-md-2">Employee</label>
+                            <label class="control-label col-md-2 required">Employee</label>
                             <div class="col-md-12">
                                 <select id="select2_emp" name="employee_id" data-validation="required" ></select> 
                             </div>
@@ -305,10 +305,10 @@
                         <div class="row">
                             <div class="col-lg-6 col-sm-12">
                                 <div class="form-group">
-                                    <label class="control-label col-md-2 m--font-bolder">From</label>
+                                    <label class="control-label col-md-2 m--font-bolder required">From</label>
                                     <div class="col-md-12 travel-order-control">
                                         <div class="col-md-12 p-0 input-control">
-                                        <input type="text" id="travelFrom" class="form-control" placeholder="" name="from" data-validation="required">
+                                            <input type="text" id="travelFrom" class="form-control" placeholder="" name="from" data-validation="required">
                                         </div>
                                         <div id="travelOrderFromIcon" class="icon-control">
                                             <i class="la la-angle-down icon"></i>
@@ -323,7 +323,7 @@
                             </div>
                             <div class="col-lg-6 col-sm-12">
                                 <div class="form-group m-form__group">
-                                    <label class="control-label col-md-2 m--font-bolder">To</label>
+                                    <label class="control-label col-md-2 m--font-bolder required">To</label>
                                     <div class="col-md-12 travel-order-control">
                                         <div class="col-md-12 p-0 input-control">
                                             <input type="text" id="travelTo" class="form-control" placeholder="" name="to" data-validation="required">
@@ -341,13 +341,13 @@
                             </div>
                         </div>
                         <div class="form-group" id="requested-by">
-                            <label class="control-label col-md-4 m--font-bolder">Requested By</label>
+                            <label class="control-label col-md-4 m--font-bolder required">Requested By</label>
                             <div class="col-md-12">
                                 <select id="select2_req" name="requested_by" data-validation="required" ></select> 
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="control-label col-md-2 m--font-bolder">Purpose</label>
+                            <label class="control-label col-md-2 m--font-bolder required">Purpose</label>
                             <div class="col-md-12">
                                 <textarea name="purpose" row="2" class="form-control" data-validation="required"></textarea> 
                             </div>
@@ -355,7 +355,7 @@
                         <div class="row">
                             <div class="col-lg-6 col-sm-12">
                                 <div class="form-group">
-                                    <label class="control-label col-md-3 m--font-bolder">Date From</label>
+                                    <label class="control-label col-md-3 m--font-bolder required">Date From</label>
                                     <div class="col-12 input-group date" id="date_from">
                                         <input class="form-control m-input" type="text" name="date_from" id="issue_dt" data-validation="required" maxlength="22" />
                                         <span class="input-group-addon">
@@ -366,7 +366,7 @@
                             </div>
                             <div class="col-lg-6 col-sm-12">
                                 <div class="form-group">
-                                    <label class="control-label col-md-3 m--font-bolder">Date To</label>
+                                    <label class="control-label col-md-3 m--font-bolder required">Date To</label>
                                     <div class="col-12 input-group date" id="date_to">
                                         <input class="form-control m-input" type="text" name="date_to" id="issue_dt" data-validation="required" maxlength="22"/>
                                         <span class="input-group-addon">
@@ -383,9 +383,9 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="control-label col-md-2 m--font-bolder">Remarks</label>
+                            <label class="control-label col-md-2 m--font-bolder required">Remarks</label>
                             <div class="col-md-12">
-                                <textarea name="remarks"  class="form-control"></textarea> 
+                                <textarea name="remarks" class="form-control" data-validation="required"></textarea> 
                             </div>
                         </div>
                     </div>

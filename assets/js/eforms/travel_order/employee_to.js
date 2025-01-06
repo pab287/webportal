@@ -176,6 +176,7 @@ var tblTravelOrder = $("#table-travel_order").DataTable({
     serverSide: true,
     processing: true,
     aaSorting: [],
+    order: [[ 0, "desc" ]],
     ajax: {
         url: baseUrl("eforms/travel_order/get_travel_order_list"),
         type: "post",
@@ -205,7 +206,7 @@ var tblTravelOrder = $("#table-travel_order").DataTable({
         {
             width: '2%',
             orderable: false,
-            data: null,
+            data: 'id',
             className: 'text-center',
             visible: false, // hide column to prevent mass action
             render: function (data, type, row) {
@@ -237,8 +238,8 @@ var tblTravelOrder = $("#table-travel_order").DataTable({
             }
         },
         {
-            data: "status", render: function (data, type, row, meta) {
-                return renderStatusHtml(data, row)
+            data: "reference_no", render: function (data, type, row, meta) {
+                return renderStatusHtml(row.status, row)
             }
         },
         // { data: "reference_no" },
@@ -248,7 +249,10 @@ var tblTravelOrder = $("#table-travel_order").DataTable({
         { data: null, width: "20%", },
         { 
             data: 'created_dt', 
-            width: "12%"
+            width: "12%",
+            render: function (data, type, row, meta) {
+                return moment(row.created_dt).format('lll');
+            }
         },
         {
             data: "created_dt",

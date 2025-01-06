@@ -337,6 +337,9 @@ var dt_from = $('#date_from').datetimepicker({
   todayBtn: true,
   format: 'yyyy/mm/dd hh:ii',
   startDate: getCurrentDate(),
+}).on("changeDate", function (e) {
+  var self = $(e.target);
+  self.validate();
 });
 
 var dt_to = $('#date_to').datetimepicker({
@@ -346,6 +349,9 @@ var dt_to = $('#date_to').datetimepicker({
   todayBtn: true,
   format: 'yyyy/mm/dd hh:ii',
   startDate: getCurrentDate(),
+}).on("changeDate", function (e) {
+  var self = $(e.target);
+  self.validate();
 });
 
 var search_val = "";
@@ -1572,6 +1578,8 @@ var vmTab3 = new Vue({
               }
             }
           } 
+
+          $("#travelFrom").validate();
         }
       });
     }
@@ -1658,33 +1666,35 @@ var vmTab2 = new Vue({
             const from_title = markersName.fromTitle;
             const to_marker = pointer.to;
             const to_title = markersName.toTitle;
-          if(Object.keys(pointer).length == 2){
-              if(from_marker != null && from_title != null){
-                if(pointer_name.from != null){
-                  pointer_name.from.setMap(null);
+            if(Object.keys(pointer).length == 2){
+                if(from_marker != null && from_title != null){
+                  if(pointer_name.from != null){
+                    pointer_name.from.setMap(null);
+                  }
+                  bounds.extend(from_marker.getPosition());
+                  map.fitBounds(bounds);
+                  var informationFrom = new google.maps.InfoWindow({
+                      content: '<h6>From</h6><br><p>'+String(from_title)+'</p>'
+                  });
+                  informationFrom.open(map, from_marker);
+                  Object.assign(pointer_name,{"from": informationFrom});
                 }
-                bounds.extend(from_marker.getPosition());
-                map.fitBounds(bounds);
-                var informationFrom = new google.maps.InfoWindow({
-                    content: '<h6>From</h6><br><p>'+String(from_title)+'</p>'
-                });
-                informationFrom.open(map, from_marker);
-                Object.assign(pointer_name,{"from": informationFrom});
-              }
-              if(to_marker != null && to_title != null){
-                if(pointer_name.to != null){
-                  pointer_name.to.setMap(null);
+                if(to_marker != null && to_title != null){
+                  if(pointer_name.to != null){
+                    pointer_name.to.setMap(null);
+                  }
+                  bounds.extend(to_marker.getPosition());
+                  map.fitBounds(bounds);
+                  var informationTo = new google.maps.InfoWindow({
+                      content: '<h6>To</h6><br><p>'+String(to_title)+'</p>'
+                  });
+                  informationTo.open(map, to_marker);
+                  Object.assign(pointer_name,{"to": informationTo});
                 }
-                bounds.extend(to_marker.getPosition());
-                map.fitBounds(bounds);
-                var informationTo = new google.maps.InfoWindow({
-                    content: '<h6>To</h6><br><p>'+String(to_title)+'</p>'
-                });
-                informationTo.open(map, to_marker);
-                Object.assign(pointer_name,{"to": informationTo});
               }
-            }
-          } 
+            } 
+
+            $("#travelTo").validate();
           }
       });
     }
