@@ -392,41 +392,41 @@
             $data = $this->loa->loa_details($id, $type);
 
             $name = $this->loa->employee_details($data->employee);
-            $name = $name->display_name;
+            $name = !empty($name) ? $name->display_name : "No Assigned Name";
 
             if(is_numeric($data->created_by)){
                 $created_by_data = $this->loa->employee_details($data->created_by);
-                $created_by = $created_by_data->display_name;
+                $created_by = !empty($created_by_data) ? $created_by_data->display_name : 'No Assigned Name';
             }else{
                 $created_by = $data->created_by;
             }
             if(is_numeric($data->last_edited_by)){
                 $last_edited_by_data = $this->loa->employee_details($data->last_edited_by);
-                $last_edited_by = $last_edited_by_data->display_name;
+                $last_edited_by = !empty($last_edited_by_data) ? $last_edited_by_data->display_name : 'No Assigned Name';
             }else{
                 $last_edited_by = $data->last_edited_by;
             }
             if(is_numeric($data->approved_by)){
                 $approved_by_data = $this->loa->employee_details($data->approved_by);
-                $approved_by = $approved_by_data->display_name;
+                $approved_by = !empty($approved_by_data) ? $approved_by_data->display_name : 'No Assigned Name';
             }else{
                 $approved_by = $data->approved_by;
             }
             if(is_numeric($data->disapproved_by)){
                 $disapproved_by_data = $this->loa->employee_details($data->disapproved_by);
-                $disapproved_by = $disapproved_by_data->display_name;
+                $disapproved_by = !empty($disapproved_by_data) ? $disapproved_by_data->display_name : 'No Assigned Name';
             }else{
                 $disapproved_by = $data->disapproved_by;
             }
             if(is_numeric($data->cancelled_by)){
                 $cancelled_by_data = $this->loa->employee_details($data->cancelled_by);
-                $cancelled_by = $cancelled_by_data->display_name;
+                $cancelled_by = !empty($cancelled_by_data) ? $cancelled_by_data->display_name : 'No Assigned Name';
             }else{
                 $cancelled_by = $data->cancelled_by;
             }
             if(is_numeric($data->hr_noted_by)){
                 $hr_noted_by_data = $this->loa->employee_details($data->hr_noted_by);
-                $hr_noted_by = $hr_noted_by_data->display_name;
+                $hr_noted_by = !empty($hr_noted_by_data) ? $hr_noted_by_data->display_name : 'No Assigned Name';
             }else{
                 $hr_noted_by = $data->hr_noted_by;
             }

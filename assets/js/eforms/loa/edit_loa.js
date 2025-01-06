@@ -86,6 +86,10 @@ $.ajax({
             self.validate();
 
             $("#date-from-hidden").val(moment(e.date).format("YYYY/MM/DD HH:mm"));
+            var toDate = $("#date-to-hidden").val();
+            var fromDate = toDate == '' ? new Date(e.date) : new Date(e.date + ' ' + toDate);
+            var val = moment(fromDate).format("YYYY/MM/DD HH:mm");
+            $("#date-to-hidden").val(val);
         });
 
         $('#under_to').timepicker({
@@ -99,8 +103,9 @@ $.ajax({
         
             fromDate = moment(fromDate).format("YYYY/MM/DD");
         
-            var toDate = new Date(fromDate + " " + e.target.value);
-            $("#date-to-hidden").val(moment(toDate).format("YYYY/MM/DD HH:mm"));
+            var toDate = fromDate == 'Invalid date' ? e.target.value : new Date(fromDate + " " + e.target.value);
+            var val = fromDate == 'Invalid date' ? toDate : moment(toDate).format("YYYY/MM/DD HH:mm");
+            $("#date-to-hidden").val(val);
         });
 
         $('#half_from').datepicker({
@@ -273,6 +278,9 @@ function type_change() {
         document.getElementById('half_date').style.display = 'none';
         document.getElementById('whole').style.display = 'none';
         document.getElementById('other_date').style.display = 'none';
+
+        $("#under_from input").val('');
+        $("#under_to").val('');
     }
     if (type == "2") {
         document.getElementById('under_date').style.display = 'none';

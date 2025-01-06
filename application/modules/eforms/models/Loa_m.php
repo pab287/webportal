@@ -60,7 +60,7 @@
 
             $filterFields = array("a.id", "a.status", "a.company", "a.department", "a.reference_no", "a.date_from", "a.date_to", "a.nature", "a.reason", "a.position", "b.firstname", "b.middlename", "b.lastname", "a.type");
 
-            $sql = "a.id, a.status, a.company as file, a.company, a.department, b.firstname, b.middlename, b.lastname, b.suffix, a.position, a.nature, a.reason, a.date_from, a.date_to, a.reference_no, a.type";
+            $sql = "a.id, a.status, a.company as file, a.company, a.department, TRIM(b.firstname) as firstname, TRIM(b.middlename) as middlename, TRIM(b.lastname) as lastname, b.suffix, a.position, a.nature, a.reason, a.date_from, a.date_to, a.reference_no, a.type";
 
             $this->db->select($sql);
             $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
