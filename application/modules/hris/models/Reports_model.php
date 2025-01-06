@@ -1086,7 +1086,8 @@ class Reports_model extends CI_Model{
     protected function generateLateReport($post = array()){
         $resultset = array();
         $arrFilter = array();
-
+        $filter="Filters applied: ";
+        $logMessage = "";
         $hasDepartment = isset($post["department"]) && $post["department"];
         if(isset($post["company"]) && $post["company"]){
             $empIds = array();
@@ -1117,6 +1118,7 @@ class Reports_model extends CI_Model{
                 if($qCompany->num_rows() == 1){
                     $cRow = $qCompany->row();
                     $arrFilter["company_code"] = $cRow->code;
+                    $filter .= "Company: {$cRow->code} ";
                 }
             }
 
@@ -1130,6 +1132,7 @@ class Reports_model extends CI_Model{
                 if($qPayrollGroup->num_rows() == 1){
                     $pgRow = $qPayrollGroup->row();
                     $arrFilter["payroll_group"] = $pgRow->description;
+                    $filter .= "Payroll Group: {$pgRow->description} ";
                 }
             }
 
@@ -1139,8 +1142,9 @@ class Reports_model extends CI_Model{
                     $startDate = Date("Y-m-d", strtotime($filterDates[0]));
                     $endDate = Date("Y-m-d", strtotime($filterDates[1]));
                 }
-                
                 $arrFilter["filter_by"] = "Date Range";
+                $filter .= "Date Range: {$post[$filterBy]} ";
+
             }else{
                 $tempDatex = $post["filter_year"]."-".$post["filter_month"]."-01";
                 $timeStamp = strtotime($tempDatex);
@@ -1154,7 +1158,7 @@ class Reports_model extends CI_Model{
                 $fsDate = Date("F d, Y", strtotime($startDate));
                 $feDate = Date("F d, Y", strtotime($endDate));
                 $arrFilter["filter_date"] = "{$fsDate} - {$feDate}";
-
+                $filter .= "Date: {$fsDate} - {$feDate} ";
                 $tempMaxDate = $this->getTimesheetMaxDate();
                 $this->db->reset_query();
 
@@ -1186,26 +1190,40 @@ class Reports_model extends CI_Model{
                 $this->db->group_by("ts.emp_id");
                 $qAttendance = $this->db->get();
                 $ctrCount = $qAttendance->num_rows();
-
+                if($filter == "Filters applied: "){
+                    $filter = "";
+                }
                 if($ctrCount > 0){
                     $maxDate = $qAttendance->row_array()["max_date"];
                     $resultset["data"] = $qAttendance->result_array();
                     $resultset["response"] = true;
                     $resultset["filters"] = $arrFilter;
                     $resultset["toastr_msg"] = "Last verified attendance date on `{$maxDate}`, A total of ({$ctrCount}) employee late attendance record/s found!";
+                    $logMessage = "Last verified attendance date on `{$maxDate}` {$filter}, A total of ({$ctrCount}) employee late attendance record/s found!";
+                    $logState="success";
+                    $userType="user";
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `{$tempMaxDate}`." : "No late attendance record/s found!";
+                    $logMessage = $resultset["toastr_msg"];
+                    $logState="error";
+                    $userType="system";
                 }
             }else{
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Filter option/s with given parameters not found!";
+                $logMessage = $resultset["toastr_msg"] + $filter;
+                $logState="error";
+                $userType="system";
             }
         }else{
             $resultset["response"] = false;
             $resultset["toastr_msg"] = "Filter option/s with given parameters, No employee data found!";
+            $logMessage = $resultset["toastr_msg"];
+            $logState="error";
+            $userType="system";
         }
-
+        $this->core_layout->setEventLog($logMessage, "generate", $logState, "gcchris",$userType);
         return $resultset;
     }
 
@@ -1278,6 +1296,8 @@ class Reports_model extends CI_Model{
         $this->load->model("gcctime/timesheet_model", "ts_model");
         $resultset = array();
         $arrFilter = array();
+        $filter = "Filters applied: ";
+        $logMessage = "";
         $hasDepartment = isset($post["department"]) && $post["department"];
         if(isset($post["company"]) && $post["company"]){
             $empIds = array();
@@ -1296,6 +1316,7 @@ class Reports_model extends CI_Model{
 
             if($qData->num_rows() > 0){ foreach ($qData->result() as $emp) { $empIds[] = $emp->id; } }
             if(!empty($empIds) && !isset($post["employee"])){ $post["employee"] = $empIds; }
+
         }
 
         if(isset($post["employee"]) && $post["employee"]){
@@ -1309,6 +1330,7 @@ class Reports_model extends CI_Model{
                 if($qCompany->num_rows() == 1){
                     $cRow = $qCompany->row();
                     $arrFilter["company_code"] = $cRow->code;
+                    $filter .= "Company: {$cRow->code} ";
                 }
             }
 
@@ -1322,6 +1344,7 @@ class Reports_model extends CI_Model{
                 if($qPayrollGroup->num_rows() == 1){
                     $pgRow = $qPayrollGroup->row();
                     $arrFilter["payroll_group"] = $pgRow->description;
+                    $filter .= "Payroll Group: {$pgRow->description} ";
                 }
             }
 
@@ -1333,6 +1356,7 @@ class Reports_model extends CI_Model{
                 }
                 
                 $arrFilter["filter_by"] = "Date Range";
+                $filter .= "Date Range: {$post[$filterBy]} ";
             }else{
                 $tempDatex = $post["filter_year"]."-".$post["filter_month"]."-01";
                 $timeStamp = strtotime($tempDatex);
@@ -1494,6 +1518,7 @@ class Reports_model extends CI_Model{
                 $fsDate = Date("F d, Y", strtotime($startDate));
                 $feDate = Date("F d, Y", strtotime($endDate));
                 $arrFilter["filter_date"] = "{$fsDate} - {$feDate}";
+                $filter .= "Date: {$fsDate} - {$feDate} ";
 
                 $this->db->select("ts.emp_id, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
                 CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
@@ -1549,7 +1574,9 @@ class Reports_model extends CI_Model{
                 $this->db->group_by("ts.emp_id");
                 $qAttendance = $this->db->get();
                 $ctrCount = $qAttendance->num_rows();
-
+                if($filter == "Filters applied: "){
+                    $filter = "";
+                }
                 if($ctrCount > 0){
                     $maxDate = $qAttendance->row()->max_date;
                     $qData = array();
@@ -1632,19 +1659,28 @@ class Reports_model extends CI_Model{
                     $resultset["response"] = true;
                     $resultset["filters"] = $arrFilter;
                     $resultset["toastr_msg"] = "Last verified attendance date on `{$maxDate}`, A total of ({$ctrCount}) employee absentee attendance record/s found!";
+                    $logMessage = "Last verified attendance date on `{$maxDate}` {$filter}, A total of ({$ctrCount}) employee absentee attendance record/s found!";
+                    $logState="success";
+                    $userType="user";
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `{$tempMaxDate}`." : "No absentee attendance record/s found!";
+                    $logState="error";
+                    $userType="system";
                 }
             }else{
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Filter option/s with given parameters not found!";
+                $logState="error";
+                $userType="system";
             }
         }else{
             $resultset["response"] = false;
             $resultset["toastr_msg"] = "Filter option/s with given parameters, No employee data found!";
+            $logState="error";
+            $userType="system";
         }
-
+        $this->core_layout->setEventLog($logMessage, "generate", $logState, "gcchris",$userType);
         return $resultset;
     }
 

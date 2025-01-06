@@ -337,7 +337,7 @@ class Reports extends MY_Controller{
 
     public function generate_late_absentee_report(){
         $data = $this->report->generateLateAbsenteeReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function select_payroll_group(){
