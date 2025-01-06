@@ -636,6 +636,8 @@ if (typeof _tempContentData !== "undefined") {
             .trigger("change")
             .on('select2:select', function (e) {
                 var data = e.params.data;
+                vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { supervisor: data.id });
+                _data = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, data.id);
             });
 
             if (vmData.current_tl_supervisory == 1) {
@@ -949,7 +951,7 @@ if (typeof _tempContentData !== "undefined") {
                     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 1 });
                     vmTab3.managerialSelect2('#m--input-manager_id', true, vmData.manager, _data);
                 }else{
-                    vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 0 });
+                    vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 0, manager: 0 });
 
                     $("#m--input-manager_id").val('').trigger('change');
                 }
