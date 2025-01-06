@@ -38,7 +38,7 @@ var tblPersonnel = $("#table-personnel").DataTable({
 
 toggleAccomplishDisable(false);
 $("#checkAllBox").click(function () {
-  $('#table-destination tbody input[type="checkbox"]').prop('checked', this.checked);
+  $('#table-destination tbody input[type="checkbox"]:not(.checked').prop('checked', this.checked);
   toggleAccomplishDisable(this.checked);
 });
 
@@ -96,12 +96,13 @@ var tblDestination = $("#table-destination").DataTable({
       className: 'text-center',
       render: function (data, type, row, meta) {
           var isCheck = '';
+
           if(row.accomplished == 1){
             isCheck = 'checked';
             toggleAccomplishDisable(true);
           }
 
-          return `<label class="m-checkbox m-checkbox--air m-checkbox--state-primary" title='Check to Print'> <input `+isCheck+` id="selectedReading" type="checkbox" class="text-gray chckBox" value="`+row.id+`" name="selected" data-date="`+row.date_to+`"><span></span></label>`;
+          return `<label class="m-checkbox m-checkbox--air m-checkbox--state-primary" title='Check to Print'> <input `+isCheck+` id="selectedReading" type="checkbox" class="text-gray chckBox ${isCheck}" value="`+row.id+`" name="selected" data-date="`+row.date_to+`" ${isCheck ? 'disabled' : ''}><span></span></label>`;
       }
     },
     // { data: "id", render: function ( data, type, row, meta ) {
@@ -868,6 +869,7 @@ function open_accomplish(){
   var now = moment().format('YYYY-MM-DD');
   var max = "";
   var min = "";
+  var disableToday = false;
 
   if (uniqueArray.length == 1) {
     _date = new Date(uniqueArray[0]);
@@ -886,6 +888,7 @@ function open_accomplish(){
   if (now <= moment(_date).format('YYYY-MM-DD')) {
     time = moment(_date).format('HH:mm:ss');
     _date = now + " " + time;
+    disableToday = true;
   }
 
   $('#due_dt').datetimepicker({
@@ -902,6 +905,12 @@ function open_accomplish(){
   $("#modal_form_accomplish input[name=globalTempSelected]").val(globalTempSelected);
   $('#modal_form_accomplish').modal('show');
   $('#modal_form_accomplish .modal-title').text('Accomplishment Report');
+
+  $('#modal_form_accomplish').on('show.bs.modal', function (e) {
+    if (!disableToday) {
+      $('.datetimepicker .datetimepicker-days .table-condensed tfoot tr:first-child th').removeClass('today');
+    }
+  });
 }
 
 function unique(array){
