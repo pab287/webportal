@@ -1929,7 +1929,14 @@ class Reports_model extends CI_Model{
         $resultSet['coverage'] = date('M d, Y', strtotime($firstDay)) . ' - ' . date('M d, Y', strtotime($lastDay));
         $resultSet['generated'] = $post['to_generate_group'];
         $resultSet['chartData'] = $list;
-
+        $filterBy = '';
+        if (!empty($post['company'])) {
+            $filterBy = 'Company: <strong>'. $this->getCompanyById($post['company'])->description."</strong> ";
+        }
+        if (!empty($post['department'])) {
+            $filterBy .= 'Department: <strong>'.$this->getDepartmentById($post['department'])->description."</strong> ";
+        }
+        $this->core_layout->setEventLog("Generated Attrition Report ".$filterBy."Year: <strong>".$post['filter_year']."</strong> ", "generate", "success", "gcchris", "user");
         return $resultSet;
     }
 
@@ -2252,7 +2259,7 @@ class Reports_model extends CI_Model{
         if ($filters == "Filters applied: ") {
             $filters .= "<strong>NONE. </strong>";
         }
-        if ($filter_type == "emp.date_start") {
+        if ($filter_type == "emp.date_start" || $filter_type == "Hired") {
             $filters .= "Hired Employees, ";
         } elseif ($filter_type) {
             $filters .= "Separated Employees, ";
