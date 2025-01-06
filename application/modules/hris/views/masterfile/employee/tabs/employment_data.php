@@ -91,9 +91,11 @@
         <div class="row">
             <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label text-center">
                 <label class="m-checkbox m-checkbox--check-bold m-checkbox--state-brand col-form-label" style="padding-top: 1px !important">
-                    <input type="checkbox" id="is_two_level" :checked="vm_tab3.current_tl_supervisory == 1 ? true : false" name="tl_supervisory" value="1"> <label> TWO LEVEL SUPERVISORY </label>
+                    <input type="checkbox" id="is_two_level" :checked="vm_tab3.current_tl_supervisory == 1 ? true : false" name="tl_supervisory" value="1"> 
+                    <label> TWO LEVEL SUPERVISORY </label>
                     <span></span>
                 </label>
+                <span class="flaticon-questions-circular-button" data-placement='right' data-toggle='m-tooltip' title='' data-original-title='Click box to enable Two Level Supervisory' data-skin="dark" style="font-size: 15px; margin-left: 3px;"></span>
             </div>
         </div>
         <div class="row m--margin-bottom-10">

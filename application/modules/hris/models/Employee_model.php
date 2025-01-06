@@ -4210,6 +4210,9 @@
         function getEmployeeDataDetails($employee_id){
             $main = $this->getEmployee($employee_id);
             $supervisorId = $main->supervisor;
+            $managerId = 0;
+            $managerName = "";
+
             $path = "uploads/files/images/employee_files/empcode_" . $main->id . "/" . $main->pic_filename;
             $avatar = base_url($path);
             $timestamp = date('M-d-Y h:i:s a');
@@ -4223,9 +4226,23 @@
                 END AS name
             ")->from($this->employeeTable)->where("id", $supervisorId)->get()->result();
             $supervisorName = empty($result)? false : $result[0]->name;
+
+            if ($main->tl_supervisory) {
+                $managerId = $main->managerial;
+
+                $_result = $this->db->select("
+                    CASE 
+                        WHEN LENGTH(middlename) > 1 THEN CONCAT(firstname, ' ', SUBSTRING(middlename, 1, 1), '. ', lastname)
+                        ELSE CONCAT(firstname, ' ', middlename, ' ', lastname)
+                    END AS name
+                ")->from($this->employeeTable)->where("id", $managerId)->get()->result();
+                $managerName = empty($_result)? false : $_result[0]->name;
+            }
+
             return
             array(
                 "supervisor" => $supervisorName,
+                'manager' => $managerName ? $managerName : "N/A",
                 "timestamp" => $timestamp,
                 "main" => $main,
                 "path" => $avatar,
@@ -4235,9 +4252,27 @@
 
         function getEmployeeDataSheetDetails($employee_id) {
             $main = $this->core_layout->getEmployee($employee_id);
+            $_meta = @unserialize($main->supervisor_meta);
+            $managerName = "";
 
-            // not done here. got blocker in nico's 201 optimization task.
-            $supervisorId = $main->supervisor;
+            if (is_array($_meta)){
+                $supervisorId = $_meta['supervisory'];
+
+                if ($main->tl_supervisory == 1) {
+                    $managerId = $_meta['managerial'];
+
+                    $_result = $this->db->select("
+                        CASE 
+                            WHEN LENGTH(middlename) > 1 THEN CONCAT(firstname, ' ', SUBSTRING(middlename, 1, 1), '. ', lastname)
+                            ELSE CONCAT(firstname, ' ', middlename, ' ', lastname)
+                        END AS name
+                    ")->from($this->employeeTable)->where("id", $managerId)->get()->result();
+                    $managerName = empty($_result)? false : $_result[0]->name;
+                }
+            } else {
+                $supervisorId = $main->supervisor_meta;
+            }
+            // $supervisorId = $main->supervisor;
             $result = $this->db->select("
                 CASE 
                     WHEN LENGTH(middlename) > 1 THEN CONCAT(firstname, ' ', SUBSTRING(middlename, 1, 1), '. ', lastname)
@@ -4245,6 +4280,7 @@
                 END AS name
             ")->from($this->employeeTable)->where("id", $supervisorId)->get()->result();
             $supervisorName = empty($result)? false : $result[0]->name;
+
             $this->db->reset_query();
             $dependents = $this->db->get_where($this->employeeDependentsTable, array("emp_id" => $employee_id,"is_archived" => 0))->result();
             $this->db->reset_query();
@@ -4361,6 +4397,7 @@
             return
                 array(
                     "supervisor" => $supervisorName,
+                    "manager" => $managerName,
                     "main" => $main,
                     "dependents" => $dependents,
                     "questions" => $this->questions,

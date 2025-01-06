@@ -1133,27 +1133,40 @@
 
                 <table class="responsive">
                     <thead class="customsalary">
-                    <tr>
-                        <th scope="col" colspan="5">EMPLOYEE INFORMATION</th>
-                    </tr>
+                        <tr>
+                            <th scope="col" colspan="5">EMPLOYEE INFORMATION</th>
+                        </tr>
                     </thead>
                     <thead>
-                    <tr>
-                        <th class="" scope="col">DEPARTMENT</th>
-                        <th class="" scope="col" style="width: 15%">WORK MODE</th>
-                        <th class="" scope="col">PAYROLL TYPE</th>
-                        <th class="" scope="col">LEVEL / RANKING</th>
-                        <th class="" scope="col">COMPANY</th>
-                    </tr>
+                        <tr>
+                            <th class="" scope="col">DEPARTMENT</th>
+                            <th class="" scope="col" style="width: 15%">WORK MODE</th>
+                            <th class="" scope="col">PAYROLL TYPE</th>
+                            <th class="" scope="col">LEVEL / RANKING</th>
+                            <th class="" scope="col">COMPANY</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    <tr>
-                        <td data-label="DEPARTMENT" v-text="main.department_description || 'None'"></td>
-                        <td data-label="WORK MODE" v-text="main.work_mode || 'None'"></td>
-                        <td data-label="PAYROLL TYPE" v-text="main.payroll_type || 'None'"></td>
-                        <td data-label="LEVEL / RANKING" v-text="main.level || 'None'"></td>
-                        <td data-label="COMPANY" v-text="main.company_id || 'None'"></td>
-                    </tr>
+                        <tr>
+                            <td data-label="DEPARTMENT" v-text="main.department_description || 'None'"></td>
+                            <td data-label="WORK MODE" v-text="main.work_mode || 'None'"></td>
+                            <td data-label="PAYROLL TYPE" v-text="main.payroll_type || 'None'"></td>
+                            <td data-label="LEVEL / RANKING" v-text="main.level || 'None'"></td>
+                            <td data-label="COMPANY" v-text="main.company_id || 'None'"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <table class="responsive">
+                    <thead class="customsalary">
+                        <th>SUPERVISOR</th>
+                        <th>DEPARTMENT MANAGER</th>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td data-label="SUPERVISOR" v-text="supervisor || 'N/A'"></td>
+                            <td data-label="MANAGER" v-text="manager || 'N/A'"></td>
+                        </tr>
                     </tbody>
                 </table>
 

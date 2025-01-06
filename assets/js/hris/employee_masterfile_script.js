@@ -493,6 +493,8 @@ if (typeof _tempContentData !== "undefined") {
         mounted: function () {
             var vmData = this.vm_tab3;
 
+            console.log(vmData.manager);
+
             const employee_status = vmData.employee_status ? vmData.employee_status.toLowerCase() : "";
             const work_status = vmData.work_status ? vmData.work_status.toLowerCase() : "";
             // const idno = vmData.idno="asdasdas";
@@ -505,7 +507,6 @@ if (typeof _tempContentData !== "undefined") {
                 $("#rehire-button-container").addClass("m--hide");
             }
 
-            console.log(tempDropdownData.dropdown_supervisory);
             let _data = this.excludeEmployee(tempDropdownData.dropdown_supervisory, vmData.supervisor); //excluded supervisor in managerial dropdown
             _data = vmData.supervisor != 0 ? _data : tempDropdownData.dropdown_supervisory;
 
@@ -963,8 +964,10 @@ if (typeof _tempContentData !== "undefined") {
                     currentTarget.off('select2:select');
                 }
 
-                // if ()
-                // not done here
+                if (id == 0) {
+                    var option = new Option('NONE', 0, true, true);
+                    currentTarget.append(option).trigger('change');
+                }
 
                 currentTarget.select2({
                     data : data,

@@ -1132,6 +1132,19 @@
 
                 <table class="responsive">
                     <thead class="customsalary">
+                        <th>SUPERVISOR</th>
+                        <th>DEPARTMENT MANAGER</th>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td data-label="SUPERVISOR" v-text="supervisor || 'N/A'"></td>
+                            <td data-label="MANAGER" v-text="manager || 'N/A'"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <table class="responsive">
+                    <thead class="customsalary">
                         <tr>
                             <th class="" scope="col">CURRENT STATION / LOCATION</th>
                             <th class="" scope="col">STATIONS</th>
