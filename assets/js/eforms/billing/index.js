@@ -26,6 +26,7 @@ am4core.ready(function () {
     $('#datePicker_subdivision').datepicker("setDate", getCurrentYear());
     $('#datePicker_total_payment').datepicker("setDate", getCurrentYear());
     $('#datePicker_top_consumer').datepicker("setDate", getCurrentYear());
+    $('#datePicker_billing_graph').datepicker("setDate", getCurrentYear());
     $('#datePicker_consumer_vs_supplier').datepicker("setDate", getCurrentYear());
 });
 
@@ -426,6 +427,17 @@ $('#datePicker_total_payment').datepicker({
     endDate: getCurrentDate(),
 });
 
+$('#datePicker_billing_graph').datepicker({
+    format: 'yyyy',
+    todayHighlight: true,
+    autoclose: true,
+    orientation: "bottom left",
+    viewMode: "years",
+    minViewMode: "years",
+    endDate: getCurrentDate(),
+});
+
+
 $('#datePicker_top_consumer').datepicker({
     format: 'yyyy-mm',
     todayHighlight: true,
@@ -449,6 +461,11 @@ $('#datePicker_consumer_vs_supplier').datepicker({
 $('#datePicker_total_payment').on('changeDate', function() {
     var date = $('#datePicker_total_payment').datepicker('getFormattedDate');
     get_analytics_lineGraph_top_payment(date);
+});
+
+$('#datePicker_billing_graph').on('changeDate', function() {
+    var date = $('#datePicker_billing_graph').datepicker('getFormattedDate');
+    get_analytics(getCurrentDate(), date, getCurrentMonth());
 });
 
 $('#datePicker_subdivision').on('changeDate', function() {

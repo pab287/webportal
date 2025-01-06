@@ -72,7 +72,7 @@
                     <div class="m-portlet__head-caption">
                         <div class="row">
                             <div class="m-portlet__head-title">
-                                <span class="m-portlet__head-icon" id="datePicker_subdivision">
+                                <span class="m-portlet__head-icon cursor_pointer" id="datePicker_subdivision">
                                     <i class="la la-calendar"></i>
                                 </span>
                                 <h3 class="m-portlet__head-text title_subdivision title_total_usage">
@@ -93,7 +93,7 @@
                     <div class="m-portlet__head-caption">
                         <div class="row">
                             <div class="m-portlet__head-title">
-                                <span class="m-portlet__head-icon" id="datePicker_top_consumer">
+                                <span class="m-portlet__head-icon cursor_pointer" id="datePicker_top_consumer">
                                     <i class="la la-calendar"></i>
                                 </span>
                                 <h3 class="m-portlet__head-text title_top_consumer">
@@ -147,7 +147,7 @@
                         <div class="row">
                             <div class="m-portlet__head-title">
                                 <input type="hidden" id="consumer_vs_supplier_date">
-                                <span class="m-portlet__head-icon" id="datePicker_consumer_vs_supplier">
+                                <span class="m-portlet__head-icon cursor_pointer" id="datePicker_consumer_vs_supplier">
                                     <i class="la la-calendar"></i>
                                 </span>
                                 <h3 class="m-portlet__head-text chartdiv_versus_title">
@@ -202,7 +202,7 @@
                     <div class="m-portlet__head-caption">
                         <div class="row">
                             <div class="m-portlet__head-title">
-                                <span class="m-portlet__head-icon" id="datePicker_total_payment">
+                                <span class="m-portlet__head-icon cursor_pointer" id="datePicker_total_payment">
                                     <i class="la la-calendar"></i>
                                 </span>
                                 <h3 class="m-portlet__head-text title_total_payment">
@@ -226,8 +226,11 @@
                     <div class="m-portlet__head-caption">
                         <div class="row">
                             <div class="m-portlet__head-title">
-                                <span class="m-portlet__head-icon">
+                                <!-- <span class="m-portlet__head-icon">
                                     <i class="flaticon-line-graph"></i>
+                                </span> -->
+                                <span class="m-portlet__head-icon cursor_pointer" id="datePicker_billing_graph">
+                                    <i class="la la-calendar"></i>
                                 </span>
                                 <h3 class="m-portlet__head-text graph_title">
                                     Analytics
