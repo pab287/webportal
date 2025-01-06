@@ -8,7 +8,6 @@ class Reports_model extends CI_Model{
     protected $employeeTrainingsTable = "gcchris.tbltrainings";
     protected $defaultStationTable = "gcchris.default_station_location";
     protected $tblAppLocationSites = "gcctimeutility.app_location_sites";
-    protected $tblPayroll = "payroll.payroll_group";
 
     protected $now = null;
     protected $user = null;
@@ -2219,16 +2218,6 @@ class Reports_model extends CI_Model{
         return $result;
     }
 
-    private function getPayrollGroupById($id){
-        $this->db->select("description");
-        $this->db->from($this->tblPayroll);
-        $this->db->where('id', $id);
-        $query = $this->db->get(); 
-        $result = $query->row();
-        $this->db->reset_query();
-        return $result;
-    }
-
 
     public function logExport(){
         $post = $this->input->post();
@@ -2239,7 +2228,6 @@ class Reports_model extends CI_Model{
         $station_id = isset($post['filters']['station']) ? intval($post['filters']['station']) : 0;
         $training = isset($post['filters']['training']) ? $post['filters']['training'] : '';
         $title = isset($post['filters']['title']) ? $post['filters']['title'] : '';
-        $payroll_id = isset ($post['filters']['payroll']) ? $post['filters']['payroll'] : 0;
 
         if(!empty($title)){
             $filters .= "LIcense and certificate title: <strong>" . $title . "</strong> ";
@@ -2258,9 +2246,6 @@ class Reports_model extends CI_Model{
         }
         if ($station_id > 0) {
             $filters .= "Station: <strong>" . $this->getStationById($station_id)->site_name . "</strong> ";
-        }
-        if ($payroll_id > 0) {
-            $filters .= "Payroll Group: <strong>" . $this->getPayrollGroupById($payroll_id)->description . "</strong> ";
         }
         $filter_by = isset($post['filters']['filter_by']) ? $post['filters']['filter_by'] : '';
         $filter_type = isset($post['filters']['filter_type']) ? $post['filters']['filter_type'] : '';

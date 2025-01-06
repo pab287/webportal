@@ -1,6 +1,6 @@
 let _years = [];
 let _companies = [];
-let filters ={};
+
 toastr.options = { newestOnTop: true, positionClass: "toast-bottom-right" };
 
 const hrisFilterLateAbsenteeReport = $("#frm-filter-hris-late_absentee_report");
@@ -186,9 +186,8 @@ if(typeof hrisFilterLateAbsenteeReport !== "undefined" && hrisFilterLateAbsentee
         tempSelectorClear(tempDepartmentSelector);
         tempSelectorClear(tempEmployeeSelector);
         tempSelectorClear(tempPayrollGroupSelector);
-
+        
         $(e.target).validate();
-        filters.company = $(e.target).val();
     }).on("select2:unselect", function (e) {
         const tempDepartmentSelector = hrisFilterLateAbsenteeReport.find("select#department");
         const tempEmployeeSelector = hrisFilterLateAbsenteeReport.find("select#employee");
@@ -199,8 +198,6 @@ if(typeof hrisFilterLateAbsenteeReport !== "undefined" && hrisFilterLateAbsentee
             tempSelectorClear(tempEmployeeSelector, true);
             tempSelectorClear(tempPayrollGroupSelector, true);
         }, 250);
-        filters.company = "";
-        filters.department = "";
     });
 
     hrisFilterLateAbsenteeReport.find("select#department")
@@ -218,9 +215,6 @@ if(typeof hrisFilterLateAbsenteeReport !== "undefined" && hrisFilterLateAbsentee
             },
             processResults: function (data) { return data; }
         }, language: { errorLoading: function () { return "Searching..." } }
-    }).on('select2:select', function(e) {
-        $(e.target).val();
-        filters.department = "";
     });
 
     hrisFilterLateAbsenteeReport.find("select#employee")
@@ -275,7 +269,6 @@ if(typeof hrisFilterLateAbsenteeReport !== "undefined" && hrisFilterLateAbsentee
                 tempEmployeeSelector.prop("disabled", true);
             }
         }
-        filters.payroll = e.params.data.id;
     }).on("select2:unselect", function (e) {
         const tempData = $(this).select2("data");
 
@@ -296,7 +289,6 @@ if(typeof hrisFilterLateAbsenteeReport !== "undefined" && hrisFilterLateAbsentee
             
         }
     });
-    filters.payroll = "";
 }
 
 $.validate({
@@ -440,10 +432,6 @@ if(typeof dtTableLateAbsentee !== "undefined" && dtTableLateAbsentee.length > 0)
             exportOptions: {
                 columns: [0, 1, 2, 3],
                 stripHtml: true,
-            },
-            customize: function (){
-                const type = vmLateAbsenteePreview.report_type
-                export_log(filters, "Attendance "+ type + " Report", "print",dtTableLateAbsenteeReport.page.info().recordsTotal);
             }
         }, {
             extend: 'print',
@@ -484,8 +472,6 @@ if(typeof dtTableLateAbsentee !== "undefined" && dtTableLateAbsentee.length > 0)
 
                 head.appendChild(style);
                 win.document.title = "Late/Absentee Report Printable Page";
-                const type = vmLateAbsenteePreview.report_type
-                export_log(filters, "Attendance "+ type + " Report", "print",dtTableLateAbsenteeReport.page.info().recordsTotal);
             }, exportOptions: {
                 columns: [0, 1, 2, 3],
                 stripHtml: true,
@@ -582,24 +568,3 @@ $("#toggleCollapse").on("click", function(){
         isCollapsedPortlet = true;
     }
 });
-
-async function export_log(filters, type, name, count) {
-    try {
-        const response = await $.ajax({
-            url: siteUrl("hris/reports/log_export"),
-            type: "POST",
-            data: { 
-                filters,
-                type: type,
-                name: name,
-                count: count,
-                csrf_token: _csrf_hash 
-            },
-            dataType: 'json'
-        });
-        return response;
-    } catch (error) {
-        console.error('Error exporting log:', error);
-        throw error;
-    }
-}
