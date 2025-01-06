@@ -112,7 +112,7 @@ $.ajax({
             todayHighlight: true,
             autoclose: true,
             pickerPosition: 'bottom-left',
-            todayBtn: true,
+            todayBtn: 'linked',
             format: 'yyyy/mm/dd',
         }).on("changeDate", function (e) {
             moment(e.date).format("yyyy/mm/dd");
@@ -124,9 +124,10 @@ $.ajax({
             todayHighlight: true,
             autoclose: true,
             pickerPosition: 'bottom-left',
-            todayBtn: true,
+            todayBtn: 'linked',
             format: 'yyyy/mm/dd',
         }).on("changeDate", function (e) {
+            $("#whole_date input").val(moment(e.date).format("YYYY/MM/DD"));
             moment(e.date).format("yyyy/mm/dd");
             var self = $(e.target);
             self.validate();
