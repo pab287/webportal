@@ -505,6 +505,12 @@ if (typeof _tempContentData !== "undefined") {
                 $("#rehire-button-container").addClass("m--hide");
             }
 
+            console.log(tempDropdownData.dropdown_supervisory);
+            let _data = this.excludeEmployee(tempDropdownData.dropdown_supervisory, vmData.supervisor); //excluded supervisor in managerial dropdown
+            _data = vmData.supervisor != 0 ? _data : tempDropdownData.dropdown_supervisory;
+
+            // console.log(_data);
+
             const activeStatusOptions = '' +
                 '<option value=""></option>' +
                 '<option ' + (vmData.work_status === 'REGULAR' ? 'selected' : '') + ' value="REGULAR">REGULAR</option>' +
@@ -627,17 +633,13 @@ if (typeof _tempContentData !== "undefined") {
             })
             .val(vmData.supervisor)
             .trigger("change")
-            
-            $("#m--input-manager_id").select2({
-                data: tempDropdownData.dropdown_supervisory,
-                placeholder: {
-                    id: "-1",
-                    text: "Select an option"
-                },
-                width: '100%'
-            })
-            .val(vmData.manager)
-            .trigger("change")
+            .on('select2:select', function (e) {
+                var data = e.params.data;
+            });
+
+            if (vmData.current_tl_supervisory == 1) {
+                this.managerialSelect2('#m--input-manager_id', true, vmData.manager, _data);
+            }
 
             $("#m--input-position_id")
                 .select2({
@@ -944,12 +946,38 @@ if (typeof _tempContentData !== "undefined") {
             $('#is_two_level').on('change', function(){
                 if($(this).is(':checked')){
                     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 1 });
+                    vmTab3.managerialSelect2('#m--input-manager_id', true, vmData.manager, _data);
                 }else{
                     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 0 });
 
                     $("#m--input-manager_id").val('').trigger('change');
                 }
             });
+        },
+        methods: {
+            managerialSelect2(target, destroy = false, id = 0, data = {}){
+                var currentTarget = $(target);
+
+                if (destroy) {
+                    currentTarget.empty();
+                    currentTarget.off('select2:select');
+                }
+
+                currentTarget.select2({
+                    data : data,
+                    placeholder: data,
+                    width: '100%'
+                }).val(id).trigger('change');
+            }, excludeEmployee(arr = [], id = 0){
+                let _data = [];
+                $.each(arr, function (index, value) {
+                    if (value.id != id) {
+                        _data.push(value);
+                    }
+                });
+
+                return _data;
+            }
         }
     });
 
