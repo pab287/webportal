@@ -2142,10 +2142,14 @@ class Reports_model extends CI_Model{
         $resultset = array();
         $records = array();
         $ctrAdded = 0;
-
+        $type="";
+        $logState="";
+        $employees = "";
         if(isset($post["station"]) && $post["station"]){
+            $station = $this->getStationById($post["station"])->site_name;
             if(isset($post["employee_id"]) && is_array($post["employee_id"]) && count($post["employee_id"]) > 0){
                 foreach ($post["employee_id"] as $empId) {
+                    $employees .= $this->getEmployeeName($empId).", ";
                     $dslTemp = $this->db->get_where($this->defaultStationTable, array("employee_id"=>$empId));
                     if($dslTemp->num_rows() == 0){
                         $siteName = $this->db
@@ -2169,11 +2173,16 @@ class Reports_model extends CI_Model{
         }
         
         if($ctrAdded > 0){ 
-            $resultset["response"] = true; 
+            $resultset["response"] = true;
             $resultset["rows"] = $records;
-        }else{ 
+            $logState = "success";
+            $type = "user";
+        }else{
             $resultset["response"] = false;
+            $logState = "error";
+            $type = "system";
         }
+        $this->core_layout->setEventLog("Set station for employee(s): $employees"."Station: ".$station, "generate", $logState, "gcchris",$type);
         return $resultset;
     }
 
@@ -2269,6 +2278,25 @@ class Reports_model extends CI_Model{
         }
         $this->core_layout->setEventLog("Exported using {$post['name']}. {$post['type']} {$filters} results found: <strong>{$post['count']}</strong>", "export", 'success', "gcchris");
         return true;
+    }
+
+    private function getEmployeeName($id) {
+        $this->db->select("id, firstname, middlename, lastname, suffix");
+        $this->db->from("gccmaster.tblemployees");
+        $this->db->where("id", $id);
+        $query = $this->db->get();
+        $result = $query->row_array();
+
+        $formattedName = strtoupper($result['firstname']) . ' ';
+        if (!empty($result['middlename'])) {
+            $initial = strtoupper(substr($result['middlename'], 0, 1)); // Get the first letter
+            $formattedName .= $initial . '. '; // Append the initial
+        }
+        $formattedName .= strtoupper($result['lastname']);
+        if (!empty($result['suffix'])) {
+            $formattedName .= ', ' . strtoupper($result['suffix']);
+        }
+        return $formattedName;
     }
 
 }
