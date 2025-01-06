@@ -97,7 +97,7 @@
                 }
                 
                 if (isset($_data['delivered_to']) && $_data['delivered_to']) {
-                    $this->db->like('CONCAT(c.ship_to, c.company_to, c.department_to, c.position_to, c.ship_to_address)', $_data['delivered_to'], 'both');
+                    $this->db->like('CONCAT(CASE WHEN CAST(ship_to AS int) THEN CONCAT(e.firstname, " ", e.lastname) ELSE a.ship_to END, a.company_to, a.department_to, a.position_to, a.ship_to_address)', $_data['delivered_to'], 'both');
                 }
 
                 if (isset($_data['created_by']) && $_data['created_by']) {
@@ -223,7 +223,7 @@
                 }
                 
                 if (isset($_data['delivered_to']) && $_data['delivered_to']) {
-                    $this->db->like('CONCAT(c.ship_to, c.company_to, c.department_to, c.position_to, c.ship_to_address)', $_data['delivered_to'], 'both');
+                    $this->db->like('CONCAT(CASE WHEN CAST(ship_to AS int) THEN CONCAT(e.firstname, " ", e.lastname) ELSE a.ship_to END, a.company_to, a.department_to, a.position_to, a.ship_to_address)', $_data['delivered_to'], 'both');
                 }
 
                 if (isset($_data['created_by']) && $_data['created_by']) {
