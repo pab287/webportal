@@ -43,7 +43,7 @@ function get_analytics(current_date, filter_year, filter_month) {
                 //     item.color = getColor(item.status);
                 // });
 
-                $(".graph_title").html('Billing graph of '+displayCurrentMonthName(getCurrentMonth())+' '+new Date().getFullYear());
+                $(".graph_title").html('Billing graph of '+displayCurrentMonthName(getCurrentMonth()) + ' ' + filter_year);
 
                 var chart = am4core.create("chartdiv", am4charts.XYChart);
 
