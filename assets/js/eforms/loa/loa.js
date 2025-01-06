@@ -82,7 +82,7 @@ var tblLoa = $("#table-loa").DataTable({
             }
         },
         {
-            data: "type", render: function (data, type, row, meta) {
+            data: "type", sortable: false, render: function (data, type, row, meta) {
                 return formatDifference(data, row)
             }
         },
@@ -605,6 +605,9 @@ $(document).ready(function () {
                         }, {
                             id: "Vacation Leave",
                             text: "Vacation Leave"
+                        }, {
+                            id: "Solo Parent Leave",
+                            text: "Solo Parent Leave"
                         }
                     ]
                 },

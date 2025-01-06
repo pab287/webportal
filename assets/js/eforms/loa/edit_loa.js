@@ -293,8 +293,10 @@ function type_change() {
         document.getElementById('other_date').style.removeProperty('display');
     }
 
-    $("#date-from-hidden").val('');
-	$("#date-to-hidden").val('');
+    if (type == 2 || type == 3) {
+        $("#date-from-hidden").val('');
+    	$("#date-to-hidden").val('');
+    }
 }
 
 function view_back() {
