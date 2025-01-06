@@ -2247,6 +2247,34 @@
 
             return $resultarray;
         }
+        
+        function getAllDepartments() {
+            $get = $this->input->get();
+            $resultarray = array();
+
+            $sql = "id, description";
+
+            $this->db->select($sql);
+            
+            if (isset($get['q']) && $get['q']) {
+                $this->db->like('description', $get['q'], 'both');
+            } else {
+                $this->db->limit(10);
+            }
+
+            $this->db->from("gcchris.tbldepartments");
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                foreach ($query->result_array() as $_query) {
+                    $data = array();
+                    $data["id"] = $_query["description"];
+                    $data["text"] = $_query["description"];
+                    $resultarray[] = $data;
+                }
+            }
+            return array("results" => $resultarray);
+        }
 
         function getEmployeeCollection() {
             $get = $this->input->get();
