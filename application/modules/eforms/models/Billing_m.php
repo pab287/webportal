@@ -3122,7 +3122,7 @@ class Billing_m extends CI_Model {
         $this->db->order_by("reading_date","DESC");
         $this->db->limit(1);
         $query = $this->db->get()->row_array();
-        $previous_reading = $query['reading'];
+        $previous_reading = (is_array($query) && array_key_exists('reading', $query) && $query['reading'] != null) ? $query['reading'] : 0;
         return $reading - $previous_reading;
     }
 
