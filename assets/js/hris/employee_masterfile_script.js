@@ -963,6 +963,9 @@ if (typeof _tempContentData !== "undefined") {
                     currentTarget.off('select2:select');
                 }
 
+                // if ()
+                // not done here
+
                 currentTarget.select2({
                     data : data,
                     placeholder: data,
