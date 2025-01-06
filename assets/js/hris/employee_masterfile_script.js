@@ -492,6 +492,7 @@ if (typeof _tempContentData !== "undefined") {
         data: { vm_tab3: tempData },
         mounted: function () {
             var vmData = this.vm_tab3;
+
             const employee_status = vmData.employee_status ? vmData.employee_status.toLowerCase() : "";
             const work_status = vmData.work_status ? vmData.work_status.toLowerCase() : "";
             // const idno = vmData.idno="asdasdas";
@@ -616,16 +617,27 @@ if (typeof _tempContentData !== "undefined") {
                 .val(-1)
                 .trigger("change");
 
-                $("#m--input-supervisor_id").select2({
-                    data: tempDropdownData.dropdown_supervisory,
-                    placeholder: {
-                        id: "-1",
-                        text: "Select an option"
-                    },
-                    width: '100%'
-                })
-                .val(vmData.supervisor)
-                .trigger("change")
+            $("#m--input-supervisor_id").select2({
+                data: tempDropdownData.dropdown_supervisory,
+                placeholder: {
+                    id: "-1",
+                    text: "Select an option"
+                },
+                width: '100%'
+            })
+            .val(vmData.supervisor)
+            .trigger("change")
+            
+            $("#m--input-manager_id").select2({
+                data: tempDropdownData.dropdown_supervisory,
+                placeholder: {
+                    id: "-1",
+                    text: "Select an option"
+                },
+                width: '100%'
+            })
+            .val(vmData.manager)
+            .trigger("change")
 
             $("#m--input-position_id")
                 .select2({
@@ -926,6 +938,16 @@ if (typeof _tempContentData !== "undefined") {
                 }else{
                     $("#reason_row").attr("hidden", true);
                     $("#reason_row #resign_reason").attr('data-validation', false);
+                }
+            });
+
+            $('#is_two_level').on('change', function(){
+                if($(this).is(':checked')){
+                    vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 1 });
+                }else{
+                    vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 0 });
+
+                    $("#m--input-manager_id").val('').trigger('change');
                 }
             });
         }

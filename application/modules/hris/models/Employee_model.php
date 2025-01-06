@@ -1977,7 +1977,19 @@
                     /** jp01 updated query starts here **/
 
                     $data->_status = $data->work_status;
-                    $data->current_supervisor = $data->supervisor;
+
+                    $tempMeta = unserialize($data->supervisor_meta);
+                    $data->current_supervisor = $tempMeta['supervisory'];
+                    // $data->current_supervisor = $data->supervisor;
+                    $data->supervisor = $tempMeta['supervisory'];
+
+                    if ($data->tl_supervisory == 1) {
+                        $data->current_manager = $tempMeta['managerial'];
+                        $data->manager = $tempMeta['managerial'];
+                    }
+
+                    $data->current_tl_supervisory = $data->tl_supervisory;
+
                     $data->current_company_id = $data->company_id;
                     $data->current_department_id = $data->department_id;
                     $data->current_position_id = $data->position;
@@ -3201,6 +3213,7 @@
             if (isset($post) && $post) {
                 unset($post["csrf_token"], $post["current_status"], $post["current_company_id"], $post["current_department_id"], $post["current_position_id"], $post["work_station"],$post["current_supervisor"], $post["default_station"]);
                 $employeeId = $post["id"];
+
                 if ($employeeId) {
                     unset($post["id"]);
                     $where = array("id" => $employeeId);
@@ -3212,6 +3225,19 @@
                             $post['date_end_prob'] = date('Y-m-d', strtotime("+6 months", strtotime($post['date_start'])));
                         }
                     }
+
+                    $tempSupervisory = array('supervisory' => $post['supervisor']);
+
+                    if (isset($post['tl_supervisory']) && $post['tl_supervisory']) {
+                        $tempManager = array('managerial' => $post['manager']);
+
+                        $tempSupervisory = array_merge($tempSupervisory, $tempManager);
+                    } else {
+                        $post['tl_supervisory'] = 0;
+                    }
+
+                    $post['supervisor_meta'] = serialize($tempSupervisory);
+                    unset($post['supervisor'], $post['manager']);
 
                     $post['resignation_effective_date'] = isset($post['resignation_effective_date']) && $post['resignation_effective_date'] ? $post['resignation_effective_date'] : NULL; //fixed in payroll employee employment data
 
@@ -4203,6 +4229,8 @@
 
         function getEmployeeDataSheetDetails($employee_id) {
             $main = $this->core_layout->getEmployee($employee_id);
+
+            // not done here. got blocker in nico's 201 optimization task.
             $supervisorId = $main->supervisor;
             $result = $this->db->select("
                 CASE 
