@@ -285,7 +285,15 @@ function formatDifference(data, row) {
             var minutes = Math.floor(delta / 60) % 60;
             delta -= minutes * 60;
 
-            return hours + " HOURS " + minutes + " MINUTES";
+            if (minutes > 1) {
+                minutes = minutes + " MINUTES";
+            } else if (minutes == 1) {
+                minutes = minutes + " MINUTE";
+            } else { 
+                minutes = "";
+            }
+
+            return hours + " HOURS " + minutes;
             break;
         case "2":
             return '4 hours';
@@ -314,6 +322,7 @@ function formatDifference(data, row) {
             var display_minutes;
             var display_hours;
             var display_days;
+
             if(hours > 1){
                 display_hours = hours + " HOURS ";
             }else if(hours == 1){
@@ -333,6 +342,10 @@ function formatDifference(data, row) {
                 display_days = days + " DAYS ";
             }else{
                 display_days = days + " DAY ";
+            }
+
+            if (days == 0 && hours > 0) {
+                display_days = "";
             }
             
             return display_days + display_hours + display_minutes;

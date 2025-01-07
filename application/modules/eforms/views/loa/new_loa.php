@@ -67,7 +67,8 @@
                                             <option value="Paternity Leave">Paternity Leave</option>
                                             <option value="Sick Leave">Sick Leave</option>
                                             <option value="Solo Parent Leave">Single / Solo Parent Leave</option>
-                                            <option value="Vacation Leave">Special Leave</option>
+                                            <!-- <option value="Vacation Leave">Special Leave</option> -->
+                                            <option value="Vacation Leave">Vacation Leave</option>
                                         </select>
                                     </div>
                                 </div>
