@@ -379,7 +379,7 @@
             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 
             <div class="form-group">
-              <label class="control-label col-md-2">Remarks</label>
+              <label class="control-label col-md-2 required">Remarks</label>
               <div class="col-md-12">
                 <textarea name="approved_remarks"  class="form-control" data-validation="required"> </textarea> 
               </div>
@@ -410,7 +410,7 @@
             <input type="hidden" value="" name="id"/> 
             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
             <div class="form-group">
-              <label class="control-label col-md-2">Remarks</label>
+              <label class="control-label col-md-2 required">Remarks</label>
               <div class="col-md-12">
                 <textarea name="disapproved_remarks"  class="form-control" data-validation="required"> </textarea> 
               </div>
@@ -439,7 +439,7 @@
             <input type="hidden" value="" name="id"/> 
             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
             <div class="form-group">
-              <label class="control-label col-md-2">Reason</label>
+              <label class="control-label col-md-2 required">Reason</label>
               <div class="col-md-12">
               <textarea name="cancelled_remarks"  class="form-control" data-validation="required"> </textarea> 
               </div>
