@@ -1349,6 +1349,7 @@ if (typeof _tempContentData !== "undefined") {
                             }
                             license += '<p style="margin: 0">'+data+'</p>';
                         }else if(data == 'CERTIFICATE'){
+                            license += '<p style="margin: 0; font-size: 9px;"  class="badge badge-info">'+"PERSONAL"+'</p>';
                             license += '<p style="margin: 0">'+row.certificate_name+'</p>';
                         }
                         return license;
@@ -1441,7 +1442,7 @@ if (typeof _tempContentData !== "undefined") {
                         }).on('select2:select', function (e) {
                             var data = e.params.data;
                             const id = data.id;
-
+                            console.log(id);
                             var cert_name_field = modalContent.find('.cert-name-field');
 
                             if(id === 'Certificate') {

@@ -1200,12 +1200,7 @@ $(".m-content")
                     data: formData,
                     success: function (response) {
                         if (response.success) {
-                            const data = response.data;
-                            if (data) {
-                                Object.keys(data).forEach((item, i) => {
-                                    tr.find('td:eq(' + i + ')').html(data[item]);
-                                });
-                            }
+                            dtLicensureExam.ajax.reload();
                         }
 
                         _toaster(response, 'Licensure Exams. & Cerfications Updated..', 10000);
@@ -1687,10 +1682,14 @@ function initEditLicenses(response) {
     _modal.append(html);
 
     const license_type = _modal.find("#license_type");
-    
+    if (response.info.data.text == "0-CERTIFICATE" ){
+        response.info.data.text="CERTIFICATE";
+    }
     const select2Option = new Option(response.info.data.text, response.info.data.id, false, true);
     license_type.html(select2Option);
-
+    if (response.info.data.text != 'CERTIFICATE'){
+        $('#cert_name').hide();
+    }
     license_type.select2({
         width: "100%",
         placeholder: {id: "-1", text: "Select an option"},
@@ -1703,18 +1702,13 @@ function initEditLicenses(response) {
     }).on('select2:select', function (e) {
         var data = e.params.data;
         const id = data.id;
-
-        var cert_name_field = $('#modalTempContent').find('.cert-name-field');
-
-        if(id === 'Certificate') {
-            cert_name_field.removeClass('d-none').html(`
-                <label for="certificate_name" class="form-control-label">Certificate Name *</label>
-                <input id="certificate_name" name="certificate_name" type="text" maxlength="100" size="100" data-validation="required" autocomplete="off" class="form-control m-input" />
-            `);
+        console.log(id);
+        if(id == "Certificate"){
+            $('#cert_name').show();
         } else {
-            cert_name_field.addClass('d-none').html('');
-        } 
-    });;
+            $('#cert_name').hide();
+        }
+    });
 
     _modal.find("input.date")
         .datepicker({

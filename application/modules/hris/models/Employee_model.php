@@ -5212,10 +5212,16 @@
             $is_active = isset($post->is_active) && $post->is_active == 1 ? $post->is_active : 0;
             unset($post->id);
             $currentData = $this->getLicensureById($id);
-            $license = explode('-', $post->license_type);
-            $post->license_id = $license[0];
-            $post->license_type = $license[1];
-            $license_type = ($license[0] != 0) ? $this->getLicense($license[0])->type : null;
+            if ($post->license_type != 'Certificate') {
+                $license = explode('-', $post->license_type);
+                $post->license_id = $license[0];
+                $post->license_type = $license[1];
+                $license_type = ($license[0] != 0) ? $this->getLicense($license[0])->type : null;
+                $post->certificate_name = null; 
+            }else{
+                $post->license_type = 'CERTIFICATE';
+                $post->license_id = '0';
+            }
 
             if(isset($post->is_active) && $post->is_active == 1){
                 unset($post->is_active);
@@ -5227,33 +5233,33 @@
             if ($this->db->update($this->employeeLicensureTable, $post)) {  
                 $changes = $this->logChanges($currentData, $post);
                 $fullname =  $this->getEmployeeName($currentData->emp_id);
-                unset($post->license_id);
+                // unset($post->license_id);
 
-                if($license_type){
-                    $html = "";
+                // if($license_type){
+                //     $html = "";
 
-                    if($license_type == 'COMPANY SPONSORED - INTERNAL'){
-                        $html .= '<p style="margin: 0; font-size: 9px;" class="badge badge-success">'.$license_type.'</p>';
-                    }elseif($license_type == 'COMPANY SPONSORED - EXTERNAL'){
-                        $html .= '<p style="margin: 0; font-size: 9px;" class="badge badge-danger">'.$license_type.'</p>';
-                    }else{
-                        $html .= '<p style="margin: 0; font-size: 9px;" class="badge badge-info">'.$license_type.'</p>';
-                    }
+                //     if($license_type == 'COMPANY SPONSORED - INTERNAL'){
+                //         $html .= '<p style="margin: 0; font-size: 9px;" class="badge badge-success">'.$license_type.'</p>';
+                //     }elseif($license_type == 'COMPANY SPONSORED - EXTERNAL'){
+                //         $html .= '<p style="margin: 0; font-size: 9px;" class="badge badge-danger">'.$license_type.'</p>';
+                //     }else{
+                //         $html .= '<p style="margin: 0; font-size: 9px;" class="badge badge-info">'.$license_type.'</p>';
+                //     }
 
-                    $html .= '<p style="margin: 0">'.$license[1].'</p>';
+                //     $html .= '<p style="margin: 0">'.$license[1].'</p>';
 
-                    $post->license_type = $html;
-                }
+                //     $post->license_type = $html;
+                // }
 
-                if($is_active == 0){
-                    $post->expiration_date = 'No Expiry';
-                }else{
-                    if(date("Y-m-d") >= $post->expiration_date){
-                        $post->expiration_date = "<span class='m-badge m-badge--danger m-badge--wide'>$post->expiration_date</span>";
-                    }else{
-                        $post->expiration_date = "<span class='m-badge m-badge--success m-badge--wide'>$post->expiration_date</span>";
-                    }
-                } // para sa diin ni???
+                // if($is_active == 0){
+                //     $post->expiration_date = 'No Expiry';
+                // }else{
+                //     if(date("Y-m-d") >= $post->expiration_date){
+                //         $post->expiration_date = "<span class='m-badge m-badge--danger m-badge--wide'>$post->expiration_date</span>";
+                //     }else{
+                //         $post->expiration_date = "<span class='m-badge m-badge--success m-badge--wide'>$post->expiration_date</span>";
+                //     }
+                // } // para sa diin ni???
 
                 $resultSet["success"] = true;
                 $resultSet["message"] = "Record was successfully updated.";
@@ -11031,7 +11037,7 @@
                         $changesString.= " Field: $field, from: ". $this->getPositionById($change['old'])->name. ", to: ". $this->getPositionById($change['new'])->name. "\n";
                     }
                     else if (strtolower($field) == 'license_id'){
-                        $changesString.= " Field: $field, from: ". $this->getLicenseTypeById($change['old'])->name. ", to: ". $this->getLicenseTypeById($change['new'])->name. "\n";
+                        $changesString.= " Field: $field, from: <strong>". $this->getLicenseTypeById($change['old']). "</strong>, to: <strong>". $this->getLicenseTypeById($change['new']). "</strong>\n";
                     }
                     else if ($field != 'work_station'){
                         $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
@@ -11072,14 +11078,19 @@
                 return $result->name;
             }
 
-            private function getLicenseTypeById($id){
-                $this->db->select("description");
+            private function getLicenseTypeById($id){                
+                $this->db->select('description');
                 $this->db->from($this->licenseTable);
                 $this->db->where('id', $id);
-                $query = $this->db->get(); 
-                $result = $query->row();
-                $this->db->reset_query();
-                return (isset($result->description) && $result->description) ? $result->description : "Certificate";
+                $query = $this->db->get();
+                if ($query->num_rows() > 0) {
+                    $result = $query->row();
+                    $this->db->reset_query();
+                    return $result->description; // Return the description as a string
+                } else {
+                    $this->db->reset_query();
+                    return 'CERTIFICATE'; // Return a default value if no match found
+                }
             }
 
             private function getDependentById($id){

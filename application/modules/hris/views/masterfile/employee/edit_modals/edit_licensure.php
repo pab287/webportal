@@ -24,8 +24,10 @@
                         <option value="">Select an Option</option>
                     </select>
                 </div>
-                <div class="form-group cert-name-field d-none">
-		
+                <div class="form-group" id="cert_name">
+                    <label for="certificate_name" class="form-control-label">Certificate Name *</label>
+                    <input id="certificate_name" name="certificate_name" type="text" maxlength="100" size="100" data-validation="required" autocomplete="off" class="form-control m-input"
+                           value="<?= $data->certificate_name ?>" />
                 </div>
                 <div class="form-group">
                     <label for="exam_place" class="form-control-label">Exam Place *</label>
