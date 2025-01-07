@@ -202,7 +202,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="service_veh">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold required">
                                         Service Vehicle
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -212,7 +212,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="service_driver">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold required">
                                         Driver
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -220,7 +220,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="other_remark">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold required">
                                         Remarks
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -228,11 +228,11 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold required">
                                         Transporter
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                        <input class="form-control m-input" type="text" name="transporter"/>
+                                        <input class="form-control m-input" type="text" name="transporter" data-validation="required" />
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="row_courier">
@@ -310,7 +310,7 @@
                             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 
                             <div class="form-group">
-                                <label class="control-label col-md-2">Description</label>
+                                <label class="control-label col-md-2 required">Description</label>
                                 <div class="col-md-12">
                                     <textarea name="description" class="form-control" data-validation="required"> </textarea>
                                 </div>
