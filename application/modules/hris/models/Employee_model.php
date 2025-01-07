@@ -3561,7 +3561,7 @@
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee educational background has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted ".$post['educ_level_type']." educational background for ".$empName['name'],"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User added new  educational background:<strong> ".$post['educ_level_type']."</strong> for employee: ".$empName['name'],"insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee educational background!";
@@ -5152,13 +5152,14 @@
 
             $post->dep_age = DateTime::createFromFormat('Y-m-d', $post->dep_birthdate)->diff(new DateTime('now'))->y;
             $currentData = $this->getDependentById($id);
-            $changes = $this->logChanges($currentData, $post);
             $this->db->reset_query();
             $this->db->where("id", $id);
             if ($this->db->update($this->employeeDependentsTable, $post)) {
+                $changes = $this->logChanges($currentData, $post);
+                $fullname =  $this->getEmployeeName($currentData->emp_id);
                 $resultSet["success"] = true;
                 $resultSet["message"] = "Record was successfully updated.";
-                $this->core_layout->setEventLog("User Updated dependent details. ". $changes,"update", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User Updated dependent details for employee:  <strong>$fullname</strong> ". $changes,"update", "success", "gcchris", "user");
             }else{ 
                 $resultSet["success"] = "false";
                 $resultSet["message"] = $this->db->error();
@@ -5183,12 +5184,14 @@
             );
             $id = $post->id;
             unset($post->id);
-
+            $currentData = $this->getEducBackgroundById($id);
             $this->db->where("id", $id);
             if ($this->db->update($this->employeeEducationTable, $post)) {
+                $changes = $this->logChanges($currentData, $post);
+                $fullname =  $this->getEmployeeName($currentData->emp_id);
                 $resultSet["success"] = true;
                 $resultSet["message"] = "Record was successfully updated.";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Updated educational background details.".$id,"update", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User updated educational background details for employee: <strong>$fullname</strong> ".$changes,"update", "success", "gcchris", "user");
             }else{
                 $resultSet["success"] = "false";
                 $resultSet["message"] = $this->db->error();
@@ -11056,6 +11059,16 @@
             private function getDependentById($id){
                 $this->db->select("*");
                 $this->db->from($this->employeeDependentsTable);
+                $this->db->where('id', $id);
+                $query = $this->db->get(); 
+                $result = $query->row();
+                $this->db->reset_query();
+                return $result;
+            }
+
+            private function getEducBackgroundById($id){
+                $this->db->select("*");
+                $this->db->from($this->employeeEducationTable);
                 $this->db->where('id', $id);
                 $query = $this->db->get(); 
                 $result = $query->row();
