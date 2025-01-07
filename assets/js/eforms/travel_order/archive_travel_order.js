@@ -25,8 +25,8 @@ var tblTravelOrder = $("#table-travel_order").DataTable({
         { data: "company" },
         { data: null },
         { data: null, width: "15%", },
-        { data: null, width: "25%", },
-        { data: "created_dt", width: "10%", orderable: true, render: function (data, type, row, meta) { return dateDisplay(row.from_to)}},
+        { data: null, width: "25%" },
+        { data: "created_dt", width: "10%", orderable: false, render: function (data, type, row, meta) { return dateDisplay(row.from_to)}},
         { data: null, width: "8%", className: "text-center" },
     ],
     columnDefs: [{

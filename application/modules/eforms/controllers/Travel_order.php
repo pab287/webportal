@@ -229,7 +229,13 @@ class Travel_order extends MY_Controller
 
     function get_department_collection()
     {
-        // $data = $this->travel_order->getDepartmentCollection();
+        $data = $this->travel_order->getDepartmentCollection();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    function get_departments(){
         $data = $this->travel_order->getAllDepartments();
         $this->output
             ->set_content_type('json')

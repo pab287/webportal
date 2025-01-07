@@ -2242,7 +2242,11 @@
                 $this->db->order_by("trim(a.code)", "ASC");
                 $query = $this->db->get();
         
-                if ($query->num_rows() > 0) { $resultarray["results"] = $query->result_array(); }
+                if ($query->num_rows() > 0) { 
+                    $resultarray["results"] = $query->result_array(); 
+                } else {
+                    $resultarray['results'] = array();
+                }
             }
 
             return $resultarray;

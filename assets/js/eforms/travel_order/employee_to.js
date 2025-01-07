@@ -257,7 +257,7 @@ var tblTravelOrder = $("#table-travel_order").DataTable({
         {
             data: "created_dt",
             width: "15%",
-            orderable: true,
+            orderable: false,
             render: function (data, type, row, meta) {
                 if (row.from_to.length > 0) {
                     let template = "" +
