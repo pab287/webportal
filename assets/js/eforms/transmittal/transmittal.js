@@ -67,7 +67,7 @@ var tblTransmittal = $("#table-transmittal")
                 }
             },
             {
-                data: "firstname", render: function (data, type, row, meta) {
+                data: "firstname", orderable: false, render: function (data, type, row, meta) {
                     // return displayName(row.display_name)
                     var html = ``;
                     var _name = row.display_name && row.display_name != '' ? row.display_name : row.ship_to;

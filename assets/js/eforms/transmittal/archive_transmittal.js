@@ -20,7 +20,7 @@ var tblTransmittal = $("#table-transmittal").DataTable({
         { data: "priority"},
         { data: "reference_no"},
         { data: "company_from"},
-        { data: "firstname", render: function (data, type, row, meta) {return displayName(row.display_name)}},
+        { data: "firstname", orderable: false, render: function (data, type, row, meta) {return displayName(row.display_name)}},
         { data: "trans_desc", render: function(data) {return formatContent(data)}},
         { data: "ship_date", render: function (data) {return formatCalendarDate(data)}},
         { data: "created_by"},       
