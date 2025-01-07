@@ -3122,7 +3122,7 @@ class Billing_m extends CI_Model {
         $this->db->order_by("reading_date","DESC");
         $this->db->limit(1);
         $query = $this->db->get()->row_array();
-        $previous_reading = $query['reading'];
+        $previous_reading = (is_array($query) && array_key_exists('reading', $query) && $query['reading'] != null) ? $query['reading'] : 0;
         return $reading - $previous_reading;
     }
 
@@ -3303,7 +3303,7 @@ class Billing_m extends CI_Model {
         $this->db->select("firstname, middlename, lastname, disconnect_date");
         $this->db->from("hydra_billing.accounts");
         $this->db->where("is_disconnected",'1');
-        $this->db->where("MONTH(disconnect_date)", $current_month);
+        // $this->db->where("MONTH(disconnect_date)", $current_month);
         $this->db->where("YEAR(disconnect_date)", $current_year);
         $query = $this->db->get();
         return $query->num_rows();
@@ -3353,7 +3353,7 @@ class Billing_m extends CI_Model {
         $this->db->from("hydra_billing.bills a");
         $this->db->join("hydra_billing.accounts b", "b.id = a.account_id", "LEFT");
         $this->db->where("b.is_disconnected",'0');
-        $this->db->where("MONTH(a.created_at)", $current_month);
+        // $this->db->where("MONTH(a.created_at)", $current_month);
         $this->db->where("YEAR(a.created_at)", $current_year);
         $query = $this->db->get();
         return $query->num_rows();
@@ -3405,7 +3405,7 @@ class Billing_m extends CI_Model {
         $this->db->join("hydra_billing.accounts b", "b.id = a.account_id", "LEFT");
         $this->db->where("a.is_paid", "0");
         $this->db->where("due_date <", $current_date);
-        $this->db->where("MONTH(due_date)", $current_month);
+        // $this->db->where("MONTH(due_date)", $current_month);
         $this->db->where("YEAR(due_date)", $current_year);
         $query = $this->db->get();
         return $query->num_rows();
@@ -3510,7 +3510,7 @@ class Billing_m extends CI_Model {
         $this->db->join("hydra_billing.accounts b", "b.id = a.account_id", "LEFT");
         $this->db->where("a.is_paid", "0");
         $this->db->where("due_date >", $current_date);
-        $this->db->where("MONTH(due_date)", $current_month);
+        // $this->db->where("MONTH(due_date)", $current_month);
         $this->db->where("YEAR(due_date)", $current_year);
         $query = $this->db->get();
         if($query->num_rows() > 0){
