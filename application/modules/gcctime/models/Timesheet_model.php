@@ -8953,7 +8953,6 @@ class Timesheet_model extends CI_Model{
                                     if($scheduleWeekday->num_rows() == 1){
                                         $tempDatax = new stdClass();
                                         $tempShiftRow = $scheduleWeekday->row();
-                                        var_dump($tempShiftRow);
                                         foreach ($shiftIndexes as $kkx => $vvx) {
                                             $tempAlterIndex = $alterShiftIndexes[$kkx];
                                             if($tempShiftRow->{$tempAlterIndex} && $tempRow->{$vvx} && $tempRow->{$vvx} !== null && $hasShift === true){
