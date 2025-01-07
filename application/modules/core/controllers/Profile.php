@@ -21,13 +21,6 @@ class Profile extends MY_Controller {
 		$employee_id = $session["logged_in"]["emp_id"];
 		
 	   if (empty($employee_id)) { redirect(base_url(), "refresh"); die(); }
-	   $currentActions = $this->core_layout->getCurrentActions();
-	   $showPayrollPayslip = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_request", $currentActions);
-
-	   $data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataDetails($employee_id),
-	   "profile_payroll_sheet"=>true, "payroll_sheet_data"=>$this->get_employee_payroll_data($employee_id), "payroll_sheet_max_id"=>$this->get_max_employee_payroll_data($employee_id),
-	   "show_payroll_payslip"=>$showPayrollPayslip));
-	   	$data->tab='personalInfo';
 		$this->core_layout->setPageTitle("Profile - Employee Data");
 		$this->core_layout->setBodyClass("profile view-employee_data");
 		$this->core_layout->setPrivilegeName("core_profile_employee_data");
@@ -39,16 +32,23 @@ class Profile extends MY_Controller {
 		$this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
 		$this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
 
-		// $this->core_layout->addJs("js/hris/employee_view_script.js" ,true);
 		$this->core_layout->addCss("css/hris/view_employee_masterfile.css", true);
-	   
-		$this->core_layout->addJs("plugins/star-rating/js/jquery.star-rating-svg.min.js", true);
 		$this->core_layout->addCss("plugins/star-rating/css/star-rating-svg.css", true);
-
-		$this->core_layout->addJs("js/hris/profile_view_script.js",true,$data);
 		$this->core_layout->addCss('css/hris/index.css', true);
-
 		$this->core_layout->addCss('css/hris/view_profile.css', true);
+		$this->core_layout->addJs("plugins/star-rating/js/jquery.star-rating-svg.min.js", true);
+
+		$currentActions = $this->core_layout->getCurrentActions();
+		$showPayrollPayslip = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_request", $currentActions);
+
+	   $data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataDetails($employee_id),
+	   "profile_payroll_sheet"=>true,
+	   "payroll_sheet_data"=>$this->get_employee_payroll_data($employee_id),
+	   "payroll_sheet_max_id"=>$this->get_max_employee_payroll_data($employee_id),
+	   "show_payroll_payslip"=>$showPayrollPayslip));
+	   	$data->tab ='personalInfo';
+
+		$this->core_layout->addJs("js/hris/profile_view_script.js",true, $data);
 
 		$this->load->view("core/templates/header");
 		$this->load->view("hris/masterfile/employee/view_employee_masterfile", $data, false);
