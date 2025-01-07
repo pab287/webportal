@@ -493,8 +493,6 @@ if (typeof _tempContentData !== "undefined") {
         mounted: function () {
             var vmData = this.vm_tab3;
 
-            console.log(vmData.manager);
-
             const employee_status = vmData.employee_status ? vmData.employee_status.toLowerCase() : "";
             const work_status = vmData.work_status ? vmData.work_status.toLowerCase() : "";
             // const idno = vmData.idno="asdasdas";
@@ -509,8 +507,7 @@ if (typeof _tempContentData !== "undefined") {
 
             let _data = this.excludeEmployee(tempDropdownData.dropdown_supervisory, vmData.supervisor); //excluded supervisor in managerial dropdown
             _data = vmData.supervisor != 0 ? _data : tempDropdownData.dropdown_supervisory;
-
-            // console.log(_data);
+            let _supData = vmData.manager && vmData.manager != 0 ? this.excludeEmployee(tempDropdownData.dropdown_supervisory, vmData.manager) : tempDropdownData.dropdown_supervisory;
 
             const activeStatusOptions = '' +
                 '<option value=""></option>' +
@@ -624,24 +621,26 @@ if (typeof _tempContentData !== "undefined") {
                 .val(-1)
                 .trigger("change");
 
-            $("#m--input-supervisor_id").select2({
-                data: tempDropdownData.dropdown_supervisory,
-                placeholder: {
-                    id: "-1",
-                    text: "Select an option"
-                },
-                width: '100%'
-            })
-            .val(vmData.supervisor)
-            .trigger("change")
-            .on('select2:select', function (e) {
-                var data = e.params.data;
-                vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { supervisor: data.id });
-                _data = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, data.id);
-            });
+            // $("#m--input-supervisor_id").select2({
+            //     data: tempDropdownData.dropdown_supervisory,
+            //     placeholder: {
+            //         id: "-1",
+            //         text: "Select an option"
+            //     },
+            //     width: '100%'
+            // })
+            // .val(vmData.supervisor)
+            // .trigger("change")
+            // .on('select2:select', function (e) {
+            //     var data = e.params.data;
+            //     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { supervisor: data.id });
+            //     _data = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, data.id);
+            // });
+
+            this.supervisorySelect2('#m--input-supervisor_id', true, vmData.supervisor, _supData);
 
             if (vmData.current_tl_supervisory == 1) {
-                this.managerialSelect2('#m--input-manager_id', true, vmData.manager, _data);
+                this.managerialSelect2('#m--input-manager_id', true, _data, vmData.manager);
             }
 
             $("#m--input-position_id")
@@ -948,8 +947,10 @@ if (typeof _tempContentData !== "undefined") {
 
             $('#is_two_level').on('change', function(){
                 if($(this).is(':checked')){
+                    var __data = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, vmTab3.vm_tab3.supervisor);
+
                     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 1 });
-                    vmTab3.managerialSelect2('#m--input-manager_id', true, vmData.manager, _data);
+                    vmTab3.managerialSelect2('#m--input-manager_id', true, __data, vmData.manager ? vmData.manager : 0);
                 }else{
                     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 0, manager: 0 });
 
@@ -958,7 +959,7 @@ if (typeof _tempContentData !== "undefined") {
             });
         },
         methods: {
-            managerialSelect2(target, destroy = false, id = 0, data = {}){
+            supervisorySelect2(target, destroy = false, id = 0, data = {}){
                 var currentTarget = $(target);
 
                 if (destroy) {
@@ -972,10 +973,51 @@ if (typeof _tempContentData !== "undefined") {
                 }
 
                 currentTarget.select2({
-                    data : data,
-                    placeholder: data,
+                    data: data,
+                    placeholder: {
+                        id: "-1",
+                        text: "Select an option"
+                    },
                     width: '100%'
-                }).val(id).trigger('change');
+                })
+                .val(id)
+                .trigger("change")
+                .on('select2:select', function (e) {
+                    var data = e.params.data;
+                    vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { supervisor: data.id });
+
+                    if (vmTab3.vm_tab3.current_tl_supervisory == 1) {
+                        _data = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, data.id);
+    
+                        vmTab3.managerialSelect2('#m--input-manager_id', true, _data, vmTab3.vm_tab3.manager ? vmTab3.vm_tab3.manager : 0);
+    
+                        if ( vmTab3.vm_tab3.manager == 0 ) {
+                            if ($('#remove-initial-class').hasClass('has-error')) {
+                                $('#remove-initial-class').removeClass('has-error');
+                                $("#remove-initial-class .help-block.form-error").remove();
+                            }
+                        }
+                    }
+                });
+            },
+            managerialSelect2(target, destroy = false, data = {}, id = 0){
+                var currentTarget = $(target);
+
+                if (destroy) {
+                    currentTarget.empty();
+                    currentTarget.off('select2:select');
+                }
+                currentTarget.select2({
+                    data : data,
+                    placeholder: "Search",
+                    width: '100%'
+                }).val(id).trigger("change").on('select2:select', function (e) {
+                    var data = e.params.data;
+                    vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { manager: data.id });
+                    var _tempData = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, data.id);
+
+                    vmTab3.supervisorySelect2('#m--input-supervisor_id', true, vmTab3.vm_tab3.supervisor, _tempData);
+                });
             }, excludeEmployee(arr = [], id = 0){
                 let _data = [];
                 $.each(arr, function (index, value) {

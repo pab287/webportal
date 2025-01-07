@@ -113,7 +113,7 @@
         </div>
         <div class="row m--margin-bottom-10">
             <div class="col-12 col-sm-12 col-md-8 col-lg-8 col-xl-8" v-show="vm_tab3.current_tl_supervisory == 1">
-                <div class="form-group m-form__group row">
+                <div id="remove-initial-class" class="form-group m-form__group row">
                     <label for="position" class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label">Department Manager:</label>
                     <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
                         <select id="m--input-manager_id" class="form-control m-input select2" name="manager" placeholder="Select an option"
