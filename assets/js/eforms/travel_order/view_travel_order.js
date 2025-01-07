@@ -886,9 +886,16 @@ function open_accomplish(){
   }
 
   if (now <= moment(_date).format('YYYY-MM-DD')) {
+    if (moment(min).format('YYYY-MM-DD') <= now) {
+      disableToday = true;
+    } else if (moment(_date).format('YYYY-MM-DD') > now) {
+      disableToday = false;
+    } else {
+      disableToday = true;
+    }
+
     time = moment(_date).format('HH:mm:ss');
     _date = now + " " + time;
-    disableToday = true;
   }
 
   $('#due_dt').datetimepicker({
@@ -907,9 +914,14 @@ function open_accomplish(){
   $('#modal_form_accomplish .modal-title').text('Accomplishment Report');
 
   $('#modal_form_accomplish').on('show.bs.modal', function (e) {
+    console.log(disableToday);
     if (!disableToday) {
       $('.datetimepicker .datetimepicker-days .table-condensed tfoot tr:first-child th').removeClass('today');
     }
+  });
+
+  $('#modal_form_accomplish').on('hidden.bs.modal', function (e) {
+    disableToday = false;
   });
 }
 
