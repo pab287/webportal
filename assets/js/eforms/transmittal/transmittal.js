@@ -334,28 +334,47 @@ modalAdvanceSearch
                 autoclose: true
             });
 
-        $("#frm-advance-search")
-            .on("submit", function (e) {
-                e.preventDefault();
+        // $("#frm-advance-search").on("submit", function (e) {
+        //     e.preventDefault();
 
-                advanceSearchData = {
-                    priority: $("[name='priority']").val(),
-                    reference_no: $("[name='reference_no']").val(),
-                    company_from: $("[name='company_from']").val(),
-                    delivered_to: $("[name='delivered_to']").val(),
-                    description: $("#advance-search-description").val(),
-                    ship_date: $("[name='ship_date']").val(),
-                    created_by: $("[name='created_by']").val(),
-                    created_dt: $("[name='created_dt']").val(),
-                    status: $("[name='status']").val(),
-                };
+        //     advanceSearchData = {
+        //         priority: $("[name='priority']").val(),
+        //         reference_no: $("[name='reference_no']").val(),
+        //         company_from: $("[name='company_from']").val(),
+        //         delivered_to: $("[name='delivered_to']").val(),
+        //         description: $("#advance-search-description").val(),
+        //         ship_date: $("[name='ship_date']").val(),
+        //         created_by: $("[name='created_by']").val(),
+        //         created_dt: $("[name='created_dt']").val(),
+        //         status: $("[name='status']").val(),
+        //     };
 
-                advanceSearch = true;
+        //     advanceSearch = true;
 
-                tblTransmittal.ajax.reload();
-                modalAdvanceSearch.modal("hide");
-            });
+        //     tblTransmittal.ajax.reload();
+        //     modalAdvanceSearch.modal("hide");
+        // }); 
     });
+
+$("#frm-advance-search").on("submit", function (e) {
+    e.preventDefault();
+
+    advanceSearchData = {
+        priority: $("[name='priority']").val(),
+        reference_no: $("[name='reference_no']").val(),
+        company_from: $("[name='company_from']").val(),
+        delivered_to: $("[name='delivered_to']").val(),
+        description: $("#advance-search-description").val(),
+        ship_date: $("[name='ship_date']").val(),
+        created_by: $("[name='created_by']").val(),
+        created_dt: $("[name='created_dt']").val(),
+        status: $("[name='status']").val(),
+    };
+
+    advanceSearch = true;
+    tblTransmittal.ajax.reload();
+    $("#modal-advance-search").modal("hide");
+});
 
 function clearAdvanceSearch() {
     const form = $("#frm-advance-search");

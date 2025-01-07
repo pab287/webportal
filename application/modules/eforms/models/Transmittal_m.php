@@ -67,6 +67,21 @@
         public function get_all_transmittal_items($query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $isAdvanceSearch = false, $_data = null, $status = null, $view_dept) {
             $check = date("Y-m-d", strtotime("-1 year", time()));
             $data = array();
+            $createdName = "";
+
+            if ($isAdvanceSearch) {
+                if (is_numeric($_data['created_by'])) {
+                    $this->db->select('CONCAT(firstname, " ", lastname) as fname');
+                    $this->db->from('gccmaster.tblemployees');
+                    $this->db->where('id', $_data['created_by']);
+                    $q = $this->db->get()->row();
+                    $createdName = $q->fname;
+                } else {
+                    $createdName = $_data['created_by'];
+                }
+            }
+
+            $this->db->reset_query();
 
             $filterFields = array("a.id", " a.status", "a.priority", "a.reference_no", "a.company_from", "a.ship_date", "c.description", "a.created_by", "a.created_dt", "a.ship_to", "a.company_to", "a.department_to", "a.ship_to_address", "e.firstname", "e.lastname", "cr.lastname", "cr.firstname");
 
@@ -101,13 +116,20 @@
                 }
 
                 if (isset($_data['created_by']) && $_data['created_by']) {
-                    $this->db->like('CONCAT(cr.lastname, cr.firstname)', $_data['created_by'], 'both');
+                    $this->db->group_start();
+                        if(is_numeric($_data['created_by'])) {
+                            $this->db->where('a.created_by', $_data['created_by']);
+                        } else {
+                            $this->db->like('CONCAT(e.firstname, " ", e.lastname)', $createdName, 'both');
+                            $this->db->or_like('CONCAT(cr.lastname, " ", cr.firstname)', $_data['created_by'], 'both');
+                        }
+                    $this->db->group_end();
                 }
 
                 if (isset($_data['ship_date']) && $_data['ship_date'] || isset($_data['created_dt']) && $_data['created_dt']) {
-                    $key = isset($_data['ship_date']) && $_data['ship_date'] ? 'c.ship_date' : 'c.created_dt';
+                    $key = isset($_data['ship_date']) && $_data['ship_date'] ? 'a.ship_date' : 'a.created_dt';
                     $value = isset($_data['ship_date']) && $_data['ship_date'] ? $_data['ship_date'] : $_data['created_dt'];
-                    $this->db->where(`DATE($key)`, date('Y-m-d', strtotime($value)));
+                    $this->db->where("DATE({$key})", date('Y-m-d', strtotime($value)));
                 }
 
                 if (isset($_data['status']) && $_data['status']) {
@@ -193,6 +215,23 @@
 
         public function get_all_transmittal_items_count($query_builder=null, $search = null, $isAdvanceSearch = false, $_data = null, $status = null, $view_dept) {
             $check = date("Y-m-d", strtotime("-1 year", time()));
+            $createdName = "";
+
+            if ($isAdvanceSearch) {
+                if (isset($_data['created_by']) && $_data['created_by']) {
+                    if (is_numeric($_data['created_by'])) {
+                        $this->db->select('CONCAT(firstname, " ", lastname) as fname');
+                        $this->db->from('gccmaster.tblemployees');
+                        $this->db->where('id', $_data['created_by']);
+                        $q = $this->db->get()->row();
+                        $createdName = $q->fname;
+                    } else {
+                        $createdName = $_data['created_by'];
+                    }
+                }
+            }
+
+            $this->db->reset_query();
             
             $filterFields = array("a.id", " a.status", "a.priority", "a.reference_no", "a.company_from", "a.ship_date", "c.description", "a.created_by", "a.created_dt", "a.ship_to", "a.company_to", "a.department_to", "a.ship_to_address", "e.firstname", "e.lastname", "cr.lastname", "cr.firstname");
 
@@ -227,13 +266,20 @@
                 }
 
                 if (isset($_data['created_by']) && $_data['created_by']) {
-                    $this->db->like('CONCAT(cr.lastname, cr.firstname)', $_data['created_by'], 'both');
+                    $this->db->group_start();
+                        if(is_numeric($_data['created_by'])) {
+                            $this->db->where('a.created_by', $_data['created_by']);
+                        } else {
+                            $this->db->like('CONCAT(e.firstname, " ", e.lastname)', $createdName, 'both');
+                            $this->db->or_like('CONCAT(cr.lastname, " ", cr.firstname)', $_data['created_by'], 'both');
+                        }
+                    $this->db->group_end();
                 }
 
                 if (isset($_data['ship_date']) && $_data['ship_date'] || isset($_data['created_dt']) && $_data['created_dt']) {
-                    $key = isset($_data['ship_date']) && $_data['ship_date'] ? 'c.ship_date' : 'c.created_dt';
+                    $key = isset($_data['ship_date']) && $_data['ship_date'] ? 'a.ship_date' : 'a.created_dt';
                     $value = isset($_data['ship_date']) && $_data['ship_date'] ? $_data['ship_date'] : $_data['created_dt'];
-                    $this->db->where(`DATE($key)`, date('Y-m-d', strtotime($value)));
+                    $this->db->where("DATE({$key})", date('Y-m-d', strtotime($value)));
                 }
 
                 if (isset($_data['status']) && $_data['status']) {
