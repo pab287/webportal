@@ -1700,7 +1700,21 @@ function initEditLicenses(response) {
             method: "GET",
             delay: 250,
         }
-    });
+    }).on('select2:select', function (e) {
+        var data = e.params.data;
+        const id = data.id;
+
+        var cert_name_field = $('#modalTempContent').find('.cert-name-field');
+
+        if(id === 'Certificate') {
+            cert_name_field.removeClass('d-none').html(`
+                <label for="certificate_name" class="form-control-label">Certificate Name *</label>
+                <input id="certificate_name" name="certificate_name" type="text" maxlength="100" size="100" data-validation="required" autocomplete="off" class="form-control m-input" />
+            `);
+        } else {
+            cert_name_field.addClass('d-none').html('');
+        } 
+    });;
 
     _modal.find("input.date")
         .datepicker({

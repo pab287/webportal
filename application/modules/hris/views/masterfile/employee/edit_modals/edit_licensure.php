@@ -24,6 +24,9 @@
                         <option value="">Select an Option</option>
                     </select>
                 </div>
+                <div class="form-group cert-name-field d-none">
+		
+                </div>
                 <div class="form-group">
                     <label for="exam_place" class="form-control-label">Exam Place *</label>
                     <input id="exam_place" name="exam_place" type="text" maxlength="100" size="100" data-validation="required" autocomplete="off" class="form-control m-input"
