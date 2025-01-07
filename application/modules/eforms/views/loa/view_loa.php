@@ -34,7 +34,7 @@
           <div class="m-portlet__head-caption">
             <div class="m-portlet__head-title">
               <span class="m-portlet__head-icon">
-                <a type="button" href="masterfile" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnNew">
+                <a type="button" href="<?=isset($_GET['page']) && $_GET['page'] === 'archive' ? 'archive_loa' : 'masterfile' ?>" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnNew">
                   <i class="la la-arrow-left"></i>
                 </a>
               </span>
@@ -469,9 +469,9 @@
             <input type="hidden" value="" name="id"/> 
             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
             <div class="form-group">
-              <label class="control-label col-md-4">Leave Pay</label>
+              <label class="control-label col-md-4 required">Leave Pay</label>
               <div class="col-md-12">
-                <select name="hr_noted_pay" class="form-control">
+                <select id="hr-noted-pay" name="hr_noted_pay" class="form-control" data-validation="required">
                   <option></option>
                   <option>With Pay</option>
                   <option>Without Pay</option>
@@ -479,7 +479,7 @@
               </div>
             </div>
             <div class="form-group">
-              <label class="control-label col-md-2">Notes</label>
+              <label class="control-label col-md-2 required">Notes</label>
               <div class="col-md-12">
                 <textarea name="hr_noted_remarks"  class="form-control" data-validation="required"> </textarea> 
               </div>

@@ -878,11 +878,12 @@
             $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
             $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
             $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
+            $excluded = (isset($post['excluded_id']) && $post['excluded_id'])? $post['excluded_id']: 0;
 
             $rowCount = 0;
             $rowData = array();
 
-            $rowData = $this->get_all_post_previous($limit, $offset, $sortBy, $sortOrder, $emp);
+            $rowData = $this->get_all_post_previous($limit, $offset, $sortBy, $sortOrder, $emp, $excluded);
 
 
             $totalNotFiltered = $rowCount;
@@ -893,13 +894,18 @@
             return $resultset;
         }
 
-        private function get_all_post_previous($limit = 10, $offset = 0, $sortBy, $sortOrder, $emp)
+        private function get_all_post_previous($limit = 10, $offset = 0, $sortBy, $sortOrder, $emp, $excluded = 0)
         {
             $sql = "a.id, a.nature, a.status, a.type, a.date_from, a.date_to";
 
             $this->db->select($sql);
             $this->db->from("gcceforms.loa a");
             $this->db->where('employee', $emp);
+
+            if ($excluded) {
+                $this->db->where('a.id !=', $excluded);
+            }
+
             $this->db->limit($limit, $offset);
 
             $i = $sortOrder[0]['column'];

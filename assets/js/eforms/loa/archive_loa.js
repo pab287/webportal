@@ -23,7 +23,7 @@ var tblLoa = $("#table-loa").DataTable({
         { data: "nature"},
         { data: "reason"},
         { data: "type",render: function (data) {return renderTypeHtml(data)}},
-        { data: "type", render: function ( data, type, row, meta ) {return formatDifference(data,row)}},
+        { data: "type", sortable: false, render: function ( data, type, row, meta ) {return formatDifference(data,row)}},
         { data: "date_from", render: function ( data, type, row, meta ) {return formatCalendarDate(data,row)}},
         { data: "reference_no"},       
         { data: null, width: "8%", className: "text-center"},
@@ -198,7 +198,7 @@ function formatCalendarDate(data,row){
 function itemDatatableActions($id){
 	if($id){
 		var _actionButton ="";
-			_actionButton += " <a  class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='"+baseUrl('eforms/loa/view_loa?id=')+$id+"' target='__blank'><i class='la la-pencil-square'></i></a>";				
+			_actionButton += " <a  class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='"+baseUrl('eforms/loa/view_loa?id=')+$id+"&page=archive' target='__blank'><i class='la la-pencil-square'></i></a>";				
 		return _actionButton;
 	}else{ return false; }
 }

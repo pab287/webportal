@@ -14,6 +14,7 @@ var getUrlParameter = function getUrlParameter(sParam) {
 
 var search_val = "";
 param_id = getUrlParameter("id");
+var page = getUrlParameter("page");
 
 var tempData = {};
 $.ajax({
@@ -152,7 +153,9 @@ var tblContent = $("#table-previous").DataTable({
     type: "post",
     dataType: "json",
     data: function(d) {
-      (d.csrf_token = _csrf_hash), (d.search["value"] = search_val);
+      (d.csrf_token = _csrf_hash), 
+      (d.excluded_id = param_id),
+      (d.search["value"] = search_val);
     }
   },
   aaSorting: [],
@@ -160,7 +163,7 @@ var tblContent = $("#table-previous").DataTable({
   columns: [
         { data: "nature"},
         { data: "type",render: function (data) {return renderTypeHtml(data)}},
-        { data: "type", render: function ( data, type, row, meta ) {return formatDifference(data,row)}},
+        { data: "type", sortable: false, render: function ( data, type, row, meta ) {return formatDifference(data,row)}},
         { data: "date_from", render: function ( data, type, row, meta ) {return formatCalendarDate(data,row)}}, 
         { data: "status",render: function ( data, type, row, meta ) {return renderStatusHtml(row)}},     
     ],
@@ -251,7 +254,7 @@ function renderStatusHtml(data){
             //return '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>HR Noted</strong></div>';
         break;
         default:
-            return '<a href="'+baseUrl("eforms/loa/view_loa?id=")+data.id+'" ><button type="button" title="View" class="btn m-btn--pill btn-metal text-white btn-sm btnView"><strong>Cancelled</strong></button></a>';
+            return '<a href="'+baseUrl("eforms/loa/view_loa?id=")+data.id+'&page=archive" ><button type="button" title="View" class="btn m-btn--pill btn-metal text-white btn-sm btnView"><strong>Cancelled</strong></button></a>';
             //return '<div class="m-badge m-badge--metal text-white m-badge--wide" role="alert"><strong>Cancelled</strong></div>';
         break;
     }
@@ -545,6 +548,17 @@ function undo_note(){
 function open_note(){
   $('#modal_form_noted').modal('show'); // show bootstrap modal
   $('.modal-title').text('HR Note'); // Set Title to Bootstrap modal title
+
+  $("#form_noted").trigger('reset');
+
+  $("#hr-noted-pay").select2({
+    placeholder: 'Select an Option',
+    minimumResultsForSearch: -1,
+    width: '100%',
+  }).on('select2:select', function (e) {
+    var self = $(e.target);
+    self.validate();
+  })
 }
 
 $.validate({
