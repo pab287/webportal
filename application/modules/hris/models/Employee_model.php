@@ -3531,7 +3531,7 @@
                 if ($saved) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee Dependent has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. "inserted new dependent of employee ".$empName["name"],"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User added new dependent: <strong>".$post['dep_name']."</strong> for employee: <strong>".$empName["name"]."</strong>","insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee dependent!";
@@ -5151,12 +5151,14 @@
             unset($post->id);
 
             $post->dep_age = DateTime::createFromFormat('Y-m-d', $post->dep_birthdate)->diff(new DateTime('now'))->y;
-
+            $currentData = $this->getDependentById($id);
+            $changes = $this->logChanges($currentData, $post);
+            $this->db->reset_query();
             $this->db->where("id", $id);
             if ($this->db->update($this->employeeDependentsTable, $post)) {
                 $resultSet["success"] = true;
                 $resultSet["message"] = "Record was successfully updated.";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Updated dependent details.".$id,"update", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User Updated dependent details. ". $changes,"update", "success", "gcchris", "user");
             }else{ 
                 $resultSet["success"] = "false";
                 $resultSet["message"] = $this->db->error();
@@ -5662,20 +5664,21 @@
             $resultSet = array();
             $this->db->where("id", $dependent_id);
             $query = $this->db->update($this->employeeDependentsTable, array("is_archived" => 1));
-
+            $this->db->reset_query();
+            $result = $this->db->select('dep_name,emp_id')->from($this->employeeDependentsTable)->where('id', $dependent_id)->get()->row();
+            $empName = $this->getEmployeeName($result->emp_id);
             if ($query) {
                 $resultSet['success'] = true;
                 $resultSet['message'] = "Record was successfully archived.";
                 $resultSet['title'] = "Dependent Archived.";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Archived dependents details.".$dependent_id,"update", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User archived dependent: <strong>". $result->dep_name."</strong> for employee: <strong>".$empName['name']."</strong>","archive", "success", "gcchris", "user");
                 $this->logArchive($this->employeeDependentsTable, $dependent_id, 1);
             } else {
                 $resultSet['success'] = false;
                 $resultSet['message'] = $this->db->error();
                 $resultSet['title'] = "Error";
-                $this->core_layout->setEventLog("Error archiving dependents details.".$dependent_id,"update", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("Error archiving dependents details.".$dependent_id,"archive", "error", "gcchris", "user");
             }
-
             return $resultSet;
         }
 
@@ -10760,25 +10763,17 @@
             return $historyStatus;
         }
 
-        private function getEmployeeName($id) {
+        private function getEmployeeName($id){
             $this->db->select("id, firstname, middlename, lastname, suffix");
             $this->db->from("gccmaster.tblemployees");
             $this->db->where("id", $id);
             $query = $this->db->get();
-            $result = $query->row_array();
-
-            $formattedName = strtoupper($result['firstname']) . ' ';
-            if (!empty($result['middlename'])) {
-                $initial = strtoupper(substr($result['middlename'], 0, 1)); // Get the first letter
-                $formattedName .= $initial . '. '; // Append the initial
-            }
-            $formattedName .= strtoupper($result['lastname']);
-            if (!empty($result['suffix'])) {
-                $formattedName .= ', ' . strtoupper($result['suffix']);
-            }
-            $data['name'] = $formattedName;
-            $data['id'] = $result['id'];
-            return $data;
+            $rs = $query->row();
+            $tempRs = (array)$rs;
+            $fullname = $this->core_layout->getDisplayName($tempRs);
+            $tempFullname = (object)$fullname;
+            $rs->display_name = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+            return $rs->display_name;
         }
 
         public function getOffensesCommendationTrail(){
@@ -11020,7 +11015,7 @@
                         $changesString.= " Field: $field, from: ". $this->getPositionById($change['old'])->name. ", to: ". $this->getPositionById($change['new'])->name. "\n";
                     }
                     else if ($field != 'work_station'){
-                        $changesString.= " Field: $field, from: ". $change['old']. ", to: ". $change['new']. "\n";
+                        $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
                     }
                 }
                 if (isset($newData['work_station'])) {
@@ -11056,6 +11051,16 @@
                 $result = $query->row();
                 $this->db->reset_query();
                 return $result->name;
+            }
+
+            private function getDependentById($id){
+                $this->db->select("*");
+                $this->db->from($this->employeeDependentsTable);
+                $this->db->where('id', $id);
+                $query = $this->db->get(); 
+                $result = $query->row();
+                $this->db->reset_query();
+                return $result;
             }
 
             private function getSalaryHistory($id){

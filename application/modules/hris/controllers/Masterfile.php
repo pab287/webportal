@@ -1276,7 +1276,7 @@
         function update_dependent() {
             $post = $this->utilities->parseFormDataToObject($this->input->post());
             $data = $this->employee_model->updateDependent($post);
-            echo json_encode($data);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
         function update_educational_background() {
@@ -1367,7 +1367,7 @@
 
         function archive_dependent($dependent_id) {
             $data = $this->employee_model->archiveDependent($dependent_id);
-            echo json_encode($data);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
         function archive_educational_background($educ_id) {
