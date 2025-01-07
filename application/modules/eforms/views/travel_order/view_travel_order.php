@@ -101,6 +101,20 @@
                                         <b v-text="vm_tab1.last_edited_by"></b>
                                     </div>
                                 </div>
+                                <div class="form-group m-form__group row" id="recommend_by">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
+                                    Recommended By
+                                    </label>
+                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                                        <b v-text="vm_tab1.approved_recommend_by"></b>
+                                    </div>   
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
+                                       
+                                    </label>
+                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="remark">
+                                        Remarks: <b v-text="vm_tab1.approved_recommend_remarks"></b>
+                                    </div>
+                                </div>
                                 <div class="form-group m-form__group row" id="approve">
                                     <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
                                     Approved By
@@ -155,20 +169,6 @@
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="remark">
                                         Remarks: <b v-text="vm_tab1.hr_noted_remarks"></b>
-                                    </div>
-                                </div>
-                                <div class="form-group m-form__group row" id="recommend_by">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                    Recommended By
-                                    </label>
-                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                        <b v-text="vm_tab1.approved_recommend_by"></b>
-                                    </div>   
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                       
-                                    </label>
-                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="remark">
-                                        Remarks: <b v-text="vm_tab1.approved_recommend_remarks"></b>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="cancel_remark"></div>
