@@ -948,8 +948,8 @@ if (typeof _tempContentData !== "undefined") {
             $('#is_two_level').on('change', function(){
                 if($(this).is(':checked')){
                     var __data = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, vmTab3.vm_tab3.supervisor);
-
                     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 1 });
+
                     vmTab3.managerialSelect2('#m--input-manager_id', true, __data, vmData.manager ? vmData.manager : 0);
                 }else{
                     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 0, manager: 0 });
@@ -990,8 +990,8 @@ if (typeof _tempContentData !== "undefined") {
                         _data = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, data.id);
     
                         vmTab3.managerialSelect2('#m--input-manager_id', true, _data, vmTab3.vm_tab3.manager ? vmTab3.vm_tab3.manager : 0);
-    
-                        if ( vmTab3.vm_tab3.manager == 0 ) {
+                        console.log(vmTab3.vm_tab3.manager);
+                        if (typeof vmTab3.vm_tab3.manager == 'undefined' || vmTab3.vm_tab3.manager == 0 ) {
                             if ($('#remove-initial-class').hasClass('has-error')) {
                                 $('#remove-initial-class').removeClass('has-error');
                                 $("#remove-initial-class .help-block.form-error").remove();
