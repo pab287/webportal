@@ -47,23 +47,23 @@ var file_under = $("#select2_file").select2({
 }).on('select2:select', function (e) {
     var data = e.params.data;
 
-    select2Department('#select2_dep', true, data.id);
+    // select2Department('#select2_dep', true, data.id);
 });
 
 
-// var department = $("#select2_dep").select2({
-//     placeholder: 'SELECT AN OPTION',
-//     width: '100%',
-//     ajax: {
-//         url: baseUrl("eforms/transmittal/get_department_collection"),
-//         global: false,
-//         delay: 250,
-//         processResults: function (data) {
-//             return data;
-//         }
-//     }
-// });
-select2Department('#select2_dep', true);
+var department = $("#select2_dep").select2({
+    placeholder: 'SELECT AN OPTION',
+    width: '100%',
+    ajax: {
+        url: baseUrl("eforms/transmittal/get_department_collection"),
+        global: false,
+        delay: 500,
+        processResults: function (data) {
+            return data;
+        }
+    }
+});
+// select2Department('#select2_dep', true);
 
 function select2Department(targetElement, destroy = false, id = 0) {
     const currentTarget = $(targetElement);
@@ -146,32 +146,35 @@ var vehicle = $("#select2_vehicle").select2({
 
 function emp_details() {
     var emp = $('[name="deliver_to"]').val();
-    $.ajax({
-        url: baseUrl('eforms/Transmittal/ajax_emp_details/') + emp,
-        type: "POST",
-        dataType: "JSON",
-        data: { csrf_token: _csrf_hash },
-        success: function (data) {
-            var _compDisplay = (parseInt(data.use_str) === 1) ? data.comp_str : data.company_id;
-            var _deptDisplay = (parseInt(data.temp_dep_str) === 0) ? data.dep_str : data.department_id;
-            var _posDisplay = (parseInt(data.temp_pos_str) === 0) ? data.pos_str : data.position;
 
-            $('[name="deliver_company"]').val(data.company_id + '\n' + data.department_id + '\n' + data.position);
-
-            var tempDisplay = _compDisplay + '\n' + _deptDisplay + '\n' + _posDisplay;
-            $('#deliver_company_display').val(tempDisplay);
-
-            /*** if (parseInt(data.use_str) === 1) {
-                $('#deliver_company_display').val(data.comp_str + '\n' + data.dep_str + '\n' + data.pos_str);
-            } else {
-                $('#deliver_company_display').val(data.company_id + '\n' + data.department_id + '\n' + data.position);
-            } ***/
-
-            $('[name="deliver_address"]').val(data.company_address);
-        }, error: function (jqXHR, textStatus, errorThrown) {
-            alert('Error: "ajax_emp_details"');
-        }
-    });
+    if (emp) {
+        $.ajax({
+            url: baseUrl('eforms/Transmittal/ajax_emp_details/') + emp,
+            type: "POST",
+            dataType: "JSON",
+            data: { csrf_token: _csrf_hash },
+            success: function (data) {
+                var _compDisplay = (parseInt(data.use_str) === 1) ? data.comp_str : data.company_id;
+                var _deptDisplay = (parseInt(data.temp_dep_str) === 0) ? data.dep_str : data.department_id;
+                var _posDisplay = (parseInt(data.temp_pos_str) === 0) ? data.pos_str : data.position;
+    
+                $('[name="deliver_company"]').val(data.company_id + '\n' + data.department_id + '\n' + data.position);
+    
+                var tempDisplay = _compDisplay + '\n' + _deptDisplay + '\n' + _posDisplay;
+                $('#deliver_company_display').val(tempDisplay);
+    
+                /*** if (parseInt(data.use_str) === 1) {
+                    $('#deliver_company_display').val(data.comp_str + '\n' + data.dep_str + '\n' + data.pos_str);
+                } else {
+                    $('#deliver_company_display').val(data.company_id + '\n' + data.department_id + '\n' + data.position);
+                } ***/
+    
+                $('[name="deliver_address"]').val(data.company_address);
+            }, error: function (jqXHR, textStatus, errorThrown) {
+                alert('Error: "ajax_emp_details"');
+            }
+        });
+    }
 }
 
 function veh_details() {
@@ -367,10 +370,10 @@ function add_transmittal() {
         self.validate();
     });
 
-    // department.on("change", function (e) {
-    //     var self = $(e.target);
-    //     self.validate();
-    // });
+    department.on("change", function (e) {
+        var self = $(e.target);
+        self.validate();
+    });
 
     requested_by.on("change", function (e) {
         var self = $(e.target);
@@ -457,12 +460,19 @@ function type_change() {
         document.getElementById('row_courier').style.display = 'none';
 
         emp_details();
+
+        $("#internal-company").css("display", 'block')
+        $("#external-company").css("display", 'none');
     }
     if (type == "external") {
         $('#form_transmittal').find('textarea:disabled, input:disabled').removeAttr('disabled');
 
-        $("#deliver_company_display").val('');
-        $("#deliver_company").val('');
+        $("#internal-company").css("display", 'none')
+        $("#external-company").css("display", 'block');
+
+        $("#deliver_company_display_ex").val('');
+        $("textarea[name='deliver_company']").val('');
+        $("textarea[name='deliver_address']").val('');
 
         document.getElementById('delivery_to_in').style.display = 'none';
         document.getElementById('delivery_to_ex').style.removeProperty('display');

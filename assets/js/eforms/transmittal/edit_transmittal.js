@@ -33,10 +33,10 @@ $.ajax({
     var company_from = new Option(company_desc, data.data.company_from, true, true);
     $('#select2_file').append(company_from).trigger('change');
 
-    vmTab1.select2Department('#select2_dep', true, data.data.company_from, { id: data.data.department_from, text: data.department_desc });
+    // vmTab1.select2Department('#select2_dep', true, data.data.company_from, { id: data.data.department_from, text: data.department_desc });
     
-    // var department_from = new Option(data.department_desc, data.data.department_from, true, true);
-    // $('#select2_dep').append(department_from).trigger('change');
+    var department_from = new Option(data.department_desc, data.data.department_from, true, true);
+    $('#select2_dep').append(department_from).trigger('change');
 
     var requested_by = new Option(name, data.data.requested_by, true, true);
     $('#select2_requested').append(requested_by).trigger('change');
@@ -74,8 +74,8 @@ $.ajax({
       $('#type').append(type).trigger('change');
       //$('[name="type"]').val('internal').trigger("change");
       deliver = data.deliver;
-      document.getElementById('company_to_in').style.removeProperty('display');
-      document.getElementById('company_to_ex').style.display = 'none';
+      // document.getElementById('company_to_in').style.removeProperty('display');
+      // document.getElementById('company_to_ex').style.display = 'none';
       document.getElementById('delivery_to_in').style.removeProperty('display');
       document.getElementById('delivery_to_ex').style.display = 'none';
       document.getElementById('row_department').style.display = 'none';
@@ -85,8 +85,8 @@ $.ajax({
       var type = new Option('EXTERNAL', 'external', true, true);
       $('#type').append(type).trigger('change');
       //$('[name="type"]').val('external').trigger("change");
-      document.getElementById('company_to_ex').style.removeProperty('display');
-      document.getElementById('company_to_in').style.display = 'none';
+      // document.getElementById('company_to_ex').style.removeProperty('display');
+      // document.getElementById('company_to_in').style.display = 'none';
       document.getElementById('delivery_to_in').style.display = 'none';
       document.getElementById('delivery_to_ex').style.removeProperty('display');
       document.getElementById('row_department').style.removeProperty('display');
@@ -114,12 +114,14 @@ $.ajax({
   }
 });
 
+var file_under, department, requested_by;
+
 var vmTab1 = new Vue({
   el: "#form_transmittal",
   data: { vm_tab1: {} },
   mounted: function () {
 
-    var file_under = $("#select2_file").select2({
+    file_under = $("#select2_file").select2({
       placeholder: 'SELECT AN OPTION',
       width: '100%',
       ajax: {
@@ -167,22 +169,22 @@ var vmTab1 = new Vue({
       data: data2
     });
 
-    // var department = $("#select2_dep").select2({
-    //   placeholder: 'SELECT AN OPTION',
-    //   width: '100%',
-    //   ajax: {
-    //     url: baseUrl("eforms/transmittal/get_department_collection"),
-    //     global: false,
-    //     delay: 250,
-    //     processResults: function (data) {
-    //       return data;
-    //     }
-    //   }
-    // })
+    department = $("#select2_dep").select2({
+      placeholder: 'SELECT AN OPTION',
+      width: '100%',
+      ajax: {
+        url: baseUrl("eforms/transmittal/get_department_collection"),
+        global: false,
+        delay: 250,
+        processResults: function (data) {
+          return data;
+        }
+      }
+    })
 
-    this.select2Department('#select2_dep', true);
+    // this.select2Department('#select2_dep', true);
 
-    var requested_by = $("#select2_requested").select2({
+    requested_by = $("#select2_requested").select2({
       placeholder: 'SELECT AN OPTION',
       width: '100%',
       minimumInputLength: 3,
@@ -196,7 +198,7 @@ var vmTab1 = new Vue({
       }
     });
 
-    var deliver = $("#select2_deliver").select2({
+    deliver = $("#select2_deliver").select2({
       placeholder: 'SELECT AN OPTION',
       width: '100%',
       minimumInputLength: 3,
@@ -210,7 +212,7 @@ var vmTab1 = new Vue({
       }
     });
 
-    var vehicle = $("#select2_vehicle").select2({
+    vehicle = $("#select2_vehicle").select2({
       placeholder: 'SELECT AN OPTION',
       width: '100%',
       ajax: {
@@ -323,10 +325,10 @@ function emp_details() {
         var _deptDisplay = (parseInt(data.temp_dep_str) === 0) ? data.dep_str : data.department_id;
         var _posDisplay = (parseInt(data.temp_pos_str) === 0) ? data.pos_str : data.position;
         var tempDisplay = _compDisplay + '\n' + _deptDisplay + '\n' + _posDisplay;
-  
 
         /*** $('[name="deliver_company"]').val(data.company_id + '\n' + data.department_id + '\n' + data.position); ***/
-        $('[name="deliver_company"]').val(tempDisplay);
+        $('[name="deliver_company"]').val(data.company_id + '\n' + data.department_id + '\n' + data.position);
+        $('#deliver_company_in').val(tempDisplay);
         $('input[name="deliver_address"]').val(data.company_address);
       }, error: function (jqXHR, textStatus, errorThrown) {
         alert('Error: "ajax_emp_details"');
@@ -454,6 +456,37 @@ function update_transmittal() {
     $('#table_v').append('<p><font color="#FF0000">Required. Add atleast 1 Content</font></p>');
   }
 
+  file_under.on("change", function (e) {
+    var self = $(e.target);
+    self.validate();
+  });
+
+  department.on("change", function (e) {
+    var self = $(e.target);
+    self.validate();
+  });
+
+  requested_by.on("change", function (e) {
+    var self = $(e.target);
+    self.validate();
+  });
+
+  $("#select2_deliver").on("change", function (e) {
+    var self = $(e.target);
+    self.validate();
+  });
+
+  vehicle.on("change", function (e) {
+    var self = $(e.target);
+    self.validate();
+  });
+
+
+  $("#delivery_dt").on("change", function (e) {
+    var self = $(e.target);
+    self.validate();
+  });
+
   $.validate({
     form: '#form_transmittal',
     lang: 'en',
@@ -479,37 +512,6 @@ function update_transmittal() {
       }
       return false;
     },
-  });
-
-  file_under.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
-
-  department.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
-
-  requested_by.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
-
-  deliver.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
-
-  vehicle.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
-
-
-  $("#delivery_dt").on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
   });
 
 }

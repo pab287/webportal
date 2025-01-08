@@ -145,16 +145,12 @@
                                     <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
                                         Company
                                     </label>
-                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                        <textarea id="deliver_company"
-                                                  name="deliver_company" rows="3"
-                                                  cols="50" class="form-control"
-                                                  style="display: none;"
-                                                  disabled></textarea>
-
-                                        <textarea id="deliver_company_display"
-                                                  rows="3" cols="50" disabled
-                                                  class="form-control"></textarea>
+                                    <div id="internal-company" class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                                        <textarea id="deliver_company" name="deliver_company" rows="3" cols="50" class="form-control" style="display: none;" disabled></textarea>
+                                        <textarea id="deliver_company_display" rows="3" cols="50" disabled class="form-control"></textarea>
+                                    </div>
+                                    <div id="external-company" class="col-md-9 col-lg-9 col-sm-9 col-xs-12" style="display: none">
+                                        <textarea id="deliver_company_display_ex" name="deliver_company" rows="3" cols="50" disabled class="form-control"></textarea>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="row_department">

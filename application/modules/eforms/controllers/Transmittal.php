@@ -367,6 +367,7 @@
                 $vehicle = "";
                 $driver = "";
             }
+
             if ($this->input->post('type') == "internal") {
                 $x = explode("\n", $this->input->post('deliver_company'));
                 $data = array(

@@ -164,7 +164,6 @@ $.ajax({
     vmTab1.vm_tab1_body = Object.assign({}, data.transmittal_body);
     vmTabPrint.vmData = Object.assign({}, data.transmittal_body);
     vmTabPrint.vmDataMain = Object.assign({}, data.data);
-    console.log(data.data);
   },
   error: function (jqXHR, textStatus, errorThrown) {
     alert("Error get data from ajax");

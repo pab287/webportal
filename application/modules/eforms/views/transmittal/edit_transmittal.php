@@ -139,23 +139,29 @@
                     <input class="form-control m-input" type="text" name="delivery_to_ex" v-model="vm_tab1.ship_to" />
                   </div>
                 </div>
-                <div class="form-group m-form__group row" id="company_to_in">
-                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
-                    Company
-                  </label>
-                  <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                    <!-- <textarea id="deliver_company_in" name="deliver_company" rows="3" cols="50" disabled class="form-control" v-text="vm_tab1.company_to_desc"> </textarea>  -->
-                    <textarea id="deliver_company_in" name="deliver_company" rows="3" cols="50" disabled class="form-control"> </textarea> 
+
+                <template v-if="vm_tab1.cat == 1">
+                  <div class="form-group m-form__group row" id="company_to_in">
+                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
+                      Company
+                    </label>
+                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                      <!-- <textarea id="deliver_company_in" name="deliver_company" rows="3" cols="50" disabled class="form-control" v-text="vm_tab1.company_to_desc"> </textarea>  -->
+                      <textarea id="deliver_company" name="deliver_company" rows="3" cols="50" class="form-control" style="display: none;" disabled></textarea>
+                      <textarea id="deliver_company_in" rows="3" cols="50" disabled class="form-control"> </textarea> 
+                    </div>
                   </div>
-                </div>
-                <div class="form-group m-form__group row" id="company_to_ex">
-                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
-                    Company
-                  </label>
-                  <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                    <textarea id="deliver_company_ex" name="deliver_company" rows="3" cols="50" class="form-control" v-text="vm_tab1.company_to"> </textarea> 
+                </template>
+                <template v-else>
+                  <div class="form-group m-form__group row" id="company_to_ex">
+                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
+                      Company
+                    </label>
+                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                      <textarea id="deliver_company_ex" name="deliver_company" rows="3" cols="50" class="form-control" v-text="vm_tab1.company_to"> </textarea> 
+                    </div>
                   </div>
-                </div>
+                </template>
                 <div class="form-group m-form__group row" id="row_department">
                   <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
                     Department
