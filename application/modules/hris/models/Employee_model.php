@@ -3232,18 +3232,28 @@
                         }
                     }
 
-                    $tempSupervisory = array('supervisory' => $post['supervisor']);
+                    if ( isset($post['supervisor']) && $post['supervisor'] != 0 ) {
+                        $tempSupervisory = array('supervisory' => $post['supervisor']);
+    
+                        if (isset($post['tl_supervisory']) && $post['tl_supervisory']) {
+                            $tempManager = array('managerial' => $post['manager']);
+    
+                            $tempSupervisory = array_merge($tempSupervisory, $tempManager);
+                        } else {
+                            $post['tl_supervisory'] = 0;
+                        }
 
-                    if (isset($post['tl_supervisory']) && $post['tl_supervisory']) {
-                        $tempManager = array('managerial' => $post['manager']);
-
-                        $tempSupervisory = array_merge($tempSupervisory, $tempManager);
-                    } else {
-                        $post['tl_supervisory'] = 0;
+                        $post['supervisor_meta'] = serialize($tempSupervisory);
+                        // unset($post['supervisor'], $post['manager']);
                     }
 
-                    $post['supervisor_meta'] = serialize($tempSupervisory);
-                    unset($post['supervisor'], $post['manager']);
+                    if (isset($post['supervisor'])){
+                        unset($post['supervisor']);
+                    }
+
+                    if (isset($post['manager'])){
+                        unset($post['manager']);
+                    }
 
                     $post['resignation_effective_date'] = isset($post['resignation_effective_date']) && $post['resignation_effective_date'] ? $post['resignation_effective_date'] : NULL; //fixed in payroll employee employment data
 
