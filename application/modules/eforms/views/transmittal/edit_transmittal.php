@@ -140,7 +140,7 @@
                   </div>
                 </div>
 
-                <template v-if="vm_tab1.cat == 1">
+                <template v-if="vm_tab1.cat == 'in'">
                   <div class="form-group m-form__group row" id="company_to_in">
                     <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
                       Company
