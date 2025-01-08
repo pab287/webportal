@@ -154,10 +154,10 @@ $.ajax({
     var newOption = new Option(data.company_desc, data.data.company, true, true);
     $('#select2_file').append(newOption).trigger('change');
 
-    // newOption = new Option(data.department_desc, data.data.department, true, true);
-    // $('#select2_dep').append(newOption).trigger('change');
+    newOption = new Option(data.department_desc, data.data.department, true, true);
+    $('#select2_dep').append(newOption).trigger('change');
 
-    vmTab1.select2Department('#select2_dep', true, { text : data.department_desc, id: data.data.department }, data.data.company );
+    // vmTab1.select2Department('#select2_dep', true, { text : data.department_desc, id: data.data.department }, data.data.company );
     
     newOption = new Option(data.data.driver, data.data.driver_id, true, true);
     if(data.data.driver_id > 0){ $('#driver').append(newOption).trigger('change'); }
@@ -172,7 +172,7 @@ var vmTab1 = new Vue({
   el: "#form_travel_order",
   data: { vm_tab1: tempData },
   mounted: function () {
-    this.select2Department('#select2_dep', true);
+    // this.select2Department('#select2_dep', true);
   }, 
   methods: {
     select2Department(targetElement, destroy = false, formData = {}, id = 0) { 
@@ -244,7 +244,7 @@ var file_under = $("#select2_file").select2({
   }
 }).on("select2:select", function (e) {
   var data = $(e.target).val();
-  vmTab1.select2Department('#select2_dep', true, {}, data);
+  // vmTab1.select2Department('#select2_dep', true, {}, data);
 });
 
 // .on("change", function (e) {
@@ -255,19 +255,19 @@ var file_under = $("#select2_file").select2({
 //   vmTab1.select2Department('#select2_dep', true, data);
 // })
 
-// var department = $("#select2_dep").select2({
-//   placeholder: 'SELECT AN OPTION',
-//   width: '100%',
-//   ajax: {
-//     url: baseUrl("eforms/Travel_order/get_department_collection"),
-//     dataType: "json",
-//     global: false,
-//     delay: 500,
-//     processResults: function (data) {
-//       return data;
-//     }
-//   }
-// });
+var department = $("#select2_dep").select2({
+  placeholder: 'SELECT AN OPTION',
+  width: '100%',
+  ajax: {
+    url: baseUrl("eforms/Travel_order/get_department_collection"),
+    dataType: "json",
+    global: false,
+    delay: 500,
+    processResults: function (data) {
+      return data;
+    }
+  }
+});
 
 var vehicle = $("#select2_vehicle").select2({
   placeholder: 'SELECT AN OPTION',

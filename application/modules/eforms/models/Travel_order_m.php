@@ -2199,57 +2199,57 @@
             //     $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tbldepartments ORDER BY `description` ASC");
             // }
 
-            // $sql = "id, description";
+            $sql = "id, description";
 
-            // $this->db->select($sql);
+            $this->db->select($sql);
             
-            // if (isset($get['q']) && $get['q']) {
-            //     $this->db->like('description', $get['q'], 'both');
-            // } else {
-            //     $this->db->limit(10);
-            // }
-
-            // $this->db->from("gcchris.tbldepartments");
-            // $query = $this->db->get();
-
-            // if ($query->num_rows() > 0) {
-            //     foreach ($query->result_array() as $_query) {
-            //         $data = array();
-            //         $data["id"] = $_query["description"];
-            //         $data["text"] = $_query["description"];
-            //         $resultarray[] = $data;
-            //     }
-            // }
-            // return array("results" => $resultarray);
-
-            if(isset($get["company"]) && $get["company"]){
-                $this->db->select("a.description as id, UPPER(IF(a.`code` = a.`description`, TRIM(a.`description`), TRIM(CONCAT(a.`code`,' | ', a.`description`)))) as text");
-                $this->db->from("gcchris.tbldepartments a");
-                $this->db->join("gccmaster.tblemployees b", "b.department_id = a.id", "INNER");
-                $this->db->join("gcchris.tblcompanies c", "c.id = b.company_id", "INNER");
-                $this->db->where("b.employee_status", "Active");
-                $this->db->where("c.description", $get["company"]);
-
-                if (isset($get['q']) && $get['q']) {
-                    $this->db->group_start();
-                    $this->db->like("a.code", $get['q'], "both");
-                    $this->db->or_like("a.description", $get['q'], "both");
-                    $this->db->group_end();
-                }
-
-                $this->db->limit(25);
-                $this->db->group_by("a.id");
-                $this->db->order_by("trim(a.code)", "ASC");
-                $query = $this->db->get();
-        
-                if ($query->num_rows() > 0) { 
-                    $resultarray["results"] = $query->result_array(); 
-                } else {
-                    $resultarray['results'] = array();
-                }
+            if (isset($get['q']) && $get['q']) {
+                $this->db->like('description', $get['q'], 'both');
+            } else {
+                $this->db->limit(10);
             }
 
-            return $resultarray;
+            $this->db->from("gcchris.tbldepartments");
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                foreach ($query->result_array() as $_query) {
+                    $data = array();
+                    $data["id"] = $_query["description"];
+                    $data["text"] = $_query["description"];
+                    $resultarray[] = $data;
+                }
+            }
+            return array("results" => $resultarray);
+
+            // if(isset($get["company"]) && $get["company"]){
+            //     $this->db->select("a.description as id, UPPER(IF(a.`code` = a.`description`, TRIM(a.`description`), TRIM(CONCAT(a.`code`,' | ', a.`description`)))) as text");
+            //     $this->db->from("gcchris.tbldepartments a");
+            //     $this->db->join("gccmaster.tblemployees b", "b.department_id = a.id", "INNER");
+            //     $this->db->join("gcchris.tblcompanies c", "c.id = b.company_id", "INNER");
+            //     $this->db->where("b.employee_status", "Active");
+            //     $this->db->where("c.description", $get["company"]);
+
+            //     if (isset($get['q']) && $get['q']) {
+            //         $this->db->group_start();
+            //         $this->db->like("a.code", $get['q'], "both");
+            //         $this->db->or_like("a.description", $get['q'], "both");
+            //         $this->db->group_end();
+            //     }
+
+            //     $this->db->limit(25);
+            //     $this->db->group_by("a.id");
+            //     $this->db->order_by("trim(a.code)", "ASC");
+            //     $query = $this->db->get();
+        
+            //     if ($query->num_rows() > 0) { 
+            //         $resultarray = $query->result_array(); 
+            //     } else {
+            //         $resultarray = array();
+            //     }
+            // }
+
+            // return $resultarray;
         }
         
         function getAllDepartments() {

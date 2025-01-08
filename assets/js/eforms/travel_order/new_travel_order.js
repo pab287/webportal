@@ -77,29 +77,23 @@ var file_under = $("#select2_file").select2({
       return data;
     }
   }
-}).on("change", function (e) {
-  var self = $(e.target);
-  self.validate();
-  var data = $(e.target).val();
-
-  select2Department('#select2_dep', true, data);
 });
 
-// var department = $("#select2_dep").select2({
-//     placeholder: 'SELECT AN OPTION',
-//     width: '100%',
-//     ajax: {
-//       url: baseUrl("eforms/Travel_order/get_department_collection"),
-//       dataType: "json",
-//       global: false,
-//       delay: 500,
-//       processResults: function (data) {
-//         return data;
-//       }
-//     }
-// });
+var department = $("#select2_dep").select2({
+    placeholder: 'SELECT AN OPTION',
+    width: '100%',
+    ajax: {
+      url: baseUrl("eforms/Travel_order/get_department_collection"),
+      dataType: "json",
+      global: false,
+      delay: 500,
+      processResults: function (data) {
+        return data;
+      }
+    }
+});
 
-select2Department('#select2_dep', true);
+// select2Department('#select2_dep', true);
 
 function select2Department(targetElement, destroy = false, id = 0) {
   const currentTarget = $(targetElement);
@@ -699,15 +693,15 @@ function add_travel_order(){
     displayRequiredPersonel();
     displayRequiredDestinations();
 
-    // file_under.on("change", function (e) {
-    //   var self = $(e.target);
-    //   self.validate();
-    // });
+    file_under.on("change", function (e) {
+      var self = $(e.target);
+      self.validate();
+    });
 
-    // department.on("change", function (e) {
-    //   var self = $(e.target);
-    //   self.validate();
-    // });  
+    department.on("change", function (e) {
+      var self = $(e.target);
+      self.validate();
+    });  
                   
     $.validate({
       form : '#form_travel_order',
