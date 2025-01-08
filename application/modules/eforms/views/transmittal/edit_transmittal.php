@@ -144,7 +144,8 @@
                     Company
                   </label>
                   <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                    <textarea id="deliver_company_in" name="deliver_company" rows="3" cols="50" disabled class="form-control" v-text="vm_tab1.company_to_desc"> </textarea> 
+                    <!-- <textarea id="deliver_company_in" name="deliver_company" rows="3" cols="50" disabled class="form-control" v-text="vm_tab1.company_to_desc"> </textarea>  -->
+                    <textarea id="deliver_company_in" name="deliver_company" rows="3" cols="50" disabled class="form-control"> </textarea> 
                   </div>
                 </div>
                 <div class="form-group m-form__group row" id="company_to_ex">

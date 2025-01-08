@@ -450,14 +450,19 @@ function clear_content() {
 function type_change() {
     var type = $('[name="type"]').val();
     if (type == "internal") {
-        $('#deliver_company').attr('disabled', 'disabled');
+        $('#deliver_company_display').attr('disabled', 'disabled');
         document.getElementById('delivery_to_in').style.removeProperty('display');
         document.getElementById('delivery_to_ex').style.display = 'none';
         document.getElementById('row_department').style.display = 'none';
         document.getElementById('row_courier').style.display = 'none';
+
+        emp_details();
     }
     if (type == "external") {
         $('#form_transmittal').find('textarea:disabled, input:disabled').removeAttr('disabled');
+
+        $("#deliver_company_display").val('');
+        $("#deliver_company").val('');
 
         document.getElementById('delivery_to_in').style.display = 'none';
         document.getElementById('delivery_to_ex').style.removeProperty('display');
