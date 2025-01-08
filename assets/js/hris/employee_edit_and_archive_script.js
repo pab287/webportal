@@ -84,7 +84,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_legal_record/" + id + "/btnRemoveLegalHistory",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-legal_history_list",
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -128,7 +129,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_offenses_and_commendations/" + id + "/btnRemoveOffenses",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-offenses_list"
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -171,7 +173,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_bg_check/" + id + "/btnRemoveBackgroundCheck",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-background_check_list",
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -215,7 +218,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_performance_evaluation/" + id + "/btnRemovePerformance",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-performance_eval_list"
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -258,7 +262,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_employee_cash_advance/" + id + "/btnRemoveCashAdvance",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-cash_advance_list"
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -750,6 +755,7 @@ $('table')
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_salary_history/" + id + "/btnRemoveSalaryHistory",
                         color: "btn-danger",
+                        table: "tbl-salary-history"
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -773,7 +779,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to delete this performance rating?",
                         action: "hris/masterfile/delete_performance_rating/" + id + "/btnRemovePerformanceRating",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-performance-rating"
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
