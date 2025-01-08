@@ -157,9 +157,9 @@
             return $result;
         }
 
-        public function add_loa()
-        {
+        public function add_loa() {
             $user_id = $this->core_layout->getCurrentEmployeeId();
+            $isValidDate = false;
             date_default_timezone_set('Asia/Singapore');
             $date = date('Y-m-d H:i:s');
             $year = substr($date, 2, 2);
@@ -183,10 +183,15 @@
             } else {
                 $series = '0001';
             }
+
+            // $phone = str_pad($this->input->post('phone'), 11, '0', STR_PAD_LEFT);
+            $phone = preg_replace('/[^a-zA-Z0-9]+/', '', $this->input->post('phone')); //removes special characters caused by inputmask
+
             $x = explode("\n", $this->input->post('company'));
             $company = trim($x[0]);
             $department = trim($x[1]);
             $position = $x[2];
+
             if ($this->input->post('type') == "1") {
                 $from = $this->input->post('under_from');
                 $to = substr($this->input->post('under_from'), 0, -6) . ' ' . $this->input->post('under_to') . ':00';
@@ -205,6 +210,7 @@
                 $from = $this->input->post('date_from');
                 $to = $this->input->post('date_to');
             }
+
             $data = array(
                 'ref_yr' => $year,
                 'ref_series' => $series,
@@ -217,7 +223,7 @@
                 'nature' => $this->input->post('nature'),
                 'address' => $this->input->post('address'),
                 'reason' => $this->input->post('reason'),
-                'phone' => $this->input->post('phone'),
+                'phone' => $phone,
                 'date_from' => $from,
                 'date_to' => $to,
                 'status' => 'Pending',
@@ -226,50 +232,72 @@
                 'created_dt' => $date,
 
             );
-            $referenceNumber = 'LOA'.$year.'-'.$month.'-'.$series;
-            $insert = $this->loa->save($data);
-            if($this->input->post('type') == '3'){
-                $loa_date = '<b>DATE </b>: '.$from.chr(10);
-            }else{
-                $loa_date = '<b>DATE </b>: '.date_format(date_create($from),"Y-m-d H:i").' - '.date_format(date_create($to),"Y-m-d H:i").chr(10);
-            }
 
-            $head_id = $this->loa->getTelegramId($department);
-            $last_id = $this->db->insert_id();
-            $emp_id = $this->loa->getEmpTelegramId($this->input->post('employee'));
-
-            if($insert){
-                $telegram_msg = '';
-                $telegram_msg .= '<b>LOA #</b>: '.$referenceNumber.chr(10);
-                $telegram_msg .= '<b>EMPLOYEE: </b>'.strtoupper($this->loa->employee_details($this->input->post('employee'))->display_name).chr(10);
-                $telegram_msg .= '<b>COMPANY: </b>'.strtoupper($company).chr(10);
-                $telegram_msg .= '<b>DEPARTMENT: </b>'.strtoupper($department).chr(10);
-                $telegram_msg .= '<b>TYPE: </b>'.strtoupper($this->leave_type($this->input->post('type'))).chr(10);
-                $telegram_msg .= $loa_date;
-                $telegram_msg .= '<b>NATURE OF LEAVE: </b>'.strtoupper($this->input->post('nature')).chr(10);
-                $telegram_msg .= '<b>REASON: </b>'.strtoupper($this->input->post('reason')).chr(10);
-                $telegram_msg .= '<b>ADDRESS ON LEAVE: </b>'.strtoupper($this->input->post('address')).chr(10);
-                $telegram_msg .= '<b>NUMBER ON LEAVE: </b>'.strtoupper($this->input->post('phone')).chr(10);
-                if($this->loa->telegram_config_if_exist('loa', 'count') > 0){
-
-                    if($emp_id){
-                        $this->loa->telegram($telegram_msg);
-                    }
-                    if($head_id){
-                        if($head_id != 2){
-                            $this->loa->telegram_dept_heads($telegram_msg,$head_id);
-                        }
-                    }else{
-                        
-                    }
+            if ($this->input->post('type') == "4") {
+                if (date('Y-m-d H:i', strtotime($this->input->post('date_from'))) > date('Y-m-d H:i', strtotime($this->input->post('date_to')))) {
+                    $isValidDate = false;
+                } else {
+                    $isValidDate = true;
                 }
-                $reference_no = $this->db->get_where("gcceforms.loa", array("id"=>$last_id))->row('reference_no');
-                $this->core_layout->setEventLog("Filed leave of absence ".$reference_no.".","add", "success", "gcceforms", "user");
-            }else{
-                $this->core_layout->setEventLog("Failed in adding leave of absence.","add", "error", "gcceforms", "system");
+            } else if ($this->input->post('type') == "1") {
+                if (date('Y-m-d H:i', strtotime($from)) > date('Y-m-d H:i', strtotime($to))) {
+                    $isValidDate = false;
+                } else {
+                    $isValidDate = true;
+                }
+            } else {
+                $isValidDate = true;
             }
-            
-            echo json_encode(array("status" => TRUE, "test" => $to, "last_id" => $last_id));
+
+            $referenceNumber = 'LOA'.$year.'-'.$month.'-'.$series;
+
+            if ($isValidDate) {
+                $insert = $this->loa->save($data);
+                if($this->input->post('type') == '3'){
+                    $loa_date = '<b>DATE </b>: '.$from.chr(10);
+                }else{
+                    $loa_date = '<b>DATE </b>: '.date_format(date_create($from),"Y-m-d H:i").' - '.date_format(date_create($to),"Y-m-d H:i").chr(10);
+                }
+    
+                $head_id = $this->loa->getTelegramId($department);
+                $last_id = $this->db->insert_id();
+                $emp_id = $this->loa->getEmpTelegramId($this->input->post('employee'));
+    
+                if($insert){
+                    $telegram_msg = '';
+                    $telegram_msg .= '<b>LOA #</b>: '.$referenceNumber.chr(10);
+                    $telegram_msg .= '<b>EMPLOYEE: </b>'.strtoupper($this->loa->employee_details($this->input->post('employee'))->display_name).chr(10);
+                    $telegram_msg .= '<b>COMPANY: </b>'.strtoupper($company).chr(10);
+                    $telegram_msg .= '<b>DEPARTMENT: </b>'.strtoupper($department).chr(10);
+                    $telegram_msg .= '<b>TYPE: </b>'.strtoupper($this->leave_type($this->input->post('type'))).chr(10);
+                    $telegram_msg .= $loa_date;
+                    $telegram_msg .= '<b>NATURE OF LEAVE: </b>'.strtoupper($this->input->post('nature')).chr(10);
+                    $telegram_msg .= '<b>REASON: </b>'.strtoupper($this->input->post('reason')).chr(10);
+                    $telegram_msg .= '<b>ADDRESS ON LEAVE: </b>'.strtoupper($this->input->post('address')).chr(10);
+                    $telegram_msg .= '<b>NUMBER ON LEAVE: </b>'.strtoupper($this->input->post('phone')).chr(10);
+                    if($this->loa->telegram_config_if_exist('loa', 'count') > 0){
+    
+                        if($emp_id){
+                            $this->loa->telegram($telegram_msg);
+                        }
+                        if($head_id){
+                            if($head_id != 2){
+                                $this->loa->telegram_dept_heads($telegram_msg,$head_id);
+                            }
+                        }else{
+                            
+                        }
+                    }
+                    $reference_no = $this->db->get_where("gcceforms.loa", array("id"=>$last_id))->row('reference_no');
+                    $this->core_layout->setEventLog("Filed leave of absence ".$reference_no.".","add", "success", "gcceforms", "user");
+                }else{
+                    $this->core_layout->setEventLog("Failed in adding leave of absence.","add", "error", "gcceforms", "system");
+                }
+                
+                echo json_encode(array("status" => TRUE, "test" => $to, "last_id" => $last_id));
+            } else {
+                echo json_encode(array("status" => FALSE));
+            }
         }
 
         public function update_loa($id)
@@ -277,6 +305,7 @@
             $user_id = $this->core_layout->getCurrentEmployeeId();
             date_default_timezone_set('Asia/Singapore');
             $date = date('Y-m-d H:i:s');
+            $isValidDate = false;
 
             $x = explode("\n", $this->input->post('company'));
             $company = trim($x[0]);
@@ -305,6 +334,10 @@
                 $from = $this->input->post('date_from');
                 $to = $this->input->post('date_to');
             }
+
+            // $phone = str_pad($this->input->post('phone'), 11, '0', STR_PAD_LEFT);
+            $phone = preg_replace('/[^a-zA-Z0-9]+/', '', $this->input->post('phone')); //removes special characters caused by inputmask
+
             $data = array(
                 'employee' => $this->input->post('employee'),
                 'company' => $company,
@@ -313,7 +346,7 @@
                 'nature' => $this->input->post('nature'),
                 'address' => $this->input->post('address'),
                 'reason' => $this->input->post('reason'),
-                'phone' => $this->input->post('phone'),
+                'phone' => $phone,
                 'date_from' => $from,
                 'date_to' => $to,
                 'type' => $this->input->post('type'),
@@ -321,57 +354,79 @@
                 'last_edited_dt' => $date,
 
             );
-            $reference_no = $this->db->get_where("gcceforms.loa", array("id"=>$id))->row('reference_no');
-            if($this->loa->update(array('id' => $id), $data)){
-                $this->core_layout->setEventLog("Updated ".$reference_no.".","update", "success", "gcceforms", "user");
-            }else{
-                $this->core_layout->setEventLog("Failed updating ".$reference_no.".","update", "error", "gcceforms", "system");
+
+            if ($this->input->post('type') == "4") {
+                if (date('Y-m-d H:i', strtotime($this->input->post('date_from'))) > date('Y-m-d H:i', strtotime($this->input->post('date_to')))) {
+                    $isValidDate = false;
+                } else {
+                    $isValidDate = true;
+                }
+            } else if ($this->input->post('type') == "1") {
+                if (date('Y-m-d H:i', strtotime($from)) > date('Y-m-d H:i', strtotime($to))) {
+                    $isValidDate = false;
+                } else {
+                    $isValidDate = true;
+                }
+            } else {
+                $isValidDate = true;
             }
-            echo json_encode(array("status" => TRUE));
+
+            $reference_no = $this->db->get_where("gcceforms.loa", array("id"=>$id))->row('reference_no');
+
+            if ($isValidDate) {
+                if($this->loa->update(array('id' => $id), $data)){
+                    $this->core_layout->setEventLog("Updated ".$reference_no.".","update", "success", "gcceforms", "user");
+                }else{
+                    $this->core_layout->setEventLog("Failed updating ".$reference_no.".","update", "error", "gcceforms", "system");
+                }
+                echo json_encode(array("status" => TRUE));
+            } else {
+                echo json_encode(array("status" => FALSE));
+            }
         }
 
-        public function ajax_loa_details($id)
+        public function ajax_loa_details($id, $type = null)
         {
             $temp = strtotime("-1 year", time());
             $check = date("Y-m-d", $temp);
-            $data = $this->loa->loa_details($id);
+            $data = $this->loa->loa_details($id, $type);
 
             $name = $this->loa->employee_details($data->employee);
-            $name = $name->display_name;
+            $name = !empty($name) ? $name->display_name : "No Assigned Name";
 
             if(is_numeric($data->created_by)){
                 $created_by_data = $this->loa->employee_details($data->created_by);
-                $created_by = $created_by_data->display_name;
+                $created_by = !empty($created_by_data) ? $created_by_data->display_name : 'No Assigned Name';
             }else{
                 $created_by = $data->created_by;
             }
             if(is_numeric($data->last_edited_by)){
                 $last_edited_by_data = $this->loa->employee_details($data->last_edited_by);
-                $last_edited_by = $last_edited_by_data->display_name;
+                $last_edited_by = !empty($last_edited_by_data) ? $last_edited_by_data->display_name : 'No Assigned Name';
             }else{
                 $last_edited_by = $data->last_edited_by;
             }
             if(is_numeric($data->approved_by)){
                 $approved_by_data = $this->loa->employee_details($data->approved_by);
-                $approved_by = $approved_by_data->display_name;
+                $approved_by = !empty($approved_by_data) ? $approved_by_data->display_name : 'No Assigned Name';
             }else{
                 $approved_by = $data->approved_by;
             }
             if(is_numeric($data->disapproved_by)){
                 $disapproved_by_data = $this->loa->employee_details($data->disapproved_by);
-                $disapproved_by = $disapproved_by_data->display_name;
+                $disapproved_by = !empty($disapproved_by_data) ? $disapproved_by_data->display_name : 'No Assigned Name';
             }else{
                 $disapproved_by = $data->disapproved_by;
             }
             if(is_numeric($data->cancelled_by)){
                 $cancelled_by_data = $this->loa->employee_details($data->cancelled_by);
-                $cancelled_by = $cancelled_by_data->display_name;
+                $cancelled_by = !empty($cancelled_by_data) ? $cancelled_by_data->display_name : 'No Assigned Name';
             }else{
                 $cancelled_by = $data->cancelled_by;
             }
             if(is_numeric($data->hr_noted_by)){
                 $hr_noted_by_data = $this->loa->employee_details($data->hr_noted_by);
-                $hr_noted_by = $hr_noted_by_data->display_name;
+                $hr_noted_by = !empty($hr_noted_by_data) ? $hr_noted_by_data->display_name : 'No Assigned Name';
             }else{
                 $hr_noted_by = $data->hr_noted_by;
             }
@@ -667,5 +722,72 @@
             $this->output
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
+        }
+
+        function mass_action_loa(){
+            $post = $this->input->post();
+
+            $type = $post['type'];
+
+            $user_id = $this->core_layout->getCurrentEmployeeId();
+            $date = date('Y-m-d H:i:s');
+            $ids = json_decode($post['checked']);
+
+            if ($type == 1) {
+                $data = array(
+                    'status' => 'Approved',
+                    'approved_remarks' => $post['remarks'],
+                    'approved_by' => $user_id,
+                    'approved_dt' => $date,
+                );
+            } else {
+                $data = array(
+                    'status' => 'Disapproved',
+                    'disapproved_remarks' => $post['remarks'],
+                    'disapproved_by' => $user_id,
+                    'disapproved_dt' => $date,
+                );
+            }
+
+            $this->db->where_in('id', $ids);
+            $query = $this->db->update('gcceforms.loa', $data);
+
+            $this->db->reset_query();
+
+            $this->db->select('reference_no');
+            $this->db->where_in('id', $ids);
+            $this->db->from('gcceforms.loa');
+            $q = $this->db->get();
+
+            $ref_no = array();
+            if ($q->num_rows() > 0) {
+                foreach ($q->result() as $row) {
+                    array_push($ref_no, $row->reference_no);
+                }
+            }
+
+            $refs = implode(', ', $ref_no);
+
+            if ($query) {
+                $status = true;
+                $message = 'Successfully ' . ($type == 1 ? 'Approved' : 'Disapproved') . ' selected LOA request.';
+
+                if ($type == 1){
+                    $this->core_layout->setEventLog("Approved selected LOA with reference number of `".$refs."`.","update", "success", "gcceforms", "user");
+                } else {
+                    $this->core_layout->setEventLog("Disapproved selected LOA with reference number of `".$refs."`.","update", "success", "gcceforms", "user");
+                }
+            } else {
+                $status = false;
+                $message = 'Failed to ' . ($type == 1 ? 'Approve' : 'Disapprove') . ' selected LOA request.';
+
+                if ($type == 1){
+                    $this->core_layout->setEventLog("Failed to approve selected LOA with reference number of `".$refs."`.","update", "error", "gcceforms", "system");
+                } else {
+                    $this->core_layout->setEventLog("Failed disapprove selected LOA with reference number of `".$refs."`.","update", "error", "gcceforms", "system");
+                }
+            }
+
+            echo json_encode(array("status" => $status, 'message' => $message));
         }
     }

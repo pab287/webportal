@@ -14,6 +14,7 @@ var getUrlParameter = function getUrlParameter(sParam) {
 
 var search_val = "";
 param_id = getUrlParameter("id");
+var page = getUrlParameter("page");
 
 var tempData = {};
 $.ajax({
@@ -32,7 +33,7 @@ $.ajax({
    
     data.data.ref_yr = data.name;
     data.data.created_by = data.created_by+' on '+data.data.created_dt;
-    data.data.last_edited_by = data.last_edited_by+' on '+data.data.last_edited_dt;
+    data.data.last_edited_by = data.last_edited_by ? data.last_edited_by+' on '+data.data.last_edited_dt : '';
     data.data.approved_by = data.approved_by+' on '+data.data.approved_dt;
     data.data.disapproved_by = data.disapproved_by+' on '+data.data.disapproved_dt;
     data.data.cancelled_by = data.cancelled_by+' on '+data.data.cancelled_dt;
@@ -105,7 +106,17 @@ $.ajax({
             var dateto = new Date(data.data.date_to);
             var hours =Math.abs(dateto - datefrom)/36e5;
             var hours= (hours).toFixed(0);
-            data.data.ref_month= hours +" hours";
+            var _temp = "";
+
+            if (hours > 1) {
+              _temp = hours + " hours";
+            } else if (hours == 1) {
+              _temp = hours + " hour";
+            } else{
+              _temp = "";
+            }
+
+            data.data.ref_month= _temp;
             data.data.type="Undertime";
         break;
         case "2":
@@ -123,10 +134,30 @@ $.ajax({
             var temp=hours%24
             var temp2=Math.floor(hours/24);
 
+            var _temp = parseFloat(temp).toFixed(1);
+            var _split = _temp.split('.')[1];
+
+            if (_split > 0) {
+                temp = _temp;
+            } else {
+                temp = parseFloat(temp).toFixed(0);
+            }
+
             if(temp=="0"){
               data.data.ref_month = temp2 +" Days ";
             }else{
-              data.data.ref_month = temp2 +" Days "+ temp +" Hours";
+              var _temp = "";
+              temp2 = temp2 > 0 ? temp2 + ' Days ' : "";
+
+              if (temp > 1) {
+                _temp =  temp + " Hours";
+              } else if (temp == 1) {
+                _temp =  temp + " Hour";
+              }else {
+                _temp =  temp + " Hour";
+              }
+
+              data.data.ref_month = temp2 + _temp;
             }
             data.data.type="Others";
         break;
@@ -152,7 +183,9 @@ var tblContent = $("#table-previous").DataTable({
     type: "post",
     dataType: "json",
     data: function(d) {
-      (d.csrf_token = _csrf_hash), (d.search["value"] = search_val);
+      (d.csrf_token = _csrf_hash), 
+      (d.excluded_id = param_id),
+      (d.search["value"] = search_val);
     }
   },
   aaSorting: [],
@@ -160,7 +193,7 @@ var tblContent = $("#table-previous").DataTable({
   columns: [
         { data: "nature"},
         { data: "type",render: function (data) {return renderTypeHtml(data)}},
-        { data: "type", render: function ( data, type, row, meta ) {return formatDifference(data,row)}},
+        { data: "type", sortable: false, render: function ( data, type, row, meta ) {return formatDifference(data,row)}},
         { data: "date_from", render: function ( data, type, row, meta ) {return formatCalendarDate(data,row)}}, 
         { data: "status",render: function ( data, type, row, meta ) {return renderStatusHtml(row)}},     
     ],
@@ -199,11 +232,21 @@ function renderTypeHtml(data){
 function formatDifference(data,row){
     switch(data){
         case "1":
-        var datefrom = new Date(row.date_from);
-var dateto = new Date(row.date_to);
-        var hours =Math.abs(dateto - datefrom)/36e5;
-        var hours= (hours).toFixed(0);
-            return hours +" HOURS";
+          var datefrom = new Date(row.date_from);
+          var dateto = new Date(row.date_to);
+          var hours=Math.abs(dateto - datefrom)/36e5;
+          var hours= (hours).toFixed(0);
+          var _temp = "";
+
+          if (hours > 1) {
+            _temp = hours + " hours";
+          } else if (hours == 1) {
+            _temp = hours + " hour";
+          } else {
+            _temp = "";
+          }
+          
+          return _temp;
         break;
         case "2":
             return '4 hours';
@@ -213,12 +256,41 @@ var dateto = new Date(row.date_to);
         break;
         default:
              var datefrom = new Date(row.date_from);
-var dateto = new Date(row.date_to);
-        var hours = Math.abs(dateto - datefrom)/ 36e5;
-        var temp=hours%24
-         var temp2=Math.floor(hours/24);
+            var dateto = new Date(row.date_to);
+            var hours = Math.abs(dateto - datefrom)/ 36e5;
+            var temp=hours%24
+            var temp2=Math.floor(hours/24);
+            var date = "";
 
-            return temp2 +" Days "+ temp +" HOURS";
+            var _temp = parseFloat(temp).toFixed(1);
+            var _split = _temp.split('.')[1];
+
+            if (_split > 0) {
+                temp = _temp;
+            } else {
+                temp = parseFloat(temp).toFixed(0);
+            }
+
+            // temp = temp > 0 ? temp + ' HOURS' : "";
+            // temp2 = temp2 > 0 ? temp2 + ' Days ' : "";
+
+            if(temp=="0"){
+              date = temp2 +" Days ";
+            }else{
+              temp2 = temp2 > 0 ? temp2 + ' Days ' : "";
+
+              if (temp > 1) {
+                temp = temp + " HOURS";
+              } else if (temp == 1) {
+                temp = temp + " HOUR";
+              } else {
+                temp = "";
+              }
+              date = temp2 + temp;
+            }
+
+            return date;
+            // return temp2 + temp;
         break;
         
     }
@@ -242,7 +314,7 @@ function renderStatusHtml(data){
             //return '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>HR Noted</strong></div>';
         break;
         default:
-            return '<a href="'+baseUrl("eforms/loa/view_loa?id=")+data.id+'" ><button type="button" title="View" class="btn m-btn--pill btn-metal text-white btn-sm btnView"><strong>Cancelled</strong></button></a>';
+            return '<a href="'+baseUrl("eforms/loa/view_loa?id=")+data.id+'&page=archive" ><button type="button" title="View" class="btn m-btn--pill btn-metal text-white btn-sm btnView"><strong>Cancelled</strong></button></a>';
             //return '<div class="m-badge m-badge--metal text-white m-badge--wide" role="alert"><strong>Cancelled</strong></div>';
         break;
     }
@@ -536,6 +608,17 @@ function undo_note(){
 function open_note(){
   $('#modal_form_noted').modal('show'); // show bootstrap modal
   $('.modal-title').text('HR Note'); // Set Title to Bootstrap modal title
+
+  $("#form_noted").trigger('reset');
+
+  $("#hr-noted-pay").select2({
+    placeholder: 'Select an Option',
+    minimumResultsForSearch: -1,
+    width: '100%',
+  }).on('select2:select', function (e) {
+    var self = $(e.target);
+    self.validate();
+  })
 }
 
 $.validate({
