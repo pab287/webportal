@@ -825,17 +825,21 @@ function open_accomplish(){
   globalTemp = [];
   globalTempSelected = [];
   let dates = [];
+
+  $("#form_accomplish").trigger('reset');
+
   $(".chckBox").each(function(i){
         var trig = $(this).is(":checked");
         var date = $(this).data("date");
         if(trig){
           globalTempSelected.push($(this).attr("value"));
+          dates.push(date);
         } else {
           globalTemp.push(globalDTdata[i]);
         }
-
-        dates.push(date);
   });
+
+  console.log(dates);
   
   if(globalTemp.length > 0){
     $("#table-selected-destination").show();
@@ -914,9 +918,9 @@ function open_accomplish(){
   $('#modal_form_accomplish .modal-title').text('Accomplishment Report');
 
   $('#modal_form_accomplish').on('show.bs.modal', function (e) {
-    console.log(disableToday);
     if (!disableToday) {
       $('.datetimepicker .datetimepicker-days .table-condensed tfoot tr:first-child th').removeClass('today');
+      $(".datetimepicker .datetimepicker-days .table-condensed tr td").addClass('disabled');
     }
   });
 

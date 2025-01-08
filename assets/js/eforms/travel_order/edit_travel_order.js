@@ -547,7 +547,7 @@ function add_destination() {
   save_method = 'add';
   $('#form_destination')[0].reset(); // reset form on modals
   $('#modal_form_destination').modal('show'); // show bootstrap modal
-  $('.modal-title').text('Add New Destination'); // Set Title to Bootstrap modal title
+  $('#modal_form_destination .modal-title').text('Add New Destination'); // Set Title to Bootstrap modal title
   var emptyOpt = new Option("", "", true, true);
   $('#select2_req').append(emptyOpt).trigger('change');
   initMapTemp();
@@ -575,7 +575,7 @@ function edit_destination(id) {
       $('[name="formTravelFrom"]').val(data.coords_from);
       $('[name="formTravelTo"]').val(data.coords_to);
       $('#modal_form_destination').modal('show'); // show bootstrap modal
-      $('.modal-title').text('Edit Destination'); // Set Title to Bootstrap modal title
+      $('#modal_form_destination .modal-title').text('Edit Destination'); // Set Title to Bootstrap modal title
     },
     error: function (jqXHR, textStatus, errorThrown) {
       alert('Error get data from ajax');
