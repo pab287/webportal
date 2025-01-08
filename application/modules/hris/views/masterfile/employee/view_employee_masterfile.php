@@ -135,7 +135,7 @@
                                         </div>
                                     </div>
                                     <template>
-                                        <div>
+                                        <div hidden>
                                             <div v-if="main.position === 'owner'">
                                             </div>
                                             <template v-else>
@@ -147,18 +147,18 @@
                                                         <span class="m--font-bolder">Charles Anthony M. Dumancas</span>
                                                     </div>
                                                 </div>
-                                            <template v-else>
-                                                <div v-if="!supervisor">
-                                                </div>
-                                                <div v-else class="mt-1 text-sm-center text-xl-left text-lg-left row">
-                                                    <div class="col-xl-6">
-                                                        <span>Head/Supervisor</span>
+                                                <template v-else>
+                                                    <div v-if="!supervisor">
                                                     </div>
-                                                    <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
-                                                        <span class="m--font-bolder" v-text="supervisor"></span>
+                                                    <div v-else class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                                        <div class="col-xl-6">
+                                                            <span>Head/Supervisor</span>
+                                                        </div>
+                                                        <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
+                                                            <span class="m--font-bolder" v-text="supervisor"></span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </template>
+                                                </template>
                                             </template>
                                         </div>
                                     </template>

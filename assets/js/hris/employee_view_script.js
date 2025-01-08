@@ -16,6 +16,7 @@ let employeeDataSheet = new Vue({
             activeSection:"",
             main:[],
             supervisor:"",
+            manager: "",
             path:"",
             dependents:[],
             job_desc:"",
@@ -148,6 +149,7 @@ let employeeDataSheet = new Vue({
             this.main = { ...this.$data.main, ..._tempContentData.data.main };
             this.path = _tempContentData.data.path;
             this.supervisor = _tempContentData.data.supervisor;
+            this.manager = _tempContentData.data.manager;
         },
         getDisplayName() {
             const { firstname, middlename, lastname, suffix } = this.main;

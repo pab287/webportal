@@ -673,6 +673,19 @@
 </table>
 
 <table class="responsive">
+    <thead class="customsalary">
+        <th>SUPERVISOR</th>
+        <th>DEPARTMENT MANAGER</th>
+    </thead>
+    <tbody>
+        <tr>
+            <td data-label="SUPERVISOR" v-text="supervisor || 'N/A'"></td>
+            <td data-label="MANAGER" v-text="manager || 'N/A'"></td>
+        </tr>
+    </tbody>
+</table>
+
+<table class="responsive">
     <col width="30%">
     <col width="*">
     <thead class="customsalary">

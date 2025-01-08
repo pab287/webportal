@@ -1977,7 +1977,25 @@
                     /** jp01 updated query starts here **/
 
                     $data->_status = $data->work_status;
-                    $data->current_supervisor = $data->supervisor;
+
+                    $tempMeta = @unserialize($data->supervisor_meta);
+
+                    if (is_array($tempMeta)) {
+                        $data->current_supervisor = $tempMeta['supervisory'];
+                        // $data->current_supervisor = $data->supervisor;
+                        $data->supervisor = $tempMeta['supervisory'];
+    
+                        if ($data->tl_supervisory == 1) {
+                            $data->current_manager = $tempMeta['managerial'];
+                            $data->manager = $tempMeta['managerial'];
+                        }
+                    } else {
+                        $data->current_supervisor = $data->supervisor_meta;
+                        $data->supervisor = $data->supervisor_meta;
+                    }
+
+                    $data->current_tl_supervisory = $data->tl_supervisory;
+
                     $data->current_company_id = $data->company_id;
                     $data->current_department_id = $data->department_id;
                     $data->current_position_id = $data->position;
@@ -3201,6 +3219,7 @@
             if (isset($post) && $post) {
                 unset($post["csrf_token"], $post["current_status"], $post["current_company_id"], $post["current_department_id"], $post["current_position_id"], $post["work_station"],$post["current_supervisor"], $post["default_station"]);
                 $employeeId = $post["id"];
+
                 if ($employeeId) {
                     unset($post["id"]);
                     $where = array("id" => $employeeId);
@@ -3212,6 +3231,19 @@
                             $post['date_end_prob'] = date('Y-m-d', strtotime("+6 months", strtotime($post['date_start'])));
                         }
                     }
+
+                    $tempSupervisory = array('supervisory' => $post['supervisor']);
+
+                    if (isset($post['tl_supervisory']) && $post['tl_supervisory']) {
+                        $tempManager = array('managerial' => $post['manager']);
+
+                        $tempSupervisory = array_merge($tempSupervisory, $tempManager);
+                    } else {
+                        $post['tl_supervisory'] = 0;
+                    }
+
+                    $post['supervisor_meta'] = serialize($tempSupervisory);
+                    unset($post['supervisor'], $post['manager']);
 
                     $post['resignation_effective_date'] = isset($post['resignation_effective_date']) && $post['resignation_effective_date'] ? $post['resignation_effective_date'] : NULL; //fixed in payroll employee employment data
 
@@ -4178,6 +4210,9 @@
         function getEmployeeDataDetails($employee_id){
             $main = $this->getEmployee($employee_id);
             $supervisorId = $main->supervisor;
+            $managerId = 0;
+            $managerName = "";
+
             $path = "uploads/files/images/employee_files/empcode_" . $main->id . "/" . $main->pic_filename;
             $avatar = base_url($path);
             $timestamp = date('M-d-Y h:i:s a');
@@ -4191,9 +4226,23 @@
                 END AS name
             ")->from($this->employeeTable)->where("id", $supervisorId)->get()->result();
             $supervisorName = empty($result)? false : $result[0]->name;
+
+            if ($main->tl_supervisory) {
+                $managerId = $main->managerial;
+
+                $_result = $this->db->select("
+                    CASE 
+                        WHEN LENGTH(middlename) > 1 THEN CONCAT(firstname, ' ', SUBSTRING(middlename, 1, 1), '. ', lastname)
+                        ELSE CONCAT(firstname, ' ', middlename, ' ', lastname)
+                    END AS name
+                ")->from($this->employeeTable)->where("id", $managerId)->get()->result();
+                $managerName = empty($_result)? false : $_result[0]->name;
+            }
+
             return
             array(
                 "supervisor" => $supervisorName,
+                'manager' => $managerName ? $managerName : "N/A",
                 "timestamp" => $timestamp,
                 "main" => $main,
                 "path" => $avatar,
@@ -4203,7 +4252,27 @@
 
         function getEmployeeDataSheetDetails($employee_id) {
             $main = $this->core_layout->getEmployee($employee_id);
-            $supervisorId = $main->supervisor;
+            $_meta = @unserialize($main->supervisor_meta);
+            $managerName = "";
+
+            if (is_array($_meta)){
+                $supervisorId = $_meta['supervisory'];
+
+                if ($main->tl_supervisory == 1) {
+                    $managerId = $_meta['managerial'];
+
+                    $_result = $this->db->select("
+                        CASE 
+                            WHEN LENGTH(middlename) > 1 THEN CONCAT(firstname, ' ', SUBSTRING(middlename, 1, 1), '. ', lastname)
+                            ELSE CONCAT(firstname, ' ', middlename, ' ', lastname)
+                        END AS name
+                    ")->from($this->employeeTable)->where("id", $managerId)->get()->result();
+                    $managerName = empty($_result)? false : $_result[0]->name;
+                }
+            } else {
+                $supervisorId = $main->supervisor_meta;
+            }
+            // $supervisorId = $main->supervisor;
             $result = $this->db->select("
                 CASE 
                     WHEN LENGTH(middlename) > 1 THEN CONCAT(firstname, ' ', SUBSTRING(middlename, 1, 1), '. ', lastname)
@@ -4211,6 +4280,7 @@
                 END AS name
             ")->from($this->employeeTable)->where("id", $supervisorId)->get()->result();
             $supervisorName = empty($result)? false : $result[0]->name;
+
             $this->db->reset_query();
             $dependents = $this->db->get_where($this->employeeDependentsTable, array("emp_id" => $employee_id,"is_archived" => 0))->result();
             $this->db->reset_query();
@@ -4327,6 +4397,7 @@
             return
                 array(
                     "supervisor" => $supervisorName,
+                    "manager" => $managerName,
                     "main" => $main,
                     "dependents" => $dependents,
                     "questions" => $this->questions,
@@ -11107,7 +11178,7 @@
         public function getEmployee($emp_id){
             $data = array();
             $this->db->select("emp.id, emp.lastname, emp.firstname, emp.middlename, emp.suffix, emp.curr_addr, emp.prov_addr, emp.citizenship, emp.religion, emp.languages, emp.email, emp.gender, emp.civil_stat, emp.bday, emp.birthplace, emp.bloodtype, emp.height, emp.weight, emp.hair_color, emp.complexion, emp.tel_no, emp.mobile_no, 
-            emp.pic_filename, emp.idno, emp.biometricno, pos.name as position ,pos.id as position_id, emp.work_status, emp.employee_status, emp.date_start, emp.date_end, com.code as company_id, emp.level, emp.date_regular, emp.date_end_prob, emp.resign_reason, pos.job_desc, emp.supervisor, emp.ques1, emp.ques2, emp.ques3, emp.ques4, emp.ques5, emp.ques6, emp.ques7, emp.ques8, emp.ques9,
+            emp.pic_filename, emp.idno, emp.biometricno, pos.name as position ,pos.id as position_id, emp.work_status, emp.employee_status, emp.date_start, emp.date_end, com.code as company_id, emp.level, emp.date_regular, emp.date_end_prob, emp.resign_reason, pos.job_desc, emp.tl_supervisory, emp.supervisor_meta, emp.ques1, emp.ques2, emp.ques3, emp.ques4, emp.ques5, emp.ques6, emp.ques7, emp.ques8, emp.ques9,
             emp.email, emp.tax_status, emp.tin_no, emp.phealth_no, emp.pagibig_no, emp.sss_no,
             emp.fat_name, emp.mot_name, emp.partner_type, emp.spo_deceased, emp.partners_deceased, emp.spo_name, emp.partners_name, emp.fat_addr, emp.mot_addr, emp.spo_addr, emp.partners_addr, emp.fat_company, emp.mot_company, emp.spo_company, emp.partners_company, emp.fat_occupation, emp.mot_occupation, emp.spo_occupation, emp.partners_occupation, emp.fat_contact, emp.mot_contact, emp.spo_contact, emp.partners_contact, emp.emer_addr, emp.emer_contact, emp.emer_name, 
             dept.description as department_description, emp.work_mode, emp.payroll_type
@@ -11118,6 +11189,19 @@
             $this->db->join($this->departmentTable." as dept", "dept.id = emp.department_id", "LEFT");
             $this->db->where("emp.id", $emp_id);
             $data = $this->db->get()->row();
+
+            $meta = @unserialize($data->supervisor_meta);
+
+            if (is_array($meta)) {
+                $data->supervisor = $meta['supervisory'];
+
+                if ($data->tl_supervisory == 1) {
+                    $data->managerial = $meta['managerial'];
+                }
+            } else {
+                $data->supervisor = $data->supervisor_meta;
+            }
+
             return $data;
         }
 
