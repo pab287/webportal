@@ -181,7 +181,7 @@
                     $data->basic_rate = number_format($data->basic_rate, 2, ".", "");
                     $data->payout_sched = $data->payout_sched;
                     $data->payroll_type = $data->payroll_type;
-                    $data->current_supervisor = $data->supervisor;
+                    // $data->current_supervisor = $data->supervisor;
                 }
             }
             return $data;
