@@ -3966,7 +3966,7 @@
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee offense and commendation has been added successfully.";
                     $insertid = $this->db->insert_id();
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new offense and commendation. Nature: ".$post['offcom_nature']." for employee ".$fullname,"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User added new offense and commendation Nature: <strong>".$post['offcom_nature']."</strong> for employee <strong>".$fullname."</strong>","insert", "success", "gcchris", "user");
                     $this->updateOffensesCommendationHistory(false,$post2,$insertid);
                 } else {
                     $resultset["response"] = false;
@@ -4020,7 +4020,7 @@
 
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Employee document has been added successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " Added new document. File/s: ".$post['document_names']." for employee ".$fullname.".","insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User Added new document, File/s: <strong>".$post['document_names']."</strong> for employee <strong>".$fullname."</strong>","insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to save employee document!";
@@ -4830,7 +4830,7 @@
                 unset($post->checklist_id, $post->checklist_document_id);
             }
             // added for pre-employment checklist
-            
+            $currentData = $this->getDocumentById($post->id);
             $this->db->trans_begin();
             $this->db->where("id", $post->id);
             $this->db->update($this->employeeDocumentsTable, array("doc_type" => $post->doc_type));
@@ -4857,6 +4857,7 @@
                 if ($uploaded['response']) {
                     $this->db->where("id", $post->id)
                         ->update($this->employeeDocumentsTable, array("doc_filename" => $uploaded['files'][0]['file_name']));
+                        $post->doc_filename = $uploaded['files'][0]['file_name'];
                 }
             }
 
@@ -4870,7 +4871,7 @@
                 $this->db->where('id', $checklistDocId);
                 $this->db->update($this->tblChecklist, $data);
             }
-            $fullname = $this->getEmployeeName($post->id);
+            $fullname = $this->getEmployeeName($currentData->emp_id);
             if ($this->db->trans_status() === FALSE) {
                 $resultSet["success"] = "false";
                 $resultSet["message"] = $this->db->error();
@@ -4878,13 +4879,14 @@
 
                 $this->core_layout->setEventLog("Error updating documents details for employee ".$fullname,"update", "error", "gcchris", "system");
             } else {
+                $changes = $this->logChanges($currentData, $post);
                 $resultSet["success"] = "true";
                 $resultSet["message"] = "Record was successfully updated.";
                 $resultSet["data"] = array(
                     "doc_type" => $post->doc_type,
                     "doc_filename" => $uploaded['response'] ? $uploaded['files'][0]['file_name'] : ""
                 );
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Updated documents details for employee ".$fullname,"update", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User updated documents details for employee <strong>$fullname</strong> $changes","update", "success", "gcchris", "user");
                 $this->db->trans_commit();
             }
 
@@ -4896,7 +4898,6 @@
             $id = $post->id;
             unset($post->id);
             $currentData = $this->getLegalDataById($id);
-            $this->db->reset_query();
             $this->db->where("id", $id);
             if ($this->db->update($this->employeeLegalHistoryTable, $post)) {
                 $changes = $this->logChanges($currentData, $post);
@@ -4922,7 +4923,7 @@
             $currentData =  $this->getOffCommById($id);
             unset($post->id, $post->current_filename);
             $resultSet = array();
-            $currentData = $this->getOffensesById($id);
+            $currentData1 = $this->getOffensesById($id);
             $this->db->trans_begin();
             $this->db->where("id", $id);
             $this->db->update($this->employeeOffensesTable, $post);
@@ -4967,9 +4968,9 @@
                 $resultSet["success"] = "true";
                 $resultSet["message"] = "Record was successfully updated.";
                 $resultSet["data"] = $post;
-                $changes = $this->logChanges($currentData, $post);
-                $fullname =  $this->getEmployeeName($currentData->emp_id);
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Updated offensses and commendation details for employee: <strong>$fullname</strong> $changes","update", "success", "gcchris", "user");
+                $changes = $this->logChanges($currentData1, $post);
+                $fullname =  $this->getEmployeeName($currentData1->emp_id);
+                $this->core_layout->setEventLog("User updated offensses and commendation details for employee: <strong>$fullname</strong> $changes","update", "success", "gcchris", "user");
                 $this->db->trans_commit();
             }
 
@@ -5052,7 +5053,7 @@
                 $this->db->trans_rollback();
             } else {
                 $changes = $this->logChanges($currentData, $post);
-                $fullname =  $this->getEmployeeName($currentData->emp_id);
+                $fullname =  $this->getEmployeeName($id);
                 $resultSet["success"] = "true";
                 $resultSet["message"] = "Record was successfully updated.";
                 $resultSet["data"] = $post->ques;
@@ -5578,12 +5579,14 @@
             $resultSet = array();
             $this->db->where("id", $document_id);
             $query = $this->db->update($this->employeeDocumentsTable, array("is_archived" => 1));
-
+            $this->db->reset_query();
+            $result = $this->db->select('doc_filename,emp_id')->from($this->employeeDocumentsTable)->where('id', $document_id)->get()->row();
+            $fullname = $this->getEmployeeName($result->emp_id);
             if ($query) {
                 $resultSet['success'] = true;
                 $resultSet['message'] = "Record was successfully archived.";
                 $resultSet['title'] = "Document Archived.";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Archived document details.".$document_id,"archive", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User archived document details, Document: <strong>$result->doc_filename</strong> for employee: <strong>$fullname</strong>","archive", "success", "gcchris", "user");
                 $this->logArchive($this->employeeDocumentsTable, $document_id, 1);
             } else {
                 $resultSet['success'] = false;
@@ -5645,12 +5648,14 @@
             $resultSet = array();
             $this->db->where("id", $offense_id);
             $query = $this->db->update($this->employeeOffensesTable, array("is_archived" => 1));
-
+            $this->db->reset_query();
+            $result = $this->db->select('offcom_nature,emp_id')->from($this->employeeOffensesTable)->where('id', $offense_id)->get()->row();
+            $fullname = $this->getEmployeeName($result->emp_id);
             if ($query) {
                 $resultSet['success'] = true;
                 $resultSet['message'] = "Record was successfully archived.";
                 $resultSet['title'] = "Offenses & Commendation Archive.";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. "Archived offenses and commendation details.".$offense_id,"archive", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User archived offenses and commendation details: <strong>$result->offcom_nature</strong> for employee: <strong>$fullname</strong>","archive", "success", "gcchris", "user");
                 $this->logArchive($this->employeeOffensesTable, $offense_id, 1);
             } else {
                 $resultSet['success'] = false;
@@ -11295,6 +11300,16 @@
             }
     
             private function getBgCheckById($id){
+                $this->db->select("*");
+                $this->db->from($this->employeeDocumentsTable);
+                $this->db->where('id', $id);
+                $query = $this->db->get(); 
+                $result = $query->row();
+                $this->db->reset_query();
+                return $result;
+            }
+
+            private function getDocumentById($id){
                 $this->db->select("*");
                 $this->db->from($this->employeeDocumentsTable);
                 $this->db->where('id', $id);
