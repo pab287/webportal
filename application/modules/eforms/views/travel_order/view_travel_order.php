@@ -415,7 +415,7 @@
                 <div class="modal-body form">
                     <input type="hidden" value="" name="id"/> 
                     <div id="remarks" style="margin-bottom: 20px;">
-                        <label class="control-label col-md-4 col-sm-4 col-xs-12 required" style="font-weight: bold; color: #7e7e7e;">Unaccomplished Remarks</label>
+                        <label class="control-label col-md-12 col-sm-12 col-xs-12 required" style="font-weight: bold; color: #7e7e7e;">Unaccomplished Remarks</label>
                         <div class="col-md-12">
                             <textarea name="unacomplish_remarks" rows="5" class="form-control" data-validation="required"> </textarea> 
                         </div>
