@@ -251,9 +251,10 @@
               <div class="col-md-12">
                 <div class="modal-footer">
                   <button type="submit" id="btnSaveTransmittal" onclick="update_transmittal()" class="btn btn-brand"><i class="la la-floppy-o"></i> Submit</button>
-                  <a href="<?php echo site_url("eforms/transmittal/masterfile");?>" >
+                  <!-- <a href="<?php //echo site_url("eforms/transmittal/masterfile");?>" >
                     <button type="button" style="color: #FFFFFF;" class="btn m-btn--custom btn-metal m-btn text-white btnNew" >Cancel</button>
-                  </a>
+                  </a> -->
+                  <button type="button" style="color: #FFFFFF;" class="btn m-btn--custom btn-metal m-btn text-white btnNew" onclick="backToMaster()">Cancel</button>
                 </div>
               </div>
             </div> 

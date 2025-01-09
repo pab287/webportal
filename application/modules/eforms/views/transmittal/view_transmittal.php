@@ -33,7 +33,7 @@
 					<div class="m-portlet__head-caption">
 						<div class="m-portlet__head-title">
               <span class="m-portlet__head-icon">
-                  <a type="button" href="masterfile" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnNew">
+                  <a type="button" href="<?=isset($_GET['page']) && $_GET['page'] == 'archive' ? 'archive_transmittal' : 'masrterfile'; ?>" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnNew">
                       <i class="la la-arrow-left"></i>
                   </a>
               </span>
@@ -401,7 +401,8 @@
                     </div>
                    <div class="modal-footer">
                       
-                     <button type="submit" id="btnSave" onclick="cancel()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
+                     <!-- <button type="submit" id="btnSave" onclick="cancel()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button> -->
+                     <button type="button" id="btnSave" onclick="cancel()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
                       <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon  btnClose" data-dismiss="modal">Close</button>
                     </div>
                     </form>
@@ -567,7 +568,8 @@
                      
         </div>
         <div class="modal-footer">
-            <button type="submit" id="btnSave" onclick="restore_form()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">yes</button>
+            <!-- <button type="submit" id="btnSave" onclick="restore_form()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">yes</button> -->
+            <button type="button" id="btnSave" onclick="restore_form()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">yes</button>
             <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon  btnClose" data-dismiss="modal">no</button>
             </div>
         </form>

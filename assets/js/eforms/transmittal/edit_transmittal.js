@@ -609,3 +609,13 @@ $(document).ready(function () {
   document.getElementById('row_courier').style.display = 'none';
   document.getElementById('other_remark').style.display = 'none';
 });
+
+function backToMaster(){
+  var data = tblContent.rows().data().toArray();
+
+  if (data.length > 0) {
+    window.location.replace(baseUrl("eforms/transmittal/view_transmittal?id=") + param_id);
+  } else {
+    toastr.warning("Content must not be empty. Please add atleast 1 content.", "Warning!", 5000);
+  }
+}
