@@ -1,0 +1,57 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Hydra Payment API",
+        "version": "1.0.0",
+        "description": "Hydra payment API documentation"},
+        "servers": [
+            {
+                "url": "http://localhost/conyxph74/eforms/hydracore"
+                }
+            ],
+        "paths": {
+            "/getAccountsCollection": {
+                "get": {
+                    "summary": "Collection of Accounts",
+                    "responses": {
+                        "200": {
+                            "description": "Successful response"
+                            }
+                        }
+                    }
+                },
+            "/getAccountById":{
+                "post": {
+                    "summary": "Fetch account details by ID",
+                    "description": "Load customer details from the system By customer ID",
+                    "requestBody": {
+                        "description": "Account details",
+                        "required": true,
+                        "content":{
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties":{
+                                        "id": {
+                                            "type": "integer",
+                                            "description": "ID of the customer",
+                                            "example": 1
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Successful response"
+                            },
+                        "400":{
+                            "description": "Bad request"
+                        }
+                    } 
+                }
+            }
+        }
+
+}                                                                                                                               
