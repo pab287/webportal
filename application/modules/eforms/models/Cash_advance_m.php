@@ -772,19 +772,20 @@ class Cash_advance_m extends CI_Model {
                 $rs->amt_applied =  "₱ ".number_format($rs->amt_applied, 2);
                 
                 $rs->amt_approved =  "₱ ".number_format($rs->amt_approved, 2);
-                if($rs->recommend_remarks){
+                /*** @malvin ngaa naka number format ang remarks.. sabta ko b! ***/
+                if($rs->recommend_remarks && is_numeric($rs->recommend_remarks)){
                     $rs->recommend_remarks =  "₱ ".number_format($rs->recommend_remarks, 2);
-                }else{
-                    $rs->recommend_remarks =  $rs->recommend_remarks;
                 }
-                $rs->hr_bal_remarks =  "₱ ".number_format($rs->hr_bal_remarks, 2);
-                $rs->acctg_bal_remarks =  "₱ ".number_format($rs->acctg_bal_remarks, 2);
-                if($rs->deduct_type=="percentage"){
-                    $rs->amt_to_b_deducted =  $rs->amt_to_b_deducted;
-                }else{
+                if($rs->hr_bal_remarks && is_numeric($rs->hr_bal_remarks)){
+                    $rs->hr_bal_remarks =  "₱ ".number_format($rs->hr_bal_remarks, 2);
+                }
+                if($rs->acctg_bal_remarks && is_numeric($rs->acctg_bal_remarks)){
+                    $rs->acctg_bal_remarks =  "₱ ".number_format($rs->acctg_bal_remarks, 2);
+                }
+                if($rs->deduct_type != "percentage" && is_numeric($rs->amt_to_b_deducted)){
                     $rs->amt_to_b_deducted =  "₱ ".number_format($rs->amt_to_b_deducted, 2);
                 }
-                
+                /*** @malvin ngaa naka number format ang remarks.. sabta ko b! ***/
 
                 $rs->acctg_ca_pending_formatted =  "₱ ".number_format($rs->acctg_ca_pending, 2, ".", ",");
                 $rs->acctg_ca_interest_formatted =  "₱ ".number_format($rs->acctg_ca_interest, 2, ".", ",");
