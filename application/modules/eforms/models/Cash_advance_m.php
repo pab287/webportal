@@ -565,7 +565,7 @@ class Cash_advance_m extends CI_Model {
         return $resultset;
     }
 
-    function email_send_approval($employeeName, $referenceNumber, $amount=0, $purpose="", $recipient){
+    protected function email_send_approval($employeeName=null, $referenceNumber=null, $amount=0, $purpose="", $recipient=null){
         $resultset = array();
         $emailTo = array();
         $employeeName = mb_strtoupper($employeeName);
@@ -1236,18 +1236,27 @@ class Cash_advance_m extends CI_Model {
                 $this->db->from('gccmaster.tblusers');
                 $this->db->where("is_suspended=0 AND email='hrpayroll@gccph.com'");
                 $email = $this->db->get();
-                $hr_email = $email->row_array(); 
-                //$hr_email['email'];   
-                $this->email_send($emp_name, $emp_details['reference_no'], $emp_details['amt_applied'], $emp_details['purpose'], $hr_email['email']);
-                //$emp_details['purpose']
-            }else if($status == 'Awaiting Approval'){
-                //send email to sir jes
-                $this->db->select('email,username');
-                $this->db->from('gccmaster.tblusers');
-                $this->db->where("is_suspended=0 AND email='hr@gccph.com'");
-                $email = $this->db->get();
                 $hr_email = $email->row_array();
-                $this->email_send_approval($emp_name, $emp_details['reference_no'], $emp_details['amt_applied'], $emp_details['purpose'], $hr_email['email']);
+                $this->email_send($emp_name, $emp_details['reference_no'], $emp_details['amt_applied'], $emp_details['purpose'], $hr_email['email']);
+            } elseif ($status == 'Awaiting Approval'){
+                //send email to sir jes
+                $this->db->select('email');
+                $this->db->from('gccmaster.tblusers');
+                /*** $this->db->where("is_suspended=0 AND email='hr@gccph.com'"); ***/
+                $this->db->where("is_suspended", 0);
+                $this->db->group_start();
+                $this->db->where("email","hr@gccph.com");
+                $this->db->or_where("email","assthrman@gccaggregates.com");
+                $this->db->group_end();
+                $this->db->order_by("id", "DESC");
+                $this->db->limit(1);
+                $email = $this->db->get();
+                if ($email->num_rows() == 1) {
+                    $hr_email = $email->row()->email;
+                    if($hr_email){
+                        $this->email_send_approval($emp_name, $emp_details['reference_no'], $emp_details['amt_applied'], $emp_details['purpose'], $hr_email);
+                    }
+                }
             }else{
                 //send email to miss grace
                 $this->db->select('email,username');
