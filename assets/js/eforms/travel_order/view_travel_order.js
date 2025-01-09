@@ -99,7 +99,7 @@ var tblDestination = $("#table-destination").DataTable({
 
           if(row.accomplished == 1){
             isCheck = 'checked';
-            toggleAccomplishDisable(true);
+          //   toggleAccomplishDisable(true); //commented to disable accomplish button
           }
 
           return `<label class="m-checkbox m-checkbox--air m-checkbox--state-primary" title='Check to Print'> <input `+isCheck+` id="selectedReading" type="checkbox" class="text-gray chckBox ${isCheck}" value="`+row.id+`" name="selected" data-date="`+row.date_to+`" ${isCheck ? 'disabled' : ''}><span></span></label>`;
@@ -821,6 +821,10 @@ $(document).ready(function(){
   // });
 });
 
+let startDate = null;
+let endDate = null;
+let disableToday = false;
+
 function open_accomplish(){
   globalTemp = [];
   globalTempSelected = [];
@@ -833,13 +837,15 @@ function open_accomplish(){
         var date = $(this).data("date");
         if(trig){
           globalTempSelected.push($(this).attr("value"));
-          dates.push(date);
+
+          if (!$(this).hasClass('checked')){
+            dates.push(date);
+          }
+
         } else {
           globalTemp.push(globalDTdata[i]);
         }
   });
-
-  console.log(dates);
   
   if(globalTemp.length > 0){
     $("#table-selected-destination").show();
@@ -873,12 +879,15 @@ function open_accomplish(){
   var now = moment().format('YYYY-MM-DD');
   var max = "";
   var min = "";
-  var disableToday = false;
+  var addedDate = "";
 
   if (uniqueArray.length == 1) {
     _date = new Date(uniqueArray[0]);
     min = moment(_date).format('YYYY-MM-DD');
     _date = moment(_date, 'YYYY-MM-DD HH:mm:ss').add(15, 'days');
+    addedDate = _date;
+
+    startDate = moment(min).format('YYYY/MM/DD HH:mm:ss');
   } else {
     min = dates.reduce(function (a, b) { return a < b ? a : b; });
     max = dates.reduce(function (a, b) { return a > b ? a : b; });
@@ -887,9 +896,14 @@ function open_accomplish(){
     _date = moment(_date, 'YYYY-MM-DD HH:mm:ss').add(15, 'days');
 
     min = moment(min).format('YYYY-MM-DD');
+    addedDate = _date;
+
+    startDate = moment(max).format('YYYY/MM/DD HH:mm:ss');
   }
 
   if (now <= moment(_date).format('YYYY-MM-DD')) {
+    time = moment(_date).format('HH:mm:ss');
+
     if (moment(min).format('YYYY-MM-DD') <= now) {
       disableToday = true;
     } else if (moment(_date).format('YYYY-MM-DD') > now) {
@@ -897,37 +911,44 @@ function open_accomplish(){
     } else {
       disableToday = true;
     }
-
-    time = moment(_date).format('HH:mm:ss');
     _date = now + " " + time;
   }
 
-  $('#due_dt').datetimepicker({
-    todayHighlight: true,
-    autoclose: true,
-    pickerPosition: 'bottom-left',
-    todayBtn: true,
-    format: 'yyyy/mm/dd hh:ii:ss',
-    startDate: moment(min).format('YYYY/MM/DD HH:mm:ss'),
-    endDate: moment(_date).format('YYYY/MM/DD HH:mm:ss'),
-  });
+  
+  endDate = moment(_date).format('YYYY/MM/DD HH:mm:ss');
 
   $("#modal_form_accomplish input[name=param_id]").val(param_id);
   $("#modal_form_accomplish input[name=globalTempSelected]").val(globalTempSelected);
   $('#modal_form_accomplish').modal('show');
   $('#modal_form_accomplish .modal-title').text('Accomplishment Report');
 
-  $('#modal_form_accomplish').on('show.bs.modal', function (e) {
-    if (!disableToday) {
-      $('.datetimepicker .datetimepicker-days .table-condensed tfoot tr:first-child th').removeClass('today');
-      $(".datetimepicker .datetimepicker-days .table-condensed tr td").addClass('disabled');
-    }
+}
+$('#modal_form_accomplish').on('show.bs.modal', function (e) {
+  $('#accomplishment_dt').remove();
+  $("#due_dt").prepend('<input class="form-control m-input" type="text" name="accomplishment_dt" id="accomplishment_dt"  maxlength="22" data-validation="required" readonly>');
+  
+  $('#accomplishment_dt').datetimepicker({
+    todayHighlight: true,
+    autoclose: true,
+    pickerPosition: 'bottom-left',
+    todayBtn: true,
+    format: 'yyyy/mm/dd hh:ii:ss',
+    startDate: startDate,
+    endDate: endDate,
   });
 
-  $('#modal_form_accomplish').on('hidden.bs.modal', function (e) {
+  if (!disableToday) {
+    $('.datetimepicker .datetimepicker-days .table-condensed tfoot tr:first-child th').removeClass('today');
+    // $(".datetimepicker .datetimepicker-days .table-condensed tr td.today").addClass('disabled').addClass("custom-disabled");
+  }
+});
+
+$('#modal_form_accomplish').on('hidden.bs.modal', function (e) {
+  if(!disableToday){
+    $(".datetimepicker .datetimepicker-days .table-condensed tr td.today").removeClass('disabled');
     disableToday = false;
-  });
-}
+  }
+});
 
 function unique(array){
   return array.filter(function(el, index, arr) {
