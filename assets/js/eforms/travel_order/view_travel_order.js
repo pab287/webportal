@@ -914,8 +914,18 @@ function open_accomplish(){
     _date = now + " " + time;
   }
 
-  
   endDate = moment(_date).format('YYYY/MM/DD HH:mm:ss');
+
+  $('#due_dt').datetimepicker({
+    todayHighlight: true,
+    autoclose: true,
+    pickerPosition: 'bottom-left',
+    todayBtn: true,
+    format: 'yyyy/mm/dd hh:ii:ss',
+  });
+
+  $('#due_dt').datetimepicker('setStartDate', moment(startDate).format('YYYY-MM-DD HH:mm'));
+  $('#due_dt').datetimepicker('setEndDate', moment(endDate).format('YYYY-MM-DD HH:mm'));
 
   $("#modal_form_accomplish input[name=param_id]").val(param_id);
   $("#modal_form_accomplish input[name=globalTempSelected]").val(globalTempSelected);
@@ -924,22 +934,8 @@ function open_accomplish(){
 
 }
 $('#modal_form_accomplish').on('show.bs.modal', function (e) {
-  $('#accomplishment_dt').remove();
-  $("#due_dt").prepend('<input class="form-control m-input" type="text" name="accomplishment_dt" id="accomplishment_dt"  maxlength="22" data-validation="required" readonly>');
-  
-  $('#accomplishment_dt').datetimepicker({
-    todayHighlight: true,
-    autoclose: true,
-    pickerPosition: 'bottom-left',
-    todayBtn: true,
-    format: 'yyyy/mm/dd hh:ii:ss',
-    startDate: startDate,
-    endDate: endDate,
-  });
-
   if (!disableToday) {
     $('.datetimepicker .datetimepicker-days .table-condensed tfoot tr:first-child th').removeClass('today');
-    // $(".datetimepicker .datetimepicker-days .table-condensed tr td.today").addClass('disabled').addClass("custom-disabled");
   }
 });
 
@@ -948,6 +944,8 @@ $('#modal_form_accomplish').on('hidden.bs.modal', function (e) {
     $(".datetimepicker .datetimepicker-days .table-condensed tr td.today").removeClass('disabled');
     disableToday = false;
   }
+
+  $('.datetimepicker .datetimepicker-days .table-condensed tfoot tr:first-child th').addClass('today');
 });
 
 function unique(array){
