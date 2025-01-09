@@ -217,7 +217,7 @@ class Company_model extends CI_Model{
 					}
 					$resultset["response"] = true;
 					$resultset["toastr_msg"] = "Company data has been added.";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new company with code: ".$post["code"],"insert", "success", "gcchris", "user");
+					$this->core_layout->setEventLog("User added new company with code: <strong>".$post["code"]."</strong>","insert", "success", "gcchris", "user");
 				}else{
 					$resultset["response"] = false;
 					$resultset["toastr_msg"] = "Failed saving company data!";
@@ -267,7 +267,7 @@ class Company_model extends CI_Model{
 				unset($post['update_date']); 
                 unset($post['update_by']);
 				$changes = $this->logChanges($currentCompanyData ,$post);
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated company: ".$post['description']." ".$changes,"update", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User updated company: ".$post['description']." ".$changes,"update", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed updating company data!";
@@ -477,7 +477,7 @@ class Company_model extends CI_Model{
 			}
 		}
 		foreach ($changes as $field => $change) {
-			$changesString.= " Field: $field, from: $change[old], to: $change[new]\n";
+			$changesString.= " Field: $field, from: <strong>$change[old]</strong>, to: <strong>$change[new]</strong>\n";
 		}
 		return $changesString;
 	}
