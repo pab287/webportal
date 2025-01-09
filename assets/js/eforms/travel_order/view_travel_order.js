@@ -911,7 +911,7 @@ function open_accomplish(){
     } else {
       disableToday = true;
     }
-    _date = now + " " + time;
+    _date = now + " " + '23:59';
   }
 
   endDate = moment(_date).format('YYYY/MM/DD HH:mm:ss');
