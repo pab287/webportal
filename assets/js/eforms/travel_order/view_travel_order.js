@@ -904,13 +904,14 @@ function open_accomplish(){
   if (now <= moment(_date).format('YYYY-MM-DD')) {
     time = moment(_date).format('HH:mm:ss');
 
-    if (moment(min).format('YYYY-MM-DD') <= now) {
-      disableToday = true;
-    } else if (moment(_date).format('YYYY-MM-DD') > now) {
+    if (moment(startDate).format('YYYY-MM-DD') > now) {
       disableToday = false;
+    } else if(moment(startDate).format('YYYY-MM-DD') <= now) {
+      disableToday = true;
     } else {
       disableToday = true;
     }
+    
     _date = now + " " + '23:59';
   }
 
@@ -932,21 +933,23 @@ function open_accomplish(){
   $('#modal_form_accomplish').modal('show');
   $('#modal_form_accomplish .modal-title').text('Accomplishment Report');
 
+  $('#modal_form_accomplish').on('show.bs.modal', function (e) {
+    console.log(disableToday);
+    if (!disableToday) {
+      $('.datetimepicker .datetimepicker-days .table-condensed tfoot tr:first-child th').removeClass('today');
+    }
+  });
+  
+  $('#modal_form_accomplish').on('hidden.bs.modal', function (e) {
+    if(!disableToday){
+      $(".datetimepicker .datetimepicker-days .table-condensed tr td.today").removeClass('disabled');
+      disableToday = false;
+    }
+  
+    $('.datetimepicker .datetimepicker-days .table-condensed tfoot tr:first-child th').addClass('today');
+  });
 }
-$('#modal_form_accomplish').on('show.bs.modal', function (e) {
-  if (!disableToday) {
-    $('.datetimepicker .datetimepicker-days .table-condensed tfoot tr:first-child th').removeClass('today');
-  }
-});
 
-$('#modal_form_accomplish').on('hidden.bs.modal', function (e) {
-  if(!disableToday){
-    $(".datetimepicker .datetimepicker-days .table-condensed tr td.today").removeClass('disabled');
-    disableToday = false;
-  }
-
-  $('.datetimepicker .datetimepicker-days .table-condensed tfoot tr:first-child th').addClass('today');
-});
 
 function unique(array){
   return array.filter(function(el, index, arr) {
