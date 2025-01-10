@@ -33,7 +33,7 @@
 					<div class="m-portlet__head-caption">
 						<div class="m-portlet__head-title">
               <span class="m-portlet__head-icon">
-                  <a type="button" href="<?=isset($_GET['page']) && $_GET['page'] == 'archive' ? 'archive_transmittal' : 'masrterfile'; ?>" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnNew">
+                  <a type="button" href="<?=isset($_GET['page']) && $_GET['page'] == 'archive' ? 'archive_transmittal' : 'masterfile'; ?>" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnNew">
                       <i class="la la-arrow-left"></i>
                   </a>
               </span>

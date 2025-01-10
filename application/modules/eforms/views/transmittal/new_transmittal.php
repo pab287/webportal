@@ -177,7 +177,7 @@
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                         <div class='input-group date' id="delivery_date">
                                             <input class="form-control m-input" type="text" id="delivery_dt" name="delivery_date"
-                                                   data-validation="required"/>
+                                                   data-validation="required" readonly />
                                             <span class="input-group-addon">
                                                 <i class="la la-calendar glyphicon-th"></i>
                                             </span>
