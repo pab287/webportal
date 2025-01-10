@@ -565,7 +565,7 @@ class Cash_advance_m extends CI_Model {
         return $resultset;
     }
 
-    function email_send_approval($employeeName, $referenceNumber, $amount=0, $purpose="", $recipient){
+    protected function email_send_approval($employeeName=null, $referenceNumber=null, $amount=0, $purpose="", $recipient=null){
         $resultset = array();
         $emailTo = array();
         $employeeName = mb_strtoupper($employeeName);
@@ -772,19 +772,20 @@ class Cash_advance_m extends CI_Model {
                 $rs->amt_applied =  "₱ ".number_format($rs->amt_applied, 2);
                 
                 $rs->amt_approved =  "₱ ".number_format($rs->amt_approved, 2);
-                if($rs->recommend_remarks){
+                /*** @malvin ngaa naka number format ang remarks.. sabta ko b! ***/
+                if($rs->recommend_remarks && is_numeric($rs->recommend_remarks)){
                     $rs->recommend_remarks =  "₱ ".number_format($rs->recommend_remarks, 2);
-                }else{
-                    $rs->recommend_remarks =  $rs->recommend_remarks;
                 }
-                $rs->hr_bal_remarks =  "₱ ".number_format($rs->hr_bal_remarks, 2);
-                $rs->acctg_bal_remarks =  "₱ ".number_format($rs->acctg_bal_remarks, 2);
-                if($rs->deduct_type=="percentage"){
-                    $rs->amt_to_b_deducted =  $rs->amt_to_b_deducted;
-                }else{
+                if($rs->hr_bal_remarks && is_numeric($rs->hr_bal_remarks)){
+                    $rs->hr_bal_remarks =  "₱ ".number_format($rs->hr_bal_remarks, 2);
+                }
+                if($rs->acctg_bal_remarks && is_numeric($rs->acctg_bal_remarks)){
+                    $rs->acctg_bal_remarks =  "₱ ".number_format($rs->acctg_bal_remarks, 2);
+                }
+                if($rs->deduct_type != "percentage" && is_numeric($rs->amt_to_b_deducted)){
                     $rs->amt_to_b_deducted =  "₱ ".number_format($rs->amt_to_b_deducted, 2);
                 }
-                
+                /*** @malvin ngaa naka number format ang remarks.. sabta ko b! ***/
 
                 $rs->acctg_ca_pending_formatted =  "₱ ".number_format($rs->acctg_ca_pending, 2, ".", ",");
                 $rs->acctg_ca_interest_formatted =  "₱ ".number_format($rs->acctg_ca_interest, 2, ".", ",");
@@ -1189,16 +1190,20 @@ class Cash_advance_m extends CI_Model {
             }
         }
     }
-    function setAcctgUpdate($id){
+    public function setAcctgUpdate($id){
         $post = $this->input->post();
-        $acctg_bal_remarks =  str_replace( ',', '', $post['acctg_bal_remarks2']);
-        $hr_bal_remarks =  str_replace( ',', '', $this->input->post('display_acctg_bal_remarks'));
-        $acctg_bal_status = $post['set_acctg_status'];
-        if($acctg_bal_status == "Payroll Balance Pending"){
-            $final_remarks = 0.00;
-        }else{
-            $final_remarks = $acctg_bal_remarks;
+
+        $arrKeys = array("cash_advance_pending", "cash_advance_interest", "cash_advance_balance", "sss_loan", "hdmf_loan", "outside_loan");
+        foreach ($arrKeys as $key) {
+            if(isset($post[$key]) && $post[$key]){ $post[$key] = trim(trim(str_replace( ',', '', $post[$key]), '₱')); }
         }
+
+        $acctg_bal_remarks =  isset($post['acctg_bal_remarks2']) && is_numeric($post['acctg_bal_remarks2']) ? trim(str_replace( ',', '', $post['acctg_bal_remarks2'])) : $post['acctg_bal_remarks2'];
+        $acctg_bal_status = $post['set_acctg_status'];
+        if($acctg_bal_status == "Payroll Balance Pending"){ $final_remarks = 0.00; }
+        else{ $final_remarks = $acctg_bal_remarks; }
+        $post["acctg_bal_remarks2"] = is_numeric($acctg_bal_remarks) ? '₱ ' . number_format($acctg_bal_remarks, 2, '.', ',') : $post["acctg_bal_remarks2"];
+
         $date = date('Y-m-d H:i:s');
         $data = array(
             'acctg_bal_by' => $this->getDisplayName(),
@@ -1206,14 +1211,15 @@ class Cash_advance_m extends CI_Model {
             'acctg_bal_remarks' => $final_remarks,
             'acctg_bal_remarks2' => $post["acctg_bal_remarks2"],
             'acctg_ca_interest' => $post["cash_advance_interest"],
-            'acctg_ca_pending' => trim($post["cash_advance_pending"], '₱'),
-            'acctg_ca_balance' => trim($this->input->post("cash_advance_balance"), '₱'),
-            'acctg_sss_loan' => trim($post["sss_loan"], '₱'),
-            'acctg_hdmf_loan' => trim($post['hdmf_loan'], '₱'),
-            'acctg_outside_loan' => trim($post['outside_loan'], '₱'),
-            'acctg_other_charges' => $this->input->post("other_charges"),
+            'acctg_ca_pending' => $post["cash_advance_pending"],
+            'acctg_sss_loan' => $post["sss_loan"],
+            'acctg_hdmf_loan' => $post['hdmf_loan'],
+            'acctg_outside_loan' => $post['outside_loan'],
             'status' => $acctg_bal_status,
         );
+        
+        if(isset($post["cash_advance_balance"]) && $post["cash_advance_balance"]){ $data["acctg_ca_balance"] = $post["cash_advance_balance"]; }
+        if(isset($post["other_charges"]) && $post["other_charges"]){ $data["acctg_other_charges"] = $post["other_charges"]; }
 
         if($id){
             $this->db->where('cash_advance.id', $id);
@@ -1236,18 +1242,27 @@ class Cash_advance_m extends CI_Model {
                 $this->db->from('gccmaster.tblusers');
                 $this->db->where("is_suspended=0 AND email='hrpayroll@gccph.com'");
                 $email = $this->db->get();
-                $hr_email = $email->row_array(); 
-                //$hr_email['email'];   
-                $this->email_send($emp_name, $emp_details['reference_no'], $emp_details['amt_applied'], $emp_details['purpose'], $hr_email['email']);
-                //$emp_details['purpose']
-            }else if($status == 'Awaiting Approval'){
-                //send email to sir jes
-                $this->db->select('email,username');
-                $this->db->from('gccmaster.tblusers');
-                $this->db->where("is_suspended=0 AND email='hr@gccph.com'");
-                $email = $this->db->get();
                 $hr_email = $email->row_array();
-                $this->email_send_approval($emp_name, $emp_details['reference_no'], $emp_details['amt_applied'], $emp_details['purpose'], $hr_email['email']);
+                $this->email_send($emp_name, $emp_details['reference_no'], $emp_details['amt_applied'], $emp_details['purpose'], $hr_email['email']);
+            } elseif ($status == 'Awaiting Approval'){
+                //send email to sir jes
+                $this->db->select('email');
+                $this->db->from('gccmaster.tblusers');
+                /*** $this->db->where("is_suspended=0 AND email='hr@gccph.com'"); ***/
+                $this->db->where("is_suspended", 0);
+                $this->db->group_start();
+                $this->db->where("email","hr@gccph.com");
+                $this->db->or_where("email","assthrman@gccaggregates.com");
+                $this->db->group_end();
+                $this->db->order_by("id", "DESC");
+                $this->db->limit(1);
+                $email = $this->db->get();
+                if ($email->num_rows() == 1) {
+                    $hr_email = $email->row()->email;
+                    if($hr_email){
+                        $this->email_send_approval($emp_name, $emp_details['reference_no'], $emp_details['amt_applied'], $emp_details['purpose'], $hr_email);
+                    }
+                }
             }else{
                 //send email to miss grace
                 $this->db->select('email,username');
