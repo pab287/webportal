@@ -1200,8 +1200,10 @@
             $this->db->where('employee_status', 'Active');
             
             if (isset($get['q']) && $get['q']) {
+                $this->db->group_start();
                 $this->db->like('firstname', $get['q'], 'both');
                 $this->db->or_like('lastname', $get['q'], 'both');
+                $this->db->group_end();
             }
 
             $this->db->order_by('firstname', 'ASC');
@@ -1242,10 +1244,12 @@
             $this->db->order_by('plateno', 'ASC');
             
             if (isset($get['q']) && $get['q']) {    
+                $this->db->group_start();
                 $this->db->like('plateno', $get['q'], 'both');
                 $this->db->or_like('name', $get['q'], 'both');
                 $this->db->or_like('gen_code', $get['q'], 'both');
                 $this->db->order_by('description', 'ASC');
+                $this->db->group_end();
             }
 
             $query = $this->db->get();
@@ -1276,8 +1280,10 @@
             $this->db->order_by('firstname', 'ASC');
             
             if (isset($get['q']) && $get['q']) {    
+                $this->db->group_start();
                 $this->db->like('firstname', $get['q'], 'both');
                 $this->db->or_like('lastname', $get['q'], 'both');
+                $this->db->group_end();
             }
 
             $query = $this->db->get();
