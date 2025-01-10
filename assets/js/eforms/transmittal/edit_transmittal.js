@@ -215,6 +215,7 @@ var vmTab1 = new Vue({
     vehicle = $("#select2_vehicle").select2({
       placeholder: 'SELECT AN OPTION',
       width: '100%',
+      minimumInputLength: 3,
       ajax: {
         url: baseUrl("eforms/transmittal/get_vehicle_collection"),
         global: false,
