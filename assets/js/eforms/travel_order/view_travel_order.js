@@ -48,7 +48,7 @@ $("#table-destination").on("click", "tbody input[type='checkbox']", function () 
 
 function toggleTableCheckbox(){
   const allCheckboxes = $("#table-destination tbody input[type='checkbox']").length;
-  const checkedCheckboxes = $("#table-destination tbody input[type='checkbox']:checked").length;
+  const checkedCheckboxes = $("#table-destination tbody input[type='checkbox']:not(.checked):checked").length;
   const checked = allCheckboxes <= checkedCheckboxes;
   toggleAccomplishDisable(checkedCheckboxes);
   $('#checkAllBox').prop('checked', checked);
