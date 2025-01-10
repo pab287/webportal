@@ -3232,7 +3232,7 @@
                         }
                     }
 
-                    if ( isset($post['supervisor']) && $post['supervisor'] != 0 ) {
+                    if ( isset($post['supervisor']) && $post['supervisor'] >= 0) {
                         $tempSupervisory = array('supervisory' => $post['supervisor']);
     
                         if (isset($post['tl_supervisory']) && $post['tl_supervisory']) {

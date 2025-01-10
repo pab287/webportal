@@ -623,6 +623,7 @@ if (typeof _tempContentData !== "undefined") {
 
             // $("#m--input-supervisor_id").select2({
             //     data: tempDropdownData.dropdown_supervisory,
+            //     allowClear: true,
             //     placeholder: {
             //         id: "-1",
             //         text: "Select an option"
@@ -967,13 +968,17 @@ if (typeof _tempContentData !== "undefined") {
                     currentTarget.off('select2:select');
                 }
 
+                var newObject = { 'id': 0, 'text': 'NONE' };
+                let newArr = [newObject].concat(data);
+                // added none to array
+
                 if (id == 0) {
                     var option = new Option('NONE', 0, true, true);
                     currentTarget.append(option).trigger('change');
                 }
 
                 currentTarget.select2({
-                    data: data,
+                    data: newArr,
                     placeholder: {
                         id: "-1",
                         text: "Select an option"
