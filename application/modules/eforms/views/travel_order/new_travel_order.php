@@ -1,3 +1,9 @@
+<style>
+    .travel-order-control .icon-control{
+        height: 32px !important;
+    }
+</style>
+
 <div class="m-content">
     <div class="row">
         <div class="col-lg-12">
@@ -25,7 +31,7 @@
                     <div class="row">
                         <div class="col-md-6 col-sm-12">  
                             <div class="form-group m-form__group row">
-                                <label class="col-md-2 col-sm-2 col-xs-12 col-lg-2 col-sm-2 col-xs-12 col-form-label m--font-bolder">
+                                <label class="col-md-2 col-sm-2 col-xs-12 col-lg-2 col-sm-2 col-xs-12 col-form-label m--font-bolder required">
                                     File Under
                                 </label>
                                 <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
@@ -35,7 +41,7 @@
                                 </div>
                             </div>
                             <div class="form-group m-form__group row">
-                                <label class="col-md-2 col-sm-2 col-xs-12 col-lg-2 col-sm-2 col-xs-12 col-form-label m--font-bolder">
+                                <label class="col-md-2 col-sm-2 col-xs-12 col-lg-2 col-sm-2 col-xs-12 col-form-label m--font-bolder required">
                                     Department
                                 </label>
                                 <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
@@ -45,7 +51,7 @@
                                 </div>
                             </div>
                             <div class="form-group m-form__group row">
-                                <label class="col-md-2 col-sm-2 col-xs-12 col-lg-2 col-sm-2 col-xs-12 col-form-label m--font-bolder">
+                                <label class="col-md-2 col-sm-2 col-xs-12 col-lg-2 col-sm-2 col-xs-12 col-form-label m--font-bolder required">
                                     Type
                                 </label>
                                 <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
@@ -69,7 +75,7 @@
                         </div>
                         <div class="col-md-6 col-sm-12">  
                             <div class="form-group m-form__group row">
-                                <label class="col-md-3 col-sm-3 col-xs-12 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bolder">
+                                <label class="col-md-3 col-sm-3 col-xs-12 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bolder required">
                                     Official Station
                                 </label>
                                 <div class="col-md-9 col-lg-9 col-sm-9 col-sm-12">
@@ -102,7 +108,7 @@
                             <div id="content_option">
                                 <template v-if="allow_service_vehicle === true">
                                 <div class="form-group m-form__group row" id="service_veh">
-                                    <label class="col-md-3 col-sm-3 col-xs-12 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-sm-3 col-xs-12 col-lg-3 col-sm-3 col-xs-12 col-form-label required">
                                         Service Vehicle
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-sm-12">
@@ -110,7 +116,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="service_driver">
-                                    <label class="col-md-3 col-sm-3 col-xs-12 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-sm-3 col-xs-12 col-lg-3 col-sm-3 col-xs-12 col-form-label required">
                                         Driver
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-sm-12">
@@ -121,7 +127,7 @@
                             </div>
                             <?php /*** service vehicle option for logistics and administrator role ***/ ?>
                             <div class="form-group m-form__group row m--font-bolder" id="other_remark" style="display: none;">
-                                <label class="col-md-3 col-sm-3 col-xs-12 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                                <label class="col-md-3 col-sm-3 col-xs-12 col-lg-3 col-sm-3 col-xs-12 col-form-label required">
                                     Remarks
                                 </label>
                                 <div class="col-md-9 col-lg-9 col-sm-9 col-sm-12">
@@ -283,7 +289,7 @@
                 <div class="modal-body form">
                     <input type="hidden" value="" name="id_personnel"/> 
                     <div class="form-group">
-                        <label class="control-label col-md-2 col-sm-2 col-xs-12">Employee</label>
+                        <label class="control-label col-md-2 col-sm-2 col-xs-12 required">Employee</label>
                         <div class="col-md-12">
                             <select id="select2_emp" name="employee_id" ></select> 
                         </div>
@@ -322,7 +328,7 @@
                             <div class="row">
                                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
                                     <div class="form-group">
-                                        <label class="control-label col-md-2 col-sm-2 col-xs-12 m--font-bolder">From</label>
+                                        <label class="control-label col-md-2 col-sm-2 col-xs-12 m--font-bolder required">From</label>
                                         <div class="col-md-12 travel-order-control">
                                             <div class="col-md-12 p-0 input-control">
                                             <input type="text" id="travelFrom" class="form-control" placeholder="" name="from" data-validation="required">
@@ -340,7 +346,7 @@
                                 </div>
                                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
                                     <div class="form-group">
-                                        <label class="control-label col-md-2 col-sm-2 col-xs-12 m--font-bolder">To</label>
+                                        <label class="control-label col-md-2 col-sm-2 col-xs-12 m--font-bolder required">To</label>
                                         <div class="col-md-12 travel-order-control">
                                             <div class="col-md-12 p-0 input-control">
                                                 <input type="text" id="travelTo" class="form-control" placeholder="" name="to" data-validation="required">
@@ -358,21 +364,21 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="control-label col-md-4 col-sm-4 col-xs-12 m--font-bolder">Requested By</label>
-                                <div class="col-md-12">
+                                <label class="control-label col-md-4 col-sm-4 col-xs-12 m--font-bolder required">Requested By</label>
+                                <div class="col-md-12" id="requested-by">
                                     <select id="select2_req" name="requested_by" data-validation="required" ></select> 
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="control-label col-md-2 col-sm-2 col-xs-12 m--font-bolder">Purpose</label>
+                                <label class="control-label col-md-2 col-sm-2 col-xs-12 m--font-bolder required">Purpose</label>
                                 <div class="col-md-12">
                                     <textarea name="purpose" row="2" class="form-control" data-validation="required"> </textarea> 
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
-                                    <div class="form-group">
-                                        <label class="control-label col-md-3 col-sm-3 col-xs-12 m--font-bolder">Date From</label>
+                                    <div class="form-group" id="to-date-from">
+                                        <label class="control-label col-md-3 col-sm-3 col-xs-12 m--font-bolder required">Date From</label>
                                         <div class="col-12 input-group date" id="date_from">
                                             <input readonly class="form-control m-input" type="text" name="date_from" id="issue_dt" data-validation="required" maxlength="22" />
                                             <span class="input-group-addon">
@@ -383,7 +389,7 @@
                                 </div>
                                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
                                     <div class="form-group">
-                                        <label class="control-label col-md-3 col-sm-3 col-xs-12 m--font-bolder">Date To</label>
+                                        <label class="control-label col-md-3 col-sm-3 col-xs-12 m--font-bolder required">Date To</label>
                                         <div class="col-12 input-group date" id="date_to">
                                             <input readonly class="form-control m-input" type="text" name="date_to" id="issue_dt" data-validation="required" maxlength="22"/>
                                             <span class="input-group-addon">
@@ -400,7 +406,7 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="control-label col-md-2 col-sm-2 col-xs-12 m--font-bolder">Remarks</label>
+                                <label class="control-label col-md-2 col-sm-2 col-xs-12 m--font-bolder required">Remarks</label>
                                 <div class="col-md-12">
                                     <textarea name="remarks"  class="form-control" data-validation="required"> </textarea> 
                                 </div>

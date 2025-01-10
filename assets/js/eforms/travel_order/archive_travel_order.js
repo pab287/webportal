@@ -25,8 +25,8 @@ var tblTravelOrder = $("#table-travel_order").DataTable({
         { data: "company" },
         { data: null },
         { data: null, width: "15%", },
-        { data: null, width: "25%", },
-        { data: "created_dt", width: "10%", orderable: true, render: function (data, type, row, meta) { return dateDisplay(row.from_to)}},
+        { data: null, width: "25%" },
+        { data: "created_dt", width: "10%", orderable: false, render: function (data, type, row, meta) { return dateDisplay(row.from_to)}},
         { data: null, width: "8%", className: "text-center" },
     ],
     columnDefs: [{
@@ -219,7 +219,7 @@ function formatCalendarDate(data) {
 function itemDatatableActions($id) {
     if ($id) {
         var _actionButton = "";
-        _actionButton += " <a class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='" + baseUrl('eforms/travel_order/view_travel_order?id=') + $id + "' target='__blank'><i class='la la-pencil-square'></i></a>";
+        _actionButton += " <a class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='" + baseUrl('eforms/travel_order/view_travel_order?id=') + $id + "&page=archive' target='__blank'><i class='la la-pencil-square'></i></a>";
         return _actionButton;
     } else { return false; }
 }

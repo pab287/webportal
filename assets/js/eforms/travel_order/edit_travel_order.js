@@ -153,8 +153,12 @@ $.ajax({
     if(data.data.vehicle_id > 0){ $('#select2_vehicle').append(newOption).trigger('change'); }
     var newOption = new Option(data.company_desc, data.data.company, true, true);
     $('#select2_file').append(newOption).trigger('change');
+
     newOption = new Option(data.department_desc, data.data.department, true, true);
     $('#select2_dep').append(newOption).trigger('change');
+
+    // vmTab1.select2Department('#select2_dep', true, { text : data.department_desc, id: data.data.department }, data.data.company );
+    
     newOption = new Option(data.data.driver, data.data.driver_id, true, true);
     if(data.data.driver_id > 0){ $('#driver').append(newOption).trigger('change'); }
     vmTab1.vm_tab1 = Object.assign({}, data.data);
@@ -166,7 +170,50 @@ $.ajax({
 
 var vmTab1 = new Vue({
   el: "#form_travel_order",
-  data: { vm_tab1: tempData }
+  data: { vm_tab1: tempData },
+  mounted: function () {
+    // this.select2Department('#select2_dep', true);
+  }, 
+  methods: {
+    select2Department(targetElement, destroy = false, formData = {}, id = 0) { 
+      const currentTarget = $(targetElement);
+      const select2Init = currentTarget.data('select2');
+
+      if (destroy) {
+        currentTarget.empty();
+        if (typeof select2Init !== 'undefined') { select2Init.destroy(); }
+        currentTarget.off('select2:select');
+      }
+
+      if (typeof formData !== 'undefined' && formData) {
+        var newOption = new Option(formData.text, formData.id, true, true);
+        $('#select2_dep').append(newOption).trigger('change');
+      }
+
+      var isDisabled = id == 0 ? true : false;
+      currentTarget.prop('disabled', isDisabled);
+
+      currentTarget.select2({
+        placeholder: 'SELECT AN OPTION',
+        width: '100%',
+        ajax: {
+          url: baseUrl("eforms/Travel_order/get_department_collection"),
+          dataType: "json",
+          global: false,
+          delay: 500,
+          data: function ({ term }) {
+            return {
+              q: term,
+              company: id
+            }  
+          },
+          processResults: function (data) {
+            return data;
+          }
+        }
+      });
+    }
+  }
 });
 
 // var driver = $("#driver").select2({
@@ -195,7 +242,18 @@ var file_under = $("#select2_file").select2({
       return data;
     }
   }
+}).on("select2:select", function (e) {
+  var data = $(e.target).val();
+  // vmTab1.select2Department('#select2_dep', true, {}, data);
 });
+
+// .on("change", function (e) {
+//   var self = $(e.target);
+//   self.validate();
+//   var data = $(e.target).val();
+
+//   vmTab1.select2Department('#select2_dep', true, data);
+// })
 
 var department = $("#select2_dep").select2({
   placeholder: 'SELECT AN OPTION',
@@ -245,7 +303,7 @@ var emp = $("#select2_emp").select2({
 var req = $("#select2_req").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
-  dropdownParent: $("#modal_form_destination"),
+  dropdownParent: $("#requested-by"),
   ajax: {
     url: baseUrl("eforms/Travel_order/get_request_collection"),
     dataType: "json",
@@ -279,6 +337,9 @@ var dt_from = $('#date_from').datetimepicker({
   todayBtn: true,
   format: 'yyyy/mm/dd hh:ii',
   startDate: getCurrentDate(),
+}).on("changeDate", function (e) {
+  var self = $(e.target);
+  self.validate();
 });
 
 var dt_to = $('#date_to').datetimepicker({
@@ -288,6 +349,9 @@ var dt_to = $('#date_to').datetimepicker({
   todayBtn: true,
   format: 'yyyy/mm/dd hh:ii',
   startDate: getCurrentDate(),
+}).on("changeDate", function (e) {
+  var self = $(e.target);
+  self.validate();
 });
 
 var search_val = "";
@@ -483,7 +547,7 @@ function add_destination() {
   save_method = 'add';
   $('#form_destination')[0].reset(); // reset form on modals
   $('#modal_form_destination').modal('show'); // show bootstrap modal
-  $('.modal-title').text('Add New Destination'); // Set Title to Bootstrap modal title
+  $('#modal_form_destination .modal-title').text('Add New Destination'); // Set Title to Bootstrap modal title
   var emptyOpt = new Option("", "", true, true);
   $('#select2_req').append(emptyOpt).trigger('change');
   initMapTemp();
@@ -511,7 +575,7 @@ function edit_destination(id) {
       $('[name="formTravelFrom"]').val(data.coords_from);
       $('[name="formTravelTo"]').val(data.coords_to);
       $('#modal_form_destination').modal('show'); // show bootstrap modal
-      $('.modal-title').text('Edit Destination'); // Set Title to Bootstrap modal title
+      $('#modal_form_destination .modal-title').text('Edit Destination'); // Set Title to Bootstrap modal title
     },
     error: function (jqXHR, textStatus, errorThrown) {
       alert('Error get data from ajax');
@@ -594,9 +658,38 @@ function save_destination() {
 }
 
 $.validate({
-    form: '#form_destination',
-    lang: 'en',
-    onSuccess: function (form) {
+  form: '#form_destination',
+  lang: 'en',
+  onSuccess: function (form) {
+    var isValidDate = false;
+    var message = "";
+    
+    var date_from = $("input[name='date_from']").val();
+    var date_to = $("input[name='date_to']").val();
+
+    date_from = new Date(date_from);
+    date_to = new Date(date_to);
+
+    date_from = moment(date_from);
+    date_to = moment(date_to);
+
+    var duration = moment.duration(date_to.diff(date_from));
+		var minutes = duration.asMinutes();
+
+    if (minutes < -1) {
+      isValidDate = false;
+      message = 'Invalid Date! `Date To` cannot be earlier than `Date From`.';
+    } else if (minutes == 0) {
+      isValidDate = false;
+      message = 'Invalid Date! `Date From` and `Date To` cannot be the same.';
+    } else if (minutes <= 30) {
+      isValidDate = false;
+      message = 'Invalid Date! `Date From` and `Date To` cannot be less than 30 minutes.';
+    } else {
+      isValidDate = true;
+    }
+
+    if (isValidDate) {
       $.ajax({
         url: url,
         type: "POST",
@@ -618,9 +711,12 @@ $.validate({
           }
         }
       });
-      return false;
-    },
-  });
+    } else {
+      toastr.warning(message, "Error!", 5000);
+    }
+    return false;
+  },
+});
 
 // $(document).ready(function(){
 //   $.ajax({
@@ -983,12 +1079,12 @@ function update_travel_order(recommend=false) {
   displayRequiredPersonel();
   displayRequiredDestinations();
 
-  file_under.on("change", function (e) {
+  $("#select2_file").on("change", function (e) {
     var self = $(e.target);
     self.validate();
   });  
  
-  department.on("change", function (e) {
+  $("#select2_dep").on("change", function (e) {
     var self = $(e.target);
     self.validate();
   });  
@@ -1380,21 +1476,22 @@ $("#travelOrderFromIcon .icon").on("click", function(){
     $("#travelOrderOptionFrom").hide();
   }else{
     $("#travelOrderOptionFrom").show();
+    
+    $.ajax({
+      url: baseUrl("eforms/travel_order/sites_options/"),
+      type: "GET",
+      dataType: "JSON",
+      success: function(resp){
+        if(resp.length > 0){
+          vmTab3.checker = true;
+        }else{
+          vmTab3.checker = false;
+        }
+        vmTab3.vm_tab3 = Object.assign({}, resp);
+      }
+    });
   }
 
-  $.ajax({
-    url: baseUrl("eforms/travel_order/sites_options/"),
-    type: "GET",
-    dataType: "JSON",
-    success: function(resp){
-      if(resp.length > 0){
-        vmTab3.checker = true;
-      }else{
-        vmTab3.checker = false;
-      }
-      vmTab3.vm_tab3 = Object.assign({}, resp);
-    }
-  });
 });
 
 var vmTab3 = new Vue({
@@ -1481,6 +1578,8 @@ var vmTab3 = new Vue({
               }
             }
           } 
+
+          $("#travelFrom").validate();
         }
       });
     }
@@ -1492,21 +1591,22 @@ $("#travelOrderToIcon .icon").on("click", function(){
     $("#travelOrderOptionTo").hide();
   }else{
     $("#travelOrderOptionTo").show();
+    
+    $.ajax({
+      url: baseUrl("eforms/travel_order/sites_options/"),
+      type: "GET",
+      dataType: "JSON",
+      success: function(resp){
+        if(resp.length > 0){
+          vmTab2.checker = true;
+        }else{
+          vmTab2.checker = false;
+        }
+        vmTab2.vm_tab2 = Object.assign({}, resp);
+      }
+    });
   }
 
-  $.ajax({
-    url: baseUrl("eforms/travel_order/sites_options/"),
-    type: "GET",
-    dataType: "JSON",
-    success: function(resp){
-      if(resp.length > 0){
-        vmTab2.checker = true;
-      }else{
-        vmTab2.checker = false;
-      }
-      vmTab2.vm_tab2 = Object.assign({}, resp);
-    }
-  });
 });
 
 var vmTab2 = new Vue({
@@ -1566,33 +1666,35 @@ var vmTab2 = new Vue({
             const from_title = markersName.fromTitle;
             const to_marker = pointer.to;
             const to_title = markersName.toTitle;
-          if(Object.keys(pointer).length == 2){
-              if(from_marker != null && from_title != null){
-                if(pointer_name.from != null){
-                  pointer_name.from.setMap(null);
+            if(Object.keys(pointer).length == 2){
+                if(from_marker != null && from_title != null){
+                  if(pointer_name.from != null){
+                    pointer_name.from.setMap(null);
+                  }
+                  bounds.extend(from_marker.getPosition());
+                  map.fitBounds(bounds);
+                  var informationFrom = new google.maps.InfoWindow({
+                      content: '<h6>From</h6><br><p>'+String(from_title)+'</p>'
+                  });
+                  informationFrom.open(map, from_marker);
+                  Object.assign(pointer_name,{"from": informationFrom});
                 }
-                bounds.extend(from_marker.getPosition());
-                map.fitBounds(bounds);
-                var informationFrom = new google.maps.InfoWindow({
-                    content: '<h6>From</h6><br><p>'+String(from_title)+'</p>'
-                });
-                informationFrom.open(map, from_marker);
-                Object.assign(pointer_name,{"from": informationFrom});
-              }
-              if(to_marker != null && to_title != null){
-                if(pointer_name.to != null){
-                  pointer_name.to.setMap(null);
+                if(to_marker != null && to_title != null){
+                  if(pointer_name.to != null){
+                    pointer_name.to.setMap(null);
+                  }
+                  bounds.extend(to_marker.getPosition());
+                  map.fitBounds(bounds);
+                  var informationTo = new google.maps.InfoWindow({
+                      content: '<h6>To</h6><br><p>'+String(to_title)+'</p>'
+                  });
+                  informationTo.open(map, to_marker);
+                  Object.assign(pointer_name,{"to": informationTo});
                 }
-                bounds.extend(to_marker.getPosition());
-                map.fitBounds(bounds);
-                var informationTo = new google.maps.InfoWindow({
-                    content: '<h6>To</h6><br><p>'+String(to_title)+'</p>'
-                });
-                informationTo.open(map, to_marker);
-                Object.assign(pointer_name,{"to": informationTo});
               }
-            }
-          } 
+            } 
+
+            $("#travelTo").validate();
           }
       });
     }

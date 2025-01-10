@@ -44,7 +44,7 @@
                     <div class="m-portlet__head-caption">
                         <div class="m-portlet__head-title">
                             <span class="m-portlet__head-icon">
-                                <a type="button" href="masterfile" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnBack">
+                                <a type="button" href="<?=isset($_GET['page']) && $_GET['page'] == 'archive' ? 'archive_travel_order' : 'masterfile' ?>" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnBack">
                                     <i class="la la-arrow-left"></i>
                                 </a>
                             </span>
@@ -101,6 +101,20 @@
                                         <b v-text="vm_tab1.last_edited_by"></b>
                                     </div>
                                 </div>
+                                <div class="form-group m-form__group row" id="recommend_by">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
+                                    Recommended By
+                                    </label>
+                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                                        <b v-text="vm_tab1.approved_recommend_by"></b>
+                                    </div>   
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
+                                       
+                                    </label>
+                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="remark">
+                                        Remarks: <b v-text="vm_tab1.approved_recommend_remarks"></b>
+                                    </div>
+                                </div>
                                 <div class="form-group m-form__group row" id="approve">
                                     <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
                                     Approved By
@@ -155,20 +169,6 @@
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="remark">
                                         Remarks: <b v-text="vm_tab1.hr_noted_remarks"></b>
-                                    </div>
-                                </div>
-                                <div class="form-group m-form__group row" id="recommend_by">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                    Recommended By
-                                    </label>
-                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                        <b v-text="vm_tab1.approved_recommend_by"></b>
-                                    </div>   
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                       
-                                    </label>
-                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="remark">
-                                        Remarks: <b v-text="vm_tab1.approved_recommend_remarks"></b>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="cancel_remark"></div>
@@ -415,18 +415,21 @@
                 <div class="modal-body form">
                     <input type="hidden" value="" name="id"/> 
                     <div id="remarks" style="margin-bottom: 20px;">
-                        <label class="control-label col-md-4 col-sm-4 col-xs-12" style="font-weight: bold; color: #7e7e7e;">Unaccomplished Remarks</label>
+                        <label class="control-label col-md-12 col-sm-12 col-xs-12 required" style="font-weight: bold; color: #7e7e7e;">Unaccomplished Remarks</label>
                         <div class="col-md-12">
                             <textarea name="unacomplish_remarks" rows="5" class="form-control" data-validation="required"> </textarea> 
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="control-label col-md-8 col-sm-8 col-xs-12" style="font-weight: bold; color: #7e7e7e;">Date Return</label>
+                        <label class="control-label col-md-8 col-sm-8 col-xs-12 required" style="font-weight: bold; color: #7e7e7e;">Date Return</label>
                         <div class="col-12 input-group date" id="due_dt">
                             <input class="form-control m-input" type="text" name="accomplishment_dt" id="accomplishment_dt" maxlength="22" data-validation="required" readonly />
                             <span class="input-group-addon">
                                     <i class="la la-calendar glyphicon-th"></i>
                             </span>
+                        </div>
+                        <div class="col-12 mt-1">
+                            <small class="m--font-danger"><i style="font-weight: bold;">Note:</i> Travel Orders cannot be accomplished if not completed within 15 days of the specified date and time.</small>
                         </div>
                     </div>
                     <div class="m_datatable  m-datatable--default  m-datatable--scroll col-12 table-responsive-sm">

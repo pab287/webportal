@@ -17,7 +17,7 @@ $("#departmentSelect").select2({
     width: '100%',
     allowClear: true,
     ajax: {
-        url: baseUrl("eforms/travel_order/get_department_collection"),
+        url: baseUrl("eforms/travel_order/get_departments"),
         dataType: "JSON",
         delay: 250,
         processResults: function (data) {
