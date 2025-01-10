@@ -22,7 +22,7 @@
 				</div>
 				<div class="m-portlet__body">
           <form action="#" id="form_transmittal" class="form-horizontal">
-          <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 					  <div class="row">
               <div class="col-md-5 col-sm-12">
                 <div class="form-group m-form__group row">
@@ -250,7 +250,8 @@
             <div class="row">
               <div class="col-md-12">
                 <div class="modal-footer">
-                  <button type="submit" id="btnSaveTransmittal" onclick="update_transmittal()" class="btn btn-brand"><i class="la la-floppy-o"></i> Submit</button>
+                  <!-- <button type="button" id="btnSaveTransmittal" onclick="update_transmittal()" class="btn btn-brand btnEdit"><i class="la la-floppy-o"></i> Submit</button> -->
+                  <button type="submit" id="btnSaveTransmittal" class="btn btn-brand btnEdit"><i class="la la-floppy-o"></i> Submit</button>
                   <!-- <a href="<?php //echo site_url("eforms/transmittal/masterfile");?>" >
                     <button type="button" style="color: #FFFFFF;" class="btn m-btn--custom btn-metal m-btn text-white btnNew" >Cancel</button>
                   </a> -->

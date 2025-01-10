@@ -132,6 +132,9 @@ var vmTab1 = new Vue({
           return data;
         }
       }
+    }).on('select2:select', function (e) {
+      var self = $(e.target);
+      self.validate();
     });
 
     var data = [
@@ -167,7 +170,10 @@ var vmTab1 = new Vue({
       placeholder: 'Select. .',
       width: '100%',
       data: data2
-    });
+    }).on('select2:select', function (e) {
+      var self = $(e.target);
+      self.validate();
+    });;
 
     department = $("#select2_dep").select2({
       placeholder: 'SELECT AN OPTION',
@@ -180,7 +186,10 @@ var vmTab1 = new Vue({
           return data;
         }
       }
-    })
+    }).on('select2:select', function (e) {
+      var self = $(e.target);
+      self.validate();
+    });
 
     // this.select2Department('#select2_dep', true);
 
@@ -196,6 +205,9 @@ var vmTab1 = new Vue({
           return data;
         }
       }
+    }).on('select2:select', function (e) {
+      var self = $(e.target);
+      self.validate();
     });
 
     deliver = $("#select2_deliver").select2({
@@ -210,6 +222,9 @@ var vmTab1 = new Vue({
           return data;
         }
       }
+    }).on('select2:select', function (e) {
+      var self = $(e.target);
+      self.validate();
     });
 
     vehicle = $("#select2_vehicle").select2({
@@ -224,6 +239,9 @@ var vmTab1 = new Vue({
           return data;
         }
       }
+    }).on('select2:select', function (e) {
+      var self = $(e.target);
+      self.validate();
     });
 
     setTimeout(function () {
@@ -449,73 +467,113 @@ function view_back() {
   window.location.replace(baseUrl("eforms/transmittal/view_transmittal?id=") + param_id);
 }
 
-function update_transmittal() {
-  var url;
-  url = baseUrl("eforms/transmittal/update_transmittal/") + param_id;
-  if (tblContent.data().length == 0) {
-    $('#table_v').empty();
-    $('#table_v').append('<p><font color="#FF0000">Required. Add atleast 1 Content</font></p>');
-  }
+// function update_transmittal() {
+//   var url;
+//   url = baseUrl("eforms/transmittal/update_transmittal/") + param_id;
+//   if (tblContent.data().length == 0) {
+//     $('#table_v').empty();
+//     $('#table_v').append('<p><font color="#FF0000">Required. Add atleast 1 Content</font></p>');
+//   }
 
-  file_under.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
+//   file_under.on("change", function (e) {
+//     var self = $(e.target);
+//     self.validate();
+//   });
 
-  department.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
+//   department.on("change", function (e) {
+//     var self = $(e.target);
+//     self.validate();
+//   });
 
-  requested_by.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
+//   requested_by.on("change", function (e) {
+//     var self = $(e.target);
+//     self.validate();
+//   });
 
-  $("#select2_deliver").on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
+//   $("#select2_deliver").on("change", function (e) {
+//     var self = $(e.target);
+//     self.validate();
+//   });
 
-  vehicle.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
+//   $("#select2_vehicle").on("change", function (e) {
+//     var self = $(e.target);
+//     self.validate();
+//   });
 
 
-  $("#delivery_dt").on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
+//   $("#delivery_dt").on("change", function (e) {
+//     var self = $(e.target);
+//     self.validate();
+//   });
 
-  $.validate({
-    form: '#form_transmittal',
-    lang: 'en',
-    onSuccess: function (form) {
-      if (tblContent.data().length !== 0) {
-        $('#table_v').empty();
-        var disabled = $('#form_transmittal').find('textarea:disabled, input:disabled, select:disabled').removeAttr('disabled');
-        $.ajax({
-          url: url,
-          type: "POST",
-          data: $('#form_transmittal').serialize(),
-          dataType: "JSON",
-          success: function (data) {
-            if (data.status) {
-              disabled.attr('disabled', 'disabled');
-              toastr.success(data.toastr_msg, "Updated successfully!", 5000);
-              window.location.replace(baseUrl("eforms/transmittal/view_transmittal?id=") + param_id);
-            } else {
-              alert('Error get data from ajax');
-            }
+//   $.validate({
+//     form: '#form_transmittal',
+//     lang: 'en',
+//     onSuccess: function (form) {
+//       var url;
+//       url = baseUrl("eforms/transmittal/update_transmittal/") + param_id;
+//       if (tblContent.data().length == 0) {
+//         $('#table_v').empty();
+//         $('#table_v').append('<p><font color="#FF0000">Required. Add atleast 1 Content</font></p>');
+//       }
+
+//       if (tblContent.data().length !== 0) {
+//         $('#table_v').empty();
+//         var disabled = $('#form_transmittal').find('textarea:disabled, input:disabled, select:disabled').removeAttr('disabled');
+//         $.ajax({
+//           url: url,
+//           type: "POST",
+//           data: $('#form_transmittal').serialize(),
+//           dataType: "JSON",
+//           success: function (data) {
+//             if (data.status) {
+//               disabled.attr('disabled', 'disabled');
+//               toastr.success(data.toastr_msg, "Updated successfully!", 5000);
+//               window.location.replace(baseUrl("eforms/transmittal/view_transmittal?id=") + param_id);
+//             } else {
+//               alert('Error get data from ajax');
+//             }
+//           }
+//         });
+//       }
+//       return false;
+//     },
+//   });
+// }
+
+$.validate({
+  form: '#form_transmittal',
+  lang: 'en',
+  onSuccess: function (form) {
+    var url;
+    url = baseUrl("eforms/transmittal/update_transmittal/") + param_id;
+    if (tblContent.data().length == 0) {
+      $('#table_v').empty();
+      $('#table_v').append('<p><font color="#FF0000">Required. Add atleast 1 Content</font></p>');
+    }
+
+    if (tblContent.data().length !== 0) {
+      $('#table_v').empty();
+      var disabled = $('#form_transmittal').find('textarea:disabled, input:disabled, select:disabled').removeAttr('disabled');
+      $.ajax({
+        url: url,
+        type: "POST",
+        data: $('#form_transmittal').serialize(),
+        dataType: "JSON",
+        success: function (data) {
+          if (data.status) {
+            disabled.attr('disabled', 'disabled');
+            toastr.success(data.toastr_msg, "Updated successfully!", 5000);
+            window.location.replace(baseUrl("eforms/transmittal/view_transmittal?id=") + param_id);
+          } else {
+            alert('Error get data from ajax');
           }
-        });
-      }
-      return false;
-    },
-  });
-
-}
+        }
+      });
+    }
+    return false;
+  },
+});
 
 function delete_content() {
   $temp = $('[name="delete_id"]').val();
