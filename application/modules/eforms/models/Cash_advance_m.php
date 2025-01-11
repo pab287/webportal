@@ -3512,8 +3512,8 @@ class Cash_advance_m extends CI_Model {
         private function getCashAdvanceReportDataCount($search,$dateRange){
             $filterFields = array("ca.id");
             $this->db->where('status', 'Approved');
-            $this->db->from($this->cashAdvanceTable. ' as CA');
-            $this->db->join($this->employeeTable. ' as E', 'CA.employee = E.id', 'left');
+            $this->db->from($this->cashAdvanceTable. ' as ca');
+            $this->db->join($this->employeeTable. ' as e', 'ca.employee = E.id', 'left');
             if ($dateRange) {
                 list($startDate, $endDate) = explode('|', $dateRange);
                 $this->db->where("DATE(ca.approved_dt) BETWEEN '$startDate' AND '$endDate'");
