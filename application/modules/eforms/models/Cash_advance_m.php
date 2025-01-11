@@ -3513,7 +3513,7 @@ class Cash_advance_m extends CI_Model {
             $filterFields = array("ca.id");
             $this->db->where('status', 'Approved');
             $this->db->from($this->cashAdvanceTable. ' as ca');
-            $this->db->join($this->employeeTable. ' as e', 'ca.employee = E.id', 'left');
+            $this->db->join($this->employeeTable. ' as e', 'ca.employee = e.id', 'left');
             if ($dateRange) {
                 list($startDate, $endDate) = explode('|', $dateRange);
                 $this->db->where("DATE(ca.approved_dt) BETWEEN '$startDate' AND '$endDate'");
