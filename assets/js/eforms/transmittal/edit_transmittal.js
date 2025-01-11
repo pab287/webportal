@@ -93,15 +93,15 @@ $.ajax({
       document.getElementById('row_courier').style.removeProperty('display');
     }
     if (data.data.priority == "Normal") {
-      var priority = new Option('Normal', 'Normal', true, true);
+      // var priority = new Option('Normal', 'Normal', true, true);
 
-      $('#priority').append(priority).trigger('change');
-      // $('[name="priority"]').val('Normal').trigger("change");
+      // $('#priority').append(priority).trigger('change');
+      $('[name="priority"]').val('Normal').trigger("change");
     }
     if (data.data.priority == "Important") {
-      var priority = new Option('Important', 'Important', true, true);
-      $('#priority').append(priority).trigger('change');
-      // $('[name="priority"]').val('Important').trigger("change");
+      // var priority = new Option('Important', 'Important', true, true);
+      // $('#priority').append(priority).trigger('change');
+      $('[name="priority"]').val('Important').trigger("change");
     }
 
     vmTab1.vm_tab1 = Object.assign({}, data.data);
