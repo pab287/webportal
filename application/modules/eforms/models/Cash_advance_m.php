@@ -5,6 +5,9 @@ class Cash_advance_m extends CI_Model {
     protected $eformsTable = "gcceforms";
     private $current_action =  array();
     private $user_data = array();
+    private $cashAdvanceTable = "gcceforms.cash_advance";
+    private $employeeTable = "gccmaster.tblemployees";
+    private $chargesTable = "gcceforms.ca_charges";
     public function __construct()
 	{
         parent::__construct();
@@ -3438,6 +3441,112 @@ class Cash_advance_m extends CI_Model {
     
             }
             return $resultset;
+        }
+
+        public function getCashAdvanceReport(){
+            $rowCount = 0;
+            $rowData = array();
+            $resultset = array();
+            $post = $this->input->post();
+            $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+            $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
+            $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+            $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+            $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
+            $dateRange = (isset($post["dateRange"]) && $post["dateRange"]) ? $post["dateRange"] : null;
+            if($dateRange == null){
+                $resultset["recordsTotal"] = 0;
+                $resultset["recordsFiltered"] =  0;
+                $resultset["data"] = [];
+                return $resultset;
+            }
+            $rowData = $this->getCashAdvanceReportData($search, $limit, $offset, $sortBy, $sortOrder,$dateRange);
+            $total = $this->getCashAdvanceReportDataCount($search,$dateRange);
+            $resultset["recordsTotal"] = $total;
+            $resultset["recordsFiltered"] =  $total;
+            $resultset["data"] = isset($rowData) && $rowData ? $rowData: array();
+            return $resultset;
+        }
+
+        private function getCashAdvanceReportData($search, $limit, $offset, $sortBy, $sortOrder,$dateRange){
+            $filterFields = array("ca.id");
+            $this->db->select("ca.id,ca.company, ca.purpose, ca.department, ca.position, ca.approved_by, ca.approved_dt, ca.acctg_sss_loan as sss_loan, ca.acctg_hdmf_loan as hdmf_loan, created_dt as date_created, ca.amt_approved, ca.acctg_outside_loan as med_loan,
+                CASE 
+                    WHEN LENGTH(e.middlename) > 1 THEN CONCAT(e.firstname, ' ', SUBSTRING(e.middlename, 1, 1), '. ', e.lastname)
+                    ELSE CONCAT(e.firstname, ' ', e.middlename, ' ', e.lastname)
+                END AS name,
+                e.firstname as firstname,
+                e.lastname as lastname,
+                SUM(c.amount) AS total_charges,
+            ");
+
+            $this->db->from($this->cashAdvanceTable. ' as ca');
+            $this->db->join($this->employeeTable. ' as e', 'ca.employee = e.id', 'left');
+            $this->db->join($this->chargesTable. ' as c', 'ca.id = c.ca_id', 'left');
+            $this->db->where('status', 'Approved');
+            if ($dateRange) {
+                list($startDate, $endDate) = explode('|', $dateRange);
+                $this->db->where("DATE(ca.approved_dt) BETWEEN '$startDate' AND '$endDate'");
+            }
+            $this->db->group_by('ca.id');
+            if(isset($search)){
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+            // if ($limit != -1) {
+            //     $this->db->limit($limit, $offset);
+            // }
+            $i = $sortOrder[0]['column'];
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            $query = $this->db->get();
+            return $query->result_array();
+        }
+
+        private function getCashAdvanceReportDataCount($search,$dateRange){
+            $filterFields = array("ca.id");
+            $this->db->where('status', 'Approved');
+            $this->db->from($this->cashAdvanceTable. ' as CA');
+            $this->db->join($this->employeeTable. ' as E', 'CA.employee = E.id', 'left');
+            if ($dateRange) {
+                list($startDate, $endDate) = explode('|', $dateRange);
+                $this->db->where("DATE(ca.approved_dt) BETWEEN '$startDate' AND '$endDate'");
+            }
+            if(isset($search)){
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+            $query = $this->db->get();
+            return $query->num_rows();
+        }
+
+        public function exportReport($type){
+            $post = $this->input->post();
+            $filter="";
+            $dateRange = (isset($post["dateRange"]) && $post["dateRange"]) ? $post["dateRange"] : null;
+            if ($dateRange) {
+                list($startDate, $endDate) = explode('|', $dateRange);
+                $startDate = trim($startDate);
+                $endDate = trim($endDate);
+                $startTimestamp = strtotime($startDate);
+                $endTimestamp = strtotime($endDate);
+                $filter .= " with date range from: <strong>".date('M d, Y', $startTimestamp)."</strong> to <strong>".date('M d, Y', $endTimestamp)."</strong>";
+            }
+           
+            return $this->core_layout->setEventLog("Cash Advance Report exported using <strong>$type</strong>.".$filter." total result(s): ".$post['total'], "generate", "success", "gcceforms", "user");
         }
 
 }

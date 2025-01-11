@@ -12,6 +12,9 @@ class Cash_advance extends MY_Controller {
         $this->core_layout->setPrivilegeName("eforms_cash_advance");
         $this->user_data = $this->session->userdata("logged_in");
         $this->current_action = $this->core_layout->getCurrentActions();
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
+        date_default_timezone_set('Asia/Manila');
     }
     
     public function index(){
@@ -61,6 +64,25 @@ class Cash_advance extends MY_Controller {
 
         $this->load->view('core/templates/header');
         $this->load->view('eforms/cash_advance/archive_cash_advance');
+        $this->load->view('core/templates/footer');
+    }
+
+    public function reports(){
+        $this->core_layout->setPageTitle("Cash Advance - Reports");
+        $this->core_layout->addJs("js/dataTables.buttons.min.js", true);
+        $this->core_layout->addJs("js/buttons.flash.min.js", true);
+        $this->core_layout->addJs("js/jszip.min.js", true);
+        $this->core_layout->addJs("js/pdfmake.min.js", true);
+        $this->core_layout->addJs("js/vfs_fonts.js", true);
+        $this->core_layout->addJs("js/buttons.html5.min.js", true);
+        $this->core_layout->addJs("js/buttons.print.min.js", true);
+        $this->core_layout->addCss("css/buttons.dataTables.min.css", true);
+
+        $this->core_layout->addJs("js/eforms/cash_advance/reports_cash_advance.js", true);
+        $this->core_layout->setPrivilegeName("ca_reports");
+
+        $this->load->view('core/templates/header');
+        $this->load->view('eforms/cash_advance/reports_cash_advance');
         $this->load->view('core/templates/footer');
     }
 
@@ -490,6 +512,16 @@ class Cash_advance extends MY_Controller {
         $this->output
         ->set_content_type('json')
         ->set_output(json_encode($data));
+    }
+
+    public function get_cash_advance_reports(){
+        $data = $this->cash_advance->getCashAdvanceReport();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function export_report($type){
+        $data = $this->cash_advance->exportReport($type);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
 }
