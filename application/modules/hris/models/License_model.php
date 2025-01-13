@@ -134,11 +134,11 @@
                     $resultset['response'] = true;
                     $resultset['toastr_msg'] = 'Saved!';
 
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " added new license: ".$post['description'],"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User added new license: <strong>".$post['description']."</strong>","insert", "success", "gcchris", "user");
                 }else{
                     $resultset['response'] = true;
                     $resultset['toastr_msg'] = 'Failed to save license!';
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting new license: ".$post['description'],"insert", "error", "gcchris", "system");
+                    $this->core_layout->setEventLog("User failed inserting new license: <strong>".$post['description']."</strong>","insert", "error", "gcchris", "system");
                 }
             }
 
@@ -164,11 +164,11 @@
                         
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "License has been removed.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has archived license: ".$currentLicenseData->description,"archive", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User has archived license: <strong>".$currentLicenseData->description."</strong>","archive", "success", "gcchris", "user");
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to remove license!";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed archiving license: ".$currentLicenseData->description,"archive", "error", "gcchris", "system");
+                    $this->core_layout->setEventLog("User has failed archiving license: <strong>".$currentLicenseData->description."</strong>","archive", "error", "gcchris", "system");
                 }
             }else{
                 $resultset["response"] = false;
@@ -198,11 +198,11 @@
                 unset($post['update_date']); 
                 unset($post['update_by']);
                 $changes = $this->logChanges($currentLicenseData ,$post);
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " update license: ".$post['description']." ".$changes,"update", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User update license: <strong>".$post['description']."</strong> ".$changes,"update", "success", "gcchris", "user");
             }else{
                 $resultset['response'] = true;
                 $resultset['toastr_msg'] = 'Failed to save license!';
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed to update license: ".$post['description'],"update", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("User failed to update license: <strong>".$post['description']."</strong>","update", "error", "gcchris", "user");
             }
 
             return $resultset;
@@ -273,11 +273,11 @@
                     
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "License has been restored.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has restored license: ".$currentLicenseData->description,"restore", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User has restored license: <strong>".$currentLicenseData->description."</strong>","restore", "success", "gcchris", "user");
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to restore license!";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed restoring license: ".$currentLicenseData->description,"restore", "error", "gcchris", "system");
+                    $this->core_layout->setEventLog("User has failed restoring license: <strong>".$currentLicenseData->description."</strong>","restore", "error", "gcchris", "system");
                 }
             }else{
                 $resultset["response"] = false;
