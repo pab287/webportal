@@ -674,11 +674,11 @@
                 if ($insert) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Personnel request data has been added.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " added new personnel request: ".$position->name." requested by ".$requestedBy." for company: ".$company->description,"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User added new personnel request: <strong>".$position->name."</strong> requested by <strong>".$requestedBy."</strong> for company: <strong>".$company->description."</strong>","insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed saving personnel request data!";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting new personnel request data","insert", "error", "gcchris", "system");
+                    $this->core_layout->setEventLog("User failed inserting new personnel request data","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
@@ -725,12 +725,12 @@
                     unset($post['qualification']);
                     unset($post['job_description']);
                     $changes = $this->logChanges($currentPersonnelData ,$post);
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated personnel request:  ".$currentPersonnelData->position_name." ".$changes,"update", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User updated personnel request: <strong>".$currentPersonnelData->position_name."</strong> ".$changes,"update", "success", "gcchris", "user");
                     $resultset["data"] = $data;
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to update personnel request data!";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating personnel request: ".$currentPersonnelData->position_name,"update", "error", "gcchris", "system");
+                    $this->core_layout->setEventLog("User failed updating personnel request: <strong>".$currentPersonnelData->position_name."</strong>","update", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
@@ -1108,12 +1108,12 @@
         
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Personnel request approval has been proccessed successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has approved personnel request: ".$personnelData->position_name,"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User has approved personnel request: <strong>".$personnelData->position_name."</strong>","insert", "success", "gcchris", "user");
                     $resultset["data"] = $data;
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to proccess personnel request approval!";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed to proccess personnel request approval for ".$personnelData->position_name,"insert", "error", "gcchris", "system");
+                    $this->core_layout->setEventLog("User failed to proccess personnel request approval for <strong>".$personnelData->position_name."</strong>","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
@@ -1181,12 +1181,12 @@
                     $data = $this->getCurrentPersonnelRequest($id);
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Personnel request status has been proccessed successfully.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has changed the status of personnel request: ".$personnelData->position_name." to ".$post["status"],"update", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User has changed the status of personnel request: <strong>".$personnelData->position_name."</strong> to <strong>".$post["status"]."</strong>","update", "success", "gcchris", "user");
                     $resultset["data"] = $data;
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to proccess personnel request status!";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating personnel request: ".$personnelData->position_name,"update", "error", "gcchris", "system");
+                    $this->core_layout->setEventLog("User failed updating personnel request: <strong>".$personnelData->position_name."</strong>","update", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
@@ -1209,11 +1209,11 @@
                 $this->adm_employee->logArchive($this->applicationTable, $post->id, 1);
                 $resultSet["success"] = true;
                 $resultSet["message"] = "Personnel request was archived.";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has archived personnel request: ".$personnelData->position_name,"archive", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User has archived personnel request: <strong>".$personnelData->position_name."</strong>","archive", "success", "gcchris", "user");
             } else {
                 $resultSet["success"] = false;
                 $resultSet["message"] = $this->db->error();
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed archiving personnel request: ".$personnelData->position_name,"archive", "error", "gcchris", "system");
+                $this->core_layout->setEventLog("User has failed archiving personnel request: <strong>".$personnelData->position_name."</strong>","archive", "error", "gcchris", "system");
             }
 
             return $resultSet;
@@ -1232,16 +1232,16 @@
             }
             foreach ($changes as $field => $change) {
                 if (strtolower($field) == 'department_id'){
-                    $changesString.= " Field: $field, from: ". $this->getDepartmentById($change['old'])->description. ", to: ". $this->getDepartmentById($change['new'])->description. "\n";
+                    $changesString.= " Field: $field, from: <strong>". $this->getDepartmentById($change['old'])->description. "</strong>, to: <strong>". $this->getDepartmentById($change['new'])->description. "</strong>\n";
                 }
                 else if (strtolower($field) == 'position_id'){
-                    $changesString.= " Field: $field, from: ". $this->getPositionById($change['old'])->name. ", to: ". $this->getPositionById($change['new'])->name. "\n";
+                    $changesString.= " Field: $field, from: <strong>". $this->getPositionById($change['old'])->name. "</strong>, to: <strong>". $this->getPositionById($change['new'])->name. "</strong>\n";
                 }
                 else if (strtolower($field) == 'salary_id'){
-                    $changesString.= " Field: $field, from: ". $this->getSalaryById($change['old'])->description. ", to: ". $this->getSalaryById($change['new'])->description. "\n";
+                    $changesString.= " Field: $field, from: <strong>". $this->getSalaryById($change['old'])->description. "</strong>, to: <strong>". $this->getSalaryById($change['new'])->description. "</strong>\n";
                 }
                 else if (strtolower($field) == 'requested_by'){
-                    $changesString.= " Field: $field, from: ". $this->getEmployeeNameById($change['old']). ", to: ". $this->getEmployeeNameById($change['new']). "\n";
+                    $changesString.= " Field: $field, from: <strong>". $this->getEmployeeNameById($change['old']). "</strong>, to: <strong>". $this->getEmployeeNameById($change['new']). "</strong>\n";
                 }
                 else{
                     $changesString.= " Field: $field, from: $change[old], to: $change[new]\n";
