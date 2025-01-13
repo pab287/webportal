@@ -134,16 +134,16 @@ class Contractor_model extends CI_Model
                 if ($insert) {
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Contractor data has been added.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new contractor: ".$post['contractor'],"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User inserted new contractor: <strong>".$post['contractor']."</strong>","insert", "success", "gcchris", "user");
                 } else {
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed saving contractor data!";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting new contractor","insert", "error", "gcchris", "system");
+                    $this->core_layout->setEventLog("User failed inserting new contractor","insert", "error", "gcchris", "system");
                 }
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Contractor already exist!";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting existing contractor","insert", "error", "gcchris", "system");
+                $this->core_layout->setEventLog("User failed inserting existing contractor","insert", "error", "gcchris", "system");
             }
         } else {
             $resultset["response"] = false;
@@ -174,11 +174,11 @@ class Contractor_model extends CI_Model
                 unset($post['modify_dt']); 
                 unset($post['modify_by']);
                 $changes = $this->logChanges($currentContractData ,$post);
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated contractor: ".$currentContractData->contractor." ".$changes,"update", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User updated contractor: <strong>".$currentContractData->contractor."</strong> ".$changes,"update", "success", "gcchris", "user");
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Failed updating contractor data!";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating contractor: ".$currentContractData->contractor,"update", "error", "gcchris", "system");
+                $this->core_layout->setEventLog("User failed updating contractor: <strong>".$currentContractData->contractor."</strong> ","update", "error", "gcchris", "system");
             }
         } else {
             $resultset["response"] = false;
@@ -209,11 +209,11 @@ class Contractor_model extends CI_Model
 
                 $resultset["response"] = true;
                 $resultset["toastr_msg"] = "Contractor has been removed.";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has archived contractor: ".$currentContractData->contractor,"archive", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User has archived contractor: <strong>".$currentContractData->contractor."</strong>","archive", "success", "gcchris", "user");
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Failed to remove contractor!";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed archiving contractor:  ".$currentContractData->contractor,"archive", "error", "gcchris", "system");
+                $this->core_layout->setEventLog("User has failed archiving contractor:  <strong>".$currentContractData->contractor."</strong>","archive", "error", "gcchris", "system");
             }
         } else {
             $resultset["response"] = false;
@@ -254,11 +254,11 @@ class Contractor_model extends CI_Model
 
                 $resultset["response"] = true;
                 $resultset["toastr_msg"] = "Contractor has been restored.";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has restored contractor: ".$currentContractData->contractor,"restore", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User has restored contractor: <strong>".$currentContractData->contractor."</strong>","restore", "success", "gcchris", "user");
             } else {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Failed to restore contractor!";
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed restoring contractor: ".$currentContractData->contractor,"restore", "error", "gcchris", "system");
+                $this->core_layout->setEventLog("User has failed restoring contractor: <strong>".$currentContractData->contractor."</strong>","restore", "error", "gcchris", "system");
             }
         } else {
             $resultset["response"] = false;
@@ -281,7 +281,7 @@ class Contractor_model extends CI_Model
 			}
 		}
 		foreach ($changes as $field => $change) {
-			$changesString.= " Field: $field, from: $change[old], to: $change[new]\n";
+			$changesString.= " Field: $field, from: <strong>$change[old]</strong>, to:<strong> $change[new]</strong>\n";
 		}
 		return $changesString;
 	}
