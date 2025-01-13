@@ -308,7 +308,7 @@ class Salary_model extends CI_Model{
 			}
 		}
 		foreach ($changes as $field => $change) {
-			$changesString.= " Field: $field, from: $change[old], to: $change[new]\n";
+			$changesString.= " Field: $field, from: <strong>$change[old]</strong>, to: <strong>$change[new]</strong>\n";
 		}
 		return $changesString;
 	}
