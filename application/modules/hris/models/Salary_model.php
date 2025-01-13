@@ -137,16 +137,16 @@ class Salary_model extends CI_Model{
 				if($insert){
 					$resultset["response"] = true;
 					$resultset["toastr_msg"] = "Salary data has been added.";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new salary: ".$post["description"],"insert", "success", "gcchris", "user");
+					$this->core_layout->setEventLog("User added new salary: <strong>".$post["description"]."</strong>","insert", "success", "gcchris", "user");
 				}else{
 					$resultset["response"] = false;
 					$resultset["toastr_msg"] = "Failed saving salary data!";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting new salary","insert", "error", "gcchris", "system");
+					$this->core_layout->setEventLog("User failed inserting new salary","insert", "error", "gcchris", "system");
 				}
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Salary data already exist!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting existing salary","insert", "error", "gcchris", "system");
+				$this->core_layout->setEventLog("User failed inserting existing salary","insert", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
@@ -176,11 +176,11 @@ class Salary_model extends CI_Model{
 				unset($post['modify_dt']); 
                 unset($post['modify_by']);
 				$changes = $this->logChanges($currentSalaryData ,$post);
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated salary: ".$currentSalaryData->description." ".$changes,"update", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User updated salary: <strong>".$currentSalaryData->description."</strong> ".$changes,"update", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed updating salary data!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating salary","update", "error", "gcchris", "system");
+				$this->core_layout->setEventLog("User failed updating salary","update", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
@@ -210,11 +210,11 @@ class Salary_model extends CI_Model{
 
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Salary has been removed.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has archived salary: ".$currentSalaryData->description,"archive", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User has archived salary: <strong>".$currentSalaryData->description."</strong>","archive", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed to remove salary!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed archiving salary: ".$currentSalaryData->description,"archive", "error", "gcchris", "system");
+				$this->core_layout->setEventLog("User has failed archiving salary: <strong>".$currentSalaryData->description."</strong>","archive", "error", "gcchris", "system");
 			}
 		}else{
 			$resultset["response"] = false;
@@ -281,11 +281,11 @@ class Salary_model extends CI_Model{
 
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Salary has been restored.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has restored salary: ".$currentSalaryData->description,"restore", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User has restored salary: <strong>".$currentSalaryData->description."</strong>","restore", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed to restore salary!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed restoring salary: ".$currentSalaryData->description,"restore", "error", "gcchris", "system");
+				$this->core_layout->setEventLog("User has failed restoring salary: <strong>".$currentSalaryData->description."</strong>","restore", "error", "gcchris", "system");
 			}
 		}else{
 			$resultset["response"] = false;
