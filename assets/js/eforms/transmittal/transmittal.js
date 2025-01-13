@@ -472,7 +472,26 @@ $(document).ready(function () {
                 operators: ['equal', 'not_equal']
             },
             {id: 'reference_no', label: 'Reference #', type: 'string'},
-            {id: 'a.company_to', label: 'File Under', type: 'string'},
+            {
+                id: 'a.company_from', 
+                label: 'File Under', 
+                input: 'select',
+                plugin: 'select2',
+                plugin_config: {
+                    placeholder: 'Select an Option',
+                    width: '230px',
+                    dropdownParent: $("#modal-query-builder"),
+                    ajax: {
+                        url: baseUrl("eforms/transmittal/get_company_collection"),
+                        global: false,
+                        delay: 500,
+                        processResults: function (data) {
+                            return data;
+                        }
+                    }
+                },
+                operators: ['equal', 'not_equal']
+            },
             {
                 id: 'ship_to', 
                 label: 'Deliver To (Internal)', 
