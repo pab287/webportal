@@ -1,0 +1,324 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Webportal API Documentaion", 
+        "version": "1.0.0",
+        "description": "Conyxph API documentation"
+    },
+        "servers": [
+                {
+                    "url": "http://localhost/conyxph74/eforms/hydracore",
+                    "description": "Development Server"
+                },
+                {
+                    "url": "http://192.168.7.78/eforms/hydracore",
+                    "description": "Staging Server"
+                },
+                {
+                    "url": "https://conyxph.com/eforms/hydracore",
+                    "description": "Production Server"
+                }
+            ],
+        "paths": {
+            "/get_account_collection": {
+                "get": {
+                    "summary": "Collection of Accounts",
+                    "tags": ["Hydra API"],
+                    "responses": {
+                        "200": {
+                            "description": "Successful response"
+                            }
+                        }
+                    }
+                },
+            "/get_account_by_id":{
+                "post": {
+                    "summary": "Fetch account details by ID",
+                    "description": "Load customer details from the system By customer ID",
+                    "tags": ["Hydra API"],
+                    "requestBody": {
+                        "description": "Account details",
+                        "required": true,
+                        "content":{
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties":{
+                                        "id": {
+                                            "type": "integer",
+                                            "description": "Id of the customer",
+                                            "example": 1
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Successful response"
+                            },
+                        "400":{
+                            "description": "Bad request"
+                        }
+                    } 
+                }
+            },
+            "/get_bill_by_id": {
+                "post":{
+                    "summary": "Fetch bill information by bill id",
+                    "description": "Load Bill information by bill id",
+                    "tags": ["Hydra API"],
+                    "requestBody":{
+                        "description": "Bill details",
+                        "required": true,
+                        "content": {
+                                "multipart/form-data":{
+                                    "schema":{
+                                        "type": "object",
+                                        "properties":{
+                                            "bill_id":{
+                                                "type": "integer",
+                                                "description": "parameter in searching bill information"
+                                            }
+                                        }
+                                    },
+                                    "required": ["bill_id"]
+                                }
+                            }
+                        },
+                    "responses": {
+                        "200": {
+                            "description": "Successful response",
+                            "content":{
+                                "application/json":{
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "success": {
+                                                "type": "boolean",
+                                                "example": true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "400":{ 
+                            "description": "Invalid input data"
+                        }
+                    }
+                }
+            },
+            "/get_account_details_by_account_no":{
+                "post":{
+                    "summary": "Fetch customer account details by accountno",
+                    "description": "Load customer account details by accountno",
+                    "tags": ["Hydra API"],
+                    "requestBody": {
+                        "description": "Customer Account Details",
+                        "required": true,
+                        "content": {
+                            "multipart/form-data": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "accountno":{
+                                            "type":"string",
+                                            "description": "Customer accountno parameter"
+                                        }
+                                    }
+                                },
+                                "required": ["accountno"]
+                            }
+                        }
+                    },
+                    "responses":{
+                        "200":{
+                            "description": "Successful response",
+                            "content": {
+                                "application/json":{
+                                    "schema": {
+                                        "type": "object",
+                                        "properties":{
+                                            "success":{
+                                                "type":"boolean",
+                                                "example": true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "400": {
+                            "description": "Invalid input data"
+                        }
+                    }
+                }
+            },
+            "/validate_account/?accountno={accountno}":{
+                "get":{
+                    "summary": "Validate account no",
+                    "description": "Validate account no if exists in the database",
+                    "tags": ["Hydra API"],
+                    "parameters":[
+                        {
+                            "name": "accountno",
+                            "in": "path",
+                            "required": true,
+                            "description": "Unique identifier to the form-data submission",
+                            "schema":{
+                                "type": "string"
+                            }
+                        }
+                    ],
+                    "responses":{
+                        "200":{
+                            "description": "Form-data details retrieved successfully",
+                            "content":{
+                                "application/json":{
+                                    "schema":{
+                                        "type": "object",
+                                        "properties":{
+                                            "success":{
+                                                "type": "boolean",
+                                                "example": {
+                                                    "summary": "Example of customer account details by accountno",
+                                                    "value":{
+                                                            "result": "true",
+                                                            "data": {
+                                                                "id": "1",
+                                                                "accountno": "1234-1234-1",
+                                                                "meterno": "12-1234567",
+                                                                "firstname": "John",
+                                                                "lastname": "Doe",
+                                                                "house_model": "C-12-123",
+                                                                "block": "12",
+                                                                "lot": "23",
+                                                                "phonenumber": "09171234564"
+                                                            }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "404":{
+                            "description": "Form-data not found",
+                            "content": {
+                              "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                        "type": "boolean",
+                                        "example": false
+                                        },
+                                        "error": {
+                                        "type": "string",
+                                        "example": "Form-data with the provided accountno was not found."
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/get_unpaid_bill_collection_by_account_id/?account_id={account_id}":{
+                "get":{
+                    "summary": "Get unpaid bill collection by account id",
+                    "description": "Get unpaid bill collection by account id",
+                    "tags": ["Hydra API"],
+                    "parameters":[
+                        {
+                            "name": "account_id",
+                            "in": "path",
+                            "required": true,
+                            "description": "Unique identifier to the form-data submission.",
+                            "schema":{
+                                "type": "string"
+                            }
+                        }
+                    ],
+                    "responses":{
+                        "200":{
+                            "description": "Form-data details retrieved successfully."
+                        },
+                        "404":{
+                            "description": "Form-data not found."
+                        },
+                        "400":{
+                            "description":"Bad request."
+                        }
+                    }
+                }
+            },
+            "/insert_payment":{
+                "post":{
+                    "summary": "Insert payment",
+                    "description": "Insert payment",
+                    "tags": ["Hydra API"],
+                    "parameters": [
+                        {
+                            "name": "accountno",
+                            "required": true,
+                            "description": "Account number of the paying customer",
+                            "in": "query",
+                            "schema":{
+                                "type": "string",
+                                "example": "1234-1234-1"
+                            }
+
+                        },
+                        {
+                            "name": "bill_ref_no",
+                            "required": true,
+                            "description": "Reference no. of the bill of the paying customer",
+                            "in": "query",
+                            "schema":{
+                                "type": "string",
+                                "example": "BHBR12-34-5678"
+                            }
+                        },
+                        {
+                            "name": "payment_details",
+                            "required": true,
+                            "description": "Reference no. of the transaction processed in the Luvpark App",
+                            "in": "query",
+                            "schema":{
+                                "type": "string",
+                                "example": "luvpark-12345"
+                            }
+                        },
+                        {
+                            "name": "received_amount",
+                            "required": true,
+                            "description": "The amount of paid of the customer",
+                            "in": "query",
+                            "schema":{
+                                "type": "number",
+                                "example": "300.00"
+                            }
+                        }
+                    ],
+                    "responses":{
+                        "200":{
+                            "description": "Payment successfully created."
+                        },
+                        "400": {
+                            "description": "Invalid input or missing data."
+                        },
+                        "404":{
+                            "description": "Bad request."
+                    }
+                }
+            }
+        }
+
+    }
+        
+}     
