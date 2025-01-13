@@ -320,7 +320,7 @@
             <?php endif; ?>
             <?php if((in_array("undo_receive", $this->current_action))): ?>
             <button class="btn btn-danger btnUndo_receive text-white" id="btnundoreceive" onclick="open_undoreceive()">
-              Undo Receipt
+              Undo Receive
             </button>
             <?php endif; ?>
             <?php if((in_array("print", $this->current_action))): ?>
@@ -455,7 +455,7 @@
           <form action="#" id="form_received" class="form-horizontal">
             <div class="form-group m-form__group row">
                 <label class="col-12 col-form-label form-control-label">
-                    Undo receival of this form?
+                    Undo Receive of this form?
                 </label>
             </div>
             <input type="hidden" value="" name="id"/> 

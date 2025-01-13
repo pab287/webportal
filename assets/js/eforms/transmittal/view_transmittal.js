@@ -320,7 +320,7 @@ function restore_form() {
 
 function open_undoreceive() {
   $('#modal_form_undoreceived').modal('show'); // show bootstrap modal
-  $('.modal-title').text('Undo Receival'); // Set Title to Bootstrap modal title
+  $('.modal-title').text('Undo Receive'); // Set Title to Bootstrap modal title
 }
 
 function undo_receive() {
