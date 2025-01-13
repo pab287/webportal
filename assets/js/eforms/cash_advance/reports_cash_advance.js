@@ -11,7 +11,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                     extend: 'excelHtml5',
                     title: 'CASH ADVANCE REPORTS',
                     exportOptions: {
-                        columns: [2, 3, 4, 5, 6, 7, 8,9,10,11,12,13,14,15],
+                        columns: [2, 4, 5, 6, 7, 8,9,10,11,12,13,14,15],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
@@ -24,18 +24,54 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                             .then(() => {
                                 dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
                             });
-                    }
+                    },
                 },
                 {
                     extend: 'pdfHtml5',
                     title: 'CASH ADVANCE REPORTS',
                     exportOptions: {
-                        columns: [2, 3, 4, 5, 6, 7, 8,9,10,11,12,13,14,15],
+                        columns: [2, 4, 5, 6, 7, 8,9,10,11,12,13,14,15],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
                             }
                         }
+                    },
+                    customize: function(doc) {
+                        doc.defaultStyle.fontSize = 6;  // Reduced from 8 to 6
+                        doc.pageOrientation = 'landscape';
+                        
+                        doc.pageSize = 'A4';
+                        
+                        var table = doc.content[1].table;
+                        var colCount = table.body[0].length;
+                        
+                        var columnWidths = new Array(colCount).fill('auto');
+                        doc.content[1].table.widths = columnWidths;
+                        
+                        doc.pageMargins = [10, 10, 10, 10]; // [left, top, right, bottom]
+                        
+                        doc.styles.tableHeader = {
+                            fontSize: 6,
+                            bold: true,
+                            fillColor: '#f3f3f3',
+                            alignment: 'center'
+                        };
+                        
+                        doc.styles.tableBodyEven = {
+                            fontSize: 6
+                        };
+                        
+                        doc.styles.tableBodyOdd = {
+                            fontSize: 6
+                        };
+                        
+                        doc.content[1].table.keepWithHeaderRows = 1;
+                        doc.content[1].layout = {
+                            hLineWidth: function(i, node) { return 0.1; },
+                            vLineWidth: function(i, node) { return 0.1; },
+                            fillColor: function(i, node) { return (i % 2 === 0) ? '#f3f3f3' : null; }
+                        };
                     },
                     action: function(e, dt, node, config) {
                         const self = this;
@@ -50,12 +86,32 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                     extend: 'print',
                     title: 'CASH ADVANCE REPORTS',
                     exportOptions: {
-                        columns: [2, 3, 4, 5, 6, 7, 8,9,10,11,12,13,14,15],
+                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
                             }
                         }
+                    },
+                    customize: function(win) { 
+                        var css = '@page { size: landscape; }' +
+                                  'table { font-size: 6pt; width: 100% }' +
+                                  'table thead th { background-color: #f3f3f3; text-align: center; font-weight: bold; }' +
+                                  'table tbody tr:nth-child(even) { background-color: #f3f3f3; }' +
+                                  'h1 { font-size: 12pt; text-align: center; margin: 10px 0; }'  +
+                                  'table th, table td { padding: 2px; border: 0.1pt solid #ddd; }';
+                        
+                        $(win.document.head).append('<style>' + css + '</style>');
+
+                        $(win.document.body).find('table')
+                            .addClass('compact')
+                            .css('font-size', '6pt')
+                            .css('border-collapse', 'collapse')
+                            .css('width', '100%');
+                        $(win.document.body).find('h1')
+                            .css('text-align', 'center')
+                            .css('font-size', '12pt')
+                            .css('margin', '10px 0');
                     },
                     action: function(e, dt, node, config) {
                         const self = this;
@@ -63,7 +119,8 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                             .then(() => {
                                 dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
                             });
-                    }
+                    },
+                    orientation: 'landscape'
                 }
             ],
         serverSide: true,
@@ -93,7 +150,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                     return tempHtml;
                 }
             },
-            { data: 'firstname', visible: false, title: 'FIRSTNAME', },
+            { data: 'name', visible: false, title: 'EMPLOYEE NAME',},
             { data: 'lastname', visible: false,title: 'LASTNAME', },
             { data: 'department', visible: false, title: 'DEPARTMENT', },
             { data: 'position', visible: false, title: 'POSITION', },
