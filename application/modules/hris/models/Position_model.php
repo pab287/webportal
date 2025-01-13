@@ -147,16 +147,16 @@ class Position_model extends CI_Model{
 				if($insert){
 					$resultset["response"] = true;
 					$resultset["toastr_msg"] = "Position data has been added.";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new position: ".$post['name'],"insert", "success", "gcchris", "user");
+					$this->core_layout->setEventLog("User added new position: <strong>".$post['name']."</strong>","insert", "success", "gcchris", "user");
 				}else{
 					$resultset["response"] = false;
 					$resultset["toastr_msg"] = "Failed saving position data!";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting new position","insert", "error", "gcchris", "system");
+					$this->core_layout->setEventLog("User failed adding new position","insert", "error", "gcchris", "system");
 				}
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Position name already exist!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting existing position","insert", "error", "gcchris", "system");
+				$this->core_layout->setEventLog("User failed inserting existing position","insert", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
@@ -185,11 +185,11 @@ class Position_model extends CI_Model{
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Position data has been updated.";
 				$changes = $this->logChanges($currentPositionData ,$post);
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated position: ".$currentPositionData->name." ".$changes,"update", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User updated position: <strong>".$currentPositionData->name."</strong> ".$changes,"update", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed updating position data!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed updating position with db id no. ".$id,"update", "error", "gcchris", "system");
+				$this->core_layout->setEventLog("User failed updating position. <strong>$currentPositionData->name</strong>","update", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
@@ -219,12 +219,12 @@ class Position_model extends CI_Model{
 
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Position has been removed.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has archived position: ".$currentPositionData->name,"archive", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User has archived position: <strong>".$currentPositionData->name."</strong>","archive", "success", "gcchris", "user");
 				
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed to remove position!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed archiving position: ".$currentPositionData->name,"archive", "error", "gcchris", "system");
+				$this->core_layout->setEventLog("User has failed archiving position: <strong>".$currentPositionData->name."</strong>","archive", "error", "gcchris", "system");
 			}
 		}else{
 			$resultset["response"] = false;
@@ -333,12 +333,12 @@ class Position_model extends CI_Model{
 
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Position has been restored.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has restored position: ".$currentPositionData->name,"restore", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User has restored position: <strong>".$currentPositionData->name."</strong>","restore", "success", "gcchris", "user");
 				
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed to restore position!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed restoring position: ".$currentPositionData->name,"restore", "error", "gcchris", "system");
+				$this->core_layout->setEventLog("User has failed restoring position: <strong>".$currentPositionData->name."</strong>","restore", "error", "gcchris", "system");
 			}
 		}else{
 			$resultset["response"] = false;
@@ -369,7 +369,7 @@ class Position_model extends CI_Model{
 			}
 		}
 		foreach ($changes as $field => $change) {
-			$changesString.= " Field: $field, from: $change[old], to: $change[new]\n";
+			$changesString.= " Field: $field, from: <strong>$change[old]</strong>, to: <strong>$change[new]</strong>\n";
 		}
 		return $changesString;
 	}
