@@ -833,8 +833,8 @@ async function getExportData(e, dt, node, config, self, url, type) {
         dataType: "JSON",
         data,
         success: function (response) {
-            dt.rows().remove();
-            dt.rows.add(response.data).draw();
+            // dt.rows().remove();
+            // dt.rows.add(response.data).draw();
             $.fn.dataTable.ext.buttons[type].action.call(self, e, dt, node, config);
         }
     });

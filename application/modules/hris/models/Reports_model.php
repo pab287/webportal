@@ -122,9 +122,12 @@ class Reports_model extends CI_Model
         $resultSet['x'] = $this->db->last_query();
 
         $recordCount = $this->utilities->getTableCount($this->tblEmployees . " emp", $criteria, null, $joinArr, true, null, "emp.id");
-        $exported = intval($export) == 1 ? " and exported as {$post->exportType}" : '';
-        $action = intval($export) == 1 ? 'export' : 'generate'; 
-        $logMessage = "Generated employee report with criteria: $criteria$exported with result count: $recordCount";
+        if(isset($post->exportType)){
+            $exportType = str_replace('Html5', '', $post->exportType);
+        }
+        $messageStart = intval($export) == 1 ? "Exported as <strong>{$exportType}</strong>" : "Generated";
+        $action = intval($export) == 1 ? 'export' : 'generate';
+        $logMessage = "{$messageStart} employee report with criteria: <strong>$criteria</strong>. Result count: <strong>$recordCount</strong>";
         $this->core_layout->setEventLog($logMessage, $action, 'success', "gcchris", 'user');
         $resultSet["recordsTotal"] = $recordCount;
         $resultSet["recordsFiltered"] = $recordCount;
