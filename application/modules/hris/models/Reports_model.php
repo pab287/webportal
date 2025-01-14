@@ -1091,9 +1091,10 @@ class Reports_model extends CI_Model{
         $hasDepartment = isset($post["department"]) && $post["department"];
         if(isset($post["company"]) && $post["company"]){
             $empIds = array();
-            $this->db->select("emp.id");
+            $this->db->select("emp.id, dept.code");
             $this->db->from($this->tblEmployees." as emp");
             $this->db->join($this->companyTable." as comp", "comp.id = emp.company_id");
+            $this->db->join($this->departmentTable." as dept", "dept.id = emp.company_id");
             $this->db->where("emp.company_id", $post["company"]);
             if($hasDepartment){
                 $this->db->where("emp.department_id", $post["department"]);
@@ -1101,7 +1102,10 @@ class Reports_model extends CI_Model{
             $this->db->order_by("emp.id", "ASC");
             $this->db->group_by("emp.id");
             $qData = $this->db->get();
-
+            if($hasDepartment){
+                $dRow = $qData->row();
+                $filter .= "Department: <strong>{$dRow->code}</strong> ";
+            }
             if($qData->num_rows() > 0){ foreach ($qData->result() as $emp) { $empIds[] = $emp->id; } }
             if(!empty($empIds) && !isset($post["employee"])){ $post["employee"] = $empIds; }
         }
@@ -1118,7 +1122,7 @@ class Reports_model extends CI_Model{
                 if($qCompany->num_rows() == 1){
                     $cRow = $qCompany->row();
                     $arrFilter["company_code"] = $cRow->code;
-                    $filter .= "Company: {$cRow->code} ";
+                    $filter .= "Company: <strong>{$cRow->code}</strong> ";
                 }
             }
 
@@ -1199,7 +1203,7 @@ class Reports_model extends CI_Model{
                     $resultset["response"] = true;
                     $resultset["filters"] = $arrFilter;
                     $resultset["toastr_msg"] = "Last verified attendance date on `{$maxDate}`, A total of ({$ctrCount}) employee late attendance record/s found!";
-                    $logMessage = "Last verified attendance date on `{$maxDate}` {$filter}, A total of ({$ctrCount}) employee late attendance record/s found!";
+                    $logMessage = "Last verified attendance date on `<strong>{$maxDate}</strong>` {$filter}, A total of (<strong>{$ctrCount}</strong>) employee late attendance record/s found!";
                     $logState="success";
                     $userType="user";
                 }else{
@@ -1309,11 +1313,13 @@ class Reports_model extends CI_Model{
             if($hasDepartment){
                 $this->db->where("emp.department_id", $post["department"]);
             }
-
             $this->db->order_by("emp.id", "ASC");
             $this->db->group_by("emp.id");
             $qData = $this->db->get();
-
+            if($hasDepartment){
+                $dRow = $qData->row();
+                $filter .= "Department: <strong>{$dRow->code}</strong> ";
+            }
             if($qData->num_rows() > 0){ foreach ($qData->result() as $emp) { $empIds[] = $emp->id; } }
             if(!empty($empIds) && !isset($post["employee"])){ $post["employee"] = $empIds; }
 
@@ -1330,7 +1336,7 @@ class Reports_model extends CI_Model{
                 if($qCompany->num_rows() == 1){
                     $cRow = $qCompany->row();
                     $arrFilter["company_code"] = $cRow->code;
-                    $filter .= "Company: {$cRow->code} ";
+                    $filter .= "Company: <strong>{$cRow->code}</strong> ";
                 }
             }
 
@@ -1659,7 +1665,7 @@ class Reports_model extends CI_Model{
                     $resultset["response"] = true;
                     $resultset["filters"] = $arrFilter;
                     $resultset["toastr_msg"] = "Last verified attendance date on `{$maxDate}`, A total of ({$ctrCount}) employee absentee attendance record/s found!";
-                    $logMessage = "Last verified attendance date on `{$maxDate}` {$filter}, A total of ({$ctrCount}) employee absentee attendance record/s found!";
+                    $logMessage = "Last verified attendance date on `<strong>{$maxDate}</strong>` {$filter}, A total of (<strong>{$ctrCount}</strong>) employee absentee attendance record/s found!";
                     $logState="success";
                     $userType="user";
                 }else{
@@ -2275,6 +2281,10 @@ class Reports_model extends CI_Model{
         }
         if ($filter_by == "date_range") {
             $filters  .= "Between <strong>{$post['filters']['date_range']} </strong> ";
+        }
+        if ($filter_by == "month") {
+            $month_name = date("F", mktime(0, 0, 0, $post['filters']['filter_month'], 1));
+            $filters .= "For the month of <strong>{$month_name}</strong> Year: <strong>{$post['filters']['filter_year']}</strong>";
         }
         $this->core_layout->setEventLog("Exported using {$post['name']}. {$post['type']} {$filters} results found: <strong>{$post['count']}</strong>", "export", 'success', "gcchris");
         return true;
