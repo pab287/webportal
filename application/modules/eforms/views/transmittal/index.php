@@ -106,6 +106,7 @@
                                 <th>File Under</th>
                                 <th>Deliver To</th>
                                 <th>Contents</th>
+                                <th>Contents</th>
                                 <th>Delivery Date</th>
                                 <th>Created By</th>
                                 <th>Date Created</th>

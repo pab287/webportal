@@ -8,7 +8,7 @@
             </h3>
             <ul class="m-subheader__breadcrumbs m-nav m-nav--inline">
                 <li class="m-nav__item m-nav__item--home">
-                    <a href="#" class="m-nav__link m-nav__link--icon">
+                    <a href="javascript:void(0)" class="m-nav__link m-nav__link--icon">
                         <i class="m-nav__link-icon la la-home"></i>
                     </a>
                 </li>
@@ -16,7 +16,7 @@
                     -
                 </li>
                 <li class="m-nav__item">
-                    <a href="" class="m-nav__link">
+                    <a href="javascript:void(0)" class="m-nav__link">
                         <span class="m-nav__link-text" style="text-transform: uppercase;">
                             <?php echo str_replace("_"," ",$this->router->fetch_class());?>
                         </span>
@@ -26,7 +26,7 @@
                     -
                 </li>
                 <li class="m-nav__item">
-                    <a href="" class="m-nav__link">
+                    <a href="javascript:void(0)" class="m-nav__link">
                         <span class="m-nav__link-text" style="text-transform: uppercase;">
                             <?php echo $crumbHeaderTitle ? $crumbHeaderTitle: str_replace("_"," ",$this->router->fetch_method());?>
                         </span>

@@ -367,6 +367,7 @@
                 $vehicle = "";
                 $driver = "";
             }
+
             if ($this->input->post('type') == "internal") {
                 $x = explode("\n", $this->input->post('deliver_company'));
                 $data = array(
@@ -854,6 +855,7 @@
         public function transmittal_body($id)
         {
             $arrData = array();
+            $this->db->select('description');
             $this->db->from('gcceforms.transmittal_body');
             $this->db->where('transmittal_id', $id);
             $query = $this->db->get();

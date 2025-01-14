@@ -61,15 +61,37 @@ var tblTransmittal = $("#table-transmittal")
             },
             {data: "priority"},
             {data: "reference_no"},
-            {data: "company_from"},
+            {data: "company_from",
+                render: function (data) {
+                    return data.toUpperCase();
+                }
+            },
             {
-                data: "firstname", render: function (data, type, row, meta) {
-                    return displayName(row.display_name)
+                data: "firstname", orderable: false, render: function (data, type, row, meta) {
+                    // return displayName(row.display_name)
+                    var html = ``;
+                    var _name = row.display_name && row.display_name != '' ? row.display_name : row.ship_to;
+
+                    html += `<p class="m-0"><b>${ _name.toUpperCase() }</b></p>\n`;
+                    
+                    if (row.company_to) {
+                        html += `<p class="m-0">${ row.company_to.toUpperCase() }</p>\n`;
+                    }
+
+                    html += `<p class="m-0">${ row.department_to.toUpperCase() }</p>\n`;
+                    html += `<p class="m-0">${ row.ship_to_address.toUpperCase() }</p>\n`;
+
+                    return html;
                 }
             },
             {
                 data: "trans_desc", render: function (data) {
-                    return formatContent(data)
+                    return formatContent(data).toUpperCase();
+                }
+            },
+            {
+                data: "trans_desc", visible: false, function (data) {
+                    return data.toUpperCase();
                 }
             },
             {
@@ -118,9 +140,24 @@ var tblTransmittal = $("#table-transmittal")
                     columns: "thead th:not(.notExport)"
                 }
             }, { 
-                extend: 'pdf',
+                extend: 'pdfHtml5',
                 exportOptions: {
-                    columns: "thead th:not(.notExport)"
+                    // columns: "thead th:not(.notExport)"
+                    columns: [2, 3, 4, 6, 7],
+                    stripNewlines: false
+                    // stripHtml: false
+                },
+                customize: function (doc) {
+                    doc.content[1].table.widths = ['13%', '16%', '29%', '29%', '13%'];
+
+                    const rowCount = doc.content[1].table.body.length;
+                    for (i = 1; i < rowCount; i++) {
+                        doc.content[1].table.body[i][0].alignment = 'left';
+                        doc.content[1].table.body[i][1].alignment = 'center';
+                        doc.content[1].table.body[i][2].alignment = 'left';
+                        doc.content[1].table.body[i][3].alignment = 'left';
+                        doc.content[1].table.body[i][4].alignment = 'center';
+                    }
                 }
             }
         ]
@@ -269,7 +306,7 @@ modalAdvanceSearch
                 ajax: {
                     url: baseUrl("eforms/transmittal/get_company_collection"),
                     dataType: "JSON",
-                    delay: 500
+                    delay: 1000
                 }
             });
 
@@ -279,6 +316,7 @@ modalAdvanceSearch
                 width: "100%",
                 dropdownParent: $(this),
                 allowClear: true,
+                minimumInputLength: 3,
                 ajax: {
                     url: baseUrl("eforms/transmittal/get_transmittal_creators"),
                     dataType: "JSON",
@@ -296,33 +334,53 @@ modalAdvanceSearch
                 autoclose: true
             });
 
-        $("#frm-advance-search")
-            .on("submit", function (e) {
-                e.preventDefault();
+        // $("#frm-advance-search").on("submit", function (e) {
+        //     e.preventDefault();
 
-                advanceSearchData = {
-                    priority: $("[name='priority']").val(),
-                    reference_no: $("[name='reference_no']").val(),
-                    company_from: $("[name='company_from']").val(),
-                    delivered_to: $("[name='delivered_to']").val(),
-                    description: $("#advance-search-description").val(),
-                    ship_date: $("[name='ship_date']").val(),
-                    created_by: $("[name='created_by']").val(),
-                    created_dt: $("[name='created_dt']").val(),
-                    status: $("[name='status']").val(),
-                };
+        //     advanceSearchData = {
+        //         priority: $("[name='priority']").val(),
+        //         reference_no: $("[name='reference_no']").val(),
+        //         company_from: $("[name='company_from']").val(),
+        //         delivered_to: $("[name='delivered_to']").val(),
+        //         description: $("#advance-search-description").val(),
+        //         ship_date: $("[name='ship_date']").val(),
+        //         created_by: $("[name='created_by']").val(),
+        //         created_dt: $("[name='created_dt']").val(),
+        //         status: $("[name='status']").val(),
+        //     };
 
-                advanceSearch = true;
+        //     advanceSearch = true;
 
-                tblTransmittal.ajax.reload();
-                modalAdvanceSearch.modal("hide");
-            });
+        //     tblTransmittal.ajax.reload();
+        //     modalAdvanceSearch.modal("hide");
+        // }); 
     });
+
+$("#frm-advance-search").on("submit", function (e) {
+    e.preventDefault();
+
+    advanceSearchData = {
+        priority: $("[name='priority']").val(),
+        reference_no: $("[name='reference_no']").val(),
+        company_from: $("[name='company_from']").val(),
+        delivered_to: $("[name='delivered_to']").val(),
+        description: $("#advance-search-description").val(),
+        ship_date: $("[name='ship_date']").val(),
+        created_by: $("[name='created_by']").val(),
+        created_dt: $("[name='created_dt']").val(),
+        status: $("[name='status']").val(),
+    };
+
+    advanceSearch = true;
+    tblTransmittal.ajax.reload();
+    $("#modal-advance-search").modal("hide");
+});
 
 function clearAdvanceSearch() {
     const form = $("#frm-advance-search");
     form.resetForm();
     form.find(".s2").val('').trigger('change');
+    form.find('select[name="company_from"]').val('').trigger('change')
     advanceSearch = false;
     advanceSearchData = {
         priority: null,
@@ -342,7 +400,7 @@ $(document).ready(function () {
     $('#query-builder').queryBuilder({
         'bt-tooltip-errors': {delay: 100},
         filters: [
-            {id: 'a.id', label: 'ID #', type: 'integer'},
+            // {id: 'a.id', label: 'ID #', type: 'integer'},
             {
                 id: 'a.cat',
                 label: 'Type',
@@ -414,7 +472,26 @@ $(document).ready(function () {
                 operators: ['equal', 'not_equal']
             },
             {id: 'reference_no', label: 'Reference #', type: 'string'},
-            {id: 'a.company_to', label: 'File Under', type: 'string'},
+            {
+                id: 'a.company_from', 
+                label: 'File Under', 
+                input: 'select',
+                plugin: 'select2',
+                plugin_config: {
+                    placeholder: 'Select an Option',
+                    width: '230px',
+                    dropdownParent: $("#modal-query-builder"),
+                    ajax: {
+                        url: baseUrl("eforms/transmittal/get_company_collection"),
+                        global: false,
+                        delay: 500,
+                        processResults: function (data) {
+                            return data;
+                        }
+                    }
+                },
+                operators: ['equal', 'not_equal']
+            },
             {
                 id: 'ship_to', 
                 label: 'Deliver To (Internal)', 

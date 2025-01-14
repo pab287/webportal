@@ -20,6 +20,7 @@ var name;
 var deliver;
 var vehicle;
 var tempData = {};
+
 $.ajax({
   url: baseUrl("eforms/transmittal/ajax_transmittal_details2/") + param_id,
   type: "GET",
@@ -32,6 +33,8 @@ $.ajax({
     var company_from = new Option(company_desc, data.data.company_from, true, true);
     $('#select2_file').append(company_from).trigger('change');
 
+    // vmTab1.select2Department('#select2_dep', true, data.data.company_from, { id: data.data.department_from, text: data.department_desc });
+    
     var department_from = new Option(data.department_desc, data.data.department_from, true, true);
     $('#select2_dep').append(department_from).trigger('change');
 
@@ -71,8 +74,8 @@ $.ajax({
       $('#type').append(type).trigger('change');
       //$('[name="type"]').val('internal').trigger("change");
       deliver = data.deliver;
-      document.getElementById('company_to_in').style.removeProperty('display');
-      document.getElementById('company_to_ex').style.display = 'none';
+      // document.getElementById('company_to_in').style.removeProperty('display');
+      // document.getElementById('company_to_ex').style.display = 'none';
       document.getElementById('delivery_to_in').style.removeProperty('display');
       document.getElementById('delivery_to_ex').style.display = 'none';
       document.getElementById('row_department').style.display = 'none';
@@ -82,23 +85,23 @@ $.ajax({
       var type = new Option('EXTERNAL', 'external', true, true);
       $('#type').append(type).trigger('change');
       //$('[name="type"]').val('external').trigger("change");
-      document.getElementById('company_to_ex').style.removeProperty('display');
-      document.getElementById('company_to_in').style.display = 'none';
+      // document.getElementById('company_to_ex').style.removeProperty('display');
+      // document.getElementById('company_to_in').style.display = 'none';
       document.getElementById('delivery_to_in').style.display = 'none';
       document.getElementById('delivery_to_ex').style.removeProperty('display');
       document.getElementById('row_department').style.removeProperty('display');
       document.getElementById('row_courier').style.removeProperty('display');
     }
     if (data.data.priority == "Normal") {
-      var priority = new Option('Normal', 'Normal', true, true);
+      // var priority = new Option('Normal', 'Normal', true, true);
 
-      $('#priority').append(priority).trigger('change');
-      // $('[name="priority"]').val('Normal').trigger("change");
+      // $('#priority').append(priority).trigger('change');
+      $('[name="priority"]').val('Normal').trigger("change");
     }
     if (data.data.priority == "Important") {
-      var priority = new Option('Important', 'Important', true, true);
-      $('#priority').append(priority).trigger('change');
-      // $('[name="priority"]').val('Important').trigger("change");
+      // var priority = new Option('Important', 'Important', true, true);
+      // $('#priority').append(priority).trigger('change');
+      $('[name="priority"]').val('Important').trigger("change");
     }
 
     vmTab1.vm_tab1 = Object.assign({}, data.data);
@@ -111,13 +114,14 @@ $.ajax({
   }
 });
 
+var file_under, department, requested_by;
 
 var vmTab1 = new Vue({
   el: "#form_transmittal",
   data: { vm_tab1: {} },
   mounted: function () {
 
-    var file_under = $("#select2_file").select2({
+    file_under = $("#select2_file").select2({
       placeholder: 'SELECT AN OPTION',
       width: '100%',
       ajax: {
@@ -128,6 +132,9 @@ var vmTab1 = new Vue({
           return data;
         }
       }
+    }).on('select2:select', function (e) {
+      var self = $(e.target);
+      self.validate();
     });
 
     var data = [
@@ -163,11 +170,12 @@ var vmTab1 = new Vue({
       placeholder: 'Select. .',
       width: '100%',
       data: data2
-    });
+    }).on('select2:select', function (e) {
+      var self = $(e.target);
+      self.validate();
+    });;
 
-
-
-    var department = $("#select2_dep").select2({
+    department = $("#select2_dep").select2({
       placeholder: 'SELECT AN OPTION',
       width: '100%',
       ajax: {
@@ -178,9 +186,14 @@ var vmTab1 = new Vue({
           return data;
         }
       }
-    })
+    }).on('select2:select', function (e) {
+      var self = $(e.target);
+      self.validate();
+    });
 
-    var requested_by = $("#select2_requested").select2({
+    // this.select2Department('#select2_dep', true);
+
+    requested_by = $("#select2_requested").select2({
       placeholder: 'SELECT AN OPTION',
       width: '100%',
       minimumInputLength: 3,
@@ -192,9 +205,12 @@ var vmTab1 = new Vue({
           return data;
         }
       }
+    }).on('select2:select', function (e) {
+      var self = $(e.target);
+      self.validate();
     });
 
-    var deliver = $("#select2_deliver").select2({
+    deliver = $("#select2_deliver").select2({
       placeholder: 'SELECT AN OPTION',
       width: '100%',
       minimumInputLength: 3,
@@ -206,11 +222,15 @@ var vmTab1 = new Vue({
           return data;
         }
       }
+    }).on('select2:select', function (e) {
+      var self = $(e.target);
+      self.validate();
     });
 
-    var vehicle = $("#select2_vehicle").select2({
+    vehicle = $("#select2_vehicle").select2({
       placeholder: 'SELECT AN OPTION',
       width: '100%',
+      minimumInputLength: 3,
       ajax: {
         url: baseUrl("eforms/transmittal/get_vehicle_collection"),
         global: false,
@@ -219,18 +239,66 @@ var vmTab1 = new Vue({
           return data;
         }
       }
+    }).on('select2:select', function (e) {
+      var self = $(e.target);
+      self.validate();
     });
 
     setTimeout(function () {
       var vmData = this.vmTab1.vm_tab1;
     }, 400);
+
+  },
+  methods: {
+    select2Department (targetElement, destroy = false, id = 0, formData = {}){
+      const currentTarget = $(targetElement);
+      const select2Init = currentTarget.data('select2');
+
+      if (destroy) {
+        currentTarget.empty();
+        if (typeof select2Init !== 'undefined') { select2Init.destroy(); }
+        currentTarget.off('select2:select');
+      }
+
+      if (typeof formData !== 'undefined' && formData) {
+        var department_from = new Option(formData.text, formData.id, true, true);
+        $('#select2_dep').append(department_from).trigger('change');
+      }
+
+      var isDisabled = id == 0 ? true : false;
+
+      currentTarget.prop('disabled', isDisabled);
+
+      currentTarget.select2({
+        placeholder: 'SELECT AN OPTION',
+        width: '100%',
+        allowClear: true,
+        ajax: {
+          url: baseUrl("eforms/transmittal/get_department_collection"),
+          global: false,
+          delay: 250,
+          data: function ({ term }) {
+            return {
+              q: term,
+              company_id: id
+            }  
+          },
+          processResults: function (data) {
+            return data;
+          }
+        }
+      }).on("select2:select", function (e) {
+        var self = $(e.target);
+        self.validate();
+      });
+    }
   }
 });
 
 var search_val = "";
 var check = "0";
 var tblContent = $("#table-content").DataTable({
-  dom: '<"toolbar">rt',
+  dom: '<"toolbar">rtp',
   serverSide: true,
   processing: true,
   ajax: {
@@ -276,10 +344,10 @@ function emp_details() {
         var _deptDisplay = (parseInt(data.temp_dep_str) === 0) ? data.dep_str : data.department_id;
         var _posDisplay = (parseInt(data.temp_pos_str) === 0) ? data.pos_str : data.position;
         var tempDisplay = _compDisplay + '\n' + _deptDisplay + '\n' + _posDisplay;
-  
 
         /*** $('[name="deliver_company"]').val(data.company_id + '\n' + data.department_id + '\n' + data.position); ***/
-        $('[name="deliver_company"]').val(tempDisplay);
+        $('[name="deliver_company"]').val(data.company_id + '\n' + data.department_id + '\n' + data.position);
+        $('#deliver_company_in').val(tempDisplay);
         $('input[name="deliver_address"]').val(data.company_address);
       }, error: function (jqXHR, textStatus, errorThrown) {
         alert('Error: "ajax_emp_details"');
@@ -399,73 +467,113 @@ function view_back() {
   window.location.replace(baseUrl("eforms/transmittal/view_transmittal?id=") + param_id);
 }
 
-function update_transmittal() {
-  var url;
-  url = baseUrl("eforms/transmittal/update_transmittal/") + param_id;
-  if (tblContent.data().length == 0) {
-    $('#table_v').empty();
-    $('#table_v').append('<p><font color="#FF0000">Required. Add atleast 1 Content</font></p>');
-  }
+// function update_transmittal() {
+//   var url;
+//   url = baseUrl("eforms/transmittal/update_transmittal/") + param_id;
+//   if (tblContent.data().length == 0) {
+//     $('#table_v').empty();
+//     $('#table_v').append('<p><font color="#FF0000">Required. Add atleast 1 Content</font></p>');
+//   }
 
-  $.validate({
-    form: '#form_transmittal',
-    lang: 'en',
-    onSuccess: function (form) {
-      if (tblContent.data().length !== 0) {
-        $('#table_v').empty();
-        var disabled = $('#form_transmittal').find('textarea:disabled, input:disabled, select:disabled').removeAttr('disabled');
-        $.ajax({
-          url: url,
-          type: "POST",
-          data: $('#form_transmittal').serialize(),
-          dataType: "JSON",
-          success: function (data) {
-            if (data.status) {
-              disabled.attr('disabled', 'disabled');
-              toastr.success(data.toastr_msg, "Updated successfully!", 5000);
-              window.location.replace(baseUrl("eforms/transmittal/view_transmittal?id=") + param_id);
-            } else {
-              alert('Error get data from ajax');
-            }
+//   file_under.on("change", function (e) {
+//     var self = $(e.target);
+//     self.validate();
+//   });
+
+//   department.on("change", function (e) {
+//     var self = $(e.target);
+//     self.validate();
+//   });
+
+//   requested_by.on("change", function (e) {
+//     var self = $(e.target);
+//     self.validate();
+//   });
+
+//   $("#select2_deliver").on("change", function (e) {
+//     var self = $(e.target);
+//     self.validate();
+//   });
+
+//   $("#select2_vehicle").on("change", function (e) {
+//     var self = $(e.target);
+//     self.validate();
+//   });
+
+
+//   $("#delivery_dt").on("change", function (e) {
+//     var self = $(e.target);
+//     self.validate();
+//   });
+
+//   $.validate({
+//     form: '#form_transmittal',
+//     lang: 'en',
+//     onSuccess: function (form) {
+//       var url;
+//       url = baseUrl("eforms/transmittal/update_transmittal/") + param_id;
+//       if (tblContent.data().length == 0) {
+//         $('#table_v').empty();
+//         $('#table_v').append('<p><font color="#FF0000">Required. Add atleast 1 Content</font></p>');
+//       }
+
+//       if (tblContent.data().length !== 0) {
+//         $('#table_v').empty();
+//         var disabled = $('#form_transmittal').find('textarea:disabled, input:disabled, select:disabled').removeAttr('disabled');
+//         $.ajax({
+//           url: url,
+//           type: "POST",
+//           data: $('#form_transmittal').serialize(),
+//           dataType: "JSON",
+//           success: function (data) {
+//             if (data.status) {
+//               disabled.attr('disabled', 'disabled');
+//               toastr.success(data.toastr_msg, "Updated successfully!", 5000);
+//               window.location.replace(baseUrl("eforms/transmittal/view_transmittal?id=") + param_id);
+//             } else {
+//               alert('Error get data from ajax');
+//             }
+//           }
+//         });
+//       }
+//       return false;
+//     },
+//   });
+// }
+
+$.validate({
+  form: '#form_transmittal',
+  lang: 'en',
+  onSuccess: function (form) {
+    var url;
+    url = baseUrl("eforms/transmittal/update_transmittal/") + param_id;
+    if (tblContent.data().length == 0) {
+      $('#table_v').empty();
+      $('#table_v').append('<p><font color="#FF0000">Required. Add atleast 1 Content</font></p>');
+    }
+
+    if (tblContent.data().length !== 0) {
+      $('#table_v').empty();
+      var disabled = $('#form_transmittal').find('textarea:disabled, input:disabled, select:disabled').removeAttr('disabled');
+      $.ajax({
+        url: url,
+        type: "POST",
+        data: $('#form_transmittal').serialize(),
+        dataType: "JSON",
+        success: function (data) {
+          if (data.status) {
+            disabled.attr('disabled', 'disabled');
+            toastr.success(data.toastr_msg, "Updated successfully!", 5000);
+            window.location.replace(baseUrl("eforms/transmittal/view_transmittal?id=") + param_id);
+          } else {
+            alert('Error get data from ajax');
           }
-        });
-      }
-      return false;
-    },
-  });
-
-  file_under.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
-
-  department.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
-
-  requested_by.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
-
-  deliver.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
-
-  vehicle.on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
-
-
-  $("#delivery_dt").on("change", function (e) {
-    var self = $(e.target);
-    self.validate();
-  });
-
-}
+        }
+      });
+    }
+    return false;
+  },
+});
 
 function delete_content() {
   $temp = $('[name="delete_id"]').val();
@@ -560,3 +668,13 @@ $(document).ready(function () {
   document.getElementById('row_courier').style.display = 'none';
   document.getElementById('other_remark').style.display = 'none';
 });
+
+function backToMaster(){
+  var data = tblContent.rows().data().toArray();
+
+  if (data.length > 0) {
+    window.location.replace(baseUrl("eforms/transmittal/view_transmittal?id=") + param_id);
+  } else {
+    toastr.warning("Content must not be empty. Please add atleast 1 content.", "Warning!", 5000);
+  }
+}

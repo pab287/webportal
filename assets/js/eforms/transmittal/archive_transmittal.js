@@ -20,7 +20,7 @@ var tblTransmittal = $("#table-transmittal").DataTable({
         { data: "priority"},
         { data: "reference_no"},
         { data: "company_from"},
-        { data: "firstname", render: function (data, type, row, meta) {return displayName(row.display_name)}},
+        { data: "firstname", orderable: false, render: function (data, type, row, meta) {return displayName(row.display_name)}},
         { data: "trans_desc", render: function(data) {return formatContent(data)}},
         { data: "ship_date", render: function (data) {return formatCalendarDate(data)}},
         { data: "created_by"},       
@@ -144,7 +144,7 @@ function formatCalendarDate(data){
 function itemDatatableActions($id){
 	if($id){
 		var _actionButton ="";
-			_actionButton += " <a class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='"+baseUrl('eforms/transmittal/view_transmittal?id=')+$id+"' target='__blank'><i class='la la-pencil-square'></i></a>";				
+			_actionButton += " <a class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='"+baseUrl('eforms/transmittal/view_transmittal?id=')+$id+"&page=archive' target='__blank'><i class='la la-pencil-square'></i></a>";				
 		return _actionButton;
 	}else{ return false; }
 }
