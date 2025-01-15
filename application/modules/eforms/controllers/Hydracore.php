@@ -9,28 +9,28 @@ class Hydracore extends MY_Controller {
     }
  
 
-    public function get_account_collection(){
+    public function account_collection(){
         $data = $this->hydracore->getAccountsCollection();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
 
-    public function get_account_by_id(){
-        $data = $this->hydracore->getAccountById();
+    public function get_account(){
+        $data = $this->hydracore->getAccount();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
 
-    public function get_bill_by_id(){
+    public function bill(){
         $data = $this->hydracore->getBillbyID();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
 
-    public function get_account_details_by_account_no(){
+    public function account_details(){
         $data = $this->hydracore->getAccountDetailsbyAccountno();
         $this->output
             ->set_content_type('json')
@@ -44,14 +44,14 @@ class Hydracore extends MY_Controller {
             ->set_output(json_encode($data));
     }
 
-    public function get_unpaid_bill_collection_by_account_id(){
+    public function unpaid_bills(){
         $data = $this->hydracore->getUnpaidBillCollectionbyAccoutId();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
 
-    public function insert_payment(){
+    public function add_payment(){
         $data = $this->hydracore->insertPayment();
         $this->output
             ->set_content_type('json')

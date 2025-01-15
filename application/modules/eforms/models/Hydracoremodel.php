@@ -18,21 +18,23 @@ class Hydracoremodel extends CI_Model {
         return $query->num_rows() > 0 ? $query->result_array() : false;
     }
 
-    public function getAccountById(){
+    public function getAccount(){
+        $get = $this->input->get();
+        
         $this->db->select("*");
         $this->db->from("hydra_billing.accounts");
-        $this->db->where("id",1);
+        $this->db->where("id",$get["id"]);
         $query = $this->db->get();
 
         return $query->num_rows() > 0 ? $query->row_array() : false;
     }
 
     public function getBillbyID(){
-        $post = $this->input->post();
+        $get = $this->input->get();
 
         $this->db->select("*");
         $this->db->from("hydra_billing.bills");
-        $this->db->where("id",$post["bill_id"]);
+        $this->db->where("id",$get["id"]);
         $query = $this->db->get();
 
         return $query->num_rows() > 0 ? $query->row_array() : false;
@@ -49,14 +51,12 @@ class Hydracoremodel extends CI_Model {
         return $query->num_rows() > 0 ? $query->row_array() : false;
     }
 
-
-
     public function getAccountDetailsbyAccountno(){
-        $post = $this->input->post();
+        $get = $this->input->get();
 
         $this->db->select("id, accountno, meterno, firstname, lastname, model AS house_model, block, lot, phonenumber");
         $this->db->from("hydra_billing.accounts");
-        $this->db->where("accountno",$post["accountno"]);
+        $this->db->where("accountno",$get["accountno"]);
         $this->db->where("status", 1);
         $query = $this->db->get();
 
