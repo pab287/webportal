@@ -144,7 +144,7 @@ class Company_model extends CI_Model{
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
                 $resultset["toastr_state"] = "warning";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed to create directory folder for the upload file of companyu logo.","upload", "error", "gcchris", "user");
+				$this->core_layout->setEventLog("User has failed to create directory folder for the upload file of company logo.","upload", "error", "gcchris", "system");
             }else{
                 $config = array();
                 $config['upload_path']          = $imagesPath;
@@ -164,18 +164,18 @@ class Company_model extends CI_Model{
 
                         $resultset["toastr_msg"] = "Upload image successful.";
                         $resultset["toastr_state"] = "success";
-						$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has successfully uploaded company logo.","upload", "success", "gcchris", "user");
+						$this->core_layout->setEventLog("User has successfully uploaded company logo.","upload", "success", "gcchris", "user");
                     }else{
                         $resultset["response"] = false;
                         $resultset["toastr_msg"] = "Image upload to specific path failed!";
                         $resultset["toastr_state"] = "error";
-						$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed uploading images to specified path of company logo.","upload", "error", "gcchris", "user");
+						$this->core_layout->setEventLog("User has failed uploading images to specified path of company logo.","upload", "error", "gcchris", "system");
                     }
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Image upload failed!";
                     $resultset["toastr_state"] = "error";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed uploading images of company logo.","upload", "error", "gcchris", "user");
+					$this->core_layout->setEventLog("User has failed uploading images of company logo.","upload", "error", "gcchris", "system");
                 }
             }
 
@@ -221,12 +221,12 @@ class Company_model extends CI_Model{
 				}else{
 					$resultset["response"] = false;
 					$resultset["toastr_msg"] = "Failed saving company data!";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has error inserting company details for company code: ".$post["code"],"insert", "error", "gcchris", "system");
+					$this->core_layout->setEventLog("User has error inserting company details for company code: ".$post["code"],"insert", "error", "gcchris", "system");
 				}
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Company code already exist!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has error inserting company already exist for company code: ".$post["code"],"insert", "error", "gcchris", "system");
+				$this->core_layout->setEventLog("User has error inserting company already exist for company code: ".$post["code"],"insert", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
@@ -267,11 +267,11 @@ class Company_model extends CI_Model{
 				unset($post['update_date']); 
                 unset($post['update_by']);
 				$changes = $this->logChanges($currentCompanyData ,$post);
-				$this->core_layout->setEventLog("User updated company: ".$post['description']." ".$changes,"update", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User updated company: <strong>".$post['description']."</strong> ".$changes,"update", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed updating company data!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has error updating company data.","update", "error", "gcchris", "system");
+				$this->core_layout->setEventLog("User has error updating company data.","update", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
@@ -301,11 +301,11 @@ class Company_model extends CI_Model{
 					
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Company has been removed.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " archived company: ".$company,"archived", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User archived company: <strong>".$company."</strong>","archived", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed to remove company!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " error archiving company with db id no. ".$company,"archived", "success", "gcchris", "system");
+				$this->core_layout->setEventLog("User error archiving company: <strong>".$company."</strong>","archived", "success", "gcchris", "system");
 			}
 		}else{
 			$resultset["response"] = false;
@@ -443,11 +443,11 @@ class Company_model extends CI_Model{
 					
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Company has been restored.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " restored company: ".$company->description,"restore", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User restored company: <strong>".$company->description."</strong>","restore", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed to restore company!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " error restoring company: ".$company->description,"restore", "success", "gcchris", "system");
+				$this->core_layout->setEventLog("User error restoring company: <strong>".$company->description."</strong>","restore", "success", "gcchris", "system");
 			}
 		}else{
 			$resultset["response"] = false;
