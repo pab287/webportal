@@ -139,12 +139,12 @@ class Department_model extends CI_Model{
 				}else{
 					$resultset["response"] = false;
 					$resultset["toastr_msg"] = "Failed saving department data!";
-					$this->core_layout->setEventLog("User failed inserting new department","insert", "error", "gcchris", "system");
+					$this->core_layout->setEventLog("User failed inserting new department: <strong>".$post['description']."</strong>","insert", "error", "gcchris", "system");
 				}
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Department code already exist!";
-				$this->core_layout->setEventLog("Use failed inserting existing department","insert", "error", "gcchris", "system");
+				$this->core_layout->setEventLog("Use failed inserting existing department: <strong>".$post['code']."</strong>","insert", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
