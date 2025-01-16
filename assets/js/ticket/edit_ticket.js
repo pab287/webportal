@@ -143,30 +143,72 @@ $.ajax({
        
         
         vmTab1.vm_tab1 = Object.assign({}, data);
-        
 
+        $("#performed_by").select2({
+            width: "100%",
+            placeholder: "Select an option",
+            data: _tempContentData.performed_by,
+            allowClear: true,
+        });
+        
+        $("#department").select2({
+            width: "100%",
+            placeholder: "Select an option",
+            data: _tempContentData.department,
+            allowClear: true,
+        });
+        
+        $("#category").select2({
+            width: "100%",
+            placeholder: "Select an option",
+            data: _tempContentData.category,
+            allowClear: true,
+        });
+        
+        $("#sub_category").select2({
+            width: "100%",
+            placeholder: "Select an option",
+            data: _tempContentData.subcategory,
+            allowClear: true,
+        });
+        
+        $("#category").on("change", function (e) {
+            let type = $("#category option:selected").text();
+            if(type == 'webportal'){
+                $("#webportal").show();
+            }else{
+                $("#webportal").hide();
+            }
+        });
+        
+        
+        $("#status").select2({
+            width: "100%",
+            placeholder: "Select an option",
+            data: _tempContentData.status,
+            allowClear: true,
+        });
+        
+        $("#severity").select2({
+            width: "100%",
+            placeholder: "Select an option",
+            data: _tempContentData.severity,
+            allowClear: true,
+        });
+
+        console.log(data);
         let category = new Option(vmData.category, vmData.category, true, true);
-        $('#category').append(category).trigger('change');
+
         
         if(vmData.category == 'webportal'){
             $("#webportal").show();
-            let sub_category = new Option(vmData.sub_category, vmData.sub_category, true, true);
-            $('#sub_category').append(sub_category).trigger('change');
+            $('#vmData.sub_category').val(data.sub_category).trigger('change');
         }
-
-
-        let department = new Option(vmData.department, vmData.department_id, true, true);
-        $('#department').append(department).trigger('change');
-
-        let status = new Option(vmData.status, vmData.status, true, true);
-        $('#status').append(status).trigger('change');
-
-        let performed_by = new Option(vmData.performed_by_det, vmData.performed_by_id, true, true);
-        $('#performed_by').append(performed_by).trigger('change');
-
-        let severity = new Option(vmData.severity_id, vmData.severity_id, true, true);
-        $('#severity').append(severity).trigger('change');
-
+        $('#status').val(data.status).trigger('change');
+        $('#performed_by').val(data.performed_by_id).trigger('change');
+        $('#category').val(data.category).trigger('change');
+        $('#severity').val(data.severity_id).trigger('change');
+        $('#department').val(data.department_id).trigger('change');
     }
 });
 
@@ -231,58 +273,6 @@ $.validate({
         });
         return false;
     },
-});
-
-$("#performed_by").select2({
-    width: "100%",
-    placeholder: "Select an option",
-    data: _tempContentData.performed_by,
-    allowClear: true,
-});
-
-$("#department").select2({
-    width: "100%",
-    placeholder: "Select an option",
-    data: _tempContentData.department,
-    allowClear: true,
-});
-
-$("#category").select2({
-    width: "100%",
-    placeholder: "Select an option",
-    data: _tempContentData.category,
-    allowClear: true,
-});
-
-$("#sub_category").select2({
-    width: "100%",
-    placeholder: "Select an option",
-    data: _tempContentData.subcategory,
-    allowClear: true,
-});
-
-$("#category").on("change", function (e) {
-    let type = $("#category option:selected").text();
-    if(type == 'webportal'){
-        $("#webportal").show();
-    }else{
-        $("#webportal").hide();
-    }
-});
-
-
-$("#status").select2({
-    width: "100%",
-    placeholder: "Select an option",
-    data: _tempContentData.status,
-    allowClear: true,
-});
-
-$("#severity").select2({
-    width: "100%",
-    placeholder: "Select an option",
-    data: _tempContentData.severity,
-    allowClear: true,
 });
 
 // $('#need_dt_group').datetimepicker({

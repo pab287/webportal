@@ -32,23 +32,99 @@ let tbl = $("#table-tickets").DataTable({
     searching: false,
     order: [[0, 'desc']],
     columns: [
+        {data: "id", visible: false},
         {data: "reference_no"},
         {data: "category"},
-        {data: "sub_category"},
-        {data: "priority"},
-        {data: "status"},
-        {data: "requested_date"},
-        {data: "days_overdue"},
+        {data: "sub_category",
+            render: function (data, type, row) {
+                return row.sub_category ? row.sub_category : 'NOT SET';
+        }},
+        {data: "priority",
+            render: function (data, type, row) {
+                if (!row.priority) return "<span class='m-badge m-badge--secondary m-badge--wide text-white'><strong>NOT SET</strong></span>";
+                
+                let badgeClass = '';
+                
+                switch(row.priority.toLowerCase()) {
+                    case 'low':
+                        badgeClass = 'm-badge--info';
+                        break;
+                    case 'medium':
+                        badgeClass = 'm-badge--warning';
+                        break;
+                    default:
+                        badgeClass = 'm-badge--danger';
+                        break;
+                }
+                
+                return `<span class='m-badge ${badgeClass} m-badge--wide text-white'><strong>${row.priority}</strong></span>`;
+            }
+        },
+        {data: "status",
+            render: function (data, type, row) {
+                if (!row.status) return "<span class='m-badge m-badge--metal m-badge--wide text-white'><strong>NOT SET</strong></span>";
+                
+                let badgeClass = '';
+                
+                switch(row.status.toLowerCase()) {
+                    case 'completed':
+                        badgeClass = 'm-badge--success';
+                        break;
+                    case 'open':
+                        badgeClass = 'm-badge--brand';
+                        break;
+                    case 'cancelled':
+                        badgeClass = 'm-badge--danger';
+                        break;
+                    case 'in progress':
+                        badgeClass = 'm-badge--accent';
+                        break;
+                    default:
+                        badgeClass = 'm-badge--metal';
+                        break;
+                }
+                
+                return `<span class='m-badge ${badgeClass} m-badge--wide text-white'><strong>${row.status}</strong></span>`;
+            }
+        },        
+        {data: "requested_date",
+            render: function (data, type, row) {
+                return moment(row.requested_date).format('MMM D, YYYY hh:mm A');
+            }
+        },
+        {
+            data: null,
+            render: function (data, type, row) {
+                if(row.status == 'Completed' || row.status == 'RESOLVED') {
+                    return 'Ticket Completed';
+                }
+                if (!row.requested_date) return '---';
+                
+                const today = new Date();
+                const requestDate = new Date(row.requested_date);
+                
+                // Return empty if invalid date
+                if (isNaN(requestDate.getTime())) return '';
+                
+                // Calculate difference in days
+                const diffTime = today - requestDate;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays <= 0) return 'Not Overdue';
+                
+                return `${diffDays.toLocaleString()} ${diffDays === 1 ? 'Day' : 'Days'}`;
+            }
+        },        
         {data: "requestor"},
         {data: "performed_by"},
         {data: null, width: "10%", className: "text-center"},
     ],
     columnDefs: [
         {
-            targets: [5], width: "15%",
+            targets: [6], width: "15%",
         },
         {
-            targets: [6],
+            targets: [7],
             orderable: false
         },
         {

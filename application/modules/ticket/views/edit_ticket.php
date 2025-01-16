@@ -82,7 +82,7 @@
                                         Severity
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
-                                        <select id="severity" name="severity" data-validation="required">
+                                        <select id="severity" name="severity" class="form-control select2" data-validation="required">
                                             <option></option>
                                         </select>
                                     </div>
@@ -116,7 +116,7 @@
                                         Department
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
-                                        <select id="department" name="department" data-validation="required">
+                                        <select id="department" name="department" class="form-control select2" data-validation="required">
                                             <option></option>
                                         </select>
                                     </div>
@@ -126,7 +126,7 @@
                                         Category
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
-                                        <select id="category" name="category" data-validation="required">
+                                        <select id="category" name="category" class="form-control select2" data-validation="required">
                                             <option></option>
                                         </select>
                                     </div>
@@ -136,7 +136,7 @@
                                         Sub-Category
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
-                                        <select id="sub_category" name="sub_category" data-validation="required">
+                                        <select id="sub_category" name="sub_category" class="form-control select2" data-validation="required">
                                             <option></option>
                                         </select>
                                     </div>
@@ -156,7 +156,7 @@
                                         Performed by:
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-8">
-                                        <select id="performed_by" name="performed_by" data-validation="required">
+                                        <select id="performed_by" name="performed_by" class="form-control select2" data-validation="required">
                                             <option></option>
                                         </select>
                                     </div>
@@ -166,7 +166,7 @@
                                         Status
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
-                                        <select id="status" name="status" data-validation="required">
+                                        <select id="status" name="status" class="form-control select2" data-validation="required">
                                             <option></option>
                                         </select>
                                     </div>
