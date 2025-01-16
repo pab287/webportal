@@ -60,11 +60,14 @@ class Ticket extends MY_Controller {
     function index(){
         $this->core_layout->setPrivilegeName("ticket");
         $this->core_layout->setPageTitle("TICKET - Add Ticket");
+        $tempData["department"] = $this->ticket->select2DepartmentData();
+        $tempData["category"] = $this->ticket->select2CategoryData('category');
+        $tempData["subcategory"] = $this->ticket->select2CategoryData('sub-category');
         $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
         $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
-        $this->core_layout->addJs("js/ticket/new_ticket.js", true);
+        $this->core_layout->addJs("js/ticket/new_ticket.js", true,$tempData);
 		$this->load->view('core/templates/header');
         $this->load->view('ticket/new_ticket');
         $this->load->view('core/templates/footer');
@@ -77,7 +80,13 @@ class Ticket extends MY_Controller {
         $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
-        $this->core_layout->addJs("js/ticket/edit_ticket.js", true);
+        $tempData["department"] = $this->ticket->select2DepartmentData();
+        $tempData["category"] = $this->ticket->select2CategoryData('category');
+        $tempData["subcategory"] = $this->ticket->select2CategoryData('sub-category');
+        $tempData["status"] = $this->ticket->select2CategoryData('status');
+        $tempData["severity"] = $this->ticket->select2CategoryData('severity');
+        $tempData["performed_by"] = $this->ticket->select2PerformedByData();
+        $this->core_layout->addJs("js/ticket/edit_ticket.js", true,$tempData);
 		$this->load->view('core/templates/header');
         $this->load->view('ticket/edit_ticket');
         $this->load->view('core/templates/footer');

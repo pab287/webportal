@@ -236,53 +236,29 @@ $.validate({
 $("#performed_by").select2({
     width: "100%",
     placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_performed_by"),
-        dataType: "json",
-        delay: 1200,
-        processResults: function (data) {
-            return data;
-        }
-    }
+    data: _tempContentData.performed_by,
+    allowClear: true,
 });
 
 $("#department").select2({
     width: "100%",
     placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_department_collection"),
-        dataType: "json",
-        delay: 1200,
-        processResults: function (data) {
-            return data;
-        }
-    }
+    data: _tempContentData.department,
+    allowClear: true,
 });
 
 $("#category").select2({
     width: "100%",
     placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_category_collection/") + 'category',
-        dataType: "json",
-        delay: 1200,
-        processResults: function (data) {
-            return data;
-        }
-    }
+    data: _tempContentData.category,
+    allowClear: true,
 });
 
 $("#sub_category").select2({
     width: "100%",
     placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_category_collection/") + 'sub-category',
-        dataType: "json",
-        delay: 1200,
-        processResults: function (data) {
-            return data;
-        }
-    }
+    data: _tempContentData.subcategory,
+    allowClear: true,
 });
 
 $("#category").on("change", function (e) {
@@ -298,27 +274,15 @@ $("#category").on("change", function (e) {
 $("#status").select2({
     width: "100%",
     placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_category_collection/") + 'status',
-        dataType: "json",
-        delay: 1200,
-        processResults: function (data) {
-            return data;
-        }
-    }
+    data: _tempContentData.status,
+    allowClear: true,
 });
 
 $("#severity").select2({
     width: "100%",
     placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_category_collection/") + 'severity',
-        dataType: "json",
-        delay: 1200,
-        processResults: function (data) {
-            return data;
-        }
-    }
+    data: _tempContentData.severity,
+    allowClear: true,
 });
 
 // $('#need_dt_group').datetimepicker({

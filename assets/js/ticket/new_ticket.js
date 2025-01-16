@@ -7,40 +7,22 @@ jQuery(document).ready(function () {
 $("select#category").select2({
     width: "100%",
     placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_category_collection/") + 'category',
-        dataType: "json",
-        delay: 250,
-        processResults: function (data) {
-            return data;
-        }
-    }
+    data: _tempContentData.category,
+    allowClear: true,
 });
 
 $("select#sub_category").select2({
     width: "100%",
     placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_category_collection/") + 'sub-category',
-        dataType: "json",
-        delay: 250,
-        processResults: function (data) {
-            return data;
-        }
-    }
+    data: _tempContentData.subcategory,
+    allowClear: true,
 });
 
 $("select#department").select2({
     width: "100%",
     placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_department_collection"),
-        dataType: "json",
-        delay: 250,
-        processResults: function (data) {
-            return data;
-        }
-    }
+    data: _tempContentData.department,
+    allowClear: true,
 });
 
 $('#date_required').datetimepicker({

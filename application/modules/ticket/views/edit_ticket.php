@@ -83,6 +83,7 @@
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="severity" name="severity" data-validation="required">
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
@@ -116,6 +117,7 @@
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="department" name="department" data-validation="required">
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
@@ -125,6 +127,7 @@
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="category" name="category" data-validation="required">
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
@@ -134,6 +137,7 @@
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="sub_category" name="sub_category" data-validation="required">
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
@@ -153,6 +157,7 @@
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-8">
                                         <select id="performed_by" name="performed_by" data-validation="required">
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
@@ -162,12 +167,13 @@
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="status" name="status" data-validation="required">
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="m-separator m-separator--solid d-xl-12"></div>  
+                        <div class="m-separator m-separator--solid d-xl-12"></div>
                         <div class="col-xl-12 order-1 order-xl-2 m--align-right">
                             <button type="submit" class="btn m-btn btn-success text-white m-btn--custom m-btn--icon m-btn--air m-btn--box btnSave">
                                 <span>

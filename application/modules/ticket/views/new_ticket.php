@@ -60,7 +60,7 @@
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <select id="category" name="category"  data-validation="required">
-
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
@@ -70,7 +70,7 @@
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <select id="sub_category" name="sub_category"  data-validation="required">
-
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
@@ -91,7 +91,7 @@
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <select id="department" name="department" data-validation="required">
-
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>

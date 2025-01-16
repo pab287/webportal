@@ -5,6 +5,7 @@ class Ticket_m extends CI_Model
     private $user_data = array();
     protected $tickets = "gccticket";
     private $current_actions =  array();
+    private $category = "gccticket.category";
 
     public function __construct(){
         parent::__construct();
@@ -842,7 +843,7 @@ class Ticket_m extends CI_Model
         return $query->result();
     }
 
-    function updateTicket($id){   
+    function updateTicket($id){
         $post = $this->input->post();
         if(isset($post['sub_category'])){
             $sub_category = $post['sub_category'];
@@ -1171,5 +1172,42 @@ class Ticket_m extends CI_Model
 			return false;
 		}
 	}
+
+    public function select2DepartmentData(){
+        $subQuery = $this->db->select('MAX(id) as max_id', FALSE)
+                             ->from('gcchris.tbldepartments')
+                             ->group_by(['code', 'description'])
+                             ->get_compiled_select();
+    
+        $this->db->select("departments.id, UPPER(CONCAT(departments.`description`)) `text`, departments.*")
+                 ->from('gcchris.tbldepartments departments')
+                 ->join("($subQuery) latest", 'latest.max_id = departments.id', 'inner')
+                 ->order_by('departments.id', 'asc');
+    
+        $results = $this->db->get()->result();
+        return $results;
+    }
+
+    public function select2CategoryData($type){
+        $this->db->select("cat.name as text, cat.name as id");
+        $this->db->from($this->category. ' as cat');
+        $this->db->where('cat.type', $type);
+        $this->db->order_by("id", "ASC");
+        $results = $this->db->get()->result();
+        return $results;
+    }
+
+    public function select2PerformedByData(){
+        $query = $this->db->query("SELECT  c.id, CONCAT(c.firstname,' ',c.lastname) as emp_name FROM gccmaster.tblusers b, gccmaster.tblemployees c WHERE b.emp_id=c.id AND b.group_id='1' AND c.employee_status = 'Active' AND b.group_id=1");
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $data["id"] = $_query["id"];
+                $data["text"] = $_query["emp_name"];
+                $resultarray[] = $data;
+            }
+        }
+        return  $resultarray;
+    }
 
 }
