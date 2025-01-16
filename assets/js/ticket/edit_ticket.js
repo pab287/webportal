@@ -164,7 +164,7 @@ $.ajax({
         let performed_by = new Option(vmData.performed_by_det, vmData.performed_by_id, true, true);
         $('#performed_by').append(performed_by).trigger('change');
 
-        let severity = new Option(vmData.severity, vmData.severity, true, true);
+        let severity = new Option(vmData.severity_id, vmData.severity_id, true, true);
         $('#severity').append(severity).trigger('change');
 
     }
