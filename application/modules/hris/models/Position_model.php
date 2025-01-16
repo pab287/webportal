@@ -151,12 +151,12 @@ class Position_model extends CI_Model{
 				}else{
 					$resultset["response"] = false;
 					$resultset["toastr_msg"] = "Failed saving position data!";
-					$this->core_layout->setEventLog("User failed adding new position","insert", "error", "gcchris", "system");
+					$this->core_layout->setEventLog("User failed adding new position: <strong>".$post['name']."</strong>","insert", "error", "gcchris", "system");
 				}
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Position name already exist!";
-				$this->core_layout->setEventLog("User failed inserting existing position","insert", "error", "gcchris", "system");
+				$this->core_layout->setEventLog("User failed inserting existing position: <strong>".$post['name']."</strong>","insert", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
@@ -189,7 +189,7 @@ class Position_model extends CI_Model{
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed updating position data!";
-				$this->core_layout->setEventLog("User failed updating position. <strong>$currentPositionData->name</strong>","update", "error", "gcchris", "system");
+				$this->core_layout->setEventLog("User failed updating position: <strong>$currentPositionData->name</strong>","update", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
