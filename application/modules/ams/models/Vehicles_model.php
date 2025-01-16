@@ -175,13 +175,13 @@
             if(isset($tableConfig['advanced_search']) && !empty($tableConfig['advanced_search'])){
                 // var_dump($tableConfig['advanced_search']);
                 $output = '';
-                $output .= ($params['gen_code'] != '')? 'Vehicle Code: '.$params['gen_code'].' ':'';
-                //$output .= ($advSearch['name'] != '')? 'Name: '.$advSearch['name'].', ':'';
-                //$output .= ($advSearch['description'] != '')? 'Description: '.$advSearch['description'].', ':'';
-                // $output .= ($advSearch['location'] != '')? 'Area: '.$advSearch['location'].', ':'';
-                // $output .= ($advSearch['asset_category'] != '')? 'Area: '.$advSearch['asset_category'].', ':'';
-                //$output .= ($params['serialno'] != '')? 'Serial #: '.$params['serialno'].', ':'';
-                //$output .= ($params['po_no'] != '')? 'PO #: '.$params['po_no'].' ':'';
+                $output .= (isset($params['gen_code']) && $params['gen_code'] != '')? 'Vehicle Code: '.$params['gen_code'].' ':'';
+                $output .= (isset($advSearch['name']) && $advSearch['name'] != '')? 'Name: '.$advSearch['name'].', ':'';
+                $output .= (isset($advSearch['description']) && $advSearch['description'] != '')? 'Description: '.$advSearch['description'].', ':'';
+                $output .= (isset($advSearch['location']) && $advSearch['location'] != '')? 'Area: '.$advSearch['location'].', ':'';
+                $output .= (isset($advSearch['asset_category']) && $advSearch['asset_category'] != '')? 'Area: '.$advSearch['asset_category'].', ':'';
+                $output .= (isset($params['serialno']) && $params['serialno'] != '')? 'Serial #: '.$params['serialno'].', ':'';
+                $output .= (isset($params['po_no']) && $params['po_no'] != '')? 'PO #: '.$params['po_no'].' ':'';
 
                 $this->core_layout->setEventLog("User searched from advanced search with `".$output."` in Vehicles Masterfile.","search", "success", "gccasset", "user");
             }
@@ -898,13 +898,13 @@
             if(isset($tableConfig['advanced_search']) && !empty($tableConfig['advanced_search'])){
                 // var_dump($tableConfig['advanced_search']);
                 $output = '';
-                $output .= ($params['gen_code'] != '')? 'Vehicle Code: '.$params['gen_code'].' ':'';
-                //$output .= ($advSearch['name'] != '')? 'Name: '.$advSearch['name'].', ':'';
-                //$output .= ($advSearch['description'] != '')? 'Description: '.$advSearch['description'].', ':'';
-                // $output .= ($advSearch['location'] != '')? 'Area: '.$advSearch['location'].', ':'';
-                // $output .= ($advSearch['asset_category'] != '')? 'Area: '.$advSearch['asset_category'].', ':'';
-                //$output .= ($params['serialno'] != '')? 'Serial #: '.$params['serialno'].', ':'';
-                //$output .= ($params['po_no'] != '')? 'PO #: '.$params['po_no'].' ':'';
+                $output .= (isset($params['gen_code']) && $params['gen_code'] != '')? 'Vehicle Code: '.$params['gen_code'].' ':'';
+                $output .= (isset($advSearch['name']) && $advSearch['name'] != '')? 'Name: '.$advSearch['name'].', ':'';
+                $output .= (isset($advSearch['description']) && $advSearch['description'] != '')? 'Description: '.$advSearch['description'].', ':'';
+                $output .= (isset($advSearch['location']) && $advSearch['location'] != '')? 'Area: '.$advSearch['location'].', ':'';
+                $output .= (isset($advSearch['asset_category']) && $advSearch['asset_category'] != '')? 'Area: '.$advSearch['asset_category'].', ':'';
+                $output .= (isset($params['serialno']) && $params['serialno'] != '')? 'Serial #: '.$params['serialno'].', ':'';
+                $output .= (isset($params['po_no']) && $params['po_no'] != '')? 'PO #: '.$params['po_no'].' ':'';
 
                 $this->core_layout->setEventLog("User searched from advanced search with `".$output."` in Vehicles Components Masterfile.","search", "success", "gccasset", "user");
             }
