@@ -2963,27 +2963,11 @@ class Payroll_m extends CI_Model
         return $timesheet;
     }
 
-    function getHolidayAmountDaily($timesheet=array()){
+    protected function getHolidayAmountDaily($timesheet=array()){
         if($timesheet && count(get_object_vars($timesheet)) > 0 && isset($timesheet->paid_holiday) && intval($timesheet->paid_holiday) == 1){
             $rowPayrate = $this->getPayrateSettingById($timesheet->payrate_id);
             $isPaidHoliday = isset($timesheet->paid_holiday) && intval($timesheet->paid_holiday) == 1 ? true: false;
-            /*** $ot_minutely = $timesheet->per_minute * (isset($rowPayrate) ? $rowPayrate->ot_rate : 1);
-            $timesheet->ot_minutely = floatval($timesheet->total_accredited_ot_hrs) > 0 ? $timesheet->total_accredited_ot_hrs * $ot_minutely: 0;
-            $timesheet->total_accredited_ot_hrs_amount = ($timesheet->total_accredited_ot_hrs * 60) * $ot_minutely;
-
-            $ot_ndiff_minutely = $timesheet->per_minute * (isset($rowPayrate) ? $rowPayrate->ot_night_diff_rate : 1);
-            $timesheet->ot_ndiff_minutely = floatval($timesheet->total_accredited_ndiff_ot_hrs) > 0 ? $timesheet->total_accredited_ndiff_ot_hrs * $ot_ndiff_minutely: 0;
-            $timesheet->total_accredited_ndiff_ot_hrs_amount = ($timesheet->total_accredited_ndiff_ot_hrs * 60) * $ot_ndiff_minutely; ***/
-
-            $tempHolidayRate = (isset($rowPayrate->regular_rate, $rowPayrate->is_holiday)
-            && $rowPayrate->regular_rate && intval($rowPayrate->is_holiday) == 1 && $isPaidHoliday === false) ? $rowPayrate->regular_rate: 1;
-
-            /*** $_holiday_minutes = $timesheet->minutely + $timesheet->ot_minutely + $timesheet->ot_ndiff_minutely;
-            $_holiday_minutes = $_holiday_minutes * ($timesheet->minutes_per_day / 60);
-
-            $_holiday_amount = $timesheet->minutely_amount + $timesheet->total_accredited_ot_hrs_amount + $timesheet->total_accredited_ndiff_ot_hrs_amount;
-            $_holiday_amount = $_holiday_amount * ($timesheet->minutes_per_day / 60); ***/
-
+            $tempHolidayRate = (isset($rowPayrate->regular_rate, $rowPayrate->is_holiday) && $rowPayrate->regular_rate && intval($rowPayrate->is_holiday) == 1 && $isPaidHoliday === false) ? $rowPayrate->regular_rate: 1;
             /*** $_holiday_minutes = $timesheet->minutely * ($timesheet->minutes_per_day / 60); ***/
             $_holiday_minutes = floatval($timesheet->minutes_per_day);
             $_holiday_amount = $timesheet->minutely_amount * ($timesheet->minutes_per_day / 60);
@@ -2991,20 +2975,17 @@ class Payroll_m extends CI_Model
             $deductUtMinutes = 0;
             $deductUtAmount = 0;
 
-            if($timesheet->is_holiday){
-                if(($timesheet->total_accredited_ot_hrs !== null && floatval($timesheet->total_accredited_ot_hrs) > 0)
-                    || ($timesheet->total_accredited_ndiff_ot_hrs !== null && floatval($timesheet->total_accredited_ndiff_ot_hrs) > 0)){
+            if($timesheet->is_holiday && ($timesheet->total_accredited_ot_hrs !== null && floatval($timesheet->total_accredited_ot_hrs) > 0)
+            || ($timesheet->total_accredited_ndiff_ot_hrs !== null && floatval($timesheet->total_accredited_ndiff_ot_hrs) > 0)){
+                $tempPayrate = (isset($timesheet->payrate_regular) && floatval($timesheet->payrate_regular) > 0)? floatval($timesheet->payrate_regular): 0;
+                $tempMinutely = (isset($timesheet->minutely) && floatval($timesheet->minutely) > 0)? floatval($timesheet->minutely): 0;
+                $holidayMinute = $tempMinutely * $tempPayrate;
+                $_temp_holiday_minutes = $holidayMinute * 60;
 
-                        $tempPayrate = (isset($timesheet->payrate_regular) && floatval($timesheet->payrate_regular) > 0)? floatval($timesheet->payrate_regular): 0;
-                        $tempMinutely = (isset($timesheet->minutely) && floatval($timesheet->minutely) > 0)? floatval($timesheet->minutely): 0;
-                        $holidayMinute = $tempMinutely * $tempPayrate;
-                        $_temp_holiday_minutes = $holidayMinute * 60;
+                $_temp_holiday_amount = $_temp_holiday_minutes * ($timesheet->minutes_per_day / 60);
 
-                    $_temp_holiday_amount = $_temp_holiday_minutes * ($timesheet->minutes_per_day / 60);
-
-                    $deductUtMinutes = $_temp_holiday_minutes;
-                    $deductUtAmount = $_temp_holiday_amount;
-                }
+                $deductUtMinutes = $_temp_holiday_minutes;
+                $deductUtAmount = $_temp_holiday_amount;
             }
 
             $timesheet->holiday_minutely = $_holiday_minutes;
@@ -3025,7 +3006,7 @@ class Payroll_m extends CI_Model
         return $timesheet;
     }
 
-    function getTotalMunitesDaily($ts=array(), $date=null){
+    protected function getTotalMunitesDaily($ts=array(), $date=null){
         $total_minutes = 0;
         if($ts && count(get_object_vars($ts)) > 0){
             $amMinutes = 0;
