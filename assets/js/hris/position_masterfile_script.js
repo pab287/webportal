@@ -22,7 +22,6 @@ if (typeof tablePositionList !== "undefined") {
         },
         columns: [
             {data: "name", width: "35%"},
-            // {data: "description", width: "20%"},
             {data: "type", width: "17%"},
             {data: "created_by", width: "20%"},
             {data: null, width: "8%", className: "text-center"}
@@ -36,10 +35,10 @@ if (typeof tablePositionList !== "undefined") {
                 return employeeDataTableActions(row.id);
             }
         },
-            {
-                targets: "_all",
-                defaultContent: ""
-            }
+        {
+            targets: "_all",
+            defaultContent: ""
+        }
         ]
     });
 
@@ -327,13 +326,12 @@ if (typeof tablePositionArchivedList !== "undefined") {
                 d.is_archived = 1
             }
         },
-        // columns: [
-        //     {data: "name", width: "45%"},
-        //     {data: "description", width: "10%"},
-        //     {data: "type", width: "17%"},
-        //     {data: "created_by", width: "20%"},
-        //     {data: null, width: "8%", className: "text-center"}
-        // ],
+        columns: [
+            {data: "name", width: "35%"},
+            {data: "type", width: "17%"},
+            {data: "created_by", width: "20%"},
+            {data: null, width: "8%", className: "text-center"}
+        ],
         columnDefs: [{
             data: null,
             defaultContent: "",
