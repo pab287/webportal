@@ -1519,6 +1519,7 @@ function initEditDocumentDialog(response) {
 }
 
 function initRegularEditDialog(response) {
+    console.log("Init");
     const html = response.html;
     const _modal = $('.document-modal-container');
     _modal.empty();
@@ -1560,6 +1561,19 @@ function initRegularEditDialog(response) {
             minViewMode: "years",
             autoclose: true
         });
+
+    _modal.find('#dep_birthdate').datepicker({
+        endDate: new Date(), 
+        todayHighlight: true,
+        orientation: "bottom left",
+        templates: {
+            leftArrow: '<i class="la la-angle-left"></i>',
+            rightArrow: '<i class="la la-angle-right"></i>'
+        },
+        format: "yyyy-mm-dd",
+        autoclose: true,
+        });
+
     _modal.modal('show');
 }
 
