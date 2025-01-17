@@ -144,7 +144,7 @@ class Company_model extends CI_Model{
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
                 $resultset["toastr_state"] = "warning";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed to create directory folder for the upload file of companyu logo.","upload", "error", "gcchris", "user");
+				$this->core_layout->setEventLog("User has failed to create directory folder for the upload file of company logo.","upload", "error", "gcchris", "system");
             }else{
                 $config = array();
                 $config['upload_path']          = $imagesPath;
@@ -164,18 +164,18 @@ class Company_model extends CI_Model{
 
                         $resultset["toastr_msg"] = "Upload image successful.";
                         $resultset["toastr_state"] = "success";
-						$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has successfully uploaded company logo.","upload", "success", "gcchris", "user");
+						$this->core_layout->setEventLog("User has successfully uploaded company logo.","upload", "success", "gcchris", "user");
                     }else{
                         $resultset["response"] = false;
                         $resultset["toastr_msg"] = "Image upload to specific path failed!";
                         $resultset["toastr_state"] = "error";
-						$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed uploading images to specified path of company logo.","upload", "error", "gcchris", "user");
+						$this->core_layout->setEventLog("User has failed uploading images to specified path of company logo.","upload", "error", "gcchris", "system");
                     }
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Image upload failed!";
                     $resultset["toastr_state"] = "error";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed uploading images of company logo.","upload", "error", "gcchris", "user");
+					$this->core_layout->setEventLog("User has failed uploading images of company logo.","upload", "error", "gcchris", "system");
                 }
             }
 
@@ -217,23 +217,22 @@ class Company_model extends CI_Model{
 					}
 					$resultset["response"] = true;
 					$resultset["toastr_msg"] = "Company data has been added.";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new company with db id no. ".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+					$this->core_layout->setEventLog("User added new company with code: <strong>".$post["code"]."</strong>","insert", "success", "gcchris", "user");
 				}else{
 					$resultset["response"] = false;
 					$resultset["toastr_msg"] = "Failed saving company data!";
-					$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has error inserting company details","insert", "error", "gcchris", "user");
+					$this->core_layout->setEventLog("User has error inserting company details for company code: <strong> ".$post["code"]."</strong>","insert", "error", "gcchris", "system");
 				}
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Company code already exist!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has error inserting company already exist.","insert", "error", "gcchris", "user");
+				$this->core_layout->setEventLog("User has error inserting company already exist for company code:  <strong>".$post["code"]."</strong>","insert", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
 			$resultset["toastr_msg"] = "No post data found!";
-			$this->core_layout->setEventLog("Company masterfile - Error, No post data found.","insert", "error", "gcchris", "user");
+			$this->core_layout->setEventLog("Company masterfile - Error, No post data found.","insert", "error", "gcchris", "system");
 		}
-        
         return $resultset;
 	}
 	
@@ -253,7 +252,7 @@ class Company_model extends CI_Model{
 			$post['email_to'] = isset($post['email_to']) ? serialize($post['email_to']) : "";
 			$post['cc_to'] = isset($post['cc_to']) ? serialize($post['cc_to']) : "";
 			$post['bcc_to'] = isset($post['bcc_to']) ? serialize($post['bcc_to']) : "";
-
+			$currentCompanyData = $this->getCompanyData($id);
 			$update = $this->db->update($this->companyTable, $post, array("id"=>$id));
 			if($update){
 				if($logo){
@@ -265,16 +264,19 @@ class Company_model extends CI_Model{
 				}
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Company data has been updated.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " updated company with db id no. ".$id,"update", "success", "gcchris", "user");
+				unset($post['update_date']); 
+                unset($post['update_by']);
+				$changes = $this->logChanges($currentCompanyData ,$post);
+				$this->core_layout->setEventLog("User updated company: <strong>".$post['description']."</strong> ".$changes,"update", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed updating company data!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " has error updating company data.","update", "error", "gcchris", "user");
+				$this->core_layout->setEventLog("User has error updating company data.","update", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
 			$resultset["toastr_msg"] = "No post data found!";
-			$this->core_layout->setEventLog("Company masterfile - Error, No post data found.","update", "error", "gcchris", "user");
+			$this->core_layout->setEventLog("Company masterfile - Error, No post data found.","update", "error", "gcchris", "system");
 		}
         
         return $resultset;
@@ -283,8 +285,9 @@ class Company_model extends CI_Model{
 	function removeCurrentCompany(){
 		$resultset = array();
 		$post = $this->input->post();
+		$company = $post['company'];
 		if(isset($post) && $post){
-			unset($post["csrf_token"]);
+			unset($post["csrf_token"],$post["company"]);
 			$updated = $this->db->update($this->companyTable, array("is_archived"=>1), $post);
 			if($updated){
 				$session = $this->core_layout->getCurrentSession();
@@ -298,16 +301,16 @@ class Company_model extends CI_Model{
 					
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Company has been removed.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " archived company with db id no. ".$post["id"],"archived", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User archived company: <strong>".$company."</strong>","archived", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed to remove company!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " error archiving company with db id no. ".$post["id"],"archived", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User error archiving company: <strong>".$company."</strong>","archived", "success", "gcchris", "system");
 			}
 		}else{
 			$resultset["response"] = false;
 			$resultset["toastr_msg"] = "No post data found!";
-			$this->core_layout->setEventLog("Company masterfile - Error, No post data found.","archived", "error", "gcchris", "user");
+			$this->core_layout->setEventLog("Company masterfile - Error, No post data found.","archived", "error", "gcchris", "system");
 		}
 
 		return $resultset;
@@ -427,6 +430,7 @@ class Company_model extends CI_Model{
 		if(isset($post) && $post){
 			unset($post["csrf_token"]);
 			$updated = $this->db->update($this->companyTable, array("is_archived"=>0), $post);
+			$company = $this->getCompanyData($post["id"]);
 			if($updated){
 				// $session = $this->core_layout->getCurrentSession();
 				// $data = array(
@@ -439,18 +443,43 @@ class Company_model extends CI_Model{
 					
 				$resultset["response"] = true;
 				$resultset["toastr_msg"] = "Company has been restored.";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " restored company with db id no. ".$post["id"],"restore", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User restored company: <strong>".$company->description."</strong>","restore", "success", "gcchris", "user");
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Failed to restore company!";
-				$this->core_layout->setEventLog("User ".$this->loggedInUsername. " error restoring company with db id no. ".$post["id"],"restore", "success", "gcchris", "user");
+				$this->core_layout->setEventLog("User error restoring company: <strong>".$company->description."</strong>","restore", "success", "gcchris", "system");
 			}
 		}else{
 			$resultset["response"] = false;
 			$resultset["toastr_msg"] = "No post data found!";
-			$this->core_layout->setEventLog("Company masterfile - Error, No post data found.","restore", "error", "gcchris", "user");
+			$this->core_layout->setEventLog("Company masterfile - Error, No post data found.","restore", "error", "gcchris", "system");
 		}
 
 		return $resultset;
 	}
+	private function getCompanyData($id) {
+		$this->db->select("*");
+		$this->db->from($this->companyTable);
+		$this->db->where('id', $id);
+		$query = $this->db->get(); 
+		return $query->row();
+	}
+
+	private function logChanges($currentData, $newData) {
+		$changes = array();
+		$changesString = '';
+		foreach ($currentData as $field => $value) {
+			if (isset($newData[$field]) && $newData[$field]!= $value) {
+				$changes[$field] = array(
+					'old' => $value,
+					'new' => $newData[$field]
+				);
+			}
+		}
+		foreach ($changes as $field => $change) {
+			$changesString.= " Field: $field, from: <strong>$change[old]</strong>, to: <strong>$change[new]</strong>\n";
+		}
+		return $changesString;
+	}
+
 }
