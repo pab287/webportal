@@ -134,11 +134,11 @@
                     $resultset['response'] = true;
                     $resultset['toastr_msg'] = 'Saved!';
 
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " inserted new license with db id no. ".$this->db->insert_id(),"insert", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User added new license: <strong>".$post['description']."</strong>","insert", "success", "gcchris", "user");
                 }else{
                     $resultset['response'] = true;
                     $resultset['toastr_msg'] = 'Failed to save license!';
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed inserting new license","insert", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("User failed inserting new license: <strong>".$post['description']."</strong>","insert", "error", "gcchris", "system");
                 }
             }
 
@@ -151,6 +151,7 @@
             if(isset($post) && $post){
                 unset($post["csrf_token"]);
                 $updated = $this->db->update($this->licenseTable, array("is_archived"=>1), $post);
+                $currentLicenseData = $this->getLicenseData($post["id"]);
                 if($updated){
                     $session = $this->core_layout->getCurrentSession();
                     $data = array(
@@ -163,16 +164,16 @@
                         
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "License has been removed.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has archived license with db id no. ".$post["id"],"archive", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User has archived license: <strong>".$currentLicenseData->description."</strong>","archive", "success", "gcchris", "user");
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to remove license!";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed archiving license with db id no. ".$post["id"],"archive", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("User has failed archiving license: <strong>".$currentLicenseData->description."</strong>","archive", "error", "gcchris", "system");
                 }
             }else{
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "No post data found!";
-                $this->core_layout->setEventLog("License masterfile - Error, No post data found.","archive", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("License masterfile - Error, No post data found.","archive", "error", "gcchris", "system");
             }
     
             return $resultset;
@@ -188,17 +189,20 @@
             $post['update_by'] = $session["emp_id"];
             $id = $post['id'];
             unset($post['id']);
-
+            $currentLicenseData = $this->getLicenseData($id);
             $this->db->where('id', $id);
             $query = $this->db->update($this->licenseTable, $post);
             if($query){
                 $resultset['response'] = true;
                 $resultset['toastr_msg'] = 'Updated!';
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " update license with db id no. ".$id,"update", "success", "gcchris", "user");
+                unset($post['update_date']); 
+                unset($post['update_by']);
+                $changes = $this->logChanges($currentLicenseData ,$post);
+                $this->core_layout->setEventLog("User update license: <strong>".$post['description']."</strong> ".$changes,"update", "success", "gcchris", "user");
             }else{
                 $resultset['response'] = true;
                 $resultset['toastr_msg'] = 'Failed to save license!';
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername. " failed to update license with db id no. ".$id,"update", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("User failed to update license: <strong>".$post['description']."</strong>","update", "error", "gcchris", "user");
             }
 
             return $resultset;
@@ -256,6 +260,7 @@
             if(isset($post) && $post){
                 unset($post["csrf_token"]);
                 $updated = $this->db->update($this->licenseTable, array("is_archived"=>0), $post);
+                $currentLicenseData = $this->getLicenseData($post["id"]);
                 if($updated){
                     // $session = $this->core_layout->getCurrentSession();
                     // $data = array(
@@ -268,18 +273,54 @@
                     
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "License has been restored.";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has restored license with db id no. ".$post["id"],"restore", "success", "gcchris", "user");
+                    $this->core_layout->setEventLog("User has restored license: <strong>".$currentLicenseData->description."</strong>","restore", "success", "gcchris", "user");
                 }else{
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = "Failed to restore license!";
-                    $this->core_layout->setEventLog("User ".$this->loggedInUsername. " has failed restoring license with db id no. ".$post["id"],"restore", "error", "gcchris", "user");
+                    $this->core_layout->setEventLog("User has failed restoring license: <strong>".$currentLicenseData->description."</strong>","restore", "error", "gcchris", "system");
                 }
             }else{
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "No post data found!";
-                $this->core_layout->setEventLog("License masterfile - Error, No post data found.","restore", "error", "gcchris", "user");
+                $this->core_layout->setEventLog("License masterfile - Error, No post data found.","restore", "error", "gcchris", "system");
             }
     
             return $resultset;
         }
+
+        private function logChanges($currentData, $newData) {
+            if (is_object($currentData)) {
+                $currentData = get_object_vars($currentData);
+            }
+            if (is_object($newData)) {
+                $newData = get_object_vars($newData);
+            }
+        
+            $changes = array();
+            $changesString = '';
+            foreach ($currentData as $field => $value) {
+                if (isset($newData[$field]) && $newData[$field]!== $value) {
+                    $changes[$field] = array(
+                        'old' => $value,
+                        'new' => $newData[$field]
+                    );
+                }
+            }
+            foreach ($changes as $field => $change) {
+                $changesString.= " Field: $field, from: $change[old], to: $change[new]\n";
+            }
+            return $changesString;
+        }
+
+        private function getLicenseData($id) {
+            $this->db->select("*");
+            $this->db->from($this->licenseTable);
+            $this->db->where('id', $id);
+            $query = $this->db->get(); 
+            $result = $query->row();
+            $this->db->reset_query();
+            return $result;
+        }
+
+
     }
