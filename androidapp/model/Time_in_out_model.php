@@ -37,6 +37,86 @@
             }
         }
 
+        /**
+         * Adds an attendance record in the app_attendance table.
+         *
+         * @param array $params The parameters for adding the attendance record.
+         * @return int The last inserted ID.
+         */
+        protected function addAppAttendanceRecord(array $params)
+        {
+            $resultId = 0;
+            if (isset(
+                $params['biometric_id'],
+                $params['time'],
+                $params['date'],
+                $params['address'],
+                $params['longitude'],
+                $params['latitude'],
+                $params['is_fingerprint'],
+                $params['time_status']
+            )) {
+                $conn = $this->conn('gcctimeutility');
+                $stmt = $conn->prepare('
+                    INSERT INTO gcctimeutility.app_attendance
+                    (biometric_id, time, date, address, longtitude, latitude, is_fingerprint, time_status)
+                    VALUES
+                    (:biometric_id, :time, :date, :address, :longtitude, :latitude, :is_fingerprint, :time_status)
+                ');
+
+                $stmt->bindParam(':biometric_id', $params['biometric_id']);
+                $stmt->bindParam(':time', $params['time']);
+                $stmt->bindParam(':date', $params['date']);
+                $stmt->bindParam(':address', $params['address']);
+                $stmt->bindParam(':longtitude', $params['longitude']);
+                $stmt->bindParam(':latitude', $params['latitude']);
+                $stmt->bindParam(':is_fingerprint', $params['is_fingerprint']);
+                $stmt->bindParam(':time_status', $params['time_status']);
+
+                $stmt->execute();
+                $resultId = $conn->lastInsertId();
+            }
+
+            return $resultId;
+        }
+
+        protected function addAppAttendanceRecordSpam(array $params)
+        {
+            $resultId = 0;
+            if (isset(
+                $params['biometric_id'],
+                $params['time'],
+                $params['date'],
+                $params['address'],
+                $params['longitude'],
+                $params['latitude'],
+                $params['is_fingerprint'],
+                $params['time_status']
+            )) {
+                $conn = $this->conn('gcctimeutility');
+                $stmt = $conn->prepare('
+                    INSERT INTO gcctimeutility.app_attendance_spam
+                    (biometric_id, time, date, address, longtitude, latitude, is_fingerprint, time_status)
+                    VALUES
+                    (:biometric_id, :time, :date, :address, :longtitude, :latitude, :is_fingerprint, :time_status)
+                ');
+
+                $stmt->bindParam(':biometric_id', $params['biometric_id']);
+                $stmt->bindParam(':time', $params['time']);
+                $stmt->bindParam(':date', $params['date']);
+                $stmt->bindParam(':address', $params['address']);
+                $stmt->bindParam(':longtitude', $params['longitude']);
+                $stmt->bindParam(':latitude', $params['latitude']);
+                $stmt->bindParam(':is_fingerprint', $params['is_fingerprint']);
+                $stmt->bindParam(':time_status', $params['time_status']);
+
+                $stmt->execute();
+                $resultId = $conn->lastInsertId();
+            }
+
+            return $resultId;
+        }
+
         public function time_log(){
             $time = date("H:i:s");
             $date = date("Y-m-d");
@@ -45,48 +125,45 @@
                 $bio_num = $_POST['biometric_id'];
                 $time_status = $_POST['time_status'];
                 $coords = $_POST['coords'];
-                // $coords = isset($_POST['coords']) && $_POST['coords'] ? (array) json_decode($_POST['coords']) : array('latitude' => null, 'longitude' => null);
 
                 $logs_action = '';
-                if($time_status==='in'){ $logs_action = 'time in'; } 
-                else if($time_status==='out'){ $logs_action = 'time out'; } 
+                if($time_status==='in'){ $logs_action = 'time in'; }
+                elseif($time_status==='out'){ $logs_action = 'time out'; }
                 else { $logs_action = $time_status; }
                 
                 if($coords['latitude'] != null && $coords['longitude'] != null){
                     $latitude = $coords['latitude'];
                     $longitude = $coords['longitude'];
-                    $conn = $this->conn("gcctimeutility");
+
                     $personnel_id = $this->personnel_id($bio_num);
                     $sites_id = $this->sites_location_id($personnel_id);
                     $stats = 1;
 
                     $this->store_logs($_POST, $personnel_id);
                     $max_time = date('H:i:s', strtotime($this->setInterval($bio_num). "+ 1 minute"));
+
+                    $location = $this->polygon_geofence($sites_id, $latitude, $longitude);
+                    $travel_order = $this->location_coordinates($bio_num, $latitude, $longitude);
+                    $address = $this->geoaddress($longitude,$latitude);
+                    
                     if($this->setInterval($bio_num) == null){
                         if(count($sites_id) != 0){
-                            $location = $this->polygon_geofence($sites_id, $latitude, $longitude);
-                            $travel_order = $this->location_coordinates($bio_num, $latitude, $longitude);
-                            $sql = "INSERT INTO gcctimeutility.app_attendance(biometric_id, time, date, address, longtitude, latitude, is_fingerprint, time_status) VALUES (:bio, :time, :date, :address, :lon, :lat, :is_finger, :time_status)";
-                            $data = $conn->prepare($sql);
-                            $data->bindParam(':bio', $bio_num);
-                            $data->bindParam(':time', $time);
-                            $data->bindParam(':date', $date);
-                            $data->bindParam(':address', $this->geoaddress($longitude,$latitude));
-                            $data->bindParam(':lon', $longitude);
-                            $data->bindParam(':lat', $latitude);
-                            $data->bindParam(':is_finger', $stats);
-                            $data->bindParam(':time_status', $time_status);
-                            $data->execute();
-                            $insertedID = $conn->lastInsertId();
-                            if($data){
+                            $insertedID = $this->addAppAttendanceRecord(array(
+                                'biometric_id' => $bio_num,
+                                'time' => $time,
+                                'date' => $date,
+                                'address' => $address,
+                                'longitude' => $longitude,
+                                'latitude' => $latitude,
+                                'is_fingerprint' => $stats,
+                                'time_status' => $time_status
+                            ));
+                            
+                            if($insertedID != 0){
                                 $resp = 0;
-                                if($location != 0){
-                                    $resp = $location;
-                                }else if($travel_order != 0){
-                                    $resp = $travel_order;
-                                }else{
-                                    $resp = 2;
-                                }
+                                if($location != 0){ $resp = $location; }
+                                elseif($travel_order != 0){ $resp = $travel_order; }
+                                else{ $resp = 2; }
                                 $this->saveLogs("success", $logs_action, $emp_id, "[Mobile] Attendance - user ".$logs_action.".");
                                 return json_encode($this->user_logs($bio_num, $date, $time, $resp, $insertedID));
                             }else{
@@ -100,30 +177,23 @@
                     }else{
                         if($max_time < $time){
                             if(count($sites_id) != 0){
-                                $location = $this->polygon_geofence($sites_id, $latitude, $longitude);
-                                $travel_order = $this->location_coordinates($bio_num, $latitude, $longitude);
-                                $sql = "INSERT INTO gcctimeutility.app_attendance(biometric_id, time, date, address, longtitude, latitude, is_fingerprint, time_status) VALUES (:bio, :time, :date, :address, :lon, :lat, :is_finger, :time_status)";
-                                $data = $conn->prepare($sql);
-                                $data->bindParam(':bio', $bio_num);
-                                $data->bindParam(':time', $time);
-                                $data->bindParam(':date', $date);
-                                $data->bindParam(':address', $this->geoaddress($longitude,$latitude));
-                                $data->bindParam(':lon', $longitude);
-                                $data->bindParam(':lat', $latitude);
-                                $data->bindParam(':is_finger', $stats);
-                                $data->bindParam(':time_status', $time_status);
-                                $data->execute();
-                                $insertedID = $conn->lastInsertId();
-                                if($data){
+                                $insertedID = $this->addAppAttendanceRecord(array(
+                                    'biometric_id' => $bio_num,
+                                    'time' => $time,
+                                    'date' => $date,
+                                    'address' => $address,
+                                    'longitude' => $longitude,
+                                    'latitude' => $latitude,
+                                    'is_fingerprint' => $stats,
+                                    'time_status' => $time_status
+                                ));
+
+                                if($insertedID){
                                     $this->log($bio_num, $longitude, $latitude);
                                     $resp = 0;
-                                    if($location != 0){
-                                        $resp = $location;
-                                    }else if($travel_order != 0){
-                                        $resp = $travel_order;
-                                    }else{
-                                        $resp = 2;
-                                    }
+                                    if($location != 0){ $resp = $location; }
+                                    elseif($travel_order != 0){ $resp = $travel_order; }
+                                    else{ $resp = 2; }
                                     $this->saveLogs("success", $logs_action, $emp_id, "[Mobile] Attendance - user ".$logs_action.".");
                                     return json_encode($this->user_logs($bio_num, $date, $time, $resp, $insertedID, $time));
                                 }else{
@@ -140,7 +210,6 @@
                         }
                     }
                 }
-                
             }
         }
 
@@ -153,11 +222,10 @@
                 $bio_num = $_POST['biometric_id'];
                 $time_status = $_POST['time_status'];
                 $coords = $_POST['coords'];
-                // $firebase_token = $_POST['firebaseToken'];
 
                 $logs_action = '';
                 if($time_status==='in'){ $logs_action = 'time in'; } 
-                else if($time_status==='out'){ $logs_action = 'time out'; } 
+                elseif($time_status==='out'){ $logs_action = 'time out'; } 
                 else { $logs_action = $time_status; }
 
                 if($coords['latitude'] != null && $coords['longitude'] != null){
@@ -170,36 +238,30 @@
                     $stats = 1;
                     $this->store_logs_spam($_POST, $personnel_id);
                     $max_time = date('H:i:s', strtotime($this->setInterval_spam($bio_num). "+ 1 minute"));
+                    
+                    $location = $this->polygon_geofence($sites_id, $latitude, $longitude);
+                    $travel_order = $this->location_coordinates($bio_num, $latitude, $longitude);
+                    $address = $this->geoaddress($longitude,$latitude);
+
                     if($this->setInterval_spam($bio_num) == null){
                         if(count($sites_id) != 0){
-                            $location = $this->polygon_geofence($sites_id, $latitude, $longitude);
-                            $travel_order = $this->location_coordinates($bio_num, $latitude, $longitude);
-                            // $sql = "INSERT INTO app_attendance_spam(biometric_id, time, date, address, longtitude, latitude, is_fingerprint, time_status, firebase_token) VALUES (:bio, :time, :date, :address, :lon, :lat, :is_finger, :time_status, :firebase_token)";
-                            $sql = "INSERT INTO gcctimeutility.app_attendance_spam(biometric_id, time, date, address, longtitude, latitude, is_fingerprint, time_status) VALUES (:bio, :time, :date, :address, :lon, :lat, :is_finger, :time_status)";
-                            $data = $conn->prepare($sql); 
-                            $data->bindParam(':bio', $bio_num);
-                            $data->bindParam(':time', $time);
-                            $data->bindParam(':date', $date);
-                            $data->bindParam(':address', $this->geoaddress($longitude,$latitude));
-                            $data->bindParam(':lon', $longitude);
-                            $data->bindParam(':lat', $latitude);
-                            $data->bindParam(':is_finger', $stats);
-                            $data->bindParam(':time_status', $time_status);
-                            // $data->bindParam(':firebase_token', $firebase_token);
-                            $data->execute();
-                            $insertedID = $conn->lastInsertId();
-                            if($data){
+                            $insertedID = $this->addAppAttendanceRecordSpam(array(
+                                'biometric_id' => $bio_num,
+                                'time' => $time,
+                                'date' => $date,
+                                'address' => $address,
+                                'longitude' => $longitude,
+                                'latitude' => $latitude,
+                                'is_fingerprint' => $stats,
+                                'time_status' => $time_status
+                            ));
+                            
+                            if($insertedID){
                                 $resp = 0;
-                                if($location != 0){
-                                    $resp = $location;
-                                }else if($travel_order != 0){
-                                    $resp = $travel_order;
-                                }else{
-                                    $resp = 2;
-                                }
-
+                                if($location != 0){ $resp = $location; }
+                                elseif($travel_order != 0){ $resp = $travel_order; }
+                                else{ $resp = 2; }
                                 $arr = [
-                                    // 'in_range' => isset($_POST['in_range']) && $_POST['in_range'] === true ? 1 : 0,
                                     'in_range' => $_POST['in_range'],
                                     'bio' => $bio_num,
                                     'last_id' => $insertedID,
@@ -224,37 +286,24 @@
                     }else{
                         if($max_time < $time){
                             if(count($sites_id) != 0){
-                                $location = $this->polygon_geofence($sites_id, $latitude, $longitude);
-                                $travel_order = $this->location_coordinates($bio_num, $latitude, $longitude);
-                                // $sql = "INSERT INTO app_attendance_spam(biometric_id, time, date, address, longtitude, latitude, is_fingerprint, time_status, firebase_token) VALUES (:bio, :time, :date, :address, :lon, :lat, :is_finger, :time_status, :firebase_token)";
-                                $sql = "INSERT INTO gcctimeutility.app_attendance_spam(biometric_id, time, date, address, longtitude, latitude, is_fingerprint, time_status) VALUES (:bio, :time, :date, :address, :lon, :lat, :is_finger, :time_status)";
-                                $data = $conn->prepare($sql);
-                                $data->bindParam(':bio', $bio_num);
-                                $data->bindParam(':time', $time);
-                                $data->bindParam(':date', $date);
-                                $data->bindParam(':address', $this->geoaddress($longitude,$latitude));
-                                $data->bindParam(':lon', $longitude);
-                                $data->bindParam(':lat', $latitude);
-                                $data->bindParam(':is_finger', $stats);
-                                $data->bindParam(':time_status', $time_status);
-                                // $data->bindParam(':firebase_token', $firebase_token);
-                                $data->execute();
-                                $insertedID = $conn->lastInsertId();
-                                if($data){
+                                $insertedID = $this->addAppAttendanceRecordSpam(array(
+                                    'biometric_id' => $bio_num,
+                                    'time' => $time,
+                                    'date' => $date,
+                                    'address' => $address,
+                                    'longitude' => $longitude,
+                                    'latitude' => $latitude,
+                                    'is_fingerprint' => $stats,
+                                    'time_status' => $time_status
+                                ));
+
+                                if($insertedID){
                                     $this->log($bio_num, $longitude, $latitude);
                                     $resp = 0;
-                                    if($location != 0){
-                                        $resp = $location;
-                                    }else if($travel_order != 0){
-                                        $resp = $travel_order;
-                                    }else{
-                                        $resp = 2;
-                                    }
-                                    
-                                    // $this->saveLogs("success", $logs_action, $emp_id, "[Mobile] Attendance - user ".$logs_action.".");
-
+                                    if($location != 0){ $resp = $location; }
+                                    elseif($travel_order != 0){ $resp = $travel_order; }
+                                    else{ $resp = 2; }
                                     $arr = [
-                                        // 'in_range' => isset($_POST['in_range']) && $_POST['in_range'] == true ? 1 : 0,
                                         'in_range' => $_POST['in_range'],
                                         'bio' => $bio_num,
                                         'last_id' => $insertedID,
@@ -262,7 +311,6 @@
 
                                     $query = "UPDATE gcctimeutility.app_attendance_spam SET in_range = :in_range WHERE biometric_id = :bio AND id = :last_id";
                                     $_data = $conn->prepare($query);
-                                    // $_data->execute($arr);
                                 
                                     if($_data->execute($arr)){
                                         $this->saveLogs("success", $logs_action, $emp_id, "[Mobile] Attendance - user ".$logs_action.".");
@@ -405,7 +453,7 @@
             $data->bindParam(":today", $date);
             $data->execute();
             $time = $data->fetch(PDO::FETCH_ASSOC);
-            return $time['time'];
+            return  $time ? $time['time']: NULL;
         }
 
         private function setInterval_spam($bionum){
@@ -624,83 +672,69 @@
             }
         }
 
-        private function polygon_geofence($sites_id, $lat, $lon){
-            if(count($sites_id) > 0){
-                $response = 0;
-                $res_count = [];
-                foreach($sites_id as $ids){
+        private function polygon_geofence($siteIds, $lat, $lon){
+            if(count($siteIds) > 0){
+                $results = [];
+                foreach($siteIds as $siteId){
                     $conn = $this->conn("gcctimeutility");
-                    $sql = "SELECT * FROM gcctimeutility.app_location_sites WHERE id = :site_id";
-                    $data = $conn->prepare($sql);
-                    $data->bindParam(':site_id', $ids);
-                    $data->execute();
-                    $site = $data->rowCount();
-                    if($site != 0){
-                        $allData = $data->fetch(PDO::FETCH_ASSOC);
-                        $geofenctCoords = unserialize($allData['geofence_polygon']);
-                        if($this->getInsideParam($geofenctCoords, $lat, $lon)){
-                            $res_count[] = 1;
+                    $sql = "SELECT geofence_polygon FROM gcctimeutility.app_location_sites WHERE id = :site_id";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bindParam(':site_id', $siteId);
+                    $stmt->execute();
+                    if($stmt->rowCount() > 0){
+                        $siteData = $stmt->fetch(PDO::FETCH_ASSOC);
+                        $geofenceCoords = unserialize($siteData['geofence_polygon']);
+                        if($this->getInsideParam($geofenceCoords, $lat, $lon)){
+                            $results[] = true;
+                        } else {
+                            $results[] = false;
                         }
                     }
                 }
-                if(count($res_count) != 0){
-                    $response = 1;
-                }
-                return $response;
+                return in_array(true, $results);
             }
-            
+            return false;
         }
 
-        private function getInsideParam($arra_coords, $lat, $lon){
-            $arrCoords = [];
-            foreach($arra_coords as $coords){
-                $arrCoords[] = array($coords['lat'], $coords['lng']);
-            }
+        private function getInsideParam(array $arra_coords, $lat = null, $lon = null){
             $isInside = false;
-            $temp = array("lat"=>$lat, "long"=>$lon);
-
-            // var_dump($arrCoords);
-
-            $lastPoint = $arrCoords[count($arrCoords) - 1];
-
-            $x = $temp["long"];
-            foreach ($arrCoords as $key => $item){
-                $x1 = $lastPoint[1];
-                $x2 = $item[1];
-                $dx = $x2 - $x1;
-                if (abs($dx) > 180){
-                    if($x > 0){
-                        while($x1 < 0){
-                            $x1 += 360;
-                        }
-                        while($x2 < 0){
-                            $x2 += 360;
-                        }
-                    }else{
-                        while($x1 > 0){
-                            $x1 -= 360;
-                        }
-                        while($x2 > 0){
-                            $x2 -= 360;
+            if(is_array($arra_coords) && count($arra_coords) > 1 && is_numeric($lat) && is_numeric($lon)){
+                $arrCoords = [];
+                foreach($arra_coords as $coords){ $arrCoords[] = array("lat"=>$coords['lat'], "long"=>$coords['lng']); }
+                if(is_array($arrCoords) && count($arrCoords) > 1 && isset($arrCoords[count($arrCoords) - 1])){
+                    $lastPoint = $arrCoords[count($arrCoords) - 1];
+                    if(isset($lastPoint['lat']) && isset($lastPoint['long'])){
+                        $temp = array("lat"=>$lat, "long"=>$lon);
+                        $x = $temp["long"];
+                        $x1 = $lastPoint["long"];
+                        foreach ($arrCoords as $item){
+                            if(isset($item["long"])){
+                                $x2 = $item["long"];
+                                $dx = $x2 - $x1;
+                                if (abs($dx) > 180){
+                                    if($x > 0){
+                                        while($x1 < 0){ $x1 += 360; }
+                                        while($x2 < 0){ $x2 += 360; }
+                                    }else{
+                                        while($x1 > 0){ $x1 -= 360; }
+                                        while($x2 > 0){ $x2 -= 360; }
+                                    }
+                                    $dx = $x2 - $x1;
+                                }
+        
+                                if (isset($item["lat"]) && (($x1 <= $x && $x2 > $x) || ($x1 >= $x && $x2 < $x))){
+                                    $grad = ($item["lat"] - $lastPoint["lat"]) / $dx;
+                                    $intersectAtLat = $lastPoint["lat"] + (($x - $x1) * $grad);
+                                    if ($intersectAtLat > $temp["lat"]){ $isInside = !$isInside; }
+                                }
+        
+                                $lastPoint = $item;
+                            }
                         }
                     }
-                    $dx = $x2 - $x1;
                 }
-
-                if (($x1 <= $x && $x2 > $x) || ($x1 >= $x && $x2 < $x)){
-                    $grad = ($item[0] - $lastPoint[0]) / $dx;
-                    $intersectAtLat = $lastPoint[0] + (($x - $x1) * $grad);
-                    $longDiff = $x - $x1;
-                    $xGrad = $longDiff * $grad;
-
-                    if ($intersectAtLat > $temp["lat"]){
-                        $isInside = !$isInside;
-                    }
-                }
-
-                $lastPoint = $item;
             }
-
+            
             return $isInside;
         }
 
@@ -828,11 +862,11 @@
 				// $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=".$lat.",".$long."&language=en-EN&sensor=false&key=AIzaSyB0P6151i4JuPBG79VhRhaiEzqR4Awmnmw";
 				// $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=".$lat.",".$long."&language=en-EN&sensor=false&key=AIzaSyCm_pTwQzhaAKspErhW9ptpubv_ATLrpgE";
                 $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=".$lat.",".$long."&language=en-EN&sensor=false&key=AIzaSyDtXLofTal2PwMVYeC3Pg6JFl-bYSTiRak";
+                
 				$curlData=file_get_contents($url);
 				$address = json_decode($curlData);
-				if($address->status == "OK"){
-					$a=$address->results[0];
-					return $a->formatted_address;
+				if($address->status == "OK" && $address->results[0]->formatted_address != null){
+					return $address->results[0]->formatted_address;
 				}else{
 					return "Location Undefined";
 				}
