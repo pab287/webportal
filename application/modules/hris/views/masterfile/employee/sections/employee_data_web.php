@@ -1234,7 +1234,7 @@
                         <td data-label="DATE REGULARIZED" v-text="formatDate(main.date_regular)"></td>
                         <td data-label="PROBEE END DATE" v-text="formatDate(main.date_end_prob)"></td>
                         <td data-label="DATE SEPARATED" v-text="(main.employee_status === 'Active' && (main.date_end !== '0000-00-00' || main.date_end === null)) ? '---' : formatDate(main.date_end)"></td>
-                        <td data-label="REASON FOR SEPARATION" v-text="main.resign_reason ? main.resign_reason : 'N/A'"></td>
+                        <td data-label="REASON FOR SEPARATION" v-text="(main.employee_status === 'Active' && main.resign_reason) ? '---' : (main.resign_reason ? main.resign_reason : '---')"></td>
                     </tr>
                     </tbody>
                 </table>
