@@ -199,7 +199,7 @@ class Ticket_m extends CI_Model
         $query = $this->db->get();
         if ($query->num_rows() > 0) {
             $resultset = $query->result();
-            foreach ($resultset as $rs) { 
+            foreach ($resultset as $rs) {
                 $rs->performed_by = $this->requested_by($rs->performed_by);
                 $rs->requestor = $this->requested_by($rs->requestor);
             }
@@ -271,11 +271,11 @@ class Ticket_m extends CI_Model
 
     // function to pull all data from database of ticketing system
     private function get_category_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null){
-        $resultArray = array();
-        $resultData = array();
+        $resultset = array();
         $filterFields = array("type", "name");
-        $this->db->select("*");
+        $this->db->select("id,type,name,status");
         $this->db->from("gccticket.category");
+        $this->db->where('is_archived', '0');
         if($search){
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
@@ -286,11 +286,6 @@ class Ticket_m extends CI_Model
                 }
             }
             $this->db->group_end();
-            // if ($sortBy) {
-            //     $this->db->order_by($sortBy, $sortOrder);
-            // } else {
-            //     $this->db->order_by("id", "DESC");
-            // }
         }
         if($limit != -1){
             $this->db->limit($limit, $offset);
@@ -299,26 +294,29 @@ class Ticket_m extends CI_Model
         $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
         $query = $this->db->get();
         if ($query->num_rows() > 0) {
-            $arrData = array();
-            foreach ($query->result() as $key => $rs) {
-                $arrData[$key] = $rs;
-            }
-
-            $data = array();
-            foreach ($arrData as $k => $v) {
-                $data[] = $v;
-            }
+            $resultset = $query->result();
             if(!empty($search)){
                 $this->core_layout->setEventLog("User searched `".$search."` on category datatable.","search", "success", "gccticket", "user");
             }
-            return $data;
-        } else {
-            return array();
         }
+        return $resultset;
     }
 
-    private function get_category_masterfile_count(){
+    private function get_category_masterfile_count($search = null){
+        $filterFields = array("type", "name");
         $this->db->from("gccticket.category");
+        $this->db->where('is_archived', '0');
+        if($search){
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
         $query = $this->db->get();
         return $query->num_rows();
     }
