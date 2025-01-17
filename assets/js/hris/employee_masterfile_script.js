@@ -1458,12 +1458,15 @@ if (typeof _tempContentData !== "undefined") {
                                 license += '<p style="margin: 0; font-size: 9px;" class="badge badge-success">'+row.type+'</p>';
                             }else if(row.type == 'COMPANY SPONSORED - EXTERNAL'){
                                 license += '<p style="margin: 0; font-size: 9px;" class="badge badge-danger">'+row.type+'</p>';
-                            }else{
+                            }
+                            else{
                                 license += '<p style="margin: 0; font-size: 9px;"  class="badge badge-info">'+row.type+'</p>';
                             }
+                            license += '<p style="margin: 0">'+data+'</p>';
+                        }else if(data == 'CERTIFICATE'){
+                            license += '<p style="margin: 0; font-size: 9px;"  class="badge badge-info">'+"PERSONAL"+'</p>';
+                            license += '<p style="margin: 0">'+row.certificate_name+'</p>';
                         }
-                        license += '<p style="margin: 0">'+data+'</p>';
-                        
                         return license;
                     }
                 },
@@ -1554,7 +1557,7 @@ if (typeof _tempContentData !== "undefined") {
                         }).on('select2:select', function (e) {
                             var data = e.params.data;
                             const id = data.id;
-
+                            console.log(id);
                             var cert_name_field = modalContent.find('.cert-name-field');
 
                             if(id === 'Certificate') {
@@ -3029,10 +3032,10 @@ if (typeof _tempContentData !== "undefined") {
                 data: { csrf_token: _csrf_hash, emp_id: tempDataId }
             },
             columns: [
-                { data: "offcom_type", title: "Type" },
+                { data: "offcom_type", width: "*" },
                 { 
                     data: "offcom_date", 
-                    title: "Date",  
+                    width: "*",
                     render: function(data, type, row) {
                         // Assuming 'data' is in the format YYYY-MM-DD
                         var date = new Date(data);
@@ -3042,20 +3045,19 @@ if (typeof _tempContentData !== "undefined") {
                             day: 'numeric',
                         });
                         return formattedDate;
-                    }
+                    },
                 },
-                { data: "offcom_nature", title: "Nature" },
-                { data: "offcom_action", title: "Sanction/Remarks" },
+                { data: "offcom_nature", },
+                { data: "offcom_action", },
                 {
                     data: "filename",
-                    title: "File",
                     width: "10%",
                     render: function(data, type, row, meta) {
                         var filePath = `<a onclick="openFile('${tempDataId}', '${data}')"  style="cursor:pointer;text-decoration:none;  this.style.color='black';" onmouseover="this.style.textDecoration='underline'; this.style.color='blue';" onmouseout="this.style.textDecoration='none';  this.style.color='black';">${data}</a>`;
                         return filePath;
                     },
                 },
-                { data: null, title: "Action", width: "12%", className: "text-center" }
+                { data: null, width: "12%", className: "text-center" }
             ],
             columnDefs: [
                 {

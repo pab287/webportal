@@ -84,7 +84,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_legal_record/" + id + "/btnRemoveLegalHistory",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-legal_history_list",
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -128,7 +129,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_offenses_and_commendations/" + id + "/btnRemoveOffenses",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-offenses_list"
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -171,7 +173,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_bg_check/" + id + "/btnRemoveBackgroundCheck",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-background_check_list",
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -215,7 +218,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_performance_evaluation/" + id + "/btnRemovePerformance",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-performance_eval_list"
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -258,7 +262,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_employee_cash_advance/" + id + "/btnRemoveCashAdvance",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-cash_advance_list"
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -301,7 +306,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_dependent/" + id + "/btnRemoveDependents",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: 'tbl-dependents_list',
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -345,7 +351,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_educational_background/" + id + "/btnRemoveEducational",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: 'tbl-educational_background_list',
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -389,7 +396,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_licensure/" + id + "/btnRemoveLicensure",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-licensure_exams_list",
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -432,7 +440,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_driverlicense/" + id + "/btnRemoveDriverLicense",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-driverlicense",
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -475,7 +484,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_worK_experience/" + id + "/btnRemoveWorkExperience",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-work_experiences_list"
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -518,7 +528,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_award/" + id + "/btnRemoveAwards",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table:"tbl-awards_list",
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -561,7 +572,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_organization/" + id + "/btnRemoveOrganization",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-organizations_list",
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -604,7 +616,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_training/" + id + "/btnRemoveTrainings",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-trainings_list",
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -647,7 +660,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_personal_reference/" + id + "/btnRemovePersonalReference",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-personal_references_list",
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -690,7 +704,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_medical_record/" + id + "/btnRemoveMedicalHistory",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-medical_records_list",
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -714,7 +729,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_skill/" + id + "/btnRemoveSkill",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-skills-list",
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -738,7 +754,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to archive this record?",
                         action: "hris/masterfile/archive_salary_history/" + id + "/btnRemoveSalaryHistory",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-salary-history"
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -762,7 +779,8 @@ $('table')
                         title: "<i class='la la-archive mr-2'></i>Confirm Archive",
                         message: "Are you sure to delete this performance rating?",
                         action: "hris/masterfile/delete_performance_rating/" + id + "/btnRemovePerformanceRating",
-                        color: "btn-danger"
+                        color: "btn-danger",
+                        table: "tbl-performance-rating"
                     },
                     path: "ams/confirmation_dialog",
                     function_name: "passDataToDialog"
@@ -815,14 +833,19 @@ $(".m-content")
             const btn = url.split('/').pop();
             const id = url.split('/').slice(-2)[0];
             const tr = (btn === 'remove-profile-picture') ? '' : $('.' + btn + '[data-id="' + id + '"]').closest("tr");
-
+            const dataTableValue = $('#confirmation-dialog').data('table');
             $.ajax({
                 url: baseUrl(url),
                 type: "GET",
                 dataType: "JSON",
                 success: function (response) {
                     if (!(btn === 'remove-profile-picture')) {
-                        response.success && tr.remove();
+                        if(dataTableValue != ''){
+                            $('#'+dataTableValue).DataTable().ajax.reload();
+                        }
+                        else{
+                            response.success && tr.remove();
+                        }
                     } else {
                         const data = response.data;
                         leftPanel.left_pane = Object.assign({}, leftPanel.left_pane, {display_avatar: data.image});
@@ -1021,7 +1044,7 @@ $(".m-content")
             const form = $(this);
             const url = form.attr("action");
             const formData = new FormData(this);
-
+            formData.append('emp_id', tempDataId);
             if (form.isValid()) {
                 $.ajax({
                     url,
@@ -1118,7 +1141,7 @@ $(".m-content")
             const form = $(this);
             const url = form.attr("action");
             const formData = new FormData(this);
-
+            formData.append('emp_id', tempDataId);
             const id = form.find("input[name='id']").val();
             const tr = $('.btnEditDependents[data-id="' + id + '"]').closest("tr");
 
@@ -1132,12 +1155,7 @@ $(".m-content")
                     data: formData,
                     success: function (response) {
                         if (response.success) {
-                            const data = response.data;
-                            if (data) {
-                                Object.keys(data).forEach((item, i) => {
-                                    tr.find('td:eq(' + i + ')').html(data[item]);
-                                });
-                            }
+                            dtDependents.ajax.reload();
                         }
 
                         _toaster(response, 'Dependent Updated.', 10000);
@@ -1166,15 +1184,10 @@ $(".m-content")
                     data: formData,
                     success: function (response) {
                         if (response.success) {
-                            const data = response.data;
-                            if (data) {
-                                Object.keys(data).forEach((item, i) => {
-                                    tr.find('td:eq(' + i + ')').html(data[item]);
-                                });
-                            }
+                            dtEducationalBg.ajax.reload();
                         }
 
-                        _toaster(response, 'Dependent Updated.', 10000);
+                        _toaster(response, 'Educational Background Updated.', 10000);
                         closeDialog();
                     }
                 });
@@ -1200,14 +1213,8 @@ $(".m-content")
                     data: formData,
                     success: function (response) {
                         if (response.success) {
-                            const data = response.data;
-                            if (data) {
-                                Object.keys(data).forEach((item, i) => {
-                                    tr.find('td:eq(' + i + ')').html(data[item]);
-                                });
-                            }
+                            dtLicensureExam.ajax.reload();
                         }
-
                         _toaster(response, 'Licensure Exams. & Cerfications Updated..', 10000);
                         closeDialog();
                     }
@@ -1234,12 +1241,7 @@ $(".m-content")
                     data: formData,
                     success: function (response) {
                         if (response.success) {
-                            const data = response.data;
-                            if (data) {
-                                Object.keys(data).forEach((item, i) => {
-                                    tr.find('td:eq(' + i + ')').html(data[item]);
-                                });
-                            }
+                            dtLicensure.ajax.reload();
                         }
 
                         _toaster(response, 'Driver Licenses Updated..', 10000);
@@ -1268,12 +1270,7 @@ $(".m-content")
                     data: formData,
                     success: function (response) {
                         if (response.success) {
-                            const data = response.data;
-                            if (data) {
-                                Object.keys(data).forEach((item, i) => {
-                                    tr.find('td:eq(' + i + ')').html(data[item]);
-                                });
-                            }
+                            dtWorkExperience.ajax.reload();
                         }
 
                         _toaster(response, 'Work Experience updated.', 10000);
@@ -1302,12 +1299,7 @@ $(".m-content")
                     data: formData,
                     success: function (response) {
                         if (response.success) {
-                            const data = response.data;
-                            if (data) {
-                                Object.keys(data).forEach((item, i) => {
-                                    tr.find('td:eq(' + i + ')').html(data[item]);
-                                });
-                            }
+                            dtAwards.ajax.reload();
                         }
 
                         _toaster(response, 'Award & Achievements updated.', 10000);
@@ -1336,12 +1328,7 @@ $(".m-content")
                     data: formData,
                     success: function (response) {
                         if (response.success) {
-                            const data = response.data;
-                            if (data) {
-                                Object.keys(data).forEach((item, i) => {
-                                    tr.find('td:eq(' + i + ')').html(data[item]);
-                                });
-                            }
+                            dtOrganization.ajax.reload();
                         }
 
                         _toaster(response, 'Organization updated.', 10000);
@@ -1370,16 +1357,10 @@ $(".m-content")
                     data: formData,
                     success: function (response) {
                         if (response.success) {
-                            const data = response.data;
-                            if (data) {
-                                Object.keys(data)
-                                    .forEach((item, i) => {
-                                        tr.find('td:eq(' + i + ')').html(data[item]);
-                                    });
-                            }
+                            dtTrainings.ajax.reload();
                         }
 
-                        _toaster(response, 'Organization updated.', 10000);
+                        _toaster(response, 'Training and Seminars updated.', 10000);
                         closeDialog();
                     }
                 });
@@ -1405,13 +1386,7 @@ $(".m-content")
                     data: formData,
                     success: function (response) {
                         if (response.success) {
-                            const data = response.data;
-                            if (data) {
-                                Object.keys(data)
-                                    .forEach((item, i) => {
-                                        tr.find('td:eq(' + i + ')').html(data[item]);
-                                    });
-                            }
+                            dtPersonalReference.ajax.reload();
                         }
 
                         _toaster(response, 'Personal Reference updated.', 10000);
@@ -1440,13 +1415,7 @@ $(".m-content")
                     data: formData,
                     success: function (response) {
                         if (response.success) {
-                            const data = response.data;
-                            if (data) {
-                                Object.keys(data)
-                                    .forEach((item, i) => {
-                                        tr.find('td:eq(' + i + ')').html(data[item]);
-                                    });
-                            }
+                            dtMedicalHistory.ajax.reload();
                         }
 
                         _toaster(response, 'Medical Record updated.', 10000);
@@ -1687,10 +1656,14 @@ function initEditLicenses(response) {
     _modal.append(html);
 
     const license_type = _modal.find("#license_type");
-    
+    if (response.info.data.text == "0-CERTIFICATE" ){
+        response.info.data.text="CERTIFICATE";
+    }
     const select2Option = new Option(response.info.data.text, response.info.data.id, false, true);
     license_type.html(select2Option);
-
+    if (response.info.data.text != 'CERTIFICATE'){
+        $('#cert_name').hide();
+    }
     license_type.select2({
         width: "100%",
         placeholder: {id: "-1", text: "Select an option"},
@@ -1699,6 +1672,15 @@ function initEditLicenses(response) {
             url: baseUrl('hris/masterfile/get_license_type'),
             method: "GET",
             delay: 250,
+        }
+    }).on('select2:select', function (e) {
+        var data = e.params.data;
+        const id = data.id;
+        console.log(id);
+        if(id == "Certificate"){
+            $('#cert_name').show();
+        } else {
+            $('#cert_name').hide();
         }
     });
 

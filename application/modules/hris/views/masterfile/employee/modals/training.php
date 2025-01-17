@@ -47,8 +47,8 @@
         <span class="btn btn-success fileinput-button btn-sm pull-right">
             <i class="glyphicon glyphicon-plus"></i>
             <span>Select file</span>
-            <input type="file" id="fileupload_training" name="files">
-            <input type="hidden" id="training_attachment" name="training_attachment" />
+            <input type="file" id="fileupload_training" name="files" accept=".pdf,application/pdf">
+            <input type="hidden" id="training_attachment" name="training_attachment" accept=".pdf,application/pdf"/>
         </span>
         <p id="temp_fileupload" class="form-control m-input m--margin-top-10" disabled="disabled">&nbsp;</p>
     </div>
