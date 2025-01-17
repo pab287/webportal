@@ -2,6 +2,7 @@ let _years = [];
 let _companies = [];
 let filterExport = {};
 let totalEntries = 0;
+let typeReport ="";
 toastr.options = { newestOnTop: true, positionClass: "toast-bottom-right" };
 
 const hrisFilterLateAbsenteeReport = $("#frm-filter-hris-late_absentee_report");
@@ -316,6 +317,7 @@ $.validate({
             data: formData,
             success: function(json){
                 if(json.response){
+                    typeReport =  document.querySelector('input[name="report_type"]:checked').value;
                     dtTableLateAbsenteeReport.clear();
                     dtTableLateAbsenteeReport.rows.add(json.data);
                     dtTableLateAbsenteeReport.draw(false);
@@ -435,8 +437,7 @@ if(typeof dtTableLateAbsentee !== "undefined" && dtTableLateAbsentee.length > 0)
                 stripHtml: true,
             },
             customize: function (xlsx) {
-                const {report_type } = filterOptionsLateAbsentee;
-                export_log(filterExport, " Late and Absentee Report", "excel",totalEntries);
+                export_log(filterExport, `${typeReport} Report`, "excel", totalEntries);
             }
         }, {
             extend: 'print',
@@ -477,7 +478,7 @@ if(typeof dtTableLateAbsentee !== "undefined" && dtTableLateAbsentee.length > 0)
 
                 head.appendChild(style);
                 win.document.title = "Late/Absentee Report Printable Page";
-                export_log(filterExport, " Late and Absentee Report", "print",totalEntries);
+                export_log(filterExport, `${typeReport} Report`, "print", totalEntries);
             }, exportOptions: {
                 columns: [0, 1, 2, 3],
                 stripHtml: true,
@@ -593,7 +594,7 @@ async function export_log(datas, type, name, count) {
                 count: count,
                 csrf_token: _csrf_hash 
             },
-            dataType: 'json'
+            // dataType: 'json'
         });
         return response;
     } catch (error) {

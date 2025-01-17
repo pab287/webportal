@@ -735,7 +735,7 @@ async function export_log(datas, type, name, count) {
                 count: count,
                 csrf_token: _csrf_hash 
             },
-            dataType: 'json'
+            // dataType: 'json'
         });
         return response;
     } catch (error) {
