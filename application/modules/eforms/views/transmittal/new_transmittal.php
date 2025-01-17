@@ -27,7 +27,7 @@
                         <div class="row">
                             <div class="col-md-5 col-sm-12">
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold">
                                         Type
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -37,7 +37,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold">
                                         File Under
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -47,7 +47,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold">
                                         Department
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -58,7 +58,7 @@
                                 </div>
                                 <br>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold">
                                         Requested By
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -68,7 +68,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
                                         Other information
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -76,7 +76,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
                                         Priority
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -124,64 +124,60 @@
                         <div class="row">
                             <div class="col-md-6 col-sm-12">
                                 <div class="form-group m-form__group row" id="delivery_to_in">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold">
                                         Deliver To
                                     </label>
-                                    <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
+                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                         <select id="select2_deliver" name="deliver_to" onchange="emp_details()" data-validation="required">
 
                                         </select>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="delivery_to_ex">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
                                         Deliver To
                                     </label>
-                                    <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
+                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                         <input class="form-control m-input" type="text" name="delivery_to_ex"/>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
                                         Company
                                     </label>
-                                    <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
-                                        <textarea id="deliver_company"
-                                                  name="deliver_company" rows="3"
-                                                  cols="50" class="form-control"
-                                                  style="display: none;"
-                                                  disabled></textarea>
-
-                                        <textarea id="deliver_company_display"
-                                                  rows="3" cols="50" disabled
-                                                  class="form-control"></textarea>
+                                    <div id="internal-company" class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                                        <textarea id="deliver_company" name="deliver_company" rows="3" cols="50" class="form-control" style="display: none;" disabled></textarea>
+                                        <textarea id="deliver_company_display" rows="3" cols="50" disabled class="form-control"></textarea>
+                                    </div>
+                                    <div id="external-company" class="col-md-9 col-lg-9 col-sm-9 col-xs-12" style="display: none">
+                                        <textarea id="deliver_company_display_ex" name="deliver_company" rows="3" cols="50" disabled class="form-control"></textarea>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="row_department">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
                                         Department
                                     </label>
-                                    <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
+                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                         <input class="form-control m-input" type="text" name="department"/>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold">
                                         Address
                                     </label>
-                                    <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
+                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                         <textarea name="deliver_address" rows="3" cols="50" class="form-control"
                                                   data-validation="required"> </textarea>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold">
                                         Delivery Date
                                     </label>
-                                    <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
+                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                         <div class='input-group date' id="delivery_date">
                                             <input class="form-control m-input" type="text" id="delivery_dt" name="delivery_date"
-                                                   data-validation="required"/>
+                                                   data-validation="required" readonly />
                                             <span class="input-group-addon">
                                                 <i class="la la-calendar glyphicon-th"></i>
                                             </span>
@@ -202,7 +198,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="service_veh">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold required">
                                         Service Vehicle
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -212,7 +208,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="service_driver">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold required">
                                         Driver
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -220,7 +216,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="other_remark">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold required">
                                         Remarks
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -228,15 +224,15 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold required">
                                         Transporter
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                        <input class="form-control m-input" type="text" name="transporter"/>
+                                        <input class="form-control m-input" type="text" name="transporter" data-validation="required" />
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="row_courier">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
                                         Courier & Waybill #
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -310,7 +306,7 @@
                             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 
                             <div class="form-group">
-                                <label class="control-label col-md-2">Description</label>
+                                <label class="control-label col-md-2 required">Description</label>
                                 <div class="col-md-12">
                                     <textarea name="description" class="form-control" data-validation="required"> </textarea>
                                 </div>
@@ -365,3 +361,10 @@
         </div>
     </div>
 </div>
+
+<style>
+    .select2-selection__rendered {
+        font-weight: 500;
+        color: #232323;
+    }
+</style>

@@ -1129,3 +1129,7 @@ body.dt-print-view.custom--dt-print-view {
     display: none;
 }
 /**** ticketing css ****/
+
+.cursor_pointer {
+    cursor: pointer;
+}

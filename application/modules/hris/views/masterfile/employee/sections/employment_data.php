@@ -30,29 +30,27 @@
         <th class="" scope="col" style="width: 5%">To</th>
     </tr>
     </thead>
-
     <tbody>
-    <?php foreach ($data->educations as $education) { ?>
-        <tr>
-            <td data-label="Level"><?= $education->educ_level_type ?></td>
-            <td data-label="School"><?= $education->educ_school ?></td>
-            <td data-label="Degree"><?= $education->educ_degree ?></td>
-            <td data-label="Honors"><?= $education->educ_honors ?></td>
-            <td data-label="From"><?= $education->educ_from ?></td>
-            <td data-label="To"><?= $education->educ_to ?></td>
-        </tr>
-    <?php } ?>
-
-    <?php if (count($data->educations) <= 0) { ?>
-        <tr>
-            <td data-label="Level">None</td>
-            <td data-label="School">None</td>
-            <td data-label="Degree">None</td>
-            <td data-label="Honors">None</td>
-            <td data-label="From">None</td>
-            <td data-label="To">None</td>
-        </tr>
-    <?php } ?>
+        <template v-if="printData.educations == false">
+            <tr>
+                <td data-label="Level">None</td>
+                <td data-label="School">None</td>
+                <td data-label="Degree">None</td>
+                <td data-label="Honors">None</td>
+                <td data-label="From">None</td>
+                <td data-label="To" >None</td>
+            </tr>
+        </template>
+        <template v-else>
+            <tr v-for="education in printData.educations" :key="education.id">
+                <td data-label="Level" v-text="education.educ_level_type"></td>
+                <td data-label="School" v-text="education.educ_school"></td>
+                <td data-label="Degree" v-text="education.educ_degree"></td>
+                <td data-label="Honors" v-text="education.educ_honors || 'N/A'"></td>
+                <td data-label="From" v-text="education.educ_from"></td>
+                <td data-label="To" v-text="education.educ_to"></td>
+            </tr>
+        </template>
     </tbody>
 </table>
 <!-- END EDUCATIONAL BACKGROUND TABLES -->
@@ -77,53 +75,26 @@
     </tr>
     </thead>
     <tbody>
-
-    <?php foreach ($data->licenses as $license) { ?>
-        <tr>
-            <td data-label="LICENSE/EXAM TYPE"><?= $license->license_type ?></td>
-            <td data-label="EXAM PLACE"><?= $license->exam_place ?></td>
-            <td data-label="RATING"><?= $license->rating ?></td>
-            <td data-label="RELEASE DATE"><?= $license->release_date ?></td>
-            <td data-label="EXAM DATE"><?= $license->exam_date ?></td>
-            <td data-label="LICENSE NO."><?= $license->license_no ?></td>
-        </tr>
-    <?php } ?>
-
-    <?php if (count($data->licenses) <= 0) { ?>
-        <tr>
-            <td data-label="LICENSE/EXAM TYPE">None</td>
-            <td data-label="EXAM PLACE">None</td>
-            <td data-label="RATING">None</td>
-            <td data-label="RELEASE DATE">None</td>
-            <td data-label="EXAM DATE">None</td>
-            <td data-label="LICENSE NO.">None</td>
-        </tr>
-    <?php } ?>
-    <!-- START DRIVER'S LICENSE ROW -->
-    <?php if($data->if_driver > 0 AND count($data->driverlicenses) > 0){ ?>
-    <thead>
-    <tr>
-        <th class="" scope="col" colspan="2">RESTRICTION</th>
-        <th class="" scope="col" colspan="2">LICENSE NO.</th>
-        <th class="" scope="col" colspan="2">EXPIRATION DATE</th>
-    </tr>
-    </thead>
-    <?php foreach ($data->driverlicenses as $driverlicense) {
-       $date_now = date("Y-m-d");
-        if($date_now > $driverlicense->expiration_date){
-            $expiration_date = "<span class='m-badge m-badge--danger m-badge--wide'>$driverlicense->expiration_date</span>";
-        }else{
-            $expiration_date = "<span class='m-badge m-badge--success m-badge--wide'>$driverlicense->expiration_date</span>";
-        }
-        
-    ?>
-        <tr>
-            <td data-label="RESTRICTION" colspan="2"><?= $driverlicense->restriction ?></td>
-            <td data-label="LICENSE NO." colspan="2"><?= $driverlicense->license_no ?></td>
-            <td data-label="EXPIRATION DATE" colspan="2"><?= $expiration_date ?></td>
-        </tr>
-    <?php } } ?>
-    <!-- END DRIVER'S LICENSE ROW -->
+        <template v-if="printData.licensesAndCerts.licenses.length == 0">
+            <tr >
+                <td data-label="LICENSE/EXAM TYPE">None</td>
+                <td data-label="EXAM PLACE">None</td>
+                <td data-label="RATING">None</td>
+                <td data-label="RELEASE DATE">None</td>
+                <td data-label="EXAM DATE">None</td>
+                <td data-label="LICENSE NO.">None</td>
+            </tr>
+        </template>
+        <template v-else>
+            <tr v-for="license in printData.licensesAndCerts.licenses" :key="license.id">
+                <td data-label="LICENSE/EXAM TYPE" v-text="license.license_type"></td>
+                <td data-label="EXAM PLACE" v-text="license.exam_place"></td>
+                <td data-label="RATING" v-text="license.rating"></td>
+                <td data-label="RELEASE DATE" v-text="license.release_date"></td>
+                <td data-label="EXAM DATE" v-text="license.exam_date"></td>
+                <td data-label="LICENSE NO." v-text="license.license_no"></td>
+            </tr>
+        </template>
     </tbody>
 </table>
 <!-- END LICENCES & CERTIFICATIONS TABLES -->
@@ -153,29 +124,28 @@
     </tr>
     </thead>
     <tbody>
-    <?php foreach ($data->experiences as $experience) { ?>
-        <tr>
-            <td data-label="COMPANY"><?= $experience->work_company ?></td>
-            <td data-label="FROM"><?= $experience->work_from ?></td>
-            <td data-label="TO"><?= $experience->work_to ?></td>
-            <td data-label="POSITION"><?= $experience->work_position ?></td>
-            <td data-label="ID NO"><?= empty($experience->old_idno) ? "N/A" : $experience->old_idno ?></td>
-            <td data-label="STATUS"><?= $experience->work_status ? $experience->work_status : "<br>" ?></td>
-            <td data-label="REASON FOR LEAVING"><?=  empty($experience->work_reason) ? "N/A" : $experience->work_reason ?></td>
-        </tr>
-    <?php } ?>
-
-    <?php if (count($data->experiences) <= 0) { ?>
-        <tr>
-            <td data-label="COMPANY">None</td>
-            <td data-label="FROM">None</td>
-            <td data-label="TO">None</td>
-            <td data-label="POSITION">None</td>
-            <td data-label="ID NO">None</td>
-            <td data-label="STATUS">None</td>
-            <td data-label="REASON FOR LEAVING">None</td>
-        </tr>
-    <?php } ?>
+        <template v-if="printData.experiences == false">
+            <tr>
+                <td data-label="COMPANY">None</td>
+                <td data-label="FROM">None</td>
+                <td data-label="TO">None</td>
+                <td data-label="POSITION">None</td>
+                <td data-label="ID NO">None</td>
+                <td data-label="STATUS">None</td>
+                <td data-label="REASON FOR LEAVING">None</td>
+            </tr>
+        </template>
+        <template v-else>
+            <tr v-for="(experience, index) in printData.experiences" :key="index">
+                <td data-label="COMPANY" v-text="experience.work_company"></td>
+                <td data-label="FROM" v-text="experience.work_from"></td>
+                <td data-label="TO" v-text="experience.work_to"></td>
+                <td data-label="POSITION" v-text="experience.work_position"></td>
+                <td data-label="ID NO" v-text="experience.old_idno || 'N/A'"></td>
+                <td data-label="STATUS" v-text="experience.work_status || '<br>'"></td>
+                <td data-label="REASON FOR LEAVING" v-text="experience.work_reason || 'N/A'"></td>
+            </tr>
+        </template>
     </tbody>
 </table>
 <!-- END LICENCES & CERTIFICATIONS TABLES -->
@@ -187,71 +157,68 @@
         <th scope="col">Questions</th>
     </tr>
     </thead>
-</table>
-<?php foreach ($data->questions as $key => $question) {
-    $answer = "ques" . ($question->a); ?>
-    <table class="responsive <?= ($key+1) < count($data->questions) ? 'mb-1' : '' ?>">
-        <thead>
+
+<table class="responsive mb-1" v-for="(question, key) in questions" :key="key">
+    <tbody>
         <tr>
-            <th class="" scope="col">
-                <?= $question->q ?>
+            <th class="" scope="col" v-text="question">
             </th>
         </tr>
-        </thead>
-        <tbody>
         <tr>
-            <td data-label="<?= $question->q ?>" class="questions">
-                <label><?= $data->main->$answer ? $data->main->$answer : "N/A" ?></label>
+            <td class="questions">
+                <span v-text="hasAnswer(key)"></span>
             </td>
         </tr>
-        </tbody>
-    </table>
-<?php } ?>
+    </tbody>
+</table>
+
+</table>
 <!-- END QUESTION TABLES -->
 
 <!-- START RETURN TO WORK TABLES -->
-<?php if (count($data->return_to_work) > 0) { ?>
-<!-- <table class="table-group-header">
-    
-</table> -->
-<table class="responsive">
-    <thead class="customsalary">
-      <tr>
-          <th scope="col" colspan="5">RETURN TO WORK</th>
-      </tr>
-    </thead>
-    <thead>
-    <tr>
-        <th class="" scope="col">REFERENCE #</th>
-        <th class="" scope="col">EFFECTIVE DATE</th>
-        <th class="" scope="col">TYPE</th>
-        <th class="" scope="col">PURPOSE</th>
-        <th class="" scope="col">APPROVED BY</th>
-    </tr>
-    </thead>
-    <tbody>
-    <?php foreach ($data->return_to_work as $rtw) { ?>
+<template>
+  <div v-if="printData.return_to_work && printData.return_to_work.length > 0">
+    <table class="responsive">
+      <thead class="customsalary">
         <tr>
-            <td data-label="REFERENCE #"><a href="<?= base_url('eforms/return_to_work/view_return_to_work/') ?><?=$rtw->id?>"><?= $rtw->reference_no ?></a></td>
-            <td data-label="EFFECTIVE DATE"><?= $rtw->from_date ?></td>
-            <td data-label="TYPE">
-            <?php
-            if($rtw->return_type == 1){
-                $type = "RECALLED";
-            }else if($rtw->return_type == 2){
-                $type = "REQUEST TO EXTEND";
-            }else{
-                $type = "ABSENT";
-            }
-            echo $type;
-            ?></td>
-            <td data-label="PURPOSE"><?= $rtw->reason ?></td>
-            <td data-label="APPROVED BY"><?= $rtw->firstname ?></td>
+          <th scope="col" colspan="5">RETURN TO WORK</th>
         </tr>
-    <?php } ?>
-    </tbody>
-</table>
-<?php } ?>
+      </thead>
+      <thead>
+        <tr>
+          <th class="" scope="col">REFERENCE #</th>
+          <th class="" scope="col">EFFECTIVE DATE</th>
+          <th class="" scope="col">TYPE</th>
+          <th class="" scope="col">PURPOSE</th>
+          <th class="" scope="col">APPROVED BY</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template v-if="!printData.return_to_work">
+          <tr>
+            <td data-label="REFERENCE #">None</td>
+            <td data-label="EFFECTIVE DATE">None</td>
+            <td data-label="TYPE">None</td>
+            <td data-label="PURPOSE">None</td>
+            <td data-label="APPROVED BY">None</td>
+          </tr>
+        </template>
+        <template v-else>
+          <tr v-for="(rtw, index) in printData.return_to_work" :key="index">
+          <td data-label="REFERENCE #">
+              <a href="javascript:void(0);" v-text="rtw.reference_no || 'N/A'">
+              </a>
+            </td>
+            <td data-label="EFFECTIVE DATE" v-text="rtw.from_date || 'N/A'"></td>
+            <td data-label="TYPE" v-text="rtw.return_type == 1 ? 'RECALLED' : rtw.return_type == 2 ? 'REQUEST TO EXTEND' : 'ABSENT'"></td>
+            <td data-label="PURPOSE" v-text="rtw.reason || 'N/A'"></td>
+            <td data-label="APPROVED BY" v-text="rtw.firstname || 'N/A'"></td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </div>
+</template>
 <!-- END RETURN TO WORK TABLES -->
 
 <!-- START AWARD AND ACHIEVEMENTS -->
@@ -272,22 +239,20 @@
     </tr>
     </thead>
     <tbody>
-
-    <?php foreach ($data->awards as $award) { ?>
-        <tr>
-            <td data-label="AWARD/ACHIEVEMENT"><?= $award->award ?></td>
-            <td data-label="INSTITUTION"><?= $award->award_institution ?></td>
-            <td data-label="GIVEN DATE"><?= $award->award_date ?></td>
-        </tr>
-    <?php } ?>
-
-    <?php if (count($data->awards) <= 0) { ?>
-        <tr>
-            <td data-label="AWARD/ACHIEVEMENT">None</td>
-            <td data-label="INSTITUTION">None</td>
-            <td data-label="GIVEN DATE">None</td>
-        </tr>
-    <?php } ?>
+        <template v-if="printData.awards == false">
+            <tr>
+                <td data-label="AWARD/ACHIEVEMENT">None</td>
+                <td data-label="INSTITUTION">None</td>
+                <td data-label="GIVEN DATE">None</td>
+            </tr>
+        </template>
+        <template v-else>
+            <tr v-for="(award, index) in printData.awards" :key="index">
+                <td data-label="AWARD/ACHIEVEMENT" v-text="award.award"></td>
+                <td data-label="INSTITUTION" v-text="award.award_institution"></td>
+                <td data-label="GIVEN DATE" v-text="award.award_date"></td>
+            </tr>
+        </template>
     </tbody>
 </table>
 <!-- END AWARD AND ACHIEVEMENTS -->
@@ -308,20 +273,16 @@
     </tr>
     </thead>
     <tbody>
-
-    <?php foreach ($data->skills as $skill) { ?>
-        <tr>
-            <td data-label="TECHNICAL/MANAGEMENT/BUSINESS/SPECIAL SKILLS">
-                <label><?= $skill->skills ?></label>
-            </td>
-        </tr>
-    <?php } ?>
-
-    <?php if (count($data->skills) <= 0) { ?>
-        <tr>
-            <td data-label="TECHNICAL/MANAGEMENT/BUSINESS/SPECIAL SKILLS">None</td>
-        </tr>
-    <?php } ?>
+        <template v-if="printData.skillset == false">
+            <tr>
+                <td data-label="TECHNICAL/MANAGEMENT/BUSINESS/SPECIAL SKILLS">None</td>
+            </tr>
+        </template>
+        <template v-else>
+            <tr v-for="(skill, index) in printData.skillset" :key="skill.id">
+                <td data-label="TECHNICAL/MANAGEMENT/BUSINESS/SPECIAL SKILLS" v-text="skill.skills"></td>
+            </tr>
+        </template>
     </tbody>
 </table>
 <!-- END SKILLS -->
@@ -345,23 +306,22 @@
     </tr>
     </thead>
     <tbody>
-    <?php foreach ($data->organizations as $organization) { ?>
-        <tr>
-            <td data-label="INSTITUTION"><?= $organization->org_institution ?></td>
-            <td data-label="MEMBERSHIP TITLE"><?= $organization->org_membership_title ?></td>
-            <td data-label="FROM"><?= $organization->org_from ?></td>
-            <td data-label="TO"><?= $organization->org_to ?></td>
-        </tr>
-    <?php } ?>
-
-    <?php if (count($data->organizations) <= 0) { ?>
-        <tr>
-            <td data-label="INSTITUTION">None</td>
-            <td data-label="MEMBERSHIP TITLE">None</td>
-            <td data-label="FROM">None</td>
-            <td data-label="TO">None</td>
-        </tr>
-    <?php } ?>
+        <template v-if="printData.organizations == false">
+            <tr >
+                <td data-label="INSTITUTION">None</td>
+                <td data-label="MEMBERSHIP TITLE">None</td>
+                <td data-label="FROM">None</td>
+                <td data-label="TO">None</td>
+            </tr>
+        </template>
+        <template v-else>
+            <tr v-for="organization in printData.organizations" :key="organization.id">
+                <td data-label="INSTITUTION" v-text="organization.org_institution"></td>
+                <td data-label="MEMBERSHIP TITLE" v-text="organization.org_membership_title"></td>
+                <td data-label="FROM" v-text="organization.org_from"></td>
+                <td data-label="TO" v-text="organization.org_to"></td>
+            </tr>
+        </template>
     </tbody>
 </table>
 <!-- END ORGANIZATIONS -->
@@ -387,27 +347,26 @@
     </tr>
     </thead>
     <tbody>
-    <?php foreach ($data->trainings as $training) { ?>
-        <tr>
-            <td data-label="TRAINING"><?= $training->training ?></td>
-            <td data-label="FROM"><?= $training->train_from ?></td>
-            <td data-label="TO"><?= $training->train_to ?></td>
-            <td data-label="INSTITUTION"><?= $training->train_institution ?></td>
-            <td data-label="CONDUCTOR"><?= $training->train_conductor ?></td>
-            <td data-label="VENUE"><?= $training->train_venue ?></td>
-        </tr>
-    <?php } ?>
-
-    <?php if (count($data->trainings) <= 0) { ?>
-        <tr>
-            <td data-label="TRAINING">None</td>
-            <td data-label="FROM">None</td>
-            <td data-label="TO">None</td>
-            <td data-label="INSTITUTION">None</td>
-            <td data-label="CONDUCTOR">None</td>
-            <td data-label="VENUE">None</td>
-        </tr>
-    <?php } ?>
+        <template v-if="printData.trainings == false">
+            <tr>
+                <td data-label="TRAINING">None</td>
+                <td data-label="FROM">None</td>
+                <td data-label="TO">None</td>
+                <td data-label="INSTITUTION">None</td>
+                <td data-label="CONDUCTOR">None</td>
+                <td data-label="VENUE">None</td>
+            </tr>
+        </template>
+        <template v-else>
+            <tr v-for="training in printData.trainings" :key="training.id">
+                <td data-label="TRAINING" v-text="training.training"></td>
+                <td data-label="FROM" v-text="training.train_from"></td>
+                <td data-label="TO" v-text="training.train_to"></td>
+                <td data-label="INSTITUTION" v-text="training.train_institution"></td>
+                <td data-label="CONDUCTOR" v-text="training.train_conductor"></td>
+                <td data-label="VENUE" v-text="training.train_venue"></td>
+            </tr>
+        </template>
     </tbody>
 </table>
 <!-- TRAINING AND SEMINARS -->
@@ -431,22 +390,20 @@
 
     </thead>
     <tbody>
-
-    <?php foreach ($data->references as $reference) { ?>
-        <tr>
-            <td data-label="NAME"><?= $reference->ref_name ?></td>
-            <td data-label="CONTACT NO."><?= $reference->ref_contact_no ?></td>
-            <td data-label="ADDRESS"><?= $reference->ref_address ?></td>
-        </tr>
-    <?php } ?>
-
-    <?php if (count($data->references) <= 0) { ?>
-        <tr>
-            <td data-label="NAME">None</td>
-            <td data-label="CONTACT NO.">None</td>
-            <td data-label="ADDRESS">None</td>
-        </tr>
-    <?php } ?>
+        <template v-if="printData.references == false">
+            <tr>
+                <td data-label="NAME">None</td>
+                <td data-label="CONTACT NO.">None</td>
+                <td data-label="ADDRESS">None</td>
+            </tr>
+        </template>
+        <template v-else>
+            <tr v-for="reference in printData.references" :key="reference.id">
+                <td data-label="NAME" v-text="reference.ref_name"></td>
+                <td data-label="CONTACT NO." v-text="reference.ref_contact_no"></td>
+                <td data-label="ADDRESS" v-text="reference.ref_address"></td>
+            </tr>
+        </template>
     </tbody>
 </table>
 <!-- PERSONAL REFERENCES -->
@@ -473,29 +430,28 @@
     </tr>
     </thead>
     <tbody>
-    <?php foreach ($data->medicals as $medical) { ?>
-        <tr>
-            <td data-label="DETAILS"><?= $medical->med_details ?></td>
-            <td data-label="MED.NO."><?= $medical->med_no ?></td>
-            <td data-label="DATE"><?= $medical->med_date ?></td>
-            <td data-label="VENUE"><?= $medical->med_venue ?></td>
-            <td data-label="PHYSICIAN"><?= $medical->med_physician ?></td>
-            <td data-label="FINDINGS"><?= $medical->med_findings ?></td>
-            <td data-label="REMARKS"><?= $medical->remarks ?></td>
-        </tr>
-    <?php } ?>
-
-    <?php if (count($data->medicals) <= 0) { ?>
-        <tr>
-            <td data-label="DETAILS">NONE</td>
-            <td data-label="MED.NO.">NONE</td>
-            <td data-label="DATE">NONE</td>
-            <td data-label="VENUE">NONE</td>
-            <td data-label="PHYSICIAN">NONE</td>
-            <td data-label="FINDINGS">NONE</td>
-            <td data-label="REMARKS">NONE</td>
-        </tr>
-    <?php } ?>
+        <template v-if="printData.medicals == false">
+            <tr>
+                <td data-label="DETAILS">NONE</td>
+                <td data-label="MED.NO.">NONE</td>
+                <td data-label="DATE">NONE</td>
+                <td data-label="VENUE">NONE</td>
+                <td data-label="PHYSICIAN">NONE</td>
+                <td data-label="FINDINGS">NONE</td>
+                <td data-label="REMARKS">NONE</td>
+            </tr>
+        </template>
+        <template v-else>
+            <tr v-for="medical in printData.medicals" :key="medical.id">
+                <td data-label="DETAILS" v-text="medical.med_details"></td>
+                <td data-label="MED.NO." v-text="medical.med_no"></td>
+                <td data-label="DATE" v-text="medical.med_date"></td>
+                <td data-label="VENUE" v-text="medical.med_venue"></td>
+                <td data-label="PHYSICIAN" v-text="medical.med_physician"></td>
+                <td data-label="FINDINGS" v-text="medical.med_findings"></td>
+                <td data-label="REMARKS" v-text="medical.remarks"></td>
+            </tr>
+        </template>
     </tbody>
 </table>
 <!-- MEDICAL HISTORY/RECORDS -->
@@ -521,27 +477,26 @@
     </tr>
     </thead>
     <tbody>
-    <?php foreach ($data->legals as $legal) { ?>
-        <tr>
-            <td data-label="CASE NO."><?= $legal->leg_case_no ? $legal->leg_case_no : "N/A" ?></td>
-            <td data-label="DETAILS"><?= $legal->leg_details ? $legal->leg_details : "N/A" ?></td>
-            <td data-label="DATE"><?= $legal->leg_case_date ? $legal->leg_case_date : "N/A" ?></td>
-            <td data-label="COURT FIELD"><?= $legal->leg_court_field ? $legal->leg_court_field : "N/A" ?></td>
-            <td data-label="PROSECUTOR"><?= $legal->leg_prosecutor ? $legal->leg_prosecutor : "N/A" ?></td>
-            <td data-label="STATUS"><?= $legal->leg_status ? $legal->leg_status : "N/A" ?></td>
-        </tr>
-    <?php } ?>
-
-    <?php if (count($data->legals) <= 0) { ?>
-        <tr>
-            <td data-label="CASE NO.">NONE</td>
-            <td data-label="DETAILS">NONE</td>
-            <td data-label="DATE">NONE</td>
-            <td data-label="COURT FIELD">NONE</td>
-            <td data-label="PROSECUTOR">NONE</td>
-            <td data-label="STATUS">NONE</td>
-        </tr>
-    <?php } ?>
+        <template v-if="printData.legals == false">
+            <tr>
+                <td data-label="CASE NO.">NONE</td>
+                <td data-label="DETAILS">NONE</td>
+                <td data-label="DATE">NONE</td>
+                <td data-label="COURT FIELD">NONE</td>
+                <td data-label="PROSECUTOR">NONE</td>
+                <td data-label="STATUS">NONE</td>
+            </tr>
+        </template>
+        <template v-else>
+            <tr v-for="legal in printData.legals" :key="legal.id">
+                <td data-label="CASE NO." v-text="legal.leg_case_no || 'N/A'"></td>
+                <td data-label="DETAILS" v-text="legal.leg_details || 'N/A'"></td>
+                <td data-label="DATE" v-text="legal.leg_case_date || 'N/A'"></td>
+                <td data-label="COURT FIELD" v-text="legal.leg_court_field || 'N/A'"></td>
+                <td data-label="PROSECUTOR" v-text="legal.leg_prosecutor || 'N/A'"></td>
+                <td data-label="STATUS" v-text="legal.leg_status || 'N/A'"></td>
+            </tr>
+        </template>
     </tbody>
 </table>
 <!-- LEGAL HISTORY/RECORDS -->
@@ -565,147 +520,70 @@
     </tr>
     </thead>
     <tbody>
-    <?php foreach ($data->offenses as $offense) { ?>
-        <tr>
-            <td data-label="TYPE"><?= $offense->offcom_type ?></td>
-            <td data-label="DATE"><?= $offense->offcom_date ?></td>
-            <td data-label="NATURE"><?= $offense->offcom_nature ?></td>
-            <td data-label="ACTION TAKEN"><?= $offense->offcom_action ?></td>
-        </tr>
-    <?php } ?>
-
-    <?php if (count($data->offenses) <= 0) { ?>
-        <tr>
-            <td data-label="TYPE">NONE</td>
-            <td data-label="DATE">NONE</td>
-            <td data-label="NATURE">NONE</td>
-            <td data-label="ACTION TAKEN">NONE</td>
-        </tr>
-    <?php } ?>
+        <template v-if="printData.offenses == false">
+            <tr>
+                <td data-label="TYPE">NONE</td>
+                <td data-label="DATE">NONE</td>
+                <td data-label="NATURE">NONE</td>
+                <td data-label="ACTION TAKEN">NONE</td>
+            </tr>
+        </template>
+        <template v-else>
+            <tr v-for="offense in printData.offenses" :key="offense.id">
+                <td data-label="TYPE" v-text="offense.offcom_type"></td>
+                <td data-label="DATE" v-text="offense.offcom_date"></td>
+                <td data-label="NATURE" v-text="offense.offcom_nature"></td>
+                <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
+            </tr>
+        </template>
     </tbody>
 </table>
 <!-- OFFENSES AND COMMENDATIONS -->
 
-
-<?php 
-$actions = $this->core_layout->getCurrentActions();
-$session_id = $this->core_layout->getCurrentEmployeeId();
-// isset($data->main->id) ? $data->main->id : "";
-if(in_array("view_own_request", $this->core_layout->getCurrentActions()) AND $data->main->id != $session_id){ 
-?>
-<!-- START SALARY HISTORY -->
-
-<?php }elseif(in_array("view_own_request", $this->core_layout->getCurrentActions()) AND $data->main->id == $session_id){ ?>
-    <!-- <table class="table-group-header">
-    
-</table> -->
-<table class="responsive">
-    <thead class="customsalary">
-    <tr>
-        <th scope="col" colspan="4">SALARY HISTORY</th>
-    </tr>
-    </thead>
-    <thead>
-    <tr>
-        <th class="" scope="col" style="width: 13%">DATE</th>
-        <th class="" scope="col" style="width: 15%">RATE</th>
-        <th class="" scope="col">POSITION</th>
-        <th class="" scope="col">REMARKS</th>
-    </tr>
-    </thead>
-    <tbody>
-    <?php 
-                        foreach ($data->salaries as $salaryIndex => $salary) { 
-                            if($salary->sal_rate != ""){
-                                $salary_rate = number_format(str_replace(',', '', $salary->sal_rate), 2, '.', ',');    
-                            }else{
-                                $salary_rate = $salary->sal_rate;
-                            }
-                            $grandTotal = floatval($main->basic_rate) + floatval($allowance);
-                        ?>
-                            <tr>
-                                <td data-label="DATE"><?= $salary->sal_date ?></td>
-                                <td data-label="RATE">
-                                    <?= $salary_rate?>
-                                    <?php 
-                                        if($salary->sal_rate == $grandTotal && $salaryIndex == 0){
-                                                echo "<p class='m-0'><small><span class='m-badge m-badge--success m-badge--wide'>Current</span></small></p>";
-                                        }
-                                    ?>
-                                </td>
-                                <td data-label="POSITION"><?= $salary->sal_position ? $salary->sal_position : "<br>" ?></td>
-                                <td data-label="REMARKS"><?= $salary->sal_remarks ?></td>
-                            </tr>
-                        <?php } ?>
-
-                        <?php if (count($data->salaries) <= 0) { ?>
-                            <tr>
-                                <td data-label="DATE">NONE</td>
-                                <td data-label="RATE">NONE</td>
-                                <td data-label="POSITION">NONE</td>
-                                <td data-label="REMARKS">NONE</td>
-                            </tr>
-                        <?php } ?>
-    </tbody>
-</table>
-<?php }else{ ?>
-<!-- <table class="table-group-header">
-    <thead>
-    <tr>
-        <th scope="col">SALARY HISTORY</th>
-    </tr>
-    </thead>
-</table> -->
-<table class="responsive">
-    <thead class="customsalary">
-      <tr>
-          <th scope="col" colspan="4">SALARY HISTORY</th>
-      </tr>
-    </thead>
-    <thead>
-    <tr>
-        <th class="" scope="col" style="width: 13%">DATE</th>
-        <th class="" scope="col" style="width: 15%">RATE</th>
-        <th class="" scope="col">POSITION</th>
-        <th class="" scope="col">REMARKS</th>
-    </tr>
-    </thead>
-    <tbody>
-    <?php 
-        foreach ($data->salaries as $salaryIndex => $salary) { 
-            if($salary->sal_rate != ""){
-                $salary_rate = number_format(str_replace(',', '', $salary->sal_rate), 2, '.', ',');    
-            }else{
-                $salary_rate = $salary->sal_rate;
-            }
-            $grandTotal = floatval($main->basic_rate) + floatval($allowance);
-        ?>
+<template v-if="printData.salaries != 'not_allowed'">
+    <table class="responsive">
+            <thead class="customsalary">
             <tr>
-                <td data-label="DATE"><?= $salary->sal_date ?></td>
-                <td data-label="RATE">
-                    <?= $salary_rate?>
-                    <?php 
-                        if($salary->sal_rate == $grandTotal && $salaryIndex == 0){
-                                echo "<p class='m-0'><small><span class='m-badge m-badge--success m-badge--wide'>Current</span></small></p>";
-                        }
-                    ?>
-                </td>
-                <td data-label="POSITION"><?= $salary->sal_position ? $salary->sal_position : "<br>" ?></td>
-                <td data-label="REMARKS"><?= $salary->sal_remarks ?></td>
+                <th scope="col" colspan="4">SALARY HISTORY</th>
             </tr>
-        <?php } ?>
-
-        <?php if (count($data->salaries) <= 0) { ?>
+            </thead>
+            <thead>
             <tr>
-                <td data-label="DATE">NONE</td>
-                <td data-label="RATE">NONE</td>
-                <td data-label="POSITION">NONE</td>
-                <td data-label="REMARKS">NONE</td>
+                <th class="" scope="col" style="width: 13%">DATE</th>
+                <th class="" scope="col" style="width: 15%">RATE</th>
+                <th class="" scope="col">POSITION</th>
+                <th class="" scope="col">REMARKS</th>
             </tr>
-        <?php } ?>
-    </tbody>
-</table>
-<?php } ?>
+            </thead>
+            <tbody>
+                <template v-if="printData.salaries == false">
+                    <tr>
+                        <td data-label="DATE">NONE</td>
+                        <td data-label="RATE">NONE</td>
+                        <td data-label="POSITION">NONE</td>
+                        <td data-label="REMARKS">NONE</td>
+                    </tr>
+                </template>
+                <template v-else>
+                    <tr v-for="(salary, index) in printData.salaries" :key="index">
+                        <td data-label="DATE" v-text="salary.sal_date"></td>
+                        <td data-label="RATE">
+                        <span v-text="formatSalaryRate(salary.sal_rate)">{{index}}</span>
+                        <template v-if="index == 0">
+                            <p class="m-0">
+                            <small>
+                                <span class="m-badge m-badge--success m-badge--wide">Current</span>
+                            </small>
+                            </p>
+                        </template>
+                        </td>
+                        <td data-label="POSITION" v-text="salary.sal_position || '<br>'"></td>
+                        <td data-label="REMARKS" v-text="salary.sal_remarks"></td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+</template>
 
 <!-- SALARY HISTORY -->
 
@@ -716,42 +594,22 @@ if(in_array("view_own_request", $this->core_layout->getCurrentActions()) AND $da
 <table class="responsive" id="accountability_table">
     <thead class="customsalary">
     <tr>
-        <th scope="col" colspan="7">ACCOUNTABILITY</th>
+        <th scope="col" colspan="8">ACCOUNTABILITY</th>
     </tr>
     </thead>
     <thead>
-    <tr>
-        <th class="" scope="col" width="12%">STATUS</th>
-        <th class="" scope="col" width="12%">REF. NO</th>
-        <th class="" scope="col" width="12%">ASSET CODE</th>
-        <th class="" scope="col">ASSET NAME</th>
-        <th class="text-right" scope="col" width="10%">AMOUNT</th>
-        <th class="text-center" scope="col" width="10%">RETURNED</th>
-        <th class="" scope="col" width="13%">DATE</th>
-    </tr>
+        <tr>
+            <th class="" scope="col" width="12%">STATUS</th>
+            <th class="" scope="col" width="12%">REF. NO</th>
+            <th class="" scope="col" width="12%">ASSET CODE</th>
+            <th class="" scope="col">ASSET NAME</th>
+            <th class="text-right" scope="col" width="10%">AMOUNT</th>
+            <th class="text-center" scope="col" width="10%">RETURNED</th>
+            <th class="" scope="col" width="13%">DATE</th>
+        </tr>
     </thead>
     <tbody>
-    <?php foreach ($data->accountability as $acct) { ?>
-        <tr>
-            <td data-label="STATUS"><?= $acct->status ?></td>
-            <td data-label="REF. NO"><?= $acct->reference_no ?></td>
-            <td data-label="ASSET CODE"><?= $acct->asset_code ?></td>
-            <td data-label="ASSET NAME"><?= $acct->aname ?></td>
-            <td class="text-right" data-label="AMOUNT"><?= number_format($acct->amount, 2, ".", ",") ?></td>
-            <td data-label="RETURNED" class="text-center" id="returned">
-                <?php
-                    if (intval($acct->is_returned) === 1) {
-                        echo "<span class='m-badge m-badge--success px-2 m--font-bolder'>Yes</span>";
-                    } else {
-                        echo "<span class='m-badge m-badge--danger px-2 m--font-bolder'>No</span>";
-                    }
-                ?>
-            </td>
-            <td data-label="DATE"><?= $acct->date_returned !== "0000-00-00" ? date("M j, Y", strtotime($acct->date_returned)) : "N/A" ?></td>
-        </tr>
-    <?php } ?>
-
-    <?php if (count($data->accountability) <= 0) { ?>
+    <template v-if="printData.accountability == false">
         <tr>
             <td data-label="STATUS">NONE</td>
             <td data-label="REF. NO">NONE</td>
@@ -761,7 +619,25 @@ if(in_array("view_own_request", $this->core_layout->getCurrentActions()) AND $da
             <td data-label="RETURNED">NONE</td>
             <td data-label="DATE">NONE</td>
         </tr>
-    <?php } ?>
+    </template>
+    <template v-else>
+        <tr v-for="acct in printData.accountability" :key="acct.id">
+            <td data-label="STATUS" v-text="acct.status"></td>
+            <td data-label="REF. NO" v-text="acct.reference_no"></td>
+            <td data-label="ASSET CODE" v-text="acct.asset_code"></td>
+            <td data-label="ASSET NAME" v-text="acct.aname"></td>
+            <td class="text-right" data-label="AMOUNT">{{ formatAmount(acct.amount) }}</td>
+            <td data-label="RETURNED" class="text-center" id="returned">
+            <span class="m-badge m-badge--success px-2 m--font-bolder" v-if="isReturned(acct)">
+                Yes
+            </span>
+            <span class="m-badge m-badge--danger px-2 m--font-bolder" v-else>
+                No
+            </span>
+            </td>
+            <td data-label="DATE" v-text="formatDate(acct.date_returned || 'N/A')"></td>
+        </tr>
+    </template>
     </tbody>
 </table>
 <!-- SALARY HISTORY -->
@@ -786,15 +662,42 @@ if(in_array("view_own_request", $this->core_layout->getCurrentActions()) AND $da
     </tr>
     </thead>
     <tbody>
-    <tr>
-        <td data-label="DEPARTMENT"><?= $data->main->department_description ? $data->main->department_description : "None" ?></td>
-        <td data-label="WORK MODE"><?= $data->main->work_mode ? $data->main->work_mode : "None" ?></td>
-        <td data-label="PAYROLL TYPE"><?= $data->main->payroll_type ? $data->main->payroll_type : "None" ?></td>
-        <td data-label="LEVEL / RANKING"><?= $data->main->level ? $data->main->level : "None" ?></td>
-        <td data-label="COMPANY"><?= $data->main->company_id ? $data->main->company_id : "None"?></td>
-    </tr>
-    
+        <tr>
+            <td data-label="DEPARTMENT" v-text="printData.main.department_description || 'None'"></td>
+            <td data-label="WORK MODE" v-text="printData.main.work_mode || 'None'"></td>
+            <td data-label="PAYROLL TYPE" v-text="printData.main.payroll_type || 'None'"></td>
+            <td data-label="LEVEL / RANKING" v-text="printData.main.level || 'None'"></td>
+            <td data-label="COMPANY" v-text="printData.main.company_id || 'None'"></td>
+        </tr>
     </tbody>
+</table>
+
+<table class="responsive">
+    <template v-if="main.position === 'owner'"></template>
+    <template v-else>
+        <template v-if="['SUPERVISORY', 'MANAGERIAL', 'EXECUTIVE'].includes(main.level)">
+            <thead class="customsalary">
+                <th>SUPERVISOR</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td data-label="SUPERVISOR">Charles Anthony M. Dumancas</td>
+                </tr>
+            </tbody>
+        </template>
+        <template v-else>
+            <thead class="customsalary">
+                <th>SUPERVISOR</th>
+                <th>DEPARTMENT MANAGER</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td data-label="SUPERVISOR" v-text="supervisor || 'N/A'"></td>
+                    <td data-label="MANAGER" v-text="manager || 'N/A'"></td>
+                </tr>
+            </tbody>
+        </template>
+    </template>
 </table>
 
 <table class="responsive">
@@ -808,16 +711,27 @@ if(in_array("view_own_request", $this->core_layout->getCurrentActions()) AND $da
     </thead>
     <tbody>
         <tr>
-            <td data-label="CURRENT STATION / LOCATION"  style="vertical-align: top">
-                <?php echo isset($data->default_station->description) && $data->default_station->description ? $data->default_station->description: ""; ?>
-            </td>
-            <td data-label="STATIONS">
-                <ul class="row"><?php if(count($data->station) != 0){ 
-                    foreach($data->station as $sites){ ?>
-                    <li class="col-4"><?php echo (isset($sites->location_name) && $sites->location_name) ? $sites->location_name : "N/A"; ?></li>
-                    <?php } } ?>
-                </ul>
-            </td>
+        <td data-label="CURRENT STATION / LOCATION">
+            <template v-if="printData.default_station != null">
+                <span v-text="printData.default_station.description"></span>
+            </template>
+            <template v-else>
+                <span v-text="'N/A'"></span>
+            </template>
+
+        </td>
+        <td data-label="STATIONS">
+            <ul class="row">
+                <template v-if="printData.stations != false">
+                    <li class="col-4" v-for="(site, index) in printData.stations" :key="index">
+                        <span v-text="site.location_name || 'N/A'"></span>
+                    </li>
+                </template>
+                <template v-else>
+                    <span v-text="'N/A'"></span>
+                </template>
+            </ul>
+        </td>
         </tr>
     </tbody>
 </table>
@@ -913,13 +827,12 @@ if(in_array("view_own_request", $this->core_layout->getCurrentActions()) AND $da
     </tr>
     </thead>
     <tbody>
-
-    <tr>
-        <td data-label="POSITION"><?= $data->main->position ? $data->main->position : "N/A" ?></td>
-        <td data-label="TYPE"><?= $data->main->level ? $data->main->level : "N/A" ?></td>
-        <td data-label="DEPARTMENT"><?= $data->main->department_description ? $data->main->department_description : "N/A" ?></td>
-        <td data-label="COMPANY"><?= $data->main->company_id ? $data->main->company_id : "N/A" ?></td>
-    </tr>
+        <tr>
+            <td data-label="POSITION" v-text="printData.main.position ? main.position : 'N/A'"></td>
+            <td data-label="TYPE" v-text="printData.main.level ? main.level : 'N/A'"></td>
+            <td data-label="DEPARTMENT" v-text="printData.main.department_description ? main.department_description : 'N/A'"></td>
+            <td data-label="COMPANY" v-text="printData.main.company_id ? main.company_id : 'N/A'"></td>
+        </tr>
     </tbody>
 </table>
 <!-- JOB DETAIL -->
@@ -934,27 +847,12 @@ if(in_array("view_own_request", $this->core_layout->getCurrentActions()) AND $da
     </tr>
     </thead>
     <tbody>
-    <tr>
-    <?php
-        $dom = new DOMDocument;
-        @$dom->loadHTML($data->main->job_desc);
-        $allElements = $dom->getElementsByTagName("li");
-
-        $count = $allElements->length;
-        if($count > 0){
-            $display = $data->main->job_desc;
-        }else{
-            $display = nl2br($data->main->job_desc);
-        }
-    ?>
-        <td id="job_desc" data-label="JOB DESCRIPTION" class="text-left">
-        <?php if($display != NULL OR $display != "NONE"){?>
-            <label><?= $display ?></label>
-        <?php } ?>
-        </td>
-    </tr>
-    <!-- $data->main->job_desc -->
-    </tbody>
+                    <tr>
+                        <td id="job_desc" class="text-left">
+                        <label v-if="job_desc && job_desc !== 'NONE'" v-html="formattedJobDesc()"></label>
+                        </td>
+                    </tr>
+                    </tbody>
 </table>
 <!-- JOB DESCRIPTION -->
 <script type="text/javascript">

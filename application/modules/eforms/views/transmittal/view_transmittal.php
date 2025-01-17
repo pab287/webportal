@@ -33,7 +33,7 @@
 					<div class="m-portlet__head-caption">
 						<div class="m-portlet__head-title">
               <span class="m-portlet__head-icon">
-                  <a type="button" href="masterfile" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnNew">
+                  <a type="button" href="<?=isset($_GET['page']) && $_GET['page'] == 'archive' ? 'archive_transmittal' : 'masterfile'; ?>" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnNew">
                       <i class="la la-arrow-left"></i>
                   </a>
               </span>
@@ -320,7 +320,7 @@
             <?php endif; ?>
             <?php if((in_array("undo_receive", $this->current_action))): ?>
             <button class="btn btn-danger btnUndo_receive text-white" id="btnundoreceive" onclick="open_undoreceive()">
-              Undo Receipt
+              Undo Receive
             </button>
             <?php endif; ?>
             <?php if((in_array("print", $this->current_action))): ?>
@@ -360,7 +360,8 @@
                     <div class="form-group">
                     <label class="control-label col-md-2 col-lg-2 col-sm-2 col-xs-12">Remarks</label>
                     <div class="col-md-12">
-                     <textarea name="approve_remarks"  class="form-control" data-validation="required"> </textarea> 
+                     <!-- <textarea name="approve_remarks"  class="form-control" data-validation="required"> </textarea>  -->
+                     <textarea name="approve_remarks"  class="form-control"> </textarea> 
                     </div>
                     </div>
                     
@@ -392,14 +393,16 @@
                     <div class="form-group">
                     <label class="control-label col-md-2 col-lg-2 col-sm-2 col-xs-12">Reason</label>
                     <div class="col-md-12">
-                     <textarea name="cancelled_remarks"  class="form-control" data-validation="required"> </textarea> 
+                     <!-- <textarea name="cancelled_remarks"  class="form-control" data-validation="required"> </textarea>  -->
+                     <textarea name="cancelled_remarks"  class="form-control"> </textarea> 
                     </div>
                     </div>
                     
                     </div>
                    <div class="modal-footer">
                       
-                     <button type="submit" id="btnSave" onclick="cancel()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
+                     <!-- <button type="submit" id="btnSave" onclick="cancel()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button> -->
+                     <button type="button" id="btnSave" onclick="cancel()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
                       <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon  btnClose" data-dismiss="modal">Close</button>
                     </div>
                     </form>
@@ -422,11 +425,11 @@
             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 
             <div class="form-group">
-            <label class="control-label col-md-2 col-lg-2 col-sm-2 col-xs-12">Remarks</label>
-            <div class="col-md-12">
-              <textarea name="received_remarks"  class="form-control" data-validation="required"> </textarea> 
-            </div>
-            </div>
+              <label class="control-label col-md-2 col-lg-2 col-sm-2 col-xs-12 required">Remarks</label>
+              <div class="col-md-12">
+                <textarea name="received_remarks"  class="form-control" data-validation="required"> </textarea> 
+              </div>
+              </div>
             
             </div>
             <div class="modal-footer">
@@ -452,7 +455,7 @@
           <form action="#" id="form_received" class="form-horizontal">
             <div class="form-group m-form__group row">
                 <label class="col-12 col-form-label form-control-label">
-                    Undo receival of this form?
+                    Undo Receive of this form?
                 </label>
             </div>
             <input type="hidden" value="" name="id"/> 
@@ -482,13 +485,13 @@
           <div class="form-group">
             <label class="control-label col-md-2 col-lg-2 col-sm-2 col-xs-12">Remarks</label>
             <div class="col-md-12">
-              <textarea name="disapproved_remarks"  class="form-control" data-validation="required"> </textarea> 
+              <!-- <textarea name="disapproved_remarks"  class="form-control" data-validation="required"> </textarea>  -->
+              <textarea name="disapproved_remarks"  class="form-control"> </textarea> 
             </div>
           </div>
                      
         </div>
         <div class="modal-footer">
-            <!-- <button type="submit" id="btnSave" onclick="disapprove()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button> // original source code -->
             <button type="button" id="btnSave" onclick="disapprove()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
             <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon  btnClose" data-dismiss="modal">Close</button>
         </div>
@@ -565,7 +568,8 @@
                      
         </div>
         <div class="modal-footer">
-            <button type="submit" id="btnSave" onclick="restore_form()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">yes</button>
+            <!-- <button type="submit" id="btnSave" onclick="restore_form()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">yes</button> -->
+            <button type="button" id="btnSave" onclick="restore_form()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">yes</button>
             <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon  btnClose" data-dismiss="modal">no</button>
             </div>
         </form>

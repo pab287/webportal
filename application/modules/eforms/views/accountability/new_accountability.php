@@ -31,6 +31,10 @@
             margin: 0 15px;
         }
     }
+
+    span.help-block.form-error{
+        text-align: left !important;
+    }
 </style>
 <div class="m-content">
     <div class="row">
@@ -58,21 +62,25 @@
                                 <input id="department_to" name="department_to" placeholder="" class="form-control" type="hidden" readonly>
                                 <input id="contract_check" name="contract_check" placeholder="" class="form-control" value='0' type="hidden" readonly>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-lg-2 col-md-2 col-sm-2 col-xs-12 col-form-label">Issued to</label>
+                                    <label class="col-lg-2 col-md-2 col-sm-2 col-xs-12 col-form-label required">Issued to</label>
                                     <div class="col-lg-7 col-md-6 col-sm-6 col-xs-12">
-                                        <select id="issued_to" name="issued_to"></select>
-                                        <select disabled id="contractor" name="contractor"></select>
+                                        <select id="issued_to" name="issued_to" data-validation="required"></select>
+                                        <!-- <select disabled id="contractor" name="contractor"></select> -->
+                                        <span class="help-block form-error"></span>
                                     </div>
                                     <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12" id='toogle_but'>
                                         <button id='con_but' type='button' class="btn m-btn--sm btn-primary btn-block btnEdit">Change to Contractor</button>
                                         <button id='emp_but' type='button' style='margin-top:0px' class="btn m-btn--sm btn-success btn-block btnEdit">Change to Employee</button>
                                     </div>
                                 </div>
-                                <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-lg-2 col-sm-12 col-form-label">Date Issued</label>
-                                    <div class="col-md-3 col-lg-3 col-sm-3 col-xs-12 input-group date" id="issue_dtpicker">
-                                        <input class="form-control m-input" type="text" name="issue_dt" id="issue_dt" maxlength="22" autocomplete="off" />
-                                        <span class="input-group-addon"><i class="la la-calendar glyphicon-th"></i></span>
+                                <div class="row">
+                                    <label class="col-md-2 col-lg-2 col-sm-12 col-form-label required">Date Issued</label>
+                                    <div class="col-md-3 col-lg-3 col-sm-3 col-xs-12 " >
+                                        <div id="issue_dtpicker" class="input-group date form-group m-form__group">
+                                            <input class="form-control m-input" type="text" name="issue_dt" id="issue_dt" maxlength="22" autocomplete="off" data-validation="required" onkeypress="isNumberKey(event)" />
+                                            <span class="input-group-addon"><i class="la la-calendar glyphicon-th"></i></span>
+                                        </div>
+                                        <span class="help-block form-error text-left"></span>
                                     </div>
                                     <div class='col-md-3 col-lg-3 col-sm-3 col-xs-12 m-checkbox-list'>
                                         <label class='m-checkbox m-checkbox--success m--margin-top-5 m--font-boldest pull-right'>
@@ -186,6 +194,7 @@
                                     <table class="table table-striped table-bordered" name="tblnewasset" id="tblnewasset" width="100%">
                                         <thead>
                                         <tr>
+                                            <th>id</th>
                                             <th>Asset Code</th>
                                             <th>Asset Name</th>
                                             <th>Description</th>
@@ -282,9 +291,10 @@
                         </div>
                         <br>
                         <div class="m_datatable m-datatable--scroll col-12 table-responsive-sm">
-                            <table class="table table-striped table-bordered" id="tblnewvehicle">
+                            <table class="table table-striped table-bordered" id="tblnewvehicle" width="100%">
                                 <thead>
                                 <tr>
+                                    <th>id</th>
                                     <th>Asset Code</th>
                                     <th>Asset Name</th>
                                     <th>Description</th>
@@ -394,6 +404,7 @@
                                     <table class="table table-striped table-bordered" name="tblmultiple" id="tblmultiple" width="100%">
                                         <thead>
                                         <tr>
+                                            <th>id</th>
                                             <th>Asset Code</th>
                                             <th>Asset Name</th>
                                             <th>Description</th>

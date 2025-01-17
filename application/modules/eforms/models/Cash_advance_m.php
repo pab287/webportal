@@ -5,6 +5,9 @@ class Cash_advance_m extends CI_Model {
     protected $eformsTable = "gcceforms";
     private $current_action =  array();
     private $user_data = array();
+    private $cashAdvanceTable = "gcceforms.cash_advance";
+    private $employeeTable = "gccmaster.tblemployees";
+    private $chargesTable = "gcceforms.ca_charges";
     public function __construct()
 	{
         parent::__construct();
@@ -565,7 +568,7 @@ class Cash_advance_m extends CI_Model {
         return $resultset;
     }
 
-    function email_send_approval($employeeName, $referenceNumber, $amount=0, $purpose="", $recipient){
+    protected function email_send_approval($employeeName=null, $referenceNumber=null, $amount=0, $purpose="", $recipient=null){
         $resultset = array();
         $emailTo = array();
         $employeeName = mb_strtoupper($employeeName);
@@ -772,19 +775,20 @@ class Cash_advance_m extends CI_Model {
                 $rs->amt_applied =  "₱ ".number_format($rs->amt_applied, 2);
                 
                 $rs->amt_approved =  "₱ ".number_format($rs->amt_approved, 2);
-                if($rs->recommend_remarks){
+                /*** @malvin ngaa naka number format ang remarks.. sabta ko b! ***/
+                if($rs->recommend_remarks && is_numeric($rs->recommend_remarks)){
                     $rs->recommend_remarks =  "₱ ".number_format($rs->recommend_remarks, 2);
-                }else{
-                    $rs->recommend_remarks =  $rs->recommend_remarks;
                 }
-                $rs->hr_bal_remarks =  "₱ ".number_format($rs->hr_bal_remarks, 2);
-                $rs->acctg_bal_remarks =  "₱ ".number_format($rs->acctg_bal_remarks, 2);
-                if($rs->deduct_type=="percentage"){
-                    $rs->amt_to_b_deducted =  $rs->amt_to_b_deducted;
-                }else{
+                if($rs->hr_bal_remarks && is_numeric($rs->hr_bal_remarks)){
+                    $rs->hr_bal_remarks =  "₱ ".number_format($rs->hr_bal_remarks, 2);
+                }
+                if($rs->acctg_bal_remarks && is_numeric($rs->acctg_bal_remarks)){
+                    $rs->acctg_bal_remarks =  "₱ ".number_format($rs->acctg_bal_remarks, 2);
+                }
+                if($rs->deduct_type != "percentage" && is_numeric($rs->amt_to_b_deducted)){
                     $rs->amt_to_b_deducted =  "₱ ".number_format($rs->amt_to_b_deducted, 2);
                 }
-                
+                /*** @malvin ngaa naka number format ang remarks.. sabta ko b! ***/
 
                 $rs->acctg_ca_pending_formatted =  "₱ ".number_format($rs->acctg_ca_pending, 2, ".", ",");
                 $rs->acctg_ca_interest_formatted =  "₱ ".number_format($rs->acctg_ca_interest, 2, ".", ",");
@@ -1189,16 +1193,20 @@ class Cash_advance_m extends CI_Model {
             }
         }
     }
-    function setAcctgUpdate($id){
+    public function setAcctgUpdate($id){
         $post = $this->input->post();
-        $acctg_bal_remarks =  str_replace( ',', '', $post['acctg_bal_remarks2']);
-        $hr_bal_remarks =  str_replace( ',', '', $this->input->post('display_acctg_bal_remarks'));
-        $acctg_bal_status = $post['set_acctg_status'];
-        if($acctg_bal_status == "Payroll Balance Pending"){
-            $final_remarks = 0.00;
-        }else{
-            $final_remarks = $acctg_bal_remarks;
+
+        $arrKeys = array("cash_advance_pending", "cash_advance_interest", "cash_advance_balance", "sss_loan", "hdmf_loan", "outside_loan");
+        foreach ($arrKeys as $key) {
+            if(isset($post[$key]) && $post[$key]){ $post[$key] = trim(trim(str_replace( ',', '', $post[$key]), '₱')); }
         }
+
+        $acctg_bal_remarks =  isset($post['acctg_bal_remarks2']) && is_numeric($post['acctg_bal_remarks2']) ? trim(str_replace( ',', '', $post['acctg_bal_remarks2'])) : $post['acctg_bal_remarks2'];
+        $acctg_bal_status = $post['set_acctg_status'];
+        if($acctg_bal_status == "Payroll Balance Pending"){ $final_remarks = 0.00; }
+        else{ $final_remarks = $acctg_bal_remarks; }
+        $post["acctg_bal_remarks2"] = is_numeric($acctg_bal_remarks) ? '₱ ' . number_format($acctg_bal_remarks, 2, '.', ',') : $post["acctg_bal_remarks2"];
+
         $date = date('Y-m-d H:i:s');
         $data = array(
             'acctg_bal_by' => $this->getDisplayName(),
@@ -1206,14 +1214,15 @@ class Cash_advance_m extends CI_Model {
             'acctg_bal_remarks' => $final_remarks,
             'acctg_bal_remarks2' => $post["acctg_bal_remarks2"],
             'acctg_ca_interest' => $post["cash_advance_interest"],
-            'acctg_ca_pending' => trim($post["cash_advance_pending"], '₱'),
-            'acctg_ca_balance' => trim($this->input->post("cash_advance_balance"), '₱'),
-            'acctg_sss_loan' => trim($post["sss_loan"], '₱'),
-            'acctg_hdmf_loan' => trim($post['hdmf_loan'], '₱'),
-            'acctg_outside_loan' => trim($post['outside_loan'], '₱'),
-            'acctg_other_charges' => $this->input->post("other_charges"),
+            'acctg_ca_pending' => $post["cash_advance_pending"],
+            'acctg_sss_loan' => $post["sss_loan"],
+            'acctg_hdmf_loan' => $post['hdmf_loan'],
+            'acctg_outside_loan' => $post['outside_loan'],
             'status' => $acctg_bal_status,
         );
+        
+        if(isset($post["cash_advance_balance"]) && $post["cash_advance_balance"]){ $data["acctg_ca_balance"] = $post["cash_advance_balance"]; }
+        if(isset($post["other_charges"]) && $post["other_charges"]){ $data["acctg_other_charges"] = $post["other_charges"]; }
 
         if($id){
             $this->db->where('cash_advance.id', $id);
@@ -1236,18 +1245,27 @@ class Cash_advance_m extends CI_Model {
                 $this->db->from('gccmaster.tblusers');
                 $this->db->where("is_suspended=0 AND email='hrpayroll@gccph.com'");
                 $email = $this->db->get();
-                $hr_email = $email->row_array(); 
-                //$hr_email['email'];   
-                $this->email_send($emp_name, $emp_details['reference_no'], $emp_details['amt_applied'], $emp_details['purpose'], $hr_email['email']);
-                //$emp_details['purpose']
-            }else if($status == 'Awaiting Approval'){
-                //send email to sir jes
-                $this->db->select('email,username');
-                $this->db->from('gccmaster.tblusers');
-                $this->db->where("is_suspended=0 AND email='hr@gccph.com'");
-                $email = $this->db->get();
                 $hr_email = $email->row_array();
-                $this->email_send_approval($emp_name, $emp_details['reference_no'], $emp_details['amt_applied'], $emp_details['purpose'], $hr_email['email']);
+                $this->email_send($emp_name, $emp_details['reference_no'], $emp_details['amt_applied'], $emp_details['purpose'], $hr_email['email']);
+            } elseif ($status == 'Awaiting Approval'){
+                //send email to sir jes
+                $this->db->select('email');
+                $this->db->from('gccmaster.tblusers');
+                /*** $this->db->where("is_suspended=0 AND email='hr@gccph.com'"); ***/
+                $this->db->where("is_suspended", 0);
+                $this->db->group_start();
+                $this->db->where("email","hr@gccph.com");
+                $this->db->or_where("email","assthrman@gccaggregates.com");
+                $this->db->group_end();
+                $this->db->order_by("id", "DESC");
+                $this->db->limit(1);
+                $email = $this->db->get();
+                if ($email->num_rows() == 1) {
+                    $hr_email = $email->row()->email;
+                    if($hr_email){
+                        $this->email_send_approval($emp_name, $emp_details['reference_no'], $emp_details['amt_applied'], $emp_details['purpose'], $hr_email);
+                    }
+                }
             }else{
                 //send email to miss grace
                 $this->db->select('email,username');
@@ -3438,6 +3456,112 @@ class Cash_advance_m extends CI_Model {
     
             }
             return $resultset;
+        }
+
+        public function getCashAdvanceReport(){
+            $rowCount = 0;
+            $rowData = array();
+            $resultset = array();
+            $post = $this->input->post();
+            $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+            $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
+            $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+            $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+            $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
+            $dateRange = (isset($post["dateRange"]) && $post["dateRange"]) ? $post["dateRange"] : null;
+            if($dateRange == null){
+                $resultset["recordsTotal"] = 0;
+                $resultset["recordsFiltered"] =  0;
+                $resultset["data"] = [];
+                return $resultset;
+            }
+            $rowData = $this->getCashAdvanceReportData($search, $limit, $offset, $sortBy, $sortOrder,$dateRange);
+            $total = $this->getCashAdvanceReportDataCount($search,$dateRange);
+            $resultset["recordsTotal"] = $total;
+            $resultset["recordsFiltered"] =  $total;
+            $resultset["data"] = isset($rowData) && $rowData ? $rowData: array();
+            return $resultset;
+        }
+
+        private function getCashAdvanceReportData($search, $limit, $offset, $sortBy, $sortOrder,$dateRange){
+            $filterFields = array("ca.id");
+            $this->db->select("ca.id,ca.company, ca.purpose, ca.department, ca.position, ca.approved_by, ca.approved_dt, ca.acctg_sss_loan as sss_loan, ca.acctg_hdmf_loan as hdmf_loan, created_dt as date_created, ca.amt_approved, ca.acctg_outside_loan as med_loan,
+                CASE 
+                    WHEN LENGTH(e.middlename) > 1 THEN CONCAT(e.firstname, ' ', SUBSTRING(e.middlename, 1, 1), '. ', e.lastname)
+                    ELSE CONCAT(e.firstname, ' ', e.middlename, ' ', e.lastname)
+                END AS name,
+                e.firstname as firstname,
+                e.lastname as lastname,
+                SUM(c.amount) AS total_charges,
+            ");
+
+            $this->db->from($this->cashAdvanceTable. ' as ca');
+            $this->db->join($this->employeeTable. ' as e', 'ca.employee = e.id', 'left');
+            $this->db->join($this->chargesTable. ' as c', 'ca.id = c.ca_id', 'left');
+            $this->db->where('status', 'Approved');
+            if ($dateRange) {
+                list($startDate, $endDate) = explode('|', $dateRange);
+                $this->db->where("DATE(ca.approved_dt) BETWEEN '$startDate' AND '$endDate'");
+            }
+            $this->db->group_by('ca.id');
+            if(isset($search)){
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+            // if ($limit != -1) {
+            //     $this->db->limit($limit, $offset);
+            // }
+            $i = $sortOrder[0]['column'];
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            $query = $this->db->get();
+            return $query->result_array();
+        }
+
+        private function getCashAdvanceReportDataCount($search,$dateRange){
+            $filterFields = array("ca.id");
+            $this->db->where('status', 'Approved');
+            $this->db->from($this->cashAdvanceTable. ' as ca');
+            $this->db->join($this->employeeTable. ' as e', 'ca.employee = e.id', 'left');
+            if ($dateRange) {
+                list($startDate, $endDate) = explode('|', $dateRange);
+                $this->db->where("DATE(ca.approved_dt) BETWEEN '$startDate' AND '$endDate'");
+            }
+            if(isset($search)){
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+            $query = $this->db->get();
+            return $query->num_rows();
+        }
+
+        public function exportReport($type){
+            $post = $this->input->post();
+            $filter="";
+            $dateRange = (isset($post["dateRange"]) && $post["dateRange"]) ? $post["dateRange"] : null;
+            if ($dateRange) {
+                list($startDate, $endDate) = explode('|', $dateRange);
+                $startDate = trim($startDate);
+                $endDate = trim($endDate);
+                $startTimestamp = strtotime($startDate);
+                $endTimestamp = strtotime($endDate);
+                $filter .= " with date range from: <strong>".date('M d, Y', $startTimestamp)."</strong> to <strong>".date('M d, Y', $endTimestamp)."</strong>";
+            }
+           
+            return $this->core_layout->setEventLog("Cash Advance Report exported using <strong>$type</strong>.".$filter." total result(s): ".$post['total'], "generate", "success", "gcceforms", "user");
         }
 
 }

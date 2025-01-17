@@ -99,9 +99,6 @@
                                 <th>Company</th>
                                 <th>WORK DAYS IN YEAR</th>
                                 <th>SSS CLASSIFICATION</th>
-                                <th>Email To</th>
-                                <th>Email Cc</th>
-                                <th>Email Bcc</th>
                                 <th>Action</th>
                             </tr>
                             </thead>

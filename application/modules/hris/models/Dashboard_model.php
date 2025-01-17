@@ -84,10 +84,10 @@
                            IF(company.id IS NULL, emp.company_id, company.code) IS NOT NULL AND 
                            emp.work_status IN ('Regular', 'Probationary', 'Service contract', 'No contract') AND 
                            (`emp`.`employee_status` = 'Active' AND `emp`.`employee_status` IS NOT NULL))) * 100 AS DECIMAL(10,1)) percentage";
-            $this->db->select($select, FALSE);
-            $this->db->where("IF(company.id IS NULL, emp.company_id, company.code) IS NOT NULL", NULL, FALSE);
+            $this->db->select($select, false);
+            $this->db->where("IF(company.id IS NULL, emp.company_id, company.code) IS NOT NULL", null, false);
             $this->db->group_start();
-            $this->db->where("emp.employee_status='Active' AND emp.employee_status IS NOT NULL", NULL, FALSE);
+            $this->db->where("emp.employee_status='Active' AND emp.employee_status IS NOT NULL", null, false);
             $this->db->group_end();
 
             // $this->db->where("emp.work_status IN ('Regular', 'Probationary', 'Service contract', 'No contract')", NULL, FALSE);

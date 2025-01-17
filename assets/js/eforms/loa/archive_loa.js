@@ -23,7 +23,7 @@ var tblLoa = $("#table-loa").DataTable({
         { data: "nature"},
         { data: "reason"},
         { data: "type",render: function (data) {return renderTypeHtml(data)}},
-        { data: "type", render: function ( data, type, row, meta ) {return formatDifference(data,row)}},
+        { data: "type", sortable: false, render: function ( data, type, row, meta ) {return formatDifference(data,row)}},
         { data: "date_from", render: function ( data, type, row, meta ) {return formatCalendarDate(data,row)}},
         { data: "reference_no"},       
         { data: null, width: "8%", className: "text-center"},
@@ -152,11 +152,21 @@ function renderTypeHtml(data){
 function formatDifference(data,row){
     switch(data){
         case "1":
-        var datefrom = new Date(row.date_from);
-var dateto = new Date(row.date_to);
-        var hours =Math.abs(dateto - datefrom)/36e5;
-        var hours= (hours).toFixed(0);
-            return hours +" HOURS";
+            var datefrom = new Date(row.date_from);
+            var dateto = new Date(row.date_to);
+            var hours =Math.abs(dateto - datefrom)/36e5;
+            var hours= (hours).toFixed(0);
+            var _temp = "";
+
+            if (hours > 1) {
+                _temp = hours + " HOURS";
+            } else if (hours == 1) {
+                _temp = hours + " HOUR";
+            } else {
+                _temp = "";
+            }
+
+            return _temp;
         break;
         case "2":
             return '4 hours';
@@ -165,17 +175,65 @@ var dateto = new Date(row.date_to);
             return '8 hours';
         break;
         default:
-             var datefrom = new Date(row.date_from);
-var dateto = new Date(row.date_to);
-        var hours = Math.abs(dateto - datefrom)/ 36e5;
-        var temp=hours%24
-         var temp2=Math.floor(hours/24);
-if(temp=="0"){
- 
-  return temp2 +" Days ";
-}else{
- return temp2 +" Days "+ temp +" HOURS";
-}
+            // var datefrom = new Date(row.date_from);
+            // var dateto = new Date(row.date_to);
+            // var hours = Math.abs(dateto - datefrom)/ 36e5;
+            // var temp=hours%24
+            // var temp2=Math.floor(hours/24);
+
+            // if(temp=="0"){
+            //     return temp2 +" Days ";
+            // }else{
+            //     return temp2 +" Days "+ temp +" HOURS";
+            // }
+
+            var datefrom = new Date(row.date_from);
+            var dateto = new Date(row.date_to);
+            // get total seconds between the times
+            var delta = Math.abs(dateto - datefrom) / 1000;
+
+            // calculate (and subtract) whole days
+            var days = Math.floor(delta / 86400);
+            delta -= days * 86400;
+
+            // calculate (and subtract) whole hours
+            var hours = Math.floor(delta / 3600) % 24;
+            delta -= hours * 3600;
+
+            // calculate (and subtract) whole minutes
+            var minutes = Math.floor(delta / 60) % 60;
+            delta -= minutes * 60;
+
+            var display_minutes;
+            var display_hours;
+            var display_days;
+
+            if(hours > 1){
+                display_hours = hours + " HOURS ";
+            }else if(hours == 1){
+                display_hours = hours + " HOUR ";
+            }else{
+                display_hours = "";
+            }
+            if(minutes > 1){
+                display_minutes = minutes + " MINUTES";
+            }else if(minutes == 1){
+                display_minutes = minutes + " MINUTE";
+            }else{
+                display_minutes = "";
+            }
+            
+            if(days > 1){
+                display_days = days + " DAYS ";
+            }else{
+                display_days = days + " DAY ";
+            }
+
+            if (days == 0 && hours > 0) {
+                display_days = "";
+            }
+            
+            return display_days + display_hours + display_minutes;
             
         break;
         
@@ -198,7 +256,7 @@ function formatCalendarDate(data,row){
 function itemDatatableActions($id){
 	if($id){
 		var _actionButton ="";
-			_actionButton += " <a  class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='"+baseUrl('eforms/loa/view_loa?id=')+$id+"' target='__blank'><i class='la la-pencil-square'></i></a>";				
+			_actionButton += " <a  class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='"+baseUrl('eforms/loa/view_loa?id=')+$id+"&page=archive' target='__blank'><i class='la la-pencil-square'></i></a>";				
 		return _actionButton;
 	}else{ return false; }
 }

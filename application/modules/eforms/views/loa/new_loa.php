@@ -27,8 +27,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-xs-12 col-form-label">
-                                        Employee *
+                                    <label class="col-md-2 col-xs-12 col-form-label required">
+                                        Employee
                                     </label>
                                     <div class="col-md-10 col-xs-12">
                                         <select id="select2_employee" name="employee" data-validation="required"
@@ -53,8 +53,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-xs-12 col-form-label">
-                                        Nature of Leave *
+                                    <label class="col-md-3 col-xs-12 col-form-label required">
+                                        Nature of Leave
                                     </label>
                                     <div class="col-md-9 col-xs-12">
                                         <select class="form-control select2" id="nature" name="nature"
@@ -67,13 +67,14 @@
                                             <option value="Paternity Leave">Paternity Leave</option>
                                             <option value="Sick Leave">Sick Leave</option>
                                             <option value="Solo Parent Leave">Single / Solo Parent Leave</option>
-                                            <option value="Vacation Leave">Special Leave</option>
+                                            <!-- <option value="Vacation Leave">Special Leave</option> -->
+                                            <option value="Vacation Leave">Vacation Leave</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-xs-12 col-form-label">
-                                        Address on Leave *
+                                    <label class="col-md-3 col-xs-12 col-form-label required">
+                                        Address on Leave
                                     </label>
                                     <div class="col-md-9 col-xs-12">
                                         <textarea name="address" rows="5" cols="50" class="form-control" maxlength="100"
@@ -81,8 +82,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-xs-12 col-form-label">
-                                        Reason for Leave *
+                                    <label class="col-md-3 col-xs-12 col-form-label required">
+                                        Reason for Leave
                                     </label>
                                     <div class="col-md-9 col-xs-12">
                                         <textarea name="reason" id="reason"
@@ -97,19 +98,17 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-xs-12 col-form-label">
+                                    <label class="col-md-3 col-xs-12 col-form-label required">
                                         Phone on Leave
                                     </label>
                                     <div class="col-md-9 col-xs-12">
-                                        <input class="form-control m-input" name="phone" type="number"
-                                            autocomplete="off"
-                                            data-validation="required"/>
+                                        <input class="form-control m-input" id="phone" name="phone" type="text" autocomplete="off" data-validation="required" onkeypress="isNumberKey(event)" />
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-xs-12 col-form-label">
+                                    <label class="col-md-2 col-xs-12 col-form-label required">
                                         Type
                                     </label>
                                     <div class="col-md-10 col-xs-12">
@@ -126,7 +125,7 @@
                                 </div>
 
                                 <div class="form-group m-form__group row" id="under_date">
-                                    <label class="col-md-2 col-xs-12 col-form-label">
+                                    <label class="col-md-2 col-xs-12 col-form-label required">
                                         Date/Time Options
                                     </label>
                                     <div class="col-md-5 col-xs-12">
@@ -162,7 +161,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="half_date">
-                                    <label class="col-2 col-form-label">
+                                    <label class="col-2 col-form-label required">
                                         Date/Time Options
                                     </label>
                                     <div class="col-md-5">
@@ -187,7 +186,7 @@
                                 </div>
 
                                 <div class="form-group m-form__group row" id="whole">
-                                    <label class="col-2 col-form-label">
+                                    <label class="col-2 col-form-label required">
                                         Date/Time Options
                                     </label>
                                     <div class="col-md-5">
@@ -206,7 +205,7 @@
                                 </div>
 
                                 <div class="form-group m-form__group row" id="other_date">
-                                    <label class="col-2 col-form-label">
+                                    <label class="col-2 col-form-label required">
                                         Date/Time Options
                                     </label>
                                     <div class="col-md-5">
@@ -246,6 +245,8 @@
                             </div>
                         </div>
                         <br>
+                        <input type="hidden" id="date-from-hidden">
+                        <input type="hidden" id="date-to-hidden">
                         <div class="modal-footer">
                             <button type="submit" id="btnSaveLoa"
                                     class="btn btn-info m-btn m-btn--custom m-btn--icon m-btn--air m-btn--box btn-submit btnSave">

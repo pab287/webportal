@@ -3,7 +3,7 @@ load_telegram_config();
 var isExport = false;
 
 $("#selectall").click(function () {
-    $('#table-loa tbody input[type="checkbox"]').prop('checked', this.checked);
+    $('#table-loa tbody input[type="checkbox"]:not(.has-checked)').prop('checked', this.checked);
 });
 
 $("#table-loa")
@@ -82,7 +82,7 @@ var tblLoa = $("#table-loa").DataTable({
             }
         },
         {
-            data: "type", render: function (data, type, row, meta) {
+            data: "type", sortable: false, render: function (data, type, row, meta) {
                 return formatDifference(data, row)
             }
         },
@@ -214,9 +214,11 @@ function formatContent(data) {
 
 function formatcheck(data, row) {
     if (data) {
-        var _checkButton = "<input type='checkbox'  value=" + data + ">";
+        var isDisabled = (row.status.toLowerCase() == 'approved' || row.status.toLowerCase() == 'hr noted' || row.status.toLowerCase() == 'disapproved') ? 'disabled' : '';
+        var isChecked = (row.status.toLowerCase() == 'approved' || row.status.toLowerCase() == 'hr noted' || row.status.toLowerCase() == 'disapproved') ? 'checked' : '';
+        var hasCheck = isChecked ? 'has-checked' : '';
 
-
+        var _checkButton = "<input type='checkbox' class='call-checkbox "+ hasCheck +"' value=" + data + " "+isDisabled+" "+isChecked+">";
         return _checkButton;
     } else {
         return false;
@@ -283,7 +285,15 @@ function formatDifference(data, row) {
             var minutes = Math.floor(delta / 60) % 60;
             delta -= minutes * 60;
 
-            return hours + " HOURS " + minutes + " MINUTES";
+            if (minutes > 1) {
+                minutes = minutes + " MINUTES";
+            } else if (minutes == 1) {
+                minutes = minutes + " MINUTE";
+            } else { 
+                minutes = "";
+            }
+
+            return hours + " HOURS " + minutes;
             break;
         case "2":
             return '4 hours';
@@ -312,6 +322,7 @@ function formatDifference(data, row) {
             var display_minutes;
             var display_hours;
             var display_days;
+
             if(hours > 1){
                 display_hours = hours + " HOURS ";
             }else if(hours == 1){
@@ -331,6 +342,10 @@ function formatDifference(data, row) {
                 display_days = days + " DAYS ";
             }else{
                 display_days = days + " DAY ";
+            }
+
+            if (days == 0 && hours > 0) {
+                display_days = "";
             }
             
             return display_days + display_hours + display_minutes;
@@ -374,53 +389,172 @@ $("#reload_dtTbl").on("click", function () {
     tblLoa.ajax.reload();
 });
 
-
-$("#choice").on("select2:select", function () {
+$("#choice").select2({
+    width: '200px',
+    placeholder: 'Select an Option'
+}).on("select2:select", function (e) {
     var type = $("#choice option:selected").val();
+    let isUpdated = false;
 
-    var rowcollection = tblLoa.$(".call-checkbox:checked", { "page": "all" });
+    var rowcollection = tblLoa.$(".call-checkbox:not(.has-checked):checked", { "page": "all" });
 
-    rowcollection.each(function (index, elem) {
+    if (rowcollection.length > 0) {
+        if (type == 1) {
+            $("#modal_form_approve").modal();
+
+            $.validate({
+                el: '#form_approve',
+                lang: 'en',
+                onSuccess: function(form){
+                    var currentForm = form[0];
+                    var formData = $(currentForm).serialize();
+            
+                    var rowcollection = tblLoa.$(".call-checkbox:not(.has-checked):checked", { "page": "all" });
+                    let checked = [];
+            
+                    rowcollection.each(function (index, elem) {
+                        var checkbox_value = $(elem).val();
+            
+                        checked.push(checkbox_value);
+                    });
+            
+                    formData += '&checked=' + JSON.stringify(checked) + '&type=1';
+            
+                    $.ajax({
+                        url: baseUrl("eforms/loa/mass_action_loa"),
+                        type: "POST",
+                        dataType: "JSON",
+                        data: formData,
+                        success: function (data) {
+                            if(data.status && data.status == true){
+                                tblLoa.ajax.reload();
+                                $("#choice").val(null).trigger("change");
+                                toastr.success(data.message, "Successfully Approved!", 5000);
+                                $("#modal_form_approve").modal("hide");
+                            } else {
+                                toastr.error(data.message, "Failed to Approve!", 5000);
+                            }
+            
+                        }, error: function (jqXHR, textStatus, errorThrown) {
+                            toastr.error("Failed to Approve selected LOA.", "Error!", 5000);
+                        }
+                    })
+            
+                    return false;
+                }
+            });
+
+        } else {
+            $("#modal_form_disapprove").modal();
+
+            $.validate({
+                el: '#form_disapprove',
+                lang: 'en',
+                onSuccess: function(form){
+                    var currentForm = form[0];
+                    var formData = $(currentForm).serialize();
+            
+                    var rowcollection = tblLoa.$(".call-checkbox:not(.has-checked):checked", { "page": "all" });
+                    let checked = [];
+            
+                    rowcollection.each(function (index, elem) {
+                        var checkbox_value = $(elem).val();
+            
+                        checked.push(checkbox_value);
+                    });
+            
+                    formData += '&checked=' + JSON.stringify(checked) + '&type=2';
+            
+                    $.ajax({
+                        url: baseUrl("eforms/loa/mass_action_loa"),
+                        type: "POST",
+                        dataType: "JSON",
+                        data: formData,
+                        success: function (data) {
+                            if(data.status && data.status == true){
+                                tblLoa.ajax.reload();
+            
+                                $("#modal_form_disapprove").modal("hide");
+                                $("#choice").val(null).trigger("change");
+                                toastr.success(data.message, "Successfully Disapproved!", 5000);
+                            } else {
+                                toastr.error(data.message, "Failed to Disapprove!", 5000);
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            toastr.error("Failed to Disapprove selected LOA.", "Error!", 5000);
+                        }
+                    })
+            
+                    return false;
+                }
+            });
+        }
+
+        // isUpdated = massAction(rowcollection, type);
+
+        // if (isUpdated) {
+        //     tblLoa.ajax.reload();
+        //     $("#choice").val(null).trigger("change");
+        // }
+    } else{
+        $("#choice").val(null).trigger("change");
+        toastr.warning("Please select at least one record", "Mass Action", 5000);
+    }
+
+});
+
+function massAction(rowcollection, type){
+    let updated = rowcollection.each(function (index, elem) {
         var checkbox_value = $(elem).val();
-
-
-        if (type == "1") {
+        let upDate = false;
+        if (type == 1) {
             $.ajax({
                 url: baseUrl("eforms/loa/approve_loa/") + checkbox_value,
                 type: "POST",
                 dataType: "JSON",
                 data: { csrf_token: _csrf_hash, approved_remarks: "" },
                 success: function (data) {
-                    window.location.replace(baseUrl("eforms/loa"));
+                    // window.location.replace(baseUrl("eforms/loa"));
+                    if(data.status && data.status == true){
+                        upDate = true;
+                    }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     alert('Error: "ajax_approve"');
                 }
             });
         }
-        if (type == "2") {
+
+        if (type == 2) {
             $.ajax({
                 url: baseUrl("eforms/loa/disapprove_loa/") + checkbox_value,
                 type: "POST",
                 dataType: "JSON",
                 data: { csrf_token: _csrf_hash, disapproved_remarks: "" },
                 success: function (data) {
-                    window.location.replace(baseUrl("eforms/loa"));
-
+                    // window.location.replace(baseUrl("eforms/loa"));
+                    if(data.status && data.status == true){
+                        upDate = true;
+                    }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     alert('Error adding / update data');
                 }
             });
         }
+
+        // return upDate;
     });
-});
+
+    return updated;
+}
 
 $(document).ready(function () {
     $('#query-builder').queryBuilder({
         'bt-tooltip-errors': { delay: 100 },
         filters: [
-            { id: 'a.id', label: 'ID #', type: 'integer' },
+            // { id: 'a.id', label: 'ID #', type: 'integer' },
             {
                 id: 'a.status',
                 label: 'Status',
@@ -484,6 +618,9 @@ $(document).ready(function () {
                         }, {
                             id: "Vacation Leave",
                             text: "Vacation Leave"
+                        }, {
+                            id: "Solo Parent Leave",
+                            text: "Solo Parent Leave"
                         }
                     ]
                 },

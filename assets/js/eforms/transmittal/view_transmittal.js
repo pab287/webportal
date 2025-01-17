@@ -164,7 +164,6 @@ $.ajax({
     vmTab1.vm_tab1_body = Object.assign({}, data.transmittal_body);
     vmTabPrint.vmData = Object.assign({}, data.transmittal_body);
     vmTabPrint.vmDataMain = Object.assign({}, data.data);
-    console.log(data.data);
   },
   error: function (jqXHR, textStatus, errorThrown) {
     alert("Error get data from ajax");
@@ -321,7 +320,7 @@ function restore_form() {
 
 function open_undoreceive() {
   $('#modal_form_undoreceived').modal('show'); // show bootstrap modal
-  $('.modal-title').text('Undo Receival'); // Set Title to Bootstrap modal title
+  $('.modal-title').text('Undo Receive'); // Set Title to Bootstrap modal title
 }
 
 function undo_receive() {

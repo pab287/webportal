@@ -92,7 +92,7 @@
 											Query Builder
 										</a>
 									</div>									
-									<a href="javascript:approve_to();" class="btn btn-success m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill btnAccomplishment text-white" data-skin="dark" data-toggle="m-tooltip" data-placement="top" title="" data-original-title="Accomplish">
+									<a href="javascript:approve_to();" class="btn btn-success m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill btnAccomplishment text-white" data-skin="dark" data-toggle="m-tooltip" data-placement="top" title="" data-original-title="Accomplish" hidden>
 										<span>
 											<i class="la la-thumbs-up"></i>
 											<span>

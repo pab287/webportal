@@ -110,7 +110,7 @@
 							</div>
 							<div class="form-group m-form__group">
 								<div class="text-center">
-									<div id="captcha" class="g-recaptcha" data-sitekey="6LfYy9QlAAAAAHNzof6dl4R4O_GkFrFeyRc42zdU"></div>
+									<div id="captcha" class="g-recaptcha" data-sitekey="<?php echo $recaptcha_site_key; ?>"></div>
 								</div>
 							</div>
 						</div>
@@ -140,7 +140,7 @@
 			  	});
 				grecaptcha.ready(() => {
 					grecaptcha.render(document.getElementById('captcha'), {
-						'sitekey' : '6LfYy9QlAAAAAHNzof6dl4R4O_GkFrFeyRc42zdU'
+						'sitekey' : '<?php echo $recaptcha_site_key; ?>'
 					});
 				});
 
@@ -160,4 +160,4 @@
 			});
 		</script>
 	</body>
-</html>
+</html> 

@@ -155,13 +155,14 @@
             }
         }
 
-        function view_employee_masterfile($employee_id = null) {
+        function view_employee_masterfile($employee_id = null,$tab = null) {
             // redirect to listing if id is empty
             if (empty($employee_id)) {
                 redirect(base_url("hris/masterfile/employee"), "refresh");
                 die();
             }
-
+            $data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataDetails($employee_id)));
+            $data->tab=$tab;
             $this->core_layout->setPageTitle("HRIS - View Employee Masterfile");
             $this->core_layout->setBodyClass("hris view-employee_masterfile");
             $this->core_layout->setPrivilegeName("hris_employee_masterfile");
@@ -177,17 +178,21 @@
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
             
-            $this->core_layout->addJs("js/hris/employee_view_script.js", true);
+            $this->core_layout->addJs("js/hris/employee_view_script.js",true,$data);
             $this->core_layout->addCss("css/hris/view_employee_masterfile.css", true);
 
             $this->core_layout->addJs('js/hris/search_employee_script.js', TRUE);
             $this->core_layout->addCss('css/hris/index.css', TRUE);
 
-            $data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataSheetDetails($employee_id)));
 
             $this->load->view("core/templates/header");
             $this->load->view("hris/masterfile/employee/view_employee_masterfile", $data, FALSE);
             $this->load->view("core/templates/footer");
+        }
+
+        public function get_print_data($employee_id){
+            $data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataSheetDetails($employee_id)));
+            $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
         function add_employee_masterfile() {
@@ -1870,4 +1875,75 @@
             ->set_content_type('json')
             ->set_output(json_encode($data));
         }
+
+        public function get_additional_info($id){
+            $data = $this->employee_model->getAddtionalInfo($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_education_background($id){
+            $data = $this->employee_model->getEducationBackground($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_license_and_cert($id){
+            $data = $this->employee_model->getLicenseAndCerts($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_work_experience($id){
+            $data = $this->employee_model->getEmpWorkExperience($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_awards_and_achievements($id){
+            $data = $this->employee_model->getAwardsAndAchievements($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_emp_skills($id){
+            $data = $this->employee_model->getEmpSkills($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_orgs($id){
+            $data = $this->employee_model->getOrgs($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_trainings_and_seminars($id){
+            $data = $this->employee_model->getTrainingsAndSeminars($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_personal_references($id){
+            $data = $this->employee_model->getPersonalReferences($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_medical_history($id){
+            $data = $this->employee_model->getEmpMedicalHistory($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_legal_history($id){
+            $data = $this->employee_model->getLegalHistory($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_accountability($id){
+            $data = $this->employee_model->getAccountability($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_employment_information($id){
+            $data = $this->employee_model->getEmploymentInformation($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_job_description($id){
+            $data = $this->employee_model->getEmpJobDescription($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
     }

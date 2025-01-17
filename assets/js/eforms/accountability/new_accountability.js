@@ -13,71 +13,177 @@ var getUrlParameter = function getUrlParameter(sParam) {
 
 param_id = getUrlParameter('id');
 
-$("#issued_to").select2({
-    placeholder: 'Select. .',
-    width: '100%',
-    minimumInputLength: 3,
-    ajax: {
-        url: baseUrl("eforms/accountability/issued_to_lookup"),
-        dataType: "json",
-        global: false,
-        delay: 500,
-        processResults: function (data) {
-            return data;
-        }
+// $("#issued_to").select2({
+//     placeholder: 'Select. .',
+//     width: '100%',
+//     minimumInputLength: 3,
+//     ajax: {
+//         url: baseUrl("eforms/accountability/issued_to_lookup"),
+//         dataType: "json",
+//         global: false,
+//         delay: 500,
+//         processResults: function (data) {
+//             return data;
+//         }
+//     }
+// }).on("select2:select", function (e) {
+//     var data = e.params.data;
+
+//     $.ajax({
+//         type: "GET",
+//         data: { 
+//             data: data.id 
+//         },
+//         url: baseUrl("eforms/accountability/get_file_under"),
+//         dataType: "json",
+//         success: function (json) {
+//             $("#company_to").val(json.company);
+//             $("#department_to").val(json.department);
+//         }
+//     });
+// });
+
+// $("#issued_to").on("select2:select", function () {
+//     $.ajax({
+//         type: "GET",
+//         data: { data: $("#issued_to option:selected").attr("value") },
+//         url: baseUrl("eforms/accountability/get_file_under"),
+//         dataType: "json",
+//         success: function (json) {
+//             $("#company_to").val(json.company);
+//             $("#department_to").val(json.department);
+//         }
+//     });
+// });
+
+// $("#contractor").select2({
+//     placeholder: 'Select. .',
+//     width: '100%',
+//     minimumInputLength: 3,
+//     ajax: {
+//         url: baseUrl("eforms/accountability/contractor_lookup"),
+//         dataType: "json",
+//         delay: 500,
+//         global: false,
+//         processResults: function (data) {
+//             return data;
+//         }
+//     }
+// }).on("select2:select", function () {
+//     $("#company_to").val("CONTRACTOR");
+//     $("#department_to").val("CONTRACTOR");
+// });
+
+// $("#contractor").on("select2:select", function () {
+//     $("#company_to").val("CONTRACTOR");
+//     $("#department_to").val("CONTRACTOR");
+// });
+
+select2Employee("#issued_to");
+
+
+function select2Employee(targetElement, destroy = false, type = 'employee') {
+    let ajax = {};
+
+    if (destroy) {
+        $(targetElement).empty();
+        $(targetElement).select2("destroy");
+        $(targetElement).off('select2:select');
     }
-});
 
-$("#issued_to").on("select2:select", function () {
-    $.ajax({
-        type: "GET",
-        data: { data: $("#issued_to option:selected").attr("value") },
-        url: baseUrl("eforms/accountability/get_file_under"),
-        dataType: "json",
-        success: function (json) {
-            $("#company_to").val(json.company);
-            $("#department_to").val(json.department);
-        }
-    });
-});
-
-$("#contractor").select2({
-    placeholder: 'Select. .',
-    width: '100%',
-    minimumInputLength: 3,
-    ajax: {
-        url: baseUrl("eforms/accountability/contractor_lookup"),
-        dataType: "json",
-        delay: 500,
-        global: false,
-        processResults: function (data) {
-            return data;
-        }
+    if (type == 'employee'){
+        ajax = {
+            url: baseUrl("eforms/accountability/issued_to_lookup"),
+            dataType: "json",
+            global: false,
+            delay: 500,
+            processResults: function (data) {
+                return data;
+            }
+        };
+    } else {
+        ajax = {
+            url: baseUrl("eforms/accountability/contractor_lookup"),
+            dataType: "json",
+            delay: 500,
+            global: false,
+            processResults: function (data) {
+                return data;
+            }
+        };
     }
-});
 
-$("#contractor").on("select2:select", function () {
-    $("#company_to").val("CONTRACTOR");
-    $("#department_to").val("CONTRACTOR");
-});
+    $(targetElement).select2({
+        placeholder: 'Select. .',
+        width: '100%',
+        minimumInputLength: 3,
+        ajax: ajax,
+    }).on("select2:select", function (e) {
+        var data = e.params.data;
 
+        console.log(type);
+
+        if (type == 'employee') {
+            $.ajax({
+                type: "GET",
+                data: { 
+                    data: data.id 
+                },
+                url: baseUrl("eforms/accountability/get_file_under"),
+                dataType: "json",
+                success: function (json) {
+                    $("#company_to").val(json.company);
+                    $("#department_to").val(json.department);
+                }
+            });
+        } else {
+            $("#company_to").val("CONTRACTOR");
+            $("#department_to").val("CONTRACTOR");
+        }
+    }); 
+
+    if (!destroy) {
+        $(targetElement).val('').trigger('change');
+    }
+}
+
+var maxDate = moment().format('MM/DD/YYYY');
 $('#issue_dtpicker').datetimepicker({
     todayHighlight: true,
     autoclose: true,
     pickTime: false,
     pickerPosition: 'bottom-left',
     todayBtn: true,
-    maxView: 4,
-    minView: 2,
+    endDate: maxDate,
+    timepicker: false,
     format: 'mm/dd/yyyy',
+});
+
+$(".today").on('click', function(){
+    var date = $('#issue_dt').val();
+    $("#issue_dt").validate();
+    $("#issue_dtpicker").validate();
+
+    $("#issue_dt").removeClass('error').addClass('valid');
+});
+
+$("#issue_dtpicker").on('blur', function(){
+    $("#issue_dt").validate();
+    $("#issue_dtpicker").validate();
+
+    $("#issue_dt").removeClass('error').addClass('valid');
 });
 
 $('#emp_but').hide();
 $('#con_but').on("click", function () {
     $('#con_but').hide();
     $('#emp_but').show();
-    $('#contractor').removeAttr("disabled");
-    $('#issued_to').attr("disabled", "disabled");
+    // $('#contractor').removeAttr("disabled");
+    // $('#issued_to').attr("disabled", "disabled");
+
+    select2Employee("#issued_to", true, 'contractor');
+    $("#issued_to").attr('name', 'contractor');
+
     $('#contract_check').val(1);
     $('#issued_to').val("");
     $('#issued_to').text("");
@@ -86,8 +192,12 @@ $('#con_but').on("click", function () {
 $('#emp_but').on("click", function () {
     $('#emp_but').hide();
     $('#con_but').show();
-    $('#issued_to').removeAttr("disabled");
-    $('#contractor').attr("disabled", "disabled");
+    // $('#issued_to').removeAttr("disabled");
+    // $('#contractor').attr("disabled", "disabled");
+
+    select2Employee("#issued_to", true, 'employee');
+    $("#issued_to").attr('name', 'issued_to');
+
     $('#contract_check').val(0);
     $('#contractor').val("");
     $('#contractor').text("");
@@ -155,7 +265,7 @@ function descriptionDetail($desc, $brand, $model, $serial, $plateno, $engineno, 
     if ($type == 'Asset') {
         return '<b>' + $desc + '</b><br>Description: ' + $desc_det + '<br>Brand: ' + $brand + '<br>Model: ' + $model + '<br>Serial: ' + $serial;
     } else {
-        return '<b>' + $desc + '</b><br>Description: ' + $desc_det + '<br>Plate no.: ' + $plateno + '<br>Engine no.: ' + $engineno + '<br>Chasis no.: ' + $chasisno;
+        return '<b>' + $desc + '</b><br>Description: ' + $desc_det + '<br>Plate no.: ' + ($plateno ? $plateno : 'N/A') + '<br>Engine no.: ' + ($engineno ? $engineno : 'N/A') + '<br>Chasis no.: ' + ($chasisno ? $chasisno : 'N/A');
     }
 }
 
@@ -170,7 +280,7 @@ function itemDatatableActions($id) {
     }
 }
 
-function delete_temp($id) {
+function delete_temp($id, isMultiple = false) {
     $.validate({
         form: '#delete_asset_form',
         lang: 'en',
@@ -186,8 +296,15 @@ function delete_temp($id) {
                 success: function (data) {
                     if (data) {
                         $('#delete_asset_modal').modal('hide');
+
+                        if (isMultiple) {
+                            tblAddedList.ajax.reload();
+
+                            $("#add_multiple_modal").css('overflow-y', 'auto');
+                        }
+
                         tblTemp.ajax.reload();
-                        $("#tbladdedlist").DataTable({ destroy: true, data: true });
+                        // $("#tbladdedlist").DataTable({ destroy: true, data: true });
                         toastr.success(data.toastr_msg, "Removed successfully", 5000);
                     } else {
                         toastr.error(data.toastr_msg, "Error removing item!", 5000);
@@ -265,6 +382,7 @@ function clear_temp() {
                     if (data) {
                         $('#clear_asset_modal').modal('hide');
                         tblTemp.ajax.reload();
+                        $("#tbladdedlist").DataTable({ destroy: true, data: true });
                         toastr.success(data.toastr_msg, "Removed successfully", 5000);
                     } else {
                         toastr.error(data.toastr_msg, "Error removing items!", 5000);
@@ -277,7 +395,7 @@ function clear_temp() {
     });
 }
 
-tblTemp.ajax.reload();
+// tblTemp.ajax.reload();
 
 //custom global search init
 $('#generalSearch').donetyping(function (callback) {
@@ -298,11 +416,26 @@ $("#tblassetcomp").DataTable({
 $("#tblnewasset").DataTable({
     dom: '<"toolbar">frtlip',
     searching: false,
+    columns: [
+        { data: "id", visible: false },
+        { data: "assetacode" },
+        { data: "name" },
+        { data: "assetname" },
+        { data: null, width: "5%", className: "text-center" },
+    ]
 });
 
 $("#tblnewvehicle").DataTable({
     dom: '<"toolbar">frtlip',
     searching: false,
+    columns: [
+        { data: "id", visible: false },
+        { data: "gen_code" },
+        { data: "name" },
+        { data: "description" },
+        { data: "plateno" },
+        { data: null, width: "5%", className: "text-center" },
+    ]
 });
 
 $("#tblvehiclecomp").DataTable({
@@ -315,10 +448,23 @@ $("#tblassetcomp_edit").DataTable({
     searching: false,
 });
 
-$("#tbladdedlist").DataTable({
+var tblAddedList = $("#tbladdedlist").DataTable({
     dom: '<"toolbar">frtlip',
     searching: false,
     destroy: true
+});
+
+$("#tblmultiple").DataTable({
+    dom: '<"toolbar">frtlip',
+    searching: false,
+    destroy: true,
+    columns: [
+        { data: "id", visible: false },
+        { data: "assetacode" },
+        { data: "name" },
+        { data: "assetname" },
+        { data: null, width: "5%", className: "text-center" },
+    ]
 });
 
 $("#asset_search").on("click", function () {
@@ -339,7 +485,9 @@ $("#asset_search").on("click", function () {
             }
         },
         searching: false,
+        order: [[0, "desc"]],
         columns: [
+            { data: "id", visible: false },
             {
                 data: "assetacode", render: function (data, type, row, meta) {
                     return assetCode(row.assetacode, row.is_borrowed);
@@ -370,11 +518,11 @@ $("#asset_search").on("click", function () {
         if ($id) {
             if ($assetcode && $name) {
                 var _actionButton = "";
-                _actionButton += " <button type='button' onclick='getAssetDetail(" + $id + ', ' + $component + ")' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-search'></i></button>";
+                _actionButton += " <button type='button' onclick='getAssetDetail(" + $id + ', ' + $component + ")' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-plus'></i></button>";
                 return _actionButton;
             } else {
                 var _actionButton = "";
-                _actionButton += " <button type='button' onclick='noAssetCode()' class='btn m-btn btn-danger m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-search'></i></button>";
+                _actionButton += " <button type='button' onclick='noAssetCode()' class='btn m-btn btn-danger m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-plus'></i></button>";
                 return _actionButton;
             }
         } else {
@@ -468,8 +616,10 @@ $("#vehicle_search").on("click", function () {
                     d.code = code
             }
         },
+        order: [[0, 'desc']],
         searching: false,
         columns: [
+            { data: "id", visible: false },
             {
                 data: "gen_code", render: function (data, type, row, meta) {
                     return vehicleCode(row.gen_code, row.is_borrowed);
@@ -501,11 +651,11 @@ $("#vehicle_search").on("click", function () {
         if ($id) {
             if ($assetcode && $name) {
                 var _actionButton = "";
-                _actionButton += " <button type='button'  onclick='getVehicleDetail(" + $id + ', ' + $component + ")'  class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-search'></i></button>";
+                _actionButton += " <button type='button'  onclick='getVehicleDetail(" + $id + ', ' + $component + ")'  class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-plus'></i></button>";
                 return _actionButton;
             } else {
                 var _actionButton = "";
-                _actionButton += " <button type='button' onclick='noAssetCode()' class='btn m-btn btn-danger m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-search'></i></button>";
+                _actionButton += " <button type='button' onclick='noAssetCode()' class='btn m-btn btn-danger m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='la la-plus'></i></button>";
                 return _actionButton;
             }
         } else {
@@ -544,7 +694,7 @@ function getVehicleDetail($id, $component) {
             $("#vehicle_qty").val(1);
             $("#vehicle_code").val(data.gen_code);
             $("#vehicle_name").text(data.name);
-            $("#vehicle_desc").text(data.description + '\nBrand: ' + data.brand + '\nModel: ' + data.model + '\nPlate No.: ' + data.plateno);
+            $("#vehicle_desc").text(data.description + '\nBrand: ' + (data.brand ? data.brand : 'N/A') + '\nModel: ' + (data.model ? data.model : 'N/A') + '\nPlate No.: ' + (data.plateno ? data.plateno : 'N/A'));
             return data;
         }
     });
@@ -600,8 +750,12 @@ $("#multiple_search").on("click", function () {
                 d.code = code;
                 return d;
             }
-        }, searching: false,
-        columns: [{
+        }, 
+        order: [[0, 'desc']],
+        searching: false,
+        columns: [
+        { data: "id", visible: false },
+        {
             data: "assetacode", render: function (data, type, row, meta) {
                 return assetCode(row.assetacode, row.is_borrowed);
             }
@@ -625,48 +779,50 @@ $("#multiple_search").on("click", function () {
     });
 });
 
-var tblMultiple = $("#tblmultiple").DataTable({
-    dom: '<"toolbar">frtlip',
-    serverSide: true,
-    processing: true,
-    destroy: true,
-    ajax: {
-        url: baseUrl("eforms/accountability/multiple_temp/"),
-        type: "post",
-        dataType: "json",
-        data: function (d) {
-            d.csrf_token = _csrf_hash,
-                d.search['value'] = search_val,
-                d.code = $("#vehicle").val()
-        }
-    },
-    searching: false,
-    columns: [
-        {
-            data: "assetacode", render: function (data, type, row, meta) {
-                return assetCode(row.assetacode, row.is_borrowed);
+function multiple_assets(){
+    var tblMultiple = $("#tblmultiple").DataTable({
+        dom: '<"toolbar">frtlip',
+        serverSide: true,
+        processing: true,
+        destroy: true,
+        ajax: {
+            url: baseUrl("eforms/accountability/multiple_temp/"),
+            type: "post",
+            dataType: "json",
+            data: function (d) {
+                d.csrf_token = _csrf_hash,
+                    d.search['value'] = search_val,
+                    d.code = $("#vehicle").val()
             }
         },
-        {
-            data: "name", render: function (data, type, row, meta) {
-                return assetName(row.name, row.is_borrowed);
-            }
-        },
-        { data: "assetname" },
-        { data: null, width: "5%", className: "text-center" },
-    ],
-    columnDefs: [
-        {
-            data: null,
-            defaultContent: "",
-            targets: -1,
-            orderable: false,
-            render: function (data, type, row, meta) {
-                return multipleDatatableActions(row.id, row.isComponent, row.assetacode, row.name);
+        searching: false,
+        columns: [
+            {
+                data: "assetacode", render: function (data, type, row, meta) {
+                    return assetCode(row.assetacode, row.is_borrowed);
+                }
             },
-        }
-    ]
-});
+            {
+                data: "name", render: function (data, type, row, meta) {
+                    return assetName(row.name, row.is_borrowed);
+                }
+            },
+            { data: "assetname" },
+            { data: null, width: "5%", className: "text-center" },
+        ],
+        columnDefs: [
+            {
+                data: null,
+                defaultContent: "",
+                targets: -1,
+                orderable: false,
+                render: function (data, type, row, meta) {
+                    return multipleDatatableActions(row.id, row.isComponent, row.assetacode, row.name);
+                },
+            }
+        ]
+    });
+}
 
 function multipleDatatableActions($id, $component, $assetcode, $name) {
     if ($id) {
@@ -717,18 +873,19 @@ function multipleAssetDetail($id, $component) {
         }
     });
 
-    var tblAddedList = $("#tbladdedlist").DataTable({
+    tblAddedList = $("#tbladdedlist").DataTable({
         dom: '<"toolbar">frtlip',
         serverSide: true,
         processing: true,
         destroy: true,
         ajax: {
-            url: baseUrl("eforms/accountability/list_temp/") + $id,
+            // url: baseUrl("eforms/accountability/list_temp/") + $id,
+            url: baseUrl("eforms/accountability/list_temp/"),
             type: "post",
             dataType: "json",
             data: function (d) {
                 d.csrf_token = _csrf_hash,
-                    d.search['value'] = search_val
+                d.search['value'] = search_val
             }
         },
         searching: false,
@@ -736,7 +893,7 @@ function multipleAssetDetail($id, $component) {
             { data: "asset_code", width: "20%" },
             {
                 data: "description", render: function (data, type, row, meta) {
-                    return descriptionDetail(row.description, row.brand, row.modelno, row.serialno, row.plateno, row.engineno, row.chasisno, row.type);
+                    return descriptionDetail(row.description, row.brand, row.modelno, row.serialno, row.plateno, row.engineno, row.chasisno, row.type, row.desc);
                 }
             },
             { data: "amount", width: "20%", className: "text-right" },
@@ -754,15 +911,15 @@ function multipleAssetDetail($id, $component) {
             }
         ]
     });
+}
 
-    function addedListDatatableActions($id) {
-        if ($id) {
-            var _actionButton = "";
-            _actionButton += " <button type='button' onclick='delete_temp(" + $id + ")' data-toggle='modal' data-target='#delete_asset_modal' class='btn btn-default m-btn m-btn--hover-danger m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='fa fa-remove'></i></button>";
-            return _actionButton;
-        } else {
-            return false;
-        }
+function addedListDatatableActions($id) {
+    if ($id) {
+        var _actionButton = "";
+        _actionButton += " <button type='button' onclick='delete_temp(" + $id + ", true)' data-toggle='modal' data-target='#delete_asset_modal' class='btn btn-default m-btn m-btn--hover-danger m-btn--icon m-btn--icon-only m-btn--pill btnEditItem'><i class='fa fa-remove'></i></button>";
+        return _actionButton;
+    } else {
+        return false;
     }
 }
 
@@ -870,4 +1027,25 @@ $.validate({
         }
         return false;
     },
+});
+
+$("#add_multiple_modal").on('shown.bs.modal', function () {
+    if (tblTemp.data().length > 0) {
+        var data = tblTemp.data();
+        tblAddedList.clear().rows(data).draw();
+    } else {
+        $("#tbladdedlist").DataTable({ destroy: true, data: true });
+    }
+});
+
+function isNumberKey(evt) {
+	const char = String.fromCharCode(evt.which);
+	if(!(/[0-9+/]/.test(char))){
+		evt.preventDefault();
+	}
+}
+
+$("#issue_dt").inputmask({
+    mask : '99/99/9999',
+    placeholder : 'mm/dd/yyyy'
 });

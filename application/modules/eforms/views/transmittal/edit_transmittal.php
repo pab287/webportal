@@ -22,11 +22,11 @@
 				</div>
 				<div class="m-portlet__body">
           <form action="#" id="form_transmittal" class="form-horizontal">
-          <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 					  <div class="row">
               <div class="col-md-5 col-sm-12">
                 <div class="form-group m-form__group row">
-                  <label class="col-md-4 col-lg-4 col-sm-4 col-xs-12 col-form-label">
+                  <label class="col-md-4 col-lg-4 col-sm-4 col-xs-12 col-form-label m--font-bold">
                     Type
                   </label>
                   <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
@@ -36,7 +36,7 @@
                   </div>
                 </div>
                 <div class="form-group m-form__group row">
-                  <label class="col-md-4 col-lg-4 col-sm-4 col-xs-12 col-form-label">
+                  <label class="col-md-4 col-lg-4 col-sm-4 col-xs-12 col-form-label required m--font-bold">
                     File Under
                   </label>
                   <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
@@ -46,7 +46,7 @@
                   </div>
                 </div>
                 <div class="form-group m-form__group row">
-                  <label class="col-md-4 col-lg-4 col-sm-4 col-xs-12 col-form-label">
+                  <label class="col-md-4 col-lg-4 col-sm-4 col-xs-12 col-form-label required m--font-bold">
                     Department
                   </label>
                   <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
@@ -57,7 +57,7 @@
                 </div>
                 <br>
                 <div class="form-group m-form__group row">
-                  <label class="col-md-4 col-lg-4 col-sm-4 col-xs-12 col-form-label">
+                  <label class="col-md-4 col-lg-4 col-sm-4 col-xs-12 col-form-label required m--font-bold">
                     Requested By
                   </label>
                   <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
@@ -67,7 +67,7 @@
                   </div>
                 </div>
                 <div class="form-group m-form__group row">
-                  <label class="col-md-4 col-lg-4 col-sm-4 col-xs-12 col-form-label">
+                  <label class="col-md-4 col-lg-4 col-sm-4 col-xs-12 col-form-label m--font-bold">
                     Other information
                   </label>
                   <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
@@ -75,7 +75,7 @@
                   </div>
                 </div>
                 <div class="form-group m-form__group row">
-                  <label class="col-md-4 col-lg-4 col-sm-4 col-xs-12 col-form-label">
+                  <label class="col-md-4 col-lg-4 col-sm-4 col-xs-12 col-form-label m--font-bold">
                     Priority
                   </label>
                   <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
@@ -122,62 +122,69 @@
             <div class="row">
               <div class="col-md-6 col-sm-12">
                 <div class="form-group m-form__group row" id="delivery_to_in">
-                  <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label">
+                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold">
                     Deliver To
                   </label>
-                  <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
+                  <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                     <select  id="select2_deliver" name="deliver_to" onchange="emp_details()" data-validation="required" >
 
                     </select>
                   </div>
                 </div>
                 <div class="form-group m-form__group row" id="delivery_to_ex">
-                  <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label">
+                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
                     Deliver To
                   </label>
-                  <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
+                  <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                     <input class="form-control m-input" type="text" name="delivery_to_ex" v-model="vm_tab1.ship_to" />
                   </div>
                 </div>
-                <div class="form-group m-form__group row" id="company_to_in">
-                  <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label">
-                    Company
-                  </label>
-                  <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
-                    <textarea id="deliver_company_in" name="deliver_company" rows="3" cols="50" disabled class="form-control" v-text="vm_tab1.company_to_desc"> </textarea> 
+
+                <template v-if="vm_tab1.cat == 'in'">
+                  <div class="form-group m-form__group row" id="company_to_in">
+                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
+                      Company
+                    </label>
+                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                      <!-- <textarea id="deliver_company_in" name="deliver_company" rows="3" cols="50" disabled class="form-control" v-text="vm_tab1.company_to_desc"> </textarea>  -->
+                      <textarea id="deliver_company" name="deliver_company" rows="3" cols="50" class="form-control" style="display: none;" disabled></textarea>
+                      <textarea id="deliver_company_in" rows="3" cols="50" disabled class="form-control"> </textarea> 
+                    </div>
                   </div>
-                </div>
-                <div class="form-group m-form__group row" id="company_to_ex">
-                  <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label">
-                    Company
-                  </label>
-                  <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
-                    <textarea id="deliver_company_ex" name="deliver_company" rows="3" cols="50" class="form-control" v-text="vm_tab1.company_to"> </textarea> 
+                </template>
+                <template v-else>
+                  <div class="form-group m-form__group row" id="company_to_ex">
+                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
+                      Company
+                    </label>
+                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                      <textarea id="deliver_company_ex" name="deliver_company" rows="3" cols="50" class="form-control" v-text="vm_tab1.company_to"> </textarea> 
+                    </div>
                   </div>
-                </div>
+                </template>
                 <div class="form-group m-form__group row" id="row_department">
-                  <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label">
+                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
                     Department
                   </label>
-                  <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
+                  <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                     <input class="form-control m-input" type="text" name="department" v-model="vm_tab1.department_to"/>
                   </div>
                 </div>
                 <div class="form-group m-form__group row">
-                  <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label">
+                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold">
                     Address
                   </label>
-                  <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
+                  <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                     <textarea name="deliver_address" rows="3" cols="50" class="form-control" data-validation="required" v-text="vm_tab1.ship_to_address"> </textarea> 
                   </div>
                 </div>
                 <div class="form-group m-form__group row">
-                  <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12 col-form-label">
+                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold">
                     Delivery Date
                   </label>
-                  <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">   
+                  <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">   
                     <div class='input-group date' id="delivery_date">               
-                      <input class="form-control m-input" type="text" id="delivery_dt" name="delivery_date" v-model="vm_tab1.ship_date"  />
+                      <input class="form-control m-input" type="text" id="delivery_dt" name="delivery_date" v-model="vm_tab1.ship_date" data-validation="required" readonly />
                       <span class="input-group-addon">
                         <i class="la la-calendar glyphicon-th"></i>
                       </span>
@@ -197,7 +204,7 @@
                   </div>
                 </div>
                 <div class="form-group m-form__group row" id="service_veh">
-                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold required">
                     Service Vehicle
                   </label>
                   <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -207,7 +214,7 @@
                   </div>
                 </div>
                 <div class="form-group m-form__group row" id="service_driver">
-                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold required">
                     Driver
                   </label>
                   <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -215,7 +222,7 @@
                   </div>
                 </div>
                 <div class="form-group m-form__group row" id="other_remark">
-                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label required m--font-bold required">
                     Remarks
                   </label>
                   <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -223,15 +230,15 @@
                   </div>
                 </div>
                 <div class="form-group m-form__group row">
-                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold required">
                     Transporter
                   </label>
                   <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                    <input class="form-control m-input" type="text" name="transporter" v-model="vm_tab1.transporter"/>
+                    <input class="form-control m-input" type="text" name="transporter" v-model="vm_tab1.transporter" data-validation="required" />
                   </div>
                 </div>
                 <div class="form-group m-form__group row" id="row_courier">
-                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label">
+                  <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bold">
                     Courier & Waybill #
                   </label>
                   <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -243,10 +250,12 @@
             <div class="row">
               <div class="col-md-12">
                 <div class="modal-footer">
-                  <button type="submit" id="btnSaveTransmittal" onclick="update_transmittal()" class="btn btn-brand"><i class="la la-floppy-o"></i> Submit</button>
-                  <a href="<?php echo site_url("eforms/transmittal/masterfile");?>" >
+                  <!-- <button type="button" id="btnSaveTransmittal" onclick="update_transmittal()" class="btn btn-brand btnEdit"><i class="la la-floppy-o"></i> Submit</button> -->
+                  <button type="submit" id="btnSaveTransmittal" class="btn btn-brand btnEdit"><i class="la la-floppy-o"></i> Submit</button>
+                  <!-- <a href="<?php //echo site_url("eforms/transmittal/masterfile");?>" >
                     <button type="button" style="color: #FFFFFF;" class="btn m-btn--custom btn-metal m-btn text-white btnNew" >Cancel</button>
-                  </a>
+                  </a> -->
+                  <button type="button" style="color: #FFFFFF;" class="btn m-btn--custom btn-metal m-btn text-white btnNew" onclick="backToMaster()">Cancel</button>
                 </div>
               </div>
             </div> 
@@ -298,7 +307,7 @@
                    <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 
                     <div class="form-group">
-                    <label class="control-label col-md-2">Description</label>
+                    <label class="control-label col-md-2 required">Description</label>
                     <div class="col-md-12">
                      <textarea name="description"  class="form-control" data-validation="required"> </textarea> 
                     </div>
@@ -351,3 +360,10 @@
           </div>
       </div>
   </div>
+
+  <style>
+    .select2-selection__rendered {
+        font-weight: 500;
+        color: #232323;
+    }
+</style>

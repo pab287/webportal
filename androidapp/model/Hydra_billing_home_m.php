@@ -9,7 +9,7 @@ class Hydra_billing_home_m extends Dbase{
 
 		// fetch accounts
 		$response['accounts_array'] = array();
-		$sth = $conn->prepare("SELECT * 
+		$sth = $conn->prepare("SELECT *
 							   FROM hydra_billing.accounts 
 							   ORDER BY `created_at` DESC");
    		$sth->execute();

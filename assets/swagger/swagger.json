@@ -1,0 +1,234 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Webportal API Documentaion", 
+        "version": "1.0.0",
+        "description": "Conyxph API documentation"
+    },
+        "servers": [
+                {
+                    "url": "http://localhost/conyxph74/eforms/hydracore",
+                    "description": "Development Server"
+                },
+                {
+                    "url": "http://192.168.7.78/eforms/hydracore",
+                    "description": "Staging Server"
+                },
+                {
+                    "url": "https://conyxph.com/eforms/hydracore",
+                    "description": "Production Server"
+                }
+            ],
+        "paths": {
+            "/account_collection": {
+                "get": {
+                    "summary": "Collection of Accounts",
+                    "tags": ["Hydra API"],
+                    "responses": {
+                        "200": {
+                            "description": "Successful response"
+                            }
+                        }
+                    }
+                },
+            "/account/?id={id}":{
+                "get": {
+                    "summary": "Fetch account details by ID",
+                    "description": "Retrieves details of a specific account by ID",
+                    "tags": ["Hydra API"],
+                    "parameters": [
+                            {
+                               "name": "id",
+                                "required": true,
+                                "description": "Retrieves details of a specific account by ID.",
+                                "in": "query",
+                                "schema":{
+                                    "type": "string",
+                                    "example": "1"
+                                }
+                            }
+                        ],
+                    "responses": {
+                        "200": {
+                            "description": "Successful response"
+                            },
+                        "400":{
+                            "description": "Bad request"
+                        }
+                    } 
+                }
+            },
+            "/bill/?id={id}": {
+                "get":{
+                    "summary": "Fetch bill information by bill id",
+                    "description": "Retrieves details of a specific bill by ID.",
+                    "tags": ["Hydra API"],
+                    "parameters": [
+                            {
+                               "name": "id",
+                                "required": true,
+                                "description": "Retrieves details of a specific bill by ID.",
+                                "in": "query",
+                                "schema":{
+                                    "type": "string",
+                                    "example": "1"
+                                }
+                            }
+                        ],
+                    "responses": {
+                        "200": {
+                            "description": "Successful response"
+                        },
+                        "400":{ 
+                            "description": "Invalid input data"
+                        }
+                    }
+                }
+            },
+            "/account_details/?accountno={accountno}":{
+                "get":{
+                    "summary": "Fetch customer account details by accountno",
+                    "description": "Retrieves account details using an account number.",
+                    "tags": ["Hydra API"],
+                    "parameters":[
+                        {
+                            "name": "accountno",
+                            "required": true,
+                            "description": "Retrieves account details using an account number..",
+                            "in": "query",
+                            "schema":{
+                                "type": "string",
+                                "example": "0000-0000-0"
+                            }
+                        }
+                    ],
+                    "responses":{
+                        "200":{
+                            "description": "Successful response"
+                        },
+                        "400": {
+                            "description": "Invalid input data"
+                        }
+                    }
+                }
+            },
+            "/validate_account/?accountno={accountno}":{
+                "get":{
+                    "summary": "Validate account no",
+                    "description": "Validates the existence of an account by its number.",
+                    "tags": ["Hydra API"],
+                    "parameters":[
+                        {
+                            "name": "accountno",
+                            "in": "path",
+                            "required": true,
+                            "description": "Unique identifier to the form-data submission",
+                            "schema":{
+                                "type": "string"
+                            }
+                        }
+                    ],
+                    "responses":{
+                        "200":{
+                            "description": "Form-data details retrieved successfully."
+                        },
+                        "404":{
+                            "description": "Form-data not found."
+                        }
+                    }
+                }
+            },
+            "/unpaid_bills/?account_id={account_id}":{
+                "get":{
+                    "summary": "Retrieves unpaid bills for a specific account.",
+                    "description": "Retrieves unpaid bills for a specific account.",
+                    "tags": ["Hydra API"],
+                    "parameters":[
+                        {
+                            "name": "account_id",
+                            "in": "path",
+                            "required": true,
+                            "description": "Unique identifier to the form-data submission.",
+                            "schema":{
+                                "type": "integer"
+                            }
+                        }
+                    ],
+                    "responses":{
+                        "200":{
+                            "description": "Form-data details retrieved successfully."
+                        },
+                        "404":{
+                            "description": "Form-data not found."
+                        },
+                        "400":{
+                            "description":"Bad request."
+                        }
+                    }
+                }
+            },
+            "/add_payment":{
+                "post":{
+                    "summary": "Creates a new payment record.",
+                    "description": "Creates a new payment record.",
+                    "tags": ["Hydra API"],
+                    "parameters": [
+                        {
+                            "name": "accountno",
+                            "required": true,
+                            "description": "Account number of the paying customer",
+                            "in": "query",
+                            "schema":{
+                                "type": "string",
+                                "example": "1234-1234-1"
+                            }
+
+                        },
+                        {
+                            "name": "bill_ref_no",
+                            "required": true,
+                            "description": "Reference no. of the bill of the paying customer",
+                            "in": "query",
+                            "schema":{
+                                "type": "string",
+                                "example": "BHBR12-34-5678"
+                            }
+                        },
+                        {
+                            "name": "payment_details",
+                            "required": true,
+                            "description": "Reference no. of the transaction processed in the Luvpark App",
+                            "in": "query",
+                            "schema":{
+                                "type": "string",
+                                "example": "luvpark-12345"
+                            }
+                        },
+                        {
+                            "name": "received_amount",
+                            "required": true,
+                            "description": "The amount of paid of the customer",
+                            "in": "query",
+                            "schema":{
+                                "type": "number",
+                                "example": "300.00"
+                            }
+                        }
+                    ],
+                    "responses":{
+                        "200":{
+                            "description": "Payment successfully created."
+                        },
+                        "400": {
+                            "description": "Invalid input or missing data."
+                        },
+                        "404":{
+                            "description": "Bad request."
+                    }
+                }
+            }
+        }
+
+    }
+        
+}     

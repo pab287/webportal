@@ -38,7 +38,7 @@ var tblPersonnel = $("#table-personnel").DataTable({
 
 toggleAccomplishDisable(false);
 $("#checkAllBox").click(function () {
-  $('#table-destination tbody input[type="checkbox"]').prop('checked', this.checked);
+  $('#table-destination tbody input[type="checkbox"]:not(.checked').prop('checked', this.checked);
   toggleAccomplishDisable(this.checked);
 });
 
@@ -48,7 +48,7 @@ $("#table-destination").on("click", "tbody input[type='checkbox']", function () 
 
 function toggleTableCheckbox(){
   const allCheckboxes = $("#table-destination tbody input[type='checkbox']").length;
-  const checkedCheckboxes = $("#table-destination tbody input[type='checkbox']:checked").length;
+  const checkedCheckboxes = $("#table-destination tbody input[type='checkbox']:not(.checked):checked").length;
   const checked = allCheckboxes <= checkedCheckboxes;
   toggleAccomplishDisable(checkedCheckboxes);
   $('#checkAllBox').prop('checked', checked);
@@ -96,12 +96,13 @@ var tblDestination = $("#table-destination").DataTable({
       className: 'text-center',
       render: function (data, type, row, meta) {
           var isCheck = '';
+
           if(row.accomplished == 1){
             isCheck = 'checked';
-            toggleAccomplishDisable(true);
+          //   toggleAccomplishDisable(true); //commented to disable accomplish button
           }
 
-          return `<label class="m-checkbox m-checkbox--air m-checkbox--state-primary" title='Check to Print'> <input `+isCheck+` id="selectedReading" type="checkbox" class="text-gray chckBox" value="`+row.id+`" name="selected"><span></span></label>`;
+          return `<label class="m-checkbox m-checkbox--air m-checkbox--state-primary" title='Check to Print'> <input `+isCheck+` id="selectedReading" type="checkbox" class="text-gray chckBox ${isCheck}" value="`+row.id+`" name="selected" data-date="`+row.date_to+`" ${isCheck ? 'disabled' : ''}><span></span></label>`;
       }
     },
     // { data: "id", render: function ( data, type, row, meta ) {
@@ -820,13 +821,27 @@ $(document).ready(function(){
   // });
 });
 
+let startDate = null;
+let endDate = null;
+let disableToday = false;
+
 function open_accomplish(){
   globalTemp = [];
   globalTempSelected = [];
+  let dates = [];
+
+  $("#form_accomplish").trigger('reset');
+
   $(".chckBox").each(function(i){
         var trig = $(this).is(":checked");
+        var date = $(this).data("date");
         if(trig){
           globalTempSelected.push($(this).attr("value"));
+
+          if (!$(this).hasClass('checked')){
+            dates.push(date);
+          }
+
         } else {
           globalTemp.push(globalDTdata[i]);
         }
@@ -858,10 +873,88 @@ function open_accomplish(){
     $("#modal_form_accomplish #remarks").hide();
   }
 
+  const uniqueArray = unique(dates);
+  var _date = "";
+  var _time = "";
+  var now = moment().format('YYYY-MM-DD');
+  var max = "";
+  var min = "";
+  var addedDate = "";
+
+  if (uniqueArray.length == 1) {
+    _date = new Date(uniqueArray[0]);
+    min = moment(_date).format('YYYY-MM-DD');
+    _date = moment(_date, 'YYYY-MM-DD HH:mm:ss').add(15, 'days');
+    addedDate = _date;
+
+    startDate = moment(min).format('YYYY/MM/DD HH:mm:ss');
+  } else {
+    min = dates.reduce(function (a, b) { return a < b ? a : b; });
+    max = dates.reduce(function (a, b) { return a > b ? a : b; });
+
+    _date = new Date(max);
+    _date = moment(_date, 'YYYY-MM-DD HH:mm:ss').add(15, 'days');
+
+    min = moment(min).format('YYYY-MM-DD');
+    addedDate = _date;
+
+    startDate = moment(max).format('YYYY/MM/DD HH:mm:ss');
+  }
+
+  if (now <= moment(_date).format('YYYY-MM-DD')) {
+    time = moment(_date).format('HH:mm:ss');
+
+    if (moment(startDate).format('YYYY-MM-DD') > now) {
+      disableToday = false;
+    } else if(moment(startDate).format('YYYY-MM-DD') <= now) {
+      disableToday = true;
+    } else {
+      disableToday = true;
+    }
+    
+    _date = now + " " + '23:59';
+  }
+
+  endDate = moment(_date).format('YYYY/MM/DD HH:mm:ss');
+
+  $('#due_dt').datetimepicker({
+    todayHighlight: true,
+    autoclose: true,
+    pickerPosition: 'bottom-left',
+    todayBtn: true,
+    format: 'yyyy/mm/dd hh:ii:ss',
+  });
+
+  $('#due_dt').datetimepicker('setStartDate', moment(startDate).format('YYYY-MM-DD HH:mm'));
+  $('#due_dt').datetimepicker('setEndDate', moment(endDate).format('YYYY-MM-DD HH:mm'));
+
   $("#modal_form_accomplish input[name=param_id]").val(param_id);
   $("#modal_form_accomplish input[name=globalTempSelected]").val(globalTempSelected);
   $('#modal_form_accomplish').modal('show');
   $('#modal_form_accomplish .modal-title').text('Accomplishment Report');
+
+  $('#modal_form_accomplish').on('show.bs.modal', function (e) {
+    console.log(disableToday);
+    if (!disableToday) {
+      $('.datetimepicker .datetimepicker-days .table-condensed tfoot tr:first-child th').removeClass('today');
+    }
+  });
+  
+  $('#modal_form_accomplish').on('hidden.bs.modal', function (e) {
+    if(!disableToday){
+      $(".datetimepicker .datetimepicker-days .table-condensed tr td.today").removeClass('disabled');
+      disableToday = false;
+    }
+  
+    $('.datetimepicker .datetimepicker-days .table-condensed tfoot tr:first-child th').addClass('today');
+  });
+}
+
+
+function unique(array){
+  return array.filter(function(el, index, arr) {
+      return index == arr.indexOf(el);
+  });
 }
 
 $.validate({
@@ -1019,13 +1112,13 @@ $("#undo_disapprove_modal").hide();
 $("#undo_hr_modal").hide();
 $("#undo_accomplishments_modal").hide();
 
-$('#due_dt').datetimepicker({
-  todayHighlight: true,
-  autoclose: true,
-  pickerPosition: 'bottom-left',
-  todayBtn: true,
-  format: 'yyyy/mm/dd hh:ii:ss',
-});
+// $('#due_dt').datetimepicker({
+//   todayHighlight: true,
+//   autoclose: true,
+//   pickerPosition: 'bottom-left',
+//   todayBtn: true,
+//   format: 'yyyy/mm/dd hh:ii:ss',
+// });
 
 
 function printArea(){

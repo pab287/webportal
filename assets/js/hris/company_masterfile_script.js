@@ -2,7 +2,7 @@ var modalWindow = $("#modalTempContent");
 var tableCompanyList = $("#table-company");
 var tableArchivedCompanyList = $("#table-archive-company");
 var search_val = "";
-
+var description = "";
 if (typeof tableCompanyList !== "undefined") {
     var search_val = "";
     var dtCompany = tableCompanyList.DataTable({
@@ -44,15 +44,15 @@ if (typeof tableCompanyList !== "undefined") {
                     }
                 }
             },
-            {
-                data: "email_to"
-            },
-            {   
-                data: "cc_to"
-            },
-            {   
-                data: "bcc_to"
-            },
+            // {
+            //     data: "email_to"
+            // },
+            // {   
+            //     data: "cc_to"
+            // },
+            // {   
+            //     data: "bcc_to"
+            // },
             {data: null, width: "8%", className: "text-center"}
         ],
         columnDefs: [
@@ -73,33 +73,33 @@ if (typeof tableCompanyList !== "undefined") {
                 targets: -1,
                 orderable: false,
                 render: function (data, type, row, meta) {
-                    return employeeDataTableActions(row.id);
+                    return employeeDataTableActions(row.id,row.description);
                 }
             },
-            {
-                data: "email_to",
-                targets: 5,
-                orderable: false,
-                render: function (data, type, row, meta) {
-                    return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
-                }
-            },
-            {
-                data: "cc_to",
-                targets: 6,
-                orderable: false,
-                render: function (data, type, row, meta) {
-                    return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
-                }
-            },
-            {
-                data: "bcc_to",
-                targets: 7,
-                orderable: false,
-                render: function (data, type, row, meta) {
-                    return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
-                }
-            },
+            // {
+            //     data: "email_to",
+            //     targets: 5,
+            //     orderable: false,
+            //     render: function (data, type, row, meta) {
+            //         return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
+            //     }
+            // },
+            // {
+            //     data: "cc_to",
+            //     targets: 6,
+            //     orderable: false,
+            //     render: function (data, type, row, meta) {
+            //         return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
+            //     }
+            // },
+            // {
+            //     data: "bcc_to",
+            //     targets: 7,
+            //     orderable: false,
+            //     render: function (data, type, row, meta) {
+            //         return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
+            //     }
+            // },
             {
                 targets: "_all",
                 defaultContent: ""
@@ -107,7 +107,7 @@ if (typeof tableCompanyList !== "undefined") {
         ]
     });
 
-    function employeeDataTableActions($id) {
+    function employeeDataTableActions($id,$code) {
         if ($id) {
             var _actionButton = "";
             _actionButton +=
@@ -129,6 +129,7 @@ if (typeof tableCompanyList !== "undefined") {
                 "   data-original-title='Archive Company'" +
                 "   data-delay='{\"show\": 300}' data-id='" +
                 $id +
+                "' data-code='" + $code +
                 "'><i class='la la-file-archive-o'></i></button>";
 
             return _actionButton;
@@ -147,6 +148,7 @@ if (typeof tableCompanyList !== "undefined") {
 $(document).on("click", ".btnRemoveCompany", function () {
     var _self = $(this);
     var dataId = _self.data("id");
+    description = _self.data("code");
     var modalWindowRemove = $("#modalRemoveCompany");
     modalWindowRemove.find("input#companyId").val(dataId);
     modalWindowRemove.modal("show");
@@ -159,7 +161,7 @@ $(document).on("click", ".btnRemoveCurrentCompany", function () {
             url: baseUrl("hris/masterfile/remove_current_company"),
             type: "post",
             dataType: "json",
-            data: {csrf_token: _csrf_hash, id: dataId},
+            data: {csrf_token: _csrf_hash, id: dataId, company: description},
             beforeSend: function () {
                 $("#modalRemoveCompany")
                     .find(".btn-submit")
@@ -198,48 +200,48 @@ $(document).on("click", ".btnEditCompany", function () {
                     tempModalContent.empty().html(json.html);
                     modalWindow.modal("show");
                     edit_template(dataId);
-                    tempModalContent.find("#edit_email_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    }); 
-                    tempModalContent.find("#edit_cc_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    });
-                    tempModalContent.find("#edit_bcc_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    });
+                    // tempModalContent.find("#edit_email_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // }); 
+                    // tempModalContent.find("#edit_cc_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // });
+                    // tempModalContent.find("#edit_bcc_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // });
                     
                     var url = baseUrl("hris/masterfile/temp_upload_company_file/true");
                     $("#edit-fileupload_logo")
@@ -326,48 +328,48 @@ $(document).on("click", ".btnNewCompany", function () {
                     var tempModalContent = modalWindow.find("#modalTempContainer");
                     tempModalContent.empty().html(json.html);
                     modalWindow.modal("show");
-                    tempModalContent.find("#email_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    }); 
-                    tempModalContent.find("#cc_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    });
-                    tempModalContent.find("#bcc_to").select2({
-                        placeholder: 'Select. .',
-                        width: '100%',
-                        multiple: true,
-                        dataType: "json",
-                        delay: 250,
-                        ajax: {
-                          global: false,
-                          url: baseUrl("hris/masterfile/email_lookup_company"),
-                          processResults: function (data) {
-                            return data;
-                          }
-                        }
-                    });
+                    // tempModalContent.find("#email_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // }); 
+                    // tempModalContent.find("#cc_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // });
+                    // tempModalContent.find("#bcc_to").select2({
+                    //     placeholder: 'Select. .',
+                    //     width: '100%',
+                    //     multiple: true,
+                    //     dataType: "json",
+                    //     delay: 250,
+                    //     ajax: {
+                    //       global: false,
+                    //       url: baseUrl("hris/masterfile/email_lookup_company"),
+                    //       processResults: function (data) {
+                    //         return data;
+                    //       }
+                    //     }
+                    // });
                     var url = baseUrl("hris/masterfile/temp_upload_company_file");
                     $("#fileupload_logo")
                         .fileupload({
@@ -448,21 +450,21 @@ function edit_template($id){
         url: baseUrl("hris/masterfile/edit_details_company/") +$id,
         type: "GET",
         success: function(data){
-            $("#edit_email_to").empty();
-            for (i = 0; i < data.email_to.length; i++) {
-                var edit_email_to = new Option(data.email_to[i], data.email_to[i], true, true);
-                $('#edit_email_to').append(edit_email_to);  
-            }
-            $("#edit_cc_to").empty();
-            for (i = 0; i < data.cc_to.length; i++) {
-                var edit_cc_to = new Option(data.cc_to[i], data.cc_to[i], true, true);
-                $('#edit_cc_to').append(edit_cc_to);
-            }
-            $("#edit_bcc_to").empty();
-            for (i = 0; i < data.bcc_to.length; i++) {
-                var edit_bcc_to = new Option(data.bcc_to[i], data.bcc_to[i], true, true);
-                $('#edit_bcc_to').append(edit_bcc_to);
-            }
+            // $("#edit_email_to").empty();
+            // for (i = 0; i < data.email_to.length; i++) {
+            //     var edit_email_to = new Option(data.email_to[i], data.email_to[i], true, true);
+            //     $('#edit_email_to').append(edit_email_to);  
+            // }
+            // $("#edit_cc_to").empty();
+            // for (i = 0; i < data.cc_to.length; i++) {
+            //     var edit_cc_to = new Option(data.cc_to[i], data.cc_to[i], true, true);
+            //     $('#edit_cc_to').append(edit_cc_to);
+            // }
+            // $("#edit_bcc_to").empty();
+            // for (i = 0; i < data.bcc_to.length; i++) {
+            //     var edit_bcc_to = new Option(data.bcc_to[i], data.bcc_to[i], true, true);
+            //     $('#edit_bcc_to').append(edit_bcc_to);
+            // }
            
         }
     });
@@ -510,15 +512,15 @@ if(typeof tableArchivedCompanyList !== 'undefined'){
                     }
                 }
             },
-            {
-                data: "email_to"
-            },
-            {   
-                data: "cc_to"
-            },
-            {   
-                data: "bcc_to"
-            },
+            // {
+            //     data: "email_to"
+            // },
+            // {   
+            //     data: "cc_to"
+            // },
+            // {   
+            //     data: "bcc_to"
+            // },
             {data: null, width: "8%", className: "text-center"}
         ],
         columnDefs: [
@@ -542,30 +544,30 @@ if(typeof tableArchivedCompanyList !== 'undefined'){
                     return employeeArchivedDataTableActions(row.id);
                 }
             },
-            {
-                data: "email_to",
-                targets: 5,
-                orderable: false,
-                render: function (data, type, row, meta) {
-                    return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
-                }
-            },
-            {
-                data: "cc_to",
-                targets: 6,
-                orderable: false,
-                render: function (data, type, row, meta) {
-                    return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
-                }
-            },
-            {
-                data: "bcc_to",
-                targets: 7,
-                orderable: false,
-                render: function (data, type, row, meta) {
-                    return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
-                }
-            },
+            // {
+            //     data: "email_to",
+            //     targets: 5,
+            //     orderable: false,
+            //     render: function (data, type, row, meta) {
+            //         return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
+            //     }
+            // },
+            // {
+            //     data: "cc_to",
+            //     targets: 6,
+            //     orderable: false,
+            //     render: function (data, type, row, meta) {
+            //         return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
+            //     }
+            // },
+            // {
+            //     data: "bcc_to",
+            //     targets: 7,
+            //     orderable: false,
+            //     render: function (data, type, row, meta) {
+            //         return "<div style='white-space: normal;width: 200px; word-wrap: break-word'>" + data + "</div>";
+            //     }
+            // },
             {
                 targets: "_all",
                 defaultContent: ""

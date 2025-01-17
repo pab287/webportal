@@ -34,7 +34,7 @@
           <div class="m-portlet__head-caption">
             <div class="m-portlet__head-title">
               <span class="m-portlet__head-icon">
-                <a type="button" href="masterfile" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnNew">
+                <a type="button" href="<?=isset($_GET['page']) && $_GET['page'] === 'archive' ? 'archive_loa' : 'masterfile' ?>" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnNew">
                   <i class="la la-arrow-left"></i>
                 </a>
               </span>
@@ -66,7 +66,7 @@
                 <b v-text="vm_tab1.created_by"></b>
               </div>
             </div>
-            <div class="form-group m-form__group row">
+            <div class="form-group m-form__group row" v-if="vm_tab1.last_edited_by && vm_tab1.last_edited_by != ' '">
               <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12"> Last Edited By </label>
               <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                 <b v-text="vm_tab1.last_edited_by"></b>
@@ -78,7 +78,7 @@
                 <b v-text="vm_tab1.approved_by"></b>
               </div>
               <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12"></label>
-              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" v-if="vm_tab1.approved_remarks && vm_tab1.approved_remarks != ' '">
                 Remarks: <b v-text="vm_tab1.approved_remarks"></b>
               </div>
             </div>
@@ -88,7 +88,7 @@
                 <b v-text="vm_tab1.disapproved_by"></b>
               </div>
               <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12"></label>
-              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" v-if="vm_tab1.disapproved_remarks && vm_tab1.disapproved_remarks != ' '">
                 Remarks: <b v-text="vm_tab1.disapproved_remarks"></b>
               </div>
             </div>
@@ -98,7 +98,7 @@
                 <b v-text="vm_tab1.cancelled_by"></b>
               </div>
               <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12"></label>
-              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" v-if="vm_tab1.cancelled_remarks && vm_tab1.cancelled_remarks != ' '">
                 Reason: <b v-text="vm_tab1.cancelled_remarks"></b>
               </div>
             </div>
@@ -108,7 +108,7 @@
                 <b v-text="vm_tab1.hr_noted_by"></b>
               </div>
               <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12"></label>
-              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" v-if="vm_tab1.hr_noted_remarks && vm_tab1.hr_noted_remarks != ' '">
                 HR Remarks: <b v-text="vm_tab1.hr_noted_remarks"></b>
               </div>
             </div>
@@ -134,13 +134,13 @@
             <br><br>
             <div class="form-group m-form__group row">
               <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12"> Reason for Leave </label>
-              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+              <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" style="word-wrap: break-word">
                 <b v-text="vm_tab1.reason"></b>
               </div>
             </div>
             <div class="form-group m-form__group row">
               <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12"> Address on Leave </label>
-                <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" style="word-wrap: break-word">
                 <b v-text="vm_tab1.address"></b>
               </div>
             </div>
@@ -243,8 +243,8 @@
                   <tr>
                     <th>Nature</th>
                     <th>Type</th>
-                    <th>Date & Time</th>
                     <th>Duration</th>
+                    <th>Date & Time</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -379,7 +379,7 @@
             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 
             <div class="form-group">
-              <label class="control-label col-md-2">Remarks</label>
+              <label class="control-label col-md-2 required">Remarks</label>
               <div class="col-md-12">
                 <textarea name="approved_remarks"  class="form-control" data-validation="required"> </textarea> 
               </div>
@@ -410,7 +410,7 @@
             <input type="hidden" value="" name="id"/> 
             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
             <div class="form-group">
-              <label class="control-label col-md-2">Remarks</label>
+              <label class="control-label col-md-2 required">Remarks</label>
               <div class="col-md-12">
                 <textarea name="disapproved_remarks"  class="form-control" data-validation="required"> </textarea> 
               </div>
@@ -439,7 +439,7 @@
             <input type="hidden" value="" name="id"/> 
             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
             <div class="form-group">
-              <label class="control-label col-md-2">Reason</label>
+              <label class="control-label col-md-2 required">Reason</label>
               <div class="col-md-12">
               <textarea name="cancelled_remarks"  class="form-control" data-validation="required"> </textarea> 
               </div>
@@ -469,9 +469,9 @@
             <input type="hidden" value="" name="id"/> 
             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
             <div class="form-group">
-              <label class="control-label col-md-4">Leave Pay</label>
+              <label class="control-label col-md-4 required">Leave Pay</label>
               <div class="col-md-12">
-                <select name="hr_noted_pay" class="form-control">
+                <select id="hr-noted-pay" name="hr_noted_pay" class="form-control" data-validation="required">
                   <option></option>
                   <option>With Pay</option>
                   <option>Without Pay</option>
@@ -479,7 +479,7 @@
               </div>
             </div>
             <div class="form-group">
-              <label class="control-label col-md-2">Notes</label>
+              <label class="control-label col-md-2 required">Notes</label>
               <div class="col-md-12">
                 <textarea name="hr_noted_remarks"  class="form-control" data-validation="required"> </textarea> 
               </div>

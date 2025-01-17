@@ -8944,7 +8944,7 @@ class Timesheet_model extends CI_Model{
                         $this->db->where_in("a.id", $shiftIds);
                         $tempShift = $this->db->get_where($this->tbl_shift_schedule." a", array("a.status"=>1, "a.is_active"=>1));
                         if($tempShift->num_rows() > 0){
-                            foreach ($tempShift->result() as $kk => $vv) {
+                            foreach ($tempShift->result() as $vv) {
                                 $tempRowIds = @unserialize($vv->shift_resource);
                                 if(is_array($tempRowIds) && count($tempRowIds) > 0){
                                     $this->db->select(implode(",", $alterShiftIndexes));
@@ -8955,7 +8955,7 @@ class Timesheet_model extends CI_Model{
                                         $tempShiftRow = $scheduleWeekday->row();
                                         foreach ($shiftIndexes as $kkx => $vvx) {
                                             $tempAlterIndex = $alterShiftIndexes[$kkx];
-                                            if($tempShiftRow->{$tempAlterIndex} && $tempRow->{$vvx} && $tempRow->{$vvx} !== null && $hasShift == true){
+                                            if($tempShiftRow->{$tempAlterIndex} && $tempRow->{$vvx} && $tempRow->{$vvx} !== null && $hasShift === true){
                                                 $tempShiftRow->{$tempAlterIndex} = $tempRow->{$vvx};
                                             }else{
                                                 $tempShiftRow->{$tempAlterIndex} = null;
@@ -8967,6 +8967,26 @@ class Timesheet_model extends CI_Model{
                                         if($singleEmployeeShift){
                                             $arrData = $tempDatax;
                                         }else{
+                                            $tempIndex = "shift-id_{$vv->shift_id}";
+                                            $arrData->{$tempIndex} = $tempDatax;
+                                        }
+                                    }else{
+                                        $tempDatax = new stdClass();
+                                        $tempShiftRow = new stdClass();
+                                        foreach ($shiftIndexes as $kkx => $vvx) {
+                                            $tempAlterIndex = $alterShiftIndexes[$kkx];
+                                            if($tempRow->{$vvx} && $tempRow->{$vvx} !== null && $hasShift === true){
+                                                $tempShiftRow->{$tempAlterIndex} = $tempRow->{$vvx};
+                                            }else{
+                                                $tempShiftRow->{$tempAlterIndex} = null;
+                                            }
+                                        }
+
+                                        $tempDatax->schedule = $tempShiftRow;
+                                        $tempDatax->custom_shift_id = $tempRow->id;
+                                        $tempDatax->has_shift = $has_shift_value;
+                                        if($singleEmployeeShift){ $arrData = $tempDatax; }
+                                        else{
                                             $tempIndex = "shift-id_{$vv->shift_id}";
                                             $arrData->{$tempIndex} = $tempDatax;
                                         }

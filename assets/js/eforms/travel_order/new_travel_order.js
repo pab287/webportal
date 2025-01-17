@@ -93,6 +93,45 @@ var department = $("#select2_dep").select2({
     }
 });
 
+// select2Department('#select2_dep', true);
+
+function select2Department(targetElement, destroy = false, id = 0) {
+  const currentTarget = $(targetElement);
+  const select2Init = currentTarget.data('select2');
+
+  if (destroy) {
+    currentTarget.empty();
+    if (typeof select2Init !== 'undefined') { select2Init.destroy(); }
+    currentTarget.off('select2:select');
+  }
+
+  var isDisabled = id == 0 ? true : false;
+  currentTarget.prop('disabled', isDisabled);
+
+  $("#select2_dep").select2({
+    placeholder: 'SELECT AN OPTION',
+    width: '100%',
+    ajax: {
+      url: baseUrl("eforms/Travel_order/get_department_collection"),
+      dataType: "json",
+      global: false,
+      delay: 500,
+      data: function ({ term }) {
+        return {
+          q: term,
+          company: id
+        }  
+      },
+      processResults: function (data) {
+        return data;
+      }
+    }
+  }).on("select2:select", function (e) {
+    var self = $(e.target);
+    self.validate();
+  });
+}
+
 vehicle = initVehicleSelect2();
 driver = initDriverSelect2();
 
@@ -116,7 +155,7 @@ var req = $("#select2_req").select2({
   placeholder: 'SELECT AN OPTION',
   width: '100%',
   minimumInputLength: 3,
-  dropdownParent: $("#modal_form_destination"),
+  dropdownParent: $("#requested-by"),
   ajax: {
     url: baseUrl("eforms/Travel_order/get_request_collection"),
     dataType: "json",
@@ -172,7 +211,6 @@ var tblPersonnel = $("#table-personnel").DataTable({
     drawCallback: function(settings){
         personnelSize = settings.json.data.length;
         displayRequiredPersonel();
-        console.log(personnelSize)
     },
     searching: true,
     columns: [
@@ -409,34 +447,67 @@ function save_destination(){
 }
 
 $.validate({
-    form : '#form_destination',
-    lang: 'en',
-    onSuccess : function(form) {
+  form : '#form_destination',
+  lang: 'en',
+  onSuccess : function(form) {
+    var isValidDate = false;
+    var message = "";
+    
+    var date_from = $("input[name='date_from']").val();
+    var date_to = $("input[name='date_to']").val();
+
+    date_from = new Date(date_from);
+    date_to = new Date(date_to);
+
+    date_from = moment(date_from);
+    date_to = moment(date_to);
+
+    var duration = moment.duration(date_to.diff(date_from));
+		var minutes = duration.asMinutes();
+
+    if (minutes < -1) {
+      isValidDate = false;
+      message = 'Invalid Date! `Date To` cannot be earlier than `Date From`.';
+    } else if (minutes == 0) {
+      isValidDate = false;
+      message = 'Invalid Date! `Date From` and `Date To` cannot be the same.';
+    } else if (minutes <= 30) {
+      isValidDate = false;
+      message = 'Invalid Date! `Date From` and `Date To` cannot be less than 30 minutes.';
+    } else {
+      isValidDate = true;
+    }
+
+    if (isValidDate) {
       $.ajax({
-          url : url,
-          type: "POST",
-          data: $('#form_destination').serialize(),
-          dataType: "JSON",
-          success: function(data){
-              if(data.status){ 
-                  tblDestination.ajax.reload();
-
-                  if(save_method == 'add') {
-                    toastr.success(data.toastr_msg, "Destination added successfully!", 5000);
-                  } else{
-                    toastr.success(data.toastr_msg, "Destination updated successfully!", 5000);
-                  }
-
-                  $("#modal_form_destination #select2_req").text("").trigger("change");
-                  $("#modal_form_destination #select2_req").val("").trigger("change");
-                  $("#modal_form_destination").modal("hide");
-              }else{
-                  alert('Error get data from ajax');
-              }
+        url : url,
+        type: "POST",
+        data: $('#form_destination').serialize(),
+        dataType: "JSON",
+        success: function(data){
+          if(data.status){ 
+            tblDestination.ajax.reload();
+  
+            if(save_method == 'add') {
+              toastr.success(data.toastr_msg, "Destination added successfully!", 5000);
+            } else{
+              toastr.success(data.toastr_msg, "Destination updated successfully!", 5000);
+            }
+  
+            $("#modal_form_destination #select2_req").text("").trigger("change");
+            $("#modal_form_destination #select2_req").val("").trigger("change");
+            $("#modal_form_destination").modal("hide");
+          }else{
+            alert('Error get data from ajax');
           }
+        }
       });
-      return false;
-    },
+    } else {
+      toastr.warning(message, 'Error!', 5000);
+    }
+
+    return false;
+  },
 });
 
 function add_personnel() {
@@ -805,8 +876,8 @@ function initMapTemp(id = "") {
         title = "From";
         coordsInput = "formNewTravelFrom";
         searchMap(input, coordsInput, title, map);
-        var self = $(this);
-        self.validate();
+        // var self = $(this);
+        // self.validate();
     });
 
     $("#travelTo").on('focus', function () {
@@ -816,8 +887,8 @@ function initMapTemp(id = "") {
         title = "To";
         coordsInput = "formNewTravelTo";
         searchMap(input, coordsInput, title, map);
-        var self = $(this);
-        self.validate();
+        // var self = $(this);
+        // self.validate();
     });
 
     map.addListener("click", (mapsMouseEvent) => {
@@ -1116,21 +1187,22 @@ $("#travelOrderFromIcon .icon").on("click", function(){
       $("#travelOrderOptionFrom").hide();
     }else{
       $("#travelOrderOptionFrom").show();
+      
+      $.ajax({
+        url: baseUrl("eforms/travel_order/sites_options/"),
+        type: "GET",
+        dataType: "JSON",
+        success: function(resp){
+          if(resp.length > 0){
+            vmTab3.checker = true;
+          }else{
+            vmTab3.checker = false;
+          }
+          vmTab3.vm_tab3 = Object.assign({}, resp);
+        }
+      });
     }
 
-    $.ajax({
-      url: baseUrl("eforms/travel_order/sites_options/"),
-      type: "GET",
-      dataType: "JSON",
-      success: function(resp){
-        if(resp.length > 0){
-          vmTab3.checker = true;
-        }else{
-          vmTab3.checker = false;
-        }
-        vmTab3.vm_tab3 = Object.assign({}, resp);
-      }
-    });
 });
 
 var vmTab3 = new Vue({
@@ -1233,6 +1305,8 @@ var vmTab3 = new Vue({
                   Object.assign(pointer_name,{"to": informationTo});
               }
           }
+
+          $('#travelFrom').validate();
         } 
       });
     }
@@ -1350,6 +1424,8 @@ var vmTab2 = new Vue({
                     Object.assign(pointer_name,{"to": informationTo});
                 }
             }
+
+            $('#travelTo').validate();
         } 
       });
     }
