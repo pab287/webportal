@@ -1305,12 +1305,13 @@ class Reports_model extends CI_Model{
         $hasDepartment = isset($post["department"]) && $post["department"];
         if(isset($post["company"]) && $post["company"]){
             $empIds = array();
-            $this->db->select("emp.id");
+            $this->db->select("emp.id,c.code");
             $this->db->from($this->tblEmployees." as emp");
             $this->db->join($this->companyTable." as comp", "comp.id = emp.company_id");
             $this->db->where("emp.company_id", $post["company"]);
             
             if($hasDepartment){
+                $this->db->join($this->departmentTable.' c', 'c.id = emp.department_id', 'LEFT');
                 $this->db->where("emp.department_id", $post["department"]);
             }
             $this->db->order_by("emp.id", "ASC");
