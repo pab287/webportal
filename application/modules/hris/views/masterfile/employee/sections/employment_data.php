@@ -767,7 +767,10 @@
                 }  
             //($data->main->date_end_prob == "0000-00-00" OR $data->main->date_end_prob == NULL) ? "N/A" : $data->main->date_end_prob?>
         </td>
-        <td data-label="DATE SEPARATED"><?= ($data->main->date_end == "0000-00-00" OR $data->main->date_end == NULL) ? "N/A" : $data->main->date_end ?></td>
+        <td data-label="DATE SEPERATED">
+            <?=($data->main->employee_status == 'Active' && ($data->main->date_end !== '0000-00-00' || $data->main->date_end !== NULL)) ? "N/A" : ($data->main->date_end == '0000-00-00' || $data->main->date_end == NULL ? "N/A" : $data->main->date_end) ?>
+        </td>
+        <!-- <td data-label="DATE SEPARATED"><?//= ($data->main->date_end == "0000-00-00" OR $data->main->date_end == NULL) ? "N/A" : $data->main->date_end ?></td> -->
         <td data-label="REASON FOR SEPARATION"><?= $data->main->resign_reason ? $data->main->resign_reason : "N/A" ?></td>
     </tr>
     </tbody>
