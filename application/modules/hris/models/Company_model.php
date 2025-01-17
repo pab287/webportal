@@ -221,12 +221,12 @@ class Company_model extends CI_Model{
 				}else{
 					$resultset["response"] = false;
 					$resultset["toastr_msg"] = "Failed saving company data!";
-					$this->core_layout->setEventLog("User has error inserting company details for company code: ".$post["code"],"insert", "error", "gcchris", "system");
+					$this->core_layout->setEventLog("User has error inserting company details for company code: <strong> ".$post["code"]."</strong>","insert", "error", "gcchris", "system");
 				}
 			}else{
 				$resultset["response"] = false;
 				$resultset["toastr_msg"] = "Company code already exist!";
-				$this->core_layout->setEventLog("User has error inserting company already exist for company code: ".$post["code"],"insert", "error", "gcchris", "system");
+				$this->core_layout->setEventLog("User has error inserting company already exist for company code:  <strong>".$post["code"]."</strong>","insert", "error", "gcchris", "system");
 			}
         }else{
 			$resultset["response"] = false;
