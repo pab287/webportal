@@ -106,7 +106,7 @@
                         </ul>
 
                         <ul class="m-nav m-nav--hover-bg m-portlet-fit--sides m--hide"
-                            id="rehire-button-container">
+                            id="rehire-button-container" hidden>
                             <li class="m-nav__separator m-nav__separator--fit my-3"></li>
                             <li class="m-nav__item">
                                 <a class="m-nav__link btnUpdate btnRehire" data-toggle="modal" data-target="#modal-rehire"

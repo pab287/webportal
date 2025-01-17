@@ -85,6 +85,18 @@
                     </div>
                 </div>
             </div>
+
+            <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5 m--hide" id="rehire-button-container-employment-data">
+                <a href="javascript:void(0)" class="m-alert m-alert--icon m-alert--outline alert alert-warning alert-dismissible fade show" data-toggle="modal" data-target="#modal-rehire"
+                style="cursor:pointer; text-decoration: none">
+					<div class="m-alert__icon">
+						<i class="la la-warning"></i>
+					</div>
+					<div class="m-alert__text">
+					  	<strong>REHIRE OPTION IS AVAILABLE!</strong>	
+					</div>		  	
+                </a>
+            </div>
         </div>
 
         <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x" v-show="vm_tab3.level !== 'SUPERVISORY' && vm_tab3.level !== 'MANAGERIAL'  && vm_tab3.level !== 'EXECUTIVE' "></div>
@@ -111,7 +123,7 @@
                 </div>
             </div>
         </div>
-        <div class="row m--margin-bottom-10">
+        <div class="row m--margin-bottom-10" v-show="vm_tab3.level !== 'SUPERVISORY' && vm_tab3.level !== 'MANAGERIAL'  && vm_tab3.level !== 'EXECUTIVE' ">
             <div class="col-12 col-sm-12 col-md-8 col-lg-8 col-xl-8" v-show="vm_tab3.current_tl_supervisory == 1">
                 <div id="remove-initial-class" class="form-group m-form__group row">
                     <label for="position" class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label">Department Manager:</label>
