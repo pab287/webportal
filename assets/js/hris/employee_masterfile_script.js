@@ -500,9 +500,11 @@ if (typeof _tempContentData !== "undefined") {
                 "terminated", "awol", "blacklisted",
                 "black listed", "end of contract", "retired"];
             if (activateRehireStatuses.includes(employee_status.toLowerCase()) || activateRehireStatuses.includes(work_status.toLowerCase())) {
-                $("#rehire-button-container").removeClass("m--hide");
+                // $("#rehire-button-container").removeClass("m--hide");
+                $("#rehire-button-container-employment-data").removeClass("m--hide");
             } else {
-                $("#rehire-button-container").addClass("m--hide");
+                // $("#rehire-button-container").addClass("m--hide");
+                $("#rehire-button-container-employment-data").addClass("m--hide");
             }
 
             let _data = this.excludeEmployee(tempDropdownData.dropdown_supervisory, vmData.supervisor); //excluded supervisor in managerial dropdown

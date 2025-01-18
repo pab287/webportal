@@ -118,7 +118,7 @@
                                             <span class="m--font-bolder" v-text="formatStartDate(main.date_start)"></span>
                                         </div>
                                     </div>
-                                    <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                    <div class="mt-1 text-sm-center text-xl-left text-lg-left row" v-if="(main.employee_status != 'Active' && (main.date_end != null || main.date_end != '0000-00-00'))">
                                         <div class="col-xl-6">
                                             <span>Date Ended:</span>
                                         </div>
