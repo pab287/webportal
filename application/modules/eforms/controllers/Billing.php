@@ -1028,6 +1028,13 @@ class Billing extends MY_Controller {
       ->set_output(json_encode($data));
     }
 
+    // function restore_billing(){
+    //     $data = $this->billing->restoreBilling();
+	// 	$this->output
+    //     ->set_content_type('json')
+    //     ->set_output(json_encode($data));
+    // }
+
     function disconnect_selected(){
       $data = $this->billing->disconnectSelected();
       $this->output

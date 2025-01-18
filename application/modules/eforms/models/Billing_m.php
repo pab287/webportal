@@ -1240,7 +1240,7 @@ class Billing_m extends CI_Model {
         $this->db->select("a.middlename,r.id,a.accountno,a.meterno,a.firstname,a.lastname,a.lot,a.block,r.ref_no,r.reading_date,r.status,r.reading,r.status as status");
         $this->db->from("hydra_billing.readings r");
         $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
-        $this->db->where("r.is_archived", "1");
+        $this->db->where("r.status", "1");
         if($search != ""){
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
@@ -5189,26 +5189,48 @@ class Billing_m extends CI_Model {
     }
 
     function restorePayment(){
-      $post = $this->input->post();
-      $id = $post["id"];
-      $post["is_archive"] = '0';
+        $post = $this->input->post();
+        $id = $post["id"];
+        $post["is_archive"] = '0';
 
-      unset($post['id']);
-      $this->db->where("id",$id);
-      $query = $this->db->update('hydra_billing.payments', $post);
+        unset($post['id']);
+        $this->db->where("id",$id);
+        $query = $this->db->update('hydra_billing.payments', $post);
 
-      if($query){
-          $resultarray["status"] = TRUE;
-          $resultarray["msg"] = "Successfully Restored.";
-          $this->core_layout->setEventLog("Payment - Restored payment of ".$post["ref_no"],"restore", "success", "hydra_billing", "user");
-      }else{
-          $resultarray["status"] = FALSE;
-          $resultarray["msg"] = "Error restoring reading.";
-          $this->core_layout->setEventLog("Payment - Error restoring payment of".$post["ref_no"],"restore", "error", "hydra_billing", "user");
-      }
+        if($query){
+            $resultarray["status"] = TRUE;
+            $resultarray["msg"] = "Successfully Restored.";
+            $this->core_layout->setEventLog("Payment - Restored payment of ".$post["ref_no"],"restore", "success", "hydra_billing", "user");
+        }else{
+            $resultarray["status"] = FALSE;
+            $resultarray["msg"] = "Error restoring reading.";
+            $this->core_layout->setEventLog("Payment - Error restoring payment of".$post["ref_no"],"restore", "error", "hydra_billing", "user");
+        }
 
-      return $resultarray;
-  }
+        return $resultarray;
+    }
+
+    // function restoreBilling(){
+    //     $post = $this->input->post();
+    //     $id = $post["id"];
+    //     $post["status"] = '1';
+
+    //     unset($post['id']);
+    //     $this->db->where("id",$id);
+    //     $query = $this->db->update('hydra_billing.bills', $post);
+
+    //     if($query){
+    //         $resultarray["status"] = true;
+    //         $resultarray["msg"] = "Successfully Restored.";
+    //         $this->core_layout->setEventLog("Billign - Restored billing of ".$post["ref_no"],"restore", "success", "hydra_billing", "user");
+    //     }else{
+    //         $resultarray["status"] = false;
+    //         $resultarray["msg"] = "Error restoring reading.";
+    //         $this->core_layout->setEventLog("Billing - Error restoring billing of".$post["ref_no"],"restore", "error", "hydra_billing", "user");
+    //     }
+
+    //     return $resultarray;
+    // }
 
     function getReadingAccounts(){
         $resultarray = array();
@@ -5481,13 +5503,12 @@ class Billing_m extends CI_Model {
       $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
       $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
 
-      $filterFields = array("a.accountno", "a.firstname", "a.lastname",
-              "a.lot", "a.block", "r.ref_no", "r.payment_date", "a.middlename");
+      $filterFields = array("a.accountno", "a.firstname", "a.middlename", "a.lastname", "a.lot", "a.block", "r.ref_no");
 
       $this->db->select("a.middlename, r.id, a.accountno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.due_date, a.model, r.status as bill_status");
       $this->db->from("hydra_billing.bills r");
       $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
-      $this->db->where("r.is_archive", "1");
+      $this->db->where("r.status", "1");
 
       if($search != ""){
           $this->db->group_start();
@@ -5519,7 +5540,6 @@ class Billing_m extends CI_Model {
               $data["model"] = $_query["model"];
               $data["ref_no"] = $_query["ref_no"];
               $data["due_date"] = $_query["due_date"];
-              $data["status"] = $_query["bill_status"];
               $resultarray[] = $data;
           }
       }
