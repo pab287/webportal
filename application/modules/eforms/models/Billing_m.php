@@ -5508,7 +5508,7 @@ class Billing_m extends CI_Model {
       $this->db->select("a.middlename, r.id, a.accountno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.due_date, a.model, r.status as bill_status");
       $this->db->from("hydra_billing.bills r");
       $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
-      $this->db->where("r.status", "1");
+      $this->db->where("r.status", "0");
 
       if($search != ""){
           $this->db->group_start();
