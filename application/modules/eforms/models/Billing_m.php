@@ -5544,8 +5544,32 @@ class Billing_m extends CI_Model {
           }
       }
 
-      $total = $this->getReadingArchiveCount($search);
+      $total = $this->getBillingArchiveCount($search);
       return array("data"=>$resultarray, "recordsTotal"=>$total, "recordsFiltered"=>$total);
+    }
+
+    public function getBillingArchiveCount($search){
+        $filterFields = array("a.accountno", "a.firstname", "a.middlename", "a.lastname", "a.lot", "a.block", "r.ref_no");
+        $this->db->select("a.middlename, r.id, a.accountno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.due_date, a.model, r.status as bill_status");
+        $this->db->from("hydra_billing.bills r");
+        $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
+        $this->db->where("r.status", "0");
+
+        if($search != ""){
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+        
+        $this->db->order_by('r.ref_no', 'DESC');
+        $query = $this->db->get();
+        return $query->num_rows();
     }
 
     function disconnectSelected(){
