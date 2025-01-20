@@ -1509,8 +1509,9 @@
                 $parameters = array();
                 $parameters["emp_id"] = $post["emp_id"];
                 $parameters["is_archived"] = 0;
-
+                $param2['offcom_type']='Commendation';
                 $dtTable->setWhereParameters($parameters);
+                $dtTable->setWhereNotInParameters('offcom_type',$param2);
 
                 $totalData = $dtTable->dtAllPostsCount();
                 $totalFiltered = $totalData;
@@ -11710,4 +11711,69 @@
             $data = $this->db->select('job_desc')->get_where($this->positionTable, array("id" => $id))->row();
             return $data;
         }
+
+        function getEmployeeCommendation() {
+            $post = $this->input->post();
+            if ($post) {
+                $columns = array("offcom_type", "offcom_date", "offcom_nature", "offcom_action", "id", "emp_id","filename");
+                $dir = "DESC";
+                $order = "offcom_date";
+                if (isset($post["order"]) && $post["order"]) {
+                    $dir = $post["order"][0]["dir"];
+                    $order = $columns[$post["order"][0]["column"]];
+                }
+                $draw = (isset($post['draw']) && $post['draw']) ? $post['draw'] : 0;
+                $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+                $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 0;
+                $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
+                $dtTable = $this->dt_model->dataTable();
+                $dtTable->setTable($this->employeeOffensesTable);
+                $dtTable->setParameterFields($columns);
+
+                $parameters = array();
+                $parameters["emp_id"] = $post["emp_id"];
+                $parameters["is_archived"] = 0;
+                $parameters['offcom_type'] = 'Commendation';
+
+                $dtTable->setWhereParameters($parameters);
+
+                $totalData = $dtTable->dtAllPostsCount();
+                $totalFiltered = $totalData;
+
+                if (empty($searchValue)) {
+                    $posts = $dtTable->dtAllPosts($limit, $start, $order, $dir);
+                } else {
+                    $posts = $dtTable->dtSearch($limit, $start, $searchValue, $order, $dir);
+                    $totalFiltered = $dtTable->dtPostSearchCount($searchValue);
+                }
+
+                $data = array();
+                if (!empty($posts)) {
+                    foreach ($posts as $pst) {
+                        $nestedData['id'] = $pst->id;
+                        $nestedData['offcom_type'] = $pst->offcom_type;
+                        $nestedData['offcom_date'] = $pst->offcom_date;
+                        $nestedData['offcom_nature'] = $pst->offcom_nature;
+                        $nestedData['offcom_action'] = $pst->offcom_action;
+                        $nestedData['filename'] = $pst->filename;
+                        $data[] = $nestedData;
+                    }
+                }
+                return array(
+                    "draw" => intval($draw),
+                    "recordsTotal" => intval($totalData),
+                    "recordsFiltered" => intval($totalFiltered),
+                    "data" => $data
+                );
+
+            } else {
+                return array(
+                    "draw" => 1,
+                    "recordsTotal" => 0,
+                    "recordsFiltered" => 0,
+                    "data" => array()
+                );
+            }
+        }
+
     }

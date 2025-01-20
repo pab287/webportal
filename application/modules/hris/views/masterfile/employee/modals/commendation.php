@@ -1,5 +1,5 @@
 <div class="modal-header">
-    <h5 class="modal-title" id="exampleModalLabel"><i class="la la-plus mr-2"></i>Add Offenses</h5>
+    <h5 class="modal-title" id="exampleModalLabel"><i class="la la-plus mr-2"></i>Add Commendation</h5>
     <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
         <span aria-hidden="true">×</span>
     </button>
@@ -10,12 +10,11 @@
 <div class="modal-body">
     <div class="form-group">
 		<label for="offcom_type" class="form-control-label">Type *</label>
-		<select id="offcom_type" name="offcom_type" data-validation="required" class="form-control m-input select2">
+		<!-- <select id="offcom_type" name="offcom_type" data-validation="required" class="form-control m-input select2">
             <option value="">&nbsp;</option>
-            <option value="OFFENSE">Offenses</option>
-            <!-- <option value="COMMENDATION">Commendations</option> -->
-            <option value="NOTICES">Notices</option>
-        </select>
+            <option value="COMMENDATION">Commendations</option>
+        </select> -->
+        <input type="text" id="offcom_type" name="offcom_type" data-validation="required" class="form-control m-input" value="COMMENDATION" readonly>
 	</div>
     <div class="form-group">
 		<label for="offcom_date" class="form-control-label">Date *</label>
@@ -31,7 +30,7 @@
 		<textarea id="offcom_nature" name="offcom_nature" maxlength="200" size="200" autocomplete="off" data-validation="required" rows="7" class="form-control m-input" style="min-height: 120px; resize: vertical;"></textarea>
 	</div>
     <div class="form-group">
-		<label for="offcom_action" class="form-control-label">Sanction/Remarks *</label>
+		<label for="offcom_action" class="form-control-label">Remarks *</label>
 		<textarea id="offcom_action" name="offcom_action" maxlength="200" size="200" autocomplete="off" data-validation="required" class="form-control m-input" style="min-height: 120px; resize: vertical;"></textarea>
 	</div>
     <div class="form-group">

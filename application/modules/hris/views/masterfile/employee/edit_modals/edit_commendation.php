@@ -4,7 +4,7 @@
           enctype="multipart/form-data">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel"><i class="la la-edit mr-2"></i>Edit Offense</h5>
+                <h5 class="modal-title" id="exampleModalLabel"><i class="la la-edit mr-2"></i>Edit Commendation</h5>
                 <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
                     <span aria-hidden="true">×</span>
                 </button>
@@ -15,10 +15,10 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label for="offcom_type" class="form-control-label">Type *</label>
-                    <select id="offcom_type" name="offcom_type" data-validation="required" class="form-control m-input select2">
+                    <!-- <select id="offcom_type" name="offcom_type" data-validation="required" class="form-control m-input select2">
                         <option value="">&nbsp;</option>
                         <option value="OFFENSE">Offenses</option>
-                        <!-- <option value="COMMENDATION">Commendations</option> -->
+                        <option value="COMMENDATION">Commendations</option>
                         <option value="NOTICES">Notices</option>
                         <option value="1ST OFFENSE">1st Offense</option>
                         <option value="2ND OFFENSE">2nd Offense</option>
@@ -41,10 +41,11 @@
                         <option value="INCIDENT REPORT">Incident Report</option>
                         <option value="REMINDER NOTICE">Reminder Notice</option>
                         <option value="RETURN TO WORK NOTICE">Return to Work Notice</option>
-                        <option value="NTE">NTE</option>
-                        <option value="NOD">NoD</option>
+                        <option value="NTE">NTE</option>  
+                        <option value="NOD">NoD</option> 
                         <option value="NOTICE OF ADMINISTRATIVE HEARING">Notice of Administrative Hearing</option>
-                    </select>
+                    </select> -->
+                    <input type="text" id="offcom_type" name="offcom_type" data-validation="required" class="form-control m-input" value="COMMENDATION" readonly>
                 </div>
                 <div class="form-group">
                     <label for="offcom_date" class="form-control-label">Date *</label>

@@ -25,8 +25,8 @@
                     </div>
                     <div id="collapseLegalHistory" class="collapse show" role="tabpanel" aria-labelledby="headingLegalHistory"
                          data-parent="#accordionOtherEmploymentData">
-                        <div class="card-body m-portlet__body--custom ">
-                            <table id="tbl-legal_history_list" class="table display table-bordered table-striped table-responsive" width="100%" style="width: 100%;">
+                        <div class="card-body m-portlet__body--custom table-responsive">
+                            <table id="tbl-legal_history_list" class="table display table-bordered table-striped " width="100%" style="width: 100%;">
                                 <col width="10%">
                                 <col width="25%">
                                 <col width="10%">
@@ -47,7 +47,7 @@
                                 <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherEmploymentData"
                                    href="#collapseOffenses" aria-expanded="false" aria-controls="collapseOffenses">
                                     <h5 class="m-portlet__head-text">
-                                        <span>Offenses and Commendations</span>
+                                        <span>Offenses</span>
                                         <i class="la pull-right la-angle-down"></i>
                                     </h5>
                                 </a>
@@ -56,8 +56,41 @@
                     </div>
                     <div id="collapseOffenses" class="collapse" role="tabpanel" aria-labelledby="headingOffenses"
                          data-parent="#accordionOtherEmploymentData">
-                        <div class="card-body m-portlet__body--custom">
-                            <table id="tbl-offenses_list" class="table display table-bordered table-striped table-responsive" width="100%">
+                        <div class="card-body m-portlet__body--custom table-responsive">
+                            <table id="tbl-offenses_list" class="table display table-bordered table-striped " width="100%">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Dates</th>
+                                        <th>Nature</th>
+                                        <th>Sanction/Remarks</th>
+                                        <th>File</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div id="headingCommendation" class="card-header m-portlet m-portlet--bordered m-portlet--unair m-portlet--accent m-portlet--head-solid-bg m-portlet--head-sm" role="tab">
+                        <div class="m-portlet__head">
+                            <div class="m-portlet__head-caption">
+                                <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherEmploymentData"
+                                   href="#collapseCommendation" aria-expanded="false" aria-controls="collapseCommendation">
+                                    <h5 class="m-portlet__head-text">
+                                        <span>Commendations</span>
+                                        <i class="la pull-right la-angle-down"></i>
+                                    </h5>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="collapseCommendation" class="collapse" role="tabpanel" aria-labelledby="headingCommendation"
+                         data-parent="#accordionOtherEmploymentData">
+                        <div class="card-body m-portlet__body--custom table-responsive">
+                            <table id="tbl-commendation_list" class="table display table-bordered table-striped " width="100%">
                                 <thead>
                                     <tr>
                                         <th>Type</th>
