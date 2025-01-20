@@ -43,7 +43,7 @@ function get_analytics(current_date, filter_year, filter_month) {
                 //     item.color = getColor(item.status);
                 // });
 
-                $(".graph_title").html('Billing graph of ' + filter_year);
+                $("#datePicker_billing_graph .selected-year").html(filter_year);
 
                 var chart = am4core.create("chartdiv", am4charts.XYChart);
 
@@ -99,7 +99,7 @@ function get_analytics_lineGraph_top_payment(filter_year) {
             am4core.ready(function () {
                 am4core.useTheme(am4themes_animated);
                 
-                $(".title_total_payment").html("Total Payment "+filter_year);
+                $("#datePicker_total_payment .selected-year").html(filter_year);
                 var chart = am4core.create("chartdiv_total_payment", am4charts.XYChart);
                 var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
                 var categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis());
@@ -166,7 +166,8 @@ function get_analytics_top_consumer(filter_date) {
         success: function (result) {
             
             var monthOf = displayCurrentMonthName(month-1) ? displayCurrentMonthName(month-1) : "December";
-            $(".title_top_consumer").html("Top Consumer of ("+monthOf+" - "+displayCurrentMonthName(month)+') '+year);
+            $(".title_top_consumer").html("Top Consumer of ("+monthOf+" - "+displayCurrentMonthName(month)+')');
+            $("#datePicker_top_consumer .selected-year").html(year);
             
             if(result.length > 0){
                 
@@ -214,7 +215,7 @@ function get_analytics_total_usage_per_subdivision(filter_year) {
             am4core.ready(function () {
                 am4core.useTheme(am4themes_animated);
 
-                $(".title_total_usage").html("Total Usage "+filter_year);
+                $("#datePicker_subdivision .selected-year").html(filter_year);
                 var chart = am4core.create("chartdiv_total_usage_previous_per_subdivision", am4charts.XYChart);
                 var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
                 var categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis());
@@ -272,7 +273,7 @@ function get_consumer_vs_supplier_per_subdivision(filter_year, subdivision_id) {
     am4core.ready(function () {
         am4core.useTheme(am4themes_animated);
 
-        $(".chartdiv_versus_title").html("Consumer vs Supplier "+filter_year);
+        $("#datePicker_consumer_vs_supplier .selected-year").html(filter_year);
         var chart = am4core.create("chartdiv_versus", am4charts.XYChart);
         var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
         var categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis());
@@ -421,7 +422,7 @@ $('#datePicker_total_payment').datepicker({
     format: 'yyyy',
     todayHighlight: true,
     autoclose: true,
-    orientation: "bottom left",
+    orientation: "bottom right",
     viewMode: "years",
     minViewMode: "years",
     endDate: getCurrentDate(),
@@ -442,7 +443,7 @@ $('#datePicker_top_consumer').datepicker({
     format: 'yyyy-mm',
     todayHighlight: true,
     autoclose: true,
-    orientation: "bottom left",
+    orientation: "bottom right",
     viewMode: "months",
     minViewMode: "months",
     endDate: getCurrentDate(),
