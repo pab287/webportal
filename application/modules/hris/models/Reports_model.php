@@ -371,21 +371,22 @@ class Reports_model extends CI_Model{
         }
 
         $select = "IF(comp.id IS NULL, emp.company_id, comp.code) company,
-                       IF(dep.id IS NULL, emp.department_id, dep.code) department,
-                       CONCAT(emp.firstname,' ', emp.middlename, ' ', emp.lastname,
-                           CASE 
-                               WHEN emp.suffix IS NOT NULL AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)
-                               ELSE ''
-                           END) employees_name,
-                       salaries.sal_date,
-                       salaries.sal_rate,
-                       salaries.sal_remarks,
-                       salaries.sal_date,
-                       emp.work_status,
-                       emp.employee_status,
-                       emp.date_start,
-                       IF(pos.name IS NULL OR pos.name = '', emp.position, pos.name) AS position,
-                       ";
+            IF(dep.id IS NULL, emp.department_id, dep.code) department,
+            CONCAT(emp.firstname,' ', emp.middlename, ' ', emp.lastname,
+                CASE
+                    WHEN emp.suffix IS NOT NULL AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)
+                    ELSE ''
+                END) employees_name,
+            salaries.sal_date,
+            salaries.sal_rate,
+            salaries.sal_remarks,
+            salaries.sal_date,
+            emp.work_status,
+            emp.employee_status,
+            emp.date_start,
+            IF(pos.name IS NULL OR pos.name = '', emp.position, pos.name) AS position,
+            ROUND(DATEDIFF(CURDATE(), emp.date_start) / 30) as tenure";
+            
         $joinArr = array(
             array('table' => 'gcchris.tblcompanies comp',
                 'condition' => 'comp.code = emp.company_id OR comp.id = emp.company_id',
@@ -400,12 +401,6 @@ class Reports_model extends CI_Model{
                 'condition' => 'pos.id = emp.position',
                 'option' => 'LEFT'),
         );
-
-        if (intval($export) === 0 && $pageOptions->length > -1) {
-            $this->db->limit($pageOptions->length, $pageOptions->start);
-        }
-
-        $this->db->order_by($pageOptions->order_column, $pageOptions->order_direction);
 
         $this->db->select($select);
         $this->db->where($where);
@@ -432,20 +427,25 @@ class Reports_model extends CI_Model{
             "option" => "BOTH"
         );
         $this->db->like($searchField["field"], $search, $searchField["option"]);
+        if (intval($export) === 0 && $pageOptions->length > -1) {
+            $this->db->limit($pageOptions->length, $pageOptions->start);
+        }
+        $this->db->group_by('emp.id');
+        $this->db->order_by($pageOptions->order_column, $pageOptions->order_direction);
 
         $query = $this->db->get($this->tblEmployees . " emp");
 
         if($query->num_rows() > 0){
+            $result = $query->result();
 
-            $arrData = array();
+            /*** $arrData = array();
             foreach($query->result() as $key => $rs){
                 $tenured = (object) $this->getTenureship($rs->date_start);
                 $rs->tenureship = $tenured->tenured;
 
                 $arrData[$key] = $rs;
             }
-
-            foreach ($arrData as $v) { $result[] = $v; }
+            foreach ($arrData as $v) { $result[] = $v; } ***/
         }
 
         $resultSet['data'] = $result;
@@ -2164,29 +2164,29 @@ class Reports_model extends CI_Model{
     public function getTenureship($date){
         $now = date('Y-m-d');
         $html = '';
-
+    
         $timeStampHired = strtotime($date);
         $timeStampNow = strtotime($now);
-
+    
         $hiredYear = date('Y', $timeStampHired);
         $nowYear = date('Y', $timeStampNow);
         
         $hiredMonth = date('m', $timeStampHired);
         $nowMonth = date('m', $timeStampNow);
-
+    
         $totalYear = $nowYear - $hiredYear;
         $totalMonths = $nowMonth - $hiredMonth;
         $totalDiff = (($nowYear - $hiredYear) * 12) + ($nowMonth - $hiredMonth);
-
+    
         $year = intval($totalYear) > 0 ? $totalYear : '';
         $month = intval($totalMonths > 0) ? $totalMonths : '';
-
+    
         if($year != '' && $year == 1){ $html .= $year.' year'; }
         elseif ($year != '' && $year > 1) { $html .= $year.' years'; }
         if($year != '' && $month != ''){ $html .= ' and '; }
         if($month != '' && $month == 1){ $html .= $month.' month'; }
         elseif ($month != '' && $month > 1) { $html .= $month.' months'; }
-
+    
         return array(
             'tenured' => $html,
             'totalMonths' => $totalDiff

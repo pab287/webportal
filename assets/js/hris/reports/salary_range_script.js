@@ -193,7 +193,21 @@ function filterEmployeesOfSalaryRange(form) {
                     {
                         data: 'date_start',
                         render: function(data, type, row, meta){
-                            return row.tenureship;
+                            const startDate = new Date(data);
+                            const diffDate = new Date(new Date() - startDate);
+                            const tempYear = diffDate.toISOString().slice(0, 4) - 1970;
+                            const tempMonth = diffDate.getMonth();
+
+                            let renderYear = '';
+                            if (tempYear === 1) { renderYear = `${tempYear} YEAR`; } 
+                            else if (tempYear > 1) { renderYear = `${tempYear} YEARS`; }
+
+                            let renderMonth = '';
+                            if (tempMonth === 1) { renderMonth = `${tempMonth} MONTH`; }
+                            else if (tempMonth > 1) { renderMonth = `${tempMonth} MONTHS`; }
+
+                            const renderFormattedDate = `${renderYear} ${renderMonth}`;
+                            return renderFormattedDate.trim();
                         }
                     }
                 ],
