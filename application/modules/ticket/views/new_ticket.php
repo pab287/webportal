@@ -56,7 +56,7 @@
                             <div class="col-xs-12 col-sm-12 col-md-6">
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Category
+                                        Category <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <select id="category" name="category"  data-validation="required">
@@ -66,7 +66,7 @@
                                 </div>
                                 <div class="form-group m-form__group row" id="webportal">
                                     <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Module
+                                        Module <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <select id="sub_category" name="sub_category"  data-validation="required">
@@ -76,7 +76,7 @@
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Date Needed
+                                        Date Needed <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8 input-group date">
                                         <input class="form-control m-input" type="text" name="date_required" id="date_required" data-validation="required"/>
@@ -87,7 +87,7 @@
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Department
+                                        Department <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <select id="department" name="department" data-validation="required">
@@ -97,7 +97,7 @@
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Issue
+                                        Issue <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <textarea class="form-control m-input" id="issue" name="issue" rows="4" data-validation="required"></textarea>

@@ -196,7 +196,6 @@ $.ajax({
             allowClear: true,
         });
 
-        console.log(data);
         let category = new Option(vmData.category, vmData.category, true, true);
 
         
@@ -504,4 +503,32 @@ function removeDocument(el,filename){
         });
     });
     
+}
+
+function delete_comment(id){
+    Swal.fire({
+        title: "Comments",
+        text:'Are you sure you want to remove this comment?!',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, Remove it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl("ticket/ticket/remove_actionstkn"),
+                type: 'POST',
+                dataType: "json",
+                data: {
+                    csrf_token : _csrf_hash,
+                    id : id
+                },
+                success: function (response) {
+                    getComments();
+                    toastr.success("Success", "Deleted.", 5000);
+                }
+            })
+        }
+      });
 }

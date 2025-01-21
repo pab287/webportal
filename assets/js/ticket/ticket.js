@@ -294,15 +294,15 @@ $(document).ready(function () {
         filters: [
             // { id: 'dept.description', label: 'Department', type: 'string', operators: ['contains', 'equal', 'not_equal'] },
             {
-                id: 'a.created_dt',
+                id: 'a.requested_date',
                 label: 'Date Requested',
                 type: 'date',
                 plugin: 'datepicker',
-                plugin_config: { format: 'yyyy-mm-dd'},
+                plugin_config: { format: 'yyyy-mm-dd' },
                 operators: ['equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'between', 'not_between']
             }, 
             {
-                id: 'status',
+                id: 'a.status',
                 label: 'Status',
                 type: 'string',
                 input: 'select',
@@ -322,7 +322,7 @@ $(document).ready(function () {
                 operators: ['equal', 'not_equal']
             },
             {
-                id: 'category',
+                id: 'cat.name',
                 label: 'Category',
                 type: 'string',
                 input: 'select',
@@ -342,7 +342,7 @@ $(document).ready(function () {
                 operators: ['equal', 'not_equal']
             },
             {
-                id: 'sub_category',
+                id: 'sub.name',
                 label: 'Sub Category',
                 type: 'string',
                 input: 'select',
@@ -361,10 +361,19 @@ $(document).ready(function () {
                 },
                 operators: ['equal', 'not_equal']
             },
-            { id: 'reference_no', label: 'Reference No', type: 'string', operators: ['contains','equal', 'not_equal'] },
+            { id: 'a.reference_no', label: 'Reference No', type: 'string', operators: ['contains','equal', 'not_equal'] },
             { id: 'requestor', field: 'CONCAT(b.firstname, " ",b.lastname) ', label: 'Requested By', type: 'string', operators: ['contains'] },
             { id: 'performed_by', field: 'CONCAT(c.firstname, " ", c.lastname) ', label: 'Performed By', type: 'string', operators: ['contains'] },
-            { id: 'Priority', label: 'Priority', type: 'string', operators: ['contains','equal', 'not_equal'] },
+            { id: 'Priority', label: 'Priority', type: 'string',
+                input: 'select',
+                plugin: 'select2',
+                operators: ['equal', 'not_equal'],
+                plugin_config: {
+                    placeholder: 'Select. .',
+                    width: '200%',
+                    data: [{id: '', text: ''},{id: 'low', text: 'Low'}, {id: 'medium', text: 'Medium'}, {id: 'high', text: 'High'}],
+                 }
+                },
             { id: 'message', label: 'Issue', type: 'string', operators: ['contains'] },
         ]
     });

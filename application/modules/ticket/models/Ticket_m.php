@@ -47,6 +47,7 @@ class Ticket_m extends CI_Model
     }
 
     public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request){
+        // var_dump($query_builder);
         $resultset = array();
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id");
@@ -1080,5 +1081,16 @@ class Ticket_m extends CI_Model
         }
         return  $resultarray;
     }
+
+    function removeActionstkn(){
+        $post = $this->input->post();
+        $id = $post['id'];
+        $comment = $this->db->select("comment")->get_where("gccticket.comments", array("id"=>$id))->row();
+        $delete = $this->db->query("DELETE FROM gccticket.comments WHERE id = ?", $id);
+        if ($delete){
+            $this->core_layout->setEventLog("User deleted comment: {$comment['comment']}","search", "success", "gccticket", "user");
+        }
+        return $delete;
+      }
 
 }

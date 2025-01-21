@@ -207,40 +207,41 @@
                 <div class="m-portlet__body">
                 <form id="frm_comments">
                     <div class="form-group m-form__group row">
-                    <div class="m-scrollable mCustomScrollbar _mCS_3 mCS-autoHide" data-scrollable="true" data-max-height="400" style="height: 400px; width: 100%; overflow: visible; max-height: 400px; position: relative;"><div id="mCSB_3" class="mCustomScrollBox mCS-minimal-dark mCSB_vertical mCSB_outside" tabindex="0" style="max-height: none;"><div id="mCSB_3_container" class="mCSB_container" style="position:relative; top:0; left:0;" dir="ltr">
-
-                        <div class="m-widget3" v-if="vm_tab2">
-                            <div class="m-widget3__item" v-for="data in vm_tab2">
-                                <div class="m-widget3__header">
-                                    <!-- <div class="m-widget3__user-img">
-                                    </div> -->
-                                    <div class="m-widget3__info">
-                                        <span class="m-widget3__username">
-                                            {{ data.created_by }}
-                                        </span>
-                                        <br>
-                                        <span class="m-widget3__time">
-                                        {{ data.created_at }}
-                                        </span>
+                        <div class="m-scrollable mCustomScrollbar _mCS_3 mCS-autoHide" data-scrollable="true" data-max-height="400" style="height: 400px; width: 100%; overflow: visible; max-height: 400px; position: relative;">
+                            <div id="mCSB_3" class="mCustomScrollBox mCS-minimal-dark mCSB_vertical mCSB_outside" tabindex="0" style="max-height: none;">
+                                <div id="mCSB_3_container" class="mCSB_container" style="position:relative; top:0; left:0;" dir="ltr">
+                                    <div class="m-widget3" v-if="vm_tab2">
+                                        <div class="m-widget3__item" v-for="data in vm_tab2">
+                                            <div class="m-widget3__header">
+                                                <!-- <div class="m-widget3__user-img">
+                                                </div> -->
+                                                <div class="m-widget3__info">
+                                                    <span class="m-widget3__username">
+                                                        {{ data.created_by }}
+                                                    </span>
+                                                    <br>
+                                                    <span class="m-widget3__time">
+                                                    {{ data.created_at }}
+                                                    </span>
+                                                </div>
+                                                <span class="m-widget3__status mb-4">
+                                                    <a href="#" @click="delete_comment(data.ticket_id)" class="btn btn-danger m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill m-btn--air">
+                                                        <i class="la la-trash"></i>
+                                                    </a>
+                                                </span>
+                                            </div>
+                                            <div class="m-widget3__body">     
+                                                <div class="m-widget3__info"><i>
+                                                    {{ data.comment }}</i>
+                                                </div>
+                                                <!-- <p class="m-widget3__text">  
+                                                </p> -->
+                                            </div>
+                                        </div>
                                     </div>
-                                    <span class="m-widget3__status mb-4">
-                                        <a href="#" onclick="delete_comment(data.ticket_id)" class="btn btn-danger m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill m-btn--air">
-                                            <i class="la la-trash"></i>
-                                        </a>
-                                    </span>
-                                </div>
-                                <div class="m-widget3__body">
-                                        
-                                <div class="m-widget3__info"><i>
-                                    {{ data.comment }}</i>
-                                </div>
-                                    <!-- <p class="m-widget3__text">
-                                        
-                                    </p> -->
                                 </div>
                             </div>
                         </div>
-                        </div></div></div>
                         <div class="m-widget3" v-else>
                             <div class="m-widget3__item">
                                 <div class="m-widget3__header">
