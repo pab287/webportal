@@ -48,7 +48,39 @@ class Reports_model extends CI_Model{
     public function generateEmployeeReport($export){
         $post = $this->utilities->parseFormDataToObject($this->input->post());
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($post);
+
+        if(in_array("supervisor", $post->fields)) {
+            $key = array_search("supervisor", $post->fields);
+            $post->fields[$key] = '(SELECT TRIM(UCASE(
+                CONCAT(firstname, \' \',
+                    CASE WHEN middlename IS NOT NULL AND middlename != \'\' THEN CONCAT(\' \', substr(middlename,1,1),\'.\')
+                    ELSE \'\' END, \' \', lastname,
+                CASE WHEN suffix IS NOT NULL AND suffix != \'\' AND suffix != \'N/A\' AND suffix != \'NONE\' THEN CONCAT(\' \', suffix)
+                    ELSE \'\' END)
+                )) FROM gccmaster.tblemployees WHERE id = IF(REPLACE(
+                SUBSTRING_INDEX(SUBSTRING_INDEX(emp.supervisor_meta, \';\', 1),\':\',-1),
+                \'"\',\'\') = \'supervisory\', REPLACE(SUBSTRING_INDEX(SUBSTRING_INDEX(emp.supervisor_meta, \';\', 2),\':\',-1),\'"\',\'\'),
+                \'\'
+            )) as supervisor';
+        }
+
+        if(in_array("manager", $post->fields)) {
+            $key = array_search("manager", $post->fields);
+            $post->fields[$key] = '(SELECT TRIM(UCASE(
+                CONCAT(firstname, \' \',
+                    CASE WHEN middlename IS NOT NULL AND middlename != \'\' THEN CONCAT(\' \', substr(middlename,1,1),\'.\')
+                    ELSE \'\' END, \' \', lastname,
+                CASE WHEN suffix IS NOT NULL AND suffix != \'\' AND suffix != \'N/A\' AND suffix != \'NONE\' THEN CONCAT(\' \', suffix)
+                    ELSE \'\' END)
+                )) FROM gccmaster.tblemployees WHERE id = IF(REPLACE(
+                SUBSTRING_INDEX(SUBSTRING_INDEX(emp.supervisor_meta, \';\', 3),\':\',-1),
+                \'"\',\'\') = \'managerial\', REPLACE(SUBSTRING_INDEX(SUBSTRING_INDEX(emp.supervisor_meta, \';\', 4),\':\',-1),\'"\',\'\'),
+                \'\'
+            )) as manager';
+        }
+
         $select = implode(", ", $post->fields);
+
         $order_field = $post->order_field;
         $order_by = $post->order_by;
         $criteria = $post->criteria;
