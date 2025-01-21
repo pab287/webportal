@@ -86,6 +86,7 @@ $('#employee_status')
 
 
 function filterEmployeesOfSalaryRange(form) {
+    let generate = true;
     const _form = $(form);
     const formValues = _form.serializeArray();
     const objFormValues = formValues.reduce((acc, item) => {
@@ -160,7 +161,8 @@ function filterEmployeesOfSalaryRange(form) {
                     data: function (d) {
                         d.csrf_token = _csrf_hash;
                         d.filter = objFormValues;
-                        d.search['value'] = search_val
+                        d.search['value'] = search_val;
+                        d.generate = generate;
                     },
                     global: false
                 },
@@ -197,6 +199,7 @@ function filterEmployeesOfSalaryRange(form) {
                 ],
                 order: [[2, 'asc']],
                 initComplete: function () {
+                    generate = false;
                     $("#table-employee-salary-range_filter input[type='search']")
                         .removeClass("form-control-sm");
 

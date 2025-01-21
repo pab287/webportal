@@ -285,6 +285,7 @@ class Reports_model extends CI_Model{
         $tableConfigStd = $this->utilities->parseFormDataToObject($tableConfig);
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($tableConfigStd);
         $search = $pageOptions->search;
+        $generate = $tableConfig['generate'];
         $company = null;
         $department = null;
         $position = null;
@@ -410,8 +411,12 @@ class Reports_model extends CI_Model{
         if($search && $search !== '') {
             $logMessage = "User searched for: '<strong>{$search}</strong>' in <strong>Employee salary range</strong>.{$filtersString} Salary range:<strong> " . number_format($salary_from, 2) . " - " . number_format($salary_to, 2) . "</strong>. System found: <strong>{$resultSet['recordsTotal']}</strong> results.";
             $this->core_layout->setEventLog($logMessage, "export", 'success', "gcchris", 'user');
+        }else{
+            if(isset($generate) && $generate == 'true') {
+                $logMessage = "Generated <strong>Employee salary range</strong>.{$filtersString} Salary range: <strong>" . number_format($salary_from, 2) . " - " . number_format($salary_to, 2) . "</strong> with result count: <strong>{$resultSet['recordsTotal']}</strong>";
+                $this->core_layout->setEventLog($logMessage, "generate", 'success', "gcchris", 'user');
+            }
         }
-        
         return $resultSet;
     }
 

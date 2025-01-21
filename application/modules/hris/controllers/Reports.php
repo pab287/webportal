@@ -276,7 +276,7 @@ class Reports extends MY_Controller{
     public function get_employees_for_salary_range($export=0)
     {
         $data = $this->report->getEmployeesForSalaryRange($export);
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function get_employee_leaves()
