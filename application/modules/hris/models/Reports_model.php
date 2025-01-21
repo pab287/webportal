@@ -377,7 +377,6 @@ class Reports_model extends CI_Model{
                     WHEN emp.suffix IS NOT NULL AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)
                     ELSE ''
                 END) employees_name,
-            salaries.sal_date,
             salaries.sal_rate,
             salaries.sal_remarks,
             salaries.sal_date,
@@ -395,7 +394,7 @@ class Reports_model extends CI_Model{
                 'condition' => 'dep.id = emp.department_id',
                 'option' => 'LEFT'),
             array('table' => 'gcchris.tblsalaries salaries',
-                'condition' => 'emp.id = salaries.emp_id AND salaries.sal_date = (SELECT MAX( sal_date) latest_date FROM gcchris.tblsalaries WHERE emp_id=emp.id)',
+                'condition' => 'emp.id = salaries.emp_id AND salaries.id = (SELECT id FROM gcchris.tblsalaries WHERE emp_id=emp.id ORDER BY id DESC, DATE(add_date) DESC LIMIT 1)',
                 'option' => 'INNER'),
             array('table' => 'gcchris.tblposition pos',
                 'condition' => 'pos.id = emp.position',
