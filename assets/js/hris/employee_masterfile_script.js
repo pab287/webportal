@@ -19,6 +19,8 @@ var tblReturnToWork = $("#tbl-return-to-work");
 var tableLegalHistory = $("#tbl-legal_history_list");
 var tableOffenses = $("#tbl-offenses_list");
 var tableCommendation = $("#tbl-commendation_list");
+var tableNotices = $("#tbl-notices_list");
+var tableOthers = $("#tbl-others_list");
 var tableCashAdvance = $("#tbl-cash_advance_list");
 var tableDocuments = $("#tbl-documents_list");
 var tableBackgroundCheck = $("#tbl-background_check_list");
@@ -3029,7 +3031,7 @@ if (typeof _tempContentData !== "undefined") {
             processing: true,
             ordering: false,
             ajax: {
-                url: baseUrl("hris/masterfile/get_employee_offenses"),
+                url: baseUrl("hris/masterfile/get_employee_offenses/")+'Offenses',
                 type: "post",
                 dataType: "json",
                 data: { csrf_token: _csrf_hash, emp_id: tempDataId }
@@ -3095,154 +3097,8 @@ if (typeof _tempContentData !== "undefined") {
                     });
             }
         });
-
-        function offensesDataTableActions($id) {
-            if ($id) {
-                var _actionButton = "";
-                if (jQuery.inArray("edit", _currentActions) !== -1) {
-                    _actionButton +=
-                        " <button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditOffenses' data-id='" + $id + "'><i class='la la-edit'></i></button>";
-                }
-                // if (jQuery.inArray("archive", _currentActions) !== -1) {
-                //     _actionButton +=
-                //         " <button type='button' class='btn btn-default m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill btnRemoveOffenses' data-id='" +
-                //         $id +
-                //         "'><i class='la la-file-archive-o'></i></button>";
-                // UNCOMMENT TO ADD BACK FUNCTIONALITY T_T
-                // }
-                _actionButton = (_actionButton) ? _actionButton : "---";
-                return _actionButton;
-            } else {
-                return false;
-            }
-        }
-
-        function cashAdvanceDataTableActions($id) {
-            if ($id) {
-                var _actionButton = "";
-                if (jQuery.inArray("edit", _currentActions) !== -1) {
-                    _actionButton +=
-                        " <button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditCashAdvance' data-id='" + $id + "'><i class='la la-edit'></i></button>";
-                }
-                if (jQuery.inArray("archive", _currentActions) !== -1) {
-                    _actionButton +=
-                        " <button type='button' class='btn btn-default m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill btnRemoveCashAdvance' data-id='" +
-                        $id +
-                        "'><i class='la la-file-archive-o'></i></button>";
-                }
-                _actionButton = (_actionButton) ? _actionButton : "---";
-                return _actionButton;
-            } else {
-                return false;
-            }
-        }
-
-        $(document).on("click", ".btnAddOffenses", function () {
-            $.ajax({
-                url: baseUrl("hris/masterfile/get_modal_offenses/" + tempDataId),
-                dataType: "json",
-                success: function (json) {
-                    var modalContent = modalTempContent.find(".modal-content");
-                    if (typeof modalContent !== "undefined" && typeof json.html !== "undefined") {
-                        modalContent.empty();
-                        modalContent.append(json.html);
-                        modalContent.find("#offcom_type").select2({
-                            width: "100%",
-                            placeholder: "Select an option",
-                            dropdownParent: modalTempContent
-                        });
-                        modalTempContent.modal("show");
-
-                        var dtPickerLegalDate = modalContent.find("#offcom_date").datepicker({
-                            todayHighlight: true,
-                            orientation: "bottom left",
-                            templates: {
-                                leftArrow: '<i class="la la-angle-left"></i>',
-                                rightArrow: '<i class="la la-angle-right"></i>'
-                            },
-                            format: "yyyy-mm-dd",
-                            autoclose: true
-                        })
-                            .on("changeDate", function (e) {
-                                var currentDt = moment(e.date).format("YYYY-MM-DD");
-                                var self = $(e.target);
-                                self.validate();
-                            });
-
-                        var url = baseUrl("hris/masterfile/upload_employee_offenses");
-                        $("#fileupload_offenses")
-                            .fileupload({
-                                url: url,
-                                dataType: "json",
-                                formData: { csrf_token: _csrf_hash, employee_id: tempDataId },
-                                done: function (e, data) {
-                                    var result = data.result;
-                                    if (result.response) {
-                                        modalContent.find("#offenses_attachment").val(result.filename);
-                                        modalContent.find("#temp_fileupload").empty().text(result.filename);
-                                        toastr.success(result.toastr_msg, "Upload Offense and Commendation File", 5000);
-                                        modalContent.find("#fileupload_offenses").removeAttr('data-validation');
-                                    } else {
-                                        toastr.error(result.toastr_msg, "Upload Offense and Commendation File", 5000);
-                                    }
-                                }
-                            })
-                            .prop("disabled", !$.support.fileInput)
-                            .parent()
-                            .addClass($.support.fileInput ? undefined : "disabled");
-
-                        $.validate({
-                            form: "#form-offenses",
-                            lang: "en",
-                            onSuccess: function (form) {
-                                var currentForm = form[0];
-                                var formUrl = currentForm.action;
-                                var formData = $(currentForm).serialize();
-
-                                $.ajax({
-                                    url: formUrl,
-                                    type: "post",
-                                    dataType: "json",
-                                    data: formData,
-                                    beforeSend: function () {
-                                        $(currentForm)
-                                            .find(".btn-submit")
-                                            .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                                    },
-                                    success: function (json) {
-                                        if (json.response) {
-                                            toastr.success(
-                                                json.toastr_msg,
-                                                "Employee offense and commendation has been saved.",
-                                                5000
-                                            );
-                                            currentForm.reset();
-                                            modalTempContent.modal("hide");
-                                            dtOffenses.ajax.reload();
-                                            offComTrail.ajax.reload();
-                                        } else {
-                                            toastr.error(
-                                                json.toastr_msg,
-                                                "Error updating offense and commendation!",
-                                                5000
-                                            );
-                                        }
-
-                                        $(currentForm)
-                                            .find(".btn-submit")
-                                            .removeClass(
-                                                "m-btn--custom m-loader m-loader--light m-loader--right"
-                                            );
-                                    }
-                                });
-                                return false;
-                            }
-                        });
-                    }
-                }
-            });
-        });
     }
+
 
     if (typeof tableCommendation !== "undefined") {
         var dtCommendation = tableCommendation.DataTable({
@@ -3251,7 +3107,7 @@ if (typeof _tempContentData !== "undefined") {
             processing: true,
             ordering: false,
             ajax: {
-                url: baseUrl("hris/masterfile/get_employee_commendation"),
+                url: baseUrl("hris/masterfile/get_employee_offenses/")+'Commendation',
                 type: "post",
                 dataType: "json",
                 data: { csrf_token: _csrf_hash, emp_id: tempDataId }
@@ -3291,7 +3147,7 @@ if (typeof _tempContentData !== "undefined") {
                     targets: -1,
                     orderable: false,
                     render: function (data, type, row, meta) {
-                        return commendationDataTableActions(row.id);
+                        return offensesDataTableActions(row.id);
                     }
                 },
                 {
@@ -3301,7 +3157,7 @@ if (typeof _tempContentData !== "undefined") {
             ],
             initComplete: function () {
                 $(".dt-toolbar_commendation").append(
-                    "<button type='button' class='btn btn-sm btn-success mb-2 btnNew btnAddCommendation'><i class='la la-plus mr-1'></i>New</button>"
+                    "<button type='button' class='btn btn-sm btn-success mb-2 btnNew btnAddOffenses'><i class='la la-plus mr-1'></i>New</button>"
                 );
 
                 let search_thread = null;
@@ -3316,137 +3172,286 @@ if (typeof _tempContentData !== "undefined") {
                         }, 1000);
                     });
             },
-
         });
-
-        function commendationDataTableActions($id) {
-            if ($id) {
-                var _actionButton = "";
-                if (jQuery.inArray("edit", _currentActions) !== -1) {
-                    _actionButton +=
-                        " <button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditCommendation' data-id='" + $id + "'><i class='la la-edit'></i></button>";
-                }
-                // if (jQuery.inArray("archive", _currentActions) !== -1) {
-                //     _actionButton +=
-                //         " <button type='button' class='btn btn-default m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill btnRemoveOffenses' data-id='" +
-                //         $id +
-                //         "'><i class='la la-file-archive-o'></i></button>";
-                // UNCOMMENT TO ADD BACK FUNCTIONALITY T_T
-                // }
-                _actionButton = (_actionButton) ? _actionButton : "---";
-                return _actionButton;
-            } else {
-                return false;
-            }
-        }
-
-        $(document).on("click", ".btnAddCommendation", function () {
-            $.ajax({
-                url: baseUrl("hris/masterfile/get_modal_commendation/" + tempDataId),
-                dataType: "json",
-                success: function (json) {
-                    var modalContent = modalTempContent.find(".modal-content");
-                    if (typeof modalContent !== "undefined" && typeof json.html !== "undefined") {
-                        modalContent.empty();
-                        modalContent.append(json.html);
-                        // modalContent.find("#offcom_type").select2({
-                        //     width: "100%",
-                        //     placeholder: "Select an option",
-                        //     dropdownParent: modalTempContent
-                        // });
-                        modalTempContent.modal("show");
-
-                        var dtPickerLegalDate = modalContent.find("#offcom_date").datepicker({
-                            todayHighlight: true,
-                            orientation: "bottom left",
-                            templates: {
-                                leftArrow: '<i class="la la-angle-left"></i>',
-                                rightArrow: '<i class="la la-angle-right"></i>'
-                            },
-                            format: "yyyy-mm-dd",
-                            autoclose: true
-                        })
-                            .on("changeDate", function (e) {
-                                var currentDt = moment(e.date).format("YYYY-MM-DD");
-                                var self = $(e.target);
-                                self.validate();
-                            });
-
-                        var url = baseUrl("hris/masterfile/upload_employee_offenses");
-                        $("#fileupload_offenses")
-                            .fileupload({
-                                url: url,
-                                dataType: "json",
-                                formData: { csrf_token: _csrf_hash, employee_id: tempDataId },
-                                done: function (e, data) {
-                                    var result = data.result;
-                                    if (result.response) {
-                                        modalContent.find("#offenses_attachment").val(result.filename);
-                                        modalContent.find("#temp_fileupload").empty().text(result.filename);
-                                        toastr.success(result.toastr_msg, "Upload Offense and Commendation File", 5000);
-                                        modalContent.find("#fileupload_offenses").removeAttr('data-validation');
-                                    } else {
-                                        toastr.error(result.toastr_msg, "Upload Offense and Commendation File", 5000);
-                                    }
-                                }
-                            })
-                            .prop("disabled", !$.support.fileInput)
-                            .parent()
-                            .addClass($.support.fileInput ? undefined : "disabled");
-
-                        $.validate({
-                            form: "#form-offenses",
-                            lang: "en",
-                            onSuccess: function (form) {
-                                var currentForm = form[0];
-                                var formUrl = currentForm.action;
-                                var formData = $(currentForm).serialize();
-
-                                $.ajax({
-                                    url: formUrl,
-                                    type: "post",
-                                    dataType: "json",
-                                    data: formData,
-                                    beforeSend: function () {
-                                        $(currentForm)
-                                            .find(".btn-submit")
-                                            .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                                    },
-                                    success: function (json) {
-                                        if (json.response) {
-                                            toastr.success(
-                                                json.toastr_msg,
-                                                "Employee offense and commendation has been saved.",
-                                                5000
-                                            );
-                                            currentForm.reset();
-                                            modalTempContent.modal("hide");
-                                            dtOffenses.ajax.reload();
-                                            offComTrail.ajax.reload();
-                                        } else {
-                                            toastr.error(
-                                                json.toastr_msg,
-                                                "Error updating offense and commendation!",
-                                                5000
-                                            );
-                                        }
-
-                                        $(currentForm)
-                                            .find(".btn-submit")
-                                            .removeClass(
-                                                "m-btn--custom m-loader m-loader--light m-loader--right"
-                                            );
-                                    }
-                                });
-                                return false;
-                            }
-                        });
-                    }
-                }
-            });
-        });
-
     }
+
+    if (typeof tableNotices !== "undefined") {
+        var dtNotices = tableNotices.DataTable({
+            dom: '<"toolbar dt-toolbar_notices">frtlip',
+            serverSide: true,
+            processing: true,
+            ordering: false,
+            ajax: {
+                url: baseUrl("hris/masterfile/get_employee_offenses/")+"Notices",
+                type: "post",
+                dataType: "json",
+                data: { csrf_token: _csrf_hash, emp_id: tempDataId }
+            },
+            columns: [
+                { data: "offcom_type", width: "*" },
+                { 
+                    data: "offcom_date", 
+                    width: "*",
+                    render: function(data, type, row) {
+                        // Assuming 'data' is in the format YYYY-MM-DD
+                        var date = new Date(data);
+                        var formattedDate = date.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                        });
+                        return formattedDate;
+                    },
+                },
+                { data: "offcom_nature", },
+                { data: "offcom_action", },
+                {
+                    data: "filename",
+                    width: "10%",
+                    render: function(data, type, row, meta) {
+                        var filePath = `<a onclick="openFile('${tempDataId}', '${data}')"  style="cursor:pointer;text-decoration:none;  this.style.color='black';" onmouseover="this.style.textDecoration='underline'; this.style.color='blue';" onmouseout="this.style.textDecoration='none';  this.style.color='black';">${data}</a>`;
+                        return filePath;
+                    },
+                },
+                { data: null, width: "12%", className: "text-center" }
+            ],
+            columnDefs: [
+                {
+                    data: null,
+                    defaultContent: "",
+                    targets: -1,
+                    orderable: false,
+                    render: function (data, type, row, meta) {
+                        return offensesDataTableActions(row.id);
+                    }
+                },
+                {
+                    targets: "_all",
+                    defaultContent: ""
+                }
+            ],
+            initComplete: function () {
+                $(".dt-toolbar_notices").append(
+                    "<button type='button' class='btn btn-sm btn-success mb-2 btnNew btnAddOffenses'><i class='la la-plus mr-1'></i>New</button>"
+                );
+
+                let search_thread = null;
+                $("#tbl-notices_list_filter input")
+                    .unbind()
+                    .bind("input", function (e) {
+                        clearTimeout(search_thread);
+                        search_thread = setTimeout(function () {
+                            const dtTableApi = tableNotices.dataTable().api();
+                            const elem = $("#tbl-notices_list_filter input");
+                            return dtTableApi.search($(elem).val()).draw();
+                        }, 1000);
+                    });
+            },
+        });
+    }
+
+    if (typeof tableOthers !== "undefined") {
+        var dtOthers = tableOthers.DataTable({
+            dom: '<"toolbar dt-toolbar_others">frtlip',
+            serverSide: true,
+            processing: true,
+            ordering: false,
+            ajax: {
+                url: baseUrl("hris/masterfile/get_employee_offenses/")+"Others",
+                type: "post",
+                dataType: "json",
+                data: { csrf_token: _csrf_hash, emp_id: tempDataId }
+            },
+            columns: [
+                { data: "offcom_type", width: "*" },
+                { 
+                    data: "offcom_date", 
+                    width: "*",
+                    render: function(data, type, row) {
+                        // Assuming 'data' is in the format YYYY-MM-DD
+                        var date = new Date(data);
+                        var formattedDate = date.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                        });
+                        return formattedDate;
+                    },
+                },
+                { data: "offcom_nature", },
+                { data: "offcom_action", },
+                {
+                    data: "filename",
+                    width: "10%",
+                    render: function(data, type, row, meta) {
+                        var filePath = `<a onclick="openFile('${tempDataId}', '${data}')"  style="cursor:pointer;text-decoration:none;  this.style.color='black';" onmouseover="this.style.textDecoration='underline'; this.style.color='blue';" onmouseout="this.style.textDecoration='none';  this.style.color='black';">${data}</a>`;
+                        return filePath;
+                    },
+                },
+                { data: null, width: "12%", className: "text-center" }
+            ],
+            columnDefs: [
+                {
+                    data: null,
+                    defaultContent: "",
+                    targets: -1,
+                    orderable: false,
+                    render: function (data, type, row, meta) {
+                        return offensesDataTableActions(row.id);
+                    }
+                },
+                {
+                    targets: "_all",
+                    defaultContent: ""
+                }
+            ],
+            initComplete: function () {
+                $(".dt-toolbar_others").append(
+                    "<button type='button' class='btn btn-sm btn-success mb-2 btnNew btnAddOffenses'><i class='la la-plus mr-1'></i>New</button>"
+                );
+
+                let search_thread = null;
+                $("#tbl-others_list_filter input")
+                    .unbind()
+                    .bind("input", function (e) {
+                        clearTimeout(search_thread);
+                        search_thread = setTimeout(function () {
+                            const dtTableApi = tableOthers.dataTable().api();
+                            const elem = $("#tbl-others_list_filter input");
+                            return dtTableApi.search($(elem).val()).draw();
+                        }, 1000);
+                    });
+            },
+
+        })  
+    }
+
+    function offensesDataTableActions($id) {
+        if ($id) {
+            var _actionButton = "";
+            if (jQuery.inArray("edit", _currentActions) !== -1) {
+                _actionButton +=
+                    " <button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditOffenses' data-id='" + $id + "'><i class='la la-edit'></i></button>";
+            }
+            // if (jQuery.inArray("archive", _currentActions) !== -1) {
+            //     _actionButton +=
+            //         " <button type='button' class='btn btn-default m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill btnRemoveOffenses' data-id='" +
+            //         $id +
+            //         "'><i class='la la-file-archive-o'></i></button>";
+            // UNCOMMENT TO ADD BACK FUNCTIONALITY T_T
+            // }
+            _actionButton = (_actionButton) ? _actionButton : "---";
+            return _actionButton;
+        } else {
+            return false;
+        }
+    }
+
+    $(document).on("click", ".btnAddOffenses", function () {
+        $.ajax({
+            url: baseUrl("hris/masterfile/get_modal_offenses/" + tempDataId),
+            dataType: "json",
+            success: function (json) {
+                var modalContent = modalTempContent.find(".modal-content");
+                if (typeof modalContent !== "undefined" && typeof json.html !== "undefined") {
+                    modalContent.empty();
+                    modalContent.append(json.html);
+                    modalContent.find("#offcom_type").select2({
+                        width: "100%",
+                        placeholder: "Select an option",
+                        dropdownParent: modalTempContent
+                    });
+                    modalTempContent.modal("show");
+
+                    var dtPickerLegalDate = modalContent.find("#offcom_date").datepicker({
+                        todayHighlight: true,
+                        orientation: "bottom left",
+                        templates: {
+                            leftArrow: '<i class="la la-angle-left"></i>',
+                            rightArrow: '<i class="la la-angle-right"></i>'
+                        },
+                        format: "yyyy-mm-dd",
+                        autoclose: true
+                    })
+                        .on("changeDate", function (e) {
+                            var currentDt = moment(e.date).format("YYYY-MM-DD");
+                            var self = $(e.target);
+                            self.validate();
+                        });
+
+                    var url = baseUrl("hris/masterfile/upload_employee_offenses");
+                    $("#fileupload_offenses")
+                        .fileupload({
+                            url: url,
+                            dataType: "json",
+                            formData: { csrf_token: _csrf_hash, employee_id: tempDataId },
+                            done: function (e, data) {
+                                var result = data.result;
+                                if (result.response) {
+                                    modalContent.find("#offenses_attachment").val(result.filename);
+                                    modalContent.find("#temp_fileupload").empty().text(result.filename);
+                                    toastr.success(result.toastr_msg, "Upload Offense and Commendation File", 5000);
+                                    modalContent.find("#fileupload_offenses").removeAttr('data-validation');
+                                } else {
+                                    toastr.error(result.toastr_msg, "Upload Offense and Commendation File", 5000);
+                                }
+                            }
+                        })
+                        .prop("disabled", !$.support.fileInput)
+                        .parent()
+                        .addClass($.support.fileInput ? undefined : "disabled");
+
+                    $.validate({
+                        form: "#form-offenses",
+                        lang: "en",
+                        onSuccess: function (form) {
+                            var currentForm = form[0];
+                            var formUrl = currentForm.action;
+                            var formData = $(currentForm).serialize();
+
+                            $.ajax({
+                                url: formUrl,
+                                type: "post",
+                                dataType: "json",
+                                data: formData,
+                                beforeSend: function () {
+                                    $(currentForm)
+                                        .find(".btn-submit")
+                                        .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                                },
+                                success: function (json) {
+                                    if (json.response) {
+                                        toastr.success(
+                                            json.toastr_msg,
+                                            "Employee offense and commendation has been saved.",
+                                            5000
+                                        );
+                                        currentForm.reset();
+                                        modalTempContent.modal("hide");
+                                        dtOffenses.ajax.reload();
+                                        offComTrail.ajax.reload();
+                                    } else {
+                                        toastr.error(
+                                            json.toastr_msg,
+                                            "Error updating offense and commendation!",
+                                            5000
+                                        );
+                                    }
+
+                                    $(currentForm)
+                                        .find(".btn-submit")
+                                        .removeClass(
+                                            "m-btn--custom m-loader m-loader--light m-loader--right"
+                                        );
+                                }
+                            });
+                            return false;
+                        }
+                    });
+                }
+            }
+        });
+    });
 
     if (typeof tableCashAdvance !== "undefined") {
         var dtCashAdvance = tableCashAdvance.DataTable({
@@ -3498,6 +3503,27 @@ if (typeof _tempContentData !== "undefined") {
                     });
             }
         });
+
+        function cashAdvanceDataTableActions($id) {
+            if ($id) {
+                var _actionButton = "";
+                if (jQuery.inArray("edit", _currentActions) !== -1) {
+                    _actionButton +=
+                        " <button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditCashAdvance' data-id='" + $id + "'><i class='la la-edit'></i></button>";
+                }
+                if (jQuery.inArray("archive", _currentActions) !== -1) {
+                    _actionButton +=
+                        " <button type='button' class='btn btn-default m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill btnRemoveCashAdvance' data-id='" +
+                        $id +
+                        "'><i class='la la-file-archive-o'></i></button>";
+                }
+                _actionButton = (_actionButton) ? _actionButton : "---";
+                return _actionButton;
+            } else {
+                return false;
+            }
+        }
+
     }
 
     if (typeof tableDocuments !== "undefined") {
@@ -6312,4 +6338,18 @@ var offComTrail = $("#offensesCommendationTrail").DataTable({
 var vmBankInfo = new Vue({
     el: "#frmEditBankData-container",
     data: { row: tempData }
+});
+$('#offense-tabs .nav-link').on('click', function(e) {
+    e.preventDefault();
+    $('#offense-tabs .nav-link').removeClass('active');
+    $('#offense-content .tab-pane').removeClass('active show');
+    $(this).addClass('active');
+    var targetId = $(this).attr('href');
+    $(targetId).addClass('active show');
+ });
+
+ $('#collapseOffenses').on('shown.bs.collapse', function() {
+    $('#offense-tabs .nav-link').removeClass('active');
+    $('#offense-content .tab-pane').removeClass('active show');
+    $('#collapseOffenses .nav-tabs .nav-link:first').tab('show');
 });

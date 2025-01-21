@@ -117,26 +117,6 @@ $('table')
                 }
             });
         })
-        .on('click', '.btnEditCommendation',
-            function () {
-                const id = $(this).attr('data-id');
-                $.ajax({
-                    url: baseUrl("hris/masterfile/open_edit_modal"),
-                    type: "POST",
-                    dataType: "JSON",
-                    data: {
-                        csrf_token: _csrf_hash,
-                        path: "hris/masterfile/employee/edit_modals/edit_commendation",
-                        function_name: "getOffensesAndCommendations",
-                        model: "Employee_model",
-                        formData: {id},
-                        init_modal_data_function: 'getOffensesAndCommendations'
-                    },
-                    success: function (response) {
-                        initEditCommendationsDialog(response);
-                    }
-                });
-            })
     .on('click', '.btnRemoveOffenses',
         function () {
             const id = $(this).attr('data-id');
@@ -1587,42 +1567,6 @@ function initEditOffensesAndCommendationsDialog(response) {
     _modal.modal('show');
 }
 
-
-function initEditCommendationsDialog(response) {
-    const html = response.html;
-    const data = response.info.data;
-    const _modal = $('.document-modal-container');
-    _modal.empty();
-    _modal.append(html);
-
-    // const select2_offense = _modal.find("#offcom_type");
-    // const _offcom_type = data.offcom_type;
-    // select2_offense.val(_offcom_type).trigger('change');
-    // select2_offense.select2({
-    //     placeholder: "Select Type",
-    //     width: "100%",
-    //     dropdownParent: $(".document-modal-container")
-    // });
-    
-
-    _modal.find("input.date")
-        .datepicker({
-            todayHighlight: true,
-            orientation: "bottom left",
-            templates: {
-                leftArrow: '<i class="la la-angle-left"></i>',
-                rightArrow: '<i class="la la-angle-right"></i>'
-            },
-            format: "yyyy-mm-dd",
-            autoclose: true
-        });
-        const tempFileUpload = _modal.find("#temp_fileupload");
-        const fileupload_offenses = _modal.find("#fileupload_offenses");
-        if ($.trim(tempFileUpload.text()) === '') {
-            fileupload_offenses.attr('data-validation', 'required');
-        }
-    _modal.modal('show');
-}
 
 function initEditPerformanceEvaluationDialog(response) {
     if (!response) {

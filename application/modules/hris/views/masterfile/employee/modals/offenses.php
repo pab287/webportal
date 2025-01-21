@@ -1,5 +1,5 @@
 <div class="modal-header">
-    <h5 class="modal-title" id="exampleModalLabel"><i class="la la-plus mr-2"></i>Add Offenses</h5>
+    <h5 class="modal-title" id="exampleModalLabel"><i class="la la-plus mr-2"></i>Add Offenses and Commendations</h5>
     <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
         <span aria-hidden="true">×</span>
     </button>
@@ -13,7 +13,7 @@
 		<select id="offcom_type" name="offcom_type" data-validation="required" class="form-control m-input select2">
             <option value="">&nbsp;</option>
             <option value="OFFENSE">Offenses</option>
-            <!-- <option value="COMMENDATION">Commendations</option> -->
+            <option value="COMMENDATION">Commendations</option>
             <option value="NOTICES">Notices</option>
         </select>
 	</div>

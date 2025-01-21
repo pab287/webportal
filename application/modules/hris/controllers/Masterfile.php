@@ -600,8 +600,8 @@
                 ->set_output(json_encode($data));
         }
 
-        function get_employee_offenses() {
-            $data = $this->employee_model->getEmployeeOffenses();
+        function get_employee_offenses($type = null) {
+            $data = $this->employee_model->getEmployeeOffenses($type);
             $this->output
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
@@ -1944,12 +1944,6 @@
         public function get_job_description($id){
             $data = $this->employee_model->getEmpJobDescription($id);
             $this->output->set_content_type('json')->set_output(json_encode($data));
-        }
-        function get_employee_commendation() {
-            $data = $this->employee_model->getEmployeeCommendation();
-            $this->output
-                ->set_content_type('json')
-                ->set_output(json_encode($data));
         }
 
         function get_modal_commendation($id = null) {
