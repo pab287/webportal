@@ -609,7 +609,7 @@ var generateAttrition = new Vue({
 
             instance.generateInitialChart();
         }, printReport(el, type){
-            export_log(filtered,"Attrition Report", "print",count);
+            export_log(filtered,"Attrition Report", "print",count,type);
             const instance = this;
 
             const divToPrint = document.getElementById(el);
@@ -716,12 +716,16 @@ $.validate({
 // for validation of checkbox
 $("[name='to_generate_group[]']:eq(0)").valAttr('','validate_checkbox_group').valAttr('qty','1-2').valAttr('error-msg','ch0ose atleast 1 to generate');
 
-async function export_log(datas, type, name, count) {
-    const filters = {};
-    datas.split('&').forEach(pair => {
-        const [key, value] = pair.split('=');
-        filters[key] = decodeURIComponent(value);
-    });
+async function export_log(datas, name, type, count,chart) {
+    let filters = {};
+    const exportName = name+' '+chart;
+    if (datas) {
+        filters = {};
+        datas.split('&').forEach(pair => {
+            const [key, value] = pair.split('=');
+            filters[key] = decodeURIComponent(value);
+        });
+    }
 
     filters.filter_type = $('input[name="to_generate_group[]"]:checked').val();
     try {
@@ -730,8 +734,8 @@ async function export_log(datas, type, name, count) {
             type: "POST",
             data: { 
                 filters,
-                type: type,
-                name: name,
+                type: exportName,
+                name: type,
                 count: count,
                 csrf_token: _csrf_hash 
             },
