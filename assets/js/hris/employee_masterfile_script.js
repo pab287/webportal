@@ -56,6 +56,25 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     if(typeof _tempContentData.data !== "undefined" && _tempContentData.data){ _user = _tempContentData.data; }
 }
 
+
+const shouldEnableProbationEndDate = (vmData) => {
+    const startDate = vmData.date_start;
+    const endDate = vmData.date_end_prob;
+    const regularDate = vmData.date_regular;
+
+    if (regularDate && (!endDate || endDate === "0000-00-00")) {
+        return true;
+    }
+
+    if (startDate && endDate) {
+        const startDateTime = new Date(startDate).getTime();
+        const endDateTime = new Date(endDate).getTime();
+        return startDateTime > endDateTime;
+    }
+
+    return false;
+};
+
 $("body")
     .tooltip({
         selector: "[data-toggle='m-tooltip']"
@@ -681,9 +700,10 @@ if (typeof _tempContentData !== "undefined") {
 
                     if(classification.toLowerCase() == 'active'){
                         if(status == 'REGULAR'){
+                            const tempState = shouldEnableProbationEndDate(vmData) === false;
                             $("#m_datepicker-date_regular").attr("disabled", false);
                             $("#m_datepicker-date_end").attr("disabled", true);
-                            $("#m_datepicker-date_end_prob").prop('disabled', true);
+                            $("#m_datepicker-date_end_prob").prop('disabled', tempState);
                         }else{
                             $("#m_datepicker-date_regular").attr("disabled", true);
                             $("#m_datepicker-date_end").attr("disabled", true);
@@ -915,12 +935,9 @@ if (typeof _tempContentData !== "undefined") {
                 $("#performance-rating").attr('onclick', '').unbind('click');
                 $("#m_datepicker-date_resign").prop('disabled', true);
             }else{
-                $("#m_datepicker-date_end_prob").prop('disabled', true);
+                const tempState = shouldEnableProbationEndDate(vmData) === false;
+                $("#m_datepicker-date_end_prob").prop('disabled', tempState);
             }
-
-            var dateToday = new Date();
-
-            // $("#m_datepicker-date_resign").datepicker();
 
             $('#m_datepicker-date_resign').daterangepicker({
                 "singleDatePicker": true,
