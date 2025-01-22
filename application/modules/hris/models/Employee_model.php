@@ -8853,6 +8853,8 @@
 
         public function updateEmployeeAllowance() {
             $post = $this->input->post();
+            $postStdClass = json_decode(json_encode($post), false);
+
             $id = $post["id"];
             $hasApprovingAuthority = isset($post["approving_authority"]) ? json_decode($post["approving_authority"]): false;
             unset($post["id"], $post["approving_authority"]);
@@ -8860,6 +8862,29 @@
             $postIsActive = isset($post["is_active"]) && $post['is_active'] ? 1 : 0;
             $resultSet = array();
 
+            $this->db->select("id, is_active");
+            $this->db->where("emp_id", $post["emp_id"]);
+            $qAllw = $this->db->get("gcchris.allowances");
+            if($qAllw->num_rows() > 0){
+                $multipleAllowances = false;
+                $recordCount = $qAllw->num_rows();
+                $checkColumn = array_column($qAllw->result_array(), "is_active");
+                $isActiveColumn = array_count_values($checkColumn);
+                if(($recordCount > 1 && isset($isActiveColumn[1]) && $isActiveColumn[1] == $recordCount) ||
+                 ($recordCount > 1 && $postStdClass->is_active && (isset($isActiveColumn[0]) && $isActiveColumn[0] > 0) && (isset($isActiveColumn[1]) && $isActiveColumn[1] > 0))){
+                    $multipleAllowances = true;
+                }
+
+                if($multipleAllowances){
+                    $resultSet["success"] = false;
+                    $resultSet["message"] = "Multiple active allowances is not allowed!";
+                    $resultSet["title"] = "Update Allowance Data";
+                    $resultSet["toast"] = "error";
+                    return $resultSet;
+                }
+            }
+
+            $this->db->reset_query();
             /*** edited contents logging ***/
             $editedContent = array();
             $fromContent = array();
@@ -8932,8 +8957,6 @@
                 if((!isset($forApproval[$key]) || $hasApprovingAuthority) && isset($editedContent[$key])){ $tempData[$key] = $post[$key]; }
             }
 
-            /*** for approval ***/           
-
             $updated = false;
             $forApprovalData = is_array($forApproval) && count($forApproval) > 0;
             $cancelApprovalWhere = array("unique_id"=>$employeeId, "table_id"=>$id, "database_table"=>"gcchris.allowances", "module"=>"hris", "is_approved"=>0);
@@ -8942,10 +8965,6 @@
                 $this->db->where("id", $id);
                 $this->db->set($tempData);
                 $updated = $this->db->update("gcchris.allowances");
-                /*** 
-                 * $tempUpdate = $this->db->update("gcchris.allowances");
-                 * $updated = $tempUpdate && $this->db->affected_rows() > 0; 
-                 * ***/
             }
 
             $coreHistoryLog = $this->core_layout->coreHistoryLogs();
@@ -11719,5 +11738,49 @@
         public function getEmpJobDescription($id){
             $data = $this->db->select('job_desc')->get_where($this->positionTable, array("id" => $id))->row();
             return $data;
+        }
+
+        public function getEmployeeAllowanceCount($id=null){
+            $resultset = array();
+            if($id){
+                $this->db->select("id");
+                $ctrActive = $this->db->get_where($this->tblAllowances, array("emp_id" => $id, "is_active"=>1));
+                if($ctrActive->num_rows() == 2){
+                    $arrIds = array();
+                    foreach ($ctrActive->result() as $row) { $arrIds[] = $row->id; }
+                    if(!empty($arrIds)){
+                        $this->db->select("id, rate, frequency");
+                        $this->db->from($this->tblAllowances);
+                        $this->db->where_in("id", $arrIds);
+                        $this->db->order_by("created_at", "ASC");
+                        $this->db->limit(1);
+                        $qTemp = $this->db->get();
+                        if($qTemp->num_rows() == 1){
+                            $rowData = $qTemp->row();
+                            $updatedAllowance = $this->db->update($this->tblAllowances, array("is_active" => 0), array("id" => $rowData->id));
+                            if($updatedAllowance && $this->db->affected_rows() == 1){
+                                $tempRate = number_format($rowData->rate, 2, '.', '');
+                                $tempFrequency = strtoupper($rowData->frequency);
+
+                                $resultset["response"] = true;
+                                $resultset["toastr_msg"] = "System has detected a multiple active allowances. 
+                                The previous active allowance has been deactivated. Allowance Rate `<strong>{$tempRate}</strong>` and Frequency `<strong>{$tempFrequency}</strong>`.";
+                            }else{
+                                $resultset["response"] = false;
+                            }
+                        }else{
+                            $resultset["response"] = false;
+                        }
+                    }else{
+                        $resultset["response"] = true;
+                    }
+                }else{
+                    $resultset["response"] = false;
+                }
+            }else{
+                $resultset["response"] = false;
+            }
+
+            return $resultset;
         }
     }

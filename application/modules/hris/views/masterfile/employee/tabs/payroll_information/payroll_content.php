@@ -632,12 +632,29 @@
 ?>
 
 <script>
-$(document).ready(function(){
-    if(screen.width > 560 && screen.width < 1920){
-        $("#frmEditPayrollData-container label").addClass("text-right");
-        $("div label").addClass("text-right");
-    }
-});
+    const getMultipleActiveAllowances = () => {
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_employee_allowance_count/"+<?php echo $data->id; ?>),
+        success: function (json) {
+            if(json.response){
+                Swal.fire({
+                    title: 'Multiple Active Allowances',
+                    html: json.toastr_msg,
+                    icon: 'warning',
+                });
+
+                setTimeout(function(){ dtAllowance.ajax.reload(); }, 250);
+            }
+        }
+    });
+}
+    $(document).ready(function(){
+        if(screen.width > 560 && screen.width < 1920){
+            $("#frmEditPayrollData-container label").addClass("text-right");
+            $("div label").addClass("text-right");
+        }
+    });
+
     const editEmployeeAllowanceModal = $("#edit-employee-allowance-modal");
     const addEmployeeLoan = $("#mdl-newLoan");
     const editEmployeeLoan = $("#edit-employee-loan");
@@ -763,7 +780,7 @@ $(document).ready(function(){
                     return btnStr;
                 }
             },
-        ],
+        ], initComplete: function () { getMultipleActiveAllowances(); }
     });
 
     $('#generalSearchAllowances').donetyping(function (callback) {
