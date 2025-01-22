@@ -237,7 +237,7 @@
 
                 $this->core_layout->addJs("plugins/star-rating/js/jquery.star-rating-svg.min.js", TRUE);
                 $this->core_layout->addCss("plugins/star-rating/css/star-rating-svg.css");
-
+                $this->core_layout->addJs("plugins/pdf/pdf.min.js", true);
                 $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
                 $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
                 $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
@@ -247,7 +247,7 @@
                 $this->core_layout->addJs("js/buttons.print.min.js", true);
 
                 $this->core_layout->addJs("js/ams/jquery.maskMoney.min.js", true);
-
+                
                 $this->core_layout->addJs("js/hris/employee_masterfile_script.js", true, $arrData);
                 $this->core_layout->addJs("js/hris/employee_documents_script.js", true);
                 $this->core_layout->addJs("js/hris/employee_edit_and_archive_script.js", true);
