@@ -5,6 +5,7 @@ class Hydra_billing_home_m extends Dbase{
 	public function get_list_accounts(){
 		$conn = $this->conn();
 		$year = date('Y');
+		$month = date('m');
 		$previous_month = date('m')-1;
 
 		// fetch accounts
@@ -87,6 +88,8 @@ class Hydra_billing_home_m extends Dbase{
 											LIMIT 1");
    			$sth_readings->execute();
    			while ($row_ = $sth_readings->fetch(PDO::FETCH_ASSOC)) {
+				$checkReading = $this->getAlreadyReading($conn, $account_id, $month, $year, $row_['meterno']);
+				$checkReading_count = $checkReading->rowCount();
 				$list = array();
 		 		$list['id'] = $row_['id'];
 		 		$list['meterno'] = $row_['meterno'];
@@ -106,6 +109,7 @@ class Hydra_billing_home_m extends Dbase{
 		 		$list['is_billed'] = $row_['is_billed'];
 		 		$list['createbill_by'] = $row_['createbill_by'];
 		 		$list['createbill_at'] = $row_['createbill_at'];
+				$list['isAlreadyReading'] = $checkReading_count;
 				array_push($response['readings_array'], $list);
    			}
 		}
@@ -253,6 +257,14 @@ class Hydra_billing_home_m extends Dbase{
 		$sth->execute();
 		$result = $sth->fetch();
 		return $result["name"] ? $result["name"] : '';
+	}
+
+	public function getAlreadyReading($conn, $account_id, $month, $year, $meterno){
+		$sth = $conn->prepare("SELECT id, is_billed, account_id 
+								FROM hydra_billing.readings 
+								WHERE account_id='$account_id' AND meterno='$meterno' AND is_archived='0' AND year(reading_date)='$year' AND month(reading_date)='$month'");
+		$sth->execute();
+		return $sth;
 	}
 
 	private function getSeries($month,$year){
