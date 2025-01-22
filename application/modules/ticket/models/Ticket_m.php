@@ -78,7 +78,13 @@ class Ticket_m extends CI_Model
             $this->db->group_end();
         }
         $i = $sortOrder[0]['column'];
-        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        if($sortBy[$i]['data'] == "priority"){
+            $this->db->order_by("prio.id", $sortOrder[0]['dir']);
+        }
+        else{
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        }
+
         if ($limit != -1) {
             $this->db->limit($limit, $offset);
         }
