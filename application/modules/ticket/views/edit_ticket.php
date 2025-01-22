@@ -52,7 +52,7 @@
                             <div class="col-lg-6 col-md-12 col-sm-12">
                                 <div class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-6 col-sm-12 col-xs-12">
-                                        Reference:
+                                        Reference: <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-12 col-xs-12">
                                         <b v-text="vm_tab1.reference_no"></b>
@@ -60,7 +60,7 @@
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-6 col-sm-12 col-xs-12">
-                                        Requested by:
+                                        Requested by: <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-12 col-xs-12">
                                         <b v-text="vm_tab1.requested_by"></b>
@@ -68,7 +68,7 @@
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-6 col-sm-12 col-xs-12">
-                                        Date Needed:
+                                        Date Needed: <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-6 input-group date" id="need_dt_group">
                                         <input class="form-control m-input" type="text" name="date_required" id="date_required" data-validation="required"/>
@@ -79,7 +79,7 @@
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Severity
+                                        Severity <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="severity" name="severity" class="form-control select2" data-validation="required">
@@ -95,7 +95,7 @@
                                     <input type="hidden" class="form-control" name="pic[]" id="pic">
                                         <span class="btn btn-success fileinput-button">
                                             <em class="fa fa-upload"></em>
-                                            <span>SELECT FILE</span>
+                                            <span>SELECT FILE </span>
                                             <input type="file" id="fileupload" name="files" multiple>
                                         </span>
                                         <div id="progress" class="progress" style="height: 7px;">
@@ -113,7 +113,7 @@
                             <div class='col-lg-6 col-md-12 col-sm-12'>
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Department
+                                        Department <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="department" name="department" class="form-control select2" data-validation="required">
@@ -123,7 +123,7 @@
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Category
+                                        Category <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="category" name="category" class="form-control select2" data-validation="required">
@@ -133,7 +133,7 @@
                                 </div>
                                 <div class="form-group m-form__group row" id="webportal">
                                     <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Sub-Category
+                                        Sub-Category <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="sub_category" name="sub_category" class="form-control select2" data-validation="required">
@@ -143,7 +143,7 @@
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-4 col-sm-12 col-form-label">
-                                        Issue:
+                                        Issue: <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <textarea class="form-control m-input" id="issue" name="issue" rows="4" data-validation="required"></textarea>
@@ -153,7 +153,7 @@
                             <div class='col-lg-6 col-md-12 col-sm-12'>
                                 <div class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-6 col-sm-4">
-                                        Performed by:
+                                        Performed by: <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-8">
                                         <select id="performed_by" name="performed_by" class="form-control select2" data-validation="required">
@@ -163,7 +163,7 @@
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Status
+                                        Status: <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="status" name="status" class="form-control select2" data-validation="required">
@@ -225,7 +225,7 @@
                                                     </span>
                                                 </div>
                                                 <span class="m-widget3__status mb-4">
-                                                    <a href="#" @click="delete_comment(data.ticket_id)" class="btn btn-danger m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill m-btn--air">
+                                                    <a href="#" @click="delete_comment(data.id)" class="btn btn-danger m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill m-btn--air">
                                                         <i class="la la-trash"></i>
                                                     </a>
                                                 </span>

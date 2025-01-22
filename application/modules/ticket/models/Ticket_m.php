@@ -768,14 +768,20 @@ class Ticket_m extends CI_Model
     }
 
     function removeFile(){
+        $post = $this->input->post();
         $result = array();
-        $id = $this->user_data['emp_id'];
-        $file = $this->input->post('filename');
+        $id = $post['requested_id'];
+        $ticket = $post['ticket_id'];
+        $file = $post['filename'];
         $url = realpath("uploads/files/images/employee_files/empcode_".$id."/ticketing/".$file);
         
         if(!file_exists($url)){
             $result['result'] = false;
         }else{
+            $result = $this->db->select("attachment")->where('id', $ticket)->get('gccticket.ticket')->row();
+            $update = explode(',',$result->attachment);
+            $new_update = array_diff($update, array($file));
+            $this->db->where('id', $ticket)->update('gccticket.ticket', array('attachment' => implode(',',$new_update)));
             unlink($url);
             $result['result'] = true;
             $result['file'] = $file;
@@ -1088,7 +1094,7 @@ class Ticket_m extends CI_Model
         $comment = $this->db->select("comment")->get_where("gccticket.comments", array("id"=>$id))->row();
         $delete = $this->db->query("DELETE FROM gccticket.comments WHERE id = ?", $id);
         if ($delete){
-            $this->core_layout->setEventLog("User deleted comment: {$comment['comment']}","search", "success", "gccticket", "user");
+            $this->core_layout->setEventLog("User deleted comment: {$comment->comment}","search", "success", "gccticket", "user");
         }
         return $delete;
       }

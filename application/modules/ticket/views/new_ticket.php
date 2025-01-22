@@ -75,10 +75,10 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
+                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
                                         Date Needed <span style="color:red;">*</span>
                                     </label>
-                                    <div class="col-sm-12 col-xs-12 col-md-8 input-group date">
+                                    <div class="col-sm-12 col-xs-12 col-md-9 input-group date">
                                         <input class="form-control m-input" type="text" name="date_required" id="date_required" data-validation="required"/>
                                         <span class="input-group-addon">
 											<i class="la la-calendar glyphicon-th"></i>
