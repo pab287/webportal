@@ -474,6 +474,7 @@ class Ticket_m extends CI_Model
 
     // function for uploading photo
     function uploadTicketPhoto(){
+        $post = $this->input->post();
         $resultset = array();
         $employeeId = $this->user_data['emp_id'];
         if ($employeeId) {
@@ -512,6 +513,15 @@ class Ticket_m extends CI_Model
 
                     $icon = base_url('assets/images/file_icons/jpg.svg');
                     if ($filename) {
+                        if(isset($post['ticket_id'])){
+                            $this->db->reset_query();
+                            $ticketData = $this->db->select("attachment")->where('id',  $post['ticket_id'] )->get('gccticket.ticket')->row();
+                            $this->db->reset_query();
+                            $attachments = explode(',', $ticketData->attachment);
+                            array_push($attachments, "empcode_{$employeeId}/ticketing/{$filename}");
+                            $updated_attachment = implode(',', array_filter(array_unique($attachments)));
+                            $this->db->where('id', $post['ticket_id'])->update('gccticket.ticket', array('attachment' => $updated_attachment));
+                        }
                         $resultset["response"] = true;
                         $resultset["added_image"] = base_url("uploads/files/images/employee_files/empcode_{$employeeId}/ticketing/{$filename}");
                         $resultset["icon"] = $icon;
@@ -741,10 +751,10 @@ class Ticket_m extends CI_Model
         $str_pic = implode(",",$this->input->post('pic'));
         $arr_pic = explode(",",$str_pic);
         
-        $img_arr = array();
-        foreach($arr_pic as $img){
-            $img_arr[] = "empcode_{$employeeId}/ticketing/".$img;
-        }
+        // $img_arr = array();
+        // foreach($arr_pic as $img){
+        //     $img_arr[] = "empcode_{$employeeId}/ticketing/".$img;
+        // }
         
         $data = array(
             'department_id' => $post['department'],
@@ -752,7 +762,7 @@ class Ticket_m extends CI_Model
             'category' => $post['category'],
             'sub_category' => $sub_category,
             'message' => $post['issue'],
-            'attachment' => implode(",",$img_arr),
+            // 'attachment' => implode(",",$img_arr),
             'priority' => $post['severity'],
             'performed_by' => $post['performed_by'],
             'status' => $post['status']
@@ -782,15 +792,20 @@ class Ticket_m extends CI_Model
         $url = realpath("uploads/files/images/employee_files/empcode_".$id."/ticketing/".$file);
         
         if(!file_exists($url)){
-            $result['result'] = false;
-        }else{
-            $result = $this->db->select("attachment")->where('id', $ticket)->get('gccticket.ticket')->row();
-            $update = explode(',',$result->attachment);
-            $new_update = array_diff($update, array($file));
-            $this->db->where('id', $ticket)->update('gccticket.ticket', array('attachment' => implode(',',$new_update)));
-            unlink($url);
-            $result['result'] = true;
-            $result['file'] = $file;
+            $result['result'] = "true";
+        }
+        else{
+            $ticketData = $this->db->select("attachment")->where('id', $ticket)->get('gccticket.ticket')->row();
+            $this->db->reset_query();
+            $update = explode(',',$ticketData->attachment);
+            if(in_array($file, $update)){
+                $new_update = array_diff($update, array($file));
+                $data  = implode(',',$new_update);
+                $this->db->where('id', $ticket)->update('gccticket.ticket', array('attachment' => $data));
+                unlink($url);
+            }
+            $result["result"] = "true";
+            $result["file"] = $file;
         }
         return $result;
     }

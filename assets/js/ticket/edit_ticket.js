@@ -324,7 +324,7 @@ let fileUploadPhoto = function () {
         .fileupload({
             url: url,
             dataType: "json",
-            formData: {csrf_token: _csrf_hash},
+            formData: {csrf_token: _csrf_hash, ticket_id: param_id},
             done: function (e, data) {
                 var result = data.result;
                 console.log(result.response);
@@ -491,7 +491,7 @@ function removeDocument(el,filename){
                     images = images.filter((n) => {return n != _name});
                     $(parent).remove();
                     $("#pic").val(images);
-
+                    console.log('Images')
                     $("#remove-file-confirmation-modal").modal("hide");
                     toastr.success(_name,"Removed File", 5000);
                 }else{
