@@ -262,7 +262,7 @@ class Reports_model extends CI_Model{
         $resultSet['recordsTotal'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $searchFields, $joinArr);
         $resultSet['recordsFiltered'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $searchFields, $joinArr);
         if (intval($export) == 1){
-            $logMessage = "Exported Expiring ". $work_status. " Employees as ".$tableConfig['exportType']." with result count: ".$resultSet['recordsTotal'];
+            $logMessage = "Exported Expiring ". $work_status. " Employees as <strong>".$tableConfig['exportType']."</strong> with result count: <strong>".$resultSet['recordsTotal']."</strong>";
             $this->core_layout->setEventLog($logMessage, "export", 'success', "gcchris", 'user');
             $search=false;
         }
