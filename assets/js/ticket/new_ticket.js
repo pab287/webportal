@@ -98,35 +98,30 @@ let fileUploadPhoto = function () {
                                     ' <i class="la la-eye"></i>' +
                                 ' </button>';
                         }
-                    const uploadlist = ' ' + 
-                            '<div class="m-widget2">'+
-                            '<div class="m-widget2__item m-widget2__item--'+ color +'">' +
-                                '<div class="m-widget2__checkbox">'+
-                                    '<div class="m-widget2__img m-widget2__img--icon">'+
-                                    '<img src='+ icon_path +' width="45" alt>' +
-                                    '</div>'+
-                                '</div>'+
-                                '<div class="m-widget2__desc">'+
-                                    '<span class="m-widget2__user-text">'+
-                                    ''+
-                                    '</span><br>'+
-                                    '<span class="m-widget2__user-name">'+
-                                    result.display_filename +
-                                    '</span>'+
-                                    '<span class="m-widget2__user-name">'+
-                                    '</span><br><br>'+
-                                '</div>' +
-                                '<div class="m-widget2__actions">' +
-                                   ''  + previewButton +
-                                    ' <button ' +
-                                    ' type="button" ' +
-                                    ' onclick="removeDocument(this)"'+
-                                    ' class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView" data-name="'+result.display_filename+'">'+
-                                    ' <i class="la la-times"></i>'+
-                                    ' </button>'+
-                                '</div>'+
-                            '</div>'+
-                            '</div>';
+                        const uploadlist = `
+                            <div class="m-widget2">
+                                <div class="m-widget2__item m-widget2__item--${color}">
+                                    <div class="m-widget2__checkbox">
+                                        <div class="m-widget2__img m-widget2__img--icon">
+                                            <img src="${icon_path}" width="45" alt>
+                                        </div>
+                                    </div>
+                                    <div class="m-widget2__desc">
+                                        <span class="m-widget2__user-text"></span><br>
+                                        <span class="m-widget2__user-name">${result.display_filename}</span>
+                                        <span class="m-widget2__user-name"></span><br><br>
+                                    </div>
+                                    <div class="m-widget2__actions">
+                                        ${previewButton}
+                                        <button type="button"
+                                                onclick="removeDocument(this, '${result.display_filename}')"
+                                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView"
+                                                data-name="${result.display_filename}">
+                                            <i class="la la-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>`;
                     $("#uploaded_files").append(uploadlist);
                     $("#no_attachment").remove();
                     toastr.success(result.toastr_msg, "Upload Image", 5000);
@@ -216,11 +211,38 @@ function previewDocument(url, icon, filename) {
     modal.modal("show");
 }
 
-function removeDocument(el){
-    var _name = $(el).attr("data-name");
-    const parent = $(el).closest('.m-widget2__item');
-    images = images.filter((n) => {return n != _name});
-    $(parent).remove();
-    $("#pic").val(images);
-    toastr.success(_name,"Removed File", 5000);
+function removeDocument(el, filename) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl("ticket/ticket/remove_file"),
+                type: 'POST',
+                dataType: "json",
+                data: {
+                    csrf_token : _csrf_hash,
+                    filename : filename,
+                },
+                success: function (response) {
+                    if (response.result) {
+                        const _name = $(el).attr("data-name");
+                        const parent = $(el).closest('.m-widget2__item');
+                        images = images.filter((n) => {return n != _name});
+                        $(parent).remove();
+                        $("#pic").val(images);
+                        toastr.success(_name,"Removed File", 5000);
+                    } else {
+                        toastr.error("File not found","Error", 5000);
+                    }
+                }
+            });
+        }
+    });
 }

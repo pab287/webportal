@@ -13,6 +13,8 @@ let getUrlParameter = function getUrlParameter(sParam) {
 
 param_id = getUrlParameter('id');
 let requested_id = 0;
+let filenames ="";
+let element = "";
 jQuery(document).ready(function () {
     fileUploadPhoto();
     $("#progress").hide();
@@ -34,7 +36,7 @@ $('#date_required_group').datetimepicker({
     todayBtn: true,
     dateTimeFormat: 'yyyy-mm-dd hh:mm',
 });
-
+let arrImg = [];
 let images = [];
 $.ajax({
     url: baseUrl("ticket/ticket/ticket_details/") + param_id,
@@ -72,7 +74,7 @@ $.ajax({
         const picUrl = vmData.attachment ? baseUrl("uploads/files/images/employee_files/" + vmData.attachment) : baseUrl('assets/images/ams/images/no_image.jpg');
         const requestor = vmData.requestor;
         requested_id = requestor;
-        const arrImg = vmData.attachment.split(',');
+        arrImg = vmData.attachment.split(',');
         arrImg.forEach(function(file){
             const fileArr = file.split("/");
             const filename = fileArr[fileArr.length - 1];
@@ -469,39 +471,44 @@ function removeFile(el){
     
 }
 
-function removeDocument(el,filename){
-    $("#remove-file-confirmation-modal").modal("show");
-
-    $("#frm-remove-file").submit(function(e){
-        e.preventDefault();
-        $.ajax({
-            url: baseUrl("ticket/ticket/remove_file"),
-            type: 'POST',
-            dataType: "json",
-            data: {
-                csrf_token : _csrf_hash,
-                filename : filename,
-                ticket_id : param_id,
-                requested_id : requested_id,
-            },
-            success: function (response) {
-                if (response.result) {
-                    const _name = $(el).attr("data-name");
-                    const parent = $(el).closest('.m-widget2__item');
-                    images = images.filter((n) => {return n != _name});
-                    $(parent).remove();
-                    $("#pic").val(images);
-                    console.log('Images')
-                    $("#remove-file-confirmation-modal").modal("hide");
-                    toastr.success(_name,"Removed File", 5000);
-                }else{
-                    toastr.error("File not found","Error", 5000);
+function removeDocument(el, filename) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl("ticket/ticket/remove_file"),
+                type: 'POST',
+                dataType: "json",
+                data: {
+                    csrf_token : _csrf_hash,
+                    filename : filename,
+                    ticket_id : param_id,
+                    requested_id : requested_id,
+                },
+                success: function (response) {
+                    if (response.result) {
+                        const _name = $(el).attr("data-name");
+                        const parent = $(el).closest('.m-widget2__item');
+                        images = images.filter((n) => {return n != _name});
+                        $(parent).remove();
+                        $("#pic").val(images);
+                        console.log(images)
+                        $("#remove-file-confirmation-modal").modal("hide");
+                        toastr.success(_name,"Removed File", 5000);
+                    } else {
+                        toastr.error("File not found","Error", 5000);
+                    }
                 }
-                $("#remove-file-confirmation-modal").modal("hide");
-            }
-        });
+            });
+        }
     });
-    
 }
 
 function delete_comment(id){

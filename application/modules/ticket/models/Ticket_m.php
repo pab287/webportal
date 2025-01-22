@@ -786,27 +786,25 @@ class Ticket_m extends CI_Model
     function removeFile(){
         $post = $this->input->post();
         $result = array();
-        $id = $post['requested_id'];
-        $ticket = $post['ticket_id'];
+        $id = isset($post['requested_id']) ? $post['requested_id'] : $this->user_data['emp_id'];
         $file = $post['filename'];
-        $url = realpath("uploads/files/images/employee_files/empcode_".$id."/ticketing/".$file);
-        
-        if(!file_exists($url)){
-            $result['result'] = "true";
-        }
-        else{
+        $file_path = "uploads/files/images/employee_files/empcode_{$id}/ticketing/{$file}";
+        $full_path = FCPATH . $file_path;
+
+        if (isset($post['ticket_id'])) {
+            $ticket = $post['ticket_id'];
             $ticketData = $this->db->select("attachment")->where('id', $ticket)->get('gccticket.ticket')->row();
             $this->db->reset_query();
-            $update = explode(',',$ticketData->attachment);
-            if(in_array($file, $update)){
+            $update = explode(',', $ticketData->attachment);
+            $file = "empcode_{$id}/ticketing/{$file}";
+            if (in_array($file, $update)) {
                 $new_update = array_diff($update, array($file));
-                $data  = implode(',',$new_update);
+                $data = implode(',', $new_update);
                 $this->db->where('id', $ticket)->update('gccticket.ticket', array('attachment' => $data));
-                unlink($url);
             }
-            $result["result"] = "true";
-            $result["file"] = $file;
         }
+        $result["result"] = file_exists($full_path) ? unlink($full_path) : false;
+        $result["file"] = $file;
         return $result;
     }
 

@@ -293,38 +293,3 @@
         </div>
     </div>
 </div>
-
-<div class="modal fade" id="remove-file-confirmation-modal"
-     tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
-    <div class="modal-dialog modal-md" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h6 class="modal-title" id="exampleModalLabel">
-                    REMOVE CONFIRMATION
-                </h6>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">
-                        ×
-                    </span>
-                </button>
-            </div>
-            <form id="frm-remove-file">
-                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-                <div class="col-12 modal-body">
-                    <p class="mb-0 m--regular-font-size-lg1">
-                        <input type="hidden" id="file_to_be_deleted" name="filename">
-                        Do you want to remove this attachment?
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-submit btn-primary btnNew">
-                        Yes
-                    </button>
-                    <button type="button" class="btn btn-danger btnNew" data-dismiss="modal">
-                        No
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
