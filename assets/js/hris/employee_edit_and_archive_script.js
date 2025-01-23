@@ -1519,7 +1519,6 @@ function initEditDocumentDialog(response) {
 }
 
 function initRegularEditDialog(response) {
-    console.log("Init");
     const html = response.html;
     const _modal = $('.document-modal-container');
     _modal.empty();
