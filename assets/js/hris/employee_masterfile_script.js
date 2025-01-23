@@ -240,8 +240,6 @@ function loadEmployees(employee_status = "All") {
                                         $("#purpose", _modal).val(response.purpose);
                                         $("#remarks", _modal).val(response.remarks);
                                         _modal.modal("show");
-                                    }else{
-                                        
                                     }
                                 }
                             });

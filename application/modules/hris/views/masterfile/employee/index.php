@@ -10,6 +10,7 @@
 
     .custom-fullname a {
         color: #1b1b1b;
+        text-decoration: none;
     }
 
     .select2-selection__rendered {
@@ -219,8 +220,8 @@
                                 <div class="row align-items-end">
                                     <div id="view-btn-web" class="form-group col-xl-2 col-lg-3 col-md-3 col-sm-12">
                                         <div id="view-btn" class="btn-group m-btn-group" role="group">
-                                            <button type="button" id="list" class="m-btn btn btn-default m-btn--hover-accent m-btn--icon btnNew"><i class="fa fa-list"></i> List</button>
-                                            <button type="button" id="grid" class="m-btn btn btn-default m-btn--hover-accent m-btn--icon btnNew active"><i class="fa fa-th"></i> Grid</button>
+                                            <button type="button" id="list" class="m-btn btn btn-default m-btn--hover-accent m-btn--icon btnView"><i class="fa fa-list"></i> List</button>
+                                            <button type="button" id="grid" class="m-btn btn btn-default m-btn--hover-accent m-btn--icon btnView active"><i class="fa fa-th"></i> Grid</button>
                                         </div>
                                     </div>
                                     <div class="form-group col-xl-3 col-lg-3 col-md-3 col-sm-12">
