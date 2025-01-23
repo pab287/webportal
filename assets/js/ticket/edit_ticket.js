@@ -264,10 +264,9 @@ $.validate({
             // },
             success: function (data) {
                 if (data) {
+                    $('#comment').val('');
                     toastr.success("Comment successfully saved.", "Saved.", 5000)
-                    setTimeout(() => {
                         getComments();
-                    }, 700);
                 } else {
                     toastr.error(data.toastr_msg, "Notice: Error!", 5000);
                 }

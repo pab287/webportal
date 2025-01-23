@@ -264,7 +264,7 @@
                             <div class="m-widget3__body">
                             <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
                                 <input name="ticket_id" id="ticket_id" type="hidden">
-                                <textarea name="comment" class="form-control" placeholder="Write here" row="3"></textarea>
+                                <textarea name="comment" id="comment" class="form-control" placeholder="Write here" row="3"></textarea>
                             </div>
                         </div>
                         <button class="btn btn-success btn-sm" type="submit">Add</button>

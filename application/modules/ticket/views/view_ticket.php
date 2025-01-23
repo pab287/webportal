@@ -195,7 +195,7 @@
                                         </span>
                                     </div>
                                     <span class="m-widget3__status mb-4">
-                                        <a href="#" onclick="delete_comment(data.ticket_id)" class="btn btn-danger m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill m-btn--air">
+                                        <a href="#" @click="delete_comment(data.id)" class="btn btn-danger m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill m-btn--air">
                                             <i class="la la-trash"></i>
                                         </a>
                                     </span>
@@ -234,7 +234,7 @@
                             <div class="m-widget3__body">
                             <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
                                 <input name="ticket_id" id="ticket_id" type="hidden">
-                                <textarea name="comment" class="form-control" placeholder="Write here" row="3"></textarea>
+                                <textarea name="comment" id="comment" class="form-control" placeholder="Write here" row="3"></textarea>
                             </div>
                         </div>
                         <button class="btn btn-success btn-sm" type="submit">Add</button>
