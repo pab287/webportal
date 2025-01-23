@@ -110,6 +110,9 @@ function loadEmployees(employee_status = "All") {
                         d.search['value'] = $("#generalSearch").val();
                         d.emp_status = $("#emp_status").val();
                         d.emp_sex = $("#emp_sex").val();
+                        if(typeof _currentActions !== "undefined" && Object.keys(_currentActions).length > 0 && _currentActions.includes("view_by_company")){
+                            d.list_view = 'by_company';
+                        }
                         return d;
                     },
                     global: false,
