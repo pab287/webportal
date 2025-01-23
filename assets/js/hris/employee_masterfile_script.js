@@ -1162,6 +1162,7 @@ if (typeof _tempContentData !== "undefined") {
                         modalTempContent.modal("show");
 
                         var dtPickerDepBirthDate = modalContent.find("#dep_birthdate").datepicker({
+                            endDate: new Date(), 
                             todayHighlight: true,
                             orientation: "bottom left",
                             templates: {
@@ -1169,13 +1170,13 @@ if (typeof _tempContentData !== "undefined") {
                                 rightArrow: '<i class="la la-angle-right"></i>'
                             },
                             format: "yyyy-mm-dd",
-                            autoclose: true
+                            autoclose: true,
                         })
-                            .on("changeDate", function (e) {
-                                var currentDt = moment(e.date).format("YYYY-MM-DD");
-                                var self = $(e.target);
-                                self.validate();
-                            });
+                        .on("changeDate", function (e) {
+                            var currentDt = moment(e.date).format("YYYY-MM-DD");
+                            var self = $(e.target);
+                            self.validate();
+                        });
 
                         $.validate({
                             form: "#form-dependents",
