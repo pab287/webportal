@@ -1,5 +1,5 @@
 <div class="modal-header">
-    <h5 class="modal-title" id="exampleModalLabel"><i class="la la-plus mr-2"></i>Add Dependentt</h5>
+    <h5 class="modal-title" id="exampleModalLabel"><i class="la la-plus mr-2"></i>Add Dependent</h5>
     <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
         <span aria-hidden="true">×</span>
     </button>
