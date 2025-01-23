@@ -89,15 +89,14 @@ class Users extends MY_Controller{
             ->set_output(json_encode($data));
     }
 
-    public function add_user()
-    {
-
+    public function add_user(){
         $data = array(
             'emp_id' => $this->input->post('emp_id'),
             'email' => $this->input->post('email'),
             'username' => $this->input->post('username'),
             'password' => MD5($this->input->post('password')),
-            'group_id' => $this->input->post('group_id')
+            'group_id' => $this->input->post('group_id'),
+            'force_change'=> 1,
         );
         $insert = $this->user->save_user($data);
         $tempData = $this->core_layout->getUserData($insert);
@@ -232,8 +231,7 @@ class Users extends MY_Controller{
     function forget_pin(){
         $post = $this->utilities->parseFormDataToObject($this->input->post());
         $data = $this->user->forgetPin($post);
-        echo json_encode($data);
-            
+        echo json_encode($data);       
     }
 
     function get_session_status(){
