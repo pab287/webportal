@@ -40,6 +40,23 @@
 
 	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
     <!--end::Page Vendors --> 
+    <style>
+        .form-group .password-container {
+            position: relative;
+        }
+
+        .form-group .m-input {
+            padding-right: 35px; /* Adjust based on the size of your icon */
+        }
+
+        .form-group .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+    </style>
   </head>
 
   	<body class="align-items-center justify-content-center">
@@ -74,27 +91,17 @@
                                 </label>
                             </div>
                             <div class="form-group m-form__group">
-                                <label>
-                                    New Password *
-                                </label>
-                                <div>
-                                    <input type="password" class="form-control m-input" name="password_confirmation" data-validation="required length strength" data-validation-length="min8" data-validation-strength="3">
-                                    <span class="m-form__help">
-                                        <ul>
-                                            <li>Password must contain numbers.</li>
-                                            <li>Password must contain uppercase letters.</li>
-                                            <li>Password must have at least one @#$ symbol.</li>
-                                            <li>Length must be greater than 8 characters.</li>
-                                        </ul>
-                                    </span>
+                                <label>New Password *</label>
+                                <div class="password-container">
+                                    <input id="newPasswordInput" type="password" class="form-control m-input" name="password_confirmation" data-validation="required length strength" data-validation-length="min8" data-validation-strength="3">
+                                    <span id="newPasswordToggle" class="password-toggle"><i class="fa fa-eye"></i></span>
                                 </div>
                             </div>
                             <div class="form-group m-form__group">
-                                <label>
-                                    Confirm Password *
-                                </label>
-                                <div> 
-                                    <input type="password" class="form-control m-input" name="password" data-validation="confirmation" >
+                                <label>Confirm Password *</label>
+                                <div class="password-container">
+                                    <input id="confirmPasswordInput" type="password" class="form-control m-input" name="password" data-validation="confirmation">
+                                    <span id="confirmPasswordToggle" class="password-toggle"><i class="fa fa-eye"></i></span>
                                 </div>
                             </div>
                         </div>
@@ -118,6 +125,14 @@
 	if (!sessionData.modal) {
 		window.location.href = '<?php echo base_url("login"); ?>';
 	}
+
+    $('.password-toggle').on('click', function(e) {
+        e.preventDefault();
+        var $pwd = $(this).siblings('.m-input');
+        $pwd.attr('type', $pwd.attr('type') === 'password' ? 'text' : 'password');
+        $(this).find('i').toggleClass('fa-eye fa-eye-slash');
+    });
+
 	$('input[name="username"]').val(sessionData.post.username || '');
 	$('input[name="old_password"]').val(sessionData.post.password || '');
 	
