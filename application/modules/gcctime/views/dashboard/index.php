@@ -105,6 +105,13 @@
         bottom: 0px;
     }
 
+    #double-monitor .empty-list .m-list-timeline__items, #undertime-monitor .empty-list .m-list-timeline__items{
+        position: absolute;
+        right: 0;
+        top: 30px !important;
+        bottom: 0px;
+    }
+
     #personal .empty-list .m-list-timeline__items, .empty-list .m-list-timeline__items {
         position: absolute;
         right: 0;
