@@ -3062,7 +3062,9 @@ if (typeof _tempContentData !== "undefined") {
 
     if (typeof tableOffenses !== "undefined") {
         var dtOffenses = tableOffenses.DataTable({
-            dom: '<"toolbar dt-toolbar_offenses">frtlip',
+            dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 dt-toolbar_offenses'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'f>>" +
+                "<'row'<'col-12'rt>>" +
+                "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
             serverSide: true,
             processing: true,
             ordering: false,
@@ -3144,7 +3146,9 @@ if (typeof _tempContentData !== "undefined") {
 
     if (typeof tableCommendation !== "undefined") {
         var dtCommendation = tableCommendation.DataTable({
-            dom: '<"toolbar dt-toolbar_commendation">frtlip',
+            dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 dt-toolbar_commendation'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'f>>" +
+                "<'row'<'col-12'rt>>" +
+                "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
             serverSide: true,
             processing: true,
             ordering: false,
@@ -3225,7 +3229,9 @@ if (typeof _tempContentData !== "undefined") {
 
     if (typeof tableNotices !== "undefined") {
         var dtNotices = tableNotices.DataTable({
-            dom: '<"toolbar dt-toolbar_notices">frtlip',
+            dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 dt-toolbar_notices'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'f>>" +
+                "<'row'<'col-12'rt>>" +
+                "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
             serverSide: true,
             processing: true,
             ordering: false,
@@ -3306,7 +3312,9 @@ if (typeof _tempContentData !== "undefined") {
 
     if (typeof tableOthers !== "undefined") {
         var dtOthers = tableOthers.DataTable({
-            dom: '<"toolbar dt-toolbar_others">frtlip',
+            dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'f>>" +
+                "<'row'<'col-12'rt>>" +
+                "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
             serverSide: true,
             processing: true,
             ordering: false,
@@ -3366,10 +3374,6 @@ if (typeof _tempContentData !== "undefined") {
                 }
             ],
             initComplete: function () {
-                $(".dt-toolbar_others").append(
-                    "<button type='button' class='btn btn-sm btn-success mb-2 btnNew btnAddOffenses'><i class='la la-plus mr-1'></i>New</button>"
-                );
-
                 let search_thread = null;
                 $("#tbl-others_list_filter input")
                     .unbind()
@@ -3489,6 +3493,9 @@ if (typeof _tempContentData !== "undefined") {
                                         currentForm.reset();
                                         modalTempContent.modal("hide");
                                         dtOffenses.ajax.reload();
+                                        dtOthers.ajax.reload();
+                                        dtNotices.ajax.reload();
+                                        dtCommendation.ajax.reload();
                                         offComTrail.ajax.reload();
                                     } else {
                                         toastr.error(
