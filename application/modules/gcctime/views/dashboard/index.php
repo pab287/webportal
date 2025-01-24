@@ -115,9 +115,9 @@
 	.no-show-list{
 		transform: translate(0px, 35%);
 	}
-	#activity-log .m-list-timeline .m-list-timeline__items:before, #latemonitor .m-list-timeline .m-list-timeline__items:before{
+	/* #activity-log .m-list-timeline .m-list-timeline__items:before, #latemonitor .m-list-timeline .m-list-timeline__items:before{
 		background-color: unset !important;
-	}
+	} */
 
     #activity-log .empty-list {
         /* height: 218px !important; */
@@ -149,28 +149,21 @@
         border-color: #b4b4b4;
     }
 
-    #real-time .m-list-timeline .m-list-timeline__items:before{
-        display: none;
-    }
-    #real-time .m-list-timeline .m-list-timeline__items .m-list-timeline__item:first-child:before, #real-time .m-list-timeline .m-list-timeline__items .m-list-timeline__item:last-child:before {
+    #real-time .m-list-timeline .m-list-timeline__items:before, #real-time .m-list-timeline .m-list-timeline__items .m-list-timeline__item:first-child:before, #real-time .m-list-timeline .m-list-timeline__items .m-list-timeline__item:last-child:before{
         display: none;
     }
     /* real-time-attendances */
 
     /* latemonitor */
-    #late-monitor .m-list-timeline .m-list-timeline__items .m-list-timeline__item:first-child:before, #latemonitor .m-list-timeline .m-list-timeline__items .m-list-timeline__item:last-child:before {
+    #late-monitor .m-list-timeline .m-list-timeline__items:before, #late-monitor .m-list-timeline .m-list-timeline__items .m-list-timeline__item:first-child:before, #late-monitor .m-list-timeline .m-list-timeline__items .m-list-timeline__item:last-child:before{
         background-color: unset !important;
     }
     /* latemonitor */
 
     /* absent */
-    #absentmonitor .m-list-timeline__items:before{
+    #absent-monitor .m-list-timeline .m-list-timeline__items:before, #absent-monitor .m-list-timeline .m-list-timeline__items .m-list-timeline__item:first-child:before, #absent-monitor .m-list-timeline .m-list-timeline__items .m-list-timeline__item:last-child:before{
         background-color: unset !important;
     }
-
-	#absentmonitor .m-list-timeline .m-list-timeline__items .m-list-timeline__item:first-child:before, #absentmonitor .m-list-timeline .m-list-timeline__items .m-list-timeline__item:last-child:before {
-		background-color: unset !important;
-	}
     /* absent */
 
     /* personal */
@@ -204,113 +197,126 @@
         pointer-events: none;
         opacity: 0.5;
     }
+
+
+    #undertime-monitor .m-list-timeline .m-list-timeline__items:before, #undertime-monitor .m-list-timeline .m-list-timeline__items .m-list-timeline__item:first-child:before, #undertime-monitor .m-list-timeline .m-list-timeline__items .m-list-timeline__item:last-child:before{
+        background-color: unset !important;
+    }
+
+    #double-monitor-monitor .m-list-timeline .m-list-timeline__items .m-list-timeline__item:first-child:before, #double-monitor .m-list-timeline .m-list-timeline__items .m-list-timeline__item:last-child:before, #double-monitor .m-list-timeline .m-list-timeline__items:before {
+        background-color: unset !important;
+    }
+
+    #lacking-monitor-monitor .m-list-timeline .m-list-timeline__items .m-list-timeline__item:first-child:before, #lacking-monitor .m-list-timeline .m-list-timeline__items .m-list-timeline__item:last-child:before, #lacking-monitor .m-list-timeline .m-list-timeline__items:before {
+        background-color: unset !important;
+    }
 </style>
 
 <div class="m-content" id="data-dashboard">
     <!-- clock -->
     <?php $colWidth = (($roleId == 1 || $roleId == 2) || $admin_privilege == true)? "8":"12"; ?>
-    <div class="row">
-        <div class="col-xl-<?=$colWidth; ?> col-md-<?=$colWidth; ?>">
-            <div class="m-portlet m-portlet--mobile">
-                <div class="m-portlet__head">
-                    <div class="m-portlet__head-caption">
-                        <div class="m-portlet__head-title">
-                            <h3 class="m-portlet__head-text">
-                                <?=strtoupper("Company Standard Time"); ?>
-                            </h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="m-portlet__body m-custom-portlet">
-                    <div class="row">
-						<div class="date-container text-center">
-							<p id="date"></p>
-						</div>
-					</div>
-                    <div class="row">
-                        <div class="col-md-2 col-12 text-center">&nbsp;</div>
-                        <div class="col-md-2 col-4 text-center" >
-                            <h1 class="unit">
-                                <span id="hours" class="custom-unit_data"></span>
-                            </h1>
-                        </div>
-                        <div class="col-md-2 col-4 text-center">
-                            <h1 class="unit">
-                                <span id="minutes" class="custom-unit_data"></span>
-                            </h1>
-                        </div>
-                        <div class="col-md-2 col-4 text-center">
-                            <h1 class="unit">
-                                <span id="seconds" class="custom-unit_data"></span>
-                            </h1> 
-                        </div>
-                        <div class="col-md-2 col-12 text-center">
-                            <h1 class="unit">
-                                <span id="ampm" class="custom-unit_data"></span>
-                            </h1>
-                        </div>
-                        <div class="col-md-2 col-12 text-center">&nbsp;</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <?php if(($roleId == 1 || $roleId == 2) || $admin_privilege == true): ?>
-            <div class="col-xl-4 col-md-4">
-                <div class="m-portlet m-portlet--mobile" id="activity-monitor">
-                    <div id="overlay">
-                        <div class="m-loader m-loader--light m-loader--lg" style="width: 30px; display: inline-block;"></div>
-                    </div>
+        <div class="row">
+            <div class="col-xl-<?=$colWidth; ?> col-md-<?=$colWidth; ?>">
+                <div class="m-portlet m-portlet--mobile">
                     <div class="m-portlet__head">
                         <div class="m-portlet__head-caption">
                             <div class="m-portlet__head-title">
-                                <h3 class="m-portlet__head-text">ACTIVITY LOG</h3>
+                                <h3 class="m-portlet__head-text">
+                                    <?=strtoupper("Company Standard Time"); ?>
+                                </h3>
                             </div>
                         </div>
                     </div>
-                    <div class="m-portlet__body m-custom-portlet" id="activity-log">
-                        <div class="m-scrollable mCustomScrollbar _mCS_3 mCS-autoHide" data-scrollable="true" data-max-height="218" style="height: 218px; overflow: visible; max-height: 218px; position: relative;" >
-                            <div class="m-list-timeline m-list-timeline--skin-light" :class="isEmpty(activityLogs) ? 'empty-list' : ''">
-                                <div class="m-list-timeline__items">
-                                    <!-- <template v-if="!isShowActivity">
-                                        <div class="text-center">
-                                            <button id="showActivityLogs" class="btn" style="width: 80%; background-color: rgb(86, 78, 192);" @click="showActivityLogs">
-                                                <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;"></h3>
-                                                <h3 class="m-widget1__title" style="font-size: 10px !important; color: white;">
-                                                    SHOW DATA
-                                                </h3>
-                                            </button>
-                                        </div>
-                                    </template> -->
-                                    <template v-if="isShowActivity">
-                                        <template v-if="!isEmpty(activityLogs)">
-                                            <template v-for="(item, index) in activityLogs">
-                                                <div class="m-list-timeline__item">
-                                                    <span class="m-list-timeline__badge" :class="'m-list-timeline__badge--' + item.status"></span>
-                                                    <span class="m-list-timeline__text" :class="statusClass(item.status)">
-                                                        <p class="m-list_notification-item">{{ item.notification.toUpperCase() }}</p>
+                    <div class="m-portlet__body m-custom-portlet">
+                        <div class="row">
+                            <div class="date-container text-center">
+                                <p id="date"></p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-2 col-12 text-center">&nbsp;</div>
+                            <div class="col-md-2 col-4 text-center" >
+                                <h1 class="unit">
+                                    <span id="hours" class="custom-unit_data"></span>
+                                </h1>
+                            </div>
+                            <div class="col-md-2 col-4 text-center">
+                                <h1 class="unit">
+                                    <span id="minutes" class="custom-unit_data"></span>
+                                </h1>
+                            </div>
+                            <div class="col-md-2 col-4 text-center">
+                                <h1 class="unit">
+                                    <span id="seconds" class="custom-unit_data"></span>
+                                </h1> 
+                            </div>
+                            <div class="col-md-2 col-12 text-center">
+                                <h1 class="unit">
+                                    <span id="ampm" class="custom-unit_data"></span>
+                                </h1>
+                            </div>
+                            <div class="col-md-2 col-12 text-center">&nbsp;</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <?php if(($roleId == 1 || $roleId == 2) || $admin_privilege == true): ?>
+                <div class="col-xl-4 col-md-4">
+                    <div class="m-portlet m-portlet--mobile" id="activity-monitor">
+                        <div id="overlay">
+                            <div class="m-loader m-loader--light m-loader--lg" style="width: 30px; display: inline-block;"></div>
+                        </div>
+                        <div class="m-portlet__head">
+                            <div class="m-portlet__head-caption">
+                                <div class="m-portlet__head-title">
+                                    <h3 class="m-portlet__head-text">ACTIVITY LOG</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="m-portlet__body m-custom-portlet" id="activity-log">
+                            <div class="m-scrollable mCustomScrollbar _mCS_3 mCS-autoHide" data-scrollable="true" data-max-height="218" style="height: 218px; overflow: visible; max-height: 218px; position: relative;" >
+                                <div class="m-list-timeline m-list-timeline--skin-light" :class="isEmpty(activityLogs) ? 'empty-list' : ''">
+                                    <div class="m-list-timeline__items">
+                                        <!-- <template v-if="!isShowActivity">
+                                            <div class="text-center">
+                                                <button id="showActivityLogs" class="btn" style="width: 80%; background-color: rgb(86, 78, 192);" @click="showActivityLogs">
+                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;"></h3>
+                                                    <h3 class="m-widget1__title" style="font-size: 10px !important; color: white;">
+                                                        SHOW DATA
+                                                    </h3>
+                                                </button>
+                                            </div>
+                                        </template> -->
+                                        <template v-if="isShowActivity">
+                                            <template v-if="!isEmpty(activityLogs)">
+                                                <template v-for="(item, index) in activityLogs">
+                                                    <div class="m-list-timeline__item">
+                                                        <span class="m-list-timeline__badge" :class="'m-list-timeline__badge--' + item.status"></span>
+                                                        <span class="m-list-timeline__text" :class="statusClass(item.status)">
+                                                            <p class="m-list_notification-item">{{ item.notification.toUpperCase() }}</p>
+                                                        </span>
+                                                        <span class="m-list-timeline__time custom-time_item">{{ item.formatted_created_at.toUpperCase() }}</span>
+                                                    </div>
+                                                </template>
+                                            </template>
+                                            <template v-else>
+                                                <!-- <div class="m-list-timeline__item" style="padding: 0; transform: translate(0px, 350%);"> -->
+                                                <div class="m-list-timeline__item" style="padding: 0;">
+                                                    <span class="m-list-timeline__text text-center" style="width: 100%;">
+                                                        <h5>NO ACTIVITY LOG FOUND</h5>
                                                     </span>
-                                                    <span class="m-list-timeline__time custom-time_item">{{ item.formatted_created_at.toUpperCase() }}</span>
                                                 </div>
                                             </template>
                                         </template>
-                                        <template v-else>
-                                            <!-- <div class="m-list-timeline__item" style="padding: 0; transform: translate(0px, 350%);"> -->
-                                            <div class="m-list-timeline__item" style="padding: 0;">
-                                                <span class="m-list-timeline__text text-center" style="width: 100%;">
-                                                    <h5>NO ACTIVITY LOG FOUND</h5>
-                                                </span>
-                                            </div>
-                                        </template>
-                                    </template>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        <?php endif; ?>
-    </div>
+            <?php endif; ?>
+        </div>
     <!-- clock -->
 
     <?php if (($roleId == 1 || $roleId == 2) || $admin_privilege == true): ?>
@@ -342,16 +348,6 @@
                                 <div id="real-time" class="m-scrollable mCustomScrollbar _mCS_3 mCS-autoHide" data-scrollable="true" data-max-height="400" style="height: 400px; max-height: 400px; overflow: visible; position: relative;">
                                     <div class="m-list-timeline m-list-timeline--skin-light" :class="isEmpty(realTimeLogs) ? 'empty-list' : ''">
                                         <div class="m-list-timeline__items">
-                                            <!-- <template v-if="!isShowRealTime">
-                                                <div class="text-center">
-                                                    <button id="showRealTimeLogs" class="btn" style="width: 80%; background-color: rgb(86, 78, 192);" @click="showRealTimeLogs">
-                                                        <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;"></h3>
-                                                        <h3 class="m-widget1__title" style="font-size: 10px !important; color: white;">
-                                                            SHOW DATA
-                                                        </h3>
-                                                    </button>
-                                                </div>
-                                            </template> -->
                                             <template v-if="isShowRealTime">
                                                 <template v-if="!isEmpty(realTimeLogs)">
                                                     <template v-for="(item, index) in realTimeLogs">
@@ -415,16 +411,6 @@
                                 <div id="late-scrollable" class="m-scrollable mCustomScrollbar _mCS_3 mCS-autoHide" data-scrollable="true" data-max-height="400" style="height: 400px; max-height: 400px; overflow: visible; position: relative;">
                                     <div class="m-list-timeline m-list-timeline--skin-light" :class="isEmpty(late_am) && isEmpty(late_pm) ? 'empty-list' : ''">
                                         <div class="m-list-timeline__items">
-                                            <!-- <template v-if="!isShowLate">
-                                                <div class="text-center">
-                                                    <button id="showLate" class="btn" style="width: 80%; background-color: rgb(86, 78, 192);" @click="showLate">
-                                                        <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;"></h3>
-                                                        <h3 class="m-widget1__title" style="font-size: 10px !important; color: white;">
-                                                            SHOW DATA
-                                                        </h3>
-                                                    </button>
-                                                </div>
-                                            </template> -->
                                             <template v-if="isShowLate">
                                                 <template v-if="latelist">
                                                     <template v-if="!isEmpty(late_pm)">
@@ -527,7 +513,7 @@
                                     <span class="m-widget6__caption" style="width: 25%;">
                                         <small>EMPLOYEE NAME</small>
                                     </span>
-                                    <span class="m-widget6__caption m--align-right" style="width: 47%;">
+                                    <span class="m-widget6__caption m--align-right" style="width: 49%;">
                                         <small>LOA/TO REFERENCE #</small>
                                     </span>					 
                                     <span class="m-widget6__caption m--align-right">
@@ -539,16 +525,6 @@
                                 <div id="absent-scrollable" class="m-scrollable mCustomScrollbar _mCS_3 mCS-autoHide" data-scrollable="true" max0-height="400" style="height: 400px; max-height: 400px; overflow: visible; position: relative;">
                                     <div class="m-list-timeline m-list-timeline--skin-light" :class="isEmpty(absent_am) && isEmpty(absent_pm) ? 'empty-list' : ''">
                                         <div class="m-list-timeline__items" id="absentslist">
-                                            <!-- <template v-if="!isShowAbsent">
-                                                <div class="text-center">
-                                                    <button id="showLate" class="btn" style="width: 80%; background-color: rgb(86, 78, 192);" @click="showAbsent">
-                                                        <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;"></h3>
-                                                        <h3 class="m-widget1__title" style="font-size: 10px !important; color: white;">
-                                                            SHOW DATA
-                                                        </h3>
-                                                    </button>
-                                                </div>
-                                            </template> -->
                                             <template v-if="isShowAbsent">
                                                 <template v-if="absentlist">
                                                     <template v-if="ndate == previousDate">
@@ -556,10 +532,10 @@
                                                             <template v-for="(item, index) in absent_am">
                                                                 <div class="m-list-timeline__item" style="padding: 0 !important; margin: 0 auto;">
                                                                     <div style='padding: 0 !important; margin: 0 auto;' class='m-list-timeline__item'>
-                                                                        <span class='m-list-timeline__text'>
+                                                                        <span class='m-list-timeline__text' style="width: 56%">
                                                                             <small>{{item.name ? item.name.toUpperCase() : item.biometricno }}</small>
                                                                         </span>
-                                                                        <span class='m-list-timeline__text' style='width: 60%;'>
+                                                                        <span class='m-list-timeline__text' style='width: 100%; text-align: center'>
                                                                             <small>
                                                                                 {{ item.content ? item.content : 'N/A' }}
                                                                             </small>
@@ -573,10 +549,10 @@
                                                             <template v-for="(item, index) in absent_pm">
                                                                 <div class="m-list-timeline__item" style="padding: 0 !important; margin: 0 auto;">
                                                                     <div style='padding: 0 !important;margin: 0 auto;' class='m-list-timeline__item'>
-                                                                        <span class='m-list-timeline__text'>
+                                                                        <span class='m-list-timeline__text' style="width: 56%">
                                                                             <small>{{item.name ? item.name.toUpperCase() : item.biometricno }}</small>
                                                                         </span>
-                                                                        <span class='m-list-timeline__text' style='width: 60%;'>
+                                                                        <span class='m-list-timeline__text' style='width: 100%; text-align: center'>
                                                                             <small>
                                                                                 {{ item.content ? item.content : 'N/A' }}
                                                                             </small>
@@ -593,10 +569,10 @@
                                                                 <template v-for="(item, index) in absent_am">
                                                                     <div class="m-list-timeline__item" style="padding: 0 !important; margin: 0 auto;">
                                                                         <div style='padding: 0 !important;margin: 0 auto;' class='m-list-timeline__item'>
-                                                                            <span class='m-list-timeline__text'>
+                                                                            <span class='m-list-timeline__text' style="width: 56%">
                                                                                 <small>{{item.name ? item.name.toUpperCase() : item.biometricno }}</small>
                                                                             </span>
-                                                                            <span class='m-list-timeline__text' style='width: 60%;'>
+                                                                            <span class='m-list-timeline__text' style='width: 100%; text-align: center'>
                                                                                 <small>{{ item.content ? item.content : 'N/A' }}</small>
                                                                             </span>
                                                                             <span style='width: 15%;' class='m-list-timeline__time'>{{ item.mrdn }}</span>
@@ -609,10 +585,10 @@
                                                                 <template v-for="(item, index) in absent_pm">
                                                                     <div class="m-list-timeline__item" style="padding: 0 !important; margin: 0 auto;">
                                                                         <div style='padding: 0 !important;margin: 0 auto;' class='m-list-timeline__item'>
-                                                                            <span class='m-list-timeline__text'>
+                                                                            <span class='m-list-timeline__text' style="width: 56%">
                                                                                 <small>{{item.name ? item.name.toUpperCase() : item.biometricno }}</small>
                                                                             </span>
-                                                                            <span class='m-list-timeline__text' style='width: 60%;'>
+                                                                            <span class='m-list-timeline__text' style='width: 100%; tex-align: center'>
                                                                                 <small>{{ item.content ? item.content : 'N/A' }}</small>
                                                                             </span>
                                                                             <span style='width: 15%;' class='m-list-timeline__time'>{{ item.mrdn }}</span>
@@ -635,10 +611,10 @@
                                                                 <template v-for="(item, index) in absent_pm">
                                                                     <div class="m-list-timeline__item" style="padding: 0 !important; margin: 0 auto;">
                                                                         <div style='padding: 0 !important;margin: 0 auto;' class='m-list-timeline__item'>
-                                                                            <span class='m-list-timeline__text'>
+                                                                            <span class='m-list-timeline__text' style="width: 56%">
                                                                                 <small>{{item.name ? item.name.toUpperCase() : item.biometricno }}</small>
                                                                             </span>
-                                                                            <span class='m-list-timeline__text' style='width: 60%;'>
+                                                                            <span class='m-list-timeline__text' style='width: 100%; text-align: center'>
                                                                                 <small>{{ item.content ? item.content : 'N/A' }}</small>
                                                                             </span>
                                                                             <span style='width: 15%;' class='m-list-timeline__time'>{{ item.mrdn }}</span>
@@ -651,10 +627,10 @@
                                                                 <template v-for="(item, index) in absent_am">
                                                                     <div class="m-list-timeline__item" style="padding: 0 !important; margin: 0 auto;">
                                                                         <div style='padding: 0 !important;margin: 0 auto;' class='m-list-timeline__item'>
-                                                                            <span class='m-list-timeline__text'>
+                                                                            <span class='m-list-timeline__text' style="width: 56%">
                                                                                 <small>{{item.name ? item.name.toUpperCase() : item.biometricno }}</small>
                                                                             </span>
-                                                                            <span class='m-list-timeline__text' style='width: 60%;'>
+                                                                            <span class='m-list-timeline__text' style='width: 100%; text-align: center'>
                                                                                 <small>{{ item.content ? item.content : 'N/A' }}</small>
                                                                             </span>
                                                                             <span style='width: 15%;' class='m-list-timeline__time'>{{ item.mrdn }}</span>
@@ -722,48 +698,40 @@
                                     </div>
                                     <div class="m-widget6__body">
                                         <div id="ut-list" class="m-scrollable mCustomScrollbar _mCS_3 mCS-autoHide" data-scrollable="true" data-max-height="100" style="height: 100px; max-height: 100px; overflow: visible; position: relative;">
-                                            <div class="m-widget__items ut" id="ut-lists">
-                                                <!-- <template v-if="!isShowUt">
-                                                    <div class="text-center">
-                                                        <button id="showUT" class="btn" style="width: 80%; background-color: rgb(86, 78, 192);" @click="getUndertime">
-                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;"></h3>
-                                                            <h3 class="m-widget1__title" style="font-size: 10px !important; color: white;">
-                                                                SHOW DATA
-                                                            </h3>
-                                                        </button>
-                                                    </div>
-                                                </template> -->
-                                                <template v-if="isShowUt">
-                                                    <template v-if="!isEmpty(utRow)">
-                                                        <template v-for="(item, index) in utRow">
-                                                            <div class="m-list-timeline__item" style="padding: 0;">
-                                                                <div class='m-widget6__item' style='padding: 0 !important;margin: 0 auto;'>
-                                                                    <span class='m-widget6__text' style='width: 50%;'>
-                                                                        <small>{{ item.name ? item.name.toUpperCase() : item.biometric_id }}</small>
-                                                                    </span>
-                                                                    <span class='m-widget6__text text-center' style='width: 30%;'>
-                                                                        <small>{{ item.content }}</small>
-                                                                    </span>
-                                                                    <span class='m-widget6__text text-right' style='width: 30%;'>
-                                                                        <small>{{ item.mrdn }}</small>
-                                                                    </span>
+                                            <div class="m-list-timeline m-list-timeline--skin-light" :class="isEmpty(utRow) ? 'empty-list' : ''">
+                                                <div class="m-list-timeline__items ut" id="ut-lists">
+                                                    <template v-if="isShowUt">
+                                                        <template v-if="!isEmpty(utRow)">
+                                                            <template v-for="(item, index) in utRow">
+                                                                <div class="m-list-timeline__item" style="padding: 0;">
+                                                                    <div class='m-widget6__item' style='padding: 0 !important;margin: 0 auto;'>
+                                                                        <span class='m-widget6__text' style='width: 50%;'>
+                                                                            <small>{{ item.name ? item.name.toUpperCase() : item.biometric_id }}</small>
+                                                                        </span>
+                                                                        <span class='m-widget6__text text-center' style='width: 30%;'>
+                                                                            <small>{{ item.content }}</small>
+                                                                        </span>
+                                                                        <span class='m-widget6__text text-right' style='width: 30%;'>
+                                                                            <small>{{ item.mrdn }}</small>
+                                                                        </span>
+                                                                    </div>
                                                                 </div>
+                                                            </template>
+                                                        </template>
+                                                        <template v-else>
+                                                            <div class="m-list-timeline__item" style="padding: 20px 0;">
+                                                                <span class="m-list-timeline__text text-center" style="width: 100%;">
+                                                                    <h5>NO DATA FOUND</h5>
+                                                                </span>
                                                             </div>
                                                         </template>
                                                     </template>
                                                     <template v-else>
                                                         <div class="m-list-timeline__item" style="padding: 20px 0;">
-                                                            <span class="m-list-timeline__text text-center" style="width: 100%;">
-                                                                <h5>NO DATA FOUND</h5>
-                                                            </span>
+                                                            <span class="m-list-timeline__text text-center" style="width: 100%;"></span>
                                                         </div>
                                                     </template>
-                                                </template>
-                                                <template v-else>
-                                                    <div class="m-list-timeline__item" style="padding: 20px 0;">
-                                                        <span class="m-list-timeline__text text-center" style="width: 100%;"></span>
-                                                    </div>
-                                                </template>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -797,43 +765,42 @@
                                     </div>
                                     <div class="m-widget6__body">
                                         <div id="double_list" class="m-scrollable mCustomScrollbar _mCS_3 mCS-autoHide" data-scrollable="true" data-max-height="100" style="height: 100px; max-height: 100px; overflow: visible; position: relative;">
-                                            <div class="m-widget__items double_entry">
-                                                <!-- <template v-if="!isShowDouble">
-                                                    <div class="text-center">
-                                                        <button id="showDouble" class="btn" style="width: 80%; background-color: rgb(86, 78, 192);" @click="getDoubleEntry">
-                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;"></h3>
-                                                            <h3 class="m-widget1__title" style="font-size: 10px !important; color: white;">
-                                                                SHOW DATA
-                                                            </h3>
-                                                        </button>
-                                                    </div>
-                                                </template> -->
-                                                <template v-if="isShowDouble">
-                                                    <template v-if="!isEmpty(doubleRow)">
-                                                        <template v-if="!isEmpty(doubleRow.double_entry)">
-                                                            <template v-for="(item, index) in doubleRow.double_entry">
-                                                                <div class='m-widget6__item' style='padding: 0 !important;margin: 0 auto;'>
-                                                                    <span class='m-widget6__text' style='width: 25%;'>
-                                                                        <small>{{ item.employee_name ? item.employee_name : item.biometric_id }}</small>
-                                                                    </span>
-                                                                    <span class='m-widget6__text text-center' style='width: 2%;'>
-                                                                        <small>{{ item.time_count }}</small>
-                                                                    </span>
-
-                                                                    <template v-if="!isEmpty(item.logged_time_record)">
-                                                                        <span class='m-widget6__text m-widget__text-logged-time m--align-right'>
-                                                                            <small>
-                                                                                <template v-for="records in item.logged_time_record">
-                                                                                    <span class="m-menu__link-badge">
-                                                                                        <span class="m-badge m-badge--accent m-badge--wide">{{ timeFormat(records) }}</span>
-                                                                                    </span>
-                                                                                </template>
-                                                                            </small>
+                                            <div class="m-list-timeline m-list-timeline--skin-light" :class="isEmpty(doubleRow.double_entry) ? 'empty-list' : ''">
+                                                <div class="m-list-timeline__items double_entry">
+                                                    <template v-if="isShowDouble">
+                                                        <template v-if="!isEmpty(doubleRow)">
+                                                            <template v-if="!isEmpty(doubleRow.double_entry)">
+                                                                <template v-for="(item, index) in doubleRow.double_entry">
+                                                                    <div class='m-widget6__item' style='padding: 0 !important;margin: 0 auto;'>
+                                                                        <span class='m-widget6__text' style='width: 25%;'>
+                                                                            <small>{{ item.employee_name ? item.employee_name : item.biometric_id }}</small>
                                                                         </span>
-                                                                    </template>
-                                                                    <template v-else>
-                                                                        <span class='m-widget6__text m-widget__text-logged-time m--align-right'><small>---</small></span>
-                                                                    </template>
+                                                                        <span class='m-widget6__text text-center' style='width: 2%;'>
+                                                                            <small>{{ item.time_count }}</small>
+                                                                        </span>
+    
+                                                                        <template v-if="!isEmpty(item.logged_time_record)">
+                                                                            <span class='m-widget6__text m-widget__text-logged-time m--align-right'>
+                                                                                <small>
+                                                                                    <template v-for="records in item.logged_time_record">
+                                                                                        <span class="m-menu__link-badge">
+                                                                                            <span class="m-badge m-badge--accent m-badge--wide">{{ timeFormat(records) }}</span>
+                                                                                        </span>
+                                                                                    </template>
+                                                                                </small>
+                                                                            </span>
+                                                                        </template>
+                                                                        <template v-else>
+                                                                            <span class='m-widget6__text m-widget__text-logged-time m--align-right'><small>---</small></span>
+                                                                        </template>
+                                                                    </div>
+                                                                </template>
+                                                            </template>
+                                                            <template v-else>
+                                                                <div class="m-list-timeline__item" style="padding: 0;">
+                                                                    <span class="m-list-timeline__text text-center" style="width: 100%;">
+                                                                        <h5>NO DATA FOUND</h5>
+                                                                    </span>
                                                                 </div>
                                                             </template>
                                                         </template>
@@ -846,18 +813,11 @@
                                                         </template>
                                                     </template>
                                                     <template v-else>
-                                                        <div class="m-list-timeline__item" style="padding: 0;">
-                                                            <span class="m-list-timeline__text text-center" style="width: 100%;">
-                                                                <h5>NO DATA FOUND</h5>
-                                                            </span>
+                                                        <div class="m-list-timeline__item" style="padding: 20px 0;">
+                                                            <span class="m-list-timeline__text text-center" style="width: 100%;"></span>
                                                         </div>
                                                     </template>
-                                                </template>
-                                                <template v-else>
-                                                    <div class="m-list-timeline__item" style="padding: 20px 0;">
-                                                        <span class="m-list-timeline__text text-center" style="width: 100%;"></span>
-                                                    </div>
-                                                </template>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -894,60 +854,52 @@
                             </div>
                             <div class="m-widget6__body">
                                 <div id="lacking_list" class="m-scrollable mCustomScrollbar _mCS_3 mCS-autoHide" data-scrollable="true" data-max-height="400" style="height: 400px; max-height: 400px; overflow: visible; position: relative;">
-                                    <div class="m-widget__items lacking_entry">
-                                        <!-- <template v-if="!isShowLacking">
-                                            <div class="text-center">
-                                                <button id="showLacking" class="btn" style="width: 36.9%; background-color: rgb(86, 78, 192);" @click="getLackingEntry">
-                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;"></h3>
-                                                    <h3 class="m-widget1__title" style="font-size: 10px !important; color: white;">
-                                                        SHOW DATA
-                                                    </h3>
-                                                </button>
-                                            </div>
-                                        </template> -->
-                                        <template v-if="isShowLacking">
-                                            <template v-if="!isEmpty(lackingRow.lacking_entry)">
-                                                <template v-for="(item, index) in lackingRow.lacking_entry">
-                                                    <div class='m-widget6__item' style='padding: 0 !important;margin: 0 auto;'>
-                                                        <span class='m-widget6__text' style='width: 27%;'>
-                                                            <small>{{ item.employee_name ? item.employee_name.toUpperCase() : item.biometric_id }}</small>
-                                                        </span>
-                                                        <span class='m-widget6__text text-center' style='width: 25%;'>
-                                                            <small>{{ item.reference_no ? item.reference_no : 'N/A' }}</small>
-                                                        </span>
-                                                        <span class='m-widget6__text text-center' style='width: 10%;'>
-                                                            <small>{{ item.time_count }}</small>
-                                                        </span>
-                                                        <template v-if="!isEmpty(item.logged_time_record)">
-                                                            <div class='m-widget6__item' style='padding: 0 !important;margin: 0 auto; text-align: right;'>		
-                                                                <small>
-                                                                    <template v-for="records in item.logged_time_record">
-                                                                        <span class="m-menu__link-badge">
-                                                                            <span class="m-badge m-badge--accent m-badge--wide">{{ timeFormat(records) }}</span>
-                                                                        </span>
-                                                                    </template>
-                                                                </small>
+                                    <div class="m-list-timeline m-list-timeline--skin-light" :class="isEmpty(lackingRow.lacking_entry) ? 'empty-list' : ''">
+                                        <div class="m-list-timeline__items lacking_entry">
+                                            <template v-if="isShowLacking">
+                                                <template v-if="!isEmpty(lackingRow.lacking_entry)">
+                                                    <template v-for="(item, index) in lackingRow.lacking_entry">
+                                                        <div class='m-widget6__item' style='padding: 0 !important;margin: 0 auto;'>
+                                                            <span class='m-widget6__text' style='width: 27%;'>
+                                                                <small>{{ item.employee_name ? item.employee_name.toUpperCase() : item.biometric_id }}</small>
                                                             </span>
-                                                        </template>
-                                                        <template v-else>
-                                                            <span class='m-widget6__text m-widget__text-logged-time m--align-right'><small>---</small></span>
-                                                        </template>
+                                                            <span class='m-widget6__text text-center' style='width: 25%;'>
+                                                                <small>{{ item.reference_no ? item.reference_no : 'N/A' }}</small>
+                                                            </span>
+                                                            <span class='m-widget6__text text-center' style='width: 10%;'>
+                                                                <small>{{ item.time_count }}</small>
+                                                            </span>
+                                                            <template v-if="!isEmpty(item.logged_time_record)">
+                                                                <div class='m-widget6__item' style='padding: 0 !important;margin: 0 auto; text-align: right;'>		
+                                                                    <small>
+                                                                        <template v-for="records in item.logged_time_record">
+                                                                            <span class="m-menu__link-badge">
+                                                                                <span class="m-badge m-badge--accent m-badge--wide">{{ timeFormat(records) }}</span>
+                                                                            </span>
+                                                                        </template>
+                                                                    </small>
+                                                                </span>
+                                                            </template>
+                                                            <template v-else>
+                                                                <span class='m-widget6__text m-widget__text-logged-time m--align-right'><small>---</small></span>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                </template>
+                                                <template v-else>
+                                                    <div class="m-list-timeline__item" style="padding: 20px 0;">
+                                                        <span class="m-list-timeline__text text-center" style="width: 100%;">
+                                                            <h5>NO DATA FOUND</h5>
+                                                        </span>
                                                     </div>
                                                 </template>
                                             </template>
                                             <template v-else>
                                                 <div class="m-list-timeline__item" style="padding: 20px 0;">
-                                                    <span class="m-list-timeline__text text-center" style="width: 100%;">
-                                                        <h5>NO DATA FOUND</h5>
-                                                    </span>
+                                                    <span class="m-list-timeline__text text-center" style="width: 100%;"></span>
                                                 </div>
                                             </template>
-                                        </template>
-                                        <template v-else>
-                                            <div class="m-list-timeline__item" style="padding: 20px 0;">
-                                                <span class="m-list-timeline__text text-center" style="width: 100%;"></span>
-                                            </div>
-                                        </template>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1295,7 +1247,9 @@
                                                 </template>
                                                 <template v-else>
                                                     <div class="m-list-timeline__item" style="padding: 20px 0;">
-                                                        <span class="m-list-timeline__text text-center" style="width: 100%;"></span>
+                                                        <span class="m-list-timeline__text text-center" style="width: 100%;">
+                                                            asd
+                                                        </span>
                                                     </div>
                                                 </template>
                                             </div>

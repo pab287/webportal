@@ -109,6 +109,7 @@ var vmData = new Vue({
                     instance.activityLogs = response;
 
                     $("#activity-monitor #overlay").css('display', 'none');
+                    $("#activity-monitor .mCSB_container").css('height', 'unset').css('max-height', 'unset');
                     $("head").append('<style>#activity-log .m-list-timeline .m-list-timeline__items:before { background-color: #ebedf2 !important; }</style>');
                 }
             });

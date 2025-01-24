@@ -109,7 +109,7 @@
         }
 
         public function get_activity_logs(){
-            $data = $this->attendance_m->getLogNotification("gcctimev2");
+            $data = $this->dashboard_m->getLogNotification("gcctimev2");
             ksort($data);
             $this->output
                 ->set_content_type('json')
