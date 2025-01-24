@@ -16,13 +16,9 @@ class Verifylogin extends MY_Controller{
         if ($this->input->post()) {
             $post = $this->input->post();
             // Check for force_change before validation
-            $query = $this->db->select('force_change')
-                              ->from('gccmaster.tblusers')
-                              ->where('username', $post['username'],)
-                              ->get()
-                              ->row_array();
+            $query = $this->db->select('force_change, password')->from('gccmaster.tblusers')->where('username', $post['username'],)->get()->row_array();
     
-            if (isset($query['force_change']) && $query['force_change'] == 1) {
+            if (isset($query['force_change']) && $query['force_change'] == 1 && $query['password'] == md5($post['password'])) {
                 $data = array(
                     'modal' => "show",
                     'post' => $post,

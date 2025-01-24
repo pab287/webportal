@@ -42,74 +42,77 @@
     <!--end::Page Vendors --> 
   </head>
 
-  	<body class="m--skin- m-header--fixed m-header--fixed-mobile"  >
-		<div class="m-content" id="passkey">
-			<!--begin::Portlet-->
-			<div class="row">
-				<div class="col-lg-4 col-sm-12 col-xs-12"></div>
-				<div class="m-portlet col-lg-4 col-md-6 col-sm-12 col-xs-12 mt-5">
-					<div class="m-portlet__head">
-						<div class="m-portlet__head-caption">
+  	<body class="align-items-center justify-content-center">
+        <div class="row">
+            <div class="col" id="passkey">
+                <div class="m-portlet m-login__signin">
+                    <div class="m-portlet__head">
+                        <div class="m-portlet__head-caption">
 							<div class="m-portlet__head-title">
-								<span class="m-portlet__head-icon"><img src="<?= base_url('assets/logo.png')?>" width="20%"></img></span>
+								<span class="m-portlet__head-icon"><img src="<?= base_url('assets/logo.png')?>" width="23%"></img></span>
 							</div>
 						</div>
-						<div class="m-portlet__head-tools">
-							<ul class="m-portlet__nav">
-								<li class="m-portlet__nav-item">
-									<h4 class="m-portlet__head-text mt-2">
-										Change Password
-									</h4>
-								</li>
-							</ul>
-						</div>
-					</div>
-					<!--begin::Form-->
-					<form class="m-form" id="changepasswordform">
-						<div class="m-portlet__body">
-						<input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-						<input type="hidden" name="username">
-						<input type="hidden" name="old_password" >
-							<div class="form-group m-form__group">
-								<label>
-									New Password *
-								</label>
-								<div> 
-									<input type="password" class="form-control m-input" name="password_confirmation" data-validation="required length strength" data-validation-length="min8" data-validation-strength="3">
-									<span class="m-form__help">
-										<ul>
-											<li>Password must contain numbers.</li>
-											<li>Password must contain uppercase letters.</li>
-											<li>Password must have at least one @#$ symbol.</li>
-											<li>Length must be greater than 8 characters.</li>
-										</ul>
-									</span>
-								</div>
-							</div>
-							<div class="form-group m-form__group">
-								<label>
-									Confirm Password *
-								</label>
-								<div> 
-									<input type="password" class="form-control m-input" name="password" data-validation="confirmation" >
-								</div>
-							</div>
-						</div>
-						<div class="m-portlet__foot">
-							<div class="form-group m-form__group">
-								<div class="text-center">
-									<button type="submit" class="btn btn-success">
-										Change password
-									</button>
-								</div>
-							</div>
-						</div>
-					</form>
-					<!--end::Form-->
-				</div>
-			</div>
-			<!--end::Portlet-->
+                        <div class="m-portlet__head-tools">
+                            <ul class="m-portlet__nav">
+                                <li class="m-portlet__nav-item">
+                                    <h4 class="m-portlet__head-text mt-2">
+                                       Update your password
+                                    </h4>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!--begin::Form-->
+                    <form class="m-form" id="changepasswordform">
+                        <div class="m-portlet__body">
+                        <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                        <input type="hidden" name="username">
+                        <input type="hidden" name="old_password" >
+                            <div class="form-group m-form__group">
+                                <label>
+                                   You need to update your password because this is the first time you are signing in.
+                                </label>
+                            </div>
+                            <div class="form-group m-form__group">
+                                <label>
+                                    New Password *
+                                </label>
+                                <div>
+                                    <input type="password" class="form-control m-input" name="password_confirmation" data-validation="required length strength" data-validation-length="min8" data-validation-strength="3">
+                                    <span class="m-form__help">
+                                        <ul>
+                                            <li>Password must contain numbers.</li>
+                                            <li>Password must contain uppercase letters.</li>
+                                            <li>Password must have at least one @#$ symbol.</li>
+                                            <li>Length must be greater than 8 characters.</li>
+                                        </ul>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="form-group m-form__group">
+                                <label>
+                                    Confirm Password *
+                                </label>
+                                <div> 
+                                    <input type="password" class="form-control m-input" name="password" data-validation="confirmation" >
+                                </div>
+                            </div>
+                        </div>
+                        <div class="m-portlet__foot">
+                            <div class="form-group m-form__group">
+                                <div class="text-center">
+                                    <button type="submit" class="btn btn-success">
+                                        Change password
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <!--end::Form-->
+                </div>
 		</div>
+
+        </div>
 <script type="text/javascript">
 	const sessionData = <?= json_encode($session  ?? []) ?>;
 	if (!sessionData.modal) {
@@ -179,7 +182,7 @@ $(document).ready(function() {
 			dataType: 'json',
             success: function(response) {
                 if (response.status) {
-                    window.location.href = '<?php echo "portal/index"; ?>';
+                    window.location.replace(response.redirect);
                 } else {
                     alert('Error updating password. Please try again.');
                 }
