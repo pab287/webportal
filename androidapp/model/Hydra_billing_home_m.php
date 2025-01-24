@@ -73,13 +73,15 @@ class Hydra_billing_home_m extends Dbase{
 
 		// fetch previous readings
 		$response['readings_array'] = array();
-		$sth = $conn->prepare("SELECT id 
+		$sth = $conn->prepare("SELECT id, subdivision_id, accountno
 							   FROM hydra_billing.accounts 
 							   ORDER BY `id` ASC");
    		$sth->execute();
    		while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
 
    			$account_id = $row['id'];
+   			$subdi_id = $row['subdivision_id'];
+   			$accountno = $row['accountno'];
 
 			$sth_readings = $conn->prepare("SELECT * 
 											FROM hydra_billing.readings 
@@ -88,13 +90,17 @@ class Hydra_billing_home_m extends Dbase{
 											LIMIT 1");
    			$sth_readings->execute();
    			while ($row_ = $sth_readings->fetch(PDO::FETCH_ASSOC)) {
+
 				$checkReading = $this->getAlreadyReading($conn, $account_id, $month, $year, $row_['meterno']);
 				$checkReading_count = $checkReading->rowCount();
 				$list = array();
 		 		$list['id'] = $row_['id'];
 		 		$list['meterno'] = $row_['meterno'];
 		 		$list['account_id'] = $row_['account_id'];
-		 		$list['ref_no'] = $row_['ref_no'];
+		 		$list['account'] = $this->getName($row_['account_id']);
+		 		$list['subdivision'] = $this->getSubdivisionName($conn, $subdi_id);
+		 		$list['accountno'] = $accountno;
+				$list['ref_no'] = $row_['ref_no'];
 		 		$list['ref_series'] = $row_['ref_series'];
 		 		$list['ref_yr'] = $row_['ref_yr'];
 		 		$list['ref_month'] = $row_['ref_month'];
@@ -110,6 +116,7 @@ class Hydra_billing_home_m extends Dbase{
 		 		$list['createbill_by'] = $row_['createbill_by'];
 		 		$list['createbill_at'] = $row_['createbill_at'];
 				$list['isAlreadyReading'] = $checkReading_count;
+
 				array_push($response['readings_array'], $list);
    			}
 		}
@@ -147,6 +154,31 @@ class Hydra_billing_home_m extends Dbase{
 
    		echo json_encode($response);
 	}
+
+	function getName($id) {
+		$conn = $this->conn();
+				$sth = $conn->prepare("SELECT firstname, lastname FROM hydra_billing.accounts WHERE id = :id");
+				$sth->bindParam(':id', $id, PDO::PARAM_INT);
+		$sth->execute();
+				$name = '';
+		if ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+			$name = $row['firstname'] . ' ' . $row['lastname'];
+		}
+		return $name;
+	}
+	function getSubName($id) {
+		$conn = $this->conn();
+				$sth = $conn->prepare("SELECT subdivision FROM hydra_billing.accounts WHERE id = :id");
+				$sth->bindParam(':id', $id, PDO::PARAM_INT);
+		$sth->execute();
+				$name = '';
+		if ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+			$name = $row['firstname'] . ' ' . $row['lastname'];
+		}
+		return $name;
+	}
+
+
 
 	public function save_local_data(){
 		$conn = $this->conn();
@@ -266,6 +298,7 @@ class Hydra_billing_home_m extends Dbase{
 		$sth->execute();
 		return $sth;
 	}
+	
 
 	private function getSeries($month,$year){
     	$conn = $this->conn();
