@@ -330,17 +330,29 @@
             }
 
             $post = $this->input->post();
-            $sex = isset($post['emp_sex']) ? $post["emp_sex"] : 'All';
+            $companyId = 0;
+            $viewByCompany = isset($post['list_view']) ? $post["list_view"] : 'all';
+            if($viewByCompany == 'by_company') {
+                $this->db->select("company_id");
+                $this->db->where("id", $emp_id);
+                $this->db->where("employee_status", "active");
+                $queryCompId = $this->db->get("gccmaster.tblemployees");
+                if($queryCompId->num_rows() == 1){
+                    $companyId = $queryCompId->row()->company_id;
+                }
+            }
 
+            $sex = isset($post['emp_sex']) ? $post["emp_sex"] : 'All';
             $orderx = (isset($post["order"]) && $post["order"]) ? $post["order"] : false;
             $dir = "DESC";
             $order = "id";
             
             if ($orderx) {
-                $colIndex = $orderx[0]["column"];                           
+                $colIndex = $orderx[0]["column"];
                 $dir = $orderx[0]["dir"];
                 $order = $post["columns"][$colIndex]["data"];
             }
+
             $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
             $draw = (isset($post['draw']) && $post['draw']) ? $post['draw'] : 0;
             $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
@@ -394,23 +406,19 @@
                 $this->db->limit($limit, $start);
             }
             $this->db->select("emp.id, emp.idno, emp.lastname, emp.firstname,
-                               emp.middlename, emp.suffix, emp.pic_filename,
-                               IF(companies.id IS NULL, emp.company_id, companies.code) company,
-                               IF(departments.id IS NULL, emp.department_id, departments.description) department,
-                               IF(positions.id IS NULL, emp.position, positions.name) position,
-                               emp.is_incomplete, emp.work_status, emp.date_start,
-                               emp.gender, emp.email, emp.curr_addr as address, emp.mobile_no");
+                emp.middlename, emp.suffix, emp.pic_filename,
+                IF(companies.id IS NULL, emp.company_id, companies.code) company,
+                IF(departments.id IS NULL, emp.department_id, departments.description) department,
+                IF(positions.id IS NULL, emp.position, positions.name) position,
+                emp.is_incomplete, emp.work_status, emp.date_start,
+                emp.gender, emp.email, emp.curr_addr as address, emp.mobile_no");
                                
-            //HR
-
-            if(!in_array(8, $dep_id) && $dep_id){
-            $this->db->where_in('emp.department_id', $dep_id);
-            }
+            if(!in_array(8, $dep_id) && $dep_id){ $this->db->where_in('emp.department_id', $dep_id); }
+            if($viewByCompany == 'by_company') { $this->db->where('emp.company_id', $companyId); }
             $this->db->order_by($order, $dir);
             $this->db->group_by("emp.id");
             $query = $this->db->get("gccmaster.tblemployees emp");
             $employees = $query->result();
-            $sql = $this->db->last_query();
 
             $data = array();
             foreach ($employees as $pst) {
@@ -463,108 +471,60 @@
                                                  </div><div class='mt-2 m--regular-font-size-sm1 m--font-boldest text-muted'>$rating_description</div>";
                 $data[] = $nestedData;
             }
-            // $recordsTotalFiltered = $this->utilities->getTableCount("gccmaster.tblemployees emp", $where, $searchArray, $joinArray, false, null, "emp.id");
+
             $recordsTotalFiltered = $this->getEmployeeCount($employee_status);
             $resultSet["data"] = $data;
             $resultSet["draw"] = $draw;
             $resultSet["recordsFiltered"] = $recordsTotalFiltered;
             $resultSet["recordsTotal"] = $recordsTotalFiltered;
 
-            /*** remove consumes database records
-            if($searchArray['key'] != "" && $searchArray['key']):
-                $this->core_layout->setEventLog("User ".$this->loggedInUsername." has searched ".$searchArray['key']." in employee masterfile datatable.", "search", "success", "gcchris", "user");
-            endif;
-            switch($employee_status){
-                case "Awol":
-                    $this->core_layout->setEventLog("filtered Awol list in employee masterfile datatable.","search", "success", "gcchris", "user");
-                break;
-                case "Active":
-                    $this->core_layout->setEventLog("filtered Active list in employee masterfile datatable.","search", "success", "gcchris", "user");
-                break;
-                case "Black Listed":
-                    $this->core_layout->setEventLog("filtered Black Listed list in employee masterfile datatable.","search", "success", "gcchris", "user");
-                break;
-                case "End of Contract":
-                    $this->core_layout->setEventLog("filtered End of Contractd list in employee masterfile datatable.","search", "success", "gcchris", "user");
-                break;
-                case "Inactive":
-                    $this->core_layout->setEventLog("filtered Inactive list in employee masterfile datatable.","search", "success", "gcchris", "user");
-                break;
-                case "Resign":
-                    $this->core_layout->setEventLog("filtered Resign in employee masterfile datatable.","search", "success", "gcchris", "user");
-                break;
-                case "Retired":
-                    $this->core_layout->setEventLog("filtered Retired in employee masterfile datatable.","search", "success", "gcchris", "user");
-                break;
-                case "Terminated":
-                    $this->core_layout->setEventLog("filtered Terminated in employee masterfile datatable.","search", "success", "gcchris", "user");
-                break;
-                default:
-                    $this->core_layout->setEventLog("filtered All in employee masterfile datatable.","search", "success", "gcchris", "user");
-                break;
-            }
-            switch($sex){
-                case "Male":
-                    $this->core_layout->setEventLog("filtered All Male gender in employee masterfile datatable.","search", "success", "gcchris", "user");
-                break;
-                case "Female":
-                    $this->core_layout->setEventLog("filtered All Female gender in employee masterfile datatable.","search", "success", "gcchris", "user");
-                break;
-                default:
-                    $this->core_layout->setEventLog("filtered All gender in employee masterfile datatable..","search", "success", "gcchris", "user");
-                break;
-            } 
-            remove consumes database records ***/
-
             return $resultSet;
         }
-        // dupli
-
-
 
         function getEmployeeCount($employee_status) {
-            $resultSet = array();
-
             $emp_id = $this->loggedinData["emp_id"];
             $this->db->select('dept.*');
             $this->db->where('head_id', $emp_id);
             $query = $this->db->get('gcchris.tbldepartments dept');
             $res = $query->result();
             $dep_id = array();
-            foreach($res as $row) {
-                $dep_id[] = $row->id;
-            }
+            foreach($res as $row) { $dep_id[] = $row->id; }
 
             $post = $this->input->post();
+            $companyId = 0;
+            $viewByCompany = isset($post['list_view']) ? $post["list_view"] : 'all';
+            if($viewByCompany == 'by_company') {
+                $this->db->select("company_id");
+                $this->db->where("id", $emp_id);
+                $this->db->where("employee_status", "active");
+                $queryCompId = $this->db->get("gccmaster.tblemployees");
+                if($queryCompId->num_rows() == 1){
+                    $companyId = $queryCompId->row()->company_id;
+                }
+            }
             $sex = isset($post['emp_sex']) ? $post["emp_sex"] : 'All';
-
             $orderx = (isset($post["order"]) && $post["order"]) ? $post["order"] : false;
             $dir = "DESC";
             $order = "id";
             
             if ($orderx) {
-                $colIndex = $orderx[0]["column"];                           
+                $colIndex = $orderx[0]["column"];
                 $dir = $orderx[0]["dir"];
                 $order = $post["columns"][$colIndex]["data"];
             }
             $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
-            $draw = (isset($post['draw']) && $post['draw']) ? $post['draw'] : 0;
-            $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
-            $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 0;
-            $searchFlue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
-
             $searchArray = array(
                 "field" => "CONCAT(IFNULL(emp.lastname, ''),
-                                   IFNULL(emp.firstname, ''),
-                                   IFNULL(emp.middlename, ''),
-                                   IFNULL(CONCAT(emp.firstname, ' ', emp.lastname), ''),
-                                   IFNULL(CONCAT(emp.lastname, ' ', emp.firstname), ''),
-                                   IFNULL(emp.work_status, ''),
-                                   IFNULL(emp.employee_status, ''),
-                                   IFNULL(IF(companies.id IS NULL, emp.company_id, companies.code), ''),
-                                   IFNULL(IF(departments.id IS NULL, emp.department_id, departments.description), ''),
-                                   IFNULL(IF(positions.id IS NULL, emp.position, positions.name), ''),
-                                   IFNULL(educ.educ_degree, ''))",
+                    IFNULL(emp.firstname, ''),
+                    IFNULL(emp.middlename, ''),
+                    IFNULL(CONCAT(emp.firstname, ' ', emp.lastname), ''),
+                    IFNULL(CONCAT(emp.lastname, ' ', emp.firstname), ''),
+                    IFNULL(emp.work_status, ''),
+                    IFNULL(emp.employee_status, ''),
+                    IFNULL(IF(companies.id IS NULL, emp.company_id, companies.code), ''),
+                    IFNULL(IF(departments.id IS NULL, emp.department_id, departments.description), ''),
+                    IFNULL(IF(positions.id IS NULL, emp.position, positions.name), ''),
+                    IFNULL(educ.educ_degree, ''))",
                 "key" => $searchValue,
                 "option" => "BOTH"
             );
@@ -595,23 +555,17 @@
             $this->db->group_end();
 
             $this->db->select("emp.id, emp.idno, emp.lastname, emp.firstname,
-                               emp.middlename, emp.suffix, emp.pic_filename,
-                               IF(companies.id IS NULL, emp.company_id, companies.code) company,
-                               IF(departments.id IS NULL, emp.department_id, departments.description) department,
-                               IF(positions.id IS NULL, emp.position, positions.name) position,
-                               emp.is_incomplete, emp.work_status, emp.date_start");
+                emp.middlename, emp.suffix, emp.pic_filename,
+                IF(companies.id IS NULL, emp.company_id, companies.code) company,
+                IF(departments.id IS NULL, emp.department_id, departments.description) department,
+                IF(positions.id IS NULL, emp.position, positions.name) position,
+                emp.is_incomplete, emp.work_status, emp.date_start");
                                
-            //HR
-
-            if(!in_array(8, $dep_id) && $dep_id){
-            $this->db->where_in('emp.department_id', $dep_id);
-            }
+            if(!in_array(8, $dep_id) && $dep_id){ $this->db->where_in('emp.department_id', $dep_id); }
+            if($viewByCompany == 'by_company') { $this->db->where('emp.company_id', $companyId); }
             $this->db->order_by($order, $dir);
             $this->db->group_by("emp.id");
             $query = $this->db->get("gccmaster.tblemployees emp");
-            $employees = $query->result();
-            $sql = $this->db->last_query();
-
             return $query->num_rows();
         }
 

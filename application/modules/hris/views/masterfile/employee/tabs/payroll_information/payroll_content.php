@@ -73,9 +73,11 @@
                         </button>
                     </template>
                     <template v-else>
+                    <?php if(in_array("save", $this->core_layout->getCurrentActions())): ?>
                         <button type="submit" class="btn btnSave btn-primary m-btn m-btn--air m-btn--custom btn-submit">
                             <i class="la la-check mr-2"></i>Save
                         </button>
+                    <?php endif; ?>
                     </template>
                 </div>
             </div>
@@ -91,7 +93,7 @@
         <div class="row m--margin-bottom-25">
             <div class="col-10 ml-auto"><h3 class="m-form__header m-form__section">Bank Information</h3></div>
         </div>
-        <div class="row">
+        <div class="row mb-5">
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
                 <div class="form-group m-form__group row">
                     <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Bank Name: </label>
@@ -110,6 +112,7 @@
             </div>
         </div>
     </div>
+    <?php if(in_array("save", $this->core_layout->getCurrentActions())): ?>
     <div class="m-portlet__foot m-portlet__foot--fit m-portlet__no-border">
         <div class="m-form__actions">
             <div class="row">
@@ -121,11 +124,12 @@
             </div>
         </div>
     </div>
-    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x mt-0"></div>
+    <?php endif; ?>
+    <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-0x"></div>
 </form>
 
 <div class="m-form m-form--fit">
-    <div class="m-portlet__body pt-0">
+    <div class="m-portlet__body">
         <div class="form-group m-form__group row mb-0 pb-0">  
             <div class="col-12 ml-auto">
                 <h4 class="m-form__header m-form__section">Allowances</h4>

@@ -379,6 +379,7 @@
             </div>
         </div>
     </div>
+    <?php if(in_array("save", $this->core_layout->getCurrentActions())): ?>
     <div class="m-portlet__foot m-portlet__foot--fit">
         <div class="m-form__actions">
             <div class="row">
@@ -388,8 +389,9 @@
             </div>
         </div>
     </div>
+    <?php endif; ?>
     <input type="hidden" name="id" v-model="vm_tab3.id" class="employee_id"/>
-    
+    <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-0x"></div>
 </form>
 <div class="modal fade" tabindex="-1" role="dialog" id="update_salary_history">
     
