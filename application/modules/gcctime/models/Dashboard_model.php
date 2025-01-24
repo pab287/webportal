@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Attendance_model extends CI_Model {
+class Dashboard_model extends CI_Model {
     private $today;
 
     public function __construct() {
