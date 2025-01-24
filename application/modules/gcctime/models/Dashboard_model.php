@@ -2497,6 +2497,7 @@
                 $this->db->select("status, created_at, notification, type");
                 $this->db->where("module", $module);
                 $this->db->where("DATE(created_at) >= ", $check);
+                $this->db->order_by("created_at", "desc");
             }
     
             $query = $this->db->get();
