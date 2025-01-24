@@ -382,7 +382,6 @@ $(document).ready(function () {
 
 $('#query-builder-btn').on('click', function () {
     var result = $('#query-builder').queryBuilder('getSQL');
-    console.log(result);
     if (!$.isEmptyObject(result)) {
         query_builder = result;
         tbl.ajax.reload();

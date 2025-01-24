@@ -47,7 +47,6 @@ class Ticket_m extends CI_Model
     }
 
     public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request){
-        // var_dump($query_builder);
         $resultset = array();
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id");
@@ -63,8 +62,17 @@ class Ticket_m extends CI_Model
         if($view_own_request){
             $this->db->where('requestor', $this->user_data['emp_id']);
         }
-        if($query_builder){
-            $this->db->where($query_builder);
+        if ($query_builder) {
+            $lower_query = strtolower($query_builder);
+            if (
+                strpos($lower_query, 'c.firstname') !== false &&
+                strpos($lower_query, 'c.lastname') !== false &&
+                strpos($lower_query, '%not set%') !== false
+            ) {
+                $this->db->where('a.performed_by', '0');
+            } else {
+                $this->db->where($query_builder);
+            }
         }
         if ($search) {
             $this->db->group_start();
@@ -1080,6 +1088,7 @@ class Ticket_m extends CI_Model
         $this->db->select('id, description AS text');
         $this->db->from('gcchris.tbldepartments');
         $this->db->where('description !=', '');
+        $this->db->where('is_archived', 0);
         $this->db->order_by('description', 'ASC');
         $query = $this->db->get();
         return $query->result_array();
@@ -1089,13 +1098,21 @@ class Ticket_m extends CI_Model
         $this->db->select("cat.name as text, cat.name as id");
         $this->db->from($this->category. ' as cat');
         $this->db->where('cat.type', $type);
-        $this->db->order_by("id", "ASC");
+        $this->db->where('cat.status', 0);
+        if($type == 'sub-category'){
+            $this->db->order_by("id", "ASC");
+        }elseif ($type == 'severity' || $type == 'status') {
+            $this->db->order_by("cat.id", "ASC");
+        }else{
+            $this->db->order_by("cat.name", "ASC");
+        }
+        
         $results = $this->db->get()->result();
         return $results;
     }
 
     public function select2PerformedByData(){
-        $query = $this->db->query("SELECT  c.id, CONCAT(c.firstname,' ',c.lastname) as emp_name FROM gccmaster.tblusers b, gccmaster.tblemployees c WHERE b.emp_id=c.id AND b.group_id='1' AND c.employee_status = 'Active' AND b.group_id=1");
+        $query = $this->db->query("SELECT  c.id, CONCAT(c.firstname,' ',c.lastname) as emp_name FROM gccmaster.tblusers b, gccmaster.tblemployees c WHERE b.emp_id=c.id AND b.group_id='1' AND c.employee_status = 'Active' AND b.group_id=1 ORDER BY c.firstname ASC");
         if ($query->num_rows() > 0) {
             foreach ($query->result_array() as $_query) {
                 $data = array();

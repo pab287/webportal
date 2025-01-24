@@ -43,7 +43,6 @@ $.ajax({
     type: "GET",
     dataType: "JSON",
     success: function (data) {
-        console.log(data);
         getComments();
         const allowedFileTypes = [
             {
