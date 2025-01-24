@@ -11,56 +11,71 @@ class Hydra_billing_readings_m extends Dbase{
 		$month = date('m');
 		$meterno = $_POST["meterno"];
 
-		$sth = $conn->prepare("SELECT a.*, b.name as subdivision
-							   FROM hydra_billing.accounts a
-							   LEFT JOIN hydra_billing.subdivision b
-							   ON a.subdivision_id = b.id
-							   WHERE a.meterno_raw='$meterno'");
-   		$sth->execute();
-   		
-   		if ($sth->rowCount() > 0) {
+		try {
+			$sth = $conn->prepare("SELECT a.*, b.name as subdivision
+								   FROM hydra_billing.accounts a
+								   LEFT JOIN hydra_billing.subdivision b
+								   ON a.subdivision_id = b.id
+								   WHERE a.meterno_raw = :meterno");
+			$sth->bindParam(':meterno', $meterno);
+			$sth->execute();
 
-   			$row = $sth->fetch(PDO::FETCH_ASSOC);
+			if ($sth->rowCount() > 0) {
 
-   			$checkReading = $this->checkReading($conn, $row['id'], $month, $year, $meterno);
-   			$checkReading_row = $checkReading->fetch();
-   			$checkReading_count = $checkReading->rowCount();
+				$row = $sth->fetch(PDO::FETCH_ASSOC);
+ 
+				$checkReading = $this->checkReading($conn, $row['id'], $month, $year, $meterno);
+				
+				if ($checkReading && count($checkReading) > 0) {
+					$checkReading_id = $checkReading[0]['id'];
+					$checkReading_is_billed = $checkReading[0]['is_billed'];
+					$checkReading_count = 1;
+					$checkReading_account_id = $checkReading[0]['account_id'];
+				} else {
+					$checkReading_id = 0;
+					$checkReading_is_billed = 0;
+					$checkReading_count = 0;
+					$checkReading_account_id = 0;
+				}
 
-		    $list['status'] = "exist";
-	 		$list['id'] = $row['id'];
-	 		$list['model'] = ucfirst($row['model']);
-	 		$list['account_status'] = $row['status'];
-	 		$list['accountno'] = $row['accountno'];
-	 		$list['meterno'] = $row['meterno'];
-	 		$list['current_date'] = $current_date;
-	 		$list['subdivision'] = $row['subdivision'];
-	 		$list['name'] = strtoupper(utf8_encode($row['firstname']." ".$row['lastname']));
-	 		$list['previous_reading'] = $this->getPreviousReading($row['id'], $meterno);
-	 		$list['reading_id'] = $checkReading_row["id"];
-	 		$list['is_billed'] = $checkReading_row["is_billed"];
-	 		$list['isAlreadyReading'] = $checkReading_count;
-
-	 		if ($checkReading_row["is_billed"] == 1) {
-	 			$billing = $this->getBilling($checkReading_row["id"], $checkReading_row["account_id"]);
-	 			$list['previous'] = $billing["previous"];
-	 			$list['current'] = $billing["current"];
-	 			$list['rate'] = $billing["rate"];
-	 			$list['usage'] = $billing["usage"];
-	 			$list['total_charges'] = $billing["total_charges"];
-	 			$list['billing_date'] = $billing["billing_date"];
-	 			$list['due_date'] = $billing["due_date"];
-	 			$list['over_payment'] = $billing["over_payment"];
-	 			$list['reconnectionFee'] = $billing["reconnectionFee"];
-	 			$list['total_penalty'] = $billing["total_penalty"];
-	 			$list['total_balance'] = $billing["total_balance"];
-	 			$list['total_amount_due'] = $billing["total_amount_due"];
-	 			$list['ref_no'] = $billing["ref_no"];
-	 			$list['bill_id'] = $billing["bill_id"];
-	 		}
-
-   		} else {
-			$list['status'] = "not exist";
-   		}
+				$list['status'] = "exist";
+				$list['id'] = $row['id'];
+				$list['model'] = ucfirst($row['model']);
+				$list['account_status'] = $row['status'];
+				$list['accountno'] = $row['accountno'];
+				$list['meterno'] = $row['meterno'];
+				$list['current_date'] = $current_date;
+				$list['subdivision'] = $row['subdivision'];
+				$list['name'] = strtoupper(utf8_encode($row['firstname']." ".$row['lastname']));
+				$list['previous_reading'] = $this->getPreviousReading($row['id'], $meterno);
+				$list['reading_id'] = $checkReading_id;
+				$list['is_billed'] = $checkReading_is_billed;
+				$list['isAlreadyReading'] = $checkReading_count;
+ 
+				if ($checkReading_is_billed == 1) {
+					$billing = $this->getBilling($checkReading_id, $checkReading_account_id);
+					$list['previous'] = $billing["previous"];
+					$list['current'] = $billing["current"];
+					$list['rate'] = $billing["rate"];
+					$list['usage'] = $billing["usage"];
+					$list['total_charges'] = $billing["total_charges"];
+					$list['billing_date'] = $billing["billing_date"];
+					$list['due_date'] = $billing["due_date"];
+					$list['over_payment'] = $billing["over_payment"];
+					$list['reconnectionFee'] = $billing["reconnectionFee"];
+					$list['total_penalty'] = $billing["total_penalty"];
+					$list['total_balance'] = $billing["total_balance"];
+					$list['total_amount_due'] = $billing["total_amount_due"];
+					$list['ref_no'] = $billing["ref_no"];
+					$list['bill_id'] = $billing["bill_id"];
+				}
+			} else {
+				$list['status'] = "not exist";
+			}
+		} catch (PDOException $e) {
+			$list['status'] = 'error';
+			$list['message'] = 'Error: ' . $e->getMessage();
+		}
 
 		array_push($response['account_details'], $list);
    		echo json_encode($response);
@@ -403,28 +418,6 @@ class Hydra_billing_readings_m extends Dbase{
 		}
 	}
 
-	public function test_function(){
-		// $test = $this->countMonthDiff("2022-01-15", "2022-02-14");
-		// if ("2022-03-14" > "2022-01-15" && $test == 0) {
-		// 	echo "1";
-		// } else {
-		// 	echo "2";
-		// }
-
-		// try {
-		//   $this->checkNum(2);
-		//   //If the exception is thrown, this text will not be shown
-		//   echo 'If you see this, the number is 1 or below';
-		// }
-
-		// //catch exception
-		// catch(Exception $e) {
-		//   echo 'Message: ' .$e->getMessage();
-		// }
-
-		echo $this->updatePrintCount("1400");
-	}
-
 	function checkNum($number) {
 	  if($number>1) {
 	    throw new Exception("Value must be 1 or below");
@@ -455,7 +448,7 @@ class Hydra_billing_readings_m extends Dbase{
 	   	$status = 1;
 
 		try {
-			if (isset($_POST['reading_id']) && $_POST['reading_id'] != "" && isset($_POST['user_id']) && $_POST['user_id'] != "" && $_POST['user_id'] != 0) {
+			if (isset($_POST['reading_id']) && $_POST['reading_id'] != "" && $_POST['reading_id'] != 0 && isset($_POST['user_id']) && $_POST['user_id'] != "" && $_POST['user_id'] != 0) {
 				$billingDetails = $this->getBillingDetails($reading_id);
 				$billing_from = $billingDetails["billing_from"];
 				$billing_to = $billingDetails["billing_to"];
@@ -497,7 +490,7 @@ class Hydra_billing_readings_m extends Dbase{
 					$list["status"] = false;
 					$list["message"] = "This account was archived, please contact the finance officer.";
 				} else {
-					if (isset($_POST['reading_id']) && $_POST['reading_id'] != "" && isset($_POST['user_id']) && $_POST['user_id'] != "" && $_POST['user_id'] != 0) {
+					if (isset($_POST['reading_id']) && $_POST['reading_id'] != "" && $_POST['reading_id'] != 0 && isset($_POST['user_id']) && $_POST['user_id'] != "" && $_POST['user_id'] != 0) {
 						$sth = $conn->prepare("INSERT INTO hydra_billing.bills(`billing_from`, `billing_to`, `due_date`, `ref_no`, `ref_series`, `ref_yr`, `ref_month`, `created_by`, `created_at`, `status`, `reading_id`, `prev_reading_id`, `account_id`, `current`, `previous`, `usage`, `rate`, `total_charges`)
 						VALUES (:billing_from, :billing_to, :due_date, :reference_no, :ref_series, :ref_yr, :ref_month, :user_id, :current_date, :status, :reading_id, :prev_reading_id, :account_id, :current, :previous, :totalUsage, :rate, :charges)");
 		
