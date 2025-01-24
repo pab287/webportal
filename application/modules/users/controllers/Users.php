@@ -96,7 +96,7 @@ class Users extends MY_Controller{
             'username' => $this->input->post('username'),
             'password' => MD5($this->input->post('password')),
             'group_id' => $this->input->post('group_id'),
-            'force_change'=> 1,
+            'force_update'=> 1,
         );
         $insert = $this->user->save_user($data);
         $tempData = $this->core_layout->getUserData($insert);

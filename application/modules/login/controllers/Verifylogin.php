@@ -15,10 +15,10 @@ class Verifylogin extends MY_Controller{
     {
         if ($this->input->post()) {
             $post = $this->input->post();
-            // Check for force_change before validation
-            $query = $this->db->select('force_change, password')->from('gccmaster.tblusers')->where('username', $post['username'],)->get()->row_array();
+            // Check for force_update before validation
+            $query = $this->db->select('force_update, password')->from('gccmaster.tblusers')->where('username', $post['username'],)->get()->row_array();
     
-            if (isset($query['force_change']) && $query['force_change'] == 1 && $query['password'] == md5($post['password'])) {
+            if (isset($query['force_update']) && $query['force_update'] == 1 && $query['password'] == md5($post['password'])) {
                 $data = array(
                     'modal' => "show",
                     'post' => $post,
@@ -27,7 +27,7 @@ class Verifylogin extends MY_Controller{
                 redirect('login/change_password', 'refresh');
             }
     
-            // Proceed with form validation if no force_change is required
+            // Proceed with form validation if no force_update is required
             $this->form_validation->set_error_delimiters(
                 '<div class="m-alert m-alert--outline alert alert-danger alert-dismissible" role="alert">',
                 '<button type="button" class="close" data-dismiss="alert" aria-label="Close"></button><span></span></div>'
