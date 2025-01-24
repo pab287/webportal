@@ -704,8 +704,10 @@ if (typeof _tempContentData !== "undefined") {
                             $("#m_datepicker-date_regular").attr("disabled", false);
                             $("#m_datepicker-date_end").attr("disabled", true);
                             $("#m_datepicker-date_end_prob").prop('disabled', tempState);
+
+                            const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
+                            setTimeout(function () { $("#m_datepicker-date_regular").datepicker("setStartDate", startDateMin); }, 250);
                             if(tempState === false){
-                                const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
                                 const endDateMax = typeof vmData.date_regular != "undefined" && vmData.date_regular != null && vmData.date_regular != "0000-00-00" ? 
                                 moment(new Date(vmData.date_regular), "YYYY-MM-DD").format("YYYY-MM-DD") : moment(new Date(vmData.date_start), "YYYY-MM-DD").add(180, 'days').format("YYYY-MM-DD");
                                 setTimeout(function () {
@@ -724,7 +726,11 @@ if (typeof _tempContentData !== "undefined") {
 
                         if(vmData.date_end == "0000-00-00" || vmData.date_end == ""){ 
                             const currentDateEnd = moment().format("YYYY-MM-DD");
-                            setTimeout(function(){ $("#m_datepicker-date_end").datepicker('setDate', currentDateEnd); }, 250); 
+                            const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
+                            setTimeout(function(){ 
+                                $("#m_datepicker-date_end").datepicker('setStartDate', startDateMin); 
+                                $("#m_datepicker-date_end").datepicker('setDate', currentDateEnd); 
+                            }, 250); 
                         }
                     }
 
@@ -946,8 +952,9 @@ if (typeof _tempContentData !== "undefined") {
             }else{
                 const tempState = shouldEnableProbationEndDate(vmData) === false;
                 $("#m_datepicker-date_end_prob").prop('disabled', tempState);
+                const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
+                setTimeout(function () { $("#m_datepicker-date_regular, m_datepicker-date_end").datepicker("setStartDate", startDateMin); }, 250);
                 if(tempState === false){
-                    const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
                     const endDateMax = typeof vmData.date_regular != "undefined" && vmData.date_regular != null && vmData.date_regular != "0000-00-00" ? 
                     moment(new Date(vmData.date_regular), "YYYY-MM-DD").format("YYYY-MM-DD") : moment(new Date(vmData.date_start), "YYYY-MM-DD").add(180, 'days').format("YYYY-MM-DD");
                     setTimeout(function () {
