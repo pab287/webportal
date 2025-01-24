@@ -112,7 +112,7 @@ class Hydra_billing_readings_m extends Dbase{
 							   LIMIT 1");
 		$sth->execute();
 		$result = $sth->fetch();
-		return $result["reading"] ? $result["reading"] : '0';
+		return (is_array($result) && isset($result["reading"])) ? $result["reading"] : '0';
 	}
 
 	private function getPreviousReadingEdit($account_id, $reading_date, $meterno_raw){
@@ -191,13 +191,25 @@ class Hydra_billing_readings_m extends Dbase{
 		echo json_encode($response);
 	}
 
-	public function checkReading($conn, $account_id, $month, $year, $meterno){
-		$sth = $conn->prepare("SELECT id, is_billed, account_id 
-							   FROM hydra_billing.readings 
-							   WHERE account_id='$account_id' AND meterno='$meterno' AND is_archived='0' AND year(reading_date)='$year' AND month(reading_date)='$month'");
-   		$sth->execute();
-   		return $sth;
+	public function checkReading($conn, $accountId, $month, $year, $meterno) {
+		try {
+			$stmt = $conn->prepare("SELECT id, is_billed, account_id
+				FROM hydra_billing.readings
+				WHERE account_id = :account_id AND meterno = :meterno AND is_archived = 0 AND YEAR(reading_date) = :year AND MONTH(reading_date) = :month");
+			
+			$stmt->execute([
+				':account_id' => $accountId,
+				':meterno' => $meterno,
+				':year' => $year,
+				':month' => $month,
+			]);
+			return $stmt->fetchAll(PDO::FETCH_ASSOC);
+		} catch (PDOException $e) {
+			echo "Error: " . $e->getMessage();
+			return false;
+		}
 	}
+	
 
 	public function save_reading(){
 		$conn = $this->conn();
@@ -209,36 +221,86 @@ class Hydra_billing_readings_m extends Dbase{
 	   	$ref_series = $this->getSeries($ref_month,$ref_yr,"hydra_billing.readings");
 	   	$reference_no = 'MRR' . $ref_yr . '-' . $ref_month . '-' . $ref_series;
 
+		// Check post data first
+		if (empty($_POST) || !isset($_POST['account_id']) || $_POST['account_id'] == "" ||
+			!isset($_POST['meterno']) || $_POST['meterno'] == "" ||
+			!isset($_POST['reading_date']) || $_POST['reading_date'] == "" ||
+			!isset($_POST['reading']) || $_POST['reading'] == "" ||
+			!isset($_POST['created_by']) || $_POST['created_by'] == "") {
+			
+			$list['status'] = false;
+			$list['message'] = "POST data is empty or missing required fields";
+			array_push($response['response_array'], $list);
+			echo json_encode($response);
+			return; // Exit the function to prevent further execution
+		}
+
 		$account_id = $_POST['account_id'];
 		$meterno = $_POST['meterno'];
 		$reading_date = $_POST['reading_date'];
 		$reading = $_POST['reading'];
 		$created_by = $_POST['created_by'];
-		$created_at = $current_date;
+
 		$accnt_name = $this->getAccountName($account_id);
+		if ($accnt_name === null) {
+			$list['status'] = false;
+			$list['message'] = 'Account name not found';
+			array_push($response['response_array'], $list);
+			echo json_encode($response);
+			return;
+		}
+
+		$created_at = $current_date;
 		$status = "Unbilled";
 
 		$month = date('m', strtotime($reading_date));
 		$year = date('Y', strtotime($reading_date));
 
-		if ($this->checkReading($conn, $account_id, $month, $year, $meterno)->rowCount() > 0) {
-			$list['status'] = 'duplicate';
-	   		$this->saveLogs("error", "insert", $created_by, "[Mobile] Readings - tried to add duplicate reading of ".$accnt_name);
-		} else if ($this->getPreviousReading($account_id, $meterno) > $reading) {
-			$list['status'] = 'previous_reading_greater';
-		} else {
+		try {
+			$existingReading = $this->checkReading($conn, $account_id, $month, $year, $meterno);
 
-			$sth = $conn->prepare("INSERT INTO hydra_billing.readings(`account_id`, `meterno`, `ref_no`, `reading_date`, `reading`, `created_by`, `created_at`, `ref_yr`, `ref_series`, `ref_month`, `status`) VALUES ('$account_id','$meterno','$reference_no','$reading_date','$reading','$created_by','$created_at','$ref_yr','$ref_series','$ref_month','$status')");
-	   		$sth->execute();
-	   		if ($sth) {
-	   			$reading_id = $conn->lastInsertId();
-	   			$list['reading_id'] = $reading_id;
-	   			$list['status'] = 'success';
-	   			$this->saveLogs("success", "insert", $created_by, "[Mobile] Readings - added reading ".$reading." of ".$accnt_name);
-	   		} else {
-	   			$list['status'] = 'error';
-	   			$this->saveLogs("error", "insert", $created_by, "[Mobile] Readings - added reading ".$reading." of ".$accnt_name);
-	   		}
+			if ($existingReading && count($existingReading) > 0) {
+
+				// Duplicate reading
+				$list['status'] = false;
+				$list['message'] = 'Duplicate reading | This user already have a reading for this month';
+				$this->saveLogs("error", "insert", $created_by, "[Mobile] Readings - tried to add duplicate reading of " . $accnt_name);
+
+			} elseif ($this->getPreviousReading($account_id, $meterno) > $reading) {
+
+				// Previous reading is greater than current reading
+				$list['status'] = false;
+				$list['message'] = 'Current reading must be greater than previous reading';
+			} else {
+
+				$sth = $conn->prepare("INSERT INTO hydra_billing.readings(`account_id`, `meterno`, `ref_no`, `reading_date`, `reading`, `created_by`, `created_at`, `ref_yr`, `ref_series`, `ref_month`, `status`) VALUES (:account_id, :meterno, :reference_no, :reading_date, :reading, :created_by, :created_at, :ref_yr, :ref_series, :ref_month, :status)");
+
+				$sth->bindParam(':account_id', $account_id);
+				$sth->bindParam(':meterno', $meterno);
+				$sth->bindParam(':reference_no', $reference_no);
+				$sth->bindParam(':reading_date', $reading_date);
+				$sth->bindParam(':reading', $reading);
+				$sth->bindParam(':created_by', $created_by);
+				$sth->bindParam(':created_at', $created_at);
+				$sth->bindParam(':ref_yr', $ref_yr);
+				$sth->bindParam(':ref_series', $ref_series);
+				$sth->bindParam(':ref_month', $ref_month);
+				$sth->bindParam(':status', $status);
+
+				if ($sth->execute()) {
+					$reading_id = $conn->lastInsertId();
+					$list['reading_id'] = $reading_id;
+					$list['status'] = true;
+					$this->saveLogs("Success", "insert", $created_by, "[Mobile] Readings - added reading " . $reading . " of " . $accnt_name);
+				} else {
+					$list['status'] = false;
+					$this->saveLogs("Error", "insert", $created_by, "[Mobile] Readings - added reading " . $reading . " of " . $accnt_name);
+				}
+			}
+		} catch (PDOException $e) {
+			$list['status'] = false;
+			$list['message'] = "Error: " . $e->getMessage();
+        	$this->saveLogs("error", "insert", $created_by, "[Mobile] Readings - error adding reading " . $reading . " of " . $accnt_name . " - " . $e->getMessage());
 		}
 
 		array_push($response['response_array'], $list);
@@ -327,12 +389,18 @@ class Hydra_billing_readings_m extends Dbase{
 
 	public function getAccountName($account_id){
 		$conn = $this->conn();
-		$sth = $conn->prepare("SELECT CONCAT(firstname,' ',lastname) AS account_name 
+		$sth = $conn->prepare("SELECT CONCAT(firstname,' ',lastname) AS account_name
 							   FROM hydra_billing.accounts 
-							   WHERE id='$account_id'");
+							   WHERE id = :account_id");
+		$sth->bindParam(':account_id', $account_id);
 		$sth->execute();
-		$row = $sth->fetch();
-		return utf8_encode($row['account_name']);
+		$row = $sth->fetch(PDO::FETCH_ASSOC);
+
+		if ($row) {
+			return utf8_encode($row['account_name']);
+		} else {
+			return "No name";
+		}
 	}
 
 	public function test_function(){
@@ -386,87 +454,117 @@ class Hydra_billing_readings_m extends Dbase{
 	   	$reference_no = 'BHBR' . $ref_yr . '-' . $ref_month . '-' . $ref_series;
 	   	$status = 1;
 
-        $billingDetails = $this->getBillingDetails($reading_id);
-        $billing_from = $billingDetails["billing_from"];
-        $billing_to = $billingDetails["billing_to"];
-        $due_date = $billingDetails["due_date"];
-	   	$prev_reading_id = $billingDetails["prev_reading_id"];
-	   	$account_id = $billingDetails["account_id"];
-	   	$current = $billingDetails["current"];
-        $previous = $billingDetails["previous"];
-        $totalUsage = $billingDetails["usage"];
-	   	$rate = $billingDetails["rate"];
-        $charges = $billingDetails["total_charges"];
-        $model = $billingDetails["model"];
-        $name = $billingDetails["name"];
-        $subdivision = $billingDetails["subdivision"];
-        $over_payment = $billingDetails["over_payment"];
-        $reconnectionFee = $billingDetails["reconnectionFee"];
-        $total_balance = $billingDetails["total_balance"];
-        $total_penalty = $billingDetails["total_penalty"];
-        $total_amount_due = $billingDetails["total_amount_due"];
-        $reading_ref_no = $billingDetails["reading_ref_no"];
-        $current_reading_date = $billingDetails["current_reading_date"];
-
-        if(!$rate){
-        	$list["status"] = false;
-        	$list["message"] = "No data found in Setup - Rate";
-        } else if(!$billingDetails["dayOf_cutOff"]){
-        	$list["status"] = false;
-        	$list["message"] = "No data found in Setup - Cut off period";
-        } else if(!$billingDetails["dayOf_dueDate"]){
-        	$list["status"] = false;
-        	$list["message"] = "No data found in Setup - Due date";
-        } else if($this->checkClientIsBilled($account_id, $current_reading_date) > 0){
-			$list["status"] = false;
-        	$list["message"] = "This account is already billed in this month";
-        } else if($billingDetails["account_status"] == 0){
-			$list["status"] = false;
-        	$list["message"] = "This account was inactive, please contact the finance officer.";
-        } else if($billingDetails["account_is_archive"] == 1){
-			$list["status"] = false;
-        	$list["message"] = "This account was archived, please contact the finance officer.";
-        } else {
-			
-	        $sth = $conn->prepare("INSERT INTO hydra_billing.bills(`billing_from`, `billing_to`, `due_date`, `ref_no`, `ref_series`, `ref_yr`, `ref_month`, `created_by`, `created_at`, `status`, 
-	        	`reading_id`, `prev_reading_id`, `account_id`, `current`, `previous`, `usage`, `rate`, `total_charges`) 
-	        	VALUES ('$billing_from','$billing_to','$due_date','$reference_no','$ref_series','$ref_yr','$ref_month','$user_id','$current_date','$status','$reading_id','$prev_reading_id',
-	        	'$account_id','$current','$previous','$totalUsage','$rate','$charges')");
-			$sth->execute();
-
-			if ($sth) {
-				$bill_id = $conn->lastInsertId();
-				$this->updateReadingStatus("Billed","1",$reading_id);
-   				$this->saveLogs("success", "insert", $user_id, "[Mobile] Readings - Generate bill of ".$reading_ref_no);
-
-				$list["status"] = true;
-        		$list["message"] = "Successfully generate bill.";
-        		$list['model'] = $model;
-        		$list['bill_id'] = $bill_id;
-        		$list['name'] = strtoupper($name);
-        		$list['subdivision'] = $subdivision;
-        		$list['previous'] = $previous;
-	 			$list['current'] = $current;
-	 			$list['rate'] = $rate;
-	 			$list['usage'] = $totalUsage;
-	 			$list['total_charges'] = $charges;
-	 			$list['billing_date'] = $billing_from.' - '.$billing_to;
-	 			$list['due_date'] = $due_date;
-	 			$list['over_payment'] = $over_payment;
-	 			$list['reconnectionFee'] = $reconnectionFee;
-	 			$list['total_balance'] = $total_balance;
-	 			$list['total_penalty'] = $total_penalty;
-	 			$list['total_amount_due'] = $total_amount_due;
-	 			$list['ref_no'] = $reference_no;
+		try {
+			if (isset($_POST['reading_id']) && $_POST['reading_id'] != "" && isset($_POST['user_id']) && $_POST['user_id'] != "" && $_POST['user_id'] != 0) {
+				$billingDetails = $this->getBillingDetails($reading_id);
+				$billing_from = $billingDetails["billing_from"];
+				$billing_to = $billingDetails["billing_to"];
+				$due_date = $billingDetails["due_date"];
+				$prev_reading_id = $billingDetails["prev_reading_id"];
+				$account_id = $billingDetails["account_id"];
+				$current = $billingDetails["current"];
+				$previous = $billingDetails["previous"];
+				$totalUsage = $billingDetails["usage"];
+				$rate = $billingDetails["rate"];
+				$charges = $billingDetails["total_charges"];
+				$model = $billingDetails["model"];
+				$name = $billingDetails["name"];
+				$subdivision = $billingDetails["subdivision"];
+				$over_payment = $billingDetails["over_payment"];
+				$reconnectionFee = $billingDetails["reconnectionFee"];
+				$total_balance = $billingDetails["total_balance"];
+				$total_penalty = $billingDetails["total_penalty"];
+				$total_amount_due = $billingDetails["total_amount_due"];
+				$reading_ref_no = $billingDetails["reading_ref_no"];
+				$current_reading_date = $billingDetails["current_reading_date"];
+		
+				if (!$rate) {
+					$list["status"] = false;
+					$list["message"] = "No data found in Setup - Rate";
+				} elseif (!$billingDetails["dayOf_cutOff"]) {
+					$list["status"] = false;
+					$list["message"] = "No data found in Setup - Cut off period";
+				} elseif (!$billingDetails["dayOf_dueDate"]) {
+					$list["status"] = false;
+					$list["message"] = "No data found in Setup - Due date";
+				} elseif ($this->checkClientIsBilled($account_id, $current_reading_date) > 0) {
+					$list["status"] = false;
+					$list["message"] = "This account is already billed in this month";
+				} elseif ($billingDetails["account_status"] == 0) {
+					$list["status"] = false;
+					$list["message"] = "This account was inactive, please contact the finance officer.";
+				} elseif ($billingDetails["account_is_archive"] == 1) {
+					$list["status"] = false;
+					$list["message"] = "This account was archived, please contact the finance officer.";
+				} else {
+					if (isset($_POST['reading_id']) && $_POST['reading_id'] != "" && isset($_POST['user_id']) && $_POST['user_id'] != "" && $_POST['user_id'] != 0) {
+						$sth = $conn->prepare("INSERT INTO hydra_billing.bills(`billing_from`, `billing_to`, `due_date`, `ref_no`, `ref_series`, `ref_yr`, `ref_month`, `created_by`, `created_at`, `status`, `reading_id`, `prev_reading_id`, `account_id`, `current`, `previous`, `usage`, `rate`, `total_charges`)
+						VALUES (:billing_from, :billing_to, :due_date, :reference_no, :ref_series, :ref_yr, :ref_month, :user_id, :current_date, :status, :reading_id, :prev_reading_id, :account_id, :current, :previous, :totalUsage, :rate, :charges)");
+		
+						$sth->bindParam(':billing_from', $billing_from);
+						$sth->bindParam(':billing_to', $billing_to);
+						$sth->bindParam(':due_date', $due_date);
+						$sth->bindParam(':reference_no', $reference_no);
+						$sth->bindParam(':ref_series', $ref_series);
+						$sth->bindParam(':ref_yr', $ref_yr);
+						$sth->bindParam(':ref_month', $ref_month);
+						$sth->bindParam(':user_id', $user_id);
+						$sth->bindParam(':current_date', $current_date);
+						$sth->bindParam(':status', $status);
+						$sth->bindParam(':reading_id', $reading_id);
+						$sth->bindParam(':prev_reading_id', $prev_reading_id);
+						$sth->bindParam(':account_id', $account_id);
+						$sth->bindParam(':current', $current);
+						$sth->bindParam(':previous', $previous);
+						$sth->bindParam(':totalUsage', $totalUsage);
+						$sth->bindParam(':rate', $rate);
+						$sth->bindParam(':charges', $charges);
+		
+						if ($sth->execute()) {
+							$bill_id = $conn->lastInsertId();
+							$this->updateReadingStatus("Billed", "1", $reading_id);
+							$this->saveLogs("success", "insert", $user_id, "[Mobile] Readings - Generate bill of " . $reading_ref_no);
+		
+							$list["status"] = true;
+							$list["message"] = "Successfully generate bill.";
+							$list['model'] = $model;
+							$list['bill_id'] = $bill_id;
+							$list['name'] = strtoupper($name);
+							$list['subdivision'] = $subdivision;
+							$list['previous'] = $previous;
+							$list['current'] = $current;
+							$list['rate'] = $rate;
+							$list['usage'] = $totalUsage;
+							$list['total_charges'] = $charges;
+							$list['billing_date'] = $billing_from . ' - ' . $billing_to;
+							$list['due_date'] = $due_date;
+							$list['over_payment'] = $over_payment;
+							$list['reconnectionFee'] = $reconnectionFee;
+							$list['total_balance'] = $total_balance;
+							$list['total_penalty'] = $total_penalty;
+							$list['total_amount_due'] = $total_amount_due;
+							$list['ref_no'] = $reference_no;
+						} else {
+							$list["status"] = false;
+							$list["message"] = "Query error, Failed to save.";
+							$this->saveLogs("error", "insert", $user_id, "[Mobile] Readings - Generate bill of " . $reading_ref_no);
+						}
+					} else {
+						$list["status"] = false;
+						$list["message"] = "Theres a problem in second validation of user id or reading id";
+					}
+				}
 			} else {
 				$list["status"] = false;
-        		$list["message"] = "query error, failed to save.";
-   				$this->saveLogs("error", "insert", $user_id, "[Mobile] Readings - Generate bill of ".$reading_ref_no);
+				$list["message"] = "Theres a problem in first validation of user id or reading id";
 			}
-        }
+		} catch (Exception $e) {
+			$list["status"] = false;
+			$list["message"] = "Error: " . $e->getMessage();
+			$this->saveLogs("Error", "insert", $user_id, "[Mobile] Readings - Generate bill of " . $reading_ref_no . " - " . $e->getMessage());
+		}
         
         array_push($response['response_array'], $list);
-
 	   	echo json_encode($response);
 	}
 
@@ -483,10 +581,17 @@ class Hydra_billing_readings_m extends Dbase{
         $current_reading = $currentReading['reading'];
         $current_reading_date = $currentReading['reading_date'];
 
-        $previousReading = $this->getPreviousReadingDetails($account_id,$meterno,$current_reading_date);
-		$prev_reading_id = $previousReading ? $previousReading['reading_id'] : "";
-        $prev_reading = $previousReading ? $previousReading['reading'] : 0;
-        $prev_reading_date = $previousReading['reading_date'];
+        $previousReading = $this->getPreviousReadingDetails($account_id, $meterno, $current_reading_date);
+
+		if ($previousReading) {
+			$prev_reading_id = $previousReading['reading_id'];
+			$prev_reading = $previousReading['reading'];
+			$prev_reading_date = $previousReading['reading_date'];
+		} else {
+			$prev_reading_id = 0;
+			$prev_reading = 0.00;
+			$prev_reading_date = '0000-00-00';
+		}
 
         $totalUsage = $this->computeTotalUsage($current_reading, $prev_reading);
         $charges = $this->computeTotalCharges($rate, $totalUsage);
@@ -685,12 +790,15 @@ class Hydra_billing_readings_m extends Dbase{
 	private function getPreviousReadingDetails($account_id,$meterno,$reading_date){
 		$conn = $this->conn();
 		$sth = $conn->prepare("SELECT id as reading_id, reading_date, reading
-							   FROM hydra_billing.readings  
-							   WHERE account_id='$account_id' AND meterno='$meterno' AND reading_date<'$reading_date' AND is_archived='0'
+							   FROM hydra_billing.readings
+							   WHERE account_id = :account_id AND meterno = :meterno AND reading_date < :reading_date AND is_archived = '0'
 							   ORDER BY reading_date DESC
 							   LIMIT 1");
+		$sth->bindParam(':account_id', $account_id);
+		$sth->bindParam(':meterno', $meterno);
+		$sth->bindParam(':reading_date', $reading_date);
 		$sth->execute();
-		return $sth->fetch();
+		return $sth->fetch(PDO::FETCH_ASSOC);
 	}
 
 	private function computeTotalUsage($reading, $prev_reading){
