@@ -695,8 +695,8 @@ if (typeof _tempContentData !== "undefined") {
                 //--------add update salary in updating employee position---//
                 //-------- enable date regularized, separation date----//
                 $("#status").change(function(){
-                    var status = $("#status").val();
-                    var classification = $("#classification").val();
+                    const status = $("#status").val();
+                    const classification = $("#classification").val();
 
                     if(classification.toLowerCase() == 'active'){
                         if(status == 'REGULAR'){
@@ -704,6 +704,15 @@ if (typeof _tempContentData !== "undefined") {
                             $("#m_datepicker-date_regular").attr("disabled", false);
                             $("#m_datepicker-date_end").attr("disabled", true);
                             $("#m_datepicker-date_end_prob").prop('disabled', tempState);
+                            if(tempState === false){
+                                const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
+                                const endDateMax = typeof vmData.date_regular != "undefined" && vmData.date_regular != null && vmData.date_regular != "0000-00-00" ? 
+                                moment(new Date(vmData.date_regular), "YYYY-MM-DD").format("YYYY-MM-DD") : moment(new Date(vmData.date_start), "YYYY-MM-DD").add(180, 'days').format("YYYY-MM-DD");
+                                setTimeout(function () {
+                                    $("#m_datepicker-date_end_prob").datepicker("setStartDate", startDateMin);
+                                    $("#m_datepicker-date_end_prob").datepicker("setEndDate", endDateMax);
+                                }, 250);
+                            }
                         }else{
                             $("#m_datepicker-date_regular").attr("disabled", true);
                             $("#m_datepicker-date_end").attr("disabled", true);
@@ -937,6 +946,15 @@ if (typeof _tempContentData !== "undefined") {
             }else{
                 const tempState = shouldEnableProbationEndDate(vmData) === false;
                 $("#m_datepicker-date_end_prob").prop('disabled', tempState);
+                if(tempState === false){
+                    const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
+                    const endDateMax = typeof vmData.date_regular != "undefined" && vmData.date_regular != null && vmData.date_regular != "0000-00-00" ? 
+                    moment(new Date(vmData.date_regular), "YYYY-MM-DD").format("YYYY-MM-DD") : moment(new Date(vmData.date_start), "YYYY-MM-DD").add(180, 'days').format("YYYY-MM-DD");
+                    setTimeout(function () {
+                        $("#m_datepicker-date_end_prob").datepicker("setStartDate", startDateMin);
+                        $("#m_datepicker-date_end_prob").datepicker("setEndDate", endDateMax);
+                    }, 250);
+                }
             }
 
             $('#m_datepicker-date_resign').daterangepicker({
