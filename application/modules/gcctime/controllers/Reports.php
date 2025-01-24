@@ -27,7 +27,7 @@
             $this->core_layout->addJs("js/time/reports/reports.script.js", TRUE, $data);
 
             $this->load->view('core/templates/header');
-            $this->load->view('reports/index');
+            $this->load->view('reports/index', $data);
             $this->load->view('core/templates/footer');
         }
 
