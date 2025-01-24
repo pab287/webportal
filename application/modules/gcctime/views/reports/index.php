@@ -7,11 +7,11 @@
                         <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--left m-tabs-line--primary"
                             role="tablist">
                             <li class="nav-item m-tabs__item">
-                                <a class="nav-link m-tabs__link active show" data-toggle="tab"
-                                   href="#m_user_profile_tab_1" role="tab" aria-selected="false">Absent Report</a>
+                                <a class="nav-link m-tabs__link <?=$isNull ? 'active show' : ($type == 'absent' ? 'active show' : '') ?>" data-toggle="tab"
+                                    href="#m_user_profile_tab_1" role="tab" aria-selected="false">Absent Report</a>
                             </li>
                             <li class="nav-item m-tabs__item">
-                                <a class="nav-link m-tabs__link" data-toggle="tab"
+                                <a class="nav-link m-tabs__link <?=!$isNull ? ($type == 'late' ? 'active show' : '') : '' ?>" data-toggle="tab"
                                    href="#late_report_tab" role="tab" aria-selected="false">Late Report</a>
                             </li>
                         </ul>
@@ -32,10 +32,10 @@
                     </div>
                 </div>
                 <div class="tab-content">
-                    <div class="tab-pane active show" id="m_user_profile_tab_1">
+                    <div class="tab-pane <?=$isNull ? 'active show' : ($type == 'absent' ? 'active show' : '') ?>" id="m_user_profile_tab_1">
                         <?php $this->load->view("reports/content/tabs/absentee_report"); ?>
                     </div>
-                    <div class="tab-pane" id="late_report_tab">
+                    <div class="tab-pane <?=!$isNull ? ($type == 'late' ? 'active show' : '') : '' ?>" id="late_report_tab">
                         <?php $this->load->view("reports/content/tabs/late_report"); ?>
                     </div>
                 </div>

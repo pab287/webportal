@@ -17,8 +17,14 @@
         }
 
         public function index() {
+            $data = array();
+
+            $type = isset($_GET['type']) ? $_GET['type'] : null;
+            $data['type'] = $type;
+            $data['isNull'] = ($type == '' && $type == null) ? true : false;
+
             $this->core_layout->setPrivilegeName("gcctime_reports");
-            $this->core_layout->addJs("js/time/reports/reports.script.js", TRUE);
+            $this->core_layout->addJs("js/time/reports/reports.script.js", TRUE, $data);
 
             $this->load->view('core/templates/header');
             $this->load->view('reports/index');
