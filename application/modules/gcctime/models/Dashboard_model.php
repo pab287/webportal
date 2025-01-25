@@ -380,7 +380,7 @@
                                 else{ $tempType = "Regular"; }
 
                                 $current_data["biometricno"] = $biometric_id;
-                                $current_data["name"] = $personnel->name;
+                                $current_data["name"] = $personnel->name ? strtoupper($personnel->name) : $biometric_id;
                                 $current_data["mrdn"] = $meredien;
                                 $current_data["type"] = $tempType;
 

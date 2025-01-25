@@ -187,8 +187,13 @@
                 $absentList['previousDate'] = date("Y-m-d", strtotime("-1 day"));
                 $absentList['meridian'] = date("A");
 
-                if (!empty($absentList['check_absent'])) {
+                $am = isset($absentList['check_absent']['am']) ? array_column($absentList['check_absent']['am'], 'name') : $absentList['check_absent']['am'] = array();
+                $pm = isset($absentList['check_absent']['pm']) ? array_column($absentList['check_absent']['pm'], 'name') : $absentList['check_absent']['pm'] = array();
 
+                array_multisort($am, SORT_DESC, $absentList['check_absent']['am']);
+                array_multisort($pm, SORT_DESC, $absentList['check_absent']['pm']);
+
+                if (!empty($absentList['check_absent'])) {
                     try {
                         $cached_records = serialize($absentList); //serialized data to be save as string
                         $this->redis->set("all_absent_cache", $cached_records);
