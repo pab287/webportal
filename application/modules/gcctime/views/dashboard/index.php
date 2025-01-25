@@ -105,10 +105,17 @@
         bottom: 0px;
     }
 
-    #double-monitor .empty-list .m-list-timeline__items, #undertime-monitor .empty-list .m-list-timeline__items{
+    #admin #double-monitor .empty-list .m-list-timeline__items, #admin #undertime-monitor .empty-list .m-list-timeline__items{
         position: absolute;
         right: 0;
         top: 30px !important;
+        bottom: 0px;
+    }
+
+    #personal #double-monitor .empty-list .m-list-timeline__items, #personal #undertime-monitor .empty-list .m-list-timeline__items{
+        position: absolute;
+        right: 0;
+        top: 110px !important;
         bottom: 0px;
     }
 
@@ -676,7 +683,7 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        <div id="admin" class="row">
             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                 <div class="row">
                     <div class="col-xl-12">
