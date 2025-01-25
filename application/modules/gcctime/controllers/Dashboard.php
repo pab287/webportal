@@ -52,13 +52,6 @@
             $data['yesterdayDate'] = $yesterdayDate;
             $data['personalDate'] = $personalDate;
 
-            try {
-                $this->scheduled_cache_flush();
-            } catch(Exception $e) {
-                $data['connection'] = false;
-                $data['redis_message'] = $e->getMessage();
-            }
-
             $this->core_layout->addJs("js/time/dashboard/index.js", true, $data);
 
             $this->load->view('core/templates/header');
@@ -125,7 +118,7 @@
             }
 
             if (!$todays_attendance) {
-                $data = $this->dashboard_m->getRealTimeAttendances(date("2025-01-16"));
+                $data = $this->dashboard_m->getRealTimeAttendances(date("Y-m-d"));
 
                 if (!empty($data)) {
                     try {
@@ -474,8 +467,6 @@
             $now = date('Y-m-d');
             $date = date('Y-m-d H:i');
 
-            if (($date >= date('Y-m-d H:i', strtotime("$now 8:15")) && $date <= date('Y-m-d H:i', strtotime("$now 8:30"))) || ($date >= date('Y-m-d H:i', strtotime("$now 13:15")) && $date <= date('Y-m-d H:i', strtotime("$now 13:30")))){
-                $this->redis->flushall();
-            }
+            $this->redis->flushall();
         }
     }
