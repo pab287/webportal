@@ -404,4 +404,14 @@ class Reports extends MY_Controller{
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
+
+    public function mass_trigger_station_action($id = null){
+        $data = $this->report->setlastEmployeeStation($id);
+
+        echo '<pre>';
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+        echo '</pre>';
+    }
 }
