@@ -73,7 +73,7 @@
                             <ul class="m-portlet__nav">
                                 <li class="m-portlet__nav-item">
                                     <h4 class="m-portlet__head-text mt-2">
-                                       Update your password
+                                    Mandatory Password Update on First Login
                                     </h4>
                                 </li>
                             </ul>
