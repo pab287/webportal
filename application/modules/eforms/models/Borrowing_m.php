@@ -2236,7 +2236,7 @@ class Borrowing_m extends CI_Model
     function emp_details($emp){
         $data = array();
 
-        $this->db->select('firstname, lastname, suffix, middlename');
+        $this->db->select('firstname, lastname, suffix, middlename, company_id, department_id, position');
         $this->db->from('gccmaster.tblemployees');
         $this->db->where('id', $emp);
         $query = $this->db->get();
