@@ -1095,4 +1095,11 @@ class Borrowing extends MY_Controller
         ->set_output(json_encode($data));
     }
 
+    public function mass_fix_action(){
+        $data = $this->borrowing->massFixAction();
+        $this->output
+        ->set_content_type('json')
+        ->set_output(json_encode($data));
+    }
+
 }

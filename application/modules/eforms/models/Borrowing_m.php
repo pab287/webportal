@@ -2807,4 +2807,38 @@ class Borrowing_m extends CI_Model
         return $result;
     }
 
+    function massFixAction(){
+        $this->db->select('id, borrower');
+        $this->db->from($this->borrowing);
+        $this->db->where('status', 'Released');
+
+        $this->db->group_start();
+            $this->db->like('company', 'undefined', 'both');
+            $this->db->like('department', 'undefined', 'both');
+            $this->db->like('position', 'undefined', 'both');
+        $this->db->group_end();
+
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result() as $row) {
+                $this->db->select('company_id, department_id, position');
+                $this->db->from('gccmaster.tblemployees');
+                $this->db->where('id', $row->borrower);
+                $q = $this->db->get()->row();
+
+                $data = array(
+                    'company' => $q->company_id,
+                    'department' => $q->department_id, 
+                    'position' => $q->position
+                );
+
+                $this->db->where('id', $row->id);
+                $this->db->update($this->borrowing, $data);
+            }
+        }
+
+        return true;
+    }
+
 }
