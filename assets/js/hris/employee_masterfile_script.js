@@ -4367,7 +4367,7 @@ $("#m_datepicker-date_hired")
         format: "yyyy-mm-dd",
         autoclose: true
     }).on("changeDate", function (e) {
-        const probeeEndDate = moment(e.date).add(6, 'M').format('YYYY-MM-DD');
+        const probeeEndDate = moment(e.date).add(180, 'days').format('YYYY-MM-DD');
         $("#m_datepicker-date_end_prob").val(probeeEndDate).datepicker('update');
     });
 
@@ -5214,7 +5214,6 @@ if (typeof tblAccountability !== "undefined") {
                         var attr = $(this).attr('r');
                         var pre = attr.substring(0, 1);
                         var ind = parseInt(attr.substring(1, attr.length));
-                        console.log(ind);
                         ind = ind + downrows;
                         $(this).attr("r", pre + ind);
                     });
