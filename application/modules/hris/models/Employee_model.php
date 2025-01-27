@@ -8973,19 +8973,18 @@
             $coreHistoryLog->setHistoryLogTableFieldId($id);
             $coreHistoryLog->setHistoryLogEmployeeId($employeeId);
 
-            if($updated && $this->db->trans_status() === TRUE){
-                $resultSet["success"] = TRUE;
+            if($updated && $this->db->trans_status() === true){
+                $resultSet["success"] = true;
                 $resultSet["message"] = "Allowance data has been updated successfully.";
                 $resultSet["title"] = "Update Allowance Data";
                 $resultSet["toast"] = "success";
 
                 if($hasApprovingAuthority){
                     $historyStatus = $this->set_approved_allowance($post);
-
                     if($historyStatus){
-                        $resultarray['salary_history'] = 'Salary History Generated.';
+                        $resultSet['salary_history'] = 'Salary History Generated.';
                     }else{
-                        $resultarray['salary_history'] = 'Failed to generate Salary History.';
+                        $resultSet['salary_history'] = 'Failed to generate Salary History.';
                     }
                 }
 
