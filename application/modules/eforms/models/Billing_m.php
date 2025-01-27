@@ -5495,79 +5495,114 @@ class Billing_m extends CI_Model {
       return array("data"=>$resultarray, "recordsTotal"=>$total, "recordsFiltered"=>$total);
     }
 
+
     function getBillingArchiveCollection(){
-      $resultarray = array();
-      $post = $this->input->post();
+        $resultArray = array();
+        $postData = $this->input->post();
 
-      $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
-      $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
-      $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+        $orderBy = array(array("column" => "1", "dir" => "desc"));
+        $search = isset($postData["search"]["value"]) && $postData["search"]["value"] ? $postData["search"]["value"] : false;
+        $limit = isset($postData["length"]) && $postData["length"] ? $postData["length"] : 10;
+        $offset = isset($postData["start"]) && $postData["start"] ? $postData["start"] : 0;
+        $sortColumn = isset($postData["columns"]) && $postData["columns"] ? $postData["columns"] : 1;
+        $sortOrder = isset($postData["order"]) && $postData["order"] ? $postData["order"] : $orderBy;
 
-      $filterFields = array("a.accountno", "a.firstname", "a.middlename", "a.lastname", "a.lot", "a.block", "r.ref_no");
+        $filterFields = [
+            "a.accountno",
+            "a.firstname",
+            "a.middlename",
+            "a.lastname",
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            "a.lot",
+            "a.block",
+            "r.ref_no"
+        ];
 
-      $this->db->select("a.middlename, r.id, a.accountno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.due_date, a.model, r.status as bill_status");
-      $this->db->from("hydra_billing.bills r");
-      $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
-      $this->db->where("r.status", "0");
-
-      if($search != ""){
-          $this->db->group_start();
-          foreach ($filterFields as $key => $field) {
-              if ($key == 0) {
-                  $this->db->like($field, $search, "both");
-              } else {
-                  $this->db->or_like($field, $search, "both");
-              }
-          }
-          $this->db->group_end();
-      }
-      $this->db->order_by('r.ref_no', 'DESC');
-
-      if($limit != -1){
-          $this->db->limit($limit, $offset);
-      }
-
-      $query = $this->db->get();
-
-      if($query->num_rows() > 0){
-          foreach($query->result_array() as $_query){
-              $data = array();
-              $data["name"] = $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
-              $data["id"] = $_query["id"];
-              $data["accountno"] = $_query["accountno"];
-              $data["block"] = $_query["block"];
-              $data["lot"] = $_query["lot"];
-              $data["model"] = $_query["model"];
-              $data["ref_no"] = $_query["ref_no"];
-              $data["due_date"] = $_query["due_date"];
-              $resultarray[] = $data;
-          }
-      }
-
-      $total = $this->getBillingArchiveCount($search);
-      return array("data"=>$resultarray, "recordsTotal"=>$total, "recordsFiltered"=>$total);
-    }
-
-    public function getBillingArchiveCount($search){
-        $filterFields = array("a.accountno", "a.firstname", "a.middlename", "a.lastname", "a.lot", "a.block", "r.ref_no");
-        $this->db->select("a.middlename, r.id, a.accountno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.due_date, a.model, r.status as bill_status");
+        // Build the query
+        $this->db->select("a.middlename, r.id, a.accountno, CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname)) as name, a.lot, a.block, r.ref_no, r.due_date, a.model, r.status as bill_status");
         $this->db->from("hydra_billing.bills r");
         $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
         $this->db->where("r.status", "0");
 
-        if($search != ""){
+        // Add search filter dynamically
+        if (!empty($search)) {
             $this->db->group_start();
-            foreach ($filterFields as $key => $field) {
-                if ($key == 0) {
-                    $this->db->like($field, $search, "both");
-                } else {
-                    $this->db->or_like($field, $search, "both");
-                }
+            foreach ($filterFields as $field) {
+                $this->db->or_like($field, $search, "both");
+            }
+            $this->db->group_end();
+        }
+
+        // Add sorting
+        if (isset($sortOrder[0]['column'])) {
+            $columnIndex = $sortOrder[0]['column'];
+            $this->db->order_by($sortColumn[$columnIndex]['data'], $sortOrder[0]['dir']);
+        }
+
+        // Add pagination
+        if ($limit > 0) {
+            $this->db->limit($limit, $offset);
+        }
+
+        // Execute query
+        $query = $this->db->get();
+
+        // Process results
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $row) {
+                $resultArray[] = [
+                    "name" => $row["name"],
+                    "id" => $row["id"],
+                    "accountno" => $row["accountno"],
+                    "block" => $row["block"],
+                    "lot" => $row["lot"],
+                    "model" => $row["model"],
+                    "ref_no" => $row["ref_no"],
+                    "due_date" => $row["due_date"]
+                ];
+            }
+        }
+
+        $total = $this->getBillingArchiveCount($search);
+        return array("data" => $resultArray, "recordsTotal" => $total, "recordsFiltered" => $total);
+    }
+
+    public function getBillingArchiveCount($search){
+        $filterFields = [
+            "a.accountno",
+            "a.firstname",
+            "a.middlename",
+            "a.lastname",
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            "a.lot",
+            "a.block",
+            "r.ref_no"
+        ];
+
+        $this->db->select("a.middlename, r.id, a.accountno, CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname)) as name, a.lot, a.block, r.ref_no, r.due_date, a.model, r.status as bill_status");
+        $this->db->from("hydra_billing.bills r");
+        $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
+        $this->db->where("r.status", "0");
+
+        // Add search filter dynamically
+        if (!empty($search)) {
+            $this->db->group_start();
+            foreach ($filterFields as $field) {
+                $this->db->or_like($field, $search, "both");
             }
             $this->db->group_end();
         }
         
-        $this->db->order_by('r.ref_no', 'DESC');
+        // Add sorting
+        if (isset($sortOrder[0]['column'])) {
+            $columnIndex = $sortOrder[0]['column'];
+            $this->db->order_by($sortColumn[$columnIndex]['data'], $sortOrder[0]['dir']);
+        }
+        
         $query = $this->db->get();
         return $query->num_rows();
     }
