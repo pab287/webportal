@@ -5496,7 +5496,7 @@ class Billing_m extends CI_Model {
     }
 
 
-    function getBillingArchiveCollection(){
+    public function getBillingArchiveCollection(){
         $resultArray = array();
         $postData = $this->input->post();
 
