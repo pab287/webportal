@@ -756,23 +756,14 @@
     </tr>
     </thead>
     <tbody>
-    <tr>
-        <td data-label="DATE REGULARIZED"><?= ($data->main->date_regular == "0000-00-00" OR $data->main->date_regular == NULL) ? "N/A" : $data->main->date_regular ?></td>
-        <td data-label="PROBEE END DATE">
-            <?php
-                if($data->main->work_status == "PROBATIONARY"){
-                    echo "N/A";
-                }else{
-                    echo $data->main->date_end_prob;
-                }  
-            //($data->main->date_end_prob == "0000-00-00" OR $data->main->date_end_prob == NULL) ? "N/A" : $data->main->date_end_prob?>
-        </td>
-        <td data-label="DATE SEPERATED">
-            <?=($data->main->employee_status == 'Active' && ($data->main->date_end !== '0000-00-00' || $data->main->date_end !== NULL)) ? "N/A" : ($data->main->date_end == '0000-00-00' || $data->main->date_end == NULL ? "N/A" : $data->main->date_end) ?>
-        </td>
-        <!-- <td data-label="DATE SEPARATED"><?//= ($data->main->date_end == "0000-00-00" OR $data->main->date_end == NULL) ? "N/A" : $data->main->date_end ?></td> -->
-        <td data-label="REASON FOR SEPARATION"><?= ($data->main->employee_status == 'Active' && $data->main->resign_reason) ? "N/A" : ($data->main->resign_reason ? $data->main->resign_reason : "N/A") ?></td>
-    </tr>
+    <template>
+        <tr>
+            <td data-label="DATE REGULARIZED" v-text="formatDate(printData.main.date_regular)"></td>
+            <td data-label="PROBEE END DATE" v-text="formatDate(printData.main.date_end_prob)"></td>
+            <td data-label="DATE SEPARATED" v-text="(printData.main.employee_status === 'Active' && (printData.main.date_end !== '0000-00-00' || printData.main.date_end === null)) ? 'N/A' : formatDate(printData.main.date_end)"></td>
+            <td data-label="REASON FOR SEPARATION" v-text="(printData.main.employee_status === 'Active' && printData.main.resign_reason) ? 'N/A' : (printData.main.resign_reason ? printData.main.resign_reason : 'N/A')"></td>
+        </tr>
+    </template>
     </tbody>
 </table>
 <!-- WORK STATUS -->
@@ -852,7 +843,7 @@
     <tbody>
                     <tr>
                         <td id="job_desc" class="text-left">
-                        <label v-if="job_desc && job_desc !== 'NONE'" v-html="formattedJobDesc()"></label>
+                        <label v-html="formattedJobDescPrint(printData.main.job_desc)"></label>
                         </td>
                     </tr>
                     </tbody>

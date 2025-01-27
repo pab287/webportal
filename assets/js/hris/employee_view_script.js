@@ -52,6 +52,7 @@ let employeeDataSheet = new Vue({
             default_station:[],
             printData:{
                 main : {},
+                job_desc:"",
                 dependents:{},
                 licensesAndCerts:{
                     licenses:"",
@@ -236,7 +237,7 @@ let employeeDataSheet = new Vue({
           },
         formatDate(empdate) {
             if (!empdate || empdate == '0000-00-00') {
-                return '---';
+                return 'N/A';
               }
             const date = new Date(empdate);
             return date.toLocaleDateString('en-US', { 
@@ -300,19 +301,23 @@ let employeeDataSheet = new Vue({
           },
           formattedJobDesc() {
             if (!this.job_desc) return '';
-            
-            // Create a temporary div to parse HTML
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = this.job_desc;
-            
-            // Check if there are any li elements
             const hasListItems = tempDiv.getElementsByTagName('li').length > 0;
-            
-            // If it has list items, return the HTML as is
-            // If not, convert newlines to <br>
+
             return hasListItems 
               ? this.job_desc 
               : this.job_desc.replace(/\n/g, '<br>');
+          },
+          formattedJobDescPrint(data) {
+            if (!data) return '';
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data;
+            const hasListItems = tempDiv.getElementsByTagName('li').length > 0;
+
+            return hasListItems 
+              ? data 
+              : data.replace(/\n/g, '<br>');
           },
     }
 })
@@ -763,6 +768,7 @@ function printFetch(){
         global: false,
         success: function(response) {
             if(response){
+                console.log("Response: ",response);
                 employeeDataSheet.$data.printData = { ...employeeDataSheet.$data.printData, ...response.data };
                 if (actions.includes("view_own_request") && employeeDataSheet.$data.printData.main.id !== session_id) {
                     employeeDataSheet.$data.printData.salaries = "not_allowed";
@@ -776,6 +782,7 @@ function printFetch(){
 }
 
 function printEmployeeDataSheet(avatar, info, user, timestamp) {
+    console.log("PrintData: ",employeeDataSheet.$data.printData);
     const divToPrint = $(".data-sheet").html();
     const newWin = window.open('', 'Print-Employee Data Sheet');
     const style1 = baseUrl("assets/css/responsiveTable.css");
@@ -970,10 +977,10 @@ function printEmployeeDataSheet(avatar, info, user, timestamp) {
         '</html>';
     newWin.document.open();
     newWin.document.write(_document);
-    newWin.document.close();
-    setTimeout(function () {
-        newWin.close();
-    }, 1500);
+    // newWin.document.close();
+    // setTimeout(function () {
+    //     newWin.close();
+    // }, 1500);
 }
 
 
