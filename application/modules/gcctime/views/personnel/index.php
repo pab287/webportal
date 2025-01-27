@@ -170,15 +170,25 @@
 					<div class="form-group row">
 						<div class="col-md-12 col-12 col-lg-12 col-xl-12 col-sm-12">
 							<label class="form-control-label">Flexible Time</label>
-							<div class="m-checkbox-inline">
+							<select name="is_flexi" id="flexi-dropdown" class="form-control">
+								<option value="0">Default</option>
+								<option value="1">Yes</option>
+								<option value="2">1 in 1 out only</option>
+								<option value="3">Super Flexi</option>
+								<option value="4" disabled>No in and no out</option>
+							</select>
+
+							<!-- Original source code for reference -->
+							<!-- <div class="m-checkbox-inline">
 								<label class="m-checkbox"><input id="isflexi1" type="radio" name="is_flexi" value="1">Yes<span></span></label>
 								<label class="m-checkbox"><input id="isflexi2" type="radio" name="is_flexi" value="2">1 IN 1 OUT ONLY<span></span></label>
 								<label class="m-checkbox"><input id="isflexi3" type="radio" name="is_flexi" value="3">SUPER FLEXI<span></span></label>
 								<label class="m-checkbox"><input id="isflexi0" type="radio" name="is_flexi" value="0" checked>No<span></span></label>
-							</div>
+							</div> -->
+							<!-- Original source code for reference -->
 						</div>
 					</div>
-					<div class="form-group row mt-5">
+					<div class="form-group row">
 						<div class="col-md-6">
 							<label class="form-control-label">Status</label>
 							<div class="m-checkbox-inline">
@@ -723,27 +733,32 @@
 						$("#form-personnel-edit").find("#is_perhour1").prop("checked", false);
 					}
 
-					if(currentData.is_flexi == 1){
-						$("#form-personnel-edit").find("#isflexi1").prop("checked", true);
-						$("#form-personnel-edit").find("#isflexi2").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi3").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi0").prop("checked", false);
-					}else if(currentData.is_flexi == 2){
-						$("#form-personnel-edit").find("#isflexi2").prop("checked", true);
-						$("#form-personnel-edit").find("#isflexi3").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi1").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi0").prop("checked", false);
-					}else if(currentData.is_flexi == 3){
-						$("#form-personnel-edit").find("#isflexi3").prop("checked", true);
-						$("#form-personnel-edit").find("#isflexi0").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi1").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi2").prop("checked", false);
-					}else{
-						$("#form-personnel-edit").find("#isflexi0").prop("checked", true);
-						$("#form-personnel-edit").find("#isflexi1").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi2").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi3").prop("checked", false);
-					}
+					// if(currentData.is_flexi == 1){
+					// 	$("#form-personnel-edit").find("#isflexi1").prop("checked", true);
+					// 	$("#form-personnel-edit").find("#isflexi2").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi3").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi0").prop("checked", false);
+					// }else if(currentData.is_flexi == 2){
+					// 	$("#form-personnel-edit").find("#isflexi2").prop("checked", true);
+					// 	$("#form-personnel-edit").find("#isflexi3").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi1").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi0").prop("checked", false);
+					// }else if(currentData.is_flexi == 3){
+					// 	$("#form-personnel-edit").find("#isflexi3").prop("checked", true);
+					// 	$("#form-personnel-edit").find("#isflexi0").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi1").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi2").prop("checked", false);
+					// }else{
+					// 	$("#form-personnel-edit").find("#isflexi0").prop("checked", true);
+					// 	$("#form-personnel-edit").find("#isflexi1").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi2").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi3").prop("checked", false);
+					// }
+
+					$("#form-personnel-edit").find('#flexi-dropdown').select2({
+						width: '100%',
+						placeholder: 'Select a Option',
+					}).val(currentData.is_flexi).trigger('change');
 					$("#modal-personnel_edit").modal("show");
 				}
 			}
