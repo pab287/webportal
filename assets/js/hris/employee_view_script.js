@@ -768,7 +768,6 @@ function printFetch(){
         global: false,
         success: function(response) {
             if(response){
-                console.log("Response: ",response);
                 employeeDataSheet.$data.printData = { ...employeeDataSheet.$data.printData, ...response.data };
                 if (actions.includes("view_own_request") && employeeDataSheet.$data.printData.main.id !== session_id) {
                     employeeDataSheet.$data.printData.salaries = "not_allowed";
@@ -782,7 +781,6 @@ function printFetch(){
 }
 
 function printEmployeeDataSheet(avatar, info, user, timestamp) {
-    console.log("PrintData: ",employeeDataSheet.$data.printData);
     const divToPrint = $(".data-sheet").html();
     const newWin = window.open('', 'Print-Employee Data Sheet');
     const style1 = baseUrl("assets/css/responsiveTable.css");
@@ -977,10 +975,10 @@ function printEmployeeDataSheet(avatar, info, user, timestamp) {
         '</html>';
     newWin.document.open();
     newWin.document.write(_document);
-    // newWin.document.close();
-    // setTimeout(function () {
-    //     newWin.close();
-    // }, 1500);
+    newWin.document.close();
+    setTimeout(function () {
+        newWin.close();
+    }, 1500);
 }
 
 
