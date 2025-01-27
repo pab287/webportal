@@ -42,13 +42,12 @@ var tblBorrowing = $("#table-borrowing").DataTable({
         { data: "status",render: function (data) {return renderStatusHtml(data)}},
         { data: "reference_no"},
         { data: "company", width: "10%"},
-        { data: "display_name", // data: firstname
+        { data: "firstname",
             render: function (data, type, row, meta) {
-                // return displayName(row.display_name)
                 var html = ``;
 
                 if(data){
-                    html += `<b>${data}</b>`;
+                    html += `<b>${ row.display_name }</b>`;
                     html += `<p class="m-0">${ row.position }</p>`;
                 }
 
