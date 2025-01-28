@@ -150,11 +150,11 @@
 					<input type="hidden" id="id" name="id" value="0" />
 					<input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 					<div class="form-group">
-						<label class="form-control-label">Biometric No *</label>
+						<label class="form-control-label required">Biometric No</label>
 						<input type="text" id="biometricno" name="biometricno" class="form-control inptBiometricno" autocomplete="off" data-validation="required" onkeypress="return isNumber(event)" />
 					</div>
 					<div class="form-group">
-						<label class="form-control-label">Name *</label>
+						<label class="form-control-label required">Name</label>
 						<input type="text" id="employee_name" name="name" class="form-control inptName" autocomplete="off" data-validation="required" />
 					</div>
 					<div class="row">
