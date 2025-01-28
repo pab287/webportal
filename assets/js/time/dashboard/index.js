@@ -57,7 +57,7 @@ var vmData = new Vue({
             toastr.error(redis_message, "Error", 10000);
         }
 
-        if ((_roleId == 1 || _roleId == 2) && _admin_privilege == true) {
+        if ((_roleId == 1 || _roleId == 2) || _admin_privilege == true) {
             instance.showActivityLogs();
             instance.showRealTimeLogs();
             instance.showLate();
