@@ -295,9 +295,11 @@ class Reports_model extends CI_Model{
 
     public function getEmployeesForSalaryRange($export){
         $tableConfig = $this->input->post();
+        $filtersString = ' Filters applied: ';
         $tableConfigStd = $this->utilities->parseFormDataToObject($tableConfig);
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($tableConfigStd);
         $search = $pageOptions->search;
+        $generate = $tableConfig['generate'];
         $company = null;
         $department = null;
         $position = null;
@@ -316,16 +318,19 @@ class Reports_model extends CI_Model{
         if (isset($tableConfigStd->filter->company)&& !empty($tableConfigStd->filter->company)) {
             $company = $this->db->where('id', $tableConfigStd->filter->company)->get('gcchris.tblcompanies')->row('code');
             $where['IF(comp.id IS NULL, emp.company_id, comp.code)='] = $company;
+            $filtersString .= 'Company: <strong>' . $company . '</strong>, ';
         }
 
         if (isset($tableConfigStd->filter->department) && !empty($tableConfigStd->filter->department)) {
             $department = $this->db->where('id', $tableConfigStd->filter->department)->get('gcchris.tbldepartments')->row('code');
             $where['IF(dep.id IS NULL, emp.department_id, dep.code)='] = $department;
+            $filtersString .= 'Department: <strong>' . $department . '</strong>, ';
         }
 
         if (isset($tableConfigStd->filter->position) && $tableConfigStd->filter->position) {
             $position = $this->db->where('id', $tableConfigStd->filter->position)->get('gcchris.tblposition')->row('name');
             $where['IF(pos.id IS NULL, emp.position, pos.name)='] = $position;
+            $filtersString .= 'Position: <strong>' . $position . '</strong>, ';
         }
 
         $select = "IF(comp.id IS NULL, emp.company_id, comp.code) company,
@@ -410,6 +415,22 @@ class Reports_model extends CI_Model{
         $resultSet['sql'] = $this->db->last_query();
         $resultSet['recordsTotal'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $searchField, $joinArr);
         $resultSet['recordsFiltered'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $searchField, $joinArr);
+       
+        if ($export && $export == 1) {
+            $logMessage = "Exported <strong>Employee salary range</strong>.{$filtersString} Salary range: <strong>" . number_format($salary_from, 2) . " - " . number_format($salary_to, 2) . "</strong> Export type: <strong>{$tableConfig['exportType']}</strong> with result count: <strong>{$resultSet['recordsTotal']}</strong>";
+            $this->core_layout->setEventLog($logMessage, "export", 'success', "gcchris", 'user');
+            $search = false;
+        }
+
+        if($search && $search !== '') {
+            $logMessage = "User searched for: '<strong>{$search}</strong>' in <strong>Employee salary range</strong>.{$filtersString} Salary range:<strong> " . number_format($salary_from, 2) . " - " . number_format($salary_to, 2) . "</strong>. System found: <strong>{$resultSet['recordsTotal']}</strong> results.";
+            $this->core_layout->setEventLog($logMessage, "export", 'success', "gcchris", 'user');
+        }else{
+            if(isset($generate) && $generate == 'true') {
+                $logMessage = "Generated <strong>Employee salary range</strong>.{$filtersString} Salary range: <strong>" . number_format($salary_from, 2) . " - " . number_format($salary_to, 2) . "</strong> with result count: <strong>{$resultSet['recordsTotal']}</strong>";
+                $this->core_layout->setEventLog($logMessage, "generate", 'success', "gcchris", 'user');
+            }
+        }
         return $resultSet;
     }
 
