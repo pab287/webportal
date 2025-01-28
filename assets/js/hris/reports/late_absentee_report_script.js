@@ -1,6 +1,8 @@
 let _years = [];
 let _companies = [];
-
+let filterExport = {};
+let totalEntries = 0;
+let typeReport ="";
 toastr.options = { newestOnTop: true, positionClass: "toast-bottom-right" };
 
 const hrisFilterLateAbsenteeReport = $("#frm-filter-hris-late_absentee_report");
@@ -307,7 +309,7 @@ $.validate({
 
         const formData = $(currentForm).serialize();
         if(propDisabled){ tempEmployeeFilter.prop("disabled", true); }
-
+        filterExport = $(currentForm).serialize();
         $.ajax({
             url: siteUrl("hris/reports/generate_late_absentee_report"),
             type: "post",
@@ -315,11 +317,12 @@ $.validate({
             data: formData,
             success: function(json){
                 if(json.response){
+                    typeReport =  document.querySelector('input[name="report_type"]:checked').value;
                     dtTableLateAbsenteeReport.clear();
                     dtTableLateAbsenteeReport.rows.add(json.data);
                     dtTableLateAbsenteeReport.draw(false);
                     Object.assign(filterOptionsLateAbsentee, json.filters);
-
+                    totalEntries = dtTableLateAbsenteeReport.rows().count();
                     setTimeout(function () {
                         const rowCount = dtTableLateAbsenteeReport.rows().count();
                         if (rowCount > 0 && isCollapsedPortlet === true) { isCollapsedPortlet = _tblPortletReports.expand(); }
@@ -432,6 +435,9 @@ if(typeof dtTableLateAbsentee !== "undefined" && dtTableLateAbsentee.length > 0)
             exportOptions: {
                 columns: [0, 1, 2, 3],
                 stripHtml: true,
+            },
+            customize: function (xlsx) {
+                export_log(filterExport, `${typeReport} Report`, "excel", totalEntries);
             }
         }, {
             extend: 'print',
@@ -472,6 +478,7 @@ if(typeof dtTableLateAbsentee !== "undefined" && dtTableLateAbsentee.length > 0)
 
                 head.appendChild(style);
                 win.document.title = "Late/Absentee Report Printable Page";
+                export_log(filterExport, `${typeReport} Report`, "print", totalEntries);
             }, exportOptions: {
                 columns: [0, 1, 2, 3],
                 stripHtml: true,
@@ -568,3 +575,30 @@ $("#toggleCollapse").on("click", function(){
         isCollapsedPortlet = true;
     }
 });
+
+async function export_log(datas, type, name, count) {
+    const filters = {};
+    datas.split('&').forEach(pair => {
+        const [key, value] = pair.split('=');
+        filters[key] = decodeURIComponent(value);
+    });
+
+    try {
+        const response = await $.ajax({
+            url: siteUrl("hris/reports/log_export"),
+            type: "POST",
+            data: { 
+                filters,
+                type: type,
+                name: name,
+                count: count,
+                csrf_token: _csrf_hash 
+            },
+            // dataType: 'json'
+        });
+        return response;
+    } catch (error) {
+        console.error('Error exporting log:', error);
+        throw error;
+    }
+}

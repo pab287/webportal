@@ -4,7 +4,8 @@ let _year = [];
 let table;
 let colorSet = new am4core.ColorSet();
 let attritionChart;
-
+let filtered = {};
+let count = 0;
 const months = [
     { id: 1, text: "January" },
     { id: 2, text: "February" },
@@ -173,7 +174,6 @@ var generateAttrition = new Vue({
         }, getScriptRendering(formUrl, formData, currentForm){
             const instance = this;
             const element = this.$el;
-
             $.ajax({
                 url: formUrl,
                 type: "post",
@@ -413,6 +413,7 @@ var generateAttrition = new Vue({
                             var dec = typeof row.december !== 'undefined' ? row.december : 0;
 
                             var total = parseInt(jan) + parseInt(feb) + parseInt(mar) + parseInt(apr) + parseInt(may) + parseInt(jun) + parseInt(jul) + parseInt(aug) + parseInt(sep) + parseInt(oct) + parseInt(nov) + parseInt(dec);
+                            count = total;
                             return total;
                         }
                     }
@@ -608,6 +609,7 @@ var generateAttrition = new Vue({
 
             instance.generateInitialChart();
         }, printReport(el, type){
+            export_log(filtered,"Attrition Report", "print",count,type);
             const instance = this;
 
             const divToPrint = document.getElementById(el);
@@ -691,6 +693,7 @@ var generateAttrition = new Vue({
             newWin.document.write(html);
             newWin.print();
             newWin.close();
+
         }
     }
 });
@@ -703,7 +706,7 @@ $.validate({
         var currentForm = form[0];
         var formUrl = currentForm.action;
         var formData = $(currentForm).serialize();
-
+        filtered = formData;
         generateAttrition.getScriptRendering(formUrl, formData, currentForm);
 
         return false;
@@ -712,3 +715,35 @@ $.validate({
 
 // for validation of checkbox
 $("[name='to_generate_group[]']:eq(0)").valAttr('','validate_checkbox_group').valAttr('qty','1-2').valAttr('error-msg','ch0ose atleast 1 to generate');
+
+async function export_log(datas, name, type, count,chart) {
+    let filters = {};
+    const exportName = name+' '+chart;
+    if (datas) {
+        filters = {};
+        datas.split('&').forEach(pair => {
+            const [key, value] = pair.split('=');
+            filters[key] = decodeURIComponent(value);
+        });
+    }
+
+    filters.filter_type = $('input[name="to_generate_group[]"]:checked').val();
+    try {
+        const response = await $.ajax({
+            url: siteUrl("hris/reports/log_export"),
+            type: "POST",
+            data: { 
+                filters,
+                type: exportName,
+                name: type,
+                count: count,
+                csrf_token: _csrf_hash 
+            },
+            // dataType: 'json'
+        });
+        return response;
+    } catch (error) {
+        console.error('Error exporting log:', error);
+        throw error;
+    }
+}

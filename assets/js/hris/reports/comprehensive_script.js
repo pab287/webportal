@@ -4,7 +4,10 @@ const filterHired = $("#tempFilter");
 const filterCertificate = $("#tempFilterCertificate");
 let globalDepartmentId = 0;
 let _companies = [], _departments = [], _positions = [];
-
+let filters ={};
+let filtersLicCert ={};
+let filtersTraining ={};
+let filtersDriversLicense ={};
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){ _companies = _tempContentData.company; }
     if(typeof _tempContentData.department !== "undefined" && _tempContentData.department.length > 0){ _departments = _tempContentData.department; }
@@ -31,6 +34,9 @@ $("#date-range", filterHired).val("");
             $("#date-range", filterHired)
             .val(picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY'))
             .validate();
+            filters.date_range = $("#date-range", filterHired).val();
+        }).on('cancel.daterangepicker', function (ev, picker) {
+            filters.date_range = "";
         });
     }
     $("#company", filterHired).select2({
@@ -40,6 +46,9 @@ $("#date-range", filterHired).val("");
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filters.company = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filters.company = "";
     });
 
     $("#department", filterHired).select2({
@@ -49,6 +58,9 @@ $("#date-range", filterHired).val("");
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filters.department = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filters.department = "";
     });
 
     $("#position", filterHired).select2({
@@ -58,6 +70,9 @@ $("#date-range", filterHired).val("");
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filters.position = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filters.position = "";
     });
 
     const temporaryFilterByHired = new Vue({
@@ -119,6 +134,9 @@ if(typeof filterTraining !== "undefined"){
             $("#date-range", filterTraining)
             .val(picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY'))
             .validate();
+            filtersTraining.date_range = $("#date-range", filterTraining).val();
+        }).on('cancel.daterangepicker', function (ev, picker) {
+            filtersTraining.date_range = "";
         });
     }
 
@@ -129,6 +147,9 @@ if(typeof filterTraining !== "undefined"){
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filtersTraining.company = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filtersTraining.company = "";
     });
 
     $("#department", filterTraining).select2({
@@ -138,6 +159,9 @@ if(typeof filterTraining !== "undefined"){
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filtersTraining.department = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filtersTraining.department = "";
     });
 
     $("#position", filterTraining).select2({
@@ -147,6 +171,9 @@ if(typeof filterTraining !== "undefined"){
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filtersTraining.position = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filtersTraining.position = "";
     });
 
     const temporaryFilterByTraining = new Vue({
@@ -206,6 +233,9 @@ if(typeof filterDriversLicense !== "undefined" && filterDriversLicense.length ==
             $("#date-range", filterDriversLicense)
             .val(picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY'))
             .validate();
+            filtersDriversLicense.date_range = $("#date-range", filterDriversLicense).val();
+        }).on('cancel.daterangepicker', function (ev, picker) {
+            filtersDriversLicense.date_range = "";
         });
     }
 
@@ -216,6 +246,9 @@ if(typeof filterDriversLicense !== "undefined" && filterDriversLicense.length ==
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filtersDriversLicense.company = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filtersDriversLicense.company = "";
     });
 
     $("#department", filterDriversLicense).select2({
@@ -225,6 +258,9 @@ if(typeof filterDriversLicense !== "undefined" && filterDriversLicense.length ==
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filtersDriversLicense.department = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filtersDriversLicense.department = "";
     });
 
     $("#position", filterDriversLicense).select2({
@@ -234,6 +270,9 @@ if(typeof filterDriversLicense !== "undefined" && filterDriversLicense.length ==
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filtersDriversLicense.position = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filtersDriversLicense.position = "";
     });
 
     const temporaryFilterByDriversLicense = new Vue({
@@ -276,7 +315,7 @@ if(typeof filterDriversLicense !== "undefined" && filterDriversLicense.length ==
 
 if(typeof filterCertificate !== "undefined"){
     $("#date-range", filterCertificate).val("");
-
+//here
     var _data = [
         { id: "COMPANY SPONSORED - INTERNAL", text: "COMPANY SPONSORED - INTERNAL" },
         { id: "COMPANY SPONSORED - EXTERNAL", text: "COMPANY SPONSORED - EXTERNAL" },
@@ -299,6 +338,9 @@ if(typeof filterCertificate !== "undefined"){
             $("#date-range", filterCertificate)
             .val(picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY'))
             .validate();
+            filtersLicCert.date_range = $("#date-range", filterCertificate).val();
+        }).on('cancel.daterangepicker', function (ev, picker) {
+            filtersLicCert.date_range = "";
         });
     }
 
@@ -309,6 +351,9 @@ if(typeof filterCertificate !== "undefined"){
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filtersLicCert.company = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filtersLicCert.company = "";
     });
 
     $("#department", filterCertificate).select2({
@@ -318,6 +363,9 @@ if(typeof filterCertificate !== "undefined"){
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filtersLicCert.department = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filtersLicCert.department = "";
     });
 
     $("#position", filterCertificate).select2({
@@ -327,6 +375,9 @@ if(typeof filterCertificate !== "undefined"){
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
+        filtersLicCert.department = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filtersLicCert.department = "";
     });
 
     $("#type", filterCertificate).select2({
@@ -336,7 +387,10 @@ if(typeof filterCertificate !== "undefined"){
         allowClear: true,
     }).on("select2:select", function (e) {
         $(e.target).validate();
-    });
+        filtersLicCert.type = $(e.target).val();
+    }).on("select2:unselect", function (e) {
+        filtersLicCert.type = "";
+    })
 
     const temporaryFilterByCertificate = new Vue({
         el: "#tempFilterByCertificate",
@@ -459,6 +513,7 @@ const vmFilteredContentLicenses = new Vue({
                             $(tempTable).removeClass("table-bordered");
                             const tempTHead = $(tempTable).find("thead th:not(:first-child):not(:last-child)");
                             tempTHead.removeClass("text-right").addClass("text-left");
+                            export_log(filtersDriversLicense,"Drivers License Report", "print",vmFilteredContentLicenses.count);
                         }
                     }, { extend: 'excel' }],
                     columnDefs: [{
@@ -495,6 +550,7 @@ const vmFilteredContentLicenses = new Vue({
                 $("i", e).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
                 $("i", e).css({ top: "50%", left: "50%" });
             }, 150);
+            export_log(filtersDriversLicense,"Drivers License Report", "excel",vmFilteredContentLicenses.count);
         }
     }
 });
@@ -580,6 +636,7 @@ const vmFilteredContentTraining = new Vue({
                             $(tempTable).removeClass("table-bordered");
                             const tempTHead = $(tempTable).find("thead th:not(:first-child)");
                             tempTHead.removeClass("text-right").addClass("text-left");
+                            export_log(filtersTraining,"Trainings and Seminars Report", "print",vmFilteredContentTraining.count);
                         }
                     }, { extend: 'excel' }]
                 });
@@ -608,6 +665,7 @@ const vmFilteredContentTraining = new Vue({
                 $("i", e).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
                 $("i", e).css({ top: "50%", left: "50%" });
             }, 150);
+            export_log(filtersTraining,"Trainings and Seminars Report", "excel",vmFilteredContentTraining.count);
         }
     }
 });
@@ -679,6 +737,7 @@ const vmFilteredContent = new Vue({
                             $(tempTable).removeClass("table-bordered");
                             const tempTHead = $(tempTable).find("thead th:not(:first-child)");
                             tempTHead.removeClass("text-right").addClass("text-center");
+                            export_log(filters,"Hired/Separated Employee Report", "print",vmFilteredContent.count);
                         }
                     }, { extend: 'excel' }]
                 });
@@ -707,6 +766,7 @@ const vmFilteredContent = new Vue({
                 $("i", e).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
                 $("i", e).css({ top: "50%", left: "50%" });
             }, 150);
+            export_log(filters,"Hired/Separated Employee Report", "excel",vmFilteredContent.count);
         }
     }
 });
@@ -809,6 +869,7 @@ const vmFilteredContentCertificate = new Vue({
                             $(tempTable).removeClass("table-bordered");
                             const tempTHead = $(tempTable).find("thead th:not(:first-child)");
                             tempTHead.removeClass("text-right").addClass("text-left");
+                            export_log(filtersLicCert,"Licences and Certifications Report", "print",vmFilteredContentCertificate.count);
                         }
                     }, { extend: 'excel' }],
                     columnDefs: [{
@@ -845,6 +906,7 @@ const vmFilteredContentCertificate = new Vue({
                 $("i", e).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
                 $("i", e).css({ top: "50%", left: "50%" });
             }, 150);
+            export_log(filtersLicCert,"Licences and Certifications Report", "excel",vmFilteredContentCertificate.count);
         }
     }
 });
@@ -857,7 +919,8 @@ $.validate({
         var currentForm = form[0];
         var formMethod = currentForm.method;
         var formData = $(currentForm).serialize();
-
+        filters.filter_by = $('input[name="filter_by"]:checked').val();
+        filters.filter_type = $('input[name="filter_type"]:checked').val();
         $.ajax({
             url: siteUrl("hris/reports/generate_comprehensive_report"),
             type: formMethod,
@@ -905,7 +968,8 @@ $.validate({
         var currentForm = form[0];
         var formMethod = currentForm.method;
         var formData = $(currentForm).serialize();
-
+        filtersTraining.filter_by = $('input[name="filter_by"]:checked').val();
+        filtersTraining.training = $('#training').val();
         $.ajax({
             url: siteUrl("hris/reports/generate_training_seminars_report"),
             type: formMethod,
@@ -953,7 +1017,7 @@ $.validate({
         var currentForm = form[0];
         var formMethod = currentForm.method;
         var formData = $(currentForm).serialize();
-
+        filtersDriversLicense.filter_by = $('input[name="filter_by"]:checked').val();
         $.ajax({
             url: siteUrl("hris/reports/generate_drivers_license_report"),
             type: formMethod,
@@ -1001,7 +1065,8 @@ $.validate({
         var currentForm = form[0];
         var formMethod = currentForm.method;
         var formData = $(currentForm).serialize();
-
+        filtersLicCert.filter_by = $('input[name="filter_by"]:checked').val();
+        filtersLicCert.title = $('#licenses').val();
         $.ajax({
             url: siteUrl("hris/reports/generate_licenses_certificate_report"),
             type: formMethod,
@@ -1040,3 +1105,24 @@ $.validate({
         return false;
     }
 });
+
+async function export_log(filters, type, name, count) {
+    try {
+        const response = await $.ajax({
+            url: siteUrl("hris/reports/log_export"),
+            type: "POST",
+            data: { 
+                filters,
+                type: type,
+                name: name,
+                count: count,
+                csrf_token: _csrf_hash 
+            },
+            // dataType: 'json'
+        });
+        return response;
+    } catch (error) {
+        console.error('Error exporting log:', error);
+        throw error;
+    }
+}
