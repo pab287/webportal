@@ -923,7 +923,7 @@ class Reports_model extends CI_Model{
                     $resultset["toastr_msg"] = "Generate all license and certification report {$resultFilter}, a total of <strong>{$numRows}</strong> record(s) found.";
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = "Generate all license and certification report, no filtered data found!";
+                    $resultset["toastr_msg"] = "Generate all license and certification report, {$resultFilter}, no filtered data found!";
                 }
             }
         }else{
