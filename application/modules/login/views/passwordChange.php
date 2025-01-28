@@ -91,9 +91,9 @@
                                 </label>
                             </div>
                             <div class="form-group m-form__group">
-                                <label>New Password *</label>
+                            <label>New Password <span style="color: red;">*</span></label>
                                 <div class="password-container">
-                                    <input id="newPasswordInput" type="password" class="form-control m-input" name="password_confirmation" data-validation="required length strength" data-validation-length="min8" data-validation-strength="3" autocomplete="off">
+                                    <input id="newPasswordInput" type="password" class="form-control m-input" name="password_confirmation" data-validation="required length strength symbol" data-validation-length="min8" data-validation-strength="3" autocomplete="off">
                                     <span id="newPasswordToggle" class="password-toggle"><i class="fa fa-eye"></i></span>
                                 </div>
                             </div>
@@ -101,12 +101,12 @@
                                 <ul>
                                     <li>Password must contain numbers.</li>
                                     <li>Password must contain uppercase letters.</li>
-                                    <li>Password must have at least one @#$ symbol.</li>
+                                    <li>Password must have at least one symbol (e.g. !@#).</li>
                                     <li>Password must be greater than 8 characters.</li>
                                 </ul>
                             </span>
                             <div class="form-group m-form__group">
-                                <label>Confirm Password *</label>
+                                <label>Confirm Password <span style="color: red;">*</span></label>
                                 <div class="password-container">
                                     <input id="confirmPasswordInput" type="password" class="form-control m-input" name="password" data-validation="confirmation">
                                     <span id="confirmPasswordToggle" class="password-toggle"><i class="fa fa-eye"></i></span>
@@ -144,12 +144,6 @@
 	$('input[name="username"]').val(sessionData.post.username || '');
 	$('input[name="old_password"]').val(sessionData.post.password || '');
 	
-			$(document).ready(function(){
-				$.validate({
-					form : '#changepasswordform',
-					modules: 'security'
-				});
-			});
 
 $(document).ready(function() {
     const $passwordInput = $('#newPasswordInput');
@@ -178,7 +172,7 @@ $(document).ready(function() {
             element: $helpSection.find('li:nth-child(2)')
         },
         { 
-            condition: (val) => /[@#$]/.test(val), 
+            condition: (val) => /[^\w\s]/.test(val),
             key: 'symbols',
             element: $helpSection.find('li:nth-child(3)')
         }
@@ -193,6 +187,21 @@ $(document).ready(function() {
         });
 
         $helpSection.toggle(!Object.values(conditions).every(Boolean));
+    });
+
+    $.formUtils.addValidator({
+        name: 'symbol', // Name of the validator
+        validatorFunction: function(value, $el, config, language, $form) {
+            return /[^\w\s]/.test(value);
+        },
+        errorMessage: 'The input must contain at least one symbol (e.g., !, @, #, $, etc.).',
+        errorMessageKey: 'missingSymbol'
+    });
+
+
+    $.validate({
+        form : '#changepasswordform',
+        modules: 'security'
     });
 
 	$('#changepasswordform').on('submit', function(e) {
