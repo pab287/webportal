@@ -93,10 +93,18 @@
                             <div class="form-group m-form__group">
                                 <label>New Password *</label>
                                 <div class="password-container">
-                                    <input id="newPasswordInput" type="password" class="form-control m-input" name="password_confirmation" data-validation="required length strength" data-validation-length="min8" data-validation-strength="3">
+                                    <input id="newPasswordInput" type="password" class="form-control m-input" name="password_confirmation" data-validation="required length strength" data-validation-length="min8" data-validation-strength="3" autocomplete="off">
                                     <span id="newPasswordToggle" class="password-toggle"><i class="fa fa-eye"></i></span>
                                 </div>
                             </div>
+                            <span class="m-form__help">
+                                <ul>
+                                    <li>Password must contain numbers.</li>
+                                    <li>Password must contain uppercase letters.</li>
+                                    <li>Password must have at least one @#$ symbol.</li>
+                                    <li>Password must be greater than 8 characters.</li>
+                                </ul>
+                            </span>
                             <div class="form-group m-form__group">
                                 <label>Confirm Password *</label>
                                 <div class="password-container">
@@ -144,8 +152,8 @@
 			});
 
 $(document).ready(function() {
-    const $passwordInput = $('input[name="password_confirmation"]');
-    const $helpSection = $passwordInput.next('.m-form__help');
+    const $passwordInput = $('#newPasswordInput');
+    const $helpSection = $('.m-form__help');
     const conditions = {
         length: false,
         numbers: false,
