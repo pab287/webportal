@@ -199,6 +199,11 @@
 </div>
 
 <script type="text/javascript">
+    const sessionData = <?= json_encode($session  ?? []) ?>;
+	if (sessionData.auth) {
+		window.location.href = '<?php echo base_url("login/authentication"); ?>';
+        console.log(sessionData.auth);
+	}
     function togglepass() {
         var x = document.getElementById("password-field");
         var y = document.getElementById("showpassword");

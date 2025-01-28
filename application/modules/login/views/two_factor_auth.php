@@ -117,8 +117,7 @@ input[type="radio"]:checked::after {
 
     </style>
   </head>
-
-  	<body class="align-items-center justify-content-center">
+    <body class="align-items-center justify-content-center">
         <div class="row">
             <div class="col" id="passkey">
                 <div class="m-portlet m-login__signin">
@@ -188,10 +187,16 @@ input[type="radio"]:checked::after {
                     </form>
                     <!--end::Form-->
                 </div>
-		</div>
-
+		    </div>
         </div>
 <script type="text/javascript">
+
+const sessionData = <?= json_encode($session  ?? []) ?>;
+console.log(sessionData);
+	// if (!sessionData.auth) {
+	// 	window.location.href = '<?php echo base_url("login"); ?>';
+	// }
+
  $('#two_factor_auth').on('submit', function(e) {
         e.preventDefault();
 
