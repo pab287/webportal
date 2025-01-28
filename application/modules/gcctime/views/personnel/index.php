@@ -151,7 +151,7 @@
 					<input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 					<div class="form-group">
 						<label class="form-control-label">Biometric No *</label>
-						<input type="text" id="biometricno" name="biometricno" class="form-control inptBiometricno" autocomplete="off" data-validation="required" />
+						<input type="text" id="biometricno" name="biometricno" class="form-control inptBiometricno" autocomplete="off" data-validation="required" onkeypress="return isNumber(event)" />
 					</div>
 					<div class="form-group">
 						<label class="form-control-label">Name *</label>
@@ -207,7 +207,7 @@
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-				<button type="submit" class="btn btn-danger btnSave btn-submit">Save</button>
+				<button type="submit" class="btn btn-success btnSave btn-submit">Save</button>
 			</div>
 			</form>
 		</div>
@@ -758,6 +758,8 @@
 					$("#form-personnel-edit").find('#flexi-dropdown').select2({
 						width: '100%',
 						placeholder: 'Select a Option',
+						dropdownParent: $("#modal-personnel_edit"),
+						minimumResultsForSearch: -1
 					}).val(currentData.is_flexi).trigger('change');
 					$("#modal-personnel_edit").modal("show");
 				}
@@ -818,6 +820,13 @@
 			$("#department_settings, #location_settings, #shift_settings").trigger("change");
 		}
 	});
+
+	function isNumber(evt) {
+		var charCode = (evt.which) ? evt.which : evt.keyCode
+		if (charCode > 31 && (charCode < 48 || charCode > 57))
+			return false;
+		return true;
+	}
 </script>
 <style type="text/css">
 	.btn.btn-default:hover,
