@@ -1,9 +1,6 @@
-$(document).ready(function(){
-
-});
-var search_val = "";
-var query_builder = "";
-var tblReadings = $("#table-billing-archive").DataTable({
+let search_val = "";
+let query_builder = "";
+const tblBilling = $("#table-billing-archive").DataTable({
    dom: '<"toolbar">rtlip',
    serverSide: true,
    processing: true,
@@ -22,31 +19,36 @@ var tblReadings = $("#table-billing-archive").DataTable({
    searching: true,
    columns: [
        { data: "ref_no", render: function (data) {
-              return "<strong style='color: #525252;'>"+data+"</strong>";
+                return "<strong style='color: #525252;'>"+data+"</strong>";
             }
         },
-       { data: "accountno"},
-       { data: "name"},
-       { data: "due_date"},
-       { data: "model"},
-       { data: "block"},
-       { data: "lot"},
-       { data: "status"},
-       { data: null, width: "5%", className: "text-center"},
+      //  { data: "accountno", orderable: false},
+      //  { data: "name", orderable: false},
+      //  { data: "due_date", orderable: false},
+      //  { data: "model", orderable: false},
+      //  { data: "block", orderable: false},
+      //  { data: "lot", orderable: false},
+       { data: "accountno" },
+       { data: "name" },
+       { data: "due_date" },
+       { data: "model" },
+       { data: "block" },
+       { data: "lot" },
+    //    { data: null, width: "5%", className: "text-center"},
    ],
    columnDefs: [
        { targets: [0]},       
-       {
-           data: null,
-           defaultContent: "",
-           targets: -1,
-           orderable: false,
-           render: function ( data, type, row, meta ) { 
-              var _action = "restore("+row.id+", '"+row.ref_no+"')";
-              var action = '<td class=" text-center"> <button type="button" onclick="'+_action+'" class="btn btn-default m-btn m-btn--hover-success m-btn--icon m-btn--icon-only m-btn--pill btnRestore" data-toggle="m-tooltip" data-original-title="Restore" data-placement="bottom" data-delay="{&quot;show&quot;: 300}" aria-describedby="tooltip638481"><i class="la la-reply"></i></button></td>';
-              return action; 
-          },
-       }
+    //    {
+    //        data: null,
+    //        defaultContent: "",
+    //        targets: -1,
+    //        orderable: false,
+    //        render: function ( data, type, row, meta ) { 
+    //           let _action = "restore("+row.id+", '"+row.ref_no+"')";
+    //           let action = '<td class=" text-center"> <button type="button" onclick="'+_action+'" class="btn btn-default m-btn m-btn--hover-success m-btn--icon m-btn--icon-only m-btn--pill btnRestore" data-toggle="m-tooltip" data-original-title="Restore" data-placement="bottom" data-delay="{&quot;show&quot;: 300}" aria-describedby="tooltip638481"><i class="la la-reply"></i></button></td>';
+    //           return action; 
+    //       },
+    //    }
    ],buttons: [
        { 
            extend: 'csv',
@@ -84,21 +86,21 @@ function renderStatus(data) {
 
 $('#generalSearch').donetyping(function(callback) {
     search_val = $(this).val();
-    tblReadings.ajax.reload();
+    tblBilling.ajax.reload();
 });
 
 $("#ExportExcel").on("click", function() {
-  tblReadings.button( '.buttons-excel' ).trigger();
+  tblBilling.button( '.buttons-excel' ).trigger();
   saveExportLogs('Readings - Export Excel');
 });
 
 $("#ExportCSV").on("click", function() {
-  tblReadings.button( '.buttons-csv' ).trigger();
+  tblBilling.button( '.buttons-csv' ).trigger();
   saveExportLogs('Readings - Export CSV');
 });
 
 $("#ExportPDF").on("click", function() {
-  tblReadings.button( '.buttons-pdf' ).trigger();
+  tblBilling.button( '.buttons-pdf' ).trigger();
   saveExportLogs('Readings - Export PDF');
 });
 
@@ -124,33 +126,33 @@ $("#table-billing").on("click", "tbody input[type='checkbox']", function () {
   $('#cb-select-all').prop('checked', checked);
 });
 
-function restore(id, ref_no){
-  $("#modal-restore").modal("show");
+// function restore(id, ref_no){
+//   $("#modal-restore").modal("show");
 
-  $.validate({
-      form: '#frm-restore',
-      lang: 'en',
-      onSuccess: function (form) {
-          $.ajax({
-              url: baseUrl("eforms/billing/restore_payment/"),
-              type: "POST",
-              data: {id: id, ref_no: ref_no, csrf_token: _csrf_hash},
-              dataType: "json",
-              beforeSend: function () {
-                  $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-              },
-              success: function (data) {
-                  if (data.status) {
-                      $('#modal-restore').modal('hide');
-                      toastr.success(data.toastr_msg, "Successfully restored", 5000);
-                      tblReadings.ajax.reload();
-                  } else {
-                      toastr.error(data.toastr_msg, "Error!", 5000);
-                  }
-                  $(".btn-submit").removeClass("m-loader m-loader--light m-loader--right");
-              }
-          });
-          return false;
-      },
-  });
-}
+//   $.validate({
+//       form: '#frm-restore',
+//       lang: 'en',
+//       onSuccess: function (form) {
+//           $.ajax({
+//               url: baseUrl("eforms/billing/restore_billing/"),
+//               type: "POST",
+//               data: {id: id, ref_no: ref_no, csrf_token: _csrf_hash},
+//               dataType: "json",
+//               beforeSend: function () {
+//                   $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+//               },
+//               success: function (data) {
+//                   if (data.status) {
+//                       $('#modal-restore').modal('hide');
+//                       toastr.success(data.toastr_msg, "Successfully restored", 5000);
+//                       tblBilling.ajax.reload();
+//                   } else {
+//                       toastr.error(data.toastr_msg, "Error!", 5000);
+//                   }
+//                   $(".btn-submit").removeClass("m-loader m-loader--light m-loader--right");
+//               }
+//           });
+//           return false;
+//       },
+//   });
+// }
