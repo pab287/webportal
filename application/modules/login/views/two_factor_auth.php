@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>
-      GC & C | Change Password
+      GC & C | Two Factor Authentication
     </title>
     <meta name="description" content="Latest updates and statistic charts">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -139,7 +139,7 @@ input[type="radio"]:checked::after {
                         </div>
                     </div>
                     <!--begin::Form-->
-                    <form class="m-form" id="two_factor_auth">
+                    <form class="m-form" id="two_factor_auth" method="POST">
                         <div class="m-portlet__body">
                             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                             <div class="form-group m-form__group">
@@ -192,7 +192,26 @@ input[type="radio"]:checked::after {
 
         </div>
 <script type="text/javascript">
+ $('#two_factor_auth').on('submit', function(e) {
+        e.preventDefault();
 
+        var formData = $(this).serialize();
+        
+        $.ajax({
+            type: 'POST',
+            url: '<?= base_url('login/authenticate')?>',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+                console.log('Form submitted successfully:', response);
+               
+            },
+            error: function(xhr, status, error) {
+                console.error('Error submitting form:', error);
+                // Handle error (e.g., show error message)
+            }
+        });
+    });
 
 </script>
 	</body>
