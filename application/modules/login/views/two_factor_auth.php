@@ -40,126 +40,160 @@
 
 	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
     <!--end::Page Vendors --> 
+    <style>
+
+.radio-container {
+    width: 100%;
+    margin: 20px 0;
+}
+
+.radio-option {
+    border: 1px solid #ebedf2;
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.radio-option:hover {
+    border-color: #716aca;
+    background-color: #f7f6fc;
+}
+
+.radio-label {
+    display: flex;
+    align-items: flex-start;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+}
+
+.label-text {
+    font-weight: 500;
+    font-size: 1.1rem;
+    margin-left: 0.5rem;
+}
+
+.radio-description {
+    margin-left: 1.7rem;
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+input[type="radio"] {
+    margin-top: 0.3rem;
+    cursor: pointer;
+}
+
+/* Custom radio button styling */
+input[type="radio"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #716aca;
+    border-radius: 50%;
+    outline: none;
+    position: relative;
+}
+
+input[type="radio"]:checked {
+    background-color: #716aca;
+}
+
+input[type="radio"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    background-color: white;
+    border-radius: 50%;
+}
+
+
+    </style>
   </head>
 
-  	<body class="m--skin- m-header--fixed m-header--fixed-mobile"  >
-  		<?php
-
-			$CI=&get_instance();
-
-			$checkkey = $this->Login_m->checkkey($_GET["key"]);
-			
-			
-		?>
-		<div class="m-content" id="passkey" style="display: none;">
-			<!--begin::Portlet-->
-			<div class="row">
-				<div class="col-lg-4 col-sm-12 col-xs-12"></div>
-				<div class="m-portlet col-lg-4 col-md-6 col-sm-12 col-xs-12 mt-5">
-					<div class="m-portlet__head">
-						<div class="m-portlet__head-caption">
+  	<body class="align-items-center justify-content-center">
+        <div class="row">
+            <div class="col" id="passkey">
+                <div class="m-portlet m-login__signin">
+                    <div class="m-portlet__head">
+                        <div class="m-portlet__head-caption">
 							<div class="m-portlet__head-title">
-								<span class="m-portlet__head-icon"><img src="<?= base_url('assets/logo.png')?>" width="20%"></img></span>
+								<span class="m-portlet__head-icon"><img src="<?= base_url('assets/logo.png')?>" width="23%"></img></span>
 							</div>
 						</div>
-						<div class="m-portlet__head-tools">
-							<ul class="m-portlet__nav">
-								<li class="m-portlet__nav-item">
-									<h4 class="m-portlet__head-text mt-2">
-										Change Password
-									</h4>
-								</li>
-							</ul>
-						</div>
-					</div>
-					<!--begin::Form-->
-					<form class="m-form" id="changepasswordform" method="POST" action="<?php echo base_url('login/Forgotpassword/processchangepassword')?>">
-						<div class="m-portlet__body">
-						<input type="hidden" name="email" value="<?php echo $checkkey["email"]?>">
-						<input type="hidden" name="redirectlink" value="<?php echo $checkkey["redirectlink"]?>">
-						<input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-							<div class="form-group m-form__group">
-								<label>
-									New Password *
-								</label>
-								<div> 
-									<input type="password" class="form-control m-input" name="password_confirmation" data-validation="required length strength" data-validation-length="min8" data-validation-strength="3">
-									<span class="m-form__help">
-										<ul>
-											<li>Password must contain numbers.</li>
-											<li>Password must contain uppercase letters.</li>
-											<li>Password must have at least one @#$ symbol.</li>
-											<li>Length must be greater than 8 characters.</li>
-										</ul>
-									</span>
-								</div>
-							</div>
-							<div class="form-group m-form__group">
-								<label>
-									Confirm Password *
-								</label>
-								<div> 
-									<input type="password" class="form-control m-input" name="password" data-validation="confirmation" >
-								</div>
-							</div>
-						</div>
-						<div class="m-portlet__foot">
-							<div class="form-group m-form__group">
-								<div class="text-center">
-									<button type="submit" class="btn btn-success">
-										Change password
-									</button>
-								</div>
-							</div>
-						</div>
-					</form>
-					<!--end::Form-->
-				</div>
-			</div>
-			<!--end::Portlet-->
+                        <div class="m-portlet__head-tools">
+                            <ul class="m-portlet__nav">
+                                <li class="m-portlet__nav-item">
+                                    <h4 class="m-portlet__head-text mt-2">
+                                    Two Factor Authentication
+                                    </h4>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!--begin::Form-->
+                    <form class="m-form" id="two_factor_auth">
+                        <div class="m-portlet__body">
+                            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                            <div class="form-group m-form__group">
+                                <div class="radio-container">
+                                    <div class="radio-option">
+                                        <label class="radio-label">
+                                            <input type="radio" name="method" value="sms" checked>
+                                            <span class="label-text">SMS</span>
+                                        </label>
+                                        <div class="radio-description">
+                                            Use your mobile number to receive a verification code. If you choose to use SMS, a verification code will be sent to the mobile number associated with your account.
+                                        </div>
+                                    </div>
+
+                                    <div class="radio-option">
+                                        <label class="radio-label">
+                                            <input type="radio" name="method" value="email" disabled>
+                                            <span class="label-text">Email</span>
+                                        </label>
+                                        <div class="radio-description">
+                                            Use your email address to receive a verification code. If you choose to use email, a verification code will be sent to the email address associated with your account.
+                                        </div>
+                                    </div>
+
+                                    <div class="radio-option">
+                                        <label class="radio-label">
+                                            <input type="radio" name="method" value="telegram" disabled>
+                                            <span class="label-text">Telegram</span>
+                                        </label>
+                                        <div class="radio-description">
+                                            Use telegram to receive a verification code. If you choose to use Telegram, a verification code will be sent to the Telegram number associated with your account.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="m-portlet__foot">
+                            <div class="form-group m-form__group">
+                                <div class="text-center">
+                                    <button type="submit" class="btn btn-success">
+                                        Send Code
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <!--end::Form-->
+                </div>
 		</div>
 
-		<div class="m-content" id="failkey" style="display: none;">
-			<!--begin::Portlet-->
-			<div class="m-portlet">
-				<div class="m-portlet__head">
-					<div class="m-portlet__head-caption">
-						<div class="m-portlet__head-title">
-							<h3 class="m-portlet__head-text">
-								Change your password
-							</h3>
-						</div>
-					</div>
-				</div>
-				<!--begin::Form-->
-				<div class="m-portlet__body">
-					<div class="form-group m-form__group row">
-						<div class="alert alert-danger" role="alert">
-							<strong>
-								Error!
-							</strong>
-								Your link has expired.
-						</div>
-					</div>
-				</div>
-				<!--end::Form-->
-			</div>
-			<!--end::Portlet-->
-		</div>
-		<script type="text/javascript">
-			$(document).ready(function(){
-				$.validate({
-					form : '#changepasswordform',
-					modules: 'security'
-				});
-			});
-		</script>
-		<?php 
-			if($checkkey){
-				echo "<script>$('#passkey').show();</script>";
-			}else{
-				echo "<script>$('#failkey').show();</script>";
-			}
-		?>
+        </div>
+<script type="text/javascript">
+
+
+</script>
 	</body>
 </html>
