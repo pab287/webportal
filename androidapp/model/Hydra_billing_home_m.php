@@ -50,109 +50,109 @@ class Hydra_billing_home_m extends Dbase{
 		}
 
 		// fetch subdivision
-		$response['subdivision_array'] = array();
-		$sth = $conn->prepare("SELECT * 
-							   FROM hydra_billing.subdivision 
-							   ORDER BY `date_added` DESC");
-   		$sth->execute();
-   		while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
-   			$list = array();
-	 		$list['id'] = $row['id'];
-	 		$list['name'] = utf8_encode($row['name']);
-	 		$list['address'] = utf8_encode($row['address']);
-	 		$list['description'] = $row['description'];
-	 		$list['meterno'] = $row['meterno'];
-	 		$list['meterno_raw'] = $row['meterno_raw'];
-	 		$list['created_by'] = $row['created_by'];
-	 		$list['updated_by'] = $row['updated_by'];
-	 		$list['updated_date'] = $row['updated_date'];
-	 		$list['status'] = $row['status'];
-	 		$list['date_added'] = $row['date_added'];
-			array_push($response['subdivision_array'], $list);
-		}
+		// $response['subdivision_array'] = array();
+		// $sth = $conn->prepare("SELECT * 
+		// 					   FROM hydra_billing.subdivision 
+		// 					   ORDER BY `date_added` DESC");
+   		// $sth->execute();
+   		// while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+   		// 	$list = array();
+	 	// 	$list['id'] = $row['id'];
+	 	// 	$list['name'] = utf8_encode($row['name']);
+	 	// 	$list['address'] = utf8_encode($row['address']);
+	 	// 	$list['description'] = $row['description'];
+	 	// 	$list['meterno'] = $row['meterno'];
+	 	// 	$list['meterno_raw'] = $row['meterno_raw'];
+	 	// 	$list['created_by'] = $row['created_by'];
+	 	// 	$list['updated_by'] = $row['updated_by'];
+	 	// 	$list['updated_date'] = $row['updated_date'];
+	 	// 	$list['status'] = $row['status'];
+	 	// 	$list['date_added'] = $row['date_added'];
+		// 	array_push($response['subdivision_array'], $list);
+		// }
 
 		// fetch previous readings
 		$response['readings_array'] = array();
 		$sth = $conn->prepare("SELECT id, subdivision_id, accountno
-							   FROM hydra_billing.accounts 
-							   ORDER BY `id` ASC");
-   		$sth->execute();
-   		while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+								FROM hydra_billing.accounts 
+								ORDER BY `id` ASC");
+		$sth->execute();
+		while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
 
-   			$account_id = $row['id'];
-   			$subdi_id = $row['subdivision_id'];
-   			$accountno = $row['accountno'];
+			$account_id = $row['id'];
+			$subdi_id = $row['subdivision_id'];
+			$accountno = $row['accountno'];
 
 			$sth_readings = $conn->prepare("SELECT * 
 											FROM hydra_billing.readings 
 											WHERE account_id='$account_id' AND is_archived='0'
 											ORDER BY `reading_date` DESC 
 											LIMIT 1");
-   			$sth_readings->execute();
-   			while ($row_ = $sth_readings->fetch(PDO::FETCH_ASSOC)) {
+			$sth_readings->execute();
+			while ($row_ = $sth_readings->fetch(PDO::FETCH_ASSOC)) {
 
 				$checkReading = $this->getAlreadyReading($conn, $account_id, $month, $year, $row_['meterno']);
 				$checkReading_count = $checkReading->rowCount();
 				$list = array();
-		 		$list['id'] = $row_['id'];
-		 		$list['meterno'] = $row_['meterno'];
-		 		$list['account_id'] = $row_['account_id'];
-		 		$list['account'] = $this->getName($row_['account_id']);
-		 		$list['subdivision'] = $this->getSubdivisionName($conn, $subdi_id);
-		 		$list['accountno'] = $accountno;
+				$list['id'] = $row_['id'];
+				$list['meterno'] = $row_['meterno'];
+				$list['account_id'] = $row_['account_id'];
+				$list['account'] = $this->getName($row_['account_id']);
+				$list['subdivision'] = $this->getSubdivisionName($conn, $subdi_id);
+				$list['accountno'] = $accountno;
 				$list['ref_no'] = $row_['ref_no'];
-		 		$list['ref_series'] = $row_['ref_series'];
-		 		$list['ref_yr'] = $row_['ref_yr'];
-		 		$list['ref_month'] = $row_['ref_month'];
-		 		$list['reading_date'] = $row_['reading_date'];
-		 		$list['reading'] = $row_['reading'];
-		 		$list['status'] = $row_['status'];
-		 		$list['created_by'] = $row_['created_by'];
-		 		$list['created_at'] = $row_['created_at'];
-		 		$list['updated_by'] = $row_['updated_by'];
-		 		$list['updated_at'] = $row_['updated_at'];
-		 		$list['pic'] = utf8_encode($row_['pic']);
-		 		$list['is_billed'] = $row_['is_billed'];
-		 		$list['createbill_by'] = $row_['createbill_by'];
-		 		$list['createbill_at'] = $row_['createbill_at'];
+				$list['ref_series'] = $row_['ref_series'];
+				$list['ref_yr'] = $row_['ref_yr'];
+				$list['ref_month'] = $row_['ref_month'];
+				$list['reading_date'] = $row_['reading_date'];
+				$list['reading'] = $row_['reading'];
+				$list['status'] = $row_['status'];
+				$list['created_by'] = $row_['created_by'];
+				$list['created_at'] = $row_['created_at'];
+				$list['updated_by'] = $row_['updated_by'];
+				$list['updated_at'] = $row_['updated_at'];
+				$list['pic'] = utf8_encode($row_['pic']);
+				$list['is_billed'] = $row_['is_billed'];
+				$list['createbill_by'] = $row_['createbill_by'];
+				$list['createbill_at'] = $row_['createbill_at'];
 				$list['isAlreadyReading'] = $checkReading_count;
 
 				array_push($response['readings_array'], $list);
-   			}
+			}
 		}
 
 		// fetch previous readings destribution
-		$response['distribution_array'] = array();
-		$sth = $conn->prepare("SELECT id 
-							   FROM hydra_billing.subdivision 
-							   ORDER BY `id` ASC");
-   		$sth->execute();
-   		while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+		// $response['distribution_array'] = array();
+		// $sth = $conn->prepare("SELECT id 
+		// 					   FROM hydra_billing.subdivision 
+		// 					   ORDER BY `id` ASC");
+   		// $sth->execute();
+   		// while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
 
-   			$subdivision_id = $row['id'];
+   		// 	$subdivision_id = $row['id'];
 
-			$sth_destribution = $conn->prepare("SELECT * 
-												FROM hydra_billing.distribution WHERE subdivision_id='$subdivision_id' 
-												ORDER BY `reading_date` DESC 
-												LIMIT 1");
-   			$sth_destribution->execute();
-   			while ($row_ = $sth_destribution->fetch(PDO::FETCH_ASSOC)) {
-				$list = array();
-		 		$list['id'] = $row_['id'];
-		 		$list['meterno'] = $row_['meterno'];
-		 		$list['distribute'] = $row_['distribute'];
-		 		$list['reading_date'] = $row_['reading_date'];
-		 		$list['subdivision_id'] = $row_['subdivision_id'];
-		 		$list['updated_by'] = $row_['updated_by'];
-		 		$list['updated_date'] = $row_['updated_date'];
-		 		$list['created_by'] = $row_['created_by'];
-		 		$list['created_date'] = $row_['created_date'];
-		 		$list['subdivision'] = $this->getSubdivisionName($conn, $row_['subdivision_id']);
-				array_push($response['distribution_array'], $list);
-   			}
-		}
+		// 	$sth_destribution = $conn->prepare("SELECT * 
+		// 										FROM hydra_billing.distribution WHERE subdivision_id='$subdivision_id' 
+		// 										ORDER BY `reading_date` DESC 
+		// 										LIMIT 1");
+   		// 	$sth_destribution->execute();
+   		// 	while ($row_ = $sth_destribution->fetch(PDO::FETCH_ASSOC)) {
+		// 		$list = array();
+		//  		$list['id'] = $row_['id'];
+		//  		$list['meterno'] = $row_['meterno'];
+		//  		$list['distribute'] = $row_['distribute'];
+		//  		$list['reading_date'] = $row_['reading_date'];
+		//  		$list['subdivision_id'] = $row_['subdivision_id'];
+		//  		$list['updated_by'] = $row_['updated_by'];
+		//  		$list['updated_date'] = $row_['updated_date'];
+		//  		$list['created_by'] = $row_['created_by'];
+		//  		$list['created_date'] = $row_['created_date'];
+		//  		$list['subdivision'] = $this->getSubdivisionName($conn, $row_['subdivision_id']);
+		// 		array_push($response['distribution_array'], $list);
+   		// 	}
+		// }
 
-   		echo json_encode($response);
+		echo json_encode($response);
 	}
 
 	function getName($id) {
@@ -184,56 +184,137 @@ class Hydra_billing_home_m extends Dbase{
 		$conn = $this->conn();
 		$response['response_array'] = array();
 
-		$user_id = $_POST['user_id'];
+		$localArrayData = file_get_contents('php://input');
+		$data = json_decode($localArrayData, true);
 
-		// ---------------------------------------------------------------------------- saving for Readings
-		$local_data_array = $_POST['local_data_array'];
-		$array_local_data = json_decode($local_data_array, true);
-		if (count($array_local_data) > 0) {
-			foreach ($array_local_data as $row){
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			die('Invalid JSON input: ' . json_last_error_msg());
+		}
+
+		if (isset($data['local_data_array']) && count($data['local_data_array']) > 0) {
+			foreach ($data['local_data_array'] as $row) {
 				$list = array();
-
-				$local_id = $row['id'];
-				$reading = $row['reading'];
-				$meterno = $row['meterno'];
-				$reading_date = $row['reading_date'];
-				$created_at = $row['created_at'];
-				$created_by = $row['created_by'];
-				$account_id = $row['account_id'];
-				$account_name = $row['account_name'];
+				$local_id = $row['id'] ?? null;
+				$reading = $row['reading'] ?? null;
+				$meterno = $row['meterno'] ?? null;
+				$reading_date = $row['reading_date'] ?? null;
+				$created_at = $row['created_at'] ?? null;
+				$created_by = $row['created_by'] ?? null;
+				$account_id = $row['account_id'] ?? null;
+				$account_name = $row['account_name'] ?? null;
 				$status = "Unbilled";
-
-				$ref_yr = substr($created_at, 2, 2);
-			   	$ref_month = substr($created_at, 5, 2);
-			   	$ref_series = $this->getSeries($ref_month,$ref_yr);
-			   	$reference_no = 'MRR' . $ref_yr . '-' . $ref_month . '-' . $ref_series;
-
-			   	$month = date('m', strtotime($reading_date));
-				$year = date('Y', strtotime($reading_date));
-
-				if ($this->checkReading($conn, $account_id, $month, $year, $meterno) > 0) {
-					$list['status'] = 'duplicate';
-				} else if ($this->getPreviousReading($account_id, $meterno) > $reading) {
-					$list['status'] = 'previous_reading_greater';
-				} else {
-
-					$sth = $conn->prepare("INSERT INTO hydra_billing.readings(`meterno`, `account_id`, `ref_no`, `reading_date`, `reading`, `created_by`, `created_at`, `ref_yr`, `ref_series`, `ref_month`, `status`) VALUES ('$meterno','$account_id','$reference_no','$reading_date','$reading','$created_by','$created_at','$ref_yr','$ref_series','$ref_month', '$status')");
-			   		$sth->execute();
-			   		if ($sth) {
-			    		$list['status'] = 'success';
-	   					$this->saveLogs("success", "insert", $created_by, "[Mobile] Readings - added reading ".$reading." of ".$account_name." thru sync.");
-			   		} else {
-			   			$list['status'] = 'error';
-	   					$this->saveLogs("error", "insert", $created_by, "[Mobile] Readings - added reading ".$reading." of ".$account_name." thru sync.");
-			   		}
+		
+				if (!$local_id || !$reading || !$meterno || !$reading_date || !$created_at || !$created_by || !$account_id || !$account_name) {
+					$list['status'] = 'error';
+					$list['message'] = 'Missing required data';
+					array_push($response['response_array'], $list);
+					continue;
 				}
-
+		
+				$ref_yr = substr($created_at, 2, 2);
+				$ref_month = substr($created_at, 5, 2);
+				$ref_series = $this->getSeries($ref_month, $ref_yr);
+				$reference_no = 'MRR' . $ref_yr . '-' . $ref_month . '-' . $ref_series;
+		
+				$month = date('m', strtotime($reading_date));
+				$year = date('Y', strtotime($reading_date));
+		
+				try {
+					if ($this->checkReading($conn, $account_id, $month, $year, $meterno) > 0) {
+						$list['status'] = 'duplicate';
+					} elseif ($this->getPreviousReading($account_id, $meterno) > $reading) {
+						$list['status'] = 'previous_reading_greater';
+					} else {
+						$sth = $conn->prepare("INSERT INTO hydra_billing.readings
+							(`meterno`, `account_id`, `ref_no`, `reading_date`, `reading`, `created_by`, `created_at`, `ref_yr`, `ref_series`, `ref_month`, `status`) 
+							VALUES (:meterno, :account_id, :reference_no, :reading_date, :reading, :created_by, :created_at, :ref_yr, :ref_series, :ref_month, :status)");
+						
+						$sth->bindParam(':meterno', $meterno, PDO::PARAM_INT);
+						$sth->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+						$sth->bindParam(':reference_no', $reference_no, PDO::PARAM_STR);
+						$sth->bindParam(':reading_date', $reading_date, PDO::PARAM_STR);
+						$sth->bindParam(':reading', $reading, PDO::PARAM_STR);
+						$sth->bindParam(':created_by', $created_by, PDO::PARAM_INT);
+						$sth->bindParam(':created_at', $created_at, PDO::PARAM_STR);
+						$sth->bindParam(':ref_yr', $ref_yr, PDO::PARAM_STR);
+						$sth->bindParam(':ref_series', $ref_series, PDO::PARAM_STR);
+						$sth->bindParam(':ref_month', $ref_month, PDO::PARAM_STR);
+						$sth->bindParam(':status', $status, PDO::PARAM_STR);
+		
+						$sth->execute();
+		
+						if ($sth->rowCount() > 0) {
+							$list['status'] = 'success';
+							$this->saveLogs("success", "insert", $created_by, "[Mobile] Readings - added reading " . $reading . " of " . $account_name . " thru sync.");
+						} else {
+							$list['status'] = 'error';
+							$list['message'] = 'Failed to insert reading';
+							$this->saveLogs("error", "insert", $created_by, "[Mobile] Readings - failed to add reading " . $reading . " of " . $account_name . " thru sync.");
+						}
+					}
+				} catch (Exception $e) {
+					$list['status'] = 'error';
+					$list['message'] = 'Error: ' . $e->getMessage();
+					$this->saveLogs("error", "insert", $created_by, "[Mobile] Readings - exception occurred: " . $e->getMessage());
+				}
+		
 				$list['local_id'] = $local_id;
 				$list['dataOf'] = "readings";
-
+		
 				array_push($response['response_array'], $list);
 			}
+		} else {
+			$response['status'] = 'error';
+			$response['message'] = 'No data found';
 		}
+		
+
+
+
+		// if (count($data) > 0) {
+		// 	foreach ($data as $row){
+		// 		$list = array();
+		// 		$local_id = $row['id'];
+		// 		$reading = $row['reading'];
+		// 		$meterno = $row['meterno'];
+		// 		$reading_date = $row['reading_date'];
+		// 		$created_at = $row['created_at'];
+		// 		$created_by = $row['created_by'];
+		// 		$account_id = $row['account_id'];
+		// 		$account_name = $row['account_name'];
+		// 		$status = "Unbilled";
+
+		// 		$ref_yr = substr($created_at, 2, 2);
+		// 		$ref_month = substr($created_at, 5, 2);
+		// 		$ref_series = $this->getSeries($ref_month,$ref_yr);
+		// 		$reference_no = 'MRR' . $ref_yr . '-' . $ref_month . '-' . $ref_series;
+
+		// 		$month = date('m', strtotime($reading_date));
+		// 		$year = date('Y', strtotime($reading_date));
+
+		// 		if ($this->checkReading($conn, $account_id, $month, $year, $meterno) > 0) {
+		// 			$list['status'] = 'duplicate';
+		// 		} elseif ($this->getPreviousReading($account_id, $meterno) > $reading) {
+		// 			$list['status'] = 'previous_reading_greater';
+		// 		} else {
+
+		// 			$sth = $conn->prepare("INSERT INTO hydra_billing.readings(`meterno`, `account_id`, `ref_no`, `reading_date`, `reading`, `created_by`, `created_at`, `ref_yr`, `ref_series`, `ref_month`, `status`) VALUES ('$meterno','$account_id','$reference_no','$reading_date','$reading','$created_by','$created_at','$ref_yr','$ref_series','$ref_month', '$status')");
+		// 			$sth->execute();
+		// 			if ($sth) {
+		// 				$list['status'] = 'success';
+		// 				$this->saveLogs("success", "insert", $created_by, "[Mobile] Readings - added reading ".$reading." of ".$account_name." thru sync.");
+		// 			} else {
+		// 				$list['status'] = 'error';
+		// 				$this->saveLogs("error", "insert", $created_by, "[Mobile] Readings - added reading ".$reading." of ".$account_name." thru sync.");
+		// 			}
+		// 		}
+
+		// 		$list['local_id'] = $local_id;
+		// 		$list['dataOf'] = "readings";
+
+		// 		array_push($response['response_array'], $list);
+		// 	}
+		// }
 
 		// ---------------------------------------------------------------------------- saving for Destribution
 		$local_data_array_destribution = $_POST['local_data_array_destribution'];
