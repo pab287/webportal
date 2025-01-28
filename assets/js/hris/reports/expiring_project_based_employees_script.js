@@ -1,11 +1,11 @@
 let tblExpiringProjectBased = null;
 let dropdownEl = null;
-
 $(document)
     .ready(function () {
+        let search_val = "";
         tblExpiringProjectBased = $('#table-expiring-project-based')
             .DataTable({
-                dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'f>>" +
+                dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportSearch'f>>" +
                     "<'row'<'col-12'rt>>" +
                     "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
                 buttons: [
@@ -46,14 +46,16 @@ $(document)
                 ],
                 serverSide: true,
                 processing: true,
-                searching: true,
+                searching: false,
                 ordering: true,
+                destroy: true,
                 ajax: {
                     url: baseUrl('hris/reports/get_expiring_employees/?work_status=Project Based'),
                     type: 'post',
                     dataType: 'json',
                     data: function (d) {
                         d.csrf_token = _csrf_hash;
+                        d.search['value'] = search_val
                     },
                     global: false
                 },
@@ -121,9 +123,6 @@ $(document)
                 order: [[5, 'asc']],
                 pageLength: 50,
                 initComplete: function () {
-                    $("#table-expiring-project-based_filter input[type='search']")
-                        .removeClass("form-control-sm");
-
                     const dropdown = '' +
                         '       <div class="m-dropdown m-dropdown--inline m-dropdown--align-left" ' +
                         '             data-dropdown-toggle="hover" aria-expanded="true">' +
@@ -171,6 +170,25 @@ $(document)
 
                     $(dropdown).appendTo("#table-expiring-project-based_wrapper .exportDropdown");
                     dropdownEl = $(".m-dropdown__toggle.export-as");
+                    const filterDiv = $('<div>').addClass('dataTables_filter');
+                    const searchInput = $('<input>')
+                        .attr('type', 'text')
+                        .addClass('form-control')
+                        .attr('placeholder', 'Search...')
+                        .attr('id', 'generalSearch');
+                    filterDiv.append(searchInput);
+                    $(filterDiv).appendTo("#table-expiring-project-based_wrapper .exportSearch");
+                    $('#generalSearch').donetyping(function(callback) {
+                        search_val = $(this).val();
+                        tblExpiringProjectBased.ajax.reload();
+                      },1000,3);
+                      $("#generalSearch").on('keyup', function (e) {   
+                        var val = $(this).val();
+                        if (val == "") {
+                            search_val = "";
+                            tblExpiringProjectBased.ajax.reload();
+                        }
+                    });
                 },
             });
     });
@@ -196,14 +214,13 @@ function exportAs(type) {
 
 async function getExportData(e, dt, node, config, self, url, type) {
     const data = dt.ajax.params();
+    data['exportType'] = type;
     const result = await $.ajax({
         url,
         type: "POST",
         dataType: "JSON",
         data,
         success: function (response) {
-            dt.rows().remove();
-            dt.rows.add(response.data).draw();
             $.fn.dataTable.ext.buttons[type].action.call(self, e, dt, node, config);
         }
     });

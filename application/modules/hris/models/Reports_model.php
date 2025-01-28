@@ -268,7 +268,14 @@ class Reports_model extends CI_Model{
         $resultSet['data'] = $this->db->get($this->tblEmployees . " emp")->result();
         $resultSet['recordsTotal'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $searchFields, $joinArr);
         $resultSet['recordsFiltered'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $searchFields, $joinArr);
-
+        if (intval($export) == 1){
+            $logMessage = "Exported Expiring ". $work_status. " Employees as <strong>".$tableConfig['exportType']."</strong> with result count: <strong>".$resultSet['recordsTotal']."</strong>";
+            $this->core_layout->setEventLog($logMessage, "export", 'success', "gcchris", 'user');
+            $search=false;
+        }
+        if ($search && $search != '') {
+            $this->core_layout->setEventLog("User searched for: "."'<strong>".$search."</strong>'"." in <strong>Expiring ".$work_status." Employees</strong>. System found: <strong>".$resultSet['recordsTotal']." results.</strong>", "search", 'success', "gcchris", 'user');
+        }
         return $resultSet;
     }
 
