@@ -40,40 +40,31 @@
 							</h3>
 						</div>
 					</div>
-					<div class="m-portlet__head-tools">
-
-					</div>
+					<div class="m-portlet__head-tools"></div>
 				</div>
+                <form action="#" id="form_overtime" class="form-horizontal">
 				<div class="m-portlet__body">
-                    <form action="#" id="form_overtime" class="form-horizontal">
+                    
                         <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                         <div id="overtime_renderer">
                             <div class="row">
                                 <div class="col-md-6 col-sm-12">
                                     <div class="form-group m-form__group row">
-                                        <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12">
-                                            Reference no:
-                                        </label>
-                                        <div class="col-md-10 col-lg-10 col-sm-10 col-xs-10" id="employee" >
-                                            <b v-text="vm_tab1.reference_no"></b>
-                                        </div>
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-12 col-xs-12">Reference no:</label>
+                                        <div class="col-md-9 col-lg-9 col-sm-12 col-xs-12"><strong v-text="vm_tab1.reference_no">&nbsp;</strong></div>
                                     </div>
                                     <div class="form-group m-form__group row">
-                                        <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12">
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-12 col-xs-12">
                                             Employee:
                                         </label>
-                                        <div class="col-md-10 col-lg-10 col-sm-10 col-xs-10" id="employee" >
-                                            <b v-text="vm_tab1.display_name"></b>
-                                        </div>
+                                        <div class="col-md-9 col-lg-9 col-sm-12 col-xs-12"><strong v-text="vm_tab1.display_name">&nbsp;</strong></div>
                                     </div>
                                     <div class="form-group m-form__group row">
-                                        <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12">
-                                            Company:
-                                        </label>
-                                        <div class="col-md-10 col-lg-10 col-sm-10 col-xs-10" id="company">
-                                            <b v-text="vm_tab1.company"></b><br>
-                                            <span v-text="vm_tab1.department"></span><br>
-                                            <span v-text="vm_tab1.position"></span>
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-12 col-xs-12">Company:</label>
+                                        <div class="col-md-9 col-lg-9 col-sm-12 col-xs-12">
+                                            <strong><span v-text="vm_tab1.company">&nbsp;</span></strong><br>
+                                            <span v-text="vm_tab1.department">&nbsp;</span><br>
+                                            <span v-text="vm_tab1.position">&nbsp;</span>
                                         </div>
                                     </div>
                                 </div>
@@ -84,7 +75,7 @@
                                             <div class="col-md-1 col-sm-12" v-for="(item, index) in vm_tab1.images">
                                                 <div class="m-temp__pic text-center">
                                                     <a :href="item.image" data-lightbox="upload_image" :data-title="item.filename">
-                                                        <img class="m-temp__img" :src="item.thumbnail" width="60" height="60" style="border: 1px solid #233e6b;" />
+                                                        <img class="m-temp__img" :src="item.thumbnail" :alt="item.filename" width="60" height="60" style="border: 1px solid #233e6b;" />
                                                     </a>
                                                 </div>
                                             </div>
@@ -96,16 +87,14 @@
                             <div class="row">
                                 <div class="col-md-6 col-sm-12">
                                     <div class="form-group m-form__group row" id="status">
-                                        <label class="col-3">
-                                            Status:
-                                        </label>
+                                        <label for="" class="col-3">Status:</label>
                                         <div class="col-9">
-                                            <span id="status_state"><b v-text="vm_tab1.status"></b></span>
+                                            <strong id="status_state"><span v-text="vm_tab1.status">&nbsp;</span></strong>
                                         </div>
                                     </div>
                                     <br>
                                     <div class="form-group m-form__group row">
-                                        <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
                                             From: 
                                         </label>
                                         <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -113,7 +102,7 @@
                                         </div>
                                     </div>
                                     <div class="form-group m-form__group row">
-                                        <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
                                             To: 
                                         </label>
                                         <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
@@ -121,99 +110,79 @@
                                         </div>
                                     </div>
                                     <div class="form-group m-form__group row">
-                                        <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
                                             Purpose:
                                         </label>
                                         <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="purpose">
                                             <b v-text="vm_tab1.purpose"></b>
                                         </div>
-                                    </div>   
-                                    <br>  
-                                    <div id = "actual_time"> 
+                                    </div>
+                                    <br>
+                                    <div id="actual_time" style="display: none;">
                                         <div class="form-group m-form__group row">
-                                            <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                                Actual time started: 
-                                            </label>
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Actual time started:</label>
                                             <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                                 <b v-text="(vm_tab1.actual_time_start != '0000-00-00 00:00:00') ? moment(vm_tab1.actual_time_start).format('LLL') : '-- : --'"></b>
                                             </div>
                                         </div>
                                         <div class="form-group m-form__group row">
-                                            <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                                Actual time ended: 
-                                            </label>
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Actual time ended:</label>
                                             <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                                 <b v-text="(vm_tab1.actual_time_end != '0000-00-00 00:00:00') ? moment(vm_tab1.actual_time_end).format('LLL') : '-- : --'"></b>
                                             </div>
                                         </div>
                                         <div class="form-group m-form__group row">
-                                            <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                                Actual time worked:
-                                            </label>
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Actual time worked:</label>
                                             <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                                 <b v-text="(vm_tab1.actual_time_work && vm_tab1.actual_time_work != '0') ? vm_tab1.actual_time_work : 'N/A'"></b>
                                             </div>
-                                        </div>   
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6 col-sm-12">
                                     <br>
                                     <div class="form-group m-form__group row">
-                                        <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                            Created By:
-                                        </label>
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Created By:</label>
                                         <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                             <b v-text="vm_tab1.created_by"></b> ON <b v-text="moment(vm_tab1.created_at).format('LLL')"></b>
                                         </div>
                                     </div>
                                     <div class="form-group m-form__group row">
-                                        <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                            Last Updated By:
-                                        </label>
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Last Updated By:</label>
                                         <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                             <b v-text="vm_tab1.updated_by"></b> <span id="updated_at"></span>
                                         </div>
                                     </div>
                                     <div class="form-group m-form__group row" id="requested_by">
-                                        <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                            Requested by:
-                                        </label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">   
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Requested by:</label>
+                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                             <b v-text="vm_tab1.display_requested_by"></b> ON <b v-text="vm_tab1.is_imported === '1'? moment(vm_tab1.requested_at).format('LL'): moment(vm_tab1.requested_at).format('LLL')"></b>
                                         </div>
-                                        <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                          
-                                        </label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="requested_remarks" >   
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">&nbsp;</label>
+                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="requested_remarks">
                                             Remarks: <b v-text="vm_tab1.requested_remarks"></b>
                                         </div>
                                     </div>
-                                    <div class="form-group m-form__group row" id="approved_by">
-                                        <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                            Approved by:
-                                        </label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">   
+                                    <div class="form-group m-form__group row" id="approved_by" style="display: none;">
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Approved by:</label>
+                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                             <b v-text="vm_tab1.approved_by"></b> ON <b v-text="vm_tab1.is_imported === '1'? moment(vm_tab1.approved_at).format('LL'): moment(vm_tab1.approved_at).format('LLL')"></b>
                                         </div>
                                     </div>
-                                    <div class="form-group m-form__group row" id="cancelled_by">
-                                        <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
+                                    <div class="form-group m-form__group row" id="cancelled_by" style="display: none;">
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
                                             Cancelled by:
                                         </label>
                                         <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                             <b v-text="vm_tab1.cancelled_by"></b> ON <b v-text="moment(vm_tab1.cancelled_at).format('LLL')"></b>
                                         </div>
-                                        <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                            
-                                        </label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="cancelled_remarks">   
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">&nbsp;</label>
+                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="cancelled_remarks">
                                             Remarks: <b v-text="vm_tab1.cancelled_remarks"></b>
                                         </div>
                                     </div>
-                                    <div class="form-group m-form__group row" id="disapproved_by">
-                                        <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                            Disapproved by:
-                                        </label>
+                                    <div class="form-group m-form__group row" id="disapproved_by" style="display: none;">
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Disapproved by:</label>
                                         <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                             <b v-text="vm_tab1.disapproved_by"></b> ON <b v-text="moment(vm_tab1.disapproved_at).format('LLL')"></b>
                                         </div>
@@ -221,59 +190,62 @@
                                 </div>
                             </div>
                         </div>
-                        <br><br><br><br>
-                        <?php $this->current_action = $this->core_layout->getCurrentActions();?>
-                        <div class="modal-footer" id="buttons">
-                            <?php if((in_array("approve_action", $this->current_action))): ?>
-                                <a class="btn btn-success m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnApprove_action btnPending" href="#" data-toggle="modal" data-target="#approve_modal">
-                                    Approve
-                                </a>
-                            <?php endif; ?>
-                            <?php if((in_array("disapprove_action", $this->current_action))): ?>
-                                <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnDisapprove_action btnPending" href="#" data-toggle="modal" data-target="#disapprove_modal">
-                                    Disapprove
-                                </a>
-                            <?php endif; ?>
-                            <?php if((in_array("edit", $this->current_action))): ?>
-                                <a class="btn btn-warning m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnEdit text-white btnPending" onclick="edit()">
-                                    Edit
-                                </a>
-                            <?php endif; ?>
-                            <?php if((in_array("cancel", $this->current_action))): ?>
-                                <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnCancel btnPending" href="#" data-toggle="modal" data-target="#cancel_modal">
-                                    Cancel
-                                </a>
-                            <?php endif; ?>
-                            <?php if((in_array("undo_approval", $this->current_action))): ?>
-                                <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnUndo_approval btnApproved" href="#" data-toggle="modal" data-target="#undo_approval_modal">
-                                    Undo Approval
-                                </a>
-                            <?php endif; ?>
-                            <?php if((in_array("undo_disapproval", $this->current_action))): ?>
-                                <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnUndo_disapproval btnDisapproved" href="#" data-toggle="modal" data-target="#undo_approval_modal">
-                                    Undo Disapproval
-                                </a>
-                            <?php endif; ?>
-                            <?php if((in_array("print", $this->current_action))): ?>
-                                <a class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnPrint btnApproved text-white" onclick="prints()">
-                                    Print
-                                </a>
-                            <?php endif; ?>
-                            <?php if((in_array("back", $this->current_action))): ?>
-                                <a href="<?=(isset($_GET['page']) && $_GET['page']) ? $_GET['page'] : 'masterfile' ?>" class="btn btn-metal m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnBack text-white">
-                                    Back
-                                </a>
-                            <?php endif; ?>
-                        </div>
-                    </form>
-                </div>
+                        
+                        
+                    </div>
+
+                    <div class="modal-footer" id="buttons">
+                        <?php $current_action = $this->core_layout->getCurrentActions(); ?>
+                        <?php if(in_array("approve_action", $current_action)): ?>
+                            <a class="btn btn-success m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnApprove_action btnPending"
+                                href="#" data-toggle="modal" data-target="#approve_modal">
+                                Approve
+                            </a>
+                        <?php endif; ?>
+                        <?php if(in_array("disapprove_action", $current_action)): ?>
+                            <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnDisapprove_action btnPending" href="#" data-toggle="modal" data-target="#disapprove_modal">
+                                Disapprove
+                            </a>
+                        <?php endif; ?>
+                        <?php if(in_array("edit", $current_action)): ?>
+                            <button type="button" class="btn btn-warning m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnEdit text-white btnPending" onclick="edit()">
+                                Edit
+                            </button>
+                        <?php endif; ?>
+                        <?php if(in_array("cancel", $current_action)): ?>
+                            <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnCancel btnPending" href="#" data-toggle="modal" data-target="#cancel_modal">
+                                Cancel
+                            </a>
+                        <?php endif; ?>
+                        <?php if(in_array("undo_approval", $current_action)): ?>
+                            <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnUndo_approval btnApproved" href="#" data-toggle="modal" data-target="#undo_approval_modal">
+                                Undo Approval
+                            </a>
+                        <?php endif; ?>
+                        <?php if(in_array("undo_disapproval", $current_action)): ?>
+                            <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnUndo_disapproval btnDisapproved" href="#" data-toggle="modal" data-target="#undo_approval_modal">
+                                Undo Disapproval
+                            </a>
+                        <?php endif; ?>
+                        <?php if(in_array("print", $current_action)): ?>
+                            <a class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnPrint btnApproved text-white" onclick="prints()">
+                                Print
+                            </a>
+                        <?php endif; ?>
+                        <?php if((in_array("back", $current_action))): ?>
+                            <a href="<?=(isset($_GET['page']) && $_GET['page']) ? $_GET['page'] : 'masterfile' ?>" class="btn btn-metal m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnBack text-white">
+                                Back
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </form>
             </div>
 	    </div>
-    </div>    
+    </div>
 </div>
  
-<div class="modal fade" id="approve_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
-    <div class="modal-dialog modal-lg" role="document">
+<div class="modal fade" id="approve_modal" tabindex="-1" aria-labelledby="exampleModalLabel">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="exampleModalLabel">
@@ -310,17 +282,8 @@
                             </div>
                         </div>
                         <div class="m-portlet__body">
-                            <div id="progress_approve"
-                                class="progress progress-striped active"
-                                role="progressbar"
-                                aria-valuemin="0"
-                                aria-valuemax="100"
-                                style="display:none;"
-                                >
-                                <div
-                                    class="progress-bar progress-bar-success"
-                                    style="width: 0%;"
-                                ></div>
+                            <div id="progress_approve" class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" style="display:none;">
+                                <div class="progress-bar progress-bar-success" style="width: 0%;"></div>
                             </div>
                             <div id="tempModalApproveImages">
                                 <template v-if="count > 0">
@@ -328,7 +291,7 @@
                                         <div class="col-md-2 col-lg-2 col-sm-2 col-xs-12" v-for="(item, index) in rows">
                                             <div class="m-temp__pic text-center">
                                                 <a :href="item.image" data-lightbox="tempimage" :title="item.filename" :data-title="item.filename">
-                                                    <img class="m-temp__img" :title="item.filename" :src="item.thumbnail" width="75" height="75" style="margin-bottom: 0.5rem;" />
+                                                    <img class="m-temp__img" :alt="item.filename" :title="item.filename" :src="item.thumbnail" width="75" height="75" style="margin-bottom: 0.5rem;" />
                                                 </a>
                                                 <div class="m-checkbox-inline">
                                                     <label class="m-checkbox">
@@ -372,8 +335,8 @@
     </div>
 </div>
 
-<div class="modal fade" id="undo_approval_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
-    <div class="modal-dialog modal-md" role="document">
+<div class="modal fade" id="undo_approval_modal" tabindex="-1" aria-labelledby="exampleModalLabel">
+    <div class="modal-dialog modal-md">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title" id="exampleModalLabel">
@@ -389,26 +352,22 @@
                 <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                 <div class="col-12 modal-body">
                     <div class="form-group m-form__group row">
-                        <label class="col-12 col-form-label form-control-label">
+                        <label for="" class="col-12 col-form-label form-control-label">
                             <b>Undo approval</b> of overtime request? Click <b>yes</b> if you wish to proceed. 
                         </label>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-submit btn-primary btnSave">
-                        Yes
-                    </button>
-                    <button type="button" class="btn btn-metal text-white btnCancel" data-dismiss="modal">
-                        No
-                    </button>				    
+                    <button type="submit" class="btn btn-submit btn-primary btnSave">Yes</button>
+                    <button type="button" class="btn btn-metal text-white btnCancel" data-dismiss="modal">No</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="disapprove_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
-    <div class="modal-dialog modal-md" role="document">
+<div class="modal fade" id="disapprove_modal" tabindex="-1" aria-labelledby="exampleModalLabel">
+    <div class="modal-dialog modal-md">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="exampleModalLabel">
@@ -423,23 +382,19 @@
             <form id="disapprove_form">
                 <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                 <div class="col-12 modal-body">
-                    <b>Disapprove</b> overtime request? Click <b>yes</b> if you wish to proceed.   
+                    <b>Disapprove</b> overtime request? Click <b>yes</b> if you wish to proceed.
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-submit btn-primary btnSave">
-                        Yes
-                    </button>
-                    <button type="button" class="btn btn-metal text-white btnCancel" data-dismiss="modal">
-                        No
-                    </button>	
+                    <button type="submit" class="btn btn-submit btn-primary btnSave"> Yes </button>
+                    <button type="button" class="btn btn-metal text-white btnCancel" data-dismiss="modal">No</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="undo_disapproval_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
-    <div class="modal-dialog modal-md" role="document">
+<div class="modal fade" id="undo_disapproval_modal" tabindex="-1" aria-labelledby="exampleModalLabel">
+    <div class="modal-dialog modal-md">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title" id="exampleModalLabel">
@@ -455,26 +410,22 @@
                 <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                 <div class="col-12 modal-body">
                     <div class="form-group m-form__group row">
-                        <label class="col-12 col-form-label form-control-label">
+                        <label for="" class="col-12 col-form-label form-control-label">
                             <b>Undo disapproval</b> of overtime request? Click <b>yes</b> if you wish to proceed. 
                         </label>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-submit btn-primary btnSave">
-                        Yes
-                    </button>
-                    <button type="button" class="btn btn-metal text-white btnCancel" data-dismiss="modal">
-                        No
-                    </button>				    
+                    <button type="submit" class="btn btn-submit btn-primary btnSave">Yes</button>
+                    <button type="button" class="btn btn-metal text-white btnCancel" data-dismiss="modal">No</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="cancel_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
-    <div class="modal-dialog modal-md" role="document">
+<div class="modal fade" id="cancel_modal" tabindex="-1" aria-labelledby="exampleModalLabel">
+    <div class="modal-dialog modal-md">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="exampleModalLabel">
@@ -490,7 +441,7 @@
                 <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                 <div class="col-12 modal-body">
                     <div class="form-group m-form__group row">
-                        <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label form-control-label">
+                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 col-form-label form-control-label">
                             Remarks:
                         </label>
                         <div class="col-12">
@@ -499,15 +450,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-submit btn-primary btnSave">
-                        Save
-                    </button>
-                    <button type="button" class="btn text-white btn-metal btnCancel" data-dismiss="modal">
-                        Close
-                    </button>
+                    <button type="submit" class="btn btn-submit btn-primary btnSave">Save</button>
+                    <button type="button" class="btn text-white btn-metal btnCancel" data-dismiss="modal">Close</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-

@@ -29,6 +29,7 @@
             display: unset;
         }
     }
+    .custom-file span.help-block.form-error { float: right; }
 </style>
 
 <div class="m-content">
@@ -59,13 +60,14 @@
 					    <div class="row">
                             <div class="col-md-6 col-sm-12">
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Employee *</label>
+                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">Employee</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                        <select id="employee" name="employee"  data-validation="required"></select>
+                                        <select id="employee" name="employee" data-validation="required"></select>
+                                        <span class="pull-right help-block form-error"></span>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Company *</label>
+                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">Company</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
                                         <textarea class="form-control m-input" id="details" rows="5" data-validation="required" disabled></textarea>
                                         <input type="hidden" name="company" id="company"/>
@@ -74,7 +76,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Date & Time *</label>
+                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">Date & Time</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12 input-group date" id="date_time">
                                         <input class="form-control m-input" type="text" id="date" data-validation="required" autocomplete="off" />
                                         <input type="hidden" name="date_from" id="date_from"/>
@@ -82,15 +84,15 @@
                                         <span class="input-group-addon">
                                                 <i class="la la-calendar glyphicon-th"></i>
                                         </span>
+                                        <span class="help-block form-error"></span>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                        Purpose *
-                                    </label>
+                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">Purpose</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
                                         <textarea class="form-control m-input" id="purpose" name="purpose" rows="6" data-validation="required" autocomplete="off"></textarea>
                                         <input type="hidden" id="prevLen" value="0"/>
+                                        <div class="text-right"><span class="help-block form-error"></span></div>
                                         <span class="m-form__help" style="text-transform: none; font-width: 600;">
                                             <i>Note: Auto bullets when pressing "Enter".</i>
                                         </span>
@@ -99,90 +101,87 @@
                             </div>
                             <div class="col-md-6 col-sm-12">
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                        Requested by *
-                                    </label>
+                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">Requested by</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
                                         <select id="requested_by" name="requested_by"  data-validation="required"></select>
+                                        <span class="pull-right help-block form-error"></span>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Remarks</label>
+                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Remarks</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
                                         <textarea class="form-control m-input" id="remarks" name="remarks" rows="5" autocomplete="off"></textarea>
                                     </div>
                                 </div>
                                 <?php if((in_array("approve_action", $this->current_action))): ?>
-                                    <div class="form-group m-form__group row">
-                                        <label class="col-12">Upload ATTACHMENT IMAGE</label>
-                                        <div class="col-md-6 col-sm-6 col-xs-12">
-                                            <div class="custom-file" >
+                                    <div class="row">
+                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">UPLOAD ATTACHMENT IMAGE</label>
+                                        <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
+                                            <div class="custom-file form-group m-form__group">
                                                 <input id="temp_fileupload" type="file" name="files" class="custom-file-input" data-validation="required" multiple />
+                                                <span class="pull-right help-block form-error"></span>
                                                 <span class="custom-file-control" id="file_append"></span>
-                                            </div>			
+                                            </div>
                                         </div>
                                     </div>
-                                    <div id="progress_approve"
-                                        class="progress progress-striped active mb-2"
-                                        role="progressbar"
-                                        aria-valuemin="0"
-                                        aria-valuemax="100"
-                                        style="display:none;"
-                                        >
-                                        <div
-                                            class="progress-bar progress-bar-success"
-                                            style="width: 0%;"
-                                        ></div>
-                                    </div>
-                                    <div id="uploaded-attach" class="m-scrollable mCustomScrollbar _mCS_3 mCS-autoHide" data-scrollbar-shown="true" data-scrollable="true" style="overflow: visible; position: relative;">
-                                        <div id="mCSB_3" class="mCustomScrollBox mCS-minimal-dark mCSB_vertical mCSB_outside" style="max-height: none;" tabindex="0">
-                                            <div id="mCSB_3_container" class="mCSB_container" style="position: relative; top: 0px; left: 0px;" dir="ltr">
-                                                <div id="tempModalApproveImages">
-                                                    <template v-if="count > 0">
-                                                        <div class="row">
-                                                            <div class="col-md-2 col-lg-2 col-sm-2 col-xs-12" v-for="(item, index) in rows">
-                                                                <div class="m-temp__pic text-center">
-                                                                    <a :href="item.image" data-lightbox="tempimage" :title="item.filename" :data-title="item.filename">
-                                                                        <img class="m-temp__img" :title="item.filename" :src="item.thumbnail" width="75" height="75" style="margin-bottom: 0.5rem;" />
-                                                                    </a>
-                                                                    <div class="m-checkbox-inline">
-                                                                        <label class="m-checkbox">
-                                                                            <input type="checkbox" name="attachment_image[]" :value="item.current_image" class="temp-attachment_image" @click="getCheckedCount" />{{renderImageLabel(index)}}<span></span>
-                                                                        </label>
+                                    <div class="row">
+                                        <div class="col-md-11 col-lg-11 col-sm-12 col-xs-12">
+                                            <div id="progress_approve" class="progress progress-striped active mb-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" style="display:none;">
+                                                <div class="progress-bar progress-bar-success" style="width: 0%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-11 col-lg-11 col-sm-12 col-xs-12 mt-3">
+                                        <div id="uploaded-attach" class="m-scrollable mCustomScrollbar _mCS_3 mCS-autoHide" data-scrollbar-shown="true" data-scrollable="true" style="overflow: visible; position: relative;">
+                                            <div id="mCSB_3" class="mCustomScrollBox mCS-minimal-dark mCSB_vertical mCSB_outside" style="max-height: none; min-height: 92px;">
+                                                <div id="mCSB_3_container" class="mCSB_container" style="position: relative; top: 0px; left: 0px;" dir="ltr">
+                                                    <div id="tempModalApproveImages">
+                                                        <template v-if="count > 0">
+                                                            <div class="row">
+                                                                <div class="col-md-2 col-lg-2 col-sm-2 col-xs-12" v-for="(item, index) in rows">
+                                                                    <div class="m-temp__pic text-center">
+                                                                        <a :href="item.image" data-lightbox="tempimage" :title="item.filename" :data-title="item.filename">
+                                                                            <img class="m-temp__img" :title="item.filename" :alt="item.filename" :src="item.thumbnail" width="75" height="75" style="margin-bottom: 0.5rem;" />
+                                                                        </a>
+                                                                        <div class="m-checkbox-inline">
+                                                                            <label class="m-checkbox">
+                                                                                <input type="checkbox" name="attachment_image[]" :value="item.current_image" class="temp-attachment_image" @click="getCheckedCount" />{{renderImageLabel(index)}}<span></span>
+                                                                            </label>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                        <div class="row">
-                                                            <div class="col-12 m--margin-top-10 text-left">
-                                                            <input id="checked_count" type="hidden" data-validation="checkbox_group_min1" value="0" />
+                                                            <div class="row">
+                                                                <div class="col-12 m--margin-top-10 text-left">
+                                                                <input id="checked_count" type="hidden" data-validation="checkbox_group_min1" value="0" />
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </template>
-                                                    <template v-else>
-                                                        <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
-                                                            <div class="m-alert__icon">
-                                                                <i class="flaticon-exclamation-1"></i>
-                                                                <span></span>
+                                                        </template>
+                                                        <template v-else>
+                                                            <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
+                                                                <div class="m-alert__icon">
+                                                                    <i class="flaticon-exclamation-1"></i>
+                                                                    <span></span>
+                                                                </div>
+                                                                <div class="m-alert__text">
+                                                                    <strong>
+                                                                        Image(s) not found!
+                                                                    </strong>
+                                                                    Upload image first
+                                                                </div>
                                                             </div>
-                                                            <div class="m-alert__text">
-                                                                <strong>
-                                                                    Image(s) not found!
-                                                                </strong>
-                                                                Upload image first
-                                                            </div>
-                                                        </div>
-                                                    </template>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div id="mCSB_3_scrollbar_vertical" class="mCSB_scrollTools mCSB_3_scrollbar mCS-minimal-dark mCSB_scrollTools_vertical" style="display: block;">
+                                                <div class="mCSB_draggerContainer">
+                                                    <div id="mCSB_3_dragger_vertical" class="mCSB_dragger" style="position: absolute; min-height: 50px; display: block; height: 14px; max-height: 280px; top: 0px;">
+                                                        <div class="mCSB_dragger_bar" style="line-height: 50px;"></div>
+                                                    </div>
+                                                    <div class="mCSB_draggerRail"></div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div id="mCSB_3_scrollbar_vertical" class="mCSB_scrollTools mCSB_3_scrollbar mCS-minimal-dark mCSB_scrollTools_vertical" style="display: block;">
-                                            <div class="mCSB_draggerContainer">
-                                                <div id="mCSB_3_dragger_vertical" class="mCSB_dragger" style="position: absolute; min-height: 50px; display: block; height: 14px; max-height: 280px; top: 0px;">
-                                                    <div class="mCSB_dragger_bar" style="line-height: 50px;"></div>
-                                                </div>
-                                                <div class="mCSB_draggerRail"></div>
-                                            </div>
                                         </div>
                                     </div>
                                 <?php endif; ?>

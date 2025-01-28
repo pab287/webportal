@@ -596,49 +596,25 @@ class Overtime_m extends CI_Model {
         return array("results"=>$resultarray);
     }
 
-    function getEmployeeDetail(){
-        // $id = implode($this->input->get());
+    public function getEmployeeDetail(){
         $get = $this->input->get();
         $id = $get['data'];
         $resultarray = array();
-
-        $this->db->select('id, company_id, department_id, position');
-        $this->db->from('gccmaster.tblemployees');
-        $this->db->where('id', $id);
-        $query = $this->db->get();
-
-        // $query = $this->db->query("SELECT id, company_id, department_id, position FROM gccmaster.tblemployees WHERE id=$id");
-        if ($query->num_rows() > 0) {
-            $row = $query->row_array();
-
-            $company = (is_numeric($row["company_id"])) ? $this->getCompany($row["company_id"]) : $row["company_id"];
-            $department = (is_numeric($row["department_id"])) ? $this->getDepartment($row["department_id"]) : $row["department_id"];
-            $position = (is_numeric($row["position"])) ? $this->getPosition($row["position"]) : $row["position"];
-
-            // if(is_numeric($row["company_id"])){
-            //     $company = $this->getCompany($row["company_id"]);
-            // }else{
-            //     $company = $row["company_id"];
-            // }
-
-            // if(is_numeric($row["department_id"])){
-            //     $department = $this->getDepartment($row["department_id"]);
-            // }else{
-            //     $department = $row["department_id"];
-            // }
-
-            // if(is_numeric($row["position"])){
-            //     $position = $this->getPosition($row["position"]);
-            // }else{
-            //     $position = $row["position"];
-            // }
-
-            $resultarray["company"] = $company;
-            $resultarray["department"] = $department;
-            $resultarray["position"] = $position;
-
-            $resultarray["details"] = $company."\n".$department."\n".$position;
-        }
+        $this->db->select("emp.id, IF(comp.id IS NULL, emp.company_id, comp.description) as company,
+        IF(dept.id IS NULL, emp.department_id, dept.description) as department,
+        IF(pos.id IS NULL, emp.position, pos.name) as position,
+        UPPER(CONCAT(IF(comp.id IS NULL, emp.company_id, comp.description), '\n',
+        IF(dept.id IS NULL, emp.department_id, dept.description), '\n',
+        IF(pos.id IS NULL, emp.position, pos.name))) as details, MAX(ps.date_end) as max_date");
+        $this->db->from("gccmaster.tblemployees emp");
+        $this->db->join("gcchris.tblcompanies comp", "comp.id = emp.company_id", "LEFT");
+        $this->db->join("gcchris.tbldepartments dept", "dept.id = emp.department_id", "LEFT");
+        $this->db->join("gcchris.tblposition pos", "pos.id = emp.position", "LEFT");
+        $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+        $this->db->where("emp.id", $id);
+        $this->db->limit(1);
+        $queryDetails = $this->db->get();
+        if($queryDetails->num_rows() == 1){ $resultarray = $queryDetails->row_array(); }
         return $resultarray;
     }
 
