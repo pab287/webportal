@@ -194,7 +194,7 @@
                 <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
                 <div class="modal-body" id="archive_text">
                     <div class="form-group">
-                        <label for="code" class="form-control-label">Name</label>
+                        <label for="code" class="form-control-label required">Name</label>
                         <input id="name" name="name" type="text" autocomplete="off"
                                 data-validation="required" class="form-control m-input"/>
                     </div>
@@ -209,7 +209,7 @@
                         </select>
                     </div>
                     <div class="form-group mt-4">
-                        <label for="status" class="form-control-label">Status</label>
+                        <label for="status" class="form-control-label required">Status</label>
                         <select name="status" id="status" class="form-control" data-validation="required">
                             <option></option>
                             <option value="0">Active</option>
