@@ -45,7 +45,7 @@ class Reports_model extends CI_Model{
         return $this->db->get("information_schema.columns")->result();
     }
 
-    public function generateEmployeeReport($export){
+    function generateEmployeeReport($export){
         $post = $this->utilities->parseFormDataToObject($this->input->post());
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($post);
         $select = implode(", ", $post->fields);
@@ -111,6 +111,13 @@ class Reports_model extends CI_Model{
         $resultSet['x'] = $this->db->last_query();
 
         $recordCount = $this->utilities->getTableCount($this->tblEmployees . " emp", $criteria, null, $joinArr, true, null, "emp.id");
+        if(isset($post->exportType)){
+            $exportType = str_replace('Html5', '', $post->exportType);
+        }
+        $messageStart = intval($export) == 1 ? "Exported as <strong>{$exportType}</strong>" : "Generated";
+        $action = intval($export) == 1 ? 'export' : 'generate';
+        $logMessage = "{$messageStart} employee report with criteria: <strong>$criteria</strong>. Result count: <strong>$recordCount</strong>";
+        $this->core_layout->setEventLog($logMessage, $action, 'success', "gcchris", 'user');
         $resultSet["recordsTotal"] = $recordCount;
         $resultSet["recordsFiltered"] = $recordCount;
         return $resultSet;

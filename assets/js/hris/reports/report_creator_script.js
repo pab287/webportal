@@ -5,6 +5,7 @@ const dropdown = $(".m-dropdown__toggle.export-as");
 let template = null;
 let templateId = null;
 let dtReport = null;
+let type ="";
 
 const template_select_option = {
     width: '100%',
@@ -825,14 +826,15 @@ $('.m-content')
 
 async function getExportData(e, dt, node, config, self, url, type) {
     const data = dt.ajax.params();
+    data['exportType'] = type;
     const result = await $.ajax({
         url,
         type: "POST",
         dataType: "JSON",
         data,
         success: function (response) {
-            dt.rows().remove();
-            dt.rows.add(response.data).draw();
+            // dt.rows().remove();
+            // dt.rows.add(response.data).draw();
             $.fn.dataTable.ext.buttons[type].action.call(self, e, dt, node, config);
         }
     });
