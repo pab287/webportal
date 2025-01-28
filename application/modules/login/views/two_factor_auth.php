@@ -113,6 +113,21 @@ input[type="radio"]:checked::after {
     background-color: white;
     border-radius: 50%;
 }
+.login-link {
+    color: #007bff; /* Blue color for the link */
+    text-decoration: none; /* Remove underline */
+    cursor: pointer; /* Show pointer cursor on hover */
+    margin-left: 10px; /* Add some spacing between the button and the link */
+}
+
+.login-link:hover {
+    text-decoration: underline; /* Add underline on hover */
+    color: #0056b3; /* Darker blue on hover */
+}
+
+.otp-input {
+    letter-spacing: 10px;
+}
 
 
     </style>
@@ -181,7 +196,11 @@ input[type="radio"]:checked::after {
                                     <button type="submit" class="btn btn-success">
                                         Send Code
                                     </button>
+                                    <div class="text-right">
+                                        <a href="#" id="backToLogin" class="login-link">Back to login</a>
+                                    </div>
                                 </div>
+
                             </div>
                         </div>
                     </form>
@@ -189,19 +208,41 @@ input[type="radio"]:checked::after {
                 </div>
 		    </div>
         </div>
+
+        <div class="modal fade show" id="m_modal_1" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: block;">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <form mthod="post">
+                        <div class="form-group m-form__group text-center">
+                            <img src="<?= base_url('assets/otp_icon.png')?>" width="23%"></img>
+                            <h2 class="m-portlet__head-text p-2">OTP Verification</h2>
+                            <label>One-Time Password sent to your regitered mobile number</label>
+                        </div>
+                        <div class="form-group m-form__group">
+                            <input type="text" id="otp" name="otp" class="form-control m-input text-center otp-input" maxlength="6" placeholder="Enter OTP">
+                            <label class="text-center">Didn't receive the OTP? <a href="#" class="login-link">Resend OTP</a></label>
+                        </div>
+                        <div class="form-group m-form__group text-center">
+                            <button type="submit" class="btn btn-primary m-btn m-btn--custom">Verify</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 <script type="text/javascript">
 
 const sessionData = <?= json_encode($session  ?? []) ?>;
-console.log(sessionData);
-	// if (!sessionData.auth) {
-	// 	window.location.href = '<?php echo base_url("login"); ?>';
-	// }
+if (!sessionData.auth) {
+    window.location.href = '<?php echo base_url("login"); ?>';
+}
+
 
  $('#two_factor_auth').on('submit', function(e) {
         e.preventDefault();
-
         var formData = $(this).serialize();
-        
+        formData += '&' + $.param({ sessionData: sessionData });
         $.ajax({
             type: 'POST',
             url: '<?= base_url('login/authenticate')?>',
@@ -209,11 +250,28 @@ console.log(sessionData);
             dataType: 'json',
             success: function(response) {
                 console.log('Form submitted successfully:', response);
-               
             },
             error: function(xhr, status, error) {
                 console.error('Error submitting form:', error);
                 // Handle error (e.g., show error message)
+            }
+        });
+    });
+
+    $('#backToLogin').on('click', function(e) {
+        e.preventDefault();
+
+        $.ajax({
+            url: '<?= base_url('login/destroySession')?>',
+            method: 'POST',
+            data: {
+                csrf_token: $('input[name="csrf_token"]').val()
+            },
+            success: function(response) {
+                window.location.href = '<?php echo base_url("login"); ?>'
+            },
+            error: function(xhr, status, error) {
+                console.error('Error destroying session:', error);
             }
         });
     });

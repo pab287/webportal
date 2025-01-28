@@ -30,11 +30,9 @@ class Verifylogin extends MY_Controller{
             if (isset($query['auth']) && $query['auth'] == 1 && $query['password'] == md5($post['password'])) {
                 $data = array(
                     'auth' => "show",
-                    'post' => $post,
                     'emp_id' => $query['emp_id']
                 );
                 $this->session->set_userdata($data);
-                var_dump("Hello world");
                 redirect('login/authentication',);
             }
     
