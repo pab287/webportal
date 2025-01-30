@@ -314,6 +314,16 @@ let employeeDataSheet = new Vue({
               ? this.job_desc 
               : this.job_desc.replace(/\n/g, '<br>');
           },
+          formattedJobDescPrint(data) {
+            if (!data) return '';
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data;
+            const hasListItems = tempDiv.getElementsByTagName('li').length > 0;
+
+            return hasListItems 
+              ? data 
+              : data.replace(/\n/g, '<br>');
+          },
     }
 })
 
