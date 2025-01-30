@@ -4395,7 +4395,7 @@
                     "driverlicenses" => $driverlicenses,
                     "experiences" => $experiences,
                     "awards" => $awards,
-                    "skills" => $skills,
+                    "skillset" => $skills,
                     "organizations" => $organizations,
                     "trainings" => $trainings,
                     "references" => $references,
@@ -4411,6 +4411,11 @@
                     "station" => $station,
                     "allowance" => $allowance ? $allowance->rate : 0,
                     "default_station" => $default_station,
+                    "licensesAndCerts"=> array(
+                        "driverlicenses" => $driverlicenses,
+                        "licenses" => $licenses,
+                        "if_driver" => $driver
+                    ),
                 );
         }
 
