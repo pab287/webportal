@@ -1462,13 +1462,17 @@ class Billing_m extends CI_Model {
                     $response["msg"] = "Client is already billed on the month of ".$month_words;
                     $this->core_layout->setEventLog("Reading - tried to generate bill reading of ".$currentReading["ref_no"]." that client is already been billed","insert", "error", "hydra_billing", "user");
                 } else {
-                    $previousReading = $this->getPreviousReadingDetails($currentReading['account_id'],$currentReading['reading_date'],$currentReading['meterno']);
-                    $prev_reading_id = $previousReading ? $previousReading['reading_id'] : "";
+                    $previousReading = $this->getPreviousReadingDetails(trim($currentReading['account_id']), trim($currentReading['reading_date']), trim($currentReading['meterno']));
+
+                    $prev_reading_id = $previousReading ? $previousReading['reading_id'] : 0;
                     $prev_reading = $previousReading ? $previousReading['reading'] : 0;
+                    $prev_reading_date = $previousReading || $previousReading != null ? $previousReading['reading_date'] : false;
+                    
                     $totalUsage = $this->computeTotalUsage($currentReading['reading'], $prev_reading);
                     $charges = $this->computeTotalCharges($rate, $totalUsage);
 
-                    $billing_from = $this->getBillingDateFrom($previousReading['reading_date'], $currentReading['reading_date'], $dayOf_cutOff);
+                    $billing_from = $this->getBillingDateFrom($prev_reading_date, $currentReading['reading_date'], $dayOf_cutOff);
+                  
                     $billing_to = date('Y-m-d', strtotime($currentReading['reading_date']));
                     $due_date = date('Y-m-d', strtotime("+".$dayOf_dueDate." day", strtotime($billing_to)));
                     
@@ -1599,8 +1603,7 @@ class Billing_m extends CI_Model {
                 return $previousReadingDate;
             }
         }
-        $date_from = date('Y-m', strtotime("-1 month", strtotime($currentReadingDate))).'-'.$dayOf_cutOff;
-        return $date_from;
+        return date('Y-m', strtotime("-1 month", strtotime($currentReadingDate))).'-'.$dayOf_cutOff;
     }
 
     function computeTotalUsage($reading, $prev_reading){
