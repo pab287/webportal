@@ -187,40 +187,31 @@
                                 <?php endif; ?>
                             </div>
                         </div>
-                        <?php if((in_array("save", $this->current_action)) && !in_array('approve_action', $this->current_action)): ?>
-                            <br><br><br><br><br>
-                        <?php endif; ?>
-                        <div class="m-separator m-separator--solid d-xl-12"></div>
-                        <div id="fix-mobile" class="col-xl-12 order-1 order-xl-2 m--align-right">
-                            <?php if((in_array("approve_action", $this->current_action) && (in_array("save", $this->current_action)))): ?>
-                                <button type="submit" class="btn btn-info m-btn m-btn--custom m-btn--icon m-btn--air m-btn--box btn-submit btnApprove_action">
-                                    <span>
-                                    <i class="la la-save"></i>
-                                        <span>
-                                        Save & Approve
-                                        </span>
-                                    </span>
-                                </button>
-                            <?php endif; ?>
-                            <?php if((in_array("save", $this->current_action)) && !in_array('approve_action', $this->current_action)): ?>
-                                <!-- <button type="submit" onclick="save()" class="btn btn-info m-btn m-btn--custom m-btn--icon m-btn--air m-btn--box btn-submit btnSave"> -->
-                                <button type="submit" class="btn btn-info m-btn m-btn--custom m-btn--icon m-btn--air m-btn--box btn-submit btnSave">
-                                    <span>
-                                    <i class="la la-save"></i>
-                                        <span>
-                                        Save
-                                        </span>
-                                    </span>
-                                </button>
-                            <?php endif; ?>
-                            <a href="masterfile" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon m-btn--air m-btn--box btnCancel">
-                                <!-- <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon m-btn--air m-btn--box btnCancel"> -->
-                                    <span>
-                                        CANCEL
-                                    </span>
-                                <!-- </button> -->
-                            </a>
-                        </div>
+                    </div>
+                    <div class="m-portlet__foot m--align-right">
+                    <?php if(in_array("approve_action", $this->current_action) && in_array("save", $this->current_action)): ?>
+                        <button type="submit" class="btn btn-info m-btn m-btn--custom m-btn--icon m-btn--air m-btn--box btn-submit btnApprove_action">
+                            <span>
+                            <i class="la la-save"></i>
+                                <span>
+                                Save & Approve
+                                </span>
+                            </span>
+                        </button>
+                    <?php endif; ?>
+                    <?php if(in_array("save", $this->current_action) && !in_array('approve_action', $this->current_action)): ?>
+                        <button type="submit" class="btn btn-info m-btn m-btn--custom m-btn--icon m-btn--air m-btn--box btn-submit btnSave">
+                            <span>
+                            <i class="la la-save"></i>
+                                <span>
+                                Save
+                                </span>
+                            </span>
+                        </button>
+                    <?php endif; ?>
+                        <a href="<?php echo site_url('eforms/overtime/masterfile') ?>" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon m-btn--air m-btn--box btnBack">
+                            <span>CANCEL</span>
+                        </a>
                     </div>
                 </form>
 			</div>

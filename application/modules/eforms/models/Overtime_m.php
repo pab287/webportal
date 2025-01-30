@@ -924,81 +924,101 @@ class Overtime_m extends CI_Model {
         return $query->num_rows();
     }
 
-    function getOvertimeRequestDetails($id){
-        $this->db->select("a.*");
-        $this->db->from('gcceforms.overtime a');
-        $this->db->where('a.id',$id);
-        $query = $this->db->get();
+    public function getOvertimeRequestDetails($id){
+        $resultarray = array();
+        $this->db->select("ot.id, ot.employee, ot.reference_no, ot.purpose, ot.attachment_image, ot.status, ot.date_from, ot.date_to,
+            ot.actual_time_start, ot.actual_time_end, ot.actual_time_work, ot.is_imported,
+            ot.created_at, ot.updated_at, ot.requested_at, ot.approved_at, ot.disapproved_at, ot.cancelled_at, ot.requested_remarks, ot.requested_by,
+            IF(comp.id IS NULL, emp.company_id, comp.description) as company,
+            IF(dept.id IS NULL, emp.department_id, dept.description) as department,
+            IF(pos.id IS NULL, emp.position, pos.name) as position,
+            UPPER(CONCAT(IF(comp.id IS NULL, emp.company_id, comp.description), '\n',
+            IF(dept.id IS NULL, emp.department_id, dept.description), '\n',
+            IF(pos.id IS NULL, emp.position, pos.name))) as details, MAX(ps.date_end) as max_date,
+            UPPER(TRIM(CONCAT(emp.firstname, ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+            END,' ', emp.lastname,
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
+            END))) as display_name,
+            UPPER(TRIM(CONCAT(req.firstname, ' ',
+            CASE WHEN UPPER(TRIM(req.middlename)) != 'N/A' AND UPPER(TRIM(req.middlename)) != 'NONE' AND
+                    TRIM(req.middlename) !='' AND req.middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(req.middlename, 1, 1), '.') ELSE ''
+            END,' ', req.lastname,
+            CASE WHEN UPPER(TRIM(req.suffix)) != 'N/A' AND
+                UPPER(TRIM(req.suffix !='NONE')) AND req.suffix !='' AND
+                req.suffix IS NOT NULL THEN CONCAT(' ', req.suffix) ELSE ''
+            END))) as display_requested_by,
+            UPPER(TRIM(CONCAT(crt.firstname, ' ', CASE WHEN UPPER(TRIM(crt.middlename)) != 'N/A' AND UPPER(TRIM(crt.middlename)) != 'NONE' AND
+            TRIM(crt.middlename) !='' AND crt.middlename IS NOT NULL THEN CONCAT(SUBSTR(crt.middlename, 1, 1), '.') ELSE '' END,' ', crt.lastname,
+            CASE WHEN UPPER(TRIM(crt.suffix)) != 'N/A' AND UPPER(TRIM(crt.suffix !='NONE')) AND crt.suffix !='' AND crt.suffix IS NOT NULL THEN
+            CONCAT(' ', crt.suffix) ELSE '' END))) as created_by,
+            UPPER(TRIM(CONCAT(upd.firstname, ' ', CASE WHEN UPPER(TRIM(upd.middlename)) != 'N/A' AND UPPER(TRIM(upd.middlename)) != 'NONE' AND
+            TRIM(upd.middlename) !='' AND upd.middlename IS NOT NULL THEN CONCAT(SUBSTR(upd.middlename, 1, 1), '.') ELSE '' END,' ', upd.lastname,
+            CASE WHEN UPPER(TRIM(upd.suffix)) != 'N/A' AND UPPER(TRIM(upd.suffix !='NONE')) AND upd.suffix !='' AND upd.suffix IS NOT NULL THEN
+            CONCAT(' ', upd.suffix) ELSE '' END))) as updated_by,
+            IF(ot.approved_by > 0, UPPER(TRIM(CONCAT(appr.firstname, ' ', CASE WHEN UPPER(TRIM(appr.middlename)) != 'N/A' AND UPPER(TRIM(appr.middlename)) != 'NONE' AND
+            TRIM(appr.middlename) !='' AND appr.middlename IS NOT NULL THEN CONCAT(SUBSTR(appr.middlename, 1, 1), '.') ELSE '' END,' ', appr.lastname,
+            CASE WHEN UPPER(TRIM(appr.suffix)) != 'N/A' AND UPPER(TRIM(appr.suffix !='NONE')) AND appr.suffix !='' AND appr.suffix IS NOT NULL THEN
+            CONCAT(' ', appr.suffix) ELSE '' END))), 'N/A') as approved_by,
+            IF(ot.disapproved_by > 0, UPPER(TRIM(CONCAT(dis.firstname, ' ', CASE WHEN UPPER(TRIM(dis.middlename)) != 'N/A' AND UPPER(TRIM(dis.middlename)) != 'NONE' AND
+            TRIM(dis.middlename) !='' AND dis.middlename IS NOT NULL THEN CONCAT(SUBSTR(dis.middlename, 1, 1), '.') ELSE '' END,' ', dis.lastname,
+            CASE WHEN UPPER(TRIM(dis.suffix)) != 'N/A' AND UPPER(TRIM(dis.suffix !='NONE')) AND dis.suffix !='' AND dis.suffix IS NOT NULL THEN
+            CONCAT(' ', dis.suffix) ELSE '' END))), 'N/A') as disapproved_by,
+            IF(ot.cancelled_by > 0, UPPER(TRIM(CONCAT(canc.firstname, ' ', CASE WHEN UPPER(TRIM(canc.middlename)) != 'N/A' AND UPPER(TRIM(canc.middlename)) != 'NONE' AND
+            TRIM(canc.middlename) !='' AND canc.middlename IS NOT NULL THEN CONCAT(SUBSTR(canc.middlename, 1, 1), '.') ELSE '' END,' ', canc.lastname,
+            CASE WHEN UPPER(TRIM(canc.suffix)) != 'N/A' AND UPPER(TRIM(canc.suffix !='NONE')) AND canc.suffix !='' AND canc.suffix IS NOT NULL THEN
+            CONCAT(' ', canc.suffix) ELSE '' END))), 'N/A') as cancelled_by");
+        $this->db->from("gcceforms.overtime ot");
+        $this->db->join("gccmaster.tblemployees emp", "emp.id = ot.employee", "INNER");
+        $this->db->join("gcchris.tblcompanies comp", "comp.id = emp.company_id", "LEFT");
+        $this->db->join("gcchris.tbldepartments dept", "dept.id = emp.department_id", "LEFT");
+        $this->db->join("gcchris.tblposition pos", "pos.id = emp.position", "LEFT");
+        $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+        $this->db->join("gccmaster.tblemployees req", "req.id = ot.requested_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees crt", "crt.id = ot.created_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees upd", "upd.id = ot.updated_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees appr", "appr.id = ot.approved_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees dis", "dis.id = ot.disapproved_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees canc", "canc.id = ot.cancelled_by", "LEFT");
+        $this->db->where("ot.id", $id);
+        $this->db->limit(1);
+        $queryDetails = $this->db->get();
+        if($queryDetails->num_rows() == 1){
+            $resultarray = $queryDetails->row_array();
+            $resultarray["images"] = array();
+            $resultarray["has_attachment"] = false;
 
-        if($query->num_rows() > 0){
-            $arrData = array();
-            foreach($query->result() as $key => $rs){
-                $rs->company = (is_numeric($rs->company))? $this->getCompany($rs->company): strtoupper($rs->company);
-                $rs->department = (is_numeric($rs->department))? $this->getDepartment($rs->department): $rs->department;
-                $rs->position = (is_numeric($rs->position))? $this->getPosition($rs->position): $rs->position;
+            $resultarray["print_purpose"] = nl2br($resultarray["purpose"]);
+            $resultarray["purpose"] = str_replace("\n",", ",str_replace("-","", $resultarray["purpose"]));
 
-                // if(is_numeric($rs->company)){
-                //     $rs->company =  $this->getCompany($rs->company);
-                // }else{
-                //     $rs->company = strtoupper($rs->company);
-                // }
+            $stdResult = (object) $resultarray;
+            $tempImage = isset($stdResult->attachment_image) ? unserialize($stdResult->attachment_image) : array();
 
-                // if(is_numeric($rs->department)){
-                //     $rs->department = $this->getDepartment($rs->department);
-                // }else{
-                //     $rs->department = $rs->department;
-                // }
-
-                // if(is_numeric($rs->position)){
-                //     $rs->position = $this->getPosition($rs->position);
-                // }else{
-                //     $rs->position = $rs->position;
-                // }
-
-                $rs->display_name = $this->format_name($rs->employee);
-                $rs->display_details = "<span><b>".$rs->company."</b><br>".$rs->department."</span>";
-                $rs->created_by = $this->format_name($rs->created_by);
-                $rs->display_requested_by = $this->format_name($rs->requested_by);
-                $rs->updated_by = $rs->updated_by ? $this->format_name($rs->updated_by) : "N/A";
-                $rs->approved_by =  $rs->approved_by ? $this->format_name($rs->approved_by) : "N/A";
-                $rs->disapproved_by =  $rs->disapproved_by ? $this->format_name($rs->disapproved_by) : "N/A";
-                $rs->cancelled_by =  $rs->cancelled_by ? $this->format_name($rs->cancelled_by) : "N/A";
-                $rs->print_purpose = nl2br($rs->purpose);
-                $rs->purpose = str_replace("\n",", ",str_replace("-","",$rs->purpose));
-
-                $tempImage = ($rs->attachment_image) ? unserialize($rs->attachment_image) : array();
-                if(is_array($tempImage) && count($tempImage) > 0){
-                    $rs->has_attachment = true;
-                    $_tempImages = array();
-                    foreach ($tempImage as $key => $value) {
-                        $tempRow = array();
-                        $tempValue = explode("/", $value);
-                        $thumbnail = "";
-                        $filename = "";
-                        if(count($tempValue) == 2){
-                            $thumbnail = "{$tempValue[0]}/thumbnails/{$tempValue[1]}";
-                            $filename = "{$tempValue[1]}";
-                        }
-                        $tempRow["filename"] = $filename;
-                        $tempRow["image"] = base_url("uploads/files/images/overtime/{$value}");
-                        $tempRow["thumbnail"] = base_url("uploads/files/images/overtime/{$thumbnail}");
-                        $_tempImages[] = $tempRow;
+            if (is_array($tempImage) && count($tempImage) > 0) {
+                $resultarray['has_attachment'] = true;
+                $images = array();
+                foreach ($tempImage as $imagePath) {
+                    $imageParts = explode('/', $imagePath);
+                    if (count($imageParts) === 2) {
+                        $thumbnail = "{$imageParts[0]}/thumbnails/{$imageParts[1]}";
+                        $filename = $imageParts[1];
+                        $images[] = array(
+                            'filename' => $filename,
+                            'image' => base_url("uploads/files/images/overtime/{$imagePath}"),
+                            'thumbnail' => base_url("uploads/files/images/overtime/{$thumbnail}"),
+                        );
                     }
-                    $rs->images = $_tempImages;
-                }else{
-                    $rs->has_attachment = false;
                 }
-
-                $arrData[$key] = $rs;
+                $resultarray['images'] = $images;
             }
-            $data = array();
-            foreach($arrData as $k=>$v){
-                $data[] = $v;
-            }
-            return $data[0];
-        }else{
-            return array();
         }
+
+        return $resultarray;
     }
 
     function updateOvertime($id){

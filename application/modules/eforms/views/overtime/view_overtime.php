@@ -43,158 +43,165 @@
 					<div class="m-portlet__head-tools"></div>
 				</div>
                 <form action="#" id="form_overtime" class="form-horizontal">
-				<div class="m-portlet__body">
-                    
+                    <div class="m-portlet__body">
                         <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                         <div id="overtime_renderer">
-                            <div class="row">
-                                <div class="col-md-6 col-sm-12">
-                                    <div class="form-group m-form__group row">
-                                        <label for="" class="col-md-3 col-lg-3 col-sm-12 col-xs-12">Reference no:</label>
-                                        <div class="col-md-9 col-lg-9 col-sm-12 col-xs-12"><strong v-text="vm_tab1.reference_no">&nbsp;</strong></div>
-                                    </div>
-                                    <div class="form-group m-form__group row">
-                                        <label for="" class="col-md-3 col-lg-3 col-sm-12 col-xs-12">
-                                            Employee:
-                                        </label>
-                                        <div class="col-md-9 col-lg-9 col-sm-12 col-xs-12"><strong v-text="vm_tab1.display_name">&nbsp;</strong></div>
-                                    </div>
-                                    <div class="form-group m-form__group row">
-                                        <label for="" class="col-md-3 col-lg-3 col-sm-12 col-xs-12">Company:</label>
-                                        <div class="col-md-9 col-lg-9 col-sm-12 col-xs-12">
-                                            <strong><span v-text="vm_tab1.company">&nbsp;</span></strong><br>
-                                            <span v-text="vm_tab1.department">&nbsp;</span><br>
-                                            <span v-text="vm_tab1.position">&nbsp;</span>
+                            <div class="form-group m-form__group row" :class="loading_content === true ? '':'m--hide'">
+                                <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
+                                    <h3 class="m--font-brand">Loading Content Please Wait . . . </h3>
+                                </div>
+                                <div class="col-1 col-md-1 col-lg-1 col-sm-1 col-xs-12">
+                                    <div class="m-loader m-loader--lg" style="width: 30px; display: inline-block;"></div>
+                                </div>
+                            </div>
+                            <div :class="loading_content === true ? 'm--hide':''">
+                                <div class="row">
+                                    <div class="col-md-6 col-sm-12">
+                                        <div class="form-group m-form__group row">
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-12 col-xs-12">Reference no:</label>
+                                            <div class="col-md-9 col-lg-9 col-sm-12 col-xs-12"><strong v-text="vm_tab1.reference_no">&nbsp;</strong></div>
+                                        </div>
+                                        <div class="form-group m-form__group row">
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-12 col-xs-12">
+                                                Employee:
+                                            </label>
+                                            <div class="col-md-9 col-lg-9 col-sm-12 col-xs-12"><strong v-text="vm_tab1.display_name">&nbsp;</strong></div>
+                                        </div>
+                                        <div class="form-group m-form__group row">
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-12 col-xs-12">Company:</label>
+                                            <div class="col-md-9 col-lg-9 col-sm-12 col-xs-12">
+                                                <strong><span v-text="vm_tab1.company">&nbsp;</span></strong><br>
+                                                <span v-text="vm_tab1.department">&nbsp;</span><br>
+                                                <span v-text="vm_tab1.position">&nbsp;</span>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div class="col-md-6 col-sm-12">
+                                        <template v-if="vm_tab1.has_attachment === true">
+                                            <h5>ATTACHED IMAGE</h5>
+                                            <div class="row m-row--no-padding align-items-center">
+                                                <div class="col-md-1 col-sm-12" v-for="(item, index) in vm_tab1.images">
+                                                    <div class="m-temp__pic text-center">
+                                                        <a :href="item.image" data-lightbox="upload_image" :data-title="item.filename">
+                                                            <img class="m-temp__img" :src="item.thumbnail" :alt="item.filename" width="60" height="60" style="border: 1px solid #233e6b;" />
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
                                 </div>
-                                <div class="col-md-6 col-sm-12">
-                                    <template v-if="vm_tab1.has_attachment === true">
-                                        <h5>ATTACHED IMAGE</h5>
-                                        <div class="row m-row--no-padding align-items-center">
-                                            <div class="col-md-1 col-sm-12" v-for="(item, index) in vm_tab1.images">
-                                                <div class="m-temp__pic text-center">
-                                                    <a :href="item.image" data-lightbox="upload_image" :data-title="item.filename">
-                                                        <img class="m-temp__img" :src="item.thumbnail" :alt="item.filename" width="60" height="60" style="border: 1px solid #233e6b;" />
-                                                    </a>
+                                <br><div class="m-separator m-separator--dashed d-xl-12"></div><br>
+                                <div class="row">
+                                    <div class="col-md-6 col-sm-12">
+                                        <div class="form-group m-form__group row" id="status">
+                                            <label for="" class="col-3">Status:</label>
+                                            <div class="col-9">
+                                                <strong id="status_state"><span v-text="vm_tab1.status">&nbsp;</span></strong>
+                                            </div>
+                                        </div>
+                                        <br>
+                                        <div class="form-group m-form__group row">
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
+                                                From: 
+                                            </label>
+                                            <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                                                <b v-text="moment(vm_tab1.date_from).format('LLL')"></b>
+                                            </div>
+                                        </div>
+                                        <div class="form-group m-form__group row">
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
+                                                To: 
+                                            </label>
+                                            <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                                                <b v-text="moment(vm_tab1.date_to).format('LLL')"></b>
+                                            </div>
+                                        </div>
+                                        <div class="form-group m-form__group row">
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
+                                                Purpose:
+                                            </label>
+                                            <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="purpose">
+                                                <b v-text="vm_tab1.purpose"></b>
+                                            </div>
+                                        </div>
+                                        <br>
+                                        <div id="actual_time" style="display: none;">
+                                            <div class="form-group m-form__group row">
+                                                <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Actual time started:</label>
+                                                <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                                                    <b v-text="(vm_tab1.actual_time_start != '0000-00-00 00:00:00') ? moment(vm_tab1.actual_time_start).format('LLL') : '-- : --'"></b>
+                                                </div>
+                                            </div>
+                                            <div class="form-group m-form__group row">
+                                                <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Actual time ended:</label>
+                                                <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                                                    <b v-text="(vm_tab1.actual_time_end != '0000-00-00 00:00:00') ? moment(vm_tab1.actual_time_end).format('LLL') : '-- : --'"></b>
+                                                </div>
+                                            </div>
+                                            <div class="form-group m-form__group row">
+                                                <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Actual time worked:</label>
+                                                <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                                                    <b v-text="(vm_tab1.actual_time_work && vm_tab1.actual_time_work != '0') ? vm_tab1.actual_time_work : 'N/A'"></b>
                                                 </div>
                                             </div>
                                         </div>
-                                    </template>
-                                </div>
-                            </div>
-                            <br><div class="m-separator m-separator--dashed d-xl-12"></div><br>
-                            <div class="row">
-                                <div class="col-md-6 col-sm-12">
-                                    <div class="form-group m-form__group row" id="status">
-                                        <label for="" class="col-3">Status:</label>
-                                        <div class="col-9">
-                                            <strong id="status_state"><span v-text="vm_tab1.status">&nbsp;</span></strong>
-                                        </div>
                                     </div>
-                                    <br>
-                                    <div class="form-group m-form__group row">
-                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                            From: 
-                                        </label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                            <b v-text="moment(vm_tab1.date_from).format('LLL')"></b>
-                                        </div>
-                                    </div>
-                                    <div class="form-group m-form__group row">
-                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                            To: 
-                                        </label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                            <b v-text="moment(vm_tab1.date_to).format('LLL')"></b>
-                                        </div>
-                                    </div>
-                                    <div class="form-group m-form__group row">
-                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                            Purpose:
-                                        </label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="purpose">
-                                            <b v-text="vm_tab1.purpose"></b>
-                                        </div>
-                                    </div>
-                                    <br>
-                                    <div id="actual_time" style="display: none;">
-                                        <div class="form-group m-form__group row">
-                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Actual time started:</label>
+                                    <div class="col-md-6 col-sm-12">
+                                        <br>
+                                        <div class="form-group m-form__group row" v-if="vm_tab1.created_by">
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Created By:</label>
                                             <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                                <b v-text="(vm_tab1.actual_time_start != '0000-00-00 00:00:00') ? moment(vm_tab1.actual_time_start).format('LLL') : '-- : --'"></b>
+                                                <b v-text="vm_tab1.created_by"></b> ON <b v-text="moment(vm_tab1.created_at).format('LLL')"></b>
                                             </div>
                                         </div>
-                                        <div class="form-group m-form__group row">
-                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Actual time ended:</label>
+                                        <div class="form-group m-form__group row" v-if="vm_tab1.updated_by">
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Last Updated By:</label>
                                             <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                                <b v-text="(vm_tab1.actual_time_end != '0000-00-00 00:00:00') ? moment(vm_tab1.actual_time_end).format('LLL') : '-- : --'"></b>
+                                                <b v-text="vm_tab1.updated_by"></b> ON <b v-text="moment(vm_tab1.updated_at).format('LLL')"></b>
                                             </div>
                                         </div>
-                                        <div class="form-group m-form__group row">
-                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Actual time worked:</label>
+                                        <div class="form-group m-form__group row" id="requested_by" v-if="vm_tab1.requested_by">
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Requested by:</label>
                                             <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                                <b v-text="(vm_tab1.actual_time_work && vm_tab1.actual_time_work != '0') ? vm_tab1.actual_time_work : 'N/A'"></b>
+                                                <b v-text="vm_tab1.display_requested_by"></b> ON <b v-text="vm_tab1.is_imported === '1'? moment(vm_tab1.requested_at).format('LL'): moment(vm_tab1.requested_at).format('LLL')"></b>
+                                            </div>
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">&nbsp;</label>
+                                            <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="requested_remarks">
+                                                Remarks: <b v-text="vm_tab1.requested_remarks"></b>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 col-sm-12">
-                                    <br>
-                                    <div class="form-group m-form__group row">
-                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Created By:</label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                            <b v-text="vm_tab1.created_by"></b> ON <b v-text="moment(vm_tab1.created_at).format('LLL')"></b>
+                                        <div class="form-group m-form__group row" id="approved_by" style="display: none;">
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Approved by:</label>
+                                            <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                                                <b v-text="vm_tab1.approved_by"></b> ON <b v-text="vm_tab1.is_imported === '1'? moment(vm_tab1.approved_at).format('LL'): moment(vm_tab1.approved_at).format('LLL')"></b>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="form-group m-form__group row">
-                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Last Updated By:</label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                            <b v-text="vm_tab1.updated_by"></b> <span id="updated_at"></span>
+                                        <div class="form-group m-form__group row" id="cancelled_by" style="display: none;">
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
+                                                Cancelled by:
+                                            </label>
+                                            <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                                                <b v-text="vm_tab1.cancelled_by"></b> ON <b v-text="moment(vm_tab1.cancelled_at).format('LLL')"></b>
+                                            </div>
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">&nbsp;</label>
+                                            <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="cancelled_remarks">
+                                                Remarks: <b v-text="vm_tab1.cancelled_remarks"></b>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="form-group m-form__group row" id="requested_by">
-                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Requested by:</label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                            <b v-text="vm_tab1.display_requested_by"></b> ON <b v-text="vm_tab1.is_imported === '1'? moment(vm_tab1.requested_at).format('LL'): moment(vm_tab1.requested_at).format('LLL')"></b>
-                                        </div>
-                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">&nbsp;</label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="requested_remarks">
-                                            Remarks: <b v-text="vm_tab1.requested_remarks"></b>
-                                        </div>
-                                    </div>
-                                    <div class="form-group m-form__group row" id="approved_by" style="display: none;">
-                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Approved by:</label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                            <b v-text="vm_tab1.approved_by"></b> ON <b v-text="vm_tab1.is_imported === '1'? moment(vm_tab1.approved_at).format('LL'): moment(vm_tab1.approved_at).format('LLL')"></b>
-                                        </div>
-                                    </div>
-                                    <div class="form-group m-form__group row" id="cancelled_by" style="display: none;">
-                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                            Cancelled by:
-                                        </label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                            <b v-text="vm_tab1.cancelled_by"></b> ON <b v-text="moment(vm_tab1.cancelled_at).format('LLL')"></b>
-                                        </div>
-                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">&nbsp;</label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="cancelled_remarks">
-                                            Remarks: <b v-text="vm_tab1.cancelled_remarks"></b>
-                                        </div>
-                                    </div>
-                                    <div class="form-group m-form__group row" id="disapproved_by" style="display: none;">
-                                        <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Disapproved by:</label>
-                                        <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                            <b v-text="vm_tab1.disapproved_by"></b> ON <b v-text="moment(vm_tab1.disapproved_at).format('LLL')"></b>
+                                        <div class="form-group m-form__group row" id="disapproved_by" style="display: none;">
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Disapproved by:</label>
+                                            <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                                                <b v-text="vm_tab1.disapproved_by"></b> ON <b v-text="moment(vm_tab1.disapproved_at).format('LLL')"></b>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        
                     </div>
 
-                    <div class="modal-footer" id="buttons">
+                    <div class="m-portlet__foot m--align-right" id="buttons" :class="loading_content === true ? 'm--hide':''">
                         <?php $current_action = $this->core_layout->getCurrentActions(); ?>
                         <?php if(in_array("approve_action", $current_action)): ?>
                             <a class="btn btn-success m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnApprove_action btnPending"
