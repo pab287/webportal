@@ -1,5 +1,5 @@
-<div class="modal fade" tabindex="-1" role="dialog" id="view-payroll-payslip-modal">
-    <div class="modal-dialog" role="document">
+<div class="modal fade" tabindex="-1" id="view-payroll-payslip-modal">
+    <div class="modal-dialog">
         <div class="modal-content" id="temp-payslip_content">
             <div class="modal-header">
                 <h5 class="modal-title">Payslip</h5>
