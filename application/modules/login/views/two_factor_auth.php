@@ -224,7 +224,7 @@ input[type="radio"]:checked::after {
                             <label class="text-center">Didn't receive the OTP? <a href="#" class="login-link">Resend OTP</a></label>
                         </div>
                         <div class="form-group m-form__group text-center">
-                            <button type="submit" class="btn btn-primary m-btn m-btn--custom">Verify</button>
+                            <button type="submit" class="btn btn-primary m-btn m-btn--custom" style="width: 200px;">Verify</button>
                         </div>
                     </div>
                 </div>
