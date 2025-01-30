@@ -121,14 +121,36 @@ input[type="radio"]:checked::after {
 }
 
 .login-link:hover {
-    text-decoration: underline; /* Add underline on hover */
-    color: #0056b3; /* Darker blue on hover */
+    text-decoration: underline;
+    color: #0056b3;
 }
 
-/* .otp-input {
-    letter-spacing: 10px;
-} */
+.otp-error {
+    display: none; 
+    color: red;
+    text-align: center;
+    margin-top: 5px;
+    font-size: 14px;
+    font-weight: bold;
+}
 
+.otp-error.show {
+    display: block; 
+}
+
+.otp-input.error {
+    border: 1px solid red; /* Red border */
+    outline: none; /* Remove default outline */
+}
+
+.login-link.disabled {
+    display: none;
+}
+
+#timer {
+    color: red; /* Style the timer text */
+    font-weight: bold;
+}
 
     </style>
   </head>
@@ -153,7 +175,7 @@ input[type="radio"]:checked::after {
                         </div>
                     </div>
                     <!--begin::Form-->
-                    <form class="m-form" id="two_factor_auth" method="POST">
+                    <form class="m-form" id="two_factor_auth">
                         <div class="m-portlet__body">
                             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                             <div class="form-group m-form__group">
@@ -221,7 +243,9 @@ input[type="radio"]:checked::after {
                             </div>
                             <div class="form-group m-form__group">
                                 <input type="text" id="otp" name="key_code" class="form-control m-input text-center otp-input" maxlength="10" placeholder="Enter OTP">
-                                <label class="text-center mt-2">Didn't receive the OTP?<a href="#" class="login-link">Resend OTP</a></label>
+                                <span class="otp-error col">OTP Code is invalid</span>
+                                <label class="text-center mt-2 col">Didn't receive the OTP? Resend OTP in <span id="timer">&nbsp</span></label>
+                                <label class="text-center col"><a href="javascript:void(0)" id="resend_otp" class="login-link disabled">Resend OTP</a></label>
                             </div>
                             <div class="form-group m-form__group text-center">
                                 <button type="submit" class="btn btn-primary m-btn m-btn--custom" style="width: 200px;" disabled>Verify</button>
@@ -233,12 +257,13 @@ input[type="radio"]:checked::after {
         </div>
 
 <script type="text/javascript">
-
 const sessionData = <?= json_encode($session  ?? []) ?>;
 if (!sessionData.auth) {
     window.location.href = '<?php echo base_url("login"); ?>';
 }
-
+let request_id = "";
+let timerSpan = $('#timer');
+let timerInterval;
 
 $(document).ready(function() {
     $.ajax({
@@ -251,24 +276,21 @@ $(document).ready(function() {
         dataType: 'json',
         success: function(response) {
             if (response.status == 'true') {
+                request_id = response.request_id;
                 $('#two_factor_auth button[type="submit"]').prop('disabled', true);
                 $('#m_modal_1').modal({
                     backdrop: 'static',
                     keyboard: false
                 });
+                startTimer(300);
             }
         },
-        error: function(xhr, status, error) {
-            console.error('Error submitting form:', error);
-            // Handle error (e.g., show error message)
-        }
     });
-});
 
 
- $('#two_factor_auth').on('submit', function(e) {
+    $('#two_factor_auth').on('submit', function(e) {
         e.preventDefault();
-        var formData = $(this).serialize();
+        let formData = $(this).serialize();
         formData += '&' + $.param({ sessionData: sessionData });
         $.ajax({
             type: 'POST',
@@ -276,39 +298,57 @@ $(document).ready(function() {
             data: formData,
             dataType: 'json',
             success: function(response) {
+                request_id = response.request_id;
                 $('#two_factor_auth button[type="submit"]').prop('disabled', true);
                 if (response.status) {
                     $('#m_modal_1').modal({
                         backdrop: 'static',
                         keyboard: false
                     });
+                    startTimer(300);
                 }
             },
-            error: function(xhr, status, error) {
-                console.error('Error submitting form:', error);
-                // Handle error (e.g., show error message)
-            }
         });
     });
 
+});
+
+function startTimer(seconds) {
+    let timeLeft = seconds;
+    timerInterval = setInterval(function() {
+        timeLeft--;
+        timerSpan.text(timeLeft + ' seconds');
+        
+        if (timeLeft === 0) {
+            clearInterval(timerInterval);
+            $('.login-link').removeClass('disabled');
+            timerSpan.hide();
+        }
+    }, 1000);
+}
+
+
 $('#verify_otp').on('submit', function(e) {
     e.preventDefault();
-    var formData = $(this).serialize();
-    formData += '&' + $.param({ emp_id: sessionData.emp_id });
+    let formData = $(this).serialize();
+    formData += '&' + $.param({ emp_id: sessionData.emp_id,username: sessionData.username,password: sessionData.password });
     $.ajax({
         type: 'POST',
         url: '<?= base_url('login/verify_otp')?>',
         data: formData,
         dataType: 'json',
         success: function(response) {
+            console.log(response);
             if (response.status) {
-                window.location.href = '<?php echo base_url("dashboard"); ?>';
+                $('.otp-error').removeClass('show');
+                $('#otp').removeClass('error');
+                 window.location.replace(response.redirect);
+            }else{
+                $('.otp-error').addClass('show');
+                $('#otp').addClass('error');
+                $('#otp').val('');
             }
         },
-        error: function(xhr, status, error) {
-            console.error('Error submitting form:', error);
-            // Handle error (e.g., show error message)
-        }
         });
 });
 
@@ -317,16 +357,13 @@ $('#verify_otp').on('submit', function(e) {
 
         $.ajax({
             url: '<?= base_url('login/destroySession')?>',
-            method: 'POST',
+            type: 'POST',
             data: {
                 csrf_token: $('input[name="csrf_token"]').val()
             },
             success: function(response) {
                 window.location.href = '<?php echo base_url("login"); ?>'
             },
-            error: function(xhr, status, error) {
-                console.error('Error destroying session:', error);
-            }
         });
     });
 
@@ -339,7 +376,29 @@ $('#verify_otp').on('submit', function(e) {
             $('#verify_otp button[type="submit"]').prop('disabled', false);
         } else {
             $('#verify_otp button[type="submit"]').prop('disabled', true);
+            $('.otp-error').removeClass('show');
+            $('#otp').removeClass('error');
         }
+    });
+
+    $('#resend_otp').on('click', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: '<?= base_url('login/resend_otp')?>',
+            method: 'POST',
+            data: {
+                csrf_token: $('input[name="csrf_token"]').val(),
+                emp_id: sessionData.emp_id,
+                request_id: request_id,
+            },
+            success: function(response) {
+                if (response.status) {
+                    startTimer(300);
+                    timerSpan.show();
+                    $('#resend_otp').addClass('disabled');
+                }
+            },
+        });
     });
 
 

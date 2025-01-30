@@ -15,9 +15,7 @@ class Verifylogin extends MY_Controller{
     {
         if ($this->input->post()) {
             $post = $this->input->post();
-            // Check for force_update before validation
             $query = $this->db->select('force_update, password, auth, emp_id')->from('gccmaster.tblusers')->where('username', $post['username'],)->get()->row_array();
-    
             if (isset($query['force_update']) && $query['force_update'] == 1 && $query['password'] == md5($post['password'])) {
                 $data = array(
                     'modal' => "show",
@@ -26,17 +24,37 @@ class Verifylogin extends MY_Controller{
                 $this->session->set_userdata($data);
                 redirect('login/change_password', );
             }
-
             if (isset($query['auth']) && $query['auth'] == 1 && $query['password'] == md5($post['password'])) {
-                $data = array(
-                    'auth' => "show",
-                    'emp_id' => $query['emp_id']
-                );
-                $this->session->set_userdata($data);
-                redirect('login/authentication',);
+                $trust_token_cookie = $this->input->cookie('device_trust_token', TRUE);
+                if($trust_token_cookie){
+                    $this->db->select('id');
+                    $this->db->from('gccmaster.trusted_devices');
+                    $this->db->where('trust_token', $trust_token_cookie);
+                    $this->db->where('expiry >', date('Y-m-d H:i:s'));
+                    $this->db->where('emp_id', $query['emp_id']);
+                    $trusted_device_query = $this->db->get();
+                    if(!$trusted_device_query->num_rows() == 1){
+                        $data = array(
+                            'auth' => "show",
+                            'emp_id' => $query['emp_id'],
+                            'password' => $post['password'],
+                            'username' => $post['username'],
+                        );
+                        $this->session->set_userdata($data);
+                        redirect('login/authentication',);
+                    }
+                }else{
+                    $data = array(
+                        'auth' => "show",
+                        'emp_id' => $query['emp_id'],
+                        'password' => $post['password'],
+                        'username' => $post['username'],
+                    );
+                    $this->session->set_userdata($data);
+                    redirect('login/authentication',);
+                }
             }
-    
-            // Proceed with form validation if no force_update is required
+            
             $this->form_validation->set_error_delimiters(
                 '<div class="m-alert m-alert--outline alert alert-danger alert-dismissible" role="alert">',
                 '<button type="button" class="close" data-dismiss="alert" aria-label="Close"></button><span></span></div>'
@@ -190,14 +208,14 @@ class Verifylogin extends MY_Controller{
 					if($response){
 						redirect($redirectLink, "refresh");
 					}else{
-						redirect($loginUrl, "refresh");					
+						redirect($loginUrl, "refresh");
 					}
 				}else{
 					redirect($loginUrl, "refresh");
 				}
 			}else{
 				redirect($loginUrl, "refresh");
-			}			
+			}
 		}
 	}
 	
