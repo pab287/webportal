@@ -150,11 +150,11 @@
 					<input type="hidden" id="id" name="id" value="0" />
 					<input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 					<div class="form-group">
-						<label class="form-control-label">Biometric No *</label>
-						<input type="text" id="biometricno" name="biometricno" class="form-control inptBiometricno" autocomplete="off" data-validation="required" />
+						<label class="form-control-label required">Biometric No</label>
+						<input type="text" id="biometricno" name="biometricno" class="form-control inptBiometricno" autocomplete="off" data-validation="required" onkeypress="return isNumber(event)" />
 					</div>
 					<div class="form-group">
-						<label class="form-control-label">Name *</label>
+						<label class="form-control-label required">Name</label>
 						<input type="text" id="employee_name" name="name" class="form-control inptName" autocomplete="off" data-validation="required" />
 					</div>
 					<div class="row">
@@ -170,15 +170,25 @@
 					<div class="form-group row">
 						<div class="col-md-12 col-12 col-lg-12 col-xl-12 col-sm-12">
 							<label class="form-control-label">Flexible Time</label>
-							<div class="m-checkbox-inline">
+							<select name="is_flexi" id="flexi-dropdown" class="form-control">
+								<option value="0">Default</option>
+								<option value="1">Yes</option>
+								<option value="2">1 in 1 out only</option>
+								<option value="3">Super Flexi</option>
+								<option value="4" disabled>No in and no out</option>
+							</select>
+
+							<!-- Original source code for reference -->
+							<!-- <div class="m-checkbox-inline">
 								<label class="m-checkbox"><input id="isflexi1" type="radio" name="is_flexi" value="1">Yes<span></span></label>
 								<label class="m-checkbox"><input id="isflexi2" type="radio" name="is_flexi" value="2">1 IN 1 OUT ONLY<span></span></label>
 								<label class="m-checkbox"><input id="isflexi3" type="radio" name="is_flexi" value="3">SUPER FLEXI<span></span></label>
 								<label class="m-checkbox"><input id="isflexi0" type="radio" name="is_flexi" value="0" checked>No<span></span></label>
-							</div>
+							</div> -->
+							<!-- Original source code for reference -->
 						</div>
 					</div>
-					<div class="form-group row mt-5">
+					<div class="form-group row">
 						<div class="col-md-6">
 							<label class="form-control-label">Status</label>
 							<div class="m-checkbox-inline">
@@ -197,7 +207,7 @@
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-				<button type="submit" class="btn btn-danger btnSave btn-submit">Save</button>
+				<button type="submit" class="btn btn-success btnSave btn-submit">Save</button>
 			</div>
 			</form>
 		</div>
@@ -723,27 +733,34 @@
 						$("#form-personnel-edit").find("#is_perhour1").prop("checked", false);
 					}
 
-					if(currentData.is_flexi == 1){
-						$("#form-personnel-edit").find("#isflexi1").prop("checked", true);
-						$("#form-personnel-edit").find("#isflexi2").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi3").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi0").prop("checked", false);
-					}else if(currentData.is_flexi == 2){
-						$("#form-personnel-edit").find("#isflexi2").prop("checked", true);
-						$("#form-personnel-edit").find("#isflexi3").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi1").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi0").prop("checked", false);
-					}else if(currentData.is_flexi == 3){
-						$("#form-personnel-edit").find("#isflexi3").prop("checked", true);
-						$("#form-personnel-edit").find("#isflexi0").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi1").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi2").prop("checked", false);
-					}else{
-						$("#form-personnel-edit").find("#isflexi0").prop("checked", true);
-						$("#form-personnel-edit").find("#isflexi1").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi2").prop("checked", false);
-						$("#form-personnel-edit").find("#isflexi3").prop("checked", false);
-					}
+					// if(currentData.is_flexi == 1){
+					// 	$("#form-personnel-edit").find("#isflexi1").prop("checked", true);
+					// 	$("#form-personnel-edit").find("#isflexi2").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi3").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi0").prop("checked", false);
+					// }else if(currentData.is_flexi == 2){
+					// 	$("#form-personnel-edit").find("#isflexi2").prop("checked", true);
+					// 	$("#form-personnel-edit").find("#isflexi3").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi1").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi0").prop("checked", false);
+					// }else if(currentData.is_flexi == 3){
+					// 	$("#form-personnel-edit").find("#isflexi3").prop("checked", true);
+					// 	$("#form-personnel-edit").find("#isflexi0").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi1").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi2").prop("checked", false);
+					// }else{
+					// 	$("#form-personnel-edit").find("#isflexi0").prop("checked", true);
+					// 	$("#form-personnel-edit").find("#isflexi1").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi2").prop("checked", false);
+					// 	$("#form-personnel-edit").find("#isflexi3").prop("checked", false);
+					// }
+
+					$("#form-personnel-edit").find('#flexi-dropdown').select2({
+						width: '100%',
+						placeholder: 'Select a Option',
+						dropdownParent: $("#modal-personnel_edit"),
+						minimumResultsForSearch: -1
+					}).val(currentData.is_flexi).trigger('change');
 					$("#modal-personnel_edit").modal("show");
 				}
 			}
@@ -803,6 +820,13 @@
 			$("#department_settings, #location_settings, #shift_settings").trigger("change");
 		}
 	});
+
+	function isNumber(evt) {
+		var charCode = (evt.which) ? evt.which : evt.keyCode
+		if (charCode > 31 && (charCode < 48 || charCode > 57))
+			return false;
+		return true;
+	}
 </script>
 <style type="text/css">
 	.btn.btn-default:hover,
