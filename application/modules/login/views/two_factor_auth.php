@@ -114,10 +114,10 @@ input[type="radio"]:checked::after {
     border-radius: 50%;
 }
 .login-link {
-    color: #007bff; /* Blue color for the link */
-    text-decoration: none; /* Remove underline */
-    cursor: pointer; /* Show pointer cursor on hover */
-    margin-left: 10px; /* Add some spacing between the button and the link */
+    color: #007bff;
+    text-decoration: none;
+    cursor: pointer;
+    margin-left: 10px;
 }
 
 .login-link:hover {
@@ -125,9 +125,9 @@ input[type="radio"]:checked::after {
     color: #0056b3; /* Darker blue on hover */
 }
 
-.otp-input {
+/* .otp-input {
     letter-spacing: 10px;
-}
+} */
 
 
     </style>
@@ -200,7 +200,6 @@ input[type="radio"]:checked::after {
                                         <a href="#" id="backToLogin" class="login-link">Back to login</a>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </form>
@@ -209,23 +208,25 @@ input[type="radio"]:checked::after {
 		    </div>
         </div>
 
-        <div class="modal fade show" id="m_modal_1" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: block;">
+        <div class="modal fade" id="m_modal_1" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
                     <div class="modal-body">
-                        <form mthod="post">
-                        <div class="form-group m-form__group text-center">
-                            <img src="<?= base_url('assets/otp_icon.png')?>" width="23%"></img>
-                            <h2 class="m-portlet__head-text p-2">OTP Verification</h2>
-                            <label>One-Time Password sent to your regitered mobile number</label>
-                        </div>
-                        <div class="form-group m-form__group">
-                            <input type="text" id="otp" name="otp" class="form-control m-input text-center otp-input" maxlength="6" placeholder="Enter OTP">
-                            <label class="text-center">Didn't receive the OTP? <a href="#" class="login-link">Resend OTP</a></label>
-                        </div>
-                        <div class="form-group m-form__group text-center">
-                            <button type="submit" class="btn btn-primary m-btn m-btn--custom" style="width: 200px;">Verify</button>
-                        </div>
+                        <form method="post" id="verify_otp">
+                            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                            <div class="form-group m-form__group text-center">
+                                <img src="<?= base_url('assets/otp_icon.png')?>" width="23%"></img>
+                                <h2 class="m-portlet__head-text p-2">OTP Verification</h2>
+                                <label>One-Time Password sent to your regitered mobile number</label>
+                            </div>
+                            <div class="form-group m-form__group">
+                                <input type="text" id="otp" name="key_code" class="form-control m-input text-center otp-input" maxlength="10" placeholder="Enter OTP">
+                                <label class="text-center mt-2">Didn't receive the OTP?<a href="#" class="login-link">Resend OTP</a></label>
+                            </div>
+                            <div class="form-group m-form__group text-center">
+                                <button type="submit" class="btn btn-primary m-btn m-btn--custom" style="width: 200px;" disabled>Verify</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -239,6 +240,32 @@ if (!sessionData.auth) {
 }
 
 
+$(document).ready(function() {
+    $.ajax({
+        type: 'POST',
+        url: '<?= base_url('login/otp_check')?>',
+        data: {
+            csrf_token: '<?php echo $this->security->get_csrf_hash(); ?>',
+            emp_id: sessionData.emp_id
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.status == 'true') {
+                $('#two_factor_auth button[type="submit"]').prop('disabled', true);
+                $('#m_modal_1').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error submitting form:', error);
+            // Handle error (e.g., show error message)
+        }
+    });
+});
+
+
  $('#two_factor_auth').on('submit', function(e) {
         e.preventDefault();
         var formData = $(this).serialize();
@@ -249,7 +276,13 @@ if (!sessionData.auth) {
             data: formData,
             dataType: 'json',
             success: function(response) {
-                console.log('Form submitted successfully:', response);
+                $('#two_factor_auth button[type="submit"]').prop('disabled', true);
+                if (response.status) {
+                    $('#m_modal_1').modal({
+                        backdrop: 'static',
+                        keyboard: false
+                    });
+                }
             },
             error: function(xhr, status, error) {
                 console.error('Error submitting form:', error);
@@ -257,6 +290,27 @@ if (!sessionData.auth) {
             }
         });
     });
+
+$('#verify_otp').on('submit', function(e) {
+    e.preventDefault();
+    var formData = $(this).serialize();
+    formData += '&' + $.param({ emp_id: sessionData.emp_id });
+    $.ajax({
+        type: 'POST',
+        url: '<?= base_url('login/verify_otp')?>',
+        data: formData,
+        dataType: 'json',
+        success: function(response) {
+            if (response.status) {
+                window.location.href = '<?php echo base_url("dashboard"); ?>';
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error submitting form:', error);
+            // Handle error (e.g., show error message)
+        }
+        });
+});
 
     $('#backToLogin').on('click', function(e) {
         e.preventDefault();
@@ -275,6 +329,20 @@ if (!sessionData.auth) {
             }
         });
     });
+
+    $('#otp').on('input', function() {
+        let value = $(this).val().replace(/\D/g, '');
+        value = value.split('').join(' ');
+        $(this).val(value);
+        const otpLength = value.replace(/\s/g, '').length;
+        if (otpLength === 6) {
+            $('#verify_otp button[type="submit"]').prop('disabled', false);
+        } else {
+            $('#verify_otp button[type="submit"]').prop('disabled', true);
+        }
+    });
+
+
 
 </script>
 	</body>
