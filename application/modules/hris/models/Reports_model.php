@@ -8,6 +8,9 @@ class Reports_model extends CI_Model{
 
     protected $defaultStationTable = "gcchris.default_station_location";
     protected $tblAppLocationSites = "gcctimeutility.app_location_sites";
+    protected $tblPersonnel = "gcctimeutility.personnel";
+    protected $tblPersonnelLocation = "gcctimeutility.personnel_locations";
+    protected $tblDefaultLocation = "gcchris.default_station_location";
 
     protected $now = null;
     protected $user = null;
@@ -2169,5 +2172,57 @@ class Reports_model extends CI_Model{
         $filters = implode(', ', array_map(function($k, $v) { return "$k: $v"; }, array_keys($post['filter']), $post['filter']));
         $this->core_layout->setEventLog("$action {$post['type']} with filters: $filters", "generate", "success", "gcchris", "user");
         return $post;
+    }
+
+    public function setlastEmployeeStation($id = null){
+        $arrData = array();
+
+        $this->db->select('a.id as employee_id, a.biometricno, b.station_id, b.station_description');
+        $this->db->join($this->tblDefaultLocation.' as b', 'b.employee_id = a.id', 'LEFT');
+        $this->db->from($this->tblEmployees.' as a');
+        
+        if ($id) {
+            $this->db->where('a.id', $id);
+        } else {
+            $this->db->where('a.biometricno !=', 1); //excluded sir CMD
+            $this->db->where('a.biometricno != " "', null, true);
+        }
+        $this->db->where('b.station_id', null);
+
+        $query = $this->db->get();
+
+        $this->db->reset_query();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result() as $row) {
+                
+                $this->db->select('a.id as personnel_id, a.biometricno, b.site_location_id, b.location_name');
+                $this->db->join($this->tblPersonnelLocation.' as b', 'b.personnel_id = a.id', 'INNER');
+                $this->db->from($this->tblPersonnel.' as a');
+                $this->db->where('a.biometricno', $row->biometricno);
+                $this->db->order_by('b.id', 'DESC');
+                $this->db->limit(1);
+                $q = $this->db->get();
+
+                if ($q->num_rows() > 0) {
+                    $personnel = $q->row();
+
+                    $data = array(
+                        'employee_id' => $row->employee_id,
+                        'station_id' => $personnel->site_location_id,
+                        'station_description' => $personnel->location_name,
+                        'created_at' => date('Y-m-d H:i:s')
+                    );
+
+                    $insert = $this->db->insert($this->tblDefaultLocation, $data);
+                    
+                    if ($insert) {
+                        array_push($arrData, $data);
+                    }
+                }
+            }
+        }
+
+        return $arrData;
     }
 }
