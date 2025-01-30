@@ -518,11 +518,11 @@ class Reports_model extends CI_Model{
                         }
                     }else{
                         $resultset["response"] = false;
-                        $resultset["toastr_msg"] = "Generate comprehensive report for hire/separated employees, no data on date range filter option(s) found!";
+                        $resultset["toastr_msg"] = "Generate comprehensive report for hire/separated employees {$resultFilter}, no data on date range filter option(s) found!";
                     }
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = "Generate comprehensive report for hire/separated employees, no filtered by option(s) found!";
+                    $resultset["toastr_msg"] = "Generate comprehensive report for hire/separated employees {$resultFilter}, no filtered by option(s) found!";
                 }
             }else{
                 $filterOption = $post["filter_type"];
@@ -553,7 +553,7 @@ class Reports_model extends CI_Model{
             }
         }else{
             $resultset["response"] = false;
-            $resultset["toastr_msg"] = "Generate hired/separated employee report, no filter by option data found!";
+            $resultset["toastr_msg"] = "Generate hired/separated employee report {$resultFilter}, no filter by option data found!";
         }
         
 
@@ -629,11 +629,11 @@ class Reports_model extends CI_Model{
                         }
                     }else{
                         $resultset["response"] = false;
-                        $resultset["toastr_msg"] = "Generate active manpower report by date range, no data on date range filter option(s) found!";
+                        $resultset["toastr_msg"] = "Generate active manpower report by date range {$resultFilter}, no data on date range filter option(s) found!";
                     }
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = "Generate active manpower report by date range, no filtered by data range option(s) found!";
+                    $resultset["toastr_msg"] = "Generate active manpower report by date range {$resultFilter}, no filtered by data range option(s) found!";
                 }
             }else{
                 $result = $this->employee->getAllActiveManpowerFilter($additionalFilters);
@@ -667,12 +667,12 @@ class Reports_model extends CI_Model{
                     $resultset["toastr_msg"] = "Generate all active manpower report {$resultFilter}, a total of (<strong>{$numRows}</strong> record(s) found.)";
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = "Generate all active manpower report, no filtered data found!";
+                    $resultset["toastr_msg"] = "Generate all active manpower report {$resultFilter}, no filtered data found!";
                 }
             }
         }else{
             $resultset["response"] = false;
-            $resultset["toastr_msg"] = "Generate all active manpower report, no filter by option data found!";
+            $resultset["toastr_msg"] = "Generate all active manpower report {$resultFilter}, no filter by option data found!";
         }
 
         $logMessage = $resultset["toastr_msg"];
@@ -752,7 +752,7 @@ class Reports_model extends CI_Model{
                         }
                     }else{
                         $resultset["response"] = false;
-                        $resultset["toastr_msg"] = "Generate trainings and seminars report by date range, no data on date range filter option(s) found!";
+                        $resultset["toastr_msg"] = "Generate trainings and seminars report by date range {$resultFilter}, no data on date range filter option(s) found!";
                     }
                 }else{
                     $resultset["response"] = false;
@@ -770,7 +770,7 @@ class Reports_model extends CI_Model{
                     $resultset["toastr_msg"] = "Generate all trainings and seminars report {$resultFilter}, a total of <strong>{$numRows}</strong> record(s) found.";
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = "Generate all trainings and seminars report, no filtered data found!";
+                    $resultset["toastr_msg"] = "Generate all trainings and seminars report {$resultFilter}, no filtered data found!";
                 }
             }
         }else{
@@ -828,11 +828,11 @@ class Reports_model extends CI_Model{
                         }
                     }else{
                         $resultset["response"] = false;
-                        $resultset["toastr_msg"] = "Generate drivers license report by date range, No data on date range filter option(s) found!";
+                        $resultset["toastr_msg"] = "Generate drivers license report by date range {$resultFilter}, No data on date range filter option(s) found!";
                     }
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = "Generate drivers license report by date range, No filtered by date range option(s) found!";
+                    $resultset["toastr_msg"] = "Generate drivers license report by date range {$resultFilter}, No filtered by date range option(s) found!";
                 }
             }else{
                 $result = $this->employee->getAllActiveDriversLicenseFilter($additionalFilters);
@@ -846,7 +846,7 @@ class Reports_model extends CI_Model{
                     $resultset["toastr_msg"] = "Generate all drivers license report {$resultFilter}, a total of <strong>{$numRows}</strong> record(s) found.";
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = "Generate all drivers license report, no filtered data found!";
+                    $resultset["toastr_msg"] = "Generate all drivers license report {$resultFilter}, no filtered data found!";
                 }
             }
         }else{
@@ -905,11 +905,11 @@ class Reports_model extends CI_Model{
                         }
                     }else{
                         $resultset["response"] = false;
-                        $resultset["toastr_msg"] = "Generate license and certification report by date range, no data on date range filter option(s) found!";
+                        $resultset["toastr_msg"] = "Generate license and certification report by date range {$resultFilter}, no data on date range filter option(s) found!";
                     }
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = "Generate license and certification report by date range, no filtered by date range option(s) found!";
+                    $resultset["toastr_msg"] = "Generate license and certification report by date range {$resultFilter}, no filtered by date range option(s) found!";
                 }
             }else{
                 $result = $this->employee->getAllActiveCertificateFilter($additionalFilters);
@@ -928,7 +928,7 @@ class Reports_model extends CI_Model{
             }
         }else{
             $resultset["response"] = false;
-            $resultset["toastr_msg"] = "Generate license and certification report, no filter by option data found!";
+            $resultset["toastr_msg"] = "Generate license and certification report {$resultFilter}, no filter by option data found!";
         }
 
         $logMessage = $resultset["toastr_msg"];
