@@ -161,4 +161,52 @@ Class Login_m extends CI_Model
         }
         return $response;
     }
+
+    public function updatePassword(){
+        $post = $this->input->post();
+        $response=array();
+        if ($post) {
+            $username = $post['username'];
+            $new_password = $post['password'];
+            $this->db->trans_start();
+            $data = array(
+                'password' => md5($new_password),
+                'force_update' => 0
+            );
+    
+            $result = $this->db->where('username', $username)->update('gccmaster.tblusers', $data);
+    
+            if (!$result) {
+                $this->session->sess_destroy();
+                $this->db->trans_rollback();
+                $response = array('status' => 'false', 'message' => 'Failed to update password');
+            }else{
+                $res = $this->Login_m->login($username, $new_password);
+                $id = $res[0]->id;
+                $privileges = $this->Login_m->get_privileges_by_id($id);
+                $sess_array = array(
+                    'id' => $id,//tbluser_id
+                    'emp_id' => $res[0]->emp_id,
+                    'username' => $res[0]->username,
+                    'firstname' => $res[0]->firstname,
+                    'middlename' => $res[0]->middlename,
+                    'lastname' => $res[0]->lastname,
+                    'privileges' => $privileges,
+                    'suffix' => $res[0]->suffix,
+                    'group_id' => $res[0]->group_id,
+                    'email' => $res[0]->email,
+                    'company' => $res[0]->company_id,
+                    'department' => $res[0]->department_id
+                );
+                $this->session->set_userdata('logged_in', $sess_array);
+                $this->db->trans_commit();
+                $url = site_url('portal/index');
+                $response = array('status' => 'success', 'message' => 'Password successfully updated', 'redirect' => $url);
+            } 
+        } else {    
+            $response = array('status' => 'failure', 'message' => 'No POST data received');
+        }
+        return $response;
+    }
+
 }
