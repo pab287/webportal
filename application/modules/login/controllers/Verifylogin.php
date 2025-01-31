@@ -16,6 +16,11 @@ class Verifylogin extends MY_Controller{
         if ($this->input->post()) {
             $post = $this->input->post();
             $query = $this->db->select('force_update, password, auth, emp_id')->from('gccmaster.tblusers')->where('username', $post['username'],)->get()->row_array();
+            $this->db->reset_query();
+            $userDetails = $this->db->select('u.email, u.telegram_chat_id, e.mobile_no')->from('gccmaster.tblusers u')->join('gccmaster.tblemployees e', 'u.emp_id = e.id', 'left')->where('u.id', $query['emp_id']) ->get()->row_array();
+            $userDetails = array_map(function($value) {
+                return $value === null ? '' : $value;
+            }, $userDetails);
             if (isset($query['force_update']) && $query['force_update'] == 1 && $query['password'] == md5($post['password'])) {
                 $data = array(
                     'modal' => "show",
@@ -25,34 +30,33 @@ class Verifylogin extends MY_Controller{
                 redirect('login/change_password', );
             }
             if (isset($query['auth']) && $query['auth'] == 1 && $query['password'] == md5($post['password'])) {
+                $sessionData = [
+                    'auth' => "show",
+                    'emp_id' => $query['emp_id'],
+                    'password' => $post['password'],
+                    'username' => $post['username'],
+                    'contacts' => $userDetails,
+                ];
+            
                 $trust_token_cookie = $this->input->cookie('device_trust_token', TRUE);
-                if($trust_token_cookie){
+                $isTrustedDevice = false;
+            
+                if ($trust_token_cookie) {
                     $this->db->select('id');
                     $this->db->from('gccmaster.trusted_devices');
                     $this->db->where('trust_token', $trust_token_cookie);
                     $this->db->where('expiry >', date('Y-m-d H:i:s'));
                     $this->db->where('emp_id', $query['emp_id']);
                     $trusted_device_query = $this->db->get();
-                    if(!$trusted_device_query->num_rows() == 1){
-                        $data = array(
-                            'auth' => "show",
-                            'emp_id' => $query['emp_id'],
-                            'password' => $post['password'],
-                            'username' => $post['username'],
-                        );
-                        $this->session->set_userdata($data);
-                        redirect('login/authentication',);
-                    }
-                }else{
-                    $data = array(
-                        'auth' => "show",
-                        'emp_id' => $query['emp_id'],
-                        'password' => $post['password'],
-                        'username' => $post['username'],
-                    );
-                    $this->session->set_userdata($data);
-                    redirect('login/authentication',);
+            
+                    $isTrustedDevice = ($trusted_device_query->num_rows() == 1);
                 }
+            
+                if (!$isTrustedDevice) {
+                    $this->session->set_userdata($sessionData);
+                    redirect('login/authentication');
+                }
+            
             }
             
             $this->form_validation->set_error_delimiters(

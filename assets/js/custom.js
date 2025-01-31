@@ -644,10 +644,12 @@ function delay(callback, ms) {
             },
             dataType: "JSON",
             success: function (response) {
+                console.log("Response: ", response);    
                 if (response.success) {
                     window.location.replace(response.redirect);
                 } else {
-                    alert("An error occurred. Please try again.");
+                    $(".two-factor-modal").modal("hide");
+                    toastr.error(response.message,"Please contact IT Department");
                 }
             },
         });

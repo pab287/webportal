@@ -58,6 +58,7 @@
 .radio-option:hover {
     border-color: #716aca;
     background-color: #f7f6fc;
+    cursor: pointer;
 }
 
 .radio-label {
@@ -113,6 +114,7 @@ input[type="radio"]:checked::after {
     background-color: white;
     border-radius: 50%;
 }
+
 .login-link {
     color: #007bff;
     text-decoration: none;
@@ -152,6 +154,18 @@ input[type="radio"]:checked::after {
     font-weight: bold;
 }
 
+.radio-option.disabled {
+    opacity: 0.6; /* Reduce opacity to indicate disabled state */
+    pointer-events: none; /* Disable all pointer events (hover, click, etc.) */
+}
+
+.radio-option.disabled .radio-label,
+.radio-option.disabled .label-text,
+.radio-option.disabled .radio-description {
+    cursor: not-allowed; /* Disable hover hand cursor */
+    color: #999; /* Optional: Change text color to gray */
+}
+
     </style>
   </head>
     <body class="align-items-center justify-content-center">
@@ -182,7 +196,7 @@ input[type="radio"]:checked::after {
                                 <div class="radio-container">
                                     <div class="radio-option">
                                         <label class="radio-label">
-                                            <input type="radio" name="method" value="sms" checked>
+                                            <input type="radio" name="method" value="sms">
                                             <span class="label-text">SMS</span>
                                         </label>
                                         <div class="radio-description">
@@ -192,7 +206,7 @@ input[type="radio"]:checked::after {
 
                                     <div class="radio-option">
                                         <label class="radio-label">
-                                            <input type="radio" name="method" value="email" disabled>
+                                            <input type="radio" name="method" value="email">
                                             <span class="label-text">Email</span>
                                         </label>
                                         <div class="radio-description">
@@ -202,7 +216,7 @@ input[type="radio"]:checked::after {
 
                                     <div class="radio-option">
                                         <label class="radio-label">
-                                            <input type="radio" name="method" value="telegram" disabled>
+                                            <input type="radio" name="method" value="telegram">
                                             <span class="label-text">Telegram</span>
                                         </label>
                                         <div class="radio-description">
@@ -215,7 +229,7 @@ input[type="radio"]:checked::after {
                         <div class="m-portlet__foot">
                             <div class="form-group m-form__group">
                                 <div class="text-center">
-                                    <button type="submit" class="btn btn-success">
+                                    <button type="submit" id="send_otp" class="btn btn-success" disabled>
                                         Send Code
                                     </button>
                                     <div class="text-right">
@@ -261,6 +275,7 @@ const sessionData = <?= json_encode($session  ?? []) ?>;
 if (!sessionData.auth) {
     window.location.href = '<?php echo base_url("login"); ?>';
 }
+console.log(sessionData);
 let request_id = "";
 let timerSpan = $('#timer');
 let timerInterval;
@@ -287,6 +302,34 @@ $(document).ready(function() {
         },
     });
 
+    const smsRadio = $('input[value="sms"]');
+    const emailRadio = $('input[value="email"]');
+    const telegramRadio = $('input[value="telegram"]');
+
+    // Disable SMS radio and add disabled class if mobile_no is not available
+    if (!sessionData.contacts.mobile_no) {
+        smsRadio.prop('disabled', true);
+        smsRadio.prop('checked', true);
+        smsRadio.closest('.radio-option').addClass('disabled');
+    }
+
+    // Disable Email radio and add disabled class if email is not available
+    if (!sessionData.contacts.email) {
+        emailRadio.prop('disabled', true);
+        emailRadio.closest('.radio-option').addClass('disabled');
+    }
+
+    // Disable Telegram radio and add disabled class if telegram_chat_id is not available
+    if (!sessionData.contacts.telegram_chat_id) {
+        telegramRadio.prop('disabled', true);
+        telegramRadio.closest('.radio-option').addClass('disabled');
+    }
+
+    $('.radio-option').on('click', function() {
+        const radio = $(this).find('input[type="radio"]');
+        radio.prop('checked', true);
+        $('#send_otp').prop('disabled', false);
+    });
 
     $('#two_factor_auth').on('submit', function(e) {
         e.preventDefault();

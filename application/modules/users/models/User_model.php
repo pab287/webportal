@@ -383,49 +383,85 @@ class User_model extends CI_Model
         return $resultset;
     }
 
-    public function activate2FA() {
-        $this->db->trans_start();
-        $post = $this->input->post();
-        $response = array();
-        $user = $this->core_layout->getUserLoggedIn();
-        $status = $post['status'];
-        $url = site_url('login/logout');
+    public function activate2FA(){
         try {
+            $this->db->trans_start();
+            $post = $this->input->post();
+            $user = $this->core_layout->getUserLoggedIn();
+            $status =  $post['status'];
+            $url = site_url('login/logout');
+            $response = [
+                'success' => false,
+                'message' => '',
+                'redirect' => $url,
+            ];
+    
             if ($status == 1) {
-                // Deactivate 2FA
-                $data = array("auth" => 0);
-                $this->db->where("id", $user['id']);
-                $this->db->update("gccmaster.tblusers", $data);
-                // Remove from trusted_devices
-                $this->db->where("emp_id", $user['id']);
-                $this->db->delete("trusted_devices");
-                $this->core_layout->deleteCookie('device_trust_token');
-                $response['message'] = "2FA Deactivated";
+                $this->deactivate2FA($user['id']);
+                $response['message'] = '2FA Deactivated';
             } else {
-                // Activate 2FA
-                $data = array("auth" => 1);
-                $this->db->where("id", $user['id']);
-                $this->db->update("gccmaster.tblusers", $data);
-                $response['message'] = "2FA Activated";
+                $this->activate2FAWithValidation($user);
+                $response['message'] = '2FA Activated';
             }
+    
             $this->db->trans_complete();
-            if ($this->db->trans_status() === FALSE) {
-                // Rollback transaction
-                $this->db->trans_rollback();
-                $response['success'] = false;
-                $response['message'] = "An error occurred. Please try again.";
-            } else {
-                // Commit transaction
-                $response['success'] = true;
-                $response['redirect'] = $url;
+    
+            if ($this->db->trans_status() == FALSE) {
+                throw new Exception('Database transaction failed');
             }
+    
+            $response['success'] = true;
+            return $response;
+    
         } catch (Exception $e) {
-            // Rollback transaction on exception
             $this->db->trans_rollback();
-            $response['success'] = false;
-            $response['message'] = "An error occurred: " . $e->getMessage();
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
         }
-        return $response;
     }
+
+    private function deactivate2FA($userId){
+        $data = ['auth' => 0];
+        $this->db->where('id', $userId);
+        $this->db->update('gccmaster.tblusers', $data);
+        $this->db->reset_query();
+        $this->db->where('emp_id', $userId);
+        $this->db->delete('trusted_devices');
+        $this->db->reset_query();
+        $this->core_layout->deleteCookie('device_trust_token');
+    }
+
+    private function activate2FAWithValidation($user){
+        // Get required user details
+        $this->db->select('u.email, u.telegram_chat_id, e.mobile_no');
+        $this->db->from('gccmaster.tblusers u');
+        $this->db->join('gccmaster.tblemployees e', 'u.emp_id = e.id', 'left'); 
+        $this->db->where('u.id', $user['id']);
+        
+        $query = $this->db->get();
+        $userDetails = $query->row_array();
+        $this->db->reset_query();
+        // Validate communication methods
+        if (!$this->validateCommunicationMethods($userDetails)) {
+            throw new Exception('You must have at least one communication method (email, mobile, or Telegram) to activate 2FA.');
+        }
+
+        // Activate 2FA
+        $data = ['auth' => 1];
+        $this->db->where('id', $user['id']);
+        $this->db->update('gccmaster.tblusers', $data);
+        $this->db->reset_query();
+    }
+
+    private function validateCommunicationMethods($userDetails){
+        return !(
+            empty($userDetails['email']) &&
+            empty($userDetails['mobile_no']) &&
+            empty($userDetails['telegram_chat_id'])
+        );
+    }
+
 
 }
