@@ -10,6 +10,7 @@ Class Login_m extends CI_Model
         $tempDate = date("Ymd");
 
         $this->directAccess = sha1("direct_access-{$tempDate}");
+        $this->load->model('core/Core_model', 'core');
     }
 
     function login($username, $password)
@@ -147,7 +148,8 @@ Class Login_m extends CI_Model
                         'group_id' => $row->group_id,
                         'email' => $row->email,
                         'company' => $row->company_id,
-                        'department' => $row->department_id
+                        'department' => $row->department_id,
+                        'TwoFactorAuth' => $row->auth,
                     );
 
                     $this->session->set_userdata('logged_in', $sess_array);
@@ -196,7 +198,8 @@ Class Login_m extends CI_Model
                     'group_id' => $res[0]->group_id,
                     'email' => $res[0]->email,
                     'company' => $res[0]->company_id,
-                    'department' => $res[0]->department_id
+                    'department' => $res[0]->department_id,
+                    'TwoFactorAuth' =>  $res[0]->auth,
                 );
                 $this->session->set_userdata('logged_in', $sess_array);
                 $this->db->trans_commit();
@@ -231,7 +234,7 @@ Class Login_m extends CI_Model
             }
     
             $data = [
-                'employee_name' => $employee['employee_name'],
+                'employee_name' => $employee->employee_name,
                 'confirmed' => 0,
                 'send_to' => $send_to,
                 'key_code' => $otp,
@@ -246,7 +249,6 @@ Class Login_m extends CI_Model
             $msg = "NEVER SHARE YOUR OTP especially on social media, SMS, or email links. Your GC&C Conyxph One Time Password (OTP) is: $otp. If this was not you, please ignore.";
             
             $send_result = $this->sendOTP($send_to, $msg, $method);
-    
             if (!$send_result) {
                 throw new Exception('Failed to send OTP.');
             }
@@ -323,7 +325,7 @@ Class Login_m extends CI_Model
                 'email' => $res[0]->email,
                 'company' => $res[0]->company_id,
                 'department' => $res[0]->department_id,
-                'TwoFactorAuth' => 1,
+                'TwoFactorAuth' => $res[0]->auth,
             );
             $this->generateCookie($id);
             $this->session->unset_userdata('auth');

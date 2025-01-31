@@ -127,7 +127,8 @@
                         'group_id' => $row->group_id,
                         'email' => $row->email,
                         'company' => $row->company_id,
-                        'department' => $row->department_id
+                        'department' => $row->department_id,
+                        'TwoFactorAuth' => $row->auth,
                     );
                     $this->session->set_userdata('logged_in', $sess_array);
                     redirect('portal/index', 'refresh');

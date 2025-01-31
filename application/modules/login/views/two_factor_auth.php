@@ -332,11 +332,13 @@ $(document).ready(function() {
     });
 
     $('#two_factor_auth').on('submit', function(e) {
+        $('#send_otp').prop('disabled', true);
         e.preventDefault();
         let formData = $(this).serialize();
         formData += '&' + $.param({ sessionData: sessionData });
         $.ajax({
             type: 'POST',
+            global: true,
             url: '<?= base_url('login/authenticate')?>',
             data: formData,
             dataType: 'json',

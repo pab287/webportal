@@ -50,6 +50,7 @@ class Verifylogin extends MY_Controller{
                     $trusted_device_query = $this->db->get();
             
                     $isTrustedDevice = ($trusted_device_query->num_rows() == 1);
+                    $this->session->userdata['logged_in']['TwoFactorAuth'] = 1;
                 }
             
                 if (!$isTrustedDevice) {
@@ -117,7 +118,8 @@ class Verifylogin extends MY_Controller{
                         'group_id' => $row->group_id,
                         'email' => $row->email,
                         'company' => $row->company_id,
-                        'department' => $row->department_id
+                        'department' => $row->department_id,
+                        'TwoFactorAuth' => $row->auth,
                     );
                     $this->session->set_userdata('logged_in', $sess_array);
                     $this->core_layout->setEventLog("User has successfully loggedin in the webportal.","login", "success", "gccmaster", "user", $row->emp_id);
@@ -156,7 +158,8 @@ class Verifylogin extends MY_Controller{
                         'group_id' => $row->group_id,
                         'email' => $row->email,
                         'company' => $row->company_id,
-                        'department' => $row->department_id
+                        'department' => $row->department_id,
+                        'TwoFactorAuth' => $row->auth,
                     );
 
                     $this->session->set_userdata('logged_in', $sess_array);
