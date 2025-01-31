@@ -93,7 +93,7 @@
                             <div class="form-group m-form__group">
                             <label>New Password <span style="color: red;">*</span></label>
                                 <div class="password-container">
-                                    <input id="newPasswordInput" type="password" class="form-control m-input" name="password_confirmation" data-validation="required length strength symbol" data-validation-length="min8" data-validation-strength="3" autocomplete="off">
+                                    <input id="newPasswordInput" type="password" class="form-control m-input" name="password_confirmation" data-validation="required length strength symbol nums caps" data-validation-length="min8" data-validation-strength="3" autocomplete="off">
                                     <span id="newPasswordToggle" class="password-toggle"><i class="fa fa-eye"></i></span>
                                 </div>
                             </div>
@@ -157,21 +157,21 @@ $(document).ready(function() {
 
     const validationRules = [
         { 
-            condition: (val) => val.length >= 8, 
+            condition: (val) => val.length >= 8,
             key: 'length',
             element: $helpSection.find('li:nth-child(4)')
         },
-        { 
+        {
             condition: (val) => /\d/.test(val), 
             key: 'numbers',
             element: $helpSection.find('li:nth-child(1)')
         },
-        { 
+        {
             condition: (val) => /[A-Z]/.test(val), 
             key: 'uppercase',
             element: $helpSection.find('li:nth-child(2)')
         },
-        { 
+        {
             condition: (val) => /[^\w\s]/.test(val),
             key: 'symbols',
             element: $helpSection.find('li:nth-child(3)')
@@ -198,6 +198,24 @@ $(document).ready(function() {
         errorMessageKey: 'missingSymbol'
     });
 
+    $.formUtils.addValidator({
+        name: 'nums', // Name of the validator
+        validatorFunction: function(value, $el, config, language, $form) {
+            return /\d/.test(value);
+        },
+        errorMessage: 'The input must contain at least one number',
+        errorMessageKey: 'missingNumber'
+    });
+
+    $.formUtils.addValidator({
+        name: 'caps', // Name of the validator
+        validatorFunction: function(value, $el, config, language, $form) {
+            return /[A-Z]/.test(value);
+        },
+        errorMessage: 'The input must contain at least one uppercase letter',
+        errorMessageKey: 'missingUppercase'
+    });
+
 
     $.validate({
         form : '#changepasswordform',
@@ -206,6 +224,10 @@ $(document).ready(function() {
 
 	$('#changepasswordform').on('submit', function(e) {
         e.preventDefault();
+        const allConditionsMet = Object.values(conditions).every(Boolean);
+        if (!allConditionsMet) {
+            return;
+        }
 		var formData = $(this).serialize();
 		$.ajax({
             url: '<?php echo base_url('login/update_password'); ?>',
