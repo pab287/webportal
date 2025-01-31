@@ -1028,7 +1028,7 @@
                                                                     <span class='m-list-timeline__text'>
                                                                         <small>{{ date(absent.date) }}</small>
                                                                     </span>
-                                                                    <span class='m-list-timeline__text text-right'>
+                                                                    <span class='m-list-timeline__text text-center'>
                                                                         <small>{{ absent.content }}</small>
                                                                     </span>
                                                                     <span class='m-list-timeline__text text-right'>
