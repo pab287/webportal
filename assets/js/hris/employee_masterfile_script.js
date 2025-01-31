@@ -708,8 +708,7 @@ if (typeof _tempContentData !== "undefined") {
                             const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
                             setTimeout(function () { $("#m_datepicker-date_regular").datepicker("setStartDate", startDateMin); }, 250);
                             if(tempState === false){
-                                const endDateMax = typeof vmData.date_regular != "undefined" && vmData.date_regular != null && vmData.date_regular != "0000-00-00" ? 
-                                moment(new Date(vmData.date_regular), "YYYY-MM-DD").format("YYYY-MM-DD") : moment(new Date(vmData.date_start), "YYYY-MM-DD").add(180, 'days').format("YYYY-MM-DD");
+                                const endDateMax = moment(new Date(vmData.date_start), "YYYY-MM-DD").add(180, 'days').format("YYYY-MM-DD");
                                 setTimeout(function () {
                                     $("#m_datepicker-date_end_prob").datepicker("setStartDate", startDateMin);
                                     $("#m_datepicker-date_end_prob").datepicker("setEndDate", endDateMax);
@@ -955,8 +954,7 @@ if (typeof _tempContentData !== "undefined") {
                 const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
                 setTimeout(function () { $("#m_datepicker-date_regular, m_datepicker-date_end").datepicker("setStartDate", startDateMin); }, 250);
                 if(tempState === false){
-                    const endDateMax = typeof vmData.date_regular != "undefined" && vmData.date_regular != null && vmData.date_regular != "0000-00-00" ? 
-                    moment(new Date(vmData.date_regular), "YYYY-MM-DD").format("YYYY-MM-DD") : moment(new Date(vmData.date_start), "YYYY-MM-DD").add(180, 'days').format("YYYY-MM-DD");
+                    const endDateMax = moment(new Date(vmData.date_start), "YYYY-MM-DD").add(180, 'days').format("YYYY-MM-DD");
                     setTimeout(function () {
                         $("#m_datepicker-date_end_prob").datepicker("setStartDate", startDateMin);
                         $("#m_datepicker-date_end_prob").datepicker("setEndDate", endDateMax);
