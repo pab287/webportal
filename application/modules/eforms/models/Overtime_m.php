@@ -1555,30 +1555,41 @@ class Overtime_m extends CI_Model {
                                     if(is_array($filteredData) && count($filteredData) > 0 && count($filteredData) == 5){
                                         $isRecorded = false;
                                         $displayName = "No assigned name";
-                                        $qTempEmployee = $this->db->get_where("gccmaster.tblemployees", 
-                                            array("biometricno"=>trim($filteredData[0]), 
-                                            "employee_status"=>"Active")
-                                        );
-                                        if($qTempEmployee->num_rows() == 1){
-                                            $row = $qTempEmployee->row();
-                                            $empRs = $this->core_layout->getDisplayName($qTempEmployee->row_array());
-                                            $empRs = (object) $empRs;
-                                            $displayName = isset($empRs->display_name_1) && $empRs->display_name_1? $empRs->display_name_1: $displayName;
+                                        $isValid = true;
 
-                                            $qSearchOt = $this->db->get_where("gcceforms.overtime", 
+                                        $this->db->select("emp.id, UPPER(TRIM(CONCAT(emp.firstname, ' ',
+                                            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                                                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                                                THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+                                            END,' ', emp.lastname,
+                                            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                                                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                                                emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
+                                            END))) as employee_name, emp.biometricno, MAX(ps.date_end) as max_date");
+                                        $this->db->from("gccmaster.tblemployees emp");
+                                        $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+                                        $this->db->where(array("emp.biometricno"=>trim($filteredData[0]), "emp.employee_status"=>"Active"));
+                                        $this->db->limit(1);
+                                        $qTempEmployee = $this->db->get();
+                                        $empRecordCount = $qTempEmployee->num_rows();
+
+                                        if($empRecordCount == 1){
+                                            $row = $qTempEmployee->row();
+                                            $displayName = $row->employee_name ? $row->employee_name : "No assigned name";
+                                            $isValid = strtotime(trim($filteredData[1])) > strtotime(trim($row->max_date));
+
+                                            var_dump($isValid, trim($filteredData[1]), $row->max_date);
+                                            $qSearchOt = $this->db->get_where("gcceforms.overtime",
                                                 array(
-                                                    "employee"=>$row->id, 
+                                                    "employee"=>$row->id,
                                                     "date_from"=>date("Y-m-d H:i:s", strtotime(trim($filteredData[1]))),
                                                     "date_to"=>date("Y-m-d H:i:s", strtotime(trim($filteredData[2]))),
                                                     "status"=>"Approved",
                                                 )
                                             );
-
                                             if($qSearchOt->num_rows() > 0){
                                                 $reference_no = array();
-                                                foreach ($qSearchOt->result() as $key => $value) {
-                                                    $reference_no[] = $value->reference_no;
-                                                }
+                                                foreach ($qSearchOt->result() as $value) { $reference_no[] = $value->reference_no; }
                                                 $isRecorded = true;
                                                 $_isRecorded[] = array(
                                                     "emp_id"=>$row->id, 
@@ -1592,9 +1603,9 @@ class Overtime_m extends CI_Model {
                                             if($filteredData[0]){ $bioNotFound[] = trim($filteredData[0]); }
                                         }
 
-                                        $employeeExist = $qTempEmployee->num_rows() == 1;
+                                        $employeeExist = $empRecordCount == 1;
 
-                                        $tempDatax["emp_id"] = ($qTempEmployee->num_rows() == 1)? $qTempEmployee->row()->id: 0;
+                                        $tempDatax["emp_id"] = ($empRecordCount == 1)? $qTempEmployee->row()->id: 0;
                                         $tempDatax["display_name"] = $displayName;
                                         $tempDatax["biometricno"] = trim($filteredData[0]);
                                         $tempDatax["date_from"] = $filteredData[1];
@@ -1602,7 +1613,8 @@ class Overtime_m extends CI_Model {
                                         $tempDatax["approved_date"] = $filteredData[3];
                                         $tempDatax["purpose"] = trim(utf8_encode($filteredData[4]));
                                         $tempDatax["is_existing"] = $qTempEmployee->num_rows();
-                                        if($isRecorded == false && $employeeExist){
+                                        $tempDatax["is_valid"] = $isValid;
+                                        if($isRecorded === false && $employeeExist){
                                             $arrData[] = $tempDatax;
                                         }
                                     }
