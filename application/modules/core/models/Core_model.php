@@ -1334,4 +1334,13 @@ class Core_model extends CI_Model{
         $result['total'] = $total;
         return $total;
     }
+
+    public function deleteCookie($cookieName) {
+        if (isset($_COOKIE[$cookieName])) {
+            // Delete the cookie by setting its expiration to the past
+            setcookie($cookieName, '', time() - 3600, '/'); // Expire 1 hour ago
+            unset($_COOKIE[$cookieName]); // Remove the cookie from the $_COOKIE array
+        }
+    }
+    
 }

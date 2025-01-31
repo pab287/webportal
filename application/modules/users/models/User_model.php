@@ -382,4 +382,50 @@ class User_model extends CI_Model
 
         return $resultset;
     }
+
+    public function activate2FA() {
+        $this->db->trans_start();
+        $post = $this->input->post();
+        $response = array();
+        $user = $this->core_layout->getUserLoggedIn();
+        $status = $post['status'];
+        $url = site_url('login/logout');
+        try {
+            if ($status == 1) {
+                // Deactivate 2FA
+                $data = array("auth" => 0);
+                $this->db->where("id", $user['id']);
+                $this->db->update("gccmaster.tblusers", $data);
+                // Remove from trusted_devices
+                $this->db->where("emp_id", $user['id']);
+                $this->db->delete("trusted_devices");
+                $this->core_layout->deleteCookie('device_trust_token');
+                $response['message'] = "2FA Deactivated";
+            } else {
+                // Activate 2FA
+                $data = array("auth" => 1);
+                $this->db->where("id", $user['id']);
+                $this->db->update("gccmaster.tblusers", $data);
+                $response['message'] = "2FA Activated";
+            }
+            $this->db->trans_complete();
+            if ($this->db->trans_status() === FALSE) {
+                // Rollback transaction
+                $this->db->trans_rollback();
+                $response['success'] = false;
+                $response['message'] = "An error occurred. Please try again.";
+            } else {
+                // Commit transaction
+                $response['success'] = true;
+                $response['redirect'] = $url;
+            }
+        } catch (Exception $e) {
+            // Rollback transaction on exception
+            $this->db->trans_rollback();
+            $response['success'] = false;
+            $response['message'] = "An error occurred: " . $e->getMessage();
+        }
+        return $response;
+    }
+
 }

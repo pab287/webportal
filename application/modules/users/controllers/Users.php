@@ -238,4 +238,10 @@ class Users extends MY_Controller{
         $data = $this->core_layout->getSessionStatus();
         echo json_encode($data);
     }
+
+    public function activate_2FA(){
+		$data = $this->user->activate2FA();
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
 }
