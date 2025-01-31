@@ -301,7 +301,7 @@ var vmData = new Vue({
                     }
 
 					if (!instance.isEmpty(data)) {
-						instance.personalAbsent = data;
+						instance.personalAbsent = data.absentee;
                         $("#personal-absent-scrollable .mCSB_container").css('height', 'unset').css('max-height', 'unset');
                         $("#personal-absent-scrollable").css('overflow: visible !important');
 					}

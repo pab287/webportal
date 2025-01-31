@@ -1012,8 +1012,8 @@
                                 <div class="m-widget6__head">
                                     <div class="m-widget6__item">					 
                                         <span class="m-widget6__caption text-left"><small>DATE</small></span>
-                                        <span class="m-widget6__caption text-center"><small>TIME</small></span>
-                                        <span class="m-widget6__caption m--align-right"><small>DURATION</small></span>					 
+                                        <span class="m-widget6__caption text-center"><small>LOA/TO REFERENCE #</small></span>
+                                        <span class="m-widget6__caption m--align-right"><small>TIME</small></span>					 
                                     </div>
                                 </div>
                                 <div class="m-widget6__body">
@@ -1029,10 +1029,10 @@
                                                                         <small>{{ date(absent.date) }}</small>
                                                                     </span>
                                                                     <span class='m-list-timeline__text text-right'>
-                                                                        <small>{{ absent.time }}</small>
+                                                                        <small>{{ absent.content }}</small>
                                                                     </span>
                                                                     <span class='m-list-timeline__text text-right'>
-                                                                        <small>{{ absent.minlate }}</small>
+                                                                        <small>{{ absent.mrdn }}</small>
                                                                     </span>
                                                                 </div>
                                                             </template>
@@ -1261,9 +1261,7 @@
                                                 </template>
                                                 <template v-else>
                                                     <div class="m-list-timeline__item" style="padding: 20px 0;">
-                                                        <span class="m-list-timeline__text text-center" style="width: 100%;">
-                                                            asd
-                                                        </span>
+                                                        <span class="m-list-timeline__text text-center" style="width: 100%;"></span>
                                                     </div>
                                                 </template>
                                             </div>
