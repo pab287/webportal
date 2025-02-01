@@ -1525,7 +1525,7 @@ class Overtime_m extends CI_Model {
                 $createFilePath = true;
             }
 
-            if ($createFilePath == false) {
+            if ($createFilePath === false) {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
                 $resultset["toastr_state"] = "warning";
@@ -1538,7 +1538,7 @@ class Overtime_m extends CI_Model {
 
                 if(isset($tempInputName) && count($tempInputName) == 1){ $config["input_field"] = $tempInputName[0]; }
                 $data = $this->file_upload->uploadFile($config);
-                if ($data["response"] == true) {
+                if ($data["response"] === true) {
                     $files = $data["files"][0];
                     $filename = $files["file_name"];
                     if(file_exists($files["full_path"])){
@@ -1547,12 +1547,18 @@ class Overtime_m extends CI_Model {
                         $arrData = array();
                         $bioNotFound = array();
 
-                        if (($handle = fopen($currentFile, "r")) !== FALSE) {
-                            while (($data = fgetcsv($handle, 100000, ",")) !== FALSE) {
+                        if (($handle = fopen($currentFile, "r")) !== false) {
+                            while (($data = fgetcsv($handle, 100000, ",")) !== false) {
                                 if($tempIndex !== 0){
                                     $tempDatax = array();
                                     $filteredData = array_filter($data);
-                                    if(is_array($filteredData) && count($filteredData) > 0 && count($filteredData) == 5){
+                                    if(is_array($filteredData) && !empty($filteredData) && count($filteredData) == 5){
+                                        $biometricNo = trim($filteredData[0]);
+                                        $dateFrom = trim($filteredData[1]);
+                                        $dateTo = trim($filteredData[2]);
+                                        $approvedDate = trim($filteredData[3]);
+                                        $purpose = trim(utf8_encode($filteredData[4]));
+
                                         $isRecorded = false;
                                         $displayName = "No assigned name";
                                         $isValid = true;
@@ -1568,7 +1574,7 @@ class Overtime_m extends CI_Model {
                                             END))) as employee_name, emp.biometricno, MAX(ps.date_end) as max_date");
                                         $this->db->from("gccmaster.tblemployees emp");
                                         $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
-                                        $this->db->where(array("emp.biometricno"=>trim($filteredData[0]), "emp.employee_status"=>"Active"));
+                                        $this->db->where(array("emp.biometricno"=>$biometricNo, "emp.employee_status"=>"Active"));
                                         $this->db->limit(1);
                                         $qTempEmployee = $this->db->get();
                                         $empRecordCount = $qTempEmployee->num_rows();
@@ -1578,12 +1584,11 @@ class Overtime_m extends CI_Model {
                                             $displayName = $row->employee_name ? $row->employee_name : "No assigned name";
                                             $isValid = strtotime(trim($filteredData[1])) > strtotime(trim($row->max_date));
 
-                                            var_dump($isValid, trim($filteredData[1]), $row->max_date);
                                             $qSearchOt = $this->db->get_where("gcceforms.overtime",
                                                 array(
                                                     "employee"=>$row->id,
-                                                    "date_from"=>date("Y-m-d H:i:s", strtotime(trim($filteredData[1]))),
-                                                    "date_to"=>date("Y-m-d H:i:s", strtotime(trim($filteredData[2]))),
+                                                    "date_from"=>date("Y-m-d H:i:s", strtotime($dateFrom)),
+                                                    "date_to"=>date("Y-m-d H:i:s", strtotime($dateTo)),
                                                     "status"=>"Approved",
                                                 )
                                             );
@@ -1595,24 +1600,24 @@ class Overtime_m extends CI_Model {
                                                     "emp_id"=>$row->id, 
                                                     "reference_no"=>$reference_no, 
                                                     "display_name"=>$displayName, 
-                                                    "date_from"=>date("Y-m-d H:i:s", strtotime(trim($filteredData[1]))), 
-                                                    "date_to"=>date("Y-m-d H:i:s", strtotime(trim($filteredData[2]))), 
+                                                    "date_from"=>date("Y-m-d H:i:s", strtotime($dateFrom)), 
+                                                    "date_to"=>date("Y-m-d H:i:s", strtotime($dateTo)), 
                                                 );
                                             }
                                         }else{
-                                            if($filteredData[0]){ $bioNotFound[] = trim($filteredData[0]); }
+                                            if($filteredData[0]){ $bioNotFound[] = $biometricNo; }
                                         }
 
                                         $employeeExist = $empRecordCount == 1;
 
                                         $tempDatax["emp_id"] = ($empRecordCount == 1)? $qTempEmployee->row()->id: 0;
                                         $tempDatax["display_name"] = $displayName;
-                                        $tempDatax["biometricno"] = trim($filteredData[0]);
-                                        $tempDatax["date_from"] = $filteredData[1];
-                                        $tempDatax["date_to"] = $filteredData[2];
-                                        $tempDatax["approved_date"] = $filteredData[3];
-                                        $tempDatax["purpose"] = trim(utf8_encode($filteredData[4]));
-                                        $tempDatax["is_existing"] = $qTempEmployee->num_rows();
+                                        $tempDatax["biometricno"] = $biometricNo;
+                                        $tempDatax["date_from"] = $dateFrom;
+                                        $tempDatax["date_to"] = $dateTo;
+                                        $tempDatax["approved_date"] = $approvedDate;
+                                        $tempDatax["purpose"] = $purpose;
+                                        $tempDatax["is_existing"] = $empRecordCount;
                                         $tempDatax["is_valid"] = $isValid;
                                         if($isRecorded === false && $employeeExist){
                                             $arrData[] = $tempDatax;
@@ -1624,7 +1629,7 @@ class Overtime_m extends CI_Model {
                             fclose($handle);
                         }
 
-                        if(is_array($arrData) && count($arrData) > 0){
+                        if(is_array($arrData) && !empty($arrData)){
                             $tempJson = json_encode(array("data" => $arrData));
                             $dateToday = Date("Ymd");
                             $jsonFileName = "temp_{$session["emp_id"]}_{$dateToday}.json";
@@ -1636,9 +1641,7 @@ class Overtime_m extends CI_Model {
                     }
                     if ($filename) {
                         if($jsonFileName){
-                            $dirpath = $filePath;
                             $resultset["response"] = true;
-    
                             $resultset["added_file"] = base_url("uploads/files/csv/overtime/temp_{$session["emp_id"]}/{$filename}");
                             $resultset["added_json_file"] = base_url("uploads/files/csv/overtime/temp_{$session["emp_id"]}/{$jsonFileName}");
                             $resultset["json_file"] = "{$jsonFileName}";
@@ -1646,13 +1649,13 @@ class Overtime_m extends CI_Model {
     
                             $resultset["toastr_msg"] = "Upload file successful.";
                             $resultset["toastr_state"] = "success";
-                            $resultset["biometric_not_found"] = is_array($bioNotFound) && count($bioNotFound) > 0 ? implode(", ", $bioNotFound): null;
+                            $resultset["biometric_not_found"] = is_array($bioNotFound) && !empty($bioNotFound) ? implode(", ", $bioNotFound): null;
                         }else{
                             $resultset["response"] = false;
                             $resultset["toastr_msg"] = "No data found!";
                             $resultset["toastr_state"] = "error";
 
-                            if(count($_isRecorded) > 0){
+                            if(!empty($_isRecorded)){
                                 $resultset["toastr_msg"] = "Employee(s) overtime is already recorded on the module!";
                                 $resultset["employee_record"] = $_isRecorded;
                                 $resultset["toastr_state"] = "warning";
