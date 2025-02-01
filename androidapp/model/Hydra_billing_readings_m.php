@@ -452,7 +452,8 @@ class Hydra_billing_readings_m extends Dbase{
 			if (isset($_POST['reading_id']) && $_POST['reading_id'] != "" && $_POST['reading_id'] != 0 && isset($_POST['user_id']) && $_POST['user_id'] != "" && $_POST['user_id'] != 0) {
 				$billingDetails = $this->getBillingDetails($reading_id);
 
-				var_dump('Generate Bill function' . $billingDetails);
+				var_dump('Generate Bill function' . $billingDetails["total_charges"]);
+				var_dump('ENV minimum ' . $_ENV['HYDRA_MINIMUM_BILLING_AMOUNT']);
 
 				$billing_from = $billingDetails["billing_from"];
 				$billing_to = $billingDetails["billing_to"];
