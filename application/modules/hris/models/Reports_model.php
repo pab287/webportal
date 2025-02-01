@@ -2225,4 +2225,54 @@ class Reports_model extends CI_Model{
 
         return $arrData;
     }
+
+    public function getSelect2Positions(){
+        $this->db->select('id, name as text');
+        $this->db->where('is_archived', 0);
+        return $this->db->get($this->positionTable)->result();
+    }
+
+    public function getSelect2Employee(){
+        $result = array();
+
+        $get = $this->input->get();
+        $search = isset($get['search']['term']) ? $get['search']['term'] : null;
+
+        $this->db->select('id, CONCAT(firstname, " ", lastname) as text');
+        $this->db->where('is_archived', 0);
+
+        if (isset($get['employee_status']) && $get['employee_status']) {
+            $this->db->where('employee_status', $get['employee_status']);
+        } else {
+            $this->db->where('employee_status', 'Active');
+        }
+
+        if (isset($get['company_id']) && $get['company_id']) {
+            $this->db->where('company_id', $get['company_id']);
+        }
+
+        if (isset($get['department_id']) && $get['department_id']) {
+            $this->db->where('department_id', $get['department_id']);
+        }
+
+        if (isset($get['position_id']) && $get['position_id']) {
+            $this->db->where('position', $get['position_id']);
+        }
+
+        if (isset($search) && $search) {
+            $this->db->group_start();
+                $this->db->like('CONCAT(firstname, " ", lastname)', $search, 'both');
+                $this->db->or_like('firstname', $search, 'both');
+                $this->db->or_like('lastname', $search, 'both');
+            $this->db->group_end();
+        }
+
+        $query = $this->db->get($this->tblEmployees);
+
+        if ($query->num_rows() > 0) {
+            $result = $query->result();
+        }
+
+        return array('results' => $result);
+    }
 }
