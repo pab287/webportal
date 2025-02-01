@@ -451,6 +451,9 @@ class Hydra_billing_readings_m extends Dbase{
 		try {
 			if (isset($_POST['reading_id']) && $_POST['reading_id'] != "" && $_POST['reading_id'] != 0 && isset($_POST['user_id']) && $_POST['user_id'] != "" && $_POST['user_id'] != 0) {
 				$billingDetails = $this->getBillingDetails($reading_id);
+
+				var_dump('Generate Bill function' . $billingDetails);
+
 				$billing_from = $billingDetails["billing_from"];
 				$billing_to = $billingDetails["billing_to"];
 				$due_date = $billingDetails["due_date"];
@@ -592,6 +595,9 @@ class Hydra_billing_readings_m extends Dbase{
 
         $totalUsage = $this->computeTotalUsage($current_reading, $prev_reading);
         $charges = $this->computeTotalCharges($rate, $totalUsage);
+
+		var_dump('getBillingDetails function' . $charges);
+
 		$actual_current_bill = $this->computeActualCurrentBill($rate, $totalUsage);
         $over_payment = $this->computeOverPayment($account_id);
         $balance_last_bill = $this->computeBalanceLastBill($account_id);
