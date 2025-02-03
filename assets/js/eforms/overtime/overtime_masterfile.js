@@ -642,11 +642,11 @@ var vmTempUploadedContent = new Vue({
     },
     methods: {
         generateDataTable: function () {
-            var _this = this;
-            var currentElement = _this.$el;
-            var currentModal = $(currentElement).closest(".modal");
-            var currentTable = $(currentElement).find("#uploaded_csv_table");
-            var currentSelect2 = $(currentElement).find("#approved_by");
+            const _this = this;
+            const currentElement = _this.$el;
+            const currentModal = $(currentElement).closest(".modal");
+            const currentTable = $(currentElement).find("#uploaded_csv_table");
+            const currentSelect2 = $(currentElement).find("#approved_by");
             if (typeof currentTable !== "undefined") {
                 _this.current_table = currentTable.DataTable({
                     dom: "lftp",
@@ -656,9 +656,15 @@ var vmTempUploadedContent = new Vue({
                     scrollY: 450,
                     scrollCollapse: true,
                     paging: false,
+                    ordering: false,
                     columns: [
-                        { data: "biometricno", title: "Biometric #", width: "12%" },
-                        { data: "display_name", title: "Employee Name", width: "25%" },
+                        { data: "is_valid", title: "", width: "3%", render: function (data) {
+                            return data === true ? `<i class="fa fa-check text-success"></i>` : `<i class="fa fa-times text-danger"></i>`;
+                        }},
+                        { data: "display_name", title: "Employee Name", width: "25%", render: function (data, type, row, meta) {
+                            const tempHtml = `<p class='mb-0 m--font-bolder'>${data}</p><p>${row.biometricno}</p>`;
+                            return tempHtml;
+                        }},
                         {
                             data: "date_from", title: "Date From", width: "12%", render: function (data) {
                                 return moment(data).format("YYYY-MM-DD HH:mm");
@@ -670,15 +676,14 @@ var vmTempUploadedContent = new Vue({
                             }
                         },
                         {
-                            data: "approved_date", title: "Approved Date", className: "text-center", width: "12%", render: function (data) {
+                            data: "approved_date", title: "Approved Date", className: "text-center", width: "14%", render: function (data) {
                                 return moment(data).format("YYYY-MM-DD");
                             }
                         },
                         { data: "purpose", title: "Purpose", width: "*" },
                     ], drawCallback: function (settings) {
-                        var tableWrapper = $(settings.nTableWrapper);
+                        const tableWrapper = $(settings.nTableWrapper);
                         tableWrapper.find("#uploaded_csv_table_filter input").removeClass("form-control-sm");
-                        //tableWrapper.find("#uploaded_csv_table_filter > input").removeClass("form-control-sm");
                     }
                 });
             }
