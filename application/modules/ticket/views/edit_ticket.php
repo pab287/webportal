@@ -45,7 +45,7 @@
 						</div>
 					</div>
 				</div>
-                <form id="frm_status_new">
+                <form id="frm_status_new" method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 				    <div class="m-portlet__body">
 					    <div class="row">
@@ -224,11 +224,11 @@
                                                     {{ data.created_at }}
                                                     </span>
                                                 </div>
-                                                <span class="m-widget3__status mb-4">
+                                                <!-- <span class="m-widget3__status mb-4">
                                                     <a href="#" @click="delete_comment(data.id)" class="btn btn-danger m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill m-btn--air">
                                                         <i class="la la-trash"></i>
                                                     </a>
-                                                </span>
+                                                </span> -->
                                             </div>
                                             <div class="m-widget3__body">     
                                                 <div class="m-widget3__info"><i>

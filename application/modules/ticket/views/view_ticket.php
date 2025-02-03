@@ -194,11 +194,11 @@
                                         {{ data.created_at }}
                                         </span>
                                     </div>
-                                    <span class="m-widget3__status mb-4">
+                                    <!-- <span class="m-widget3__status mb-4">
                                         <a href="#" @click="delete_comment(data.id)" class="btn btn-danger m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill m-btn--air">
                                             <i class="la la-trash"></i>
                                         </a>
-                                    </span>
+                                    </span> -->
                                 </div>
                                 <div class="m-widget3__body">
                                         

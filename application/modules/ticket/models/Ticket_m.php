@@ -665,10 +665,13 @@ class Ticket_m extends CI_Model
 
     function saveTicket(){
         $post = $this->input->post();
-        if(isset($post['sub_category'])){
-            $sub_category = $this->input->post('sub_category');
-        }else{
-            $sub_category = "";
+        if(isset($post['category']) && $post['category'] == "webportal"){
+            if(isset($post['sub_category'])){
+                $sub_category = $post['sub_category'];
+            }
+        }
+        else{
+            $sub_category = 0;
         }
         $requested_date = date('Y-m-d H:i', strtotime($post['date_required']));
         $date = date('Y-m-d H:i:s');
@@ -747,9 +750,12 @@ class Ticket_m extends CI_Model
 
     function updateTicket($id){
         $post = $this->input->post();
-        if(isset($post['sub_category'])){
-            $sub_category = $post['sub_category'];
-        }else{
+        if(isset($post['category']) && $post['category'] == "webportal"){
+            if(isset($post['sub_category'])){
+                $sub_category = $post['sub_category'];
+            }
+        }
+        else{
             $sub_category = 0;
         }
         $requested_date = date('Y-m-d H:i', strtotime($post['date_required']));
