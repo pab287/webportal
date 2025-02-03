@@ -248,6 +248,8 @@ Class Login_m extends CI_Model
     
             $msg = "NEVER SHARE YOUR OTP especially on social media, SMS, or email links. Your GC&C Conyxph One Time Password (OTP) is: $otp. If this was not you, please ignore.";
             
+            $email = $this->load->view("eforms/email_templates/email-bf_template", array("otp" => $otp), true);
+            
             $send_result = $this->sendOTP($send_to, $msg, $method);
             if (!$send_result) {
                 throw new Exception('Failed to send OTP.');
