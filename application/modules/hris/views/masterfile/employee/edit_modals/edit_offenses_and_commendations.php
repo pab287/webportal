@@ -52,7 +52,7 @@
                         <span class="input-group-addon">
                             <i class="la la-calendar"></i>
                         </span>
-                        <input id="offcom_date" type="text" name="offcom_date" maxlength="12" size="12" autocomplete="off" data-validation="required"
+                        <input id="offcom_date" type="text" name="offcom_date" maxlength="12" size="12" autocomplete="off" data-validation="required" readonly
                                class="form-control m-input date" value="<?= $data->offcom_date ?>"/>
                     </div>
                 </div>
