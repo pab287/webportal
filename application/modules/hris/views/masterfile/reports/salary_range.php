@@ -89,7 +89,7 @@
                         <template v-if="filter == 2">
                             <div class="form-group m-form__group">
                                 <label for="">Employee</label>
-                                <select name="employee[]" class="form-control" id="employee" multiple="multiple">
+                                <select name="employee" class="form-control" id="employee" multiple="multiple">
                                     <option></option>
                                 </select>
                             </div>
@@ -169,6 +169,14 @@
                                     </small>
                                 </h3>
                             </div>
+                        </div>
+                    </div>
+                    <div class="m-portlet__body">
+                        <div class="table-responsive">
+                            <table id="table-employee-salary-history" width="100%" class="table table-hover table-bordered">
+                                <thead></thead>
+                                <tbody></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

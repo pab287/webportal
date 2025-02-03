@@ -11,6 +11,7 @@ class Reports_model extends CI_Model{
     protected $tblPersonnel = "gcctimeutility.personnel";
     protected $tblPersonnelLocation = "gcctimeutility.personnel_locations";
     protected $tblDefaultLocation = "gcchris.default_station_location";
+    protected $tblSalaryHistory = 'gcchris.tblsalaries';
 
     protected $now = null;
     protected $user = null;
@@ -2274,5 +2275,83 @@ class Reports_model extends CI_Model{
         }
 
         return array('results' => $result);
+    }
+
+    public function getEmployeeSalaryHistory(){
+        $post = $this->input->post()['filter'];
+        $resultset = array();
+        $result = array();
+
+        if (isset($post) && $post) {
+
+            $sql = 'a.sal_date, a.sal_rate, a.sal_remarks, a.add_date, 
+                UPPER(CONCAT(b.firstname, " ", b.lastname)) as emp_name, b.biometricno, date_format(a.sal_date, "%Y") as year';
+
+            $this->db->select($sql);
+            $this->db->join($this->tblEmployees.' as b', 'b.id = a.emp_id', 'LEFT');
+            $this->db->from($this->tblSalaryHistory.' as a');
+    
+            if (isset($post['employee_status']) && $post['employee_status']) {
+                $this->db->where('b.employee_status', $post['employee_status']);
+            }
+    
+            if (isset($post['company']) && $post['company']) {
+                $this->db->where('b.company_id', $post['company']);
+            }
+    
+            if (isset($post['department']) && $post['department']) {
+                $this->db->where('b.department_id', $post['department']);
+            }
+    
+            if (isset($post['position']) && $post['position']) {
+                $this->db->where('b.position', $post['position']);
+            }
+
+            if (isset($post['employee']) && $post['employee']) {
+                $this->db->where_in('b.id', $post['employee']);
+            }
+
+            $this->db->group_start();
+                $this->db->where('YEAR(a.add_date) >=', $post['date_from']);
+                $this->db->where('YEAR(a.add_date) <=', $post['date_to']);
+            $this->db->group_end();
+
+            $this->db->order_by('a.add_date', 'DESC');
+
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                $arrData = array();
+                $count = 0;
+                foreach ($query->result() as $key => $row) {
+                    if (isset($arrData[$row->biometricno][$row->year]) && $arrData[$row->biometricno][$row->year]) {
+                        // not done plotting the data
+                        if (count($arrData[$row->biometricno][$row->year]) == 0) {
+                            $arrData[$row->biometricno][$row->year][] = $row;
+                        } else {
+                            $arrData[$row->biometricno.'_'.$row->year.'_'.$key][$row->year][] = $row;
+                        }
+                    } else {
+                        $arrData[$row->biometricno][$row->year] = array($row);
+                    }
+                }
+
+                var_dump($arrData);
+            }
+        }
+
+        $resultset['generated_years'] = $this->generatedYears($post['date_from'], $post['date_to']);
+        $resultset['results'] = $result;
+        return $resultset;
+    }
+
+    function generatedYears($from, $to){
+        $years = array();
+
+        for($nYear = $to; $nYear >= $from; $nYear--){
+            array_push($years, (int)$nYear); //changed first value from string to a number
+        }
+
+        return $years;
     }
 }

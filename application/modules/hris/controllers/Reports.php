@@ -286,16 +286,7 @@ class Reports extends MY_Controller{
     public function get_employees_for_salary_range($export=0)
     {
         $post = $this->input->post();
-
-        if (isset($post['isGenerated']) && $post['isGenerated'] == 'true') {
-            $data = $this->report->getEmployeesForSalaryRange($export);
-        } else {
-            $data = array(
-                'data' => array(),
-                'recordsTotal' => 0,
-                'recordsFiltered' => 0
-            );
-        }
+        $data = $this->report->getEmployeesForSalaryRange($export);
         
         echo json_encode($data);
     }
@@ -438,6 +429,13 @@ class Reports extends MY_Controller{
 
     public function get_employee_select2_data(){
         $data = $this->report->getSelect2Employee();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function get_employee_salary_history(){
+        $data = $this->report->getEmployeeSalaryHistory();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));

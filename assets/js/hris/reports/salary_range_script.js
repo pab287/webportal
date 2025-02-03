@@ -215,7 +215,7 @@ var vmData = new Vue({
         employeeStatus: null,
         salaryRangeTable: {},
         formValues: null,
-        isGeneratedRange: false
+        salaryHistoryTable: {},
     },
     mounted(){
         var instance = this;
@@ -237,7 +237,7 @@ var vmData = new Vue({
                     instance.maskInput();
                     instance.salaryRangeDataTable();
 
-                    if (typeof instance.salaryRangeTable !== "undefined" && instance.salaryRangeTable) {
+                    if (typeof instance.salaryRangeTable !== "undefined" && instance.salaryRangeTable.data().length > 0) {
                         var _table = instance.salaryRangeTable;
                         _table.ajax.reload(); 
                     } else {
@@ -249,6 +249,12 @@ var vmData = new Vue({
                     instance.yearSelect2("#yearFrom", true, _years);
                     instance.yearSelect2("#yearTo", true, _years);
                     instance.employeeSelect2("#employee", true);
+
+                    // if (typeof instance.salaryHistoryTable !== "undefined" && instance.salaryHistoryTable.data().length > 0) {
+                    //     var _table = instance.salaryHistoryTable;
+                    // } else {
+                    // }
+                    instance.salaryHistoryDataTable();
                 }, 100);
             }
         }, maskInput(){
@@ -397,10 +403,10 @@ var vmData = new Vue({
                         title: 'EMPLOYEES SALARY RANGE REPORT',
                         action: function (e, dt, node, config) {
                             const self = this;
-                            getExportData(e, dt, node, config, self, `${url}/1`, 'excelHtml5')
-                                .then(() => {
-                                    dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
-                                });
+                            dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
+                            // getExportData(e, dt, node, config, self, `${url}/1`, 'excelHtml5')
+                            //     .then(() => {
+                            //     });
                         }
                     },
                     {
@@ -408,10 +414,11 @@ var vmData = new Vue({
                         title: 'EMPLOYEES SALARY RANGE REPORT',
                         action: function (e, dt, node, config) {
                             const self = this;
-                            getExportData(e, dt, node, config, self, `${url}/1`, 'pdfHtml5')
-                                .then(() => {
-                                    dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
-                                });
+                            dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
+                            // getExportData(e, dt, node, config, self, `${url}/1`, 'pdfHtml5')
+                            //     .then(() => {
+                            //         dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
+                            //     });
                         }
                     },
                     {
@@ -419,10 +426,10 @@ var vmData = new Vue({
                         title: 'EMPLOYEES SALARY RANGE REPORT',
                         action: function (e, dt, node, config) {
                             const self = this;
-                            getExportData(e, dt, node, config, self, `${url}/1`, 'print')
-                                .then(() => {
-                                    dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
-                                });
+                            dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
+                            // getExportData(e, dt, node, config, self, `${url}/1`, 'print')
+                            //     .then(() => {
+                            //     });
                         }
                     }
                 ],
@@ -430,7 +437,7 @@ var vmData = new Vue({
                 ordering: true,
                 retrieve: true,
                 deferLoading: 0,
-                searching: false,
+                searching: true,
                 ajax: {
                     url: url,
                     type: 'post',
@@ -438,7 +445,6 @@ var vmData = new Vue({
                     data: function (d) {
                         d.csrf_token = _csrf_hash;
                         d.filter = instance.formValues;
-                        d.isGenerated = instance.isGeneratedRange;
                     },
                     global: false
                 },
@@ -498,7 +504,8 @@ var vmData = new Vue({
 
                     $(dropdown).appendTo("#table-employee-salary-range_wrapper .exportDropdown");
                     dropdownEl = $(".m-dropdown__toggle.export-as");
-
+                }, drawCallback: function (settings) {
+                    const nTable = settings.nTable;
 
                     const tempExcel = $("#export-as-excel");
                     const tempPdf = $("#export-as-pdf");
@@ -507,24 +514,22 @@ var vmData = new Vue({
                     if (typeof tempExcel != 'undefined' && tempExcel.length > 0) {
                         tempExcel.on("click", function () {
                             table.button(".buttons-excel").trigger();
-
                         });
                     }
 
                     if (typeof tempPdf != 'undefined' && tempPdf.length > 0) {
                         tempPdf.on("click", function () {
                             table.button(".buttons-pdf").trigger();
-
                         });
                     }
                     if (typeof tempPrint != 'undefined' && tempPrint.length > 0) {
                         tempPrint.on("click", function () {
                             table.button(".buttons-print").trigger();
-
                         });
                     }
                 }
             });
+
             instance.salaryRangeTable = table;
         }, generateReport(){
             var instance = this;
@@ -533,26 +538,52 @@ var vmData = new Vue({
 
             if (_form.isValid()) {
                 const formValues = _form.serializeArray();
-                let _data = {};
+                
+                // Convert to object using reduce
+                const obj = formValues.reduce((acc, item) => {
+                    // Handle duplicate keys (like employee[]) by creating an array
+                    if (acc[item.name]) {
+                        if (Array.isArray(acc[item.name])) {
+                            acc[item.name].push(item.value);
+                        } else {
+                            acc[item.name] = [acc[item.name], item.value];
+                        }
+                    } else {
+                        acc[item.name] = item.value ? item.value : 0;
+                    }
+                    return acc;
+                }, {});
 
-                $.each(formValues, (acc, item) => {
-                    if (item.name != 'sal_range_from' || item.name != 'sal_range_to')
-                        _data[item.name] = item.value ? item.value : 0;
-                });
-
-                instance.formValues = _data;
+                instance.formValues = obj;
 
                 if (instance.filter === 1) {
                     var salaryTable = instance.salaryRangeTable;
-                    instance.isGeneratedRange = true;
                     salaryTable.ajax.reload();
                 } else {
+                    // var salaryHistoryTable = instance.salaryHistoryTable;
 
+                    $.ajax({
+                        url: baseUrl('hris/reports/get_employee_salary_history'),
+                        type: "POST",
+                        dataType: "json",
+                        data: {
+                            csrf_token : _csrf_hash,
+                            filter : obj
+                        },
+                        success: function(data){
+                            // if (data.response) {
+                            //     console.log(data.data);
+                            // }
+                        }
+                    })
                 }
             }
-        }, salaryHistoryDatatable(){
+        }, salaryHistoryDataTable(){
             var instance = this;
-            instance.salaryHistoryTable = $('#table-employee-salary-history').DataTable({
+
+            var url = baseUrl('hris/reports/get_employees_for_salary_history');
+
+            var table = $('#table-employee-salary-history').DataTable({
                 dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'f>>" +
                     "<'row'<'col-12'rt>>" +
                     "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
@@ -562,7 +593,7 @@ var vmData = new Vue({
                         title: 'EMPLOYEES SALARY HISTORY REPORT',
                         action: function (e, dt, node, config) {
                             const self = this;
-                            getExportData(e, dt, node, config, self, `${baseUrl('hris/reports/get_employees_for_salary_history')}/1`, 'excelHtml5')
+                            getExportData(e, dt, node, config, self, `${url}/1`, 'excelHtml5')
                                 .then(() => {
                                     dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
                                 });
@@ -573,13 +604,107 @@ var vmData = new Vue({
                         title: 'EMPLOYEES SALARY HISTORY REPORT',
                         action: function (e, dt, node, config) {
                             const self = this;
-                            getExportData(e, dt, node, config, self, `${baseUrl('hris/reports/get_employees_for_salary_history')}/1`, 'pdfHtml5')
+                            getExportData(e, dt, node, config, self, `${url}/1`, 'pdfHtml5')
                                 .then(() => {
                                     dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
                                 });
                         }
-                    }]
+                    },
+                    {
+                        extend: 'print',
+                        title: 'EMPLOYEES SALARY RANGE REPORT',
+                        action: function (e, dt, node, config) {
+                            const self = this;
+                            getExportData(e, dt, node, config, self, `${url}/1`, 'print')
+                                .then(() => {
+                                    dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
+                                });
+                        }
+                    }
+                ],
+                columns: [
+                    { title: 'Name', data: 'name' },
+                    { title: 'Biometric #', data: 'biometricno' },
+                    { title: 'Year', data: 'year' },
+                    { title: 'Salary', data: 'salary' },
+                    { title: 'Eff Date', data: 'effdate' },
+                    { title: 'Year', data: 'year' },
+                    { title: 'Salary', data: 'salary' },
+                    { title: 'Eff Date', data: 'effdate' },
+                ],
+                serverSide: false,
+                ordering: true,
+                retrieve: true,
+                deferLoading: 0,
+                searching: true,
+                data: [],
+                initComplete: function (settings) {
+                    const nTable = settings.nTable;
+
+                    $("#table-employee-salary-history_filter input[type='search']").removeClass("form-control-sm");
+
+                    const dropdown = `` +
+                        `       <div class="m-dropdown m-dropdown--inline m-dropdown--align-left" data-dropdown-toggle="hover" aria-expanded="true">` +
+                        `            <button class="m-dropdown__toggle btn btn-success dropdown-toggle export-as">  EXPORT AS </button>` +
+                        `            <div class="m-dropdown__wrapper">` +
+                        `                <div class="m-dropdown__inner">` +
+                        `                    <div class="m-dropdown__body">` +
+                        `                        <div class="m-dropdown__content">` +
+                        `                            <ul class="m-nav">` +
+                        `                                <li class="m-nav__item">` +
+                        `                                    <div id="export-as-excel" style="cursor:pointer;" class="m-nav__link">` +
+                        `                                        <i class="m-nav__link-icon fa fa-file-excel-o m--font-success"></i>` +
+                        `                                        <span class="m-nav__link-text" style="text-transform: none;">Excel File</span>` +
+                        `                                    </div>` +
+                        `                                </li>` +
+                        `                                <li class="m-nav__item">` +
+                        `                                    <div href="javascript:void(0)" id="export-as-pdf" style="cursor:pointer;" class="m-nav__link">` +
+                        `                                        <i class="m-nav__link-icon fa fa-file-pdf-o m--font-danger"></i>` +
+                        `                                        <span class="m-nav__link-text" style="text-transform: none;">PDF File</span>` +
+                        `                                    </div>` +
+                        `                                </li>` +
+                        `                                <li class="m-nav__item">` +
+                        `                                    <div href="javascript:void(0)" id="export-as-print" style="cursor:pointer;" class="m-nav__link">` +
+                        `                                        <i class="m-nav__link-icon fa fa-print m--font-info"></i>'` +
+                        `                                        <span class="m-nav__link-text" style="text-transform: none;">Print</span>` +
+                        `                                    </div>` +
+                        `                                </li>` +
+                        `                            </ul>` +
+                        `                        </div>` +
+                        `                    </div>` +
+                        `                </div>` +
+                        `            </div>` +
+                        `       </div>`;
+
+                    $(dropdown).appendTo("#table-employee-salary-history_wrapper .exportDropdown");
+                    dropdownEl = $(".m-dropdown__toggle.export-as");
+                }, drawCallback: function (settings) {
+                    const nTable = settings.nTable;
+
+                    const tempExcel = $("#export-as-excel");
+                    const tempPdf = $("#export-as-pdf");
+                    const tempPrint = $("#export-as-print");
+
+                    if (typeof tempExcel != 'undefined' && tempExcel.length > 0) {
+                        tempExcel.on("click", function () {
+                            table.button(".buttons-excel").trigger();
+                        });
+                    }
+
+                    if (typeof tempPdf != 'undefined' && tempPdf.length > 0) {
+                        tempPdf.on("click", function () {
+                            table.button(".buttons-pdf").trigger();
+                        });
+                    }
+                    if (typeof tempPrint != 'undefined' && tempPrint.length > 0) {
+                        tempPrint.on("click", function () {
+                            table.button(".buttons-print").trigger();
+                        });
+                    }
+                }
             });
+
+            instance.salaryHistoryTable = table;
         }
     }
 });
