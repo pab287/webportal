@@ -730,7 +730,7 @@ async function export_log(datas, name, type, count,chart) {
     filters.filter_type = $('input[name="to_generate_group[]"]:checked').val();
     try {
         const response = await $.ajax({
-            url: siteUrl("hris/reports/log_export"),
+            url: siteUrl("hris/reports/log_export") + '?t=' + new Date().getTime(),
             type: "POST",
             data: { 
                 filters,

@@ -640,7 +640,7 @@ $.validate({
 async function export_log(filters, type, name, count) {
     try {
         const response = await $.ajax({
-            url: siteUrl("hris/reports/log_export"),
+            url: siteUrl("hris/reports/log_export") + '?t=' + new Date().getTime(),
             type: "POST",
             data: { 
                 filters,
