@@ -11,10 +11,10 @@
     <div class="form-group">
 		<label for="offcom_type" class="form-control-label">Type <span style="color: red;">*</span></label>
 		<select id="offcom_type" name="offcom_type" data-validation="required" class="form-control m-input select2">
-            <option value="">&nbsp;</option>
-            <option value="OFFENSE">Offenses</option>
+            <option></option>
+            <!-- <option value="OFFENSE">Offenses</option>
             <option value="COMMENDATION">Commendations</option>
-            <option value="NOTICES">Notices</option>
+            <option value="NOTICES">Notices</option> -->
         </select>
 	</div>
     <div class="form-group">

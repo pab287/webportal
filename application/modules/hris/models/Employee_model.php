@@ -1514,18 +1514,18 @@
                     $prms = array();
                     switch (strtoupper($type)) {
                         case "OFFENSES":
-                            $prms = array('OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE', '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE', '8TH OFFENSE', '9TH OFFENSE', '10TH OFFENSE', '11TH OFFENSE', '12TH OFFENSE');
+                            $prms = array('OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE', '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE', 'DISMISSAL','WRITTEN WARNING','3-DAYS-SUSPENSION','6-DAYS-SUSPENSION','1-2-DAYS-SUSPENSION');
                             break;
                         case "COMMENDATION":
                             $prms = array('COMMENDATION');
                             break;
                         case "NOTICES":
-                            $prms = array('LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 'WRITTEN WARNING', 'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 'NOD', 'NOTICE OF ADMINISTRATIVE HEARING','NOTICES');
+                            $prms = array('LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 'NOD', 'NOTICE OF ADMINISTRATIVE','NOTICES','SUSPENSION');
                             break;
                         case "OTHERS":
                             $prms = array(
-                                'OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE', '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE', '8TH OFFENSE', '9TH OFFENSE', '10TH OFFENSE', '11TH OFFENSE', '12TH OFFENSE',
-                                'COMMENDATION', 'LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 'WRITTEN WARNING', 'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 'NOD', 'NOTICE OF ADMINISTRATIVE HEARING', 'NOTICES'
+                                'OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE', '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE',
+                                'COMMENDATION', 'LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 'WRITTEN WARNING', 'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 'NOD','DISMISSAL', 'NOTICE OF ADMINISTRATIVE HEARING', 'NOTICES','3-DAYS-SUSPENSION','6-DAYS-SUSPENSION','1-2-DAYS-SUSPENSION',
                                 );
                             break;
                         default:

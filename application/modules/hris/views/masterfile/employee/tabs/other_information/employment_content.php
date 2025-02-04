@@ -72,6 +72,7 @@
                                                 <th>Dates</th>
                                                 <th>Nature</th>
                                                 <th>Sanction/Remarks</th>
+                                                <th></th>
                                                 <th>File</th>
                                                 <th>Action</th>
                                             </tr>
@@ -87,6 +88,7 @@
                                                 <th>Dates</th>
                                                 <th>Nature</th>
                                                 <th>Sanction/Remarks</th>
+                                                <th></th>
                                                 <th>File</th>
                                                 <th>Action</th>
                                             </tr>
@@ -102,6 +104,7 @@
                                                 <th>Dates</th>
                                                 <th>Nature</th>
                                                 <th>Sanction/Remarks</th>
+                                                <th></th>
                                                 <th>File</th>
                                                 <th>Action</th>
                                             </tr>
@@ -117,6 +120,7 @@
                                                 <th>Dates</th>
                                                 <th>Nature</th>
                                                 <th>Sanction/Remarks</th>
+                                                <th></th>
                                                 <th>File</th>
                                                 <th>Action</th>
                                             </tr>

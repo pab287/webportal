@@ -1000,7 +1000,6 @@ if (typeof _tempContentData !== "undefined") {
                         _data = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, data.id);
     
                         vmTab3.managerialSelect2('#m--input-manager_id', true, _data, vmTab3.vm_tab3.manager ? vmTab3.vm_tab3.manager : 0);
-                        console.log(vmTab3.vm_tab3.manager);
                         if (typeof vmTab3.vm_tab3.manager == 'undefined' || vmTab3.vm_tab3.manager == 0 ) {
                             if ($('#remove-initial-class').hasClass('has-error')) {
                                 $('#remove-initial-class').removeClass('has-error');
@@ -1562,7 +1561,6 @@ if (typeof _tempContentData !== "undefined") {
                         }).on('select2:select', function (e) {
                             var data = e.params.data;
                             const id = data.id;
-                            console.log(id);
                             var cert_name_field = modalContent.find('.cert-name-field');
 
                             if(id === 'Certificate') {
@@ -3092,16 +3090,23 @@ if (typeof _tempContentData !== "undefined") {
                 },
                 { data: "offcom_nature", },
                 { data: "offcom_action", },
-                {
-                    data: "filename",
-                    width: "10%",
-                    render: function(data, type, row, meta) {
+                { data:"",className: "text-center",
+                    render:  function(data, type, row, meta){
                         return `
                         <span>
                             <button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill"
                                     onclick="openFile('${tempDataId}', '${data}')">
                                 <i class="fa fa-eye"></i>
                             </button>
+                        </span>`;
+                    }
+                },
+                {
+                    data: "filename",
+                    width: "10%",
+                    render: function(data, type, row, meta) {
+                        return `
+                        <span>
                             <span>${data}</span>
                         </span>`;
                     },
@@ -3115,7 +3120,7 @@ if (typeof _tempContentData !== "undefined") {
                     targets: -1,
                     orderable: false,
                     render: function (data, type, row, meta) {
-                        return offensesDataTableActions(row.id);
+                        return offensesDataTableActions(row.id,'offenses');
                     }
                 },
                 {
@@ -3125,7 +3130,7 @@ if (typeof _tempContentData !== "undefined") {
             ],
             initComplete: function () {
                 $(".dt-toolbar_offenses").append(
-                    "<button type='button' class='btn btn-sm btn-success mb-2 btnNew btnAddOffenses'><i class='la la-plus mr-1'></i>New</button>"
+                    "<button id ='btnOffenses' type='button' class='btn btn-sm btn-success mb-2 btnNew btnAddOffenses'  data-select='offenses'><i class='la la-plus mr-1'></i>New</button>"
                 );
 
                 let search_thread = null;
@@ -3176,16 +3181,23 @@ if (typeof _tempContentData !== "undefined") {
                 },
                 { data: "offcom_nature", },
                 { data: "offcom_action", },
-                {
-                    data: "filename",
-                    width: "10%",
-                    render: function(data, type, row, meta) {
+                { data:"",className: "text-center",
+                    render:  function(data, type, row, meta){
                         return `
                         <span>
                             <button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill"
                                     onclick="openFile('${tempDataId}', '${data}')">
                                 <i class="fa fa-eye"></i>
                             </button>
+                        </span>`;
+                    }
+                },
+                {
+                    data: "filename",
+                    width: "10%",
+                    render: function(data, type, row, meta) {
+                        return `
+                        <span>
                             <span>${data}</span>
                         </span>`;
                     },
@@ -3199,7 +3211,7 @@ if (typeof _tempContentData !== "undefined") {
                     targets: -1,
                     orderable: false,
                     render: function (data, type, row, meta) {
-                        return offensesDataTableActions(row.id);
+                        return offensesDataTableActions(row.id, 'commendation');
                     }
                 },
                 {
@@ -3209,7 +3221,7 @@ if (typeof _tempContentData !== "undefined") {
             ],
             initComplete: function () {
                 $(".dt-toolbar_commendation").append(
-                    "<button type='button' class='btn btn-sm btn-success mb-2 btnNew btnAddOffenses'><i class='la la-plus mr-1'></i>New</button>"
+                    "<button id='btnCommendation' type='button' class='btn btn-sm btn-success mb-2 btnNew btnAddOffenses' data-select='commendation'><i class='la la-plus mr-1'></i>New</button>"
                 );
 
                 let search_thread = null;
@@ -3259,16 +3271,23 @@ if (typeof _tempContentData !== "undefined") {
                 },
                 { data: "offcom_nature", },
                 { data: "offcom_action", },
-                {
-                    data: "filename",
-                    width: "10%",
-                    render: function(data, type, row, meta) {
+                { data:"",className: "text-center",
+                    render:  function(data, type, row, meta){
                         return `
                         <span>
                             <button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill"
                                     onclick="openFile('${tempDataId}', '${data}')">
                                 <i class="fa fa-eye"></i>
                             </button>
+                        </span>`;
+                    }
+                },
+                {
+                    data: "filename",
+                    width: "10%",
+                    render: function(data, type, row, meta) {
+                        return `
+                        <span>
                             <span>${data}</span>
                         </span>`;
                     },
@@ -3282,7 +3301,7 @@ if (typeof _tempContentData !== "undefined") {
                     targets: -1,
                     orderable: false,
                     render: function (data, type, row, meta) {
-                        return offensesDataTableActions(row.id);
+                        return offensesDataTableActions(row.id, 'notices');
                     }
                 },
                 {
@@ -3292,7 +3311,7 @@ if (typeof _tempContentData !== "undefined") {
             ],
             initComplete: function () {
                 $(".dt-toolbar_notices").append(
-                    "<button type='button' class='btn btn-sm btn-success mb-2 btnNew btnAddOffenses'><i class='la la-plus mr-1'></i>New</button>"
+                    "<button id='btnNotices' type='button' class='btn btn-sm btn-success mb-2 btnNew btnAddOffenses' data-select='notices'><i class='la la-plus mr-1'></i>New</button>"
                 );
 
                 let search_thread = null;
@@ -3342,16 +3361,23 @@ if (typeof _tempContentData !== "undefined") {
                 },
                 { data: "offcom_nature", },
                 { data: "offcom_action", },
-                {
-                    data: "filename",
-                    width: "10%",
-                    render: function(data, type, row, meta) {
+                { data:"",className: "text-center",
+                    render:  function(data, type, row, meta){
                         return `
                         <span>
                             <button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill"
                                     onclick="openFile('${tempDataId}', '${data}')">
                                 <i class="fa fa-eye"></i>
                             </button>
+                        </span>`;
+                    }
+                },
+                {
+                    data: "filename",
+                    width: "10%",
+                    render: function(data, type, row, meta) {
+                        return `
+                        <span>
                             <span>${data}</span>
                         </span>`;
                     },
@@ -3365,7 +3391,7 @@ if (typeof _tempContentData !== "undefined") {
                     targets: -1,
                     orderable: false,
                     render: function (data, type, row, meta) {
-                        return offensesDataTableActions(row.id);
+                        return offensesDataTableActions(row.id,'others');
                     }
                 },
                 {
@@ -3390,12 +3416,12 @@ if (typeof _tempContentData !== "undefined") {
         })  
     }
 
-    function offensesDataTableActions($id) {
+    function offensesDataTableActions($id,$type) {
         if ($id) {
             var _actionButton = "";
             if (jQuery.inArray("edit", _currentActions) !== -1) {
                 _actionButton +=
-                    " <button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditOffenses' data-id='" + $id + "'><i class='la la-edit'></i></button>";
+                    " <button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditOffenses' data-select='"+$type+"' data-id='" + $id + "'><i class='la la-edit'></i></button>";
             }
             // if (jQuery.inArray("archive", _currentActions) !== -1) {
             //     _actionButton +=
@@ -3412,6 +3438,32 @@ if (typeof _tempContentData !== "undefined") {
     }
 
     $(document).on("click", ".btnAddOffenses", function () {
+
+        let selectedData = this.dataset.select;
+        let data = [];
+        if (selectedData == 'offenses'){
+            data =  [
+                { id: '1ST-OFFENSE', text: '1ST OFFENSE' },
+                { id: '2ND-OFFENSE', text: '2ND OFFENSE' },
+                { id: '3RD-OFFENSE', text: '3RD OFFENSE' },
+                { id: '4TH-OFFENSE', text: '4TH OFFENSE' },
+                { id: '5TH-OFFENSE', text: '5TH OFFENSE' },
+                { id: 'WRITTEN-WARNING', text: 'WRITTEN WARNING' },
+                { id: '3-DAYS-SUSPENSION', text: '3-DAYS SUSPENSION' },
+                { id: '6-DAYS-SUSPENSION', text: '6-DAYS SUSPENSION' },
+                { id: '1-2-DAYS-SUSPENSION', text: '1-2 DAYS SUSPENSION' },
+                { id: 'DISMISSAL', text: 'DISMISSAL' }
+            ]
+        }
+        else if(selectedData == 'commendation'){
+            data =  [
+                { id: '1ST-COMMENDATION', text: 'COMMENDATION' },]
+        }
+        else if(selectedData == 'notices'){
+            data =  [
+                { id: 'NOTICES', text: 'NOTICE' },]
+        }
+
         $.ajax({
             url: baseUrl("hris/masterfile/get_modal_offenses/" + tempDataId),
             dataType: "json",
@@ -3423,8 +3475,16 @@ if (typeof _tempContentData !== "undefined") {
                     modalContent.find("#offcom_type").select2({
                         width: "100%",
                         placeholder: "Select an option",
-                        dropdownParent: modalTempContent
+                        dropdownParent: modalTempContent,
+                        data: data,
                     });
+
+                    if (data.length === 1) {
+                        modalContent.find("#offcom_type")
+                            .val(data[0].id)
+                            .trigger('change');
+                    }
+
                     modalTempContent.modal("show");
 
                     var dtPickerLegalDate = modalContent.find("#offcom_date").datepicker({
@@ -4492,7 +4552,6 @@ var validatePersonalEmployeeData = function () {
                         .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
                 },
                 success: function (json) {
-                    console.log(formData);
                     if (json.response) {
                         toastr.success(
                             json.toastr_msg,
@@ -5468,7 +5527,6 @@ if (typeof tblAccountability !== "undefined") {
                         var attr = $(this).attr('r');
                         var pre = attr.substring(0, 1);
                         var ind = parseInt(attr.substring(1, attr.length));
-                        console.log(ind);
                         ind = ind + downrows;
                         $(this).attr("r", pre + ind);
                     });
