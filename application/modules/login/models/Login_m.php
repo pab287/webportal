@@ -245,12 +245,8 @@ Class Login_m extends CI_Model
     
             $this->db->insert('gccmaster.two_factor_authentication', $data);
             $request_id = $this->db->insert_id();
-    
-            $msg = "NEVER SHARE YOUR OTP especially on social media, SMS, or email links. Your GC&C Conyxph One Time Password (OTP) is: $otp. If this was not you, please ignore.";
-            
-            $email = $this->load->view("eforms/email_templates/email-bf_template", array("otp" => $otp), true);
-            
-            $send_result = $this->sendOTP($send_to, $msg, $method);
+            $data['first_name'] = $employee->firstname;
+            $send_result = $this->sendOTP($send_to, $data, $method);
             if (!$send_result) {
                 throw new Exception('Failed to send OTP.');
             }
@@ -406,14 +402,17 @@ Class Login_m extends CI_Model
         }
     }
 
-    private function sendOTP($send_to, $msg, $method) {
+    private function sendOTP($send_to, $data, $method) {
+        
         switch ($method) {
             case 'sms':
+                $msg = "NEVER SHARE YOUR OTP especially on social media, SMS, or email links. Your GC&C Conyxph One Time Password (OTP) is: {$data['otp']}. If this was not you, please ignore.";
                 return $this->sms->sendSMS($send_to, $msg);
             case 'email':
-                return $this->core->send_email('core', 'Two Factor Authentication', 'Two Factor Authentication', $msg);
+                $email =$this->load->view("two_factor_email_template.php", array("data" => $data),true);
+                return $this->core->send_email('core', 'Two Factor Authentication', 'Two Factor Authentication', $email);
             case 'telegram':
-                // Add Telegram sending logic here (if applicable)
+                // Add Telegram sending logic here
                 return true; // Placeholder
             default:
                 return false;
@@ -421,7 +420,7 @@ Class Login_m extends CI_Model
     }
 
     private function getEmployeeNameById($id){
-        $query = $this->db->query("SELECT CONCAT(firstname, IFNULL(CONCAT(' ', SUBSTRING(middlename, 1, 1), '.'), ''), ' ',lastname) AS employee_name FROM gccmaster.tblemployees WHERE id = {$id}");
+        $query = $this->db->query("SELECT CONCAT(firstname, IFNULL(CONCAT(' ', SUBSTRING(middlename, 1, 1), '.'), ''), ' ',lastname) AS employee_name, firstname FROM gccmaster.tblemployees WHERE id = {$id}");
         return $query->row();
     }
 
