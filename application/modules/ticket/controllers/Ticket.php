@@ -63,6 +63,7 @@ class Ticket extends MY_Controller {
         $tempData["department"] = $this->ticket->select2DepartmentData();
         $tempData["category"] = $this->ticket->select2CategoryData('category');
         $tempData["subcategory"] = $this->ticket->select2CategoryData('sub-category');
+        $tempData["responsibility"] = $this->ticket->select2CategoryData('responsibility');
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
         $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
@@ -89,6 +90,7 @@ class Ticket extends MY_Controller {
         $tempData["subcategory"] = $this->ticket->select2CategoryData('sub-category');
         $tempData["status"] = $this->ticket->select2CategoryData('status');
         $tempData["severity"] = $this->ticket->select2CategoryData('severity');
+        $tempData["responsibility"] = $this->ticket->select2CategoryData('responsibility');
         $tempData["performed_by"] = $this->ticket->select2PerformedByData();
         $this->core_layout->addJs("js/ticket/edit_ticket.js", true,$tempData);
 		$this->load->view('core/templates/header');

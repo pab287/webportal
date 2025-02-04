@@ -2,12 +2,20 @@ jQuery(document).ready(function () {
     $("#progress").hide();
     fileUploadPhoto();
     $("#webportal").hide();
+    $("#dept-res").hide();
 });
 
 $("select#category").select2({
     width: "100%",
     placeholder: "Select an option",
     data: _tempContentData.category,
+    allowClear: true,
+});
+
+$("select#responsiblity").select2({
+    width: "100%",
+    placeholder: "Select an option",
+    data: _tempContentData.responsibility,
     allowClear: true,
 });
 
@@ -164,6 +172,11 @@ $("#category").on("change", function (e) {
         $("#webportal").show();
     }else{
         $("#webportal").hide();
+    }
+    if(type == 'software'){
+        $("#dept-res").show();
+    }else{
+        $("#dept-res").hide();
     }
 });
 

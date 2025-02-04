@@ -676,6 +676,23 @@ class Ticket_m extends CI_Model
         else{
             $sub_category = 0;
         }
+
+        switch($post['category']) {
+            case 'webportal':
+            case 'website':
+                $responsibility = "SOFTWARE DEVELOPMENT";
+                break;
+                
+            case 'hardware':
+            case 'outlook':
+                $responsibility = "IT SUPPORT";
+                break;
+                
+            case 'software':
+                $responsibility = $post['responsibility'];
+                break;
+        }
+
         $requested_date = date('Y-m-d H:i', strtotime($post['date_required']));
         $date = date('Y-m-d H:i:s');
         $year = substr($date, 2, 2);
@@ -724,7 +741,8 @@ class Ticket_m extends CI_Model
             'attachment' => implode(",",$img_arr),
             'priority' => 'low',
             'status' => 'open',
-            'created_at' => $date
+            'created_at' => $date,
+            'responsibility' => $responsibility
         );
         $result = $this->db->insert('gccticket.ticket', $data);
         $last_id = $this->db->insert_id();
@@ -761,6 +779,23 @@ class Ticket_m extends CI_Model
         else{
             $sub_category = 0;
         }
+
+        switch($post['category']) {
+            case 'webportal':
+            case 'website':
+                $responsibility = "SOFTWARE DEVELOPMENT";
+                break;
+                
+            case 'hardware':
+            case 'outlook':
+                $responsibility = "IT SUPPORT";
+                break;
+                
+            case 'software':
+                $responsibility = $post['responsibility'];
+                break;
+        }
+
         $requested_date = date('Y-m-d H:i', strtotime($post['date_required']));
         $employeeId = $this->user_data['emp_id'];
         $date = date('Y-m-d H:i:s');
@@ -782,7 +817,8 @@ class Ticket_m extends CI_Model
             // 'attachment' => implode(",",$img_arr),
             'priority' => $post['severity'],
             'performed_by' => $post['performed_by'],
-            'status' => $post['status']
+            'status' => $post['status'],
+            'responsibility' => $responsibility
         );
         if(empty($str_pic)){
             $data['attachment'] = "";
@@ -1032,6 +1068,7 @@ class Ticket_m extends CI_Model
             $telegram_msg .= '<b>Reference #</b>: '.strtoupper($data['reference_no']).chr(10);
             $telegram_msg .= '<b>Priority</b>: '.strtoupper($data['priority']).chr(10);
             $telegram_msg .= '<b>Category</b>: '.strtoupper($category).chr(10);
+            $telegram_msg .= '<b>Department Responsible</b>: '.strtoupper($data['responsibility']).chr(10);
             $telegram_msg .= '<b>Issue</b>: '.strtoupper($data['message']).chr(10);
             $telegram_msg .= '<b>Requested By</b>: '.strtoupper($requestor['display_name_1']).chr(10);
             $telegram_msg .= '<b>Date Needed</b>: '.strtoupper($data['requested_date']).chr(10);
@@ -1110,7 +1147,7 @@ class Ticket_m extends CI_Model
         $this->db->where('cat.status', 0);
         if($type == 'sub-category'){
             $this->db->order_by("id", "ASC");
-        }elseif ($type == 'severity' || $type == 'status') {
+        }elseif ($type == 'severity' || $type == 'status' || $type == 'responsibility') {
             $this->db->order_by("cat.id", "ASC");
         }else{
             $this->db->order_by("cat.name", "ASC");

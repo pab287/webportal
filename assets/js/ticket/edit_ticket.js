@@ -19,6 +19,7 @@ jQuery(document).ready(function () {
     fileUploadPhoto();
     $("#progress").hide();
     $("#webportal").hide();
+    $("#dept-res").hide();
 });
 
 $('#date_required_group').datepicker({
@@ -181,6 +182,11 @@ $.ajax({
             }else{
                 $("#webportal").hide();
             }
+            if(type == 'software'){
+                $("#dept-res").show();
+            }else{
+                $("#dept-res").hide();
+            }
         });
         
         
@@ -198,12 +204,23 @@ $.ajax({
             allowClear: true,
         });
 
+        $("#responsibility").select2({
+            width: "100%",
+            placeholder: "Select an option",
+            data: _tempContentData.responsibility,
+            allowClear: true,
+        });
+
         let category = new Option(vmData.category, vmData.category, true, true);
 
         
         if(vmData.category == 'webportal'){
             $("#webportal").show();
             $('#sub_category').val(data.sub_category).trigger('change');
+        }
+        if(vmData.category == 'software'){
+            $("#dept-res").show();
+            $('#responsibility').val(data.responsibility).trigger('change');
         }
         $('#status').val(data.status).trigger('change');
         $('#performed_by').val(data.performed_by_id).trigger('change');

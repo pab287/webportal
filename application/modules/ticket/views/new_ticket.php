@@ -64,6 +64,16 @@
                                         </select>
                                     </div>
                                 </div>
+                                <div class="form-group m-form__group row" id="dept-res">
+                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
+                                        Department Responsible: <span style="color:red;">*</span>
+                                    </label>
+                                    <div class="col-sm-12 col-xs-12 col-md-9">
+                                        <select id="responsiblity" name="responsibility"  data-validation="required">
+                                            <option></option>
+                                        </select>
+                                    </div>
+                                </div>
                                 <div class="form-group m-form__group row" id="webportal">
                                     <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
                                         Module <span style="color:red;">*</span>
