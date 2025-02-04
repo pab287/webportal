@@ -159,7 +159,7 @@ class Hydra_billing_readings_m extends Dbase{
 							   ON a.account_id = b.id
 							   LEFT JOIN hydra_billing.subdivision c
 							   ON b.subdivision_id = c.id
-							   WHERE a.created_by='$user_id' AND a.meterno = b.meterno_raw AND a.is_archived='0' AND month(a.created_at)='$current_m' AND year(a.created_at)='$current_y'
+							   WHERE a.created_by='$user_id' AND a.meterno = b.meterno_raw AND a.is_archived='0' AND month(a.reading_date)='$current_m' AND year(a.reading_date)='$current_y'
 							   ORDER BY a.ref_no DESC");
    		$sth->execute();
 
