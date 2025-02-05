@@ -265,92 +265,106 @@
                 </div>
                 <template v-if="has_uploaded_file === true">
                     <input type="hidden" name="json_file" v-model="json_file" />
-                    <table id="uploaded_csv_table" class="table"></table>
-                    <div class="row m--margin-top-10">
-                        <div class="col-md-6">
-                            <div class="form-group m-form__group">
-                                <label for="approved_by">
-                                    Approved By
-                                </label>
-                                <select class="form-control m-input m-input--air" id="approved_by" name="approved_by"></select>
+                    <template v-if="invalid_ctr > 0">
+                        <div class="mt-3 m-alert m-alert--icon m-alert--outline alert alert-warning fade show" role="alert">
+							<div class="m-alert__icon">
+								<i class="la la-warning"></i>
+							</div>
+							<div class="m-alert__text">
+							  	<strong>Invalid Overtime Entries!</strong> There are <strong>`{{ invalid_ctr }}`</strong> invalid entries that are not allowed to be imported.
+							</div>
+						</div>
+                    </template>
+                    <div class="mb-5">
+                        <table id="uploaded_csv_table" class="table"></table>
+                    </div>
+                    <template v-if="valid_ctr > 0">
+                        <div class="row m--margin-top-10">
+                            <div class="col-md-6">
+                                <div class="form-group m-form__group">
+                                    <label for="approved_by">
+                                        Approved By
+                                    </label>
+                                    <select class="form-control m-input m-input--air" id="approved_by" name="approved_by"></select>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                        <div class="m-portlet m-portlet--bordered m-portlet--unair">
-                            <div class="m-portlet__head">
-                                <div class="m-portlet__head-caption">
-                                    <div class="m-portlet__head-title">
-                                        <h3 class="m-portlet__head-text">
-                                            Attachment Image
-                                        </h3>
-                                    </div>
-                                </div>
-                                <div class="m-portlet__head-tools">
-                                    <ul class="m-portlet__nav">
-                                        <li class="m-portlet__nav-item">
-                                            <span class="m-portlet__nav-link btn btn-success m-btn m-btn--pill m-btn--air fileinput-button btnUpload">
-                                                <i class="fa fa-plus"></i>
-                                                <span>Upload File</span>
-                                                <input id="temp_fileupload" type="file" name="files" multiple />
-                                            </span>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="m-portlet__body">
-                                <div id="progress_approve"
-                                    class="progress progress-striped active"
-                                    role="progressbar"
-                                    aria-valuemin="0"
-                                    aria-valuemax="100"
-                                    style="display:none;"
-                                    >
-                                    <div
-                                        class="progress-bar progress-bar-success"
-                                        style="width: 0%;"
-                                    ></div>
-                                </div>
-                                <template v-if="count > 0">
-                                    <div class="row">
-                                        <div class="col-2 col-md-2" v-for="(item, index) in rows">
-                                            <div class="m-temp__pic text-center">
-                                                <a :href="item.image" data-lightbox="tempimage" :data-title="item.filename">
-                                                    <img class="m-temp__img" :src="item.thumbnail" width="75" height="75" style="margin-bottom: 0.5rem;" />
-                                                </a>
-                                                <div class="m-checkbox-inline">
-                                                    <label class="m-checkbox">
-                                                        <input type="checkbox" name="attachment_image[]" :value="item.current_image" class="temp-attachment_image" @click="getCheckedCount" />{{renderImageLabel(index)}}<span></span>
-                                                    </label>
-                                                </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="m-portlet m-portlet--bordered m-portlet--unair">
+                                    <div class="m-portlet__head">
+                                        <div class="m-portlet__head-caption">
+                                            <div class="m-portlet__head-title">
+                                                <h3 class="m-portlet__head-text">
+                                                    Attachment Image
+                                                </h3>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-12 m--margin-top-10 text-left">
-                                        <input id="checked_count" type="hidden" data-validation="checkbox_group_min1" value="0" />
+                                        <div class="m-portlet__head-tools">
+                                            <ul class="m-portlet__nav">
+                                                <li class="m-portlet__nav-item">
+                                                    <span class="m-portlet__nav-link btn btn-success m-btn m-btn--pill m-btn--air fileinput-button btnUpload">
+                                                        <i class="fa fa-plus"></i>
+                                                        <span>Upload File</span>
+                                                        <input id="temp_fileupload" type="file" name="files" multiple />
+                                                    </span>
+                                                </li>
+                                            </ul>
                                         </div>
                                     </div>
-                                </template>
-                                <template v-else>
-                                    <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
-                                        <div class="m-alert__icon">
-                                            <i class="flaticon-exclamation-1"></i>
-                                            <span></span>
+                                    <div class="m-portlet__body">
+                                        <div id="progress_approve"
+                                            class="progress progress-striped active"
+                                            role="progressbar"
+                                            aria-valuemin="0"
+                                            aria-valuemax="100"
+                                            style="display:none;"
+                                            >
+                                            <div
+                                                class="progress-bar progress-bar-success"
+                                                style="width: 0%;"
+                                            ></div>
                                         </div>
-                                        <div class="m-alert__text">
-                                            <strong>
-                                                Image(s) not found!
-                                            </strong>
-                                            Upload image first
-                                        </div>
+                                        <template v-if="count > 0">
+                                            <div class="row">
+                                                <div class="col-2 col-md-2" v-for="(item, index) in rows">
+                                                    <div class="m-temp__pic text-center">
+                                                        <a :href="item.image" data-lightbox="tempimage" :data-title="item.filename">
+                                                            <img class="m-temp__img" :src="item.thumbnail" width="75" height="75" style="margin-bottom: 0.5rem;" />
+                                                        </a>
+                                                        <div class="m-checkbox-inline">
+                                                            <label class="m-checkbox">
+                                                                <input type="checkbox" name="attachment_image[]" :value="item.current_image" class="temp-attachment_image" @click="getCheckedCount" />{{renderImageLabel(index)}}<span></span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-12 m--margin-top-10 text-left">
+                                                <input id="checked_count" type="hidden" data-validation="checkbox_group_min1" value="0" />
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template v-else>
+                                            <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
+                                                <div class="m-alert__icon">
+                                                    <i class="flaticon-exclamation-1"></i>
+                                                    <span></span>
+                                                </div>
+                                                <div class="m-alert__text">
+                                                    <strong>
+                                                        Image(s) not found!
+                                                    </strong>
+                                                    Upload image first
+                                                </div>
+                                            </div>
+                                        </template>
                                     </div>
-                                </template>
+                                </div>
                             </div>
                         </div>
-                        </div>
-                    </div>
+                    </template>
                 </template>
                 <template v-else>
                     <template v-if="employee_records.length > 0">
@@ -392,13 +406,8 @@
                         </div>
                     </template>
                 </template>
-                <!-- span class="m-portlet__nav-link btn btn-success m-btn m-btn--pill m-btn--air fileinput-button btnUpload">
-                    <i class="fa fa-plus"></i>
-                    <span>Upload Approval Image</span>
-                    <input id="import_image" type="file" name="import_image" />
-                </span -->
             </div>
-            <div class="modal-footer" v-if="has_uploaded_file === true">
+            <div class="modal-footer" v-if="has_uploaded_file === true && valid_ctr > 0">
                 <button type="submit" id="submit-import-overtime" class="btn btn-primary btnSave">Save</button>
                 <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Cancel</button>
             </div>
@@ -407,8 +416,8 @@
     </div>
 </div>
 
-<div class="modal fade" tabindex="-1" role="dialog" id="modal-mass-update">
-    <div class="modal-dialog" role="document">
+<div class="modal fade" tabindex="-1" id="modal-mass-update">
+    <div class="modal-dialog">
         <form id="frm-mass-update" method="post" action="<?php echo site_url("eforms/overtime/mass_update"); ?>">
             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
             <div class="modal-content">
@@ -420,7 +429,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group m-form__group row align-items-center">
-                        <label class="col-4">Date & Time *</label>
+                        <label for="" class="col-4">Date & Time *</label>
                         <div class="col-7 input-group date p-0" id="mass_date_time">
                             <input class="form-control m-input mb-0" type="text" id="date" data-validation="required" autocomplete="off" />
                             <input type="hidden" name="date_from" id="date_from"/>
@@ -440,8 +449,8 @@
     </div>
 </div>
 
-<div class="modal fade" tabindex="-1" role="dialog" id="modal-mass-approve">
-    <div class="modal-dialog" role="document">
+<div class="modal fade" tabindex="-1" id="modal-mass-approve">
+    <div class="modal-dialog">
         <form id="frm-mass-approve" method="post" action="<?php echo site_url("eforms/overtime/mass_approve"); ?>">
             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
             <div class="modal-content">
@@ -470,8 +479,8 @@
     </div>
 </div>
 
-<div class="modal fade" tabindex="-1" role="dialog" id="modal-mass-disapprove">
-    <div class="modal-dialog" role="document">
+<div class="modal fade" tabindex="-1" id="modal-mass-disapprove">
+    <div class="modal-dialog">
         <form id="frm-mass-disapprove" method="post" action="<?php echo site_url("eforms/overtime/mass_disapprove"); ?>">
             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
             <div class="modal-content">

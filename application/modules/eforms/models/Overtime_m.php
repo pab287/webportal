@@ -1536,6 +1536,8 @@ class Overtime_m extends CI_Model {
                 $config['max_size'] = 1000000;
                 $config['create_thumbnail'] = false;
 
+                $invalidCtr = 0;
+                $validCtr = 0;
                 if(isset($tempInputName) && count($tempInputName) == 1){ $config["input_field"] = $tempInputName[0]; }
                 $data = $this->file_upload->uploadFile($config);
                 if ($data["response"] === true) {
@@ -1622,6 +1624,9 @@ class Overtime_m extends CI_Model {
                                         if($isRecorded === false && $employeeExist){
                                             $arrData[] = $tempDatax;
                                         }
+
+                                        if($isValid === false && $empRecordCount == 1 && $isRecorded === false){ $invalidCtr++; }
+                                        elseif($isValid === true && $empRecordCount == 1 && $isRecorded === false){ $validCtr++; }
                                     }
                                 }
                                 $tempIndex++;
@@ -1650,6 +1655,8 @@ class Overtime_m extends CI_Model {
                             $resultset["toastr_msg"] = "Upload file successful.";
                             $resultset["toastr_state"] = "success";
                             $resultset["biometric_not_found"] = is_array($bioNotFound) && !empty($bioNotFound) ? implode(", ", $bioNotFound): null;
+                            $resultset["invalid_ctr"] = $invalidCtr;
+                            $resultset["valid_ctr"] = $validCtr;
                         }else{
                             $resultset["response"] = false;
                             $resultset["toastr_msg"] = "No data found!";
@@ -1744,7 +1751,7 @@ class Overtime_m extends CI_Model {
         $this->image_lib->clear();
     }
 
-    function importApprovedOvertime(){
+    public function importApprovedOvertime(){
         $resultset = array();
         $post = $this->input->post();
         if(isset($post) && $post){
@@ -1761,16 +1768,17 @@ class Overtime_m extends CI_Model {
                     $arrData = json_decode($fileContent, true);
                     if(isset($arrData["data"]) && $arrData["data"] && is_array($arrData["data"]) && count($arrData["data"]) > 0){
                         $ctrUploaded = 0;
-                        foreach ($arrData["data"] as $key => $value) {
+                        foreach ($arrData["data"] as $value) {
                             $rs = (object) $value;
-                            if(intval($rs->is_existing) == 1){
-                                $sqlSelect = "a.id as employee, UPPER(IFNULL(b.description, a.company_id)) as company, 
-                                UPPER(IFNULL(c.description, a.department_id)) as department, 
-                                UPPER(IFNULL(d.name, a.position)) as position";
+                            if(intval($rs->is_existing) == 1 && $rs->is_valid === true){
+                                $sqlSelect = "a.id as employee, UPPER(IFNULL(b.description, a.company_id)) as company,
+                                UPPER(IFNULL(c.description, a.department_id)) as department,
+                                UPPER(IFNULL(d.name, a.position)) as position, MAX(ps.date_end) as max_date";
                                 $this->db->select($sqlSelect);
                                 $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id OR b.description = a.company_id OR b.code = a.company_id", "LEFT");
                                 $this->db->join("gcchris.tbldepartments c", "c.id = a.department_id OR c.description = a.department_id OR c.code = a.department_id", "LEFT");
                                 $this->db->join("gcchris.tblposition d", "d.id = a.position OR d.name = a.position", "LEFT");
+                                $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = a.id AND ps.posted = 1", "LEFT");
                                 $this->db->group_by("a.id");
                                 $qTemp = $this->db->get_where("gccmaster.tblemployees a", array("a.id"=>$rs->emp_id, "a.employee_status"=>"Active"));
                                 if($qTemp->num_rows() == 1){
@@ -1779,10 +1787,9 @@ class Overtime_m extends CI_Model {
                                     if (sizeof($list) > 0) {
                                         foreach ($list as $arr) { $x = $arr->ref_series; }
                                         $series = intval($x) + 1;
-                                        if (strlen($series) == 1) { $series = '000' . $series; } 
-                                        else if (strlen($series) == 2) { $series = '00' . $series; } 
-                                        else if (strlen($series) == 3) { $series = '0' . $series; } 
-                                        else { $series = $series; }
+                                        if (strlen($series) == 1) { $series = '000' . $series; }
+                                        elseif (strlen($series) == 2) { $series = '00' . $series; }
+                                        elseif (strlen($series) == 3) { $series = '0' . $series; }
                                     } else { $series = '0001'; }
                                     $referenceNo = "OT{$year}-{$month}-{$series}";
 
@@ -1804,19 +1811,23 @@ class Overtime_m extends CI_Model {
                                     $currentRow->attachment_image = isset($post["attachment_image"]) ? serialize($post["attachment_image"]) : "";
                                     $currentRow->is_imported = 1;
 
+                                    $isValidDate = strtotime(trim($rs->date_from)) > strtotime(trim($currentRow->max_date));
+                                    unset($currentRow->max_date);
+
                                     $tempWhere = array();
                                     $tempWhere["employee"] = $rs->emp_id;
                                     $tempWhere["date_from"] = date("Y-m-d H:i:s", strtotime($rs->date_from));
                                     $tempWhere["date_to"] = date("Y-m-d H:i:s", strtotime($rs->date_to));
                                     $tempWhere["status"] = "Approved";
                                     $checkExisting = $this->db->get_where("gcceforms.overtime", $tempWhere);
-                                    if($checkExisting->num_rows() == 0){
+                                    if($isValidDate && $checkExisting->num_rows() == 0){
                                         $added = $this->db->insert("gcceforms.overtime", $currentRow);
                                         if($added){ $ctrUploaded++; }
                                     }
                                 }
                             }
                         }
+
                         if($ctrUploaded > 0){
                             $resultset["response"] = true;
                             $resultset["toastr_msg"] = "Overtime record(s) has been imported and was added.";
