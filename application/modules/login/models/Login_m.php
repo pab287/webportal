@@ -406,7 +406,7 @@ Class Login_m extends CI_Model
         
         switch ($method) {
             case 'sms':
-                $msg = "NEVER SHARE YOUR OTP especially on social media, SMS, or email links. Your GC&C Conyxph One Time Password (OTP) is: {$data['otp']}. If this was not you, please ignore.";
+                $msg = "NEVER SHARE YOUR OTP especially on social media, SMS, or email links. Your GC&C Conyxph One Time Password (OTP) is: {$data['send_to']}. If this was not you, please ignore.";
                 return $this->sms->sendSMS($send_to, $msg);
             case 'email':
                 $email =$this->load->view("two_factor_email_template.php", array("data" => $data),true);
