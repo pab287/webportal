@@ -57,11 +57,11 @@ let fileUploadPhoto = function () {
             icon: "jpg.svg",
             color: "success"
         },
-        {
-            _type: ["docx", "DOCX"],
-            icon: "doc.svg",
-            color: "info"
-        },
+        // {
+        //     _type: ["docx", "DOCX"],
+        //     icon: "doc.svg",
+        //     color: "info"
+        // },
         {
             _type: ["pdf", "PDF"],
             icon: "pdf.svg",
