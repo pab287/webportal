@@ -650,6 +650,10 @@ async function export_log(filters, type, name, count) {
                 csrf_token: _csrf_hash 
             },
             // dataType: 'json'
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            },
         });
         return response;
     } catch (error) {

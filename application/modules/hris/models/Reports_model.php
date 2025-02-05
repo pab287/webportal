@@ -464,15 +464,14 @@ class Reports_model extends CI_Model{
         $resultFilter = "Filter applied: ";
         $resultset = array();
         $post = $this->input->post();
-        
+        $additionalFilters = array();
+        if(isset($post["company"]) && $post["company"]){ $additionalFilters["comp.id"] = $post["company"]; $resultFilter .= "Company: <strong>" . $this->getCompanyById($post["company"])->description."</strong> "; }
+        if(isset($post["department"]) && $post["department"]){ $additionalFilters["dept.id"] = $post["department"]; $resultFilter .= "Department: <strong>" . $this->getDepartmentById($post["department"])->description."</strong> "; }
+        if(isset($post["position"]) && $post["position"]){ $additionalFilters["pos.id"] = $post["position"]; $resultFilter .= "Position: <strong>" . $this->getPositionById($post["position"])->name."</strong> "; }
+        if(isset($post["sort_by"]) && $post["sort_by"]){ $sortOrder["sort_by"] = $post["sort_by"]; }
+        if(isset($post["sort_order"]) && $post["sort_order"]){ $sortOrder["sort_order"] = $post["sort_order"]; }
+        if($resultFilter == "Filter applied: "){ $resultFilter = ""; }
         if(isset($post["filter_by"]) && $post["filter_by"]){
-            $additionalFilters = array();
-            if(isset($post["company"]) && $post["company"]){ $additionalFilters["comp.id"] = $post["company"]; $resultFilter .= "Company: <strong>" . $this->getCompanyById($post["company"])->description."</strong> "; }
-            if(isset($post["department"]) && $post["department"]){ $additionalFilters["dept.id"] = $post["department"]; $resultFilter .= "Department: <strong>" . $this->getDepartmentById($post["department"])->description."</strong> "; }
-            if(isset($post["position"]) && $post["position"]){ $additionalFilters["pos.id"] = $post["position"]; $resultFilter .= "Position: <strong>" . $this->getPositionById($post["position"])->name."</strong> "; }
-            if(isset($post["sort_by"]) && $post["sort_by"]){ $sortOrder["sort_by"] = $post["sort_by"]; }
-            if(isset($post["sort_order"]) && $post["sort_order"]){ $sortOrder["sort_order"] = $post["sort_order"]; }
-            if($resultFilter == "Filter applied: "){ $resultFilter = ""; }
             $tempFilterBy = $post["filter_by"];
             $filteredOptions = array();
             $filteredOptions["filter_by"] = $tempFilterBy;
@@ -548,7 +547,7 @@ class Reports_model extends CI_Model{
                     $resultset["toastr_msg"] = "Generate all hired/separated employee report for `{$_filteredOption}` {$resultFilter}, a total of <strong>{$numRows}</strong> record(s) found.";
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = "Generate all hired/separated employee report for `{$_filteredOption}`, no filtered data found!";
+                    $resultset["toastr_msg"] = "Generate all hired/separated employee report for `{$_filteredOption}` {$resultFilter}, no filtered data found!";
                 }
             }
         }else{
@@ -570,17 +569,17 @@ class Reports_model extends CI_Model{
         $arrData = array();
         $arr = array();
         $post = $this->input->post();
-        if(isset($post["filter_by"]) && $post["filter_by"]){
-            $additionalFilters = array();
-            if(isset($post["company"]) && $post["company"]){ $additionalFilters["comp.id"] = $post["company"]; $resultFilter .= "Company: <strong>" . $this->getCompanyById($post["company"])->description."</strong> "; }
-            if(isset($post["department"]) && $post["department"]){ $additionalFilters["dept.id"] = $post["department"]; $resultFilter .= "Department: <strong>" . $this->getDepartmentById($post["department"])->description."</strong> "; }
+        $additionalFilters = array();
+        if(isset($post["company"]) && $post["company"]){ $additionalFilters["comp.id"] = $post["company"]; $resultFilter .= "Company: <strong>" . $this->getCompanyById($post["company"])->description."</strong> "; }
+        if(isset($post["department"]) && $post["department"]){ $additionalFilters["dept.id"] = $post["department"]; $resultFilter .= "Department: <strong>" . $this->getDepartmentById($post["department"])->description."</strong> "; }
 
-            /*** if(isset($post["station"]) && $post["station"]){ $additionalFilters["loc.location_name"] = $post["station"]; } ***/
-            if(isset($post["station"]) && $post["station"]){ $additionalFilters["dsl.station_id"] = $post["station"]; $resultFilter .= "Station: <strong>" . $this->getStationById($post["station"])->site_name."</strong> "; }
-            if($resultFilter == "Filter applied: "){ $resultFilter = ""; }
-            $filterType = $post["filter_by"];
-            $filteredOptions = array();
-            $filteredOptions["filter_by"] = $filterType;
+        /*** if(isset($post["station"]) && $post["station"]){ $additionalFilters["loc.location_name"] = $post["station"]; } ***/
+        if(isset($post["station"]) && $post["station"]){ $additionalFilters["dsl.station_id"] = $post["station"]; $resultFilter .= "Station: <strong>" . $this->getStationById($post["station"])->site_name."</strong> "; }
+        if($resultFilter == "Filter applied: "){ $resultFilter = ""; }
+        $filterType = $post["filter_by"];
+        $filteredOptions = array();
+        $filteredOptions["filter_by"] = $filterType;
+        if(isset($post["filter_by"]) && $post["filter_by"]){
             if($filterType == "date_range"){
                 if(isset($post[$filterType]) && $post[$filterType]){
                     $dateRange = explode(" - ", $post[$filterType]);
@@ -2166,13 +2165,13 @@ class Reports_model extends CI_Model{
             $this->db->order_by("emp.lastname", "ASC");
             $this->db->order_by("emp.firstname", "ASC");
             $qRecords = $this->db->get();
-
             $resultset["rows"] = $qRecords->result_array();
+            $count = count($resultset["rows"]);
             $resultset["id"] = $post["company"];
         }else{
             $resultset["response"] = false;
         }
-
+        $this->core_layout->setEventLog("Generated list of employees without stations. With result: {$count}", "generate", 'success', "gcchris");
         if($dataOnly){
             if($resultset["response"] === true){ return $resultset["rows"]; }
             else{ return array(); }
