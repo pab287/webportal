@@ -17,6 +17,10 @@ class Verifylogin extends MY_Controller{
             $query = $this->db->select('force_update, password, auth, emp_id')->from('gccmaster.tblusers')->where('username', $post['username'],)->get()->row_array();
             $this->db->reset_query();
             if (empty($query['emp_id'])) {
+                $this->form_validation->set_error_delimiters(
+                    '<div class="m-alert m-alert--outline alert alert-danger alert-dismissible" role="alert">',
+                    '<button type="button" class="close" data-dismiss="alert" aria-label="Close"></button><span>Invalid unsername or password</span></div>'
+                );
                 $this->load->view('login_v');
                 return;
             }
@@ -28,6 +32,10 @@ class Verifylogin extends MY_Controller{
             ->row_array();
         
         if (empty($userDetails)) {
+            $this->form_validation->set_error_delimiters(
+                '<div class="m-alert m-alert--outline alert alert-danger alert-dismissible" role="alert">',
+                '<button type="button" class="close" data-dismiss="alert" aria-label="Close"></button><span>Invalid unsername or password</span></div>'
+            );
             $this->load->view('login_v');
             return;
         }
