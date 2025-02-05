@@ -2135,8 +2135,11 @@ class Reports_model extends CI_Model{
     public function getEmployeeNoStations($companyId=null, $dataOnly=false){
         $post = $this->input->post();
         $resultset = array();
-
+        $filters="";
         if($companyId && $dataOnly ){ $post["company"] = $companyId; }
+        if ($companyId > 0) {
+            $filters .= "Company: <strong>" . $this->getCompanyById($companyId)->description . "</strong> ";
+        }
         if(isset($post["company"]) && $post["company"]){
             $resultset["response"] = true;
             $this->db->select("emp.id, UCASE(
@@ -2171,7 +2174,7 @@ class Reports_model extends CI_Model{
         }else{
             $resultset["response"] = false;
         }
-        $this->core_layout->setEventLog("Generated list of employees without stations. With result: {$count}", "generate", 'success', "gcchris");
+        $this->core_layout->setEventLog("Generated list of employees without stations. $filters With result: {$count}", "generate", 'success', "gcchris");
         if($dataOnly){
             if($resultset["response"] === true){ return $resultset["rows"]; }
             else{ return array(); }
