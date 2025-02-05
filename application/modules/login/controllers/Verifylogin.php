@@ -29,6 +29,7 @@ class Verifylogin extends MY_Controller{
                 $query = $this->db->select('force_update, password, auth, emp_id')->from('gccmaster.tblusers')->where('username', $post['username'])->get()->row_array();
                 $this->db->reset_query();
                 if (isset($query['force_update']) && $query['force_update'] == 1) {
+                    $this->session->sess_destroy();
                     $data = array(
                         'modal' => "show",
                         'post' => $post,
@@ -38,6 +39,7 @@ class Verifylogin extends MY_Controller{
                     return;
                 }
                 if (isset($query['auth']) && $query['auth'] == 1) {
+                    $this->session->sess_destroy();
                     $userDetails = $this->db->select('u.email, u.telegram_chat_id, e.mobile_no')->from('gccmaster.tblusers u')->join('gccmaster.tblemployees e', 'u.emp_id = e.id', 'left')->where('u.id', $query['emp_id'])->get()->row_array();
                     $userDetails = array_map(function($value) {
                         return is_null($value) ? '' : $value;
