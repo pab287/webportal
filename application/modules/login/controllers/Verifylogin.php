@@ -14,7 +14,7 @@ class Verifylogin extends MY_Controller{
     public function index(){
         if ($this->input->post()) {
             $post = $this->input->post();
-            $query = $this->db->select('force_update, password, auth, emp_id')->from('gccmaster.tblusers')->where('username', $post['username'],)->get()->row_array();
+            $query = $this->db->select('force_update, password, auth, emp_id')->from('gccmaster.tblusers')->where('username', $post['username'],'password',md5($post['password']))->get()->row_array();
             $this->db->reset_query();
             if (empty($query['emp_id'])) {
                 $this->form_validation->set_error_delimiters(
@@ -24,32 +24,18 @@ class Verifylogin extends MY_Controller{
                 $this->load->view('login_v');
                 return;
             }
-            $userDetails = $this->db->select('u.email, u.telegram_chat_id, e.mobile_no')
-            ->from('gccmaster.tblusers u')
-            ->join('gccmaster.tblemployees e', 'u.emp_id = e.id', 'left')
-            ->where('u.id', $query['emp_id'])
-            ->get()
-            ->row_array();
-        
-        if (empty($userDetails)) {
-            $this->form_validation->set_error_delimiters(
-                '<div class="m-alert m-alert--outline alert alert-danger alert-dismissible" role="alert">',
-                '<button type="button" class="close" data-dismiss="alert" aria-label="Close"></button><span>Invalid unsername or password</span></div>'
-            );
-            $this->load->view('login_v');
-            return;
-        }
-        $userDetails = array_map(function($value) {
-            return $value === null ? '' : $value;
-        }, $userDetails);
-        if (isset($query['force_update']) && $query['force_update'] == 1 && $query['password'] == md5($post['password'])) {
-            $data = array(
-                'modal' => "show",
-                'post' => $post,
-            );
-            $this->session->set_userdata($data);
-            redirect('login/change_password', );
-        }
+            $userDetails = $this->db->select('u.email, u.telegram_chat_id, e.mobile_no')->from('gccmaster.tblusers u')->join('gccmaster.tblemployees e', 'u.emp_id = e.id', 'left')->where('u.id', $query['emp_id'])->get()->row_array();
+            $userDetails = array_map(function($value) {
+                return $value === null ? '' : $value;
+            }, $userDetails);
+            if (isset($query['force_update']) && $query['force_update'] == 1 && $query['password'] == md5($post['password'])) {
+                $data = array(
+                    'modal' => "show",
+                    'post' => $post,
+                );
+                $this->session->set_userdata($data);
+                redirect('login/change_password', );
+            }
         if (isset($query['auth']) && $query['auth'] == 1 && $query['password'] == md5($post['password'])) {
             $sessionData = [
                 'auth' => "show",
