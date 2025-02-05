@@ -275,7 +275,6 @@ const sessionData = <?= json_encode($session  ?? []) ?>;
 if (!sessionData.auth) {
     window.location.href = '<?php echo base_url("login"); ?>';
 }
-console.log(sessionData);
 let request_id = "";
 let timerSpan = $('#timer');
 let timerInterval;

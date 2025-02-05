@@ -40,7 +40,7 @@ class Verifylogin extends MY_Controller{
                 if (isset($query['auth']) && $query['auth'] == 1) {
                     $userDetails = $this->db->select('u.email, u.telegram_chat_id, e.mobile_no')->from('gccmaster.tblusers u')->join('gccmaster.tblemployees e', 'u.emp_id = e.id', 'left')->where('u.id', $query['emp_id'])->get()->row_array();
                     $userDetails = array_map(function($value) {
-                        return $value === null ? '' : $value;
+                        return is_null($value) ? '' : $value;
                     }, $userDetails);
                     $sessionData = [
                         'auth' => "show",

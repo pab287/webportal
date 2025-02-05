@@ -130,7 +130,6 @@
         </div>
 <script type="text/javascript">
 	const sessionData = <?= json_encode($session  ?? []) ?>;
-    console.log(sessionData);
 	if (!sessionData.modal) {
 		window.location.href = '<?php echo base_url("login"); ?>';
 	}
