@@ -25,6 +25,7 @@ const addShiftModal = $("#add-shift-modal");
 const customShiftModal = $("#modal-custom-shift-schedule");
 
 const monthlyEmployeeModal = $("#monthly-employees-list-modal");
+const importInvalidModal = $("#timesheet-import-invalid-modal");
 
 let dtTimesheet;
 let employeeImage = null;
@@ -3542,6 +3543,11 @@ function openImportModal(type) {
     importModal.modal('show');
 }
 
+const vmInvalidImport = new Vue({
+    el: '#invalid-content',
+    data: { row: {} }
+})
+
 $.validate({
     form: $('#frm-timesheet-import-modal'),
     lang: 'en',
@@ -3655,6 +3661,13 @@ $.validate({
                                 toastr[toast](response.message, response.title, { timeOut: 10000 });
                             }
                         } else {
+                            vmInvalidImport.row = response.invalid_records;
+                            vmInvalidImport.count = response.invalid_count;
+
+                            if(response.invalid_count > 0){
+                                importInvalidModal.modal('show');
+                            }
+
                             if (parseInt(response.possible_duplicate.length) >= 1) {
                                 const dt = $("table", tsPossibleDuplicatesModal)
                                     .DataTable({

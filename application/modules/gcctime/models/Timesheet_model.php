@@ -33,6 +33,7 @@ class Timesheet_model extends CI_Model{
     protected $tbl_time_adjustments_manual_overtime = "gcctimeutility.time_adjustment_manual_overtime";
 
     protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
+    protected $tbl_payroll_sheet = "payroll.payroll_sheet";
 
     private $db_debug;
     private $logged_in_user;
@@ -6728,7 +6729,7 @@ class Timesheet_model extends CI_Model{
         return $resultSet;
     }
 
-    function importAndGenerateTimesheet()
+    public function importAndGenerateTimesheet()
     {
         $logged_in_user_emp_id = $this->logged_in_user["emp_id"];
         $post = $this->arrayToStdClass($this->input->post());
@@ -6743,7 +6744,6 @@ class Timesheet_model extends CI_Model{
         $exist_in_timesheet = array();
         $this->db_debug = $this->db->db_debug;
         $possible_duplicate = array();
-        // $this->db->db_debug = false;
 
         $import_data = array(
             "filename" => $file->name,
@@ -6763,8 +6763,7 @@ class Timesheet_model extends CI_Model{
 
         $upload = $this->do_upload('./uploads/timesheet/imports/' . $import_insert_id, '*', 'file_import');
         if (!empty($upload->error)) {
-            $resultSet = array("success" => false, "title" => "Upload Error", "message" => $upload->error);
-            return $resultSet;
+            return array("success" => false, "title" => "Upload Error", "message" => $upload->error);
         } else {
             $resultSet["upload_data"] = $upload->upload_data;
             $this->db->where("id", $import_insert_id);
@@ -6791,6 +6790,13 @@ class Timesheet_model extends CI_Model{
                         $datetime = date('Y-m-d H:i:s', strtotime(trim($parts[1])));
                         $tempTime = date('H:i', strtotime(trim($parts[1])));
                         $date = date('Y-m-d', strtotime(trim($parts[1])));
+
+                        $this->db->select("MAX(ps.date_end) as max_date");
+                        $this->db->from($this->tbl_employees." emp");
+                        $this->db->join($this->tbl_payroll_sheet." ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+                        $this->db->where("emp.biometricno", $biometric_id);
+                        $this->db->group_by("emp.id");
+                        $qTemp = $this->db->get();
 
                         if (strtotime($date) >= strtotime($start) && strtotime($date) <= strtotime($end)) {
                             $attendance_exist = $this->db
@@ -6863,6 +6869,14 @@ class Timesheet_model extends CI_Model{
                         $tempTime = date('H:i', strtotime($allDataInSheet[$i]["D"]));
                         $date = date('Y-m-d', strtotime($allDataInSheet[$i]["D"]));
                         
+                        $this->db->select("MAX(ps.date_end) as max_date");
+                        $this->db->from($this->tbl_employees." emp");
+                        $this->db->join($this->tbl_payroll_sheet." ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+                        $this->db->where("emp.biometricno", $biometric_id);
+                        $this->db->group_by("emp.id");
+                        $this->db->limit(1);
+                        $qTemp = $this->db->get();
+
                         if (strtotime($date) >= strtotime($start) && strtotime($date) <= strtotime($end)) {
                             $attendance_exist = $this->db
                                 ->where("biometric_id", $biometric_id)
@@ -7030,28 +7044,32 @@ class Timesheet_model extends CI_Model{
             $rows_count = count($rows);
             $timesheet = array();
             $tempAttendanceData = array();
-
+            $invalidRecords = array();
+            $invalidCtr = 0;
             if (intval($rows_count) >= 2) {
                 for ($i = 2; $i <= $rows_count; $i++) {
                     if(isset($rows[$i]["A"], $rows[$i]["B"]) && ($rows[$i]["A"] && $rows[$i]["B"])){
                         $biometric = $rows[$i]["A"];
                         $date = date('Y-m-d', strtotime($rows[$i]["B"]));
-                        $am_in = (isset($rows[$i]["C"]) && $rows[$i]["C"])? $rows[$i]["C"]: NULL;
-                        $am_out = (isset($rows[$i]["D"]) && $rows[$i]["D"])? $rows[$i]["D"]: NULL;
-                        $pm_in = (isset($rows[$i]["E"]) && $rows[$i]["E"])? $rows[$i]["E"]: NULL;
-                        $pm_out = (isset($rows[$i]["F"]) && $rows[$i]["F"])? $rows[$i]["F"]: NULL;
+                        $am_in = (isset($rows[$i]["C"]) && $rows[$i]["C"])? $rows[$i]["C"]: null;
+                        $am_out = (isset($rows[$i]["D"]) && $rows[$i]["D"])? $rows[$i]["D"]: null;
+                        $pm_in = (isset($rows[$i]["E"]) && $rows[$i]["E"])? $rows[$i]["E"]: null;
+                        $pm_out = (isset($rows[$i]["F"]) && $rows[$i]["F"])? $rows[$i]["F"]: null;
                         $ot = (isset($rows[$i]["G"]) && $rows[$i]["G"])? $rows[$i]["G"]: 0;
                         $ndot = (isset($rows[$i]["H"]) && $rows[$i]["H"])? $rows[$i]["H"]: 0;
+
+                        $maxDate = $this->getPayrollMaxDate($biometric);
+                        $isValidDate = $maxDate !== false ? strtotime($date) > strtotime($maxDate) : false;
 
                         $date_check = $date;
                         $weekday = strtolower(date('l', strtotime($date)));
                         $ot = floatval($ot);
                         $ndot = floatval($ndot);
 
-                        $tempAmIn = ($am_in)? date("H:i:s", strtotime($am_in)): NULL;
-                        $tempAmOut = ($am_out)? date("H:i:s", strtotime($am_out)): NULL;
-                        $tempPmIn = ($pm_in)? date("H:i:s", strtotime($pm_in)): NULL;
-                        $tempPmOut = ($pm_out)? date("H:i:s", strtotime($pm_out)): NULL;
+                        $tempAmIn = ($am_in)? date("H:i:s", strtotime($am_in)): null;
+                        $tempAmOut = ($am_out)? date("H:i:s", strtotime($am_out)): null;
+                        $tempPmIn = ($pm_in)? date("H:i:s", strtotime($pm_in)): null;
+                        $tempPmOut = ($pm_out)? date("H:i:s", strtotime($pm_out)): null;
 
                         /*** attendance rework ***/
                         $next_day = new DateTime($date);
@@ -7069,12 +7087,12 @@ class Timesheet_model extends CI_Model{
                             $isNextDay = true;
                         }
                         
-                        if(($tempAmOut && $tempPmIn) && (strtotime($tempPmIn) < strtotime($tempAmOut)) || $isNextDay == true){
+                        if(($tempAmOut && $tempPmIn) && (strtotime($tempPmIn) < strtotime($tempAmOut)) || $isNextDay === true){
                             $_pm_in = date("Y-m-d H:i", strtotime($tempAlteredDate . " " . $tempPmIn));
                             $isNextDay = true;
                         }
                         
-                        if(($tempPmIn && $tempPmOut) && (strtotime($tempPmOut) < strtotime($tempPmIn)) || $isNextDay == true){
+                        if(($tempPmIn && $tempPmOut) && (strtotime($tempPmOut) < strtotime($tempPmIn)) || $isNextDay === true){
                             $_pm_out = date("Y-m-d H:i", strtotime($tempAlteredDate . " " . $tempPmOut));
                             $isNextDay = true;
                         }
@@ -7091,7 +7109,11 @@ class Timesheet_model extends CI_Model{
                         }
 
                         $employee = $this->db
-                            ->select("personnel.*, emp.id emp_id, emp.lastname, emp.firstname")
+                            ->select("personnel.*, emp.id emp_id, emp.lastname, emp.firstname,
+                            UCASE(CONCAT(emp.lastname,
+                                CASE WHEN emp.suffix != 'N/A' AND emp.suffix !='NONE' AND emp.suffix !='' AND emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''  END, ', ',
+                                emp.firstname, ' ', CASE WHEN emp.middlename != 'N/A' AND emp.middlename != 'NONE'
+                                AND emp.middlename !='' AND emp.middlename IS NOT NULL THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE '' END)) as employee_name")
                             ->where("personnel.biometric_id", $biometric)
                             ->join($this->tbl_personnel . " personnel", "emp.biometricno = personnel.biometric_id", "LEFT")
                             ->get($this->tbl_employees . " emp");
@@ -7280,14 +7302,19 @@ class Timesheet_model extends CI_Model{
                                         $this->db->group_end();
                                     }
                                     $tempQuery = $this->db->get();
-                                    if($tempQuery->num_rows() == 0){
+                                    if($tempQuery->num_rows() == 0 && $isValidDate === true){
                                         array_push($timesheet, $employee_time_sheet);
+                                    }elseif($tempQuery->num_rows() == 0 && $isValidDate === false){
+                                        $invalidRecords[$employee_time_sheet->emp_id]["biometric_id"] = $empRow->biometric_id;
+                                        $invalidRecords[$employee_time_sheet->emp_id]["employee_name"] = $empRow->employee_name;
+                                        $invalidRecords[$employee_time_sheet->emp_id]["dates"][] = date("Y/m/d", strtotime($date));
+                                        $invalidCtr++;
                                     }
                                 }
                             }
 
-                            if(count($currentDateTime) > 0){
-                                foreach ($currentDateTime as $key => $value) {
+                            if(!empty($currentDateTime)){
+                                foreach ($currentDateTime as $value) {
                                     $tempRow = new stdClass();
                                     $tempRow->biometric_id = $empRow->biometric_id;
                                     $tempRow->datetime = $value;
@@ -7301,15 +7328,16 @@ class Timesheet_model extends CI_Model{
 
             if (!empty($timesheet)) {
                 $this->db->insert_batch($this->tbl_timesheet, $timesheet);
-                if($this->db->affected_rows() > 0){}
             }
 
             $resultSet["success"] = true;
             $resultSet["message"] = "Timesheet was successfully imported.";
             $resultSet["title"] = "Import Successful.";
+            $resultSet["invalid_records"] = $invalidRecords;
+            $resultSet["invalid_count"] = $invalidCtr;
         }
 
-        if ($this->db->trans_status() === TRUE) {
+        if ($this->db->trans_status() === true) {
             $this->db->trans_commit();
         } else {
             $this->db->trans_rollback();
@@ -7358,6 +7386,20 @@ class Timesheet_model extends CI_Model{
         $resultSet["possible_duplicate"] = $possible_duplicate;
         $resultSet["type"] = $post->type;
         return $resultSet;
+    }
+
+    protected function getPayrollMaxDate($biometric_id=null){
+        if($biometric_id){
+            $this->db->select("MAX(ps.date_end) as max_date");
+            $this->db->from($this->tbl_employees." emp");
+            $this->db->join($this->tbl_payroll_sheet." ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+            $this->db->where("emp.biometricno", $biometric_id);
+            $this->db->group_by("emp.id");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() == 1){ return $qTemp->row()->max_date; }
+            else{ return false; }
+        }else{ return false; }
+        
     }
 
     private function do_upload($upload_path, $allowed_types, $file)

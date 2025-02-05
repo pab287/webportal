@@ -74,3 +74,39 @@
         </div>
     </form>
 </div>
+
+
+<div class="modal fade" tabindex="-1" id="timesheet-import-invalid-modal">
+    <div class="modal-dialog">
+        <div class="modal-content" id="invalid-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Invalid Import <small>Record</small></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {{ row }}
+                <div class="m-widget4">
+                    <div class="m-widget4__item">
+                        <div class="m-widget4__ext">
+                            <span class="m-widget4__icon m--font-brand">
+                                <i class="flaticon-interface-3"></i>
+                            </span>
+                        </div>
+                        <div class="m-widget4__info">
+                            <span class="m-widget4__text">
+                            Make Metronic Great Again
+                            </span>
+                        </div>
+                        <div class="m-widget4__ext">
+                            <span class="m-widget4__number m--font-info">
+                            +500
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
