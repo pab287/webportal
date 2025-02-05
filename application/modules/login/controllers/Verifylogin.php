@@ -11,75 +11,88 @@ class Verifylogin extends MY_Controller{
         $this->directAccess = md5("direct_access");
     }
 
-    public function index()
-    {
+    public function index(){
         if ($this->input->post()) {
             $post = $this->input->post();
             $query = $this->db->select('force_update, password, auth, emp_id')->from('gccmaster.tblusers')->where('username', $post['username'],)->get()->row_array();
             $this->db->reset_query();
-            $userDetails = $this->db->select('u.email, u.telegram_chat_id, e.mobile_no')->from('gccmaster.tblusers u')->join('gccmaster.tblemployees e', 'u.emp_id = e.id', 'left')->where('u.id', $query['emp_id']) ->get()->row_array();
-            $userDetails = array_map(function($value) {
-                return $value === null ? '' : $value;
-            }, $userDetails);
-            if (isset($query['force_update']) && $query['force_update'] == 1 && $query['password'] == md5($post['password'])) {
-                $data = array(
-                    'modal' => "show",
-                    'post' => $post,
-                );
-                $this->session->set_userdata($data);
-                redirect('login/change_password', );
-            }
-            if (isset($query['auth']) && $query['auth'] == 1 && $query['password'] == md5($post['password'])) {
-                $sessionData = [
-                    'auth' => "show",
-                    'emp_id' => $query['emp_id'],
-                    'password' => $post['password'],
-                    'username' => $post['username'],
-                    'contacts' => $userDetails,
-                ];
-            
-                $trust_token_cookie = $this->input->cookie('device_trust_token', TRUE);
-                $isTrustedDevice = false;
-            
-                if ($trust_token_cookie) {
-                    $this->db->select('id');
-                    $this->db->from('gccmaster.trusted_devices');
-                    $this->db->where('trust_token', $trust_token_cookie);
-                    $this->db->where('expiry >', date('Y-m-d H:i:s'));
-                    $this->db->where('emp_id', $query['emp_id']);
-                    $trusted_device_query = $this->db->get();
-            
-                    $isTrustedDevice = ($trusted_device_query->num_rows() == 1);
-                    $this->session->userdata['logged_in']['TwoFactorAuth'] = 1;
-                }
-            
-                if (!$isTrustedDevice) {
-                    $this->session->set_userdata($sessionData);
-                    redirect('login/authentication');
-                }
-            
-            }
-            
-            $this->form_validation->set_error_delimiters(
-                '<div class="m-alert m-alert--outline alert alert-danger alert-dismissible" role="alert">',
-                '<button type="button" class="close" data-dismiss="alert" aria-label="Close"></button><span></span></div>'
-            );
-    
-            $this->form_validation->set_rules('username', 'Username', 'trim|required|prep_for_form');
-            $this->form_validation->set_rules('password', 'Password', 'trim|required|callback_check_database|prep_for_form');
-    
-            if ($this->form_validation->run() === FALSE) {
-                // Field validation failed. User redirected to login page
+            if (empty($query['emp_id'])) {
                 $this->load->view('login_v');
-            } else {
-                // Go to private area
-                redirect('portal/index', 'refresh');
+                return;
             }
-        } else {
-            // Display login view for GET requests
+            $userDetails = $this->db->select('u.email, u.telegram_chat_id, e.mobile_no')
+            ->from('gccmaster.tblusers u')
+            ->join('gccmaster.tblemployees e', 'u.emp_id = e.id', 'left')
+            ->where('u.id', $query['emp_id'])
+            ->get()
+            ->row_array();
+        
+        if (empty($userDetails)) {
             $this->load->view('login_v');
+            return;
         }
+        $userDetails = array_map(function($value) {
+            return $value === null ? '' : $value;
+        }, $userDetails);
+        if (isset($query['force_update']) && $query['force_update'] == 1 && $query['password'] == md5($post['password'])) {
+            $data = array(
+                'modal' => "show",
+                'post' => $post,
+            );
+            $this->session->set_userdata($data);
+            redirect('login/change_password', );
+        }
+        if (isset($query['auth']) && $query['auth'] == 1 && $query['password'] == md5($post['password'])) {
+            $sessionData = [
+                'auth' => "show",
+                'emp_id' => $query['emp_id'],
+                'password' => $post['password'],
+                'username' => $post['username'],
+                'contacts' => $userDetails,
+            ];
+        
+            $trust_token_cookie = $this->input->cookie('device_trust_token', TRUE);
+            $isTrustedDevice = false;
+        
+            if ($trust_token_cookie) {
+                $this->db->select('id');
+                $this->db->from('gccmaster.trusted_devices');
+                $this->db->where('trust_token', $trust_token_cookie);
+                $this->db->where('expiry >', date('Y-m-d H:i:s'));
+                $this->db->where('emp_id', $query['emp_id']);
+                $trusted_device_query = $this->db->get();
+        
+                $isTrustedDevice = ($trusted_device_query->num_rows() == 1);
+                $this->session->userdata['logged_in']['TwoFactorAuth'] = 1;
+            }
+        
+            if (!$isTrustedDevice) {
+                $this->session->set_userdata($sessionData);
+                redirect('login/authentication');
+            }
+        
+        }
+        
+        $this->form_validation->set_error_delimiters(
+            '<div class="m-alert m-alert--outline alert alert-danger alert-dismissible" role="alert">',
+            '<button type="button" class="close" data-dismiss="alert" aria-label="Close"></button><span></span></div>'
+        );
+
+        $this->form_validation->set_rules('username', 'Username', 'trim|required|prep_for_form');
+        $this->form_validation->set_rules('password', 'Password', 'trim|required|callback_check_database|prep_for_form');
+
+        if ($this->form_validation->run() === FALSE) {
+            // Field validation failed. User redirected to login page
+            $this->load->view('login_v');
+        } else {
+            // Go to private area
+            redirect('portal/index', 'refresh');
+        }
+    } else {
+        // Display login view for GET requests
+        $this->load->view('login_v');
     }
+}
 
     function check_database($password)
     {
