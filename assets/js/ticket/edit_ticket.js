@@ -270,19 +270,21 @@ $.validate({
     form: '#frm-add-comment',
     lang: 'en',
     onSuccess: function (form) {
+        var comment = $('#comment').val().trim();
+        if (!comment) {
+            toastr.error("Comment cannot be empty or contain only spaces.", "Validation Error!", 5000);
+            return false; 
+        }
         $.ajax({
             url: baseUrl("ticket/ticket/add_comment"),
             type: "POST",
             dataType: "json",
             data: $("#frm-add-comment").find("input,textarea").serialize(),
-            // beforeSend: function () {
-            //     $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-            // },
             success: function (data) {
                 if (data) {
                     $('#comment').val('');
-                    toastr.success("Comment successfully saved.", "Saved.", 5000)
-                        getComments();
+                    toastr.success("Comment successfully saved.", "Saved.", 5000);
+                    getComments();
                 } else {
                     toastr.error(data.toastr_msg, "Notice: Error!", 5000);
                 }

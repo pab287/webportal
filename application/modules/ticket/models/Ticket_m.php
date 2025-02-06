@@ -634,9 +634,9 @@ class Ticket_m extends CI_Model
         $get = $this->input->get();
         $resultarray = array();
         if (isset($get['q'])) {
-            $query = $this->db->query("SELECT  `id`, `name` FROM gccticket.category WHERE `name` LIKE '%{$get['q']}%' AND `type` = '$type' AND `status` = 0 AND `is_archived` = 0");
+            $query = $this->db->query("SELECT  `id`, `name` FROM gccticket.category WHERE `name` LIKE '%{$get['q']}%' AND `type` = '$type' AND `status` = 0 AND `is_archived` = 0 AND `name` != 'Cancelled'");
         } else {
-            $query = $this->db->query("SELECT  `id`, `name` FROM gccticket.category WHERE `type` = '$type' AND `status` = 0 AND `is_archived` = 0");
+            $query = $this->db->query("SELECT  `id`, `name` FROM gccticket.category WHERE `type` = '$type' AND `status` = 0 AND `is_archived` = 0 AND `name` != 'Cancelled'");
         }
         if ($query->num_rows() > 0) {
             foreach ($query->result_array() as $_query) {
