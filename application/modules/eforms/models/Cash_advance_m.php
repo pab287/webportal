@@ -3123,11 +3123,11 @@ class Cash_advance_m extends CI_Model {
     public function setInterestPercentage(){
         $resultset = array();
         $post = $this->input->post();
-        if(isset($post["id"], $post["interest_percentage"]) && $post["id"] && $post["interest_percentage"]){
+        if(isset($post["id"], $post["interest_percentage"]) && $post["id"]){
             $logData = $this->getCaEmployeeReference($post["id"]);
             $referenceNo = isset($logData["reference_no"]) && $logData["reference_no"] ? $logData["reference_no"]: "Undefined";
             $employeeName = isset($logData["employee_name"]) && $logData["employee_name"] ? $logData["employee_name"]: "No Assigned Name";
-            $percentage = isset($post["interest_percentage"]) && $post["interest_percentage"] ? $post["interest_percentage"]: 0;
+            $percentage = isset($post["interest_percentage"]) && $post["interest_percentage"] ? $post["interest_percentage"]: null;
 
             $udpated = $this->db->update("gcceforms.cash_advance", array("acctg_ca_interest_percentage"=>$post["interest_percentage"]), array("id"=>$post["id"]));
             if($udpated && $this->db->affected_rows() === 1){
