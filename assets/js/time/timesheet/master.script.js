@@ -354,8 +354,7 @@ $(document)
                 if(!jQuery.isEmptyObject(tempData)){
                     tempEmployeeSelector.empty();
                     $.each(tempData[0].employees, function(ii, vv){
-                        console.log(vv);
-                        var tempOption = new Option(vv.text, vv.id, true, true);
+                        const tempOption = new Option(vv.text, vv.id, true, true);
                         tempEmployeeSelector.append(tempOption);
                     });
 
@@ -419,8 +418,7 @@ $(document)
                 if(!jQuery.isEmptyObject(tempData)){
                     tempEmployeeSelector.empty();
                     $.each(tempData[0].employees, function(ii, vv){
-                        console.log(vv);
-                        var tempOption = new Option(vv.text, vv.id, true, true);
+                        const tempOption = new Option(vv.text, vv.id, true, true);
                         tempEmployeeSelector.append(tempOption);
                     });
 
@@ -1160,7 +1158,6 @@ $(document)
                             group = (group !== null) ? group.toUpperCase() : group;
                             const empHeaderIndex = api.rows(i)[0];
                             const row = pageRows[empHeaderIndex];
-                            console.log(row);
                             const isMonthlyPaid = typeof row.is_monthly_paid !== "undefined" && row.is_monthly_paid ? row.is_monthly_paid : false;
                             const monthlyPaidIndicator = isMonthlyPaid ? `<small class='ml-5 mr-3 m--font-boldest'>Monthly Paid</small>
                                 <i class="fa fa-calendar"></i>
@@ -1635,7 +1632,6 @@ function regenerateRow(form) {
                                     $(rowEl).hasClass("no-shift") && $(rowEl).removeClass("no-shift");
                                 }
 
-                                console.log(timesheet);
                                 if((timesheet.am_in && timesheet.am_out) || (timesheet.pm_in && timesheet.pm_out)){
                                     setTimeout(function(){
                                         toastr.info("Loading re-generated timesheet data, please wait!", "Loading Timesheet Data", { timeOut: 10000 });
@@ -3510,19 +3506,20 @@ $('#tbl-overtime').on('click', 'tbody .btnUpdate', function () {
 // START IMPORT FUNCTIONS
 $('#file-import')
     .on('change', function () {
+        const _this = this;
         const file = this.files[0];
         const filename = file !== undefined ? file.name : 'CHOOSE FILE...';
         $('.custom-file-control', importModal).html(filename);
+        setTimeout(() => { $(_this).validate(); }, 250);
     });
 
 function openImportModal(type) {
     let btnText = null;
     let modalTitle = null;
-    let modalContent = null;
     $("form", importModal).resetForm();
     $('#import-inclusive-dates', importModal).data('daterangepicker').setStartDate(moment());
     $('#import-inclusive-dates', importModal).data('daterangepicker').setEndDate(moment());
-
+    
     if (type === 'attendance') {
         btnText = `Import & Generate`;
         modalTitle = 'Import Attendance';
@@ -3532,11 +3529,13 @@ function openImportModal(type) {
     } else {
         btnText = `Import`;
         modalTitle = 'Import Timesheet';
+        $("#device-id", importModal).val("").trigger("change");
         $("#device-id", importModal).siblings("label").removeClass("required");
         $("#device-id", importModal).prop("disabled", true);
         $("#device-id", importModal).removeAttr("data-validation");
     }
 
+    $(".custom-file-control", importModal).text("");
     $('#type', importModal).val(type);
     $('.modal-title', importModal).html(modalTitle);
     $('.btn-import__text', importModal).html(btnText);
@@ -3545,7 +3544,7 @@ function openImportModal(type) {
 
 const vmInvalidImport = new Vue({
     el: '#invalid-content',
-    data: { row: {} }
+    data: { rows: {}, count: 0 }
 })
 
 $.validate({
@@ -3661,13 +3660,6 @@ $.validate({
                                 toastr[toast](response.message, response.title, { timeOut: 10000 });
                             }
                         } else {
-                            vmInvalidImport.row = response.invalid_records;
-                            vmInvalidImport.count = response.invalid_count;
-
-                            if(response.invalid_count > 0){
-                                importInvalidModal.modal('show');
-                            }
-
                             if (parseInt(response.possible_duplicate.length) >= 1) {
                                 const dt = $("table", tsPossibleDuplicatesModal)
                                     .DataTable({
@@ -3845,6 +3837,10 @@ $.validate({
                             }
                         }
 
+                        vmInvalidImport.rows = response.invalid_records;
+                        vmInvalidImport.count = response.invalid_count;
+                        if(response.invalid_count > 0){ importInvalidModal.modal('show'); }
+
                         btnSubmit.removeClass('m-btn--custom m-loader m-loader--light m-loader--left');
                         $(':input', form).prop('disabled', false);
                         $('#importing-alert-message').fadeOut();
@@ -3950,9 +3946,14 @@ $('#import-inclusive-dates', importModal)
         cancelClass: 'btn-secondary',
         autoUpdateInput: true,
         container: $(this, importModal).parent(),
-    }, function (start, end, label) {
+    }, function (start, end) {
         $('#import-inclusive-dates .form-control', importModal)
             .val(start.format('MMM DD, YYYY') + ' / ' + end.format('MMM DD, YYYY'));
+    }).on('apply.daterangepicker', function(ev) {
+        setTimeout(function() { 
+            $(ev.target).validate();
+            $("input", ev.target).validate();
+        }, 250);
     });
 
 $('#device-id', importModal)
@@ -3960,6 +3961,8 @@ $('#device-id', importModal)
         placeholder: 'CHOOSE A DEVICE',
         width: '100%',
         dropdownParent: importModal
+    }).on("select2:select", function (e){
+        $(e.target).validate();
     });
 
 function exportAsCsv(arrayStr) {
