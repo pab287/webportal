@@ -99,6 +99,7 @@ class Ticket_m extends CI_Model
         if ($limit != -1) {
             $this->db->limit($limit, $offset);
         }
+        $this->db->group_by("a.id");
         $query = $this->db->get();
         if ($query->num_rows() > 0) {
             $resultset = $query->result();
@@ -146,6 +147,7 @@ class Ticket_m extends CI_Model
             }
             $this->db->group_end();
         }
+        $this->db->group_by("a.id");
         $query = $this->db->get();
         return $query->num_rows();
     }
