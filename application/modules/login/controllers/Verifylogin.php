@@ -23,9 +23,23 @@ class Verifylogin extends MY_Controller{
             $this->form_validation->set_rules('password', 'Password', 'trim|required|callback_check_database|prep_for_form');
 
             if ($this->form_validation->run() === FALSE) {
-                // Field validation failed. User redirected to login page
+                $this->db->trans_start();
+                
+                $this->db->where('username', $post['username']);
+                $this->db->set('login_attempts', 'login_attempts + 1', false);
+                $this->db->set('lockout', 'IF(login_attempts >= 5, 1, lockout)', false);
+                $this->db->update('gccmaster.tblusers');
+                
+                $this->db->trans_complete();
+                
                 $this->load->view('login_v');
-            } else {
+                return;
+            }
+            else {
+                $this->db->where('username', $post['username']);
+                $this->db->set('login_attempts', '0', false);
+                $this->db->update('gccmaster.tblusers');
+
                 $query = $this->db->select('force_update, password, auth, emp_id,resend_attempts')
                 ->from('gccmaster.tblusers')
                 ->where('username', $post['username'])
