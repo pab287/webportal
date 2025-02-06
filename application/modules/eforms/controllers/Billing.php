@@ -17,6 +17,7 @@ class Billing extends MY_Controller {
         $this->core_layout->addJs("global/js/amcharts4/maps.js", true);
         $this->core_layout->addJs("global/js/amcharts4/themes/animated.js", true);
         $this->core_layout->addJs("js/eforms/billing/index.js", true);
+        $this->core_layout->addJs("js/eforms/billing/bootstrap-datepicker.min.js");
         $this->load->view('core/templates/header');
         $this->load->view('eforms/billing/index');
         $this->load->view('core/templates/footer');

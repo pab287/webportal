@@ -449,6 +449,37 @@ $('#datePicker_top_consumer').datepicker({
     endDate: getCurrentDate(),
 });
 
+// $('#datePicker_top_consumer').datepicker({
+//     format: 'yyyy-mm',
+//     todayHighlight: true,
+//     autoclose: true,
+//     orientation: "bottom right",
+//     viewMode: "months",
+//     minViewMode: "months",
+//     endDate: getCurrentDate_top_consumer(),
+// }).on('changeYear', function(e) {
+//     // Get the current view date
+//     const viewDate = e.date;
+//     const currentDate = new Date(getCurrentDate_top_consumer());
+
+//     // Check if the view date is less than the current date
+//     if (viewDate.getFullYear() < currentDate.getFullYear() || 
+//         (viewDate.getFullYear() === currentDate.getFullYear() && viewDate.getMonth() < currentDate.getMonth())) {
+//         // Remove the disabled class from the .next button
+//         $('.datepicker .next').removeClass('disabled');
+//     } else {
+//         // Add the disabled class to the .next button
+//         $('.datepicker .next').addClass('disabled');
+//     }
+// });
+
+function getCurrentDate_top_consumer() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+}
+
 $('#datePicker_consumer_vs_supplier').datepicker({
     format: 'yyyy',
     todayHighlight: true,
