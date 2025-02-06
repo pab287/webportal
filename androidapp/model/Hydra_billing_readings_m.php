@@ -126,7 +126,7 @@ class Hydra_billing_readings_m extends Dbase{
         $list["reconnectionFee"] = number_format($reconnectionFee, 2,'.','');
 		$list['overdue_charges'] = $overdue_charges;
 		$list['over_payment'] = $over_payment;
-        $list["total_penalty"] = number_format($balance_last_bill['total_penalty'], 2,'.','');
+        $list["total_penalty"] = number_format($overdue_charges, 2,'.',''); // Total penalty of current bill only
         $list["total_balance"] = number_format($balance_last_bill['total_balance'] + $balance_last_bill['total_penalty'], 2,'.','');
 		$list['formula'] = $row["total_charges"] . " + " . $balance_last_bill['total_balance'] . " + " . $overdue_charges . " + " .  $reconnectionFee . " + " .  $balance_last_bill['total_penalty'] . " - " . $over_payment;
         $list["total_amount_due"] = number_format($total_amount_due, 2,'.','');
@@ -242,11 +242,12 @@ class Hydra_billing_readings_m extends Dbase{
 
 	public function save_reading(){
 		$conn = $this->conn();
-		$current_date = date("Y-m-d H:i:s");
 		$response['response_array'] = array();
 
+		$current_date = date("Y-m-d H:i:s");
 		$ref_yr = substr($current_date, 2, 2);
 	   	$ref_month = substr($current_date, 5, 2);
+
 	   	$ref_series = $this->getSeries($ref_month,$ref_yr,"hydra_billing.readings");
 	   	$reference_no = 'MRR' . $ref_yr . '-' . $ref_month . '-' . $ref_series;
 
