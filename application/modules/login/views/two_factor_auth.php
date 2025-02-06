@@ -519,7 +519,6 @@ $('#verify_otp').on('submit', function(e) {
                 request_id: request_id,
             },
             success: function(response) {
-                console.log(response);
                 if (response) {
                     $('#m_modal_1').modal('hide');
                 }

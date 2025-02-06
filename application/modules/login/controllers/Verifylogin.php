@@ -26,7 +26,10 @@ class Verifylogin extends MY_Controller{
                 // Field validation failed. User redirected to login page
                 $this->load->view('login_v');
             } else {
-                $query = $this->db->select('force_update, password, auth, emp_id,resend_attempts')->from('gccmaster.tblusers')->where('username', $post['username'])->get()->row_array();
+                $query = $this->db->select('force_update, password, auth, emp_id,resend_attempts')
+                ->from('gccmaster.tblusers')
+                ->where('username', $post['username'])
+                ->get()->row_array();
                 $this->db->reset_query();
                 if (isset($query['force_update']) && $query['force_update'] == 1) {
                     $this->session->unset_userdata('logged_in');
