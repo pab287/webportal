@@ -1240,7 +1240,23 @@ $(document)
             lang: 'en',
             scrollToTopOnError: false,
             onSuccess: function (form) {
-                dtTimesheet.ajax.reload();
+                const empVal = $("select#employees", form).val();
+                const compVal = $("select#company", form).val();
+                const psVal = $("select#payroll_group", form).val();
+                if(typeof empVal !== "undefined" && typeof compVal !== "undefined" && typeof psVal !== "undefined"
+                    && empVal.length == 0 && (compVal == null || compVal == '') && psVal.length == 0) {
+                        Swal.fire({
+                            title: 'Search All Timesheet?',
+                            html: "Are you sure you want to search all timesheet record/s?",
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3085d6',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText: 'Yes, Search All!'
+                        }).then((result) => {
+                            if (result.isConfirmed) { dtTimesheet.ajax.reload(); }
+                        });
+                }else{ dtTimesheet.ajax.reload(); }
                 return false;
             }
         });
@@ -5211,7 +5227,7 @@ $("#time-manual-overtime-entry-modal #date").datepicker({
     }
 });
 
-var resetFilter = function (event) {
+const resetFilter = function (event) {
     const form = $(event).closest("form");
     if (typeof form !== "undefined" && form.length == 1) {
         const select2 = form.find("#employees, #payroll_group, #company");
