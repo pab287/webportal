@@ -6819,7 +6819,7 @@ class Timesheet_model extends CI_Model{
                             if(!isset($invalidRecords[$invalidEntries->emp_id]["dates"])){ $invalidRecords[$invalidEntries->emp_id]["dates"] = array(); }
                             $invalidRecords[$invalidEntries->emp_id]["dates"][] = date("Y/m/d H:i", strtotime($datetime));
                             $invalidCtr++;
-                        } elseif($resultResponse !== false && isset($resultResponse["employee_not_found"]) && $resultResponse["employee_not_found"] === true){ {
+                        } elseif ($resultResponse !== false && isset($resultResponse["employee_not_found"]) && $resultResponse["employee_not_found"] === true){
                             if (!in_array($biometric_id, $non_existing)) { array_push($non_existing, $biometric_id); }
                         }
                     }
@@ -6862,7 +6862,7 @@ class Timesheet_model extends CI_Model{
                             if(!isset($invalidRecords[$invalidEntries->emp_id]["dates"])){ $invalidRecords[$invalidEntries->emp_id]["dates"] = array(); }
                             $invalidRecords[$invalidEntries->emp_id]["dates"][] = date("Y/m/d H:i", strtotime($datetime));
                             $invalidCtr++;
-                        } elseif($resultResponse !== false && isset($resultResponse["employee_not_found"]) && $resultResponse["employee_not_found"] === true){ {
+                        } elseif ($resultResponse !== false && isset($resultResponse["employee_not_found"]) && $resultResponse["employee_not_found"] === true){
                             if (!in_array($biometric_id, $non_existing)) { array_push($non_existing, $biometric_id); }
                         }
                     }
@@ -6909,7 +6909,7 @@ class Timesheet_model extends CI_Model{
                                 if(!isset($invalidRecords[$invalidEntries->emp_id]["dates"])){ $invalidRecords[$invalidEntries->emp_id]["dates"] = array(); }
                                 $invalidRecords[$invalidEntries->emp_id]["dates"][] = date("Y/m/d H:i", strtotime($datetime));
                                 $invalidCtr++;
-                            } elseif($resultResponse !== false && isset($resultResponse["employee_not_found"]) && $resultResponse["employee_not_found"] === true){ {
+                            } elseif ($resultResponse !== false && isset($resultResponse["employee_not_found"]) && $resultResponse["employee_not_found"] === true){
                                 if (!in_array($biometric_id, $non_existing)) { array_push($non_existing, $biometric_id); }
                             }
                         }
