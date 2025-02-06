@@ -496,6 +496,7 @@
               ),
           );
             $response['data']=file_get_contents($urltouse,false,stream_context_create($arrContextOptions));
+            $response['status']=true;
             // $response['urls']= $urltouse; -> for testing only
             if ($debug) {
                 echo "Response: <br><pre>".

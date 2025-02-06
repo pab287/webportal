@@ -13,8 +13,8 @@
             </p>
         </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
-        <button type="button" id="confirmTwoFactor" class="btn btn-success">I understand</button>
+        <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Cancel</button>
+        <button type="button" id="confirmTwoFactor" class="btn btn-success btnSave">I understand</button>
       </div>
     </div>
   </div>

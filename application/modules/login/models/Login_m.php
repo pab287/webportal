@@ -227,6 +227,8 @@ Class Login_m extends CI_Model
             $otp = rand(100000, 999999);
             $employee = $this->getEmployeeNameById($id);
             $contacts = $post['sessionData']['contacts'];
+            $sesh =['method'=> $method];
+            $this->session->set_userdata($sesh);
             $send_to = $this->getSendToValue($contacts, $method);
     
             if (empty($send_to)) {
@@ -272,9 +274,10 @@ Class Login_m extends CI_Model
         $response = array();
         $post = $this->input->post();
         $id = $post['emp_id'];
-        $this->db->select('key_code, expiry, id');
+        $this->db->select('key_code, expiry, gccmaster.two_factor_authentication.id,method');
+        $this->db->join('gccmaster.tblusers', 'gccmaster.tblusers.emp_id = gccmaster.two_factor_authentication.emp_id');
         $this->db->from("gccmaster.two_factor_authentication");
-        $this->db->where('emp_id', $id);
+        $this->db->where('gccmaster.two_factor_authentication.emp_id', $id);
         $this->db->where('confirmed', 0);
         $this->db->where('expiry >=', date('Y-m-d H:i:s'));
         $current_otp = $this->db->get()->row_array();
@@ -282,6 +285,7 @@ Class Login_m extends CI_Model
             $response['status'] = "true";
             $response['request_id'] = $current_otp['id'];
             $response['expiry'] = $current_otp['expiry'];
+            $response['method'] = $current_otp['method'];
         }else {
             $response['status'] = "false";
         }
@@ -290,13 +294,13 @@ Class Login_m extends CI_Model
 
     public function verifyOtp(){
         $post = $this->input->post();
-        $id = $post['emp_id'];
+        $emp_id = $post['emp_id'];
         $username = $post['username'];
         $new_password = $post['password'];
         $key_code = str_replace(' ', '', $post['key_code']);
         $this->db->select('id');
         $this->db->from('gccmaster.two_factor_authentication');
-        $this->db->where('emp_id', $id);
+        $this->db->where('emp_id', $emp_id);
         $this->db->where('confirmed', 0);
         $this->db->where('expiry >=', date('Y-m-d H:i:s'));
         $this->db->where('key_code', $key_code);
@@ -325,49 +329,51 @@ Class Login_m extends CI_Model
                 'department' => $res[0]->department_id,
                 'TwoFactorAuth' => $res[0]->auth,
             );
-            $this->generateCookie($id);
+            $this->db->where('emp_id', $emp_id);
+            $this->db->set('resend_attempts',0, false);
+            $this->db->update('gccmaster.tblusers');
+            $this->generateCookie($emp_id);
             $this->session->unset_userdata('auth');
             $this->session->set_userdata('logged_in', $sess_array);
             $url = site_url('portal/index');
-            $response = array('status' => 'success', 'message' => 'Success', 'redirect' => $url);
-        }else{
-            $response['status'] = "error";
+            $response = array('status' => 'true', 'message' => 'Success', 'redirect' => $url);
         }
-
+        else {
+            $this->db->select('resend_attempts');
+            $this->db->where('emp_id', $emp_id);
+            $current_attempts = $this->db->get('gccmaster.tblusers')->row()->resend_attempts;
+        
+            $this->db->where('emp_id', $emp_id);
+            $this->db->set('resend_attempts', 'resend_attempts + 1', false);
+            $this->db->update('gccmaster.tblusers');
+        
+            if ($current_attempts + 1 > 3) {
+                $this->db->where('emp_id', $emp_id);
+                $this->db->set('lockout', 1, false);
+                $this->db->update('gccmaster.tblusers');
+                $url = site_url('login');
+                $response = array('status' => 'locked', 'message' => 'Error', 'redirect' => $url);
+                $this->session->sess_destroy();
+            }else{
+                $response['status'] = "false";
+            }
+        }
         return $response;
     }
 
 
-    public function resendOtp(){
-        $response = array();
+    public function resendOtp() {
         $post = $this->input->post();
-        $id = $post['emp_id'];
-        $request_id = $post['request_id'];
-        $this->db->select('key_code,send_to,method');
-        $this->db->from("gccmaster.two_factor_authentication");
-        $this->db->where('emp_id', $id);
-        $this->db->where('id', $request_id);
-        $this->db->where('confirmed', 0);
-        $this->db->where('expiry >=', date('Y-m-d H:i:s'));
-        $query = $this->db->get();
-        if($query->num_rows() == 1){
-            $row = $query->row();
-            $method = $row->method;
-            if($method == 'sms'){
-                $send_to = $row->send_to;
-                $otp = $row->key_code;
-                $msg = "NEVER SHARE YOU OTP especially on social media and SMS or email links. Your GC&C Conyxph One Time Password (OTP) is: $otp. If this was not you, please ignore.";
-                $sms = $this->sms->sendSMS($send_to,$msg);
-                $response['sms'] = $sms;
-                $response['status'] = "true";
-            }else{
-                $response['status'] = "true";
-            }
-        }
-        else{
-            $response['status'] = "false";
-        }
-        return $response;
+        $old_request_id = $post['request_id'];
+        
+        // Update record with transaction
+        $this->db->trans_start();
+        $this->db->where('id', $old_request_id);
+        $this->db->set('expiry', date('Y-m-d H:i:s'));
+        $this->db->update('gccmaster.two_factor_authentication');
+        $this->db->trans_complete();
+        
+        return $this->db->trans_status();
     }
 
     private function generateCookie($id){
@@ -406,16 +412,24 @@ Class Login_m extends CI_Model
         
         switch ($method) {
             case 'sms':
-                $msg = "NEVER SHARE YOUR OTP especially on social media, SMS, or email links. Your GC&C Conyxph One Time Password (OTP) is: {$data['key_code']}. If this was not you, please ignore.";
-                return $this->sms->sendSMS($send_to, $msg);
-            case 'email':
-                $email =$this->load->view("two_factor_email_template.php", array("data" => $data),true);
-                return $this->core->send_email('core', 'Two Factor Authentication', 'Two Factor Authentication', $email);
-            case 'telegram':
-                // Add Telegram sending logic here
-                return true; // Placeholder
-            default:
+                $msg = "NEVER SHARE YOUR OTP especially on social media, SMS, or email links. " .
+                       "Your GC&C Conyxph One Time Password (OTP) is: {$data['key_code']}. " .
+                       "If this was not you, please ignore.";
+                
+                $result = $this->sms->sendSMS($send_to, $msg);
+                if ($result['status'] == true) {
+                    return true;
+                }
                 return false;
+                
+            case 'email':
+                $email_content = $this->load->view("two_factor_email_template.php",array("data" => $data), true);
+                $result = $this->core->send_email('core','Two Factor Authentication','Two Factor Authentication',$email_content);
+                return $result === true;
+                
+            case 'telegram':
+                // Add Telegram implementation here
+                return true; // Placeholder
         }
     }
 

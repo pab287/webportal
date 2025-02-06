@@ -51,7 +51,7 @@
     </style>
 </head>
 <body>
-    <h2>Hello <?php echo $data['first_name']; ?>,</h2>
+    <h2>Hello <?php echo $data['first_name'] ?? $data['employee_name'] ?? 'User'; ?>,</h2>
     
     <p>Someone is trying to log in to your Conyx account with a new device</p>
     

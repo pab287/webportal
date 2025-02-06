@@ -166,6 +166,25 @@ input[type="radio"]:checked::after {
     color: #999; /* Optional: Change text color to gray */
 }
 
+#two_factor_auth.loading {
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+#two_factor_auth.loading button[type="submit"] {
+    background-color: #ccc;
+}
+
+.timer-text {
+    margin-top: 1rem;
+    color: #999;
+    font-size: 0.85em;
+}
+.resend-action{
+    margin-top: 1rem;
+}
+
+
     </style>
   </head>
     <body class="align-items-center justify-content-center">
@@ -214,7 +233,7 @@ input[type="radio"]:checked::after {
                                         </div>
                                     </div>
 
-                                    <div class="radio-option">
+                                    <div class="radio-option disabled">
                                         <label class="radio-label">
                                             <input type="radio" name="method" value="telegram">
                                             <span class="label-text">Telegram</span>
@@ -251,20 +270,46 @@ input[type="radio"]:checked::after {
                         <form method="post" id="verify_otp">
                             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                             <div class="form-group m-form__group text-center">
-                                <img src="<?= base_url('assets/otp_icon.png')?>" width="23%"></img>
+                                <img src="<?= base_url('assets/otp_icon.png')?>" width="23%">
                                 <h2 class="m-portlet__head-text p-2">OTP Verification</h2>
-                                <label>One-Time Password sent to your regitered mobile number</label>
+                                <label id="otp_info">A verification code has been sent to your registered mobile number</label>
                             </div>
                             <div class="form-group m-form__group">
                                 <input type="text" id="otp" name="key_code" class="form-control m-input text-center otp-input" maxlength="10" placeholder="Enter OTP">
                                 <span class="otp-error col">OTP Code is invalid</span>
-                                <label class="text-center mt-2 col">Didn't receive the OTP? Resend OTP in <span id="timer">&nbsp</span></label>
-                                <label class="text-center col"><a href="javascript:void(0)" id="resend_otp" class="login-link disabled">Resend OTP</a></label>
+                                <div id="resend_tag">
+                                    <div class="resend-info">
+                                        <p class="text-center timer-text">
+                                            Request new code in: <span id="timer"></span>
+                                        </p>
+                                    </div>
+                                    <div class="text-center resend-action">
+                                        <a href="javascript:void(0)" id="resend_otp" class="login-link disabled">
+                                            <i class="la la-refresh"></i> Request New OTP
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                             <div class="form-group m-form__group text-center">
                                 <button type="submit" class="btn btn-primary m-btn m-btn--custom" style="width: 200px;" disabled>Verify</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="otp-error" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        Error
+                    </div>
+                    <div class="modal-body">
+                        Cannot send otp at this time please try again later.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -277,8 +322,8 @@ if (!sessionData.auth) {
 }
 let request_id = "";
 let timerSpan = $('#timer');
-let timerInterval;
-
+let timerInterval = 0;
+let method = '';
 $(document).ready(function() {
     $.ajax({
         type: 'POST',
@@ -291,7 +336,13 @@ $(document).ready(function() {
         success: function(response) {
             if (response.status == 'true') {
                 request_id = response.request_id;
+                method = response.method;
                 $('#two_factor_auth button[type="submit"]').prop('disabled', true);
+                if(response.method == 'sms'){
+                        $('#otp_info').text('A verification code has been sent to your registered mobile number');
+                    }else if(response.method == 'email'){
+                        $('#otp_info').text('A verification code has been sent to your registered email address');
+                    }
                 $('#m_modal_1').modal({
                     backdrop: 'static',
                     keyboard: false
@@ -331,7 +382,9 @@ $(document).ready(function() {
     });
 
     $('#two_factor_auth').on('submit', function(e) {
-        $('#send_otp').prop('disabled', true);
+        $(this).find('button[type="submit"]')
+        .prop('disabled', true)
+        .html('<i class="fa fa-spinner fa-spin"></i> Authenticating...');
         e.preventDefault();
         let formData = $(this).serialize();
         formData += '&' + $.param({ sessionData: sessionData });
@@ -341,33 +394,61 @@ $(document).ready(function() {
             url: '<?= base_url('login/authenticate')?>',
             data: formData,
             dataType: 'json',
+            beforeSend: function() {
+            // Show loading state
+            $('#two_factor_auth').addClass('loading');
+            },
+            complete: function() {
+            // Remove loading state
+            $('#two_factor_auth')
+                .removeClass('loading')
+                .find('button[type="submit"]')
+                .html('Send Code')
+                .prop('disabled', false);
+            },
             success: function(response) {
                 request_id = response.request_id;
+                method = response.method;
                 $('#two_factor_auth button[type="submit"]').prop('disabled', true);
                 if (response.status) {
+                    if(response.method == 'sms'){
+                        $('#otp_info').text('A verification code has been sent to your registered mobile number');
+                    }else if(response.method == 'email'){
+                        $('#otp_info').text('A verification code has been sent to your registered email address');
+                    }
                     $('#m_modal_1').modal({
                         backdrop: 'static',
                         keyboard: false
                     });
                     startTimer(300);
                 }
+                else{
+                    $('#otp-error').modal('show');
+                }
             },
         });
     });
+
+    $('#m_modal_1').on('show.bs.modal', function(e) {
+    $('.resend-action').hide();
+});
 
 });
 
 function startTimer(seconds) {
     let timeLeft = seconds;
+    $('.timer-text').show();
     timerInterval = setInterval(function() {
         timeLeft--;
         timerSpan.text(timeLeft + ' seconds');
-        
         if (timeLeft === 0) {
             clearInterval(timerInterval);
             $('.login-link').removeClass('disabled');
-            timerSpan.hide();
+            $('.resend-action').show();
+            $('.timer-text').hide();
+            timerSpan.text("");
         }
+
     }, 1000);
 }
 
@@ -382,12 +463,15 @@ $('#verify_otp').on('submit', function(e) {
         data: formData,
         dataType: 'json',
         success: function(response) {
-            console.log(response);
-            if (response.status) {
+            if (response.status == 'true') {
                 $('.otp-error').removeClass('show');
                 $('#otp').removeClass('error');
                  window.location.replace(response.redirect);
-            }else{
+            }
+            else if(response.status == 'locked'){
+                window.location.replace(response.redirect);
+            }
+            else{
                 $('.otp-error').addClass('show');
                 $('#otp').addClass('error');
                 $('#otp').val('');
@@ -432,14 +516,12 @@ $('#verify_otp').on('submit', function(e) {
             method: 'POST',
             data: {
                 csrf_token: $('input[name="csrf_token"]').val(),
-                emp_id: sessionData.emp_id,
                 request_id: request_id,
             },
             success: function(response) {
-                if (response.status) {
-                    startTimer(300);
-                    timerSpan.show();
-                    $('#resend_otp').addClass('disabled');
+                console.log(response);
+                if (response) {
+                    $('#m_modal_1').modal('hide');
                 }
             },
         });

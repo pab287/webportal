@@ -16,7 +16,7 @@ class Verifylogin extends MY_Controller{
             $post = $this->input->post();
             $this->form_validation->set_error_delimiters(
                 '<div class="m-alert m-alert--outline alert alert-danger alert-dismissible" role="alert">',
-                '<button type="button" class="close" data-dismiss="alert" aria-label="Close"></button><span></span></div>'
+                '<span></span></div>'
             );
     
             $this->form_validation->set_rules('username', 'Username', 'trim|required|prep_for_form');
@@ -26,7 +26,7 @@ class Verifylogin extends MY_Controller{
                 // Field validation failed. User redirected to login page
                 $this->load->view('login_v');
             } else {
-                $query = $this->db->select('force_update, password, auth, emp_id')->from('gccmaster.tblusers')->where('username', $post['username'])->get()->row_array();
+                $query = $this->db->select('force_update, password, auth, emp_id,resend_attempts')->from('gccmaster.tblusers')->where('username', $post['username'])->get()->row_array();
                 $this->db->reset_query();
                 if (isset($query['force_update']) && $query['force_update'] == 1) {
                     $this->session->unset_userdata('logged_in');
@@ -39,7 +39,7 @@ class Verifylogin extends MY_Controller{
                     return;
                 }
                 if (isset($query['auth']) && $query['auth'] == 1) {
-                    $this->session->unset_userdata('logged_in');
+
                     $userDetails = $this->db->select('u.email, u.telegram_chat_id, e.mobile_no')
                     ->from('gccmaster.tblusers u')
                     ->join('gccmaster.tblemployees e', 'u.emp_id = e.id', 'left')
@@ -71,6 +71,7 @@ class Verifylogin extends MY_Controller{
                     }
                 
                     if (!$isTrustedDevice) {
+                        $this->session->unset_userdata('logged_in');
                         $this->session->set_userdata($sessionData);
                         redirect('login/authentication');
                         return;
@@ -111,7 +112,12 @@ class Verifylogin extends MY_Controller{
                     $this->form_validation->set_message('check_database', 'This user account is suspended.');
                     $this->core_layout->setEventLog("User account logged in is currently suspended.","login", "error", "gccmaster", "user", $row->emp_id);
                     return false;
-                } else {
+                }elseif ($row->lockout == 1){
+                    $this->form_validation->set_message('check_database', 'This user account is locked. Please contact IT Support');
+                    $this->core_layout->setEventLog("User account logged in is currently locked out.","login", "error", "gccmaster", "user", $row->emp_id);
+                    return false;
+                }
+                else {
                     $sess_array = array(
                         'id' => $row->id,//tbluser_id
                         'emp_id' => $row->emp_id,
