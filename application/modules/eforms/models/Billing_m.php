@@ -1692,6 +1692,7 @@ class Billing_m extends CI_Model {
 
         if($query->num_rows() > 0){
             foreach($query->result_array() as $_query){
+                $bill_id = $_query['id'];
                 $data = array();
                 $due_date = $_query["due_date"];
 
@@ -1734,8 +1735,10 @@ class Billing_m extends CI_Model {
                     } else {
                         $net_payment = $net_payment;
                     }
-                } else {
 
+                    $totalPayments = $this->totalPayments($bill_id); // Check for partial payment of current bill
+                } else {
+                    $totalPayments = 0;
                     $due_date = $_query["due_date"];
                     $overdue = $_query["is_penalty"] ? unserialize($_query["penalties"])[0]["overdue"] : 0.00;
                     $disconnectionFee = $_query["reconnection_fee"];
@@ -1755,6 +1758,8 @@ class Billing_m extends CI_Model {
                     $paid_status = 'On going';
                 }
 
+                
+
                 $data["checkbox"] = "";
                 $data["name"] = $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
                 $data["id"] = $_query["id"];
@@ -1767,14 +1772,14 @@ class Billing_m extends CI_Model {
                 $data["due_date"] = $_query["due_date"];
                 // $data["total_charges"] = '₱ '.number_format((float)$_query["total_charges"], 2, '.', '');
                 $data["status"] = $paid_status;
-
                 $data['current_due'] = $_query['total_charges'];
                 $data["balance"] = $balance;
+                $data["total_payments"] = $totalPayments;
                 $data["balanceLastBill"] = $balanceLastBill;
                 $data["overdue"] = number_format(($overdue + $data["balanceLastBill"]["total_penalty"]),2,".",",");
                 $data["disconnection_fee"] = $disconnectionFee;
                 // $data["total_charges"] = number_format((($_query['total_charges'] + $balanceLastBill["total_amount"] + $overdue + $disconnectionFee) - $balance),2,".",",");
-                $data["total_charges"] = number_format((((int)$_query['total_charges'] + (int)$balanceLastBill["total_balance"] + (int)$disconnectionFee + (int)$data["overdue"]) - (int)$balance),2,".",",");
+                $data["total_charges"] = number_format((((int)$_query['total_charges'] + (int)$balanceLastBill["total_balance"] + (int)$disconnectionFee + (int)$data["overdue"]) - (int)$balance - (int)$totalPayments),2,".",",");
 
                 $data["solution"] = $_query['total_charges'] . " + " .  $balanceLastBill["total_balance"] . " + " . $disconnectionFee . " + " . $data["overdue"] . " - " . $balance  . " = " . $data["total_charges"];
                 $resultarray[] = $data;
@@ -4474,10 +4479,11 @@ class Billing_m extends CI_Model {
     function computeBalanceLastBill($account_id, $bill_id = -0, $bill_date){
 		$array = array();
 		$current_date = date("Y-m-d");
-    $penalties = $this->getPenalties();
-    $total_balance = 0;
+        $penalties = $this->getPenalties();
+        $total_balance = 0;
 		$total_penalty = 0;
-    $bills_payments = 0;
+        $bills_payments = 0;
+        $totalPayments = 0;
         $this->db->select("id, total_charges, due_date, billing_to");
         $this->db->from("hydra_billing.bills");
         $this->db->where("account_id", $account_id);
@@ -4504,14 +4510,37 @@ class Billing_m extends CI_Model {
                 $total_penalty = $total_penalty + $overdue_charges;
                 $total_balance = $total_balance + $total_charges;
                 $bills_payments = $this->computeBillsPaid($row['id']);
+                /**
+                 * Last Bill of the current bill that was sent here
+                 * Example : $bill_id = 130
+                 * The bill ID that was sent here is $row['id'] = (129)
+                 */
+                $totalPayments = $this->totalPayments($row['id']); // 
             }
         }
 
-    $array['total_penalty'] = floor(($total_penalty*100))/100;
-		$array['total_balance'] = floor(($total_balance*100))/100;
+        $array['total_penalty'] = floor(($total_penalty*100))/100;
+		$array['total_balance'] = floor((($total_balance - $totalPayments)*100))/100;
 		$array['total_amount'] = ($array['total_balance'] + $array['total_penalty']) - floor(($bills_payments*100))/100;
-    $array['bills_payment'] = $bills_payments;
+        $array['bills_payment'] = $bills_payments;
+        $array['total_payments'] = $totalPayments;
 		return $array;
+    }
+
+    public function totalPayments($bill_id){
+        $arrData = array();
+        $this->db->select("received_amount");
+        $this->db->from("hydra_billing.payments");
+        $this->db->where("bill_id", $bill_id);
+        $this->db->where("is_archive", 0);
+        $query = $this->db->get();
+
+        $partialAmount = 0;
+        foreach($query->result_array() as $tempData){
+            $actual_amount = $tempData['received_amount'];
+            $partialAmount += $actual_amount;
+        }
+        return $partialAmount;
     }
 
     function computeBillsPaid($bill_id){
