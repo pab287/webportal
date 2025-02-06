@@ -2136,9 +2136,10 @@ class Reports_model extends CI_Model{
         $post = $this->input->post();
         $resultset = array();
         $filters="";
+        $companyIds = $post["company"];
         if($companyId && $dataOnly ){ $post["company"] = $companyId; }
-        if ($companyId > 0) {
-            $filters .= "Company: <strong>" . $this->getCompanyById($companyId)->description . "</strong> ";
+        if ($companyIds > 0) {
+            $filters .= "Company: <strong>" . $this->getCompanyById($companyIds)->description . "</strong> ";
         }
         if(isset($post["company"]) && $post["company"]){
             $resultset["response"] = true;
