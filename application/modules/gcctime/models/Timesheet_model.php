@@ -6806,7 +6806,7 @@ class Timesheet_model extends CI_Model{
                             "user_id" => $logged_in_user_emp_id
                         ]);
 
-                        if($resultResponse !== false && $resultResponse["response"] === true){
+                        if($resultResponse !== false && isset($resultResponse["response"]) && $resultResponse["response"] === true){
                             if(isset($resultResponse["shift_id"]) && intval($resultResponse["shift_id"]) > 0){
                                 if(!in_array($resultResponse["emp_id"], $emp_id_to_generate)){ array_push($emp_id_to_generate, $resultResponse["emp_id"]); }
                             } else {
@@ -6819,7 +6819,7 @@ class Timesheet_model extends CI_Model{
                             if(!isset($invalidRecords[$invalidEntries->emp_id]["dates"])){ $invalidRecords[$invalidEntries->emp_id]["dates"] = array(); }
                             $invalidRecords[$invalidEntries->emp_id]["dates"][] = date("Y/m/d H:i", strtotime($datetime));
                             $invalidCtr++;
-                        } else {
+                        } elseif($resultResponse !== false && isset($resultResponse["employee_not_found"]) && $resultResponse["employee_not_found"] === true){ {
                             if (!in_array($biometric_id, $non_existing)) { array_push($non_existing, $biometric_id); }
                         }
                     }
@@ -6849,7 +6849,7 @@ class Timesheet_model extends CI_Model{
                             "user_id" => $logged_in_user_emp_id
                         ]);
 
-                        if($resultResponse !== false && $resultResponse["response"] === true){
+                        if($resultResponse !== false && isset($resultResponse["response"]) && $resultResponse["response"] === true){
                             if(isset($resultResponse["shift_id"]) && intval($resultResponse["shift_id"]) > 0){
                                 if(!in_array($resultResponse["emp_id"], $emp_id_to_generate)){ array_push($emp_id_to_generate, $resultResponse["emp_id"]); }
                             } else {
@@ -6862,7 +6862,7 @@ class Timesheet_model extends CI_Model{
                             if(!isset($invalidRecords[$invalidEntries->emp_id]["dates"])){ $invalidRecords[$invalidEntries->emp_id]["dates"] = array(); }
                             $invalidRecords[$invalidEntries->emp_id]["dates"][] = date("Y/m/d H:i", strtotime($datetime));
                             $invalidCtr++;
-                        } else {
+                        } elseif($resultResponse !== false && isset($resultResponse["employee_not_found"]) && $resultResponse["employee_not_found"] === true){ {
                             if (!in_array($biometric_id, $non_existing)) { array_push($non_existing, $biometric_id); }
                         }
                     }
@@ -6896,7 +6896,7 @@ class Timesheet_model extends CI_Model{
                                 "user_id" => $logged_in_user_emp_id
                             ]);
 
-                            if($resultResponse !== false && $resultResponse["response"] === true){
+                            if($resultResponse !== false && isset($resultResponse["response"]) && $resultResponse["response"] === true){
                                 if(isset($resultResponse["shift_id"]) && intval($resultResponse["shift_id"]) > 0){
                                     if(!in_array($resultResponse["emp_id"], $emp_id_to_generate)){ array_push($emp_id_to_generate, $resultResponse["emp_id"]); }
                                 } else {
@@ -6909,7 +6909,7 @@ class Timesheet_model extends CI_Model{
                                 if(!isset($invalidRecords[$invalidEntries->emp_id]["dates"])){ $invalidRecords[$invalidEntries->emp_id]["dates"] = array(); }
                                 $invalidRecords[$invalidEntries->emp_id]["dates"][] = date("Y/m/d H:i", strtotime($datetime));
                                 $invalidCtr++;
-                            } else {
+                            } elseif($resultResponse !== false && isset($resultResponse["employee_not_found"]) && $resultResponse["employee_not_found"] === true){ {
                                 if (!in_array($biometric_id, $non_existing)) { array_push($non_existing, $biometric_id); }
                             }
                         }
@@ -7008,7 +7008,7 @@ class Timesheet_model extends CI_Model{
 
                         if (!(strtotime($date) >= strtotime($start) && strtotime($date) <= strtotime($end))) { continue; }
 
-                        $employee = $this->getExistingEmployeeePersonnel($biometric);                        
+                        $employee = $this->getExistingEmployeeePersonnel($biometric);
                         if($employee !== false && $employee->num_rows() == 1){
                             $empRow = $employee->row();
                             $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $empRow->emp_id);
@@ -7342,7 +7342,8 @@ class Timesheet_model extends CI_Model{
                     $result["emp_id"] = $empRow->emp_id;
                     $result["shift_id"] = $empRow->shift_id;
                 } else { $result['response'] = false; }
-            } else {
+            } elseif (strtotime($parameters['date']) >= strtotime($parameters['start']) && strtotime($parameters['date']) <= strtotime($parameters['end']) &&
+            $isValidDate == false){
                 $result['response'] = false;
                 $result['invalid_entries'] = [
                     'emp_id' => $empRow->emp_id,
@@ -7351,7 +7352,10 @@ class Timesheet_model extends CI_Model{
                     'date' => $parameters['date'],
                 ];
             }
-        } else { $result['response'] = false; }
+        } else { 
+            $result['response'] = false;
+            $result['employee_not_found'] = true;
+        }
         return $result;
     }
 
