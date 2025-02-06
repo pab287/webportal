@@ -512,7 +512,7 @@ class Ticket_m extends CI_Model
             } else {
                 $config = array();
                 $config['upload_path'] = $imagesPath;
-                $config['allowed_types'] = 'jpg|jpeg|png|PNG|JPG|JPEG|docx|pdf';
+                $config['allowed_types'] = 'jpg|jpeg|png|PNG|JPG|JPEG|pdf|PDF';
                 $config['max_size'] = 100000;
                 $config['create_thumbnail'] = true;
 
