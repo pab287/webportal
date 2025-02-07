@@ -11638,7 +11638,7 @@
 
         public function getEmployee($emp_id){
             $data = array();
-            $this->db->select("emp.id, emp.lastname, emp.firstname, emp.middlename, emp.suffix, emp.curr_addr, emp.prov_addr, emp.citizenship, emp.religion, emp.languages, emp.email, emp.gender, emp.civil_stat, emp.bday, emp.birthplace, emp.bloodtype, emp.height, emp.weight, emp.hair_color, emp.complexion, emp.tel_no, emp.mobile_no, 
+            $this->db->select("emp.id,emp.mot_deceased,emp.fat_deceased, emp.lastname, emp.firstname, emp.middlename, emp.suffix, emp.curr_addr, emp.prov_addr, emp.citizenship, emp.religion, emp.languages, emp.email, emp.gender, emp.civil_stat, emp.bday, emp.birthplace, emp.bloodtype, emp.height, emp.weight, emp.hair_color, emp.complexion, emp.tel_no, emp.mobile_no, 
             emp.pic_filename, emp.idno, emp.biometricno, pos.name as position ,pos.id as position_id, emp.work_status, emp.employee_status, emp.date_start, emp.date_end, com.code as company_id, emp.level, emp.date_regular, emp.date_end_prob, emp.resign_reason, pos.job_desc, emp.tl_supervisory, emp.supervisor_meta, emp.ques1, emp.ques2, emp.ques3, emp.ques4, emp.ques5, emp.ques6, emp.ques7, emp.ques8, emp.ques9,
             emp.email, emp.tax_status, emp.tin_no, emp.phealth_no, emp.pagibig_no, emp.sss_no,
             emp.fat_name, emp.mot_name, emp.partner_type, emp.spo_deceased, emp.partners_deceased, emp.spo_name, emp.partners_name, emp.fat_addr, emp.mot_addr, emp.spo_addr, emp.partners_addr, emp.fat_company, emp.mot_company, emp.spo_company, emp.partners_company, emp.fat_occupation, emp.mot_occupation, emp.spo_occupation, emp.partners_occupation, emp.fat_contact, emp.mot_contact, emp.spo_contact, emp.partners_contact, emp.emer_addr, emp.emer_contact, emp.emer_name, 
