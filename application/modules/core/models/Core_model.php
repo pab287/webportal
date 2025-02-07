@@ -839,9 +839,7 @@ class Core_model extends CI_Model{
             $sendToData = ($sendTo && is_array($sendTo)) ? implode(",", $sendTo) : "";
             $ccToData = ($sendCc && is_array($sendCc)) ? implode(",", $sendCc) : "";
             $bccToData = ($sendBcc && is_array($sendBcc)) ? implode(",", $sendBcc) : "";
-            
             $sendToData = ($sendToData) ? $sendToData : "seniordeveloper01@gccaggregates.com";
-
             $emailSender = $this->doMailer($email_title, $overrideMailer);
             if ($emailSender) {
                 $emailSender->to($sendToData);
