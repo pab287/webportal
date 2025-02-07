@@ -600,13 +600,13 @@ var generateAttrition = new Vue({
             const instance = this;
 
             instance.chart_year = year;
-
+            filtered.year = year;
             instance.generateInitialChart();
         }, loadByCompany(id){
             const instance = this;
 
             instance.chart_company = id;
-
+            filtered .company = id;
             instance.generateInitialChart();
         }, printReport(el, type){
             export_log(filtered,"Attrition Report", "print",count,type);
@@ -719,12 +719,14 @@ $("[name='to_generate_group[]']:eq(0)").valAttr('','validate_checkbox_group').va
 async function export_log(datas, name, type, count,chart) {
     let filters = {};
     const exportName = name+' '+chart;
-    if (datas) {
+    if (datas && chart != 'chart') {
         filters = {};
         datas.split('&').forEach(pair => {
             const [key, value] = pair.split('=');
             filters[key] = decodeURIComponent(value);
         });
+    }else{
+        filters = datas;
     }
 
     filters.filter_type = $('input[name="to_generate_group[]"]:checked').val();

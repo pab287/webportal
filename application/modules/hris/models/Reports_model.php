@@ -426,7 +426,7 @@ class Reports_model extends CI_Model{
             $logMessage = "User searched for: '<strong>{$search}</strong>' in <strong>Employee salary range</strong>.{$filtersString} Salary range:<strong> " . number_format($salary_from, 2) . " - " . number_format($salary_to, 2) . "</strong>. System found: <strong>{$resultSet['recordsTotal']}</strong> results.";
             $this->core_layout->setEventLog($logMessage, "export", 'success', "gcchris", 'user');
         }else{
-            if(isset($generate) && $generate == 'true') {
+            if(isset($generate) && $generate == 'true' && !$export && !$export == 1) {
                 $logMessage = "Generated <strong>Employee salary range</strong>.{$filtersString} Salary range: <strong>" . number_format($salary_from, 2) . " - " . number_format($salary_to, 2) . "</strong> with result count: <strong>{$resultSet['recordsTotal']}</strong>";
                 $this->core_layout->setEventLog($logMessage, "generate", 'success', "gcchris", 'user');
             }
@@ -1242,24 +1242,24 @@ class Reports_model extends CI_Model{
                     $userType="user";
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `{$tempMaxDate}`." : "No late attendance record/s found!";
+                    $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `<strong>{$tempMaxDate}</trong>`." : "No late attendance record/s found!";
                     $logMessage = $resultset["toastr_msg"];
-                    $logState="error";
-                    $userType="system";
+                    $logState="success";
+                    $userType="user";
                 }
             }else{
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Filter option/s with given parameters not found!";
                 $logMessage = $resultset["toastr_msg"] + $filter;
-                $logState="error";
-                $userType="system";
+                $logState="success";
+                $userType="user";
             }
         }else{
             $resultset["response"] = false;
             $resultset["toastr_msg"] = "Filter option/s with given parameters, No employee data found!";
             $logMessage = $resultset["toastr_msg"];
-            $logState="error";
-            $userType="system";
+            $logState="success";
+            $userType="user";
         }
         $this->core_layout->setEventLog($logMessage, "generate", $logState, "gcchris",$userType);
         return $resultset;
@@ -1699,27 +1699,30 @@ class Reports_model extends CI_Model{
                     $resultset["loa_reference"] = $loaReference;
                     $resultset["response"] = true;
                     $resultset["filters"] = $arrFilter;
-                    $resultset["toastr_msg"] = "Last verified attendance date on `{$maxDate}`, A total of ({$ctrCount}) employee absentee attendance record/s found!";
+                    $resultset["toastr_msg"] = "Last verified attendance date on <strong>`{$maxDate}`</strong>, A total of (<strong>{$ctrCount}</strong>) employee absentee attendance record/s found!";
                     $logMessage = "Last verified attendance date on `<strong>{$maxDate}</strong>` {$filter}, A total of (<strong>{$ctrCount}</strong>) employee absentee attendance record/s found!";
                     $logState="success";
                     $userType="user";
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `{$tempMaxDate}`." : "No absentee attendance record/s found!";
-                    $logState="error";
-                    $userType="system";
+                    $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `<strong>{$tempMaxDate}</strong>`." : "No absentee attendance record/s found!";
+                    $logMessage = $resultset["toastr_msg"];
+                    $logState="success";
+                    $userType="user";
                 }
             }else{
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Filter option/s with given parameters not found!";
-                $logState="error";
-                $userType="system";
+                $logMessage = $resultset["toastr_msg"];
+                $logState="success";
+                $userType="user";
             }
         }else{
             $resultset["response"] = false;
             $resultset["toastr_msg"] = "Filter option/s with given parameters, No employee data found!";
-            $logState="error";
-            $userType="system";
+            $logMessage = $resultset["toastr_msg"];
+            $logState="success";
+            $userType="user";
         }
         $this->core_layout->setEventLog($logMessage, "generate", $logState, "gcchris",$userType);
         return $resultset;
@@ -2069,10 +2072,17 @@ class Reports_model extends CI_Model{
             array("index" => 11, "name" => "Nov"),
             array("index" => 12, "name" => "Dec")
         );
-
+        $filter = "Filters: ";
         $year = isset($post['filter_year']) && $post['filter_year'] ? $post['filter_year'] : '2024';
         $company = isset($post['company']) && $post['company'] ? $post['company'] : null;
-
+        
+        $filter .= "Year: <strong>" . $year . "</strong>, ";
+        if($company){
+            $filter .= "Company: <strong>" . $company . "</strong>, ";
+        }
+        if ($filter == "Filters: ") {
+            $filter = "";
+        }
         $firstDay = date('Y-m-d', strtotime('first day of January ' . date($post['filter_year'])));
         $lastDay = date("Y-m-t", strtotime($year.'-'.'12'));
 
@@ -2096,7 +2106,7 @@ class Reports_model extends CI_Model{
         $resultSet['data'] = $list;
         $resultSet['coverage'] = date('M d, Y', strtotime($firstDay)) . ' - ' . date('M d, Y', strtotime($lastDay));
         $resultSet['company'] = (isset($post['company']) && $post['company']) ? $this->getGeneratedCompany($post['company']) : 'All';;
-
+        $this->core_layout->setEventLog("Generated Attrition Report Chart $filter", "generate", "success", "gcchris", "user");
         return $resultSet;
     }
 
@@ -2227,7 +2237,7 @@ class Reports_model extends CI_Model{
             $logState = "error";
             $type = "system";
         }
-        $this->core_layout->setEventLog("Set station for employee(s): $employees"."Station: ".$station, "generate", $logState, "gcchris",$type);
+        $this->core_layout->setEventLog("Set station for employee(s): <strong>$employees</strong>"."Station: ".$station, "generate", $logState, "gcchris",$type);
         return $resultset;
     }
 
