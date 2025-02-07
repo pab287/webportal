@@ -319,6 +319,7 @@ $.validate({
                     dtTableLateAbsenteeReport.rows.add(json.data);
                     dtTableLateAbsenteeReport.draw(false);
                     Object.assign(filterOptionsLateAbsentee, json.filters);
+                    globalLoaReference ={ ...json.loa_reference };
 
                     setTimeout(function () {
                         const rowCount = dtTableLateAbsenteeReport.rows().count();
