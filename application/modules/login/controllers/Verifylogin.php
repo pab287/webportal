@@ -27,7 +27,7 @@ class Verifylogin extends MY_Controller{
                 
                 $this->db->where('username', $post['username']);
                 $this->db->set('login_attempts', 'login_attempts + 1', false);
-                $this->db->set('lockout', 'IF(login_attempts >= 5, 1, lockout)', false);
+                $this->db->set('lockout', 'IF(login_attempts >= 4, 1, lockout)', false);
                 $this->db->update('gccmaster.tblusers');
                 
                 $this->db->trans_complete();
@@ -157,7 +157,14 @@ class Verifylogin extends MY_Controller{
             }
         } else {
             $this->core_layout->setEventLog("User ".$username." logged in with Invalid credentials for username or password.","login", "error", "gccmaster", "user");
-            $this->form_validation->set_message('check_database', 'Invalid username or password');
+            $attempts = $this->Login_m->getAttempts($username);
+            var_dump($attempts->login_attempts);
+            if ($attempts->login_attempts <= 4) {
+                $resend_attempts = 4 - $attempts->login_attempts;
+                $this->form_validation->set_message('check_database', 'Invalid username or password! You have (' . $resend_attempts . ') remaining tries.');
+            }else{
+                $this->form_validation->set_message('check_database', 'Invalid username or password!');
+            }
             return false;
         }
     }

@@ -252,7 +252,7 @@ input[type="radio"]:checked::after {
                                         Send Code
                                     </button>
                                     <div class="text-right">
-                                        <a href="#" id="backToLogin" class="login-link">Back to login</a>
+                                        <a href="#" id="backToLogin" class="login-link backToLogin">Back to login</a>
                                     </div>
                                 </div>
                             </div>
@@ -276,7 +276,7 @@ input[type="radio"]:checked::after {
                             </div>
                             <div class="form-group m-form__group">
                                 <input type="text" id="otp" name="key_code" class="form-control m-input text-center otp-input" maxlength="10" placeholder="Enter OTP">
-                                <span class="otp-error col">OTP Code is invalid</span>
+                                <span class="otp-error col">Invalid One Time Password!. You have (<span class="otp-attempts"></span>) remaining tries.</span>
                                 <div id="resend_tag">
                                     <div class="resend-info">
                                         <p class="text-center timer-text">
@@ -292,6 +292,9 @@ input[type="radio"]:checked::after {
                             </div>
                             <div class="form-group m-form__group text-center">
                                 <button type="submit" class="btn btn-primary m-btn m-btn--custom" style="width: 200px;" disabled>Verify</button>
+                            </div>
+                            <div class="text-right">
+                                <a href="#" id="backToLogin" class="login-link backToLogin">Back to login</a>
                             </div>
                         </form>
                     </div>
@@ -472,6 +475,7 @@ $('#verify_otp').on('submit', function(e) {
                 window.location.replace(response.redirect);
             }
             else{
+                $('.otp-attempts').text(4-response.attempts);
                 $('.otp-error').addClass('show');
                 $('#otp').addClass('error');
                 $('#otp').val('');
@@ -480,7 +484,7 @@ $('#verify_otp').on('submit', function(e) {
         });
 });
 
-    $('#backToLogin').on('click', function(e) {
+    $('.backToLogin').on('click', function(e) {
         e.preventDefault();
 
         $.ajax({

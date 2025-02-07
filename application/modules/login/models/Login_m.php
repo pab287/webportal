@@ -230,7 +230,9 @@ Class Login_m extends CI_Model
             $sesh =['method'=> $method];
             $this->session->set_userdata($sesh);
             $send_to = $this->getSendToValue($contacts, $method);
-    
+            // $this->db->where('emp_id', $id);
+            // $this->db->set('expiry', date('Y-m-d H:i:s'));
+            // $this->db->update('gccmaster.two_factor_authentication');
             if (empty($send_to)) {
                 throw new Exception('No valid communication method found for the selected 2FA method.');
             }
@@ -286,6 +288,7 @@ Class Login_m extends CI_Model
             $response['request_id'] = $current_otp['id'];
             $response['expiry'] = $current_otp['expiry'];
             $response['method'] = $current_otp['method'];
+            $response['attempts'] = $current_otp['key_code'];
         }else {
             $response['status'] = "false";
         }
@@ -347,7 +350,7 @@ Class Login_m extends CI_Model
             $this->db->set('resend_attempts', 'resend_attempts + 1', false);
             $this->db->update('gccmaster.tblusers');
         
-            if ($current_attempts + 1 > 3) {
+            if ($current_attempts >= 4) {
                 $this->db->where('emp_id', $emp_id);
                 $this->db->set('lockout', 1, false);
                 $this->db->update('gccmaster.tblusers');
@@ -355,6 +358,7 @@ Class Login_m extends CI_Model
                 $response = array('status' => 'locked', 'message' => 'Error', 'redirect' => $url);
                 $this->session->sess_destroy();
             }else{
+                $response['attempts'] = "$current_attempts";
                 $response['status'] = "false";
             }
         }
@@ -437,6 +441,14 @@ Class Login_m extends CI_Model
 
     private function getEmployeeNameById($id){
         $query = $this->db->query("SELECT CONCAT(firstname, IFNULL(CONCAT(' ', SUBSTRING(middlename, 1, 1), '.'), ''), ' ',lastname) AS employee_name, firstname FROM gccmaster.tblemployees WHERE id = {$id}");
+        return $query->row();
+    }
+
+    public function getAttempts($username) {
+        $this->db->select('login_attempts');
+        $this->db->from('gccmaster.tblusers');
+        $this->db->where('username', $username);
+        $query = $this->db->get();
         return $query->row();
     }
 
