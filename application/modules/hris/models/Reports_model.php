@@ -1759,8 +1759,8 @@ class Reports_model extends CI_Model{
             if($hasDepartment){
                 $this->db->join($this->departmentTable.' c', 'c.id = a.department_id OR c.code = a.department_id', 'LEFT');
 
-                if(isset($post['department']) && $post['department']){
-                    $this->db->where('a.department_id', $post['department']);
+                if(isset($department) && $department){
+                    $this->db->where('a.department_id', $department);
                 }
             }
 
@@ -1827,8 +1827,8 @@ class Reports_model extends CI_Model{
             if($hasDepartment){
                 $this->db->join($this->departmentTable.' c', 'c.id = a.department_id OR c.code = a.department_id', 'LEFT');
 
-                if(isset($post['department']) && $post['department']){
-                    $this->db->where('a.department_id', $post['department']);
+                if(isset($department) && $department){
+                    $this->db->where('a.department_id', $department);
                 }
             }
 
@@ -1911,7 +1911,7 @@ class Reports_model extends CI_Model{
             $_first = date('Y-m-d', strtotime($_dateParam));
             $_last = date('Y-m-t', strtotime($_dateParam));
             $_company = isset($post['company']) && $post['company'] ? $post['company'] : null;
-            $_department = isset($post['department']) && $post['department'] ? $post['department'] : null;
+            $_department = isset($department) && $department ? $department : null;
 
             $monthData['d'] = $_month["name"];
             $monthData['hired'] = (int) $this->getNewlyHired($_first, $_last, $_company, $hasDepartment, $_department);
@@ -2280,12 +2280,14 @@ class Reports_model extends CI_Model{
     public function getEmployeeSalaryHistory(){
         $post = $this->input->post()['filter'];
         $resultset = array();
-        $result = array();
+        $arrData = array();
 
         if (isset($post) && $post) {
 
-            $sql = 'a.sal_date, a.sal_rate, a.sal_remarks, a.add_date, 
-                UPPER(CONCAT(b.firstname, " ", b.lastname)) as emp_name, b.biometricno, date_format(a.sal_date, "%Y") as year';
+            $date_to = isset($post['date_to']) ? $post['date_to'] : date('Y');
+
+            $sql = 'a.id, a.sal_date, a.sal_rate, a.sal_remarks, a.add_date, 
+                UPPER(CONCAT(TRIM(b.firstname), " ", TRIM(b.lastname))) as name, b.biometricno, date_format(a.sal_date, "%Y") as year';
 
             $this->db->select($sql);
             $this->db->join($this->tblEmployees.' as b', 'b.id = a.emp_id', 'LEFT');
@@ -2312,36 +2314,68 @@ class Reports_model extends CI_Model{
             }
 
             $this->db->group_start();
-                $this->db->where('YEAR(a.add_date) >=', $post['date_from']);
-                $this->db->where('YEAR(a.add_date) <=', $post['date_to']);
+                $this->db->where('YEAR(a.sal_date) >=', $post['date_from']);
+                $this->db->where('YEAR(a.sal_date) <=', $date_to);
             $this->db->group_end();
-
-            $this->db->order_by('a.add_date', 'DESC');
 
             $query = $this->db->get();
 
             if ($query->num_rows() > 0) {
-                $arrData = array();
-                $count = 0;
                 foreach ($query->result() as $key => $row) {
                     if (isset($arrData[$row->biometricno][$row->year]) && $arrData[$row->biometricno][$row->year]) {
-                        // not done plotting the data
-                        if (count($arrData[$row->biometricno][$row->year]) == 0) {
-                            $arrData[$row->biometricno][$row->year][] = $row;
+                        if (in_array($row->year, $arrData[$row->biometricno])) {
+                            $arrData[$row->biometricno][$row->year] = $row;
                         } else {
-                            $arrData[$row->biometricno.'_'.$row->year.'_'.$key][$row->year][] = $row;
+                            $arrData[$row->biometricno.'_'.$key]['id'] = $row->id;
+                            $arrData[$row->biometricno.'_'.$key]['name'] = $row->name;
+                            $arrData[$row->biometricno.'_'.$key]['biometricno'] = $row->biometricno;
+                            $arrData[$row->biometricno.'_'.$key][$row->year] = $row;
                         }
                     } else {
-                        $arrData[$row->biometricno][$row->year] = array($row);
+                        $arrData[$row->biometricno]['id'] = $row->id;
+                        $arrData[$row->biometricno]['name'] = $row->name;
+                        $arrData[$row->biometricno]['biometricno'] = $row->biometricno;
+                        $arrData[$row->biometricno][$row->year] = $row;
                     }
                 }
+            }
+        }
+        array_multisort(array_column($arrData, 'name'), SORT_ASC, $arrData);
+        array_multisort(array_column($arrData, 'id'), SORT_DESC, $arrData);
 
-                var_dump($arrData);
+        $_arrData = array_values($arrData); //reverting the index to number
+        
+        $resultset['generated_years'] = $this->generatedYears($post['date_from'], $date_to);
+        $resultset['company'] = isset($post['company']) ? $this->getCompanyById($post['company']) : null;
+        $resultset['department'] = isset($post['department']) ? $this->getDepartmentById($post['department']) : null;
+        $resultset['position'] = isset($post['position']) ? $this->getPositionById($post['position']) : null;
+        $resultset['data'] = $_arrData;
+
+        $message = "Employee Salary History has been generated with filters";
+        
+        if (isset($post['company']) && $post['company']) {
+            $message .= ' - Company: '.$resultset['company'];
+        }
+        
+        if (isset($post['department']) && $post['department']) {
+            $message .= ' - Department: '.$resultset['department'];
+        }
+
+        if (isset($post['position']) && $post['position']) {
+            $message .= ' - Position: '.$resultset['position'];
+        }
+
+        if (isset($post['employee']) && $post['employee']) {
+            if (is_array($post['employee'])) {
+                $message .= ' - Employees ID: '.implode(',', $post['employee']);
+            } else {
+                $message .= ' - Employee ID: '.$post['employee'];
             }
         }
 
-        $resultset['generated_years'] = $this->generatedYears($post['date_from'], $post['date_to']);
-        $resultset['results'] = $result;
+        $message .= ' and date range from '.$post['date_from'].' to '.$date_to;
+
+        $this->core_layout->setEventLog($message,"Salary History", "search", "gcchris", "user");
         return $resultset;
     }
 
@@ -2353,5 +2387,35 @@ class Reports_model extends CI_Model{
         }
 
         return $years;
+    }
+
+    function getCompanyById($id){
+        $this->db->select('code');
+        $this->db->where('id', $id);
+        $query = $this->db->get($this->companyTable);
+        if ($query->num_rows() > 0) {
+            return $query->row()->code;
+        }
+        return false;
+    }
+
+    function getDepartmentById($id){
+        $this->db->select('code');
+        $this->db->where('id', $id);
+        $query = $this->db->get($this->departmentTable);
+        if ($query->num_rows() > 0) {
+            return $query->row()->code;
+        }
+        return false;
+    }
+
+    function getPositionById($id){
+        $this->db->select('name');
+        $this->db->where('id', $id);
+        $query = $this->db->get($this->positionTable);
+        if ($query->num_rows() > 0) {
+            return $query->row()->name;
+        }
+        return false;
     }
 }

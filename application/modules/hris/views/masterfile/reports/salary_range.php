@@ -18,11 +18,11 @@
                             <label for="">Filter by:</label>
                             <div class="m-radio-inline">
                                 <label class="m-radio">
-                                    <input type="radio" name="filterby" value="1" checked @click="filterBy(1)"> Salary Range
+                                    <input type="radio" name="filterby" value="1" @click="filterBy(1)"> Salary Range
                                     <span></span>
                                 </label>
                                 <label class="m-radio">
-                                    <input type="radio" name="filterby" value="2" @click="filterBy(2)"> Salary History
+                                    <input type="radio" name="filterby" value="2" checked @click="filterBy(2)"> Salary History
                                     <span></span>
                                 </label>
                             </div>
@@ -173,7 +173,7 @@
                     </div>
                     <div class="m-portlet__body">
                         <div class="table-responsive">
-                            <table id="table-employee-salary-history" width="100%" class="table table-hover table-bordered">
+                            <table id="table-employee-salary-history" width="100%" class="table table-hover table-bordered" style="width: 100%">
                                 <thead></thead>
                                 <tbody></tbody>
                             </table>

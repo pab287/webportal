@@ -434,7 +434,7 @@ class Reports extends MY_Controller{
             ->set_output(json_encode($data));
     }
 
-    public function get_employee_salary_history(){
+    public function get_employees_history(){
         $data = $this->report->getEmployeeSalaryHistory();
         $this->output
             ->set_content_type('json')
