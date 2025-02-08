@@ -2346,9 +2346,9 @@ class Reports_model extends CI_Model{
         $_arrData = array_values($arrData); //reverting the index to number
         
         $resultset['generated_years'] = $this->generatedYears($post['date_from'], $date_to);
-        $resultset['company'] = isset($post['company']) ? $this->getCompanyById($post['company']) : null;
-        $resultset['department'] = isset($post['department']) ? $this->getDepartmentById($post['department']) : null;
-        $resultset['position'] = isset($post['position']) ? $this->getPositionById($post['position']) : null;
+        $resultset['company'] = isset($post['company']) ? $this->getCompanyCodeById($post['company']) : null;
+        $resultset['department'] = isset($post['department']) ? $this->getDepartmentCodeById($post['department']) : null;
+        $resultset['position'] = isset($post['position']) ? $this->getPositionNameById($post['position']) : null;
         $resultset['data'] = $_arrData;
 
         $message = "Employee Salary History has been generated with filters";
@@ -2389,7 +2389,7 @@ class Reports_model extends CI_Model{
         return $years;
     }
 
-    function getCompanyById($id){
+    function getCompanyCodeById($id){
         $this->db->select('code');
         $this->db->where('id', $id);
         $query = $this->db->get($this->companyTable);
@@ -2399,7 +2399,7 @@ class Reports_model extends CI_Model{
         return false;
     }
 
-    function getDepartmentById($id){
+    function getDepartmentCodeById($id){
         $this->db->select('code');
         $this->db->where('id', $id);
         $query = $this->db->get($this->departmentTable);
@@ -2409,7 +2409,7 @@ class Reports_model extends CI_Model{
         return false;
     }
 
-    function getPositionById($id){
+    function getPositionNameById($id){
         $this->db->select('name');
         $this->db->where('id', $id);
         $query = $this->db->get($this->positionTable);
