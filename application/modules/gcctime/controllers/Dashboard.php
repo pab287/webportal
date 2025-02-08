@@ -122,8 +122,8 @@
 
                 if (!empty($data)) {
                     try {
-                        // $cached_records = serialize($data);
-                        // $this->redis->set("all_today_cache", $cached_records);
+                        $cached_records = serialize($data);
+                        $this->redis->set("all_today_cache", $cached_records);
                     } catch (Exception $e) {
                         $data['no_cache'] = $e->getMessage();
                     }

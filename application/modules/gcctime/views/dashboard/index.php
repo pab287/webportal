@@ -1079,7 +1079,7 @@
                                 <div class="m-widget6__head">
                                     <div class="m-widget6__item">					 
                                         <span class="m-widget6__caption text-left"><small>DATE</small></span>
-                                        <span class="m-widget6__caption text-center"><small>CONTENT</small></span>
+                                        <span class="m-widget6__caption text-center"><small>LOA REFERENCE #</small></span>
                                         <span class="m-widget6__caption text-right"><small>TIME</small></span>				 
                                     </div>
                                 </div>
