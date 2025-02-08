@@ -18,11 +18,11 @@
                             <label for="">Filter by:</label>
                             <div class="m-radio-inline">
                                 <label class="m-radio">
-                                    <input type="radio" name="filterby" value="1" @click="filterBy(1)"> Salary Range
+                                    <input type="radio" name="filterby" value="1" @click="filterBy(1)" checked> Salary Range
                                     <span></span>
                                 </label>
                                 <label class="m-radio">
-                                    <input type="radio" name="filterby" value="2" checked @click="filterBy(2)"> Salary History
+                                    <input type="radio" name="filterby" value="2" @click="filterBy(2)"> Salary History
                                     <span></span>
                                 </label>
                             </div>

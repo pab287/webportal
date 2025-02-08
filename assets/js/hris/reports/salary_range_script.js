@@ -208,7 +208,7 @@ var vmData = new Vue({
     el: "#salary-report",
     lang: 'en',
     data: {
-        filter: 2,
+        filter: 1,
         company: 0,
         department: 0,
         position: 0,
@@ -235,24 +235,24 @@ var vmData = new Vue({
 
         instance.salaryRangeDataTable();
 
-        var _temp = [
-            { title: 'Name', data: 'name' },
-            { title: 'Biometric #', data: 'biometricno' },
-            { title: 'Year', data: 'year' },
-            { title: 'Salary', data: 'salary' },
-            { title: 'Eff Date', data: 'effdate' },
-            { title: 'Year', data: 'year' },
-            { title: 'Salary', data: 'salary' },
-            { title: 'Eff Date', data: 'effdate' },
-        ];
+        // var _temp = [
+        //     { title: 'Name', data: 'name' },
+        //     { title: 'Biometric #', data: 'biometricno' },
+        //     { title: 'Year', data: 'year' },
+        //     { title: 'Salary', data: 'salary' },
+        //     { title: 'Eff Date', data: 'effdate' },
+        //     { title: 'Year', data: 'year' },
+        //     { title: 'Salary', data: 'salary' },
+        //     { title: 'Eff Date', data: 'effdate' },
+        // ];
 
-        instance.instanceColumn = _temp;
-        instance.salaryHistoryDataTable();     
-        instance.employeeSelect2("#employee", true);
-        instance.yearSelect2("#yearFrom", true, _years);
+        // instance.instanceColumn = _temp;
+        // instance.salaryHistoryDataTable();     
+        // instance.employeeSelect2("#employee", true);
+        // instance.yearSelect2("#yearFrom", true, _years);
 
-        $("#yearTo").prop('disabled', true);
-        instance.yearSelect2("#yearTo", true, _years);
+        // $("#yearTo").prop('disabled', true);
+        // instance.yearSelect2("#yearTo", true, _years);
     },
     methods: {
         filterBy(val){
@@ -290,6 +290,11 @@ var vmData = new Vue({
 
                     instance.instanceColumn = _temp;
                     instance.salaryHistoryDataTable();
+                    instance.employeeSelect2("#employee", true);
+                    instance.yearSelect2("#yearFrom", true, _years);
+
+                    $("#yearTo").prop('disabled', true);
+                    instance.yearSelect2("#yearTo", true, _years);
                 }, 100);
             }
         }, maskInput(){
