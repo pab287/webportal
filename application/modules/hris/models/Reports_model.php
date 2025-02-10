@@ -1227,6 +1227,7 @@ class Reports_model extends CI_Model{
                     $resultset["toastr_msg"] = "Last verified attendance date on `{$maxDate}`, A total of ({$ctrCount}) employee late attendance record/s found!";
                 }else{
                     $resultset["response"] = false;
+                    $resultset["filters"] = $arrFilter;
                     $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `{$tempMaxDate}`." : "No late attendance record/s found!";
                 }
             }else{
@@ -1666,6 +1667,7 @@ class Reports_model extends CI_Model{
                     $resultset["toastr_msg"] = "Last verified attendance date on `{$maxDate}`, A total of ({$ctrCount}) employee absentee attendance record/s found!";
                 }else{
                     $resultset["response"] = false;
+                    $resultset["filters"] = $arrFilter;
                     $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `{$tempMaxDate}`." : "No absentee attendance record/s found!";
                 }
             }else{
