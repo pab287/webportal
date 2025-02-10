@@ -13,6 +13,7 @@
             // $this->authenticate->doRedirect();
             $this->load->model("Loa_m", "loa");
             $this->load->model("Registry_m", "registry");
+            $this->load->model("sms/contacts_model","contacts");
         }
 
         public function index()
@@ -487,6 +488,12 @@
 
             $reference_no = $this->db->get_where("gcceforms.loa", array("id"=>$id))->row('reference_no');
             if($this->loa->update(array('id' => $id), $data)){
+                $details = $this->getLeaveDetails($id);
+                $contactPerson = $this->getContactPerson($details['supervisor_meta']);
+                $message = "Hi " . $details['fullname'] . ", \n \nYour leave from " .
+                (new DateTime($details['date_from']))->format('F j') . " to " .
+                (new DateTime($details['date_to']))->format('F j') . " is approved. Contact $contactPerson if you have any questions or concerns. \n \nThis is a computer generated message please do not reply to this number. \n \nThank you!";
+                $this->contacts->sendSMS($details['mobile_no'], $message);
                 $this->core_layout->setEventLog("Approve ".$reference_no.".","update", "success", "gcceforms", "user");
             }else{
                 $this->core_layout->setEventLog("Failed approve ".$reference_no.".","update", "error", "gcceforms", "system");
@@ -790,4 +797,47 @@
 
             echo json_encode(array("status" => $status, 'message' => $message));
         }
+
+        private function formatName($firstname, $lastname) {
+            return ucfirst(strtolower($firstname)) . ' ' . ucfirst(strtolower($lastname));
+        }
+
+        private function getCorporateHR() {
+            $query = $this->db->select("firstname, lastname")
+                             ->get_where("gccmaster.tblemployees", [
+                                 "position" => 145,
+                                 "employee_status" => "Active"
+                             ]);
+            return $this->formatName($query->row()->firstname, $query->row()->lastname);
+        }
+
+        private function getLeaveDetails($id) {
+            $query = $this->db->query("
+                SELECT
+                    l.date_from,
+                    l.date_to,
+                    e.mobile_no,
+                    e.position,
+                    e.supervisor_meta,
+                    CONCAT(e.firstname, ' ', e.lastname) AS fullname
+                FROM gcceforms.loa l
+                JOIN gccmaster.tblemployees e ON l.employee = e.id
+                WHERE l.id = ?
+            ", [$id]);
+            return $query->row_array();
+        }
+
+        private function getContactPerson($supervisor_meta) {
+            if (!$supervisor_meta || !($managerial = @unserialize($supervisor_meta))) {
+                return "HR - ".$this->getCorporateHR();
+            }
+            var_dump($managerial);
+            $query = $this->db->select("firstname, ' ', lastname")
+                             ->get_where("gccmaster.tblemployees", [
+                                 "id" => $managerial['supervisory'],
+                                 "employee_status" => "Active"
+                             ]);
+            return "Immediate Supervisor - ".$this->formatName($query->row()->firstname, $query->row()->lastname);
+        }
+
     }
