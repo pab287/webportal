@@ -1,5 +1,7 @@
 let dropdownEl = null;
+let search_val = "";
 let _years = [];
+let generate = '';
 
 function filterEmployeesOfSalaryRange(form) {
     const _form = $(form);
@@ -235,24 +237,18 @@ var vmData = new Vue({
 
         instance.salaryRangeDataTable();
 
-        // var _temp = [
-        //     { title: 'Name', data: 'name' },
-        //     { title: 'Biometric #', data: 'biometricno' },
-        //     { title: 'Year', data: 'year' },
-        //     { title: 'Salary', data: 'salary' },
-        //     { title: 'Eff Date', data: 'effdate' },
-        //     { title: 'Year', data: 'year' },
-        //     { title: 'Salary', data: 'salary' },
-        //     { title: 'Eff Date', data: 'effdate' },
-        // ];
+        $('#generalSearch').donetyping(function(callback) {
+            search_val = $(this).val();
+            instance.salaryRangeTable.ajax.reload();
+        },1000,3);
 
-        // instance.instanceColumn = _temp;
-        // instance.salaryHistoryDataTable();     
-        // instance.employeeSelect2("#employee", true);
-        // instance.yearSelect2("#yearFrom", true, _years);
-
-        // $("#yearTo").prop('disabled', true);
-        // instance.yearSelect2("#yearTo", true, _years);
+        $("#generalSearch").on('keyup', function (e) {
+            var val = $(this).val();
+            if (val == ""){
+                search_val="";
+                instance.salaryRangeTable.ajax.reload();
+            }
+        });
     },
     methods: {
         filterBy(val){
@@ -262,6 +258,7 @@ var vmData = new Vue({
             if (val === 1){
                 setTimeout(() => {
                     instance.maskInput();
+                    instance.generate = true;
                     instance.salaryRangeDataTable();
 
                     if (typeof instance.salaryRangeTable !== "undefined" && instance.salaryRangeTable.data().length > 0) {
@@ -475,9 +472,9 @@ var vmData = new Vue({
             var url = baseUrl('hris/reports/get_employees_for_salary_range');
 
             var table = $('#table-employee-salary-range').DataTable({
-                dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'f>>" +
+                dom: "<'row mb-3 justify-content-between'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-3 col-lg-3 col-md-3 col-sm-12 text-right searchable'f>>" +
                     "<'row'<'col-12'rt>>" +
-                    "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
+                    "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12 'p>>",
                 buttons: [
                     {
                         extend: 'excelHtml5',
@@ -517,7 +514,9 @@ var vmData = new Vue({
                 ordering: true,
                 retrieve: true,
                 deferLoading: 0,
-                searching: true,
+                searching: false,
+                scrollX: false,
+                scrollY: false,
                 ajax: {
                     url: url,
                     type: 'post',
@@ -525,6 +524,8 @@ var vmData = new Vue({
                     data: function (d) {
                         d.csrf_token = _csrf_hash;
                         d.filter = instance.formValues;
+                        d.search['value'] = search_val;
+                        d.generate = generate;
                     },
                     global: false
                 },
@@ -547,6 +548,7 @@ var vmData = new Vue({
                 initComplete: function (settings) {
                     const nTable = settings.nTable;
                     var _tableData = settings.aoData.length;
+                    generate = false;
 
                     $("#table-employee-salary-range_filter input[type='search']").removeClass("form-control-sm");
 
@@ -619,6 +621,15 @@ var vmData = new Vue({
                             }
                         });
                     }
+
+                    var isDisable = _tableData > 0 ? '' : 'disabled';
+
+                    const search = `<label style="font-weight: normal; white-space: nowrap;"><input type="text" class="form-control" id="generalSearch" placeholder="Search..." disabled></label>`;
+
+                    $(search).appendTo('#table-employee-salary-range_wrapper .searchable');
+                }, drawCallback: function(){
+                    var api = this.api();
+                    $("#generalSearch").prop('disabled', false);
                 }
             });
 
@@ -649,6 +660,7 @@ var vmData = new Vue({
                 instance.formValues = obj;
 
                 if (instance.filter === 1) {
+                    generate = true;
                     var salaryTable = instance.salaryRangeTable;
                     salaryTable.ajax.reload();
                 } else {
@@ -714,7 +726,7 @@ var vmData = new Vue({
             var url = baseUrl('hris/reports/get_employees_history');
 
             var table = $('#table-employee-salary-history').DataTable({
-                dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'f>>" +
+                dom: "<'row mb-3 justify-content-between'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-3 col-lg-3 col-md-3 col-sm-12'f>>" +
                     "<'row'<'col-12'rt>>" +
                     "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
                 buttons: [
