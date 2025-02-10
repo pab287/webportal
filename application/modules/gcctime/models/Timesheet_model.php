@@ -7164,7 +7164,7 @@ class Timesheet_model extends CI_Model{
                             $tempMergedTimeSheet = array_merge((array) $employee_time_sheet, (array) $updatedTimeSheet);
                             $employee_time_sheet = (object) $tempMergedTimeSheet;
 
-                            if (sizeof((array) $timesheet_exist) >= 1) {
+                            if (sizeof((array) $timesheet_exist) >= 1 && $isValidDate === true){
                                 $tempEmployeeData = (object) $this->core_layout->getEmployeeData($empRow->emp_id);
                                 $tempName = isset($tempEmployeeData->display_name_1) && $tempEmployeeData->display_name_1 ? $tempEmployeeData->display_name_1: "No assigned name";
                                 $timesheet_exist->emp_name = $tempName;
