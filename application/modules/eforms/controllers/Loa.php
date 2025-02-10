@@ -29,6 +29,16 @@
             $this->load->view('core/templates/footer');
         }
 
+        public function test_email(){
+            $data['name'] = "John Doe";
+            $data['type'] = "Undertime";
+            $data['nature'] = "Leave of Absence";
+            $data['reference_no'] = "LOA25-02-0001";
+            $data['date_from'] = "2025-02-14";
+            $data['date_to'] = "2025-02-15";
+            $this->load->view('eforms/email_templates/email_loa_approval',$data);
+        }
+
         public function masterfile()
         {
             $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', TRUE);
@@ -476,6 +486,8 @@
 
         public function approve_loa($id)
         {
+            $this->load->view('eforms/email_templates/email_loa_approval');
+            die();
             $user_id = $this->core_layout->getCurrentEmployeeId();
             date_default_timezone_set('Asia/Singapore');
             $date = date('Y-m-d H:i:s');
@@ -499,7 +511,7 @@
                 $this->core_layout->setEventLog("Failed approve ".$reference_no.".","update", "error", "gcceforms", "system");
             }
 
-            echo json_encode(array("status" => TRUE));
+            // echo json_encode(array("status" => TRUE));
         }
 
         public function undo_approve_loa($id)
