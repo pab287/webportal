@@ -1604,12 +1604,16 @@ class Reports_model extends CI_Model{
                             foreach ($attDatex as $dt) {
                                 $this->db->select("date_from, date_to, employee, reference_no, type");
                                 $this->db->from("gcceforms.loa");
+                                $this->db->group_start();
                                 $this->db->where("DATE(date_from) >=", $dt);
+                                $this->db->or_where("DATE(date_from) <=", $dt);
+                                $this->db->where("DATE(date_to) >=", $dt);
+                                $this->db->group_end();
                                 $this->db->where("employee", $attx->emp_id);
                                 $this->db->where("status", "Approved");
                                 $this->db->order_by("date_from", "ASC");
                                 $approvedLoa = $this->db->get();
-
+                                var_dump($this->db->last_query());
                                 if($approvedLoa->num_rows() > 0){
                                     foreach ($approvedLoa->result() as $appLoa) {
                                         $isWholeDay = (intval($appLoa->type) === 3) ? true : false;
