@@ -1612,8 +1612,9 @@ class Reports_model extends CI_Model{
 
                                 if($approvedLoa->num_rows() > 0){
                                     foreach ($approvedLoa->result() as $appLoa) {
+                                        $isWholeDay = (intval($appLoa->type) === 3) ? true : false;
                                         $dateFrom = date("Y-m-d", strtotime($appLoa->date_from));
-                                        $dateTo = date("Y-m-d", strtotime($appLoa->date_to));
+                                        $dateTo = $isWholeDay ? $dateFrom : date("Y-m-d", strtotime($appLoa->date_to));
                                         $cDate = date("Y-m-d", strtotime($dt));
                                         if(strtotime($cDate) >= strtotime($dateFrom) && strtotime($cDate) <= strtotime($dateTo)){
                                             $loaReference[$appLoa->employee][$cDate] = $appLoa->reference_no;
