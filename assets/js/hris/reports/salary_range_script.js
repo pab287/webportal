@@ -1,7 +1,7 @@
 let dropdownEl = null;
 let search_val = "";
 let _years = [];
-let generate = '';
+let generate = true;
 
 function filterEmployeesOfSalaryRange(form) {
     const _form = $(form);
