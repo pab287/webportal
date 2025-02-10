@@ -410,10 +410,10 @@ $(document).ready(function() {
                 .prop('disabled', false);
             },
             success: function(response) {
-                request_id = response.request_id;
-                method = response.method;
                 $('#two_factor_auth button[type="submit"]').prop('disabled', true);
                 if (response.status) {
+                    request_id = response.request_id;
+                    method = response.method;
                     if(response.method == 'sms'){
                         $('#otp_info').text('A verification code has been sent to your registered mobile number');
                     }else if(response.method == 'email'){
@@ -429,6 +429,13 @@ $(document).ready(function() {
                     $('#otp-error').modal('show');
                 }
             },
+            error: function(xhr, status, error) {
+                // Show error modal when AJAX request fails
+                $('#otp-error').modal('show');
+                
+                // Optional: Log the error details
+                console.error('AJAX Error:', error);
+            }
         });
     });
 

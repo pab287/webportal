@@ -22,16 +22,7 @@ class Verifylogin extends MY_Controller{
             $this->form_validation->set_rules('username', 'Username', 'trim|required|prep_for_form');
             $this->form_validation->set_rules('password', 'Password', 'trim|required|callback_check_database|prep_for_form');
 
-            if ($this->form_validation->run() === FALSE) {
-                $this->db->trans_start();
-                
-                $this->db->where('username', $post['username']);
-                $this->db->set('login_attempts', 'login_attempts + 1', false);
-                $this->db->set('lockout', 'IF(login_attempts >= 4, 1, lockout)', false);
-                $this->db->update('gccmaster.tblusers');
-                
-                $this->db->trans_complete();
-                
+            if ($this->form_validation->run() === FALSE) {                
                 $this->load->view('login_v');
                 return;
             }
@@ -158,11 +149,25 @@ class Verifylogin extends MY_Controller{
         } else {
             $this->core_layout->setEventLog("User ".$username." logged in with Invalid credentials for username or password.","login", "error", "gccmaster", "user");
             $attempts = $this->Login_m->getAttempts($username);
-            var_dump($attempts->login_attempts);
-            if ($attempts->login_attempts <= 4) {
-                $resend_attempts = 4 - $attempts->login_attempts;
-                $this->form_validation->set_message('check_database', 'Invalid username or password! You have (' . $resend_attempts . ') remaining tries.');
-            }else{
+            if( isset($attempts->login_attempts) && isset($attempts->lockout)){
+                if ($attempts->login_attempts <= 3) {
+                    $resend_attempts = 4 - $attempts->login_attempts;
+                    $this->form_validation->set_message('check_database', 'Invalid username or password! You have (' . $resend_attempts . ') remaining tries.');
+
+                    $this->db->trans_start();
+                
+                    $this->db->where('username', $username);
+                    $this->db->set('login_attempts', 'login_attempts + 1', false);
+                    $this->db->set('lockout', 'IF(login_attempts >= 4, 1, lockout)', false);
+                    $this->db->update('gccmaster.tblusers');
+                    
+                    $this->db->trans_complete();
+
+                }else if($attempts->login_attempts > 3 && $attempts->lockout == 1){
+                    $this->form_validation->set_message('check_database', 'This user account is locked. Please contact IT Support');
+                }
+            }
+            else{
                 $this->form_validation->set_message('check_database', 'Invalid username or password!');
             }
             return false;

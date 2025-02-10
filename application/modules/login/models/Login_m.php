@@ -445,7 +445,7 @@ Class Login_m extends CI_Model
     }
 
     public function getAttempts($username) {
-        $this->db->select('login_attempts');
+        $this->db->select('login_attempts,lockout');
         $this->db->from('gccmaster.tblusers');
         $this->db->where('username', $username);
         $query = $this->db->get();
