@@ -29,16 +29,6 @@
             $this->load->view('core/templates/footer');
         }
 
-        public function test_email(){
-            $data['name'] = "John Doe";
-            $data['type'] = "Undertime";
-            $data['nature'] = "Leave of Absence";
-            $data['reference_no'] = "LOA25-02-0001";
-            $data['date_from'] = "2025-02-14";
-            $data['date_to'] = "2025-02-15";
-            $this->load->view('eforms/email_templates/email_loa_approval',$data);
-        }
-
         public function masterfile()
         {
             $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', TRUE);
@@ -486,8 +476,6 @@
 
         public function approve_loa($id)
         {
-            $this->load->view('eforms/email_templates/email_loa_approval');
-            die();
             $user_id = $this->core_layout->getCurrentEmployeeId();
             date_default_timezone_set('Asia/Singapore');
             $date = date('Y-m-d H:i:s');
@@ -501,17 +489,32 @@
             $reference_no = $this->db->get_where("gcceforms.loa", array("id"=>$id))->row('reference_no');
             if($this->loa->update(array('id' => $id), $data)){
                 $details = $this->getLeaveDetails($id);
+                $send_to = $details['email'];
                 $contactPerson = $this->getContactPerson($details['supervisor_meta']);
-                $message = "Hi " . $details['fullname'] . ", \n \nYour leave from " .
-                (new DateTime($details['date_from']))->format('F j') . " to " .
-                (new DateTime($details['date_to']))->format('F j') . " is approved. Contact $contactPerson if you have any questions or concerns. \n \nThis is a computer generated message please do not reply to this number. \n \nThank you!";
-                $this->contacts->sendSMS($details['mobile_no'], $message);
+                if (!empty($details['mobile_no']) && preg_match('/^(\+63|0)[0-9]{10}$/', $details['mobile_no'])) {
+                    $message = sprintf(
+                        "Hi %s,\n\nYour leave from %s to %s is approved. Contact %s if you have any questions or concerns.\n\nThis is a computer generated message please do not reply to this number.\n\nThank you!",
+                        $details['fullname'],
+                        (new DateTime($details['date_from']))->format('F j'),
+                        (new DateTime($details['date_to']))->format('F j'),
+                        $contactPerson
+                    );
+                    $this->contacts->sendSMS($details['mobile_no'], $message);
+                }
+                if (!empty($send_to) && preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', $send_to) && !in_array(strtolower($send_to), ['none', 'n/a'])) {
+                    $details['contact_person'] = $contactPerson;
+                    $send_email[] = $send_to;
+                    $email_content = $this->load->view("eforms/email_templates/email_loa_approval.php", array("data" => $details), true);
+                    $mailer['send_to'] = $send_email;
+                    $result = $this->core_layout->send_email('core', 'GC & C Conyx PH', 'Leave of Absence', $email_content, $mailer);
+                }
                 $this->core_layout->setEventLog("Approve ".$reference_no.".","update", "success", "gcceforms", "user");
+                $status = TRUE;
             }else{
                 $this->core_layout->setEventLog("Failed approve ".$reference_no.".","update", "error", "gcceforms", "system");
+                $status = FALSE;
             }
-
-            // echo json_encode(array("status" => TRUE));
+            echo json_encode(array("status" => $status));
         }
 
         public function undo_approve_loa($id)
@@ -826,14 +829,19 @@
         private function getLeaveDetails($id) {
             $query = $this->db->query("
                 SELECT
+                    l.*,
                     l.date_from,
                     l.date_to,
                     e.mobile_no,
                     e.position,
                     e.supervisor_meta,
-                    CONCAT(e.firstname, ' ', e.lastname) AS fullname
+                    COALESCE(u.email, e.email) as email,
+                    CONCAT(e.firstname, ' ', e.lastname) AS fullname,
+                    CONCAT(a.firstname, ' ', a.lastname) AS approve_by
                 FROM gcceforms.loa l
                 JOIN gccmaster.tblemployees e ON l.employee = e.id
+                JOIN gccmaster.tblemployees a ON l.approved_by = a.id
+                LEFT JOIN gccmaster.tblusers u ON u.emp_id = e.id
                 WHERE l.id = ?
             ", [$id]);
             return $query->row_array();
@@ -843,7 +851,6 @@
             if (!$supervisor_meta || !($managerial = @unserialize($supervisor_meta))) {
                 return "HR - ".$this->getCorporateHR();
             }
-            var_dump($managerial);
             $query = $this->db->select("firstname, ' ', lastname")
                              ->get_where("gccmaster.tblemployees", [
                                  "id" => $managerial['supervisory'],
