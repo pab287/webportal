@@ -1132,7 +1132,7 @@ function update_travel_order(recommend=false) {
                     action = getStatus(value.status);
 
                     html += '<li class="mb-2">';
-                      html += `<p class="m-0">REF NO: <strong>${ value.reference_no }</strong> <span class="${action}">${ value.status }</span></p>`;
+                      html += `<p class="m-0">REF NO: <strong>${ value.reference_no }</strong> ${action}</p>`;
                       html += `<p class="m-0">NAME: <strong>${ value.name }</strong></p>`;
                       html += '<div>';
                         html += `<p style="margin-bottom: 2px !important; margin-top: 5px !important;">DESTINATIONS</p>`;
@@ -1781,31 +1781,32 @@ function validateRecommendation(recommendationModal){
 }
 
 function getStatus(status){
-  switch (status) {
-    case "Pending":
-        action = 'm-badge m-badge--warning text-white m-badge--wide';
-        break;
-    case "Recommend_Approved":
-        action = 'm-badge m-badge--info text-white m-badge--wide ';
-        break;
-    case "Approved":
-        if (row.accomplishment_dt == "0000-00-00 00:00:00" || (row.accomplished == 0 && row.accomplished)) {
-          action = 'm-badge m-badge--accent m-badge--wide';
-        }
-        break;
-    case "Disapproved":
-        action = 'm-badge m-badge--danger m-badge--wide';
-        break;
-    case "HR Noted":
-        action = 'm-badge m-badge--accent m-badge--wide';
-        break;
-    case "Received":
-        action = 'm-badge m-badge--accent m-badge--wide';
-        break;
-    default:
-        action = 'm-badge m-badge--metal text-white m-badge--wide';
-        break;
-  }
+  var action= '';
+    switch (status) {
+        case "Pending":
+            action = '<span class="m-badge m-badge--warning text-white m-badge--wide " role="alert"><small><strong>For Recommendation</strong></small></span>';
+            break;
+        case "Recommend_Approved":
+            action = '<span class="m-badge m-badge--info text-white m-badge--wide " role="alert"><small><strong>Pending Approval</strong></small></span>';
+            break;
+        case "Approved":
+            if (row.accomplishment_dt == "0000-00-00 00:00:00" || (row.accomplished == 0 && row.accomplished)) {
+                action = '<span class="m-badge m-badge--accent m-badge--wide accomplishment_'+row.id+'" role="alert"><small><strong>Approved</strong></small></span>';
+            }
+            break;
+        case "Disapproved":
+            action = '<span class="m-badge m-badge--danger m-badge--wide" role="alert"><small><strong>Disapproved</strong></small></span>';
+            break;
+        case "HR Noted":
+            action = '<span class="m-badge m-badge--accent m-badge--wide" role="alert"><small><strong>HR Noted</strong></small></span>';
+            break;
+        case "Received":
+            action = '<span class="m-badge m-badge--accent m-badge--wide" role="alert"><small><strong>Received</strong></small></span>';
+            break;
+        default:
+            action = '<span class="m-badge m-badge--metal text-white m-badge--wide" role="alert"><small><strong>Cancelled</strong></small></span>';
+            break;
+    }
 
-  return action;
+    return action;
 }
