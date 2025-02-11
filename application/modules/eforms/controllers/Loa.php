@@ -859,4 +859,14 @@
             return "Immediate Supervisor - ".$this->formatName($query->row()->firstname, $query->row()->lastname);
         }
 
+        public function test_email(){
+            $data['name'] = "John Doe";
+            $data['type'] = "Undertime";
+            $data['nature'] = "Leave of Absence";
+            $data['reference_no'] = "LOA25-02-0001";
+            $data['date_from'] = "2025-02-14";
+            $data['date_to'] = "2025-02-15";
+            $this->load->view('eforms/email_templates/email_loa_for_approval',$data);
+        }
+
     }
