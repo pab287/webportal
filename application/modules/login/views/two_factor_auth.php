@@ -276,7 +276,7 @@ input[type="radio"]:checked::after {
                             </div>
                             <div class="form-group m-form__group">
                                 <input type="text" id="otp" name="key_code" class="form-control m-input text-center otp-input" maxlength="10" placeholder="Enter OTP">
-                                <span class="otp-error col">Invalid One Time Password!. You have (<span class="otp-attempts"></span>) remaining tries.</span>
+                                <span class="otp-error col">Invalid One Time Password! You have (<span class="otp-attempts"></span>) remaining tries left before your account is locked.</span>
                                 <div id="resend_tag">
                                     <div class="resend-info">
                                         <p class="text-center timer-text">

@@ -152,7 +152,7 @@ class Verifylogin extends MY_Controller{
             if( isset($attempts->login_attempts) && isset($attempts->lockout)){
                 if ($attempts->login_attempts <= 3) {
                     $resend_attempts = 4 - $attempts->login_attempts;
-                    $this->form_validation->set_message('check_database', 'Invalid username or password! You have (' . $resend_attempts . ') remaining tries.');
+                    $this->form_validation->set_message('check_database', 'Invalid username or password! You have (' . $resend_attempts . ') remaining tries left before your account is locked.');
 
                     $this->db->trans_start();
                 

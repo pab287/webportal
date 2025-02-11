@@ -11,9 +11,12 @@
             <p>You will be logged out after activating or deactivating two-factor authentication.<br/>
                 Please log in again to continue.
             </p>
+            <p class="text-muted small mt-2">
+                By clicking "<strong>I understand</strong>", you acknowledge that you will be logged out immediately and must log in again with your new two-factor authentication settings.
+            </p>
         </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Cancel 2FA</button>
         <button type="button" id="confirmTwoFactor" class="btn btn-success btnSave">I understand</button>
       </div>
     </div>
