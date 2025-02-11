@@ -1242,7 +1242,7 @@ class Reports_model extends CI_Model{
                     $userType="user";
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `<strong>{$tempMaxDate}</trong>`." : "No late attendance record/s found!";
+                    $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `<strong>{$tempMaxDate}</trong>`. {$filter}" : "No late attendance record/s found!";
                     $logMessage = $resultset["toastr_msg"];
                     $logState="success";
                     $userType="user";
@@ -1705,7 +1705,7 @@ class Reports_model extends CI_Model{
                     $userType="user";
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `<strong>{$tempMaxDate}</strong>`." : "No absentee attendance record/s found!";
+                    $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `<strong>{$tempMaxDate}</strong>`  {$filter}." : "No absentee attendance record/s found!";
                     $logMessage = $resultset["toastr_msg"];
                     $logState="success";
                     $userType="user";
