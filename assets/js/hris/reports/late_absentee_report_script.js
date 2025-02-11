@@ -215,6 +215,22 @@ if(typeof hrisFilterLateAbsenteeReport !== "undefined" && hrisFilterLateAbsentee
             },
             processResults: function (data) { return data; }
         }, language: { errorLoading: function () { return "Searching..." } }
+    }).on("select2:select", function (e) {
+        const tempEmployeeSelector = hrisFilterLateAbsenteeReport.find("select#employee");
+        const tempPayrollGroupSelector = hrisFilterLateAbsenteeReport.find("select#payroll_group");
+
+        tempSelectorClear(tempEmployeeSelector);
+        tempSelectorClear(tempPayrollGroupSelector);
+        
+        $(e.target).validate();
+    }).on("select2:unselect", function (e) {
+        const tempEmployeeSelector = hrisFilterLateAbsenteeReport.find("select#employee");
+        const tempPayrollGroupSelector = hrisFilterLateAbsenteeReport.find("select#payroll_group");
+
+        setTimeout(() => {
+            tempSelectorClear(tempEmployeeSelector, true);
+            tempSelectorClear(tempPayrollGroupSelector, true);
+        }, 250);
     });
 
     hrisFilterLateAbsenteeReport.find("select#employee")
