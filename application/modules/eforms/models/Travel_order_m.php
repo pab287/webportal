@@ -3633,51 +3633,59 @@
                 'status' => 'Pending',
             );
 
-            $query = $this->db->insert('gcceforms.travel_order', $data);
-            if($query){
+            $checkPersonnel = $this->checkPersonnelTO($this->user_data['id']);
 
-                $to_last_id = $this->db->insert_id();
-
-                // save personnel
-                $temp_personnel = $this->get_temp_personnel($this->user_data['id']);
-                foreach ($temp_personnel as $row) {
-                    $data = array(
-                        'travel_order_id' => $to_last_id,
-                        'employee_id' => $row->employee_id
-                    );
-                    $this->save_personnel($data);
+            if (empty($checkPersonnel)) {
+                $query = $this->db->insert('gcceforms.travel_order', $data);
+                if($query){
+    
+                    $to_last_id = $this->db->insert_id();
+    
+                    // save personnel
+                    $temp_personnel = $this->get_temp_personnel($this->user_data['id']);
+                    foreach ($temp_personnel as $row) {
+                        $data = array(
+                            'travel_order_id' => $to_last_id,
+                            'employee_id' => $row->employee_id
+                        );
+                        $this->save_personnel($data);
+                    }
+                    $this->delete_temp_all_personnel($this->user_data['id']);
+                    
+                    // save destination
+                    $temp_destination = $this->get_temp_destination($this->user_data['id']);
+                    foreach ($temp_destination as $row) {
+                        $data = array(
+                            'travel_order_id' => $to_last_id,
+                            'des_from' => $row->des_from,
+                            'des_to' => $row->des_to,
+                            'destination' => $row->destination,
+                            'requested_by' => $row->requested_by,
+                            'purpose' => $row->purpose,
+                            'date_from' => $row->date_from,
+                            'date_to' => $row->date_to,
+                            'instructions' => $row->instructions,
+                            'remarks' => $row->remarks,
+                            'travel_from' => $row->travel_from,
+                            'travel_to' => $row->travel_to,
+                            'coords_from' => $row->coords_from,
+                            'coords_to' => $row->coords_to,
+                        );
+                        $this->save_destination($data);
+                    }
+                    $this->delete_temp_all_destination($this->user_data['id']);
+    
+                    $resultarray['status'] = true;
+                    $resultarray['msg'] = 'Travel order has been created successfully.';
+                    $resultarray["redirect"] = site_url("eforms/travel_order/view_travel_order?id={$to_last_id}");
+                } else {
+                    $resultarray['status'] = false;
+                    $resultarray['msg'] = 'Failed to create new travel order entry!';
                 }
-                $this->delete_temp_all_personnel($this->user_data['id']);
-                
-                // save destination
-                $temp_destination = $this->get_temp_destination($this->user_data['id']);
-                foreach ($temp_destination as $row) {
-                    $data = array(
-                        'travel_order_id' => $to_last_id,
-                        'des_from' => $row->des_from,
-                        'des_to' => $row->des_to,
-                        'destination' => $row->destination,
-                        'requested_by' => $row->requested_by,
-                        'purpose' => $row->purpose,
-                        'date_from' => $row->date_from,
-                        'date_to' => $row->date_to,
-                        'instructions' => $row->instructions,
-                        'remarks' => $row->remarks,
-                        'travel_from' => $row->travel_from,
-                        'travel_to' => $row->travel_to,
-                        'coords_from' => $row->coords_from,
-                        'coords_to' => $row->coords_to,
-                    );
-                    $this->save_destination($data);
-                }
-                $this->delete_temp_all_destination($this->user_data['id']);
-
-                $resultarray['status'] = true;
-                $resultarray['msg'] = 'Travel order has been created successfully.';
-                $resultarray["redirect"] = site_url("eforms/travel_order/view_travel_order?id={$to_last_id}");
             } else {
+                $resultarray['data'] = $checkPersonnel;
                 $resultarray['status'] = false;
-                $resultarray['msg'] = 'Failed to create new travel order entry!';
+                $resultarray['msg'] = 'Failed to Create new Travel Order Entries.';
             }
 
             return $resultarray;
@@ -3720,15 +3728,23 @@
                 'driver' => $driver_name,
             );
 
-            $reference_no = $this->db->get_where("gcceforms.travel_order", array("id"=>$to_id))->row('reference_no');
-            if($this->update_travel_order(array('id' => $to_id), $data)){
-                $resultarray['status'] = true;
-                $resultarray['msg'] = 'Successfully update';
-                $this->core_layout->setEventLog("Updated ".$reference_no.".","update", "success", "gcceforms", "user");
-            }else{
+            $checkPersonnel = $this->checkPersonnelEditTO($to_id);
+
+            if (empty($checkPersonnel)) {
+                $reference_no = $this->db->get_where("gcceforms.travel_order", array("id"=>$to_id))->row('reference_no');
+                if($this->update_travel_order(array('id' => $to_id), $data)){
+                    $resultarray['status'] = true;
+                    $resultarray['msg'] = 'Successfully update';
+                    $this->core_layout->setEventLog("Updated ".$reference_no.".","update", "success", "gcceforms", "user");
+                }else{
+                    $resultarray['status'] = false;
+                    $resultarray['msg'] = 'Failed to update';
+                    $this->core_layout->setEventLog("Failed updating ".$reference_no.".","update", "error", "gcceforms", "system");
+                }
+            } else {
+                $resultarray['data'] = $checkPersonnel;
                 $resultarray['status'] = false;
-                $resultarray['msg'] = 'Failed to update';
-                $this->core_layout->setEventLog("Failed updating ".$reference_no.".","update", "error", "gcceforms", "system");
+                $resultarray['msg'] = 'Failed to Create new Travel Order Entries.';
             }
 
             return $resultarray;
@@ -5000,5 +5016,203 @@
             }
         }
 
+        function checkPersonnelTO($userId) {
+            $_personnelIds = array();
+            $_destinationLocation = array();
+            $arrData = array();
+            
+            $temp_personnel = $this->get_temp_personnel($this->user_data['id']);
+            $temp_destination = $this->get_temp_destination($this->user_data['id']);
 
+            foreach($temp_personnel as $row) {
+                $_personnelIds[] = $row->employee_id;
+            }
+
+            foreach($temp_destination as $row) {
+                $data = array(
+                    'date_from' => $row->date_from,
+                    'date_to' => $row->date_to
+                );
+
+                $_destinationLocation[] = $data;
+            }
+
+            $travelDates = $this->getFirstAndLastArrValue($temp_destination);
+
+            $this->db->select('a.reference_no, c.date_from, c.date_to, c.destination, UPPER(CONCAT(d.firstname, " ", d.lastname)) as name, a.status');
+            $this->db->join($this->travelPersonnelTable.' as b', 'b.travel_order_id = a.id', 'LEFT');
+            $this->db->join($this->travelDestinationTable.' as c', 'c.travel_order_id = a.id', 'LEFT');
+            $this->db->join($this->employeeTable.' as d', 'd.id = b.employee_id', 'LEFT');
+            $this->db->from($this->travelOrderTable.' as a');
+            $this->db->where_in('employee_id', $_personnelIds);
+
+            $this->db->where('a.status !=', 'Cancelled');
+            $this->db->where('a.status !=', 'Disapproved');
+
+            $this->db->group_start();
+            $this->db->where('a.status !=', 'Approved');
+            $this->db->where('a.accomplished', 0);
+            $this->db->group_end();
+            
+            $this->db->or_group_start();
+            $this->db->where('a.status', 'Approved');
+            $this->db->where('a.accomplished', 0);
+            $this->db->group_end();
+
+            $this->db->group_start();
+                $this->db->where('DATE(c.date_from) >= ', date('Y-m-d', strtotime($travelDates['date_from'])));
+                $this->db->where('DATE(c.date_from) <= ', date('Y-m-d', strtotime($travelDates['date_from'])));
+                $this->db->or_where('DATE(c.date_to) >=', date('Y-m-d', strtotime($travelDates['date_to'])));
+                $this->db->where('DATE(c.date_to) <=', date('Y-m-d', strtotime($travelDates['date_to'])));
+            $this->db->group_end();
+
+            $query = $this->db->get();
+            
+            if ($query->num_rows() > 0){
+                foreach($query->result() as $key => $rs) {
+                    foreach ($_destinationLocation as $k => $row) {
+                        $savedFromDes = date('Y-m-d H:i', strtotime($rs->date_from));
+                        $savedToDes = date('Y-m-d H:i', strtotime($rs->date_to));
+
+                        $toSavedFromDes = date('Y-m-d H:i', strtotime($row['date_from']));
+                        $toSavedToDes = date('Y-m-d H:i', strtotime($row['date_to']));
+
+                        if (($savedFromDes >= $toSavedFromDes && $savedFromDes <= $toSavedToDes) || ($savedToDes >= $toSavedFromDes && $savedToDes <= $toSavedToDes) || ($savedFromDes <= $toSavedFromDes && $savedToDes >= $toSavedToDes)) {
+                           $arrData[$key]['reference_no'] = $rs->reference_no;
+                           $arrData[$key]['name'] = $rs->name;
+                           $arrData[$key]['status'] = $rs->status;
+                           $arrData[$key]['to'][] = ['destination' => $rs->destination, 'date_from' => $rs->date_from, 'date_to' => $rs->date_to];
+                        }
+                    }
+                }
+            }
+
+            $restructuredArray = [];
+
+            foreach ($arrData as $entry) {
+                $name = $entry['name'];
+                $referenceNo = $entry['reference_no'];
+                $status = $entry['status'];
+
+                if (!isset($restructuredArray[$name])) {
+                    $restructuredArray[$name] = [
+                        'reference_no' => $referenceNo,
+                        'name' => $name,
+                        'status' => $status,
+                        'to' => []
+                    ];
+                }
+
+                $restructuredArray[$name]['to'] = array_merge($restructuredArray[$name]['to'], $entry['to']);
+            }
+
+            // Convert associative array to indexed array
+            $restructuredArray = array_values($restructuredArray);
+
+            return $restructuredArray;
+        }
+
+        function getFirstAndLastArrValue($arr){
+            $first = reset($arr);
+            $last = end($arr);
+
+            return ['date_from' => $first->date_from, 'date_to' => $last->date_to];
+        }
+
+        function checkPersonnelEditTO($id) {
+            $_personnelIds = array();
+            $_destinationLocation = array();
+            $arrData = array();
+
+            $personnels = $this->db->select('employee_id')->get_where($this->travelPersonnelTable, array('travel_order_id' => $id))->result();
+            $destinations = $this->db->select('date_from, date_to')->get_where($this->travelDestinationTable, array('travel_order_id' => $id))->result();
+
+            foreach($personnels as $row) {
+                $_personnelIds[] = $row->employee_id;
+            }
+
+            foreach($destinations as $row) {
+                $data = array(
+                    'date_from' => $row->date_from,
+                    'date_to' => $row->date_to
+                );
+
+                $_destinationLocation[] = $data;
+            }
+
+            $travelDates = $this->getFirstAndLastArrValue($destinations);
+
+            $this->db->select('a.reference_no, c.date_from, c.date_to, c.destination, UPPER(CONCAT(d.firstname, " ", d.lastname)) as name, a.status');
+            $this->db->join($this->travelPersonnelTable.' as b', 'b.travel_order_id = a.id', 'LEFT');
+            $this->db->join($this->travelDestinationTable.' as c', 'c.travel_order_id = a.id', 'LEFT');
+            $this->db->join($this->employeeTable.' as d', 'd.id = b.employee_id', 'LEFT');
+            $this->db->from($this->travelOrderTable.' as a');
+            $this->db->where('a.id !=', $id);
+            $this->db->where_in('employee_id', $_personnelIds);
+
+            $this->db->where('a.status !=', 'Cancelled');
+            $this->db->where('a.status !=', 'Disapproved');
+
+            $this->db->group_start();
+            $this->db->where('a.status !=', 'Approved');
+            $this->db->where('a.accomplished', 0);
+            $this->db->group_end();
+            
+            $this->db->or_group_start();
+            $this->db->where('a.status', 'Approved');
+            $this->db->where('a.accomplished', 0);
+            $this->db->group_end();
+
+            $this->db->group_start();
+                $this->db->where('DATE(c.date_from) >= ', date('Y-m-d', strtotime($travelDates['date_from'])));
+                $this->db->where('DATE(c.date_from) <= ', date('Y-m-d', strtotime($travelDates['date_from'])));
+                $this->db->or_where('DATE(c.date_to) >=', date('Y-m-d', strtotime($travelDates['date_to'])));
+                $this->db->where('DATE(c.date_to) <=', date('Y-m-d', strtotime($travelDates['date_to'])));
+            $this->db->group_end();
+
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0){
+                foreach($query->result() as $key => $rs) {
+                    foreach ($_destinationLocation as $k => $row) {
+                        $savedFromDes = date('Y-m-d H:i', strtotime($rs->date_from));
+                        $savedToDes = date('Y-m-d H:i', strtotime($rs->date_to));
+
+                        $toSavedFromDes = date('Y-m-d H:i', strtotime($row['date_from']));
+                        $toSavedToDes = date('Y-m-d H:i', strtotime($row['date_to']));
+
+                        if (($savedFromDes >= $toSavedFromDes && $savedFromDes <= $toSavedToDes) || ($savedToDes >= $toSavedFromDes && $savedToDes <= $toSavedToDes) || ($savedFromDes <= $toSavedFromDes && $savedToDes >= $toSavedToDes)) {
+                           $arrData[$key]['reference_no'] = $rs->reference_no;
+                           $arrData[$key]['name'] = $rs->name;
+                           $arrData[$key]['status'] = $rs->status;
+                           $arrData[$key]['to'][] = ['destination' => $rs->destination, 'date_from' => $rs->date_from, 'date_to' => $rs->date_to];
+                        }
+                    }
+                }
+            }
+
+            $restructuredArray = [];
+
+            foreach ($arrData as $entry) {
+                $name = $entry['name'];
+                $referenceNo = $entry['reference_no'];
+                $status = $entry['status'];
+
+                if (!isset($restructuredArray[$name])) {
+                    $restructuredArray[$name] = [
+                        'reference_no' => $referenceNo,
+                        'name' => $name,
+                        'status' => $status,
+                        'to' => []
+                    ];
+                }
+
+                $restructuredArray[$name]['to'] = array_merge($restructuredArray[$name]['to'], $entry['to']);
+            }
+
+            // Convert associative array to indexed array
+            $restructuredArray = array_values($restructuredArray);
+
+            return $restructuredArray;
+        }
     }

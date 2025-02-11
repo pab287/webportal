@@ -167,6 +167,8 @@ class Travel_order extends MY_Controller
         $this->core_layout->addJs("js/eforms/travel_order/new_travel_order.js", true, $tempData);
         // $this->core_layout->addJs("js/eforms/travel_order/travel_order_sites.js", true);
 
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
 
         $this->load->view('core/templates/header');
         $this->load->view('eforms/travel_order/new_travel_order');
@@ -195,6 +197,10 @@ class Travel_order extends MY_Controller
         $this->core_layout->setPageTitle("Travel Order - Edit Travel Order");
         $this->core_layout->setPrivilegeName("to_masterfile");
         $this->core_layout->addJs("js/eforms/travel_order/edit_travel_order.js", true);
+
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
+
         // $this->core_layout->addJs("js/eforms/travel_order/travel_order_sites.js", true);
         $this->load->view('core/templates/header');
         $this->load->view('eforms/travel_order/edit_travel_order');
