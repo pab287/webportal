@@ -5083,7 +5083,7 @@
 
                 $config = array();
                 $config['upload_path'] = $uploadPath;
-                $config['allowed_types'] = 'jpg|jpeg|png|PNG|JPG|JPEG|pdf|doc|docx';
+                $config['allowed_types'] = 'jpg|jpeg|png|pdf|PNG|JPG|JPEG|PDF';
                 $config['max_size'] = 10000;
                 $config['create_thumbnail'] = false;
 

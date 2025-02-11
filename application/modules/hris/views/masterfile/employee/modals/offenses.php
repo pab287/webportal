@@ -39,7 +39,7 @@
         <span class="btn btn-success fileinput-button btn-sm pull-right">
             <i class="glyphicon glyphicon-plus"></i>
             <span>Select file</span>
-            <input type="file" id="fileupload_offenses" name="files" data-validation="required">
+            <input type="file" id="fileupload_offenses" name="files" accept=".jpg,.jpeg,.png,.pdf" data-validation="required" />
             <input type="hidden" id="offenses_attachment" name="offenses_attachment">
         </span>
         <p id="temp_fileupload" style='text-overflow: ellipsis; white-space: nowrap; overflow: hidden;' class="form-control m-input m--margin-top-10" disabled="disabled">&nbsp;</p>
