@@ -265,30 +265,35 @@
                 $emp_id = $this->loa->getEmpTelegramId($this->input->post('employee'));
     
                 if($insert){
-                    $telegram_msg = '';
-                    $telegram_msg .= '<b>LOA #</b>: '.$referenceNumber.chr(10);
-                    $telegram_msg .= '<b>EMPLOYEE: </b>'.strtoupper($this->loa->employee_details($this->input->post('employee'))->display_name).chr(10);
-                    $telegram_msg .= '<b>COMPANY: </b>'.strtoupper($company).chr(10);
-                    $telegram_msg .= '<b>DEPARTMENT: </b>'.strtoupper($department).chr(10);
-                    $telegram_msg .= '<b>TYPE: </b>'.strtoupper($this->leave_type($this->input->post('type'))).chr(10);
-                    $telegram_msg .= $loa_date;
-                    $telegram_msg .= '<b>NATURE OF LEAVE: </b>'.strtoupper($this->input->post('nature')).chr(10);
-                    $telegram_msg .= '<b>REASON: </b>'.strtoupper($this->input->post('reason')).chr(10);
-                    $telegram_msg .= '<b>ADDRESS ON LEAVE: </b>'.strtoupper($this->input->post('address')).chr(10);
-                    $telegram_msg .= '<b>NUMBER ON LEAVE: </b>'.strtoupper($this->input->post('phone')).chr(10);
-                    if($this->loa->telegram_config_if_exist('loa', 'count') > 0){
+                    // $telegram_msg = '';
+                    // $telegram_msg .= '<b>LOA #</b>: '.$referenceNumber.chr(10);
+                    // $telegram_msg .= '<b>EMPLOYEE: </b>'.strtoupper($this->loa->employee_details($this->input->post('employee'))->display_name).chr(10);
+                    // $telegram_msg .= '<b>COMPANY: </b>'.strtoupper($company).chr(10);
+                    // $telegram_msg .= '<b>DEPARTMENT: </b>'.strtoupper($department).chr(10);
+                    // $telegram_msg .= '<b>TYPE: </b>'.strtoupper($this->leave_type($this->input->post('type'))).chr(10);
+                    // $telegram_msg .= $loa_date;
+                    // $telegram_msg .= '<b>NATURE OF LEAVE: </b>'.strtoupper($this->input->post('nature')).chr(10);
+                    // $telegram_msg .= '<b>REASON: </b>'.strtoupper($this->input->post('reason')).chr(10);
+                    // $telegram_msg .= '<b>ADDRESS ON LEAVE: </b>'.strtoupper($this->input->post('address')).chr(10);
+                    // $telegram_msg .= '<b>NUMBER ON LEAVE: </b>'.strtoupper($this->input->post('phone')).chr(10);
+                    // if($this->loa->telegram_config_if_exist('loa', 'count') > 0){
     
-                        if($emp_id){
-                            $this->loa->telegram($telegram_msg);
-                        }
-                        if($head_id){
-                            if($head_id != 2){
-                                $this->loa->telegram_dept_heads($telegram_msg,$head_id);
-                            }
-                        }else{
+                    //     if($emp_id){
+                    //         $this->loa->telegram($telegram_msg);
+                    //     }
+                    //     if($head_id){
+                    //         if($head_id != 2){
+                    //             $this->loa->telegram_dept_heads($telegram_msg,$head_id);
+                    //         }
+                    //     }else{
                             
-                        }
-                    }
+                    //     }
+                    // }   
+                    $head_contact = $this->getHeadContact($this->input->post('employee'));
+                    var_dump($head_contact);
+
+                    $this->contacts->sendSMS($head_contact['head_no'], "Testing");
+                    die();
                     $reference_no = $this->db->get_where("gcceforms.loa", array("id"=>$last_id))->row('reference_no');
                     $this->core_layout->setEventLog("Filed leave of absence ".$reference_no.".","add", "success", "gcceforms", "user");
                 }else{
@@ -857,6 +862,17 @@
                                  "employee_status" => "Active"
                              ]);
             return "Immediate Supervisor - ".$this->formatName($query->row()->firstname, $query->row()->lastname);
+        }
+
+        private function getHeadContact($id) {
+            $query = $this->db->select("e.supervisor_meta, s.mobile_no as head_no, u.email as head_email, CONCAT(e.firstname, ' ', e.lastname) AS fullname, CONCAT(s.firstname, ' ', s.lastname) AS head_name")
+                ->from("gccmaster.tblemployees e")
+                ->join("gcchris.tbldepartments d", "d.id = e.department_id", "left")
+                ->join("gccmaster.tblemployees s", "s.id = d.head_id", "left")
+                ->join("gccmaster.tblusers u", "u.emp_id = s.id", "left")
+                ->where("e.id", $id)
+                ->get();
+            return $query->row_array();
         }
 
         public function test_email(){
