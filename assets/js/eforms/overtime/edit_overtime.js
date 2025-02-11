@@ -36,8 +36,8 @@ $.ajax({
     $('#employee').append(employee).trigger('change');
     const requested_by = new Option(data.display_requested_by, data.requested_by, true, true);
     $('#requested_by').append(requested_by).trigger('change');
-
-    dateTimeRangePicker(data.max_date, data.date_from, data.date_to);
+    const tempMinDate = moment(new Date(data.max_date), "YYYY-MM-DD").add(1, 'days').format("YYYY-MM-DD");
+    dateTimeRangePicker(tempMinDate, data.date_from, data.date_to);
   }
 });
 
@@ -82,7 +82,10 @@ $("#employee").on("select2:select", function () {
         $("#department").val(data.department);
         $("#position").val(data.position);
 
-        if(data.max_date){ dateTimeRangePicker(data.max_date); }
+        if(data.max_date){
+          const tempMinDate = moment(new Date(data.max_date), "YYYY-MM-DD").add(1, 'days').format("YYYY-MM-DD");
+          dateTimeRangePicker(tempMinDate);
+        }
       }
     }
   });

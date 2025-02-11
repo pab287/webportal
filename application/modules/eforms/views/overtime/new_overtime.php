@@ -30,6 +30,9 @@
         }
     }
     .custom-file span.help-block.form-error { float: right; }
+    .has-error .custom-file-control {
+        border: 1px solid rgb(185, 74, 72);
+    }
 </style>
 
 <div class="m-content">
@@ -59,40 +62,54 @@
 				    <div class="m-portlet__body">
 					    <div class="row">
                             <div class="col-md-6 col-sm-12">
-                                <div class="form-group m-form__group row">
-                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">Employee</label>
+                                <div class="row">
+                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">EMPLOYEE</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                        <select id="employee" name="employee" data-validation="required"></select>
-                                        <span class="pull-right help-block form-error"></span>
+                                        <div class="form-group m-form__group row">
+                                            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                                                <select id="employee" name="employee" data-validation="required"></select>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="form-group m-form__group row">
-                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">Company</label>
+                                <div class="row">
+                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">COMPANY</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                        <textarea class="form-control m-input" id="details" rows="5" data-validation="required" disabled></textarea>
-                                        <input type="hidden" name="company" id="company"/>
-                                        <input type="hidden" name="department" id="department"/>
-                                        <input type="hidden" name="position" id="position"/>
+                                        <div class="form-group m-form__group row">
+                                            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                                                <textarea class="form-control m-input" id="details" rows="5" data-validation="required" disabled></textarea>
+                                                <input type="hidden" name="company" id="company"/>
+                                                <input type="hidden" name="department" id="department"/>
+                                                <input type="hidden" name="position" id="position"/>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="form-group m-form__group row">
-                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">Date & Time</label>
-                                    <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12 input-group date" id="date_time">
-                                        <input class="form-control m-input" type="text" id="date" data-validation="required" autocomplete="off" />
-                                        <input type="hidden" name="date_from" id="date_from"/>
-                                        <input type="hidden" name="date_to" id="date_to"/>
-                                        <span class="input-group-addon">
-                                                <i class="la la-calendar glyphicon-th"></i>
-                                        </span>
-                                        <span class="help-block form-error"></span>
+                                <div class="row">
+                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">DATE & TIME</label>
+                                    <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
+                                        <div class="form-group m-form__group row">
+                                            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12 input-group date" id="date_time">
+                                                <input class="form-control m-input" type="text" id="date" data-validation="required" autocomplete="off" />
+                                                <input type="hidden" name="date_from" id="date_from"/>
+                                                <input type="hidden" name="date_to" id="date_to"/>
+                                                <span class="input-group-addon">
+                                                        <i class="la la-calendar glyphicon-th"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
                                     </div>
                                 </div>
-                                <div class="form-group m-form__group row">
-                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">Purpose</label>
+                                <div class="row">
+                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">PURPOSE</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                        <textarea class="form-control m-input" id="purpose" name="purpose" rows="6" data-validation="required" autocomplete="off"></textarea>
-                                        <input type="hidden" id="prevLen" value="0"/>
-                                        <div class="text-right"><span class="help-block form-error"></span></div>
+                                        <div class="form-group m-form__group row">
+                                            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                                                <textarea class="form-control m-input" id="purpose" name="purpose" rows="6" data-validation="required" autocomplete="off"></textarea>
+                                                <input type="hidden" id="prevLen" value="0"/>
+                                            </div>
+                                        </div>
                                         <span class="m-form__help" style="text-transform: none; font-width: 600;">
                                             <i>Note: Auto bullets when pressing "Enter".</i>
                                         </span>
@@ -100,15 +117,18 @@
                                 </div>
                             </div>
                             <div class="col-md-6 col-sm-12">
-                                <div class="form-group m-form__group row">
-                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">Requested by</label>
+                                <div class="row">
+                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">REQUESTED BY</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                        <select id="requested_by" name="requested_by"  data-validation="required"></select>
-                                        <span class="pull-right help-block form-error"></span>
+                                        <div class="form-group m-form__group row">
+                                            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                                            <select id="requested_by" name="requested_by"  data-validation="required"></select>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Remarks</label>
+                                    <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">REMARKS</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
                                         <textarea class="form-control m-input" id="remarks" name="remarks" rows="5" autocomplete="off"></textarea>
                                     </div>
@@ -117,11 +137,15 @@
                                     <div class="row">
                                         <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12 required">UPLOAD ATTACHMENT IMAGE</label>
                                         <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                            <div class="custom-file form-group m-form__group">
-                                                <input id="temp_fileupload" type="file" name="files" class="custom-file-input" data-validation="required" multiple />
-                                                <span class="pull-right help-block form-error"></span>
-                                                <span class="custom-file-control" id="file_append"></span>
+                                            <div class="form-group m-form__group row">
+                                                <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                                                    <div class="custom-file">
+                                                        <input id="temp_fileupload" type="file" name="files" class="custom-file-input" data-validation="required" multiple />
+                                                        <span class="custom-file-control" id="file_append"></span>
+                                                    </div>
+                                                </div>
                                             </div>
+                                            
                                         </div>
                                     </div>
                                     <div class="row">

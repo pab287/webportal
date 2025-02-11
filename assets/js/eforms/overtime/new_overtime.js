@@ -62,7 +62,10 @@ $("#employee").on("select2:select", function() {
                 $("#department").val(data.department);
                 $("#position").val(data.position);
 
-                if(data.max_date){ dateTimeRangePicker(data.max_date); }
+                if(data.max_date){ 
+                    const tempMinDate = moment(new Date(data.max_date), "YYYY-MM-DD").add(1, 'days').format("YYYY-MM-DD");
+                    dateTimeRangePicker(tempMinDate);
+                }
             }
         }
     });
