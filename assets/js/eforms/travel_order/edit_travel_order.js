@@ -1790,9 +1790,7 @@ function getStatus(status){
             action = '<span class="m-badge m-badge--info text-white m-badge--wide " role="alert"><small><strong>Pending Approval</strong></small></span>';
             break;
         case "Approved":
-            if (row.accomplishment_dt == "0000-00-00 00:00:00" || (row.accomplished == 0 && row.accomplished)) {
-                action = '<span class="m-badge m-badge--accent m-badge--wide accomplishment_'+row.id+'" role="alert"><small><strong>Approved</strong></small></span>';
-            }
+            action = '<span class="m-badge m-badge--accent m-badge--wide" role="alert"><small><strong>Approved</strong></small></span>';
             break;
         case "Disapproved":
             action = '<span class="m-badge m-badge--danger m-badge--wide" role="alert"><small><strong>Disapproved</strong></small></span>';
