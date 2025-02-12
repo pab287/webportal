@@ -41,8 +41,105 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
+                        <table class="table table-striped table-bordered" id="table-telegram-protocol" width="100%">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Owner</th>
+                                    <th>Status</th>
+                                    <th>Module</th>
+                                    <th>Bot Chat Id</th>
+                                    <th>Token</th>
+                                    <th>Created At</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>	
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="new_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Add SMS Protocol</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form id="new_form" method="post" action="<?php echo site_url("configuration/set_telegram_protocol_settings"); ?>">
+                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                <div class="col-12 modal-body">
+                    <div class="form-group m-form__group row">
+                        <label class="col-6 col-form-label form-control-label">
+                            Bot Name *
+                        </label>
+                        <div class="col-12">
+                            <input type="text" class="form-control" name="bot_name" data-validation="required" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row">
+                        <label class="col-6 col-form-label form-control-label">
+                            Bot Description *
+                        </label>
+                        <div class="col-12">
+                            <input type="text" class="form-control" name="bot_description" data-validation="required" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row">
+                        <label class="col-6 col-form-label form-control-label">
+                            Module *
+                        </label>
+                        <div class="col-12">
+                            <select id="select2_module" name="modules[]" class="form-control m-select2" data-validation="required" multiple>
+                                <option></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row">
+                        <label class="col-6 col-form-label form-control-label">
+                            Bot Owner *
+                        </label>
+                        <div class="col-12">
+                            <select id="select2_owner" name="owner_id" class="form-control m-select2" data-validation="required">
+                                <option></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row">
+                        <label class="col-6 col-form-label form-control-label">
+                            Chat Id *
+                        </label>
+                        <div class="col-12">
+                            <input type="text" class="form-control" name="chat_id" data-validation="required" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row">
+                        <label class="col-6 col-form-label form-control-label">
+                            Telegram Bot Token *
+                        </label>
+                        <div class="col-12">
+                            <input type="text" class="form-control" name="telegram_bot_token" data-validation="required" autocomplete="off" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-submit btn-primary btnSave">Save</button>
+                    <button type="button" class="btn btn-metal text-white btnClose" data-dismiss="modal">Close</button>   
+                </div>
+            </form>
         </div>
     </div>
 </div>

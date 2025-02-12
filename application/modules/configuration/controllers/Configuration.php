@@ -48,7 +48,9 @@ class Configuration extends MY_Controller {
 
     public function telegram_protocol(){
         $this->core_layout->setPrivilegeName("cfg_telegram_protocol");
-        $this->core_layout->addJs("js/configuration/telegram/telegram_protocol.js", true);
+        $data['owner'] = $this->telegram->select2OwnerData();
+        $data['module'] = $this->telegram->select2ModuleData();
+        $this->core_layout->addJs("js/configuration/telegram/telegram_protocol.js", true,$data);
 		$this->load->view('core/templates/header');
         $this->load->view('configuration/telegram/telegram_protocol');
         $this->load->view('core/templates/footer');
@@ -265,6 +267,16 @@ class Configuration extends MY_Controller {
         $this->output
         ->set_content_type('json')
         ->set_output(json_encode($data));
+    }
+
+    public function telegram_protocol_datatable_request(){
+        $data = $this->telegram->getTelegramDatatableRequest();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function set_telegram_protocol_settings(){
+        $data = $this->telegram->setTelegramProtocolSettings();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
 }
