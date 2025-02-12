@@ -121,7 +121,7 @@
                                     <span class="btn btn-success fileinput-button">
                                         <em class="fa fa-upload"></em>
                                         <span>SELECT FILE</span>
-                                        <input type="file" id="fileupload" multiple name="files">
+                                        <input type="file" id="fileupload" multiple name="files" accept=".jpg,.jpeg,.png,.pdf" >
                                     </span>
                                     <br>
                                     <br>

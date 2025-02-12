@@ -96,7 +96,7 @@
                                         <span class="btn btn-success fileinput-button">
                                             <em class="fa fa-upload"></em>
                                             <span>SELECT FILE </span>
-                                            <input type="file" id="fileupload" name="files" multiple>
+                                            <input type="file" id="fileupload" name="files" multiple accept=".jpg,.jpeg,.png,.pdf" >
                                         </span>
                                         <div id="progress" class="progress" style="height: 7px;">
                                             <div class="progress-bar progress-bar-small progress-bar-success"></div>

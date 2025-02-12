@@ -114,6 +114,14 @@
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-6 col-sm-4">
+                                        Department Responsible:
+                                    </label>
+                                    <div class="col-lg-8 col-md-6 col-sm-8">
+                                        <b v-text="vm_tab1.responsibility"></b>
+                                    </div>
+                                </div>
+                                <div class="form-group m-form__group row">
+                                    <label class="col-lg-4 col-md-6 col-sm-4">
                                         Module:
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-8">

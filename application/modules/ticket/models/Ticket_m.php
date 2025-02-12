@@ -550,7 +550,7 @@ class Ticket_m extends CI_Model
                     }
                 } else {
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = "Image upload failed!";
+                    $resultset["toastr_msg"] = $data["message"];
                     $resultset["toastr_state"] = "error";
                 }
             }
@@ -692,6 +692,9 @@ class Ticket_m extends CI_Model
                 
             case 'software':
                 $responsibility = $post['responsibility'];
+                break;
+            default:
+                $responsibility = "IT SUPPORT";
                 break;
         }
 
@@ -866,7 +869,9 @@ class Ticket_m extends CI_Model
     function deleteTicket($id){
         $this->db->where('id', $id);
         $data = array(
-            'is_archived' => 1
+            'status' => 'Cancelled',
+            'is_archived' => 1,
+
         );
         $query = $this->db->update('gccticket.ticket', $data);
         return $query;
