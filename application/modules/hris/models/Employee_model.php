@@ -2359,7 +2359,7 @@
                         }
                     } else {
                         $resultset["response"] = false;
-                        $resultset["toastr_msg"] = "File upload failed!";
+                        $resultset["toastr_msg"] = "File upload failed! ".$data["message"];
                         $resultset["toastr_state"] = "error";
                         $this->core_layout->setEventLog("Employee Offense - File upload failed.","file upload", "error", "gcchris", "system");
                     }
