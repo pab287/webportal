@@ -80,39 +80,36 @@
         <div class="m-portlet__body">
             <div class="m-form m-form--label-align-right m--margin-top-10 m--margin-bottom-10">
                 <div class="row align-items-center">
-                    <div class="col d-flex ">
-                        <div class="form-group row">
-                            <div class="col" style="padding-right: 1px;">
-                                <!-- <a class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill btnNew text-white" onclick="open_resume()"> -->
-                                   <a class="btn m-btn--pill btn-accent btnNew text-white" href="<?php echo site_url("crs/new_resume_page"); ?>">
-                                <span>
-                                    <i class="la la-plus"></i>
+                    <div class="col-xl-8 d-flex row align-items-center">
+                            <div class="col-1 p1">
+                                <a class="btn m-btn--pill btn-accent btnNew text-white" href="<?php echo site_url("crs/new_resume_page"); ?>">
                                     <span>
-                                        New
+                                        <i class="la la-plus"></i>
+                                        <span>
+                                            New
+                                        </span>
                                     </span>
-                                </span>
                                 </a>
                             </div>
 
-                            <div class="col" style="padding-left: 0;">
-                                <!-- <a class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill btnNew text-white" onclick="open_resume()"> -->
-                                <a class="btn m-btn--pill btn-danger btnNew text-white btnNew text-white" href="#" data-toggle="modal" data-target="#query_search">
+                            <div class="col-2 p1">
                                 <span>
-                                <!-- <i class=" flaticon-search-1"></i> -->
-                                    <span>
-                                       Advance Search
-                                    </span>
+                                    <a class="btn m-btn--pill btn-danger btnNew text-white btnNew" href="#" data-toggle="modal" data-target="#query_search">
+                                        <span>
+                                            <span>
+                                            Advance Search
+                                            </span>
+                                        </span>
+                                    </a>
                                 </span>
-                                </a>
                             </div>
-                            <div style= "width:250px;">
-                            <div class="form-group d-flex">
-                                <select name="year" id="year" class="form-control"></select>
+                            <div class="col-3 p1">
+                                <span>
+                                    <input type="text" name="application_dt_resume" id="application_dt_resume" placeholder="SELECT APPLICATION DATE" class="form-control m-input " autocomplete="off" readonly>
+                                </span>
                             </div>
-                        </div>
-                        </div>
                     </div>
-                    <div class="col-xl-4 order-1 order-xl-2 m--align-right d-flex flex-row">
+                    <div class="col-xl-4 d-flex">
                         <div class="m-input-icon m-input-icon--left" style="border: 1px solid #c3c3c3;">
                             <input type="text" class="form-control m-input m-input--solid" placeholder="Search..." id="generalSearch">
                             <span class="m-input-icon__icon m-input-icon__icon--left">
@@ -188,9 +185,9 @@
                         <th>Desired<br>Position</th>
                         <th>Eligible<br> Position/Tag</th>
                         <th>Status</th>
-                        <th>Remarks</th>
-                        <th>Recruitment</th>
                         <th>Attach Files</th>
+                        <th>Recruitment</th>
+                        <th>Remarks</th>
                         <th>Action</th>
                     </tr>
                     </thead>

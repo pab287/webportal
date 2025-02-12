@@ -1,6 +1,7 @@
 var search_val = "";
 var temp_images = [];
 var clone_element = null;
+let application_dt_resume_val = "";
 var tblResume = $("#table-resume")
     .DataTable({
         dom: 'rtlip',
@@ -16,7 +17,7 @@ var tblResume = $("#table-resume")
             data: function (d) {
                 d.csrf_token = _csrf_hash;
                 d.search['value'] = search_val;
-                d.year = selectedYear;
+                d.application_date = application_dt_resume_val;
             }
         },
         searching: true,
@@ -64,13 +65,13 @@ var tblResume = $("#table-resume")
                 data: "status",
             },
             {
-                data: "description",
+                data: "filename",
             },
             {
                 data: "recruitment",
             },
             {
-                data: "filename",
+                data: "description",
             },
             {
                 data: null,
@@ -269,23 +270,23 @@ function itemDatatableActions($id, $status) {
 //custom global search init
 $('#generalSearch').donetyping(function (callback) {
     search_val = $(this).val();
-    if(search_val.length >= 3){
-        $.ajax({
-            url: baseUrl("crs/search_confirm_val"),
-            type: "post",
-            data: {
-                csrf_token: _csrf_hash,
-                search_val: search_val
-            },
-            success: function(resp){
-                if(resp == true){
-                    toastr.error("This user status is currently Blacklisted.", "Invalid Data!", 10000);
-                }
+    // if(search_val.length >= 3){
+    //     $.ajax({
+    //         url: baseUrl("crs/search_confirm_val"),
+    //         type: "post",
+    //         data: {
+    //             csrf_token: _csrf_hash,
+    //             search_val: search_val
+    //         },
+    //         success: function(resp){
+    //             if(resp == true){
+    //                 toastr.error("This user status is currently Blacklisted.", "Invalid Data!", 10000);
+    //             }
                 
-            }
-        });
-    }
-    
+    //         }
+    //     });
+    // }
+    // tblReport.ajax.reload();
     tblResume.ajax.reload();
 });
 
@@ -644,11 +645,11 @@ const dbFieldEl = '' +
     '<option value="school">School</option>' +
     '<option value="course">Course</option>' +
     '<option value="position">Position</option>' +
-    '<option value="tag1">Tag</option>' +
+    '<option value="tag1">Eligible Position</option>' +
     '<option value="description">Description</option>' +
-    '<option value="recruitment">Recruitment</option>' +
+    '<option value="recruitment">Recruitment Source</option>' +
     '<option value="referral">Referral</option>' +
-    '<option value="applied_dt">Applied_dt</option>' +
+    '<option value="applied_dt">Applied Date</option>' +
     '';
 
 const dbSortFieldEl = '' +
@@ -660,11 +661,11 @@ const dbSortFieldEl = '' +
     '<option value="school">School</option>' +
     '<option value="course">Course</option>' +
     '<option value="position">Position</option>' +
-    '<option value="tag1">Tag</option>' +
+    '<option value="tag1">Eligible Positio</option>' +
     '<option value="description">Description</option>' +
-    '<option value="recruitment">Recruitment</option>' +
+    '<option value="recruitment">Recruitment Source</option>' +
     '<option value="referral">Referral</option>' +
-    '<option value="applied_dt">Applied_dt</option>' +
+    '<option value="applied_dt">Applied Date</option>' +
     '';
 
 $('#field')
@@ -1216,3 +1217,36 @@ function logexport(type){
         },
     });
 }
+
+$('#application_dt_resume').daterangepicker({
+     alwaysShowCalendars: true,
+     todayHighlight: true,
+     showDropdowns: true,
+     autoclose: true,
+     pickerPosition: 'center', 
+     todayBtn: 'linked',
+     format: 'yyyy/mm/dd',
+     autoUpdateInput: false,
+     minDate: new Date(2015, 0, 1),
+     maxDate: new Date(new Date().getFullYear(), 11, 31),
+     ranges: {
+         'Today': [moment(), moment()],
+         'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+         'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+         'Last 365 Days': [moment().subtract(364, 'days'), moment()]
+     },
+     locale: {
+         cancelLabel: 'Clear'  
+     }
+  }).on('apply.daterangepicker', function(ev, picker) {
+      ev.preventDefault();
+      let startDate = picker.startDate.format('YYYY/MM/DD');
+      let endDate = picker.endDate.format('YYYY/MM/DD');
+      application_dt_resume_val = startDate + ' - ' + endDate;
+      $(this).val(application_dt_resume_val);   
+      tblResume.ajax.reload();
+  }).on('cancel.daterangepicker', function(ev, picker) {
+     $(this).val('SELECT APPLICATION DATE');
+     application_dt_resume_val = "";
+     tblResume.ajax.reload();
+  });
