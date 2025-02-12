@@ -5039,12 +5039,12 @@
 
             $travelDates = $this->getFirstAndLastArrValue($temp_destination);
 
-            $this->db->select('a.reference_no, c.date_from, c.date_to, c.destination, UPPER(CONCAT(d.firstname, " ", d.lastname)) as name, a.status');
+            $this->db->select('a.reference_no, c.date_from, c.date_to, c.destination, UPPER(CONCAT(d.firstname, " ", d.lastname)) as name, a.status, b.employee_id');
             $this->db->join($this->travelPersonnelTable.' as b', 'b.travel_order_id = a.id', 'LEFT');
             $this->db->join($this->travelDestinationTable.' as c', 'c.travel_order_id = a.id', 'LEFT');
             $this->db->join($this->employeeTable.' as d', 'd.id = b.employee_id', 'LEFT');
             $this->db->from($this->travelOrderTable.' as a');
-            $this->db->where_in('employee_id', $_personnelIds);
+            $this->db->where_in('b.employee_id', $_personnelIds);
 
             $this->db->where('a.status !=', 'Cancelled');
             $this->db->where('a.status !=', 'Disapproved');
@@ -5070,20 +5070,23 @@
             
             if ($query->num_rows() > 0){
                 foreach($query->result() as $key => $rs) {
-                    foreach ($_destinationLocation as $k => $row) {
-                        $savedFromDes = date('Y-m-d H:i', strtotime($rs->date_from));
-                        $savedToDes = date('Y-m-d H:i', strtotime($rs->date_to));
-
-                        $toSavedFromDes = date('Y-m-d H:i', strtotime($row['date_from']));
-                        $toSavedToDes = date('Y-m-d H:i', strtotime($row['date_to']));
-
-                        if (($savedFromDes >= $toSavedFromDes && $savedFromDes <= $toSavedToDes) || ($savedToDes >= $toSavedFromDes && $savedToDes <= $toSavedToDes) || ($savedFromDes <= $toSavedFromDes && $savedToDes >= $toSavedToDes)) {
-                           $arrData[$key]['reference_no'] = $rs->reference_no;
-                           $arrData[$key]['name'] = $rs->name;
-                           $arrData[$key]['status'] = $rs->status;
-                           $arrData[$key]['to'][] = ['destination' => $rs->destination, 'date_from' => $rs->date_from, 'date_to' => $rs->date_to];
+                    if (in_array($rs->employee_id, $_personnelIds)) {
+                        foreach ($_destinationLocation as $k => $row) {
+                            $savedFromDes = date('Y-m-d H:i', strtotime($rs->date_from));
+                            $savedToDes = date('Y-m-d H:i', strtotime($rs->date_to));
+    
+                            $toSavedFromDes = date('Y-m-d H:i', strtotime($row['date_from']));
+                            $toSavedToDes = date('Y-m-d H:i', strtotime($row['date_to']));
+    
+                            if (($savedFromDes >= $toSavedFromDes && $savedFromDes <= $toSavedToDes) || ($savedToDes >= $toSavedFromDes && $savedToDes <= $toSavedToDes) || ($savedFromDes <= $toSavedFromDes && $savedToDes >= $toSavedToDes)) {
+                               $arrData[$key]['reference_no'] = $rs->reference_no;
+                               $arrData[$key]['name'] = $rs->name;
+                               $arrData[$key]['status'] = $rs->status;
+                               $arrData[$key]['to'][] = ['destination' => $rs->destination, 'date_from' => $rs->date_from, 'date_to' => $rs->date_to];
+                            }
                         }
                     }
+
                 }
             }
 
@@ -5142,13 +5145,13 @@
 
             $travelDates = $this->getFirstAndLastArrValue($destinations);
 
-            $this->db->select('a.reference_no, c.date_from, c.date_to, c.destination, UPPER(CONCAT(d.firstname, " ", d.lastname)) as name, a.status');
+            $this->db->select('a.reference_no, c.date_from, c.date_to, c.destination, UPPER(CONCAT(d.firstname, " ", d.lastname)) as name, a.status, b.employee_id');
             $this->db->join($this->travelPersonnelTable.' as b', 'b.travel_order_id = a.id', 'LEFT');
             $this->db->join($this->travelDestinationTable.' as c', 'c.travel_order_id = a.id', 'LEFT');
             $this->db->join($this->employeeTable.' as d', 'd.id = b.employee_id', 'LEFT');
             $this->db->from($this->travelOrderTable.' as a');
             $this->db->where('a.id !=', $id);
-            $this->db->where_in('employee_id', $_personnelIds);
+            $this->db->where_in('b.employee_id', $_personnelIds);
 
             $this->db->where('a.status !=', 'Cancelled');
             $this->db->where('a.status !=', 'Disapproved');
@@ -5174,18 +5177,20 @@
 
             if ($query->num_rows() > 0){
                 foreach($query->result() as $key => $rs) {
-                    foreach ($_destinationLocation as $k => $row) {
-                        $savedFromDes = date('Y-m-d H:i', strtotime($rs->date_from));
-                        $savedToDes = date('Y-m-d H:i', strtotime($rs->date_to));
-
-                        $toSavedFromDes = date('Y-m-d H:i', strtotime($row['date_from']));
-                        $toSavedToDes = date('Y-m-d H:i', strtotime($row['date_to']));
-
-                        if (($savedFromDes >= $toSavedFromDes && $savedFromDes <= $toSavedToDes) || ($savedToDes >= $toSavedFromDes && $savedToDes <= $toSavedToDes) || ($savedFromDes <= $toSavedFromDes && $savedToDes >= $toSavedToDes)) {
-                           $arrData[$key]['reference_no'] = $rs->reference_no;
-                           $arrData[$key]['name'] = $rs->name;
-                           $arrData[$key]['status'] = $rs->status;
-                           $arrData[$key]['to'][] = ['destination' => $rs->destination, 'date_from' => $rs->date_from, 'date_to' => $rs->date_to];
+                    if (in_array($rs->employee_id, $_personnelIds)) {
+                        foreach ($_destinationLocation as $k => $row) {
+                            $savedFromDes = date('Y-m-d H:i', strtotime($rs->date_from));
+                            $savedToDes = date('Y-m-d H:i', strtotime($rs->date_to));
+    
+                            $toSavedFromDes = date('Y-m-d H:i', strtotime($row['date_from']));
+                            $toSavedToDes = date('Y-m-d H:i', strtotime($row['date_to']));
+    
+                            if (($savedFromDes >= $toSavedFromDes && $savedFromDes <= $toSavedToDes) || ($savedToDes >= $toSavedFromDes && $savedToDes <= $toSavedToDes) || ($savedFromDes <= $toSavedFromDes && $savedToDes >= $toSavedToDes)) {
+                               $arrData[$key]['reference_no'] = $rs->reference_no;
+                               $arrData[$key]['name'] = $rs->name;
+                               $arrData[$key]['status'] = $rs->status;
+                               $arrData[$key]['to'][] = ['destination' => $rs->destination, 'date_from' => $rs->date_from, 'date_to' => $rs->date_to];
+                            }
                         }
                     }
                 }
