@@ -146,6 +146,8 @@
 
         function reports(){
             $this->core_layout->setPrivilegeName("crs_reports");
+            $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
+            $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
             $this->core_layout->addCss("global/plugins/uploadui/css/blueimp/blueimp-gallery.min.css", true);
             $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload.css", true);
             $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload-ui.css", true);

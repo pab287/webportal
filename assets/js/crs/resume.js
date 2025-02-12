@@ -591,7 +591,7 @@ $(document).ready(function () {
                 { id: 'referral', label: 'Referral', type: 'string' },
                 { 
                     id: 'applied_dt',
-                    label: 'Applied_dt',
+                    label: 'Applied Date',
                     type: 'date',
                     validation: {
                         format: 'YYYY-MM-DD'
@@ -622,6 +622,11 @@ $(document).ready(function () {
                 $(".rule-operator-container").find('select').select2();
             });
     }
+    $('#query-builder').on('afterCreateRuleInput.queryBuilder', function(e, rule) {
+        if (rule.filter.id === 'applied_dt') {
+            $(rule.$el.find('.rule-value-container input')).attr('readonly', true);
+        }
+    });
 });
 
 function selectItem(target, id) { // refactored this a bit, don't pay attention to this being a function
