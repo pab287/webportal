@@ -80,7 +80,7 @@
                     </div>
 
                     <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
-                        <table class="table table-bordered" width="100%" style="font-family: roboto;" id="tbl-overtime-summary">
+                        <table class="table table-bordered" style="font-family: roboto; width: 100%;" id="tbl-overtime-summary">
                             <thead>
                                 <tr>
                                     <th class="m--hide">EMPLOYEE NAME</th>
@@ -88,16 +88,18 @@
                                     <th>SPECIFIED DAY</th>
                                     <th>DAILY RATE</th>
                                     <th>DAILY ALLOWANCE</th>
-                                    <th>NO. OF HOURS</th>
+                                    <th>NO. HRS</th>
                                     <th>OT PAY</th>
-                                    <th>ND HRS WORKED</th>
-                                    <th>NIGHT DIFFERENTIAL</th>
+                                    <th>25% OT PAY</th>
+                                    <th>30% OT PAY</th>
+                                    <th>NDIFF HRS.</th>
+                                    <th>NDIFF PAY</th>
                                     <th>AMOUNT</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
                             <tfoot>
-                                <th class="text-right" colspan="9">&nbsp;</th>
+                                <th class="text-right" colspan="11">&nbsp;</th>
                                 <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
                             </tfoot>
                         </table>

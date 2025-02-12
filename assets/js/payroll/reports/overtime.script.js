@@ -536,14 +536,13 @@ $(document).ready(function(){
                 const sheet = xlsx.xl.worksheets['sheet1.xml'];
 
                 let numrows = $('row', sheet).length;
-                numrows = $('row', sheet).length;
                 let mergeCells = $('mergeCells', sheet);
                 mergeCells[0].appendChild(_createNode(sheet, 'mergeCell', {
-                    attr: { ref: 'A' + numrows + ':' + 'I' + numrows },
+                    attr: { ref: 'A' + numrows + ':' + 'K' + numrows },
                 }));
 
                 function _createNode(doc, nodeName, opts) {
-                    var tempNode = doc.createElement(nodeName);
+                    const tempNode = doc.createElement(nodeName);
                     if (opts) {
                         if (opts.attr) { $(tempNode).attr(opts.attr); }
                         if (opts.children) {
@@ -558,20 +557,20 @@ $(document).ready(function(){
             },
         }], columns: [
             { visible: false, data: 'employee_name' },
-            { data: 'overtime_in', width: '*' },
-            { data: 'day', width: '10%', className: "text-center" },
-            { data: 'daily_rate', width: '10%', className: "text-right",
+            { data: 'overtime_in', width: '10%' },
+            { data: 'day', width: '8%', className: "text-center" },
+            { data: 'daily_rate', width: '6%', className: "text-right",
                 render: function(data, type, row){
                     return '₱ '+data;
                 }
-            }, { data: 'allowance', width: '12%', className: "text-right", 
+            }, { data: 'allowance', width: '9%', className: "text-right", 
                 render: function (data) {
                     if (data && parseFloat(data) > 0) {
                         const allw = parseFloat(data);
                         return allw.toFixed(2);
                     } else { return '-'; }
                 }
-            }, { data: 'ot_hrs', width: '12%', className: "text-right",
+            }, { data: 'ot_hrs', width: '5%', className: "text-right",
                 render: function (data, type, row) {
                     if (data && parseFloat(data) > 0) {
                         const ot_hrs = parseFloat(data);
@@ -579,27 +578,42 @@ $(document).ready(function(){
                     }
                     return data;
                 }
-            }, { data: 'ot_pay', width: '7%', className: "text-right",
-                render: function (data, type, row) {
+            }, { data: 'ot_pay', width: '8%', className: "text-right",
+                render: function (data, _type, row) {
                     if (data && parseFloat(data) > 0) {
-                        const ot_pay = parseFloat(data);
+                        let ot_pay = parseFloat(data);
+                        if(parseInt(row.has_shift) === 1) { ot_pay = ot_pay - (ot_pay * 0.25); }
+                        else if(parseInt(row.has_shift) === 0) { ot_pay = ot_pay - (ot_pay * 0.30); }
                         return '₱ '+ot_pay.toFixed(2);
-                    }
-                    return data;
+                    }else{ return '-'; }
                 }
-            }, { data: 'ot_ndiff_hrs', width: '12%', className: "text-right",
-                render: function (data, type, row) {
+            }, { data: null, className: "text-right", width: '8%', 
+                render: function (_data, _type, row) {
+                    if (row.ot_pay && parseFloat(row.ot_pay) > 0 && parseInt(row.has_shift) === 1) {
+                        const _25_ot_pay = parseFloat(row.ot_pay) * 0.25;
+                        return '₱ '+_25_ot_pay.toFixed(2);
+                    } else { return '-'; }
+                }
+            }, { data: null, className: "text-right", width: '8%', 
+                render: function (_data, _type, row) {
+                    if (row.ot_pay && parseFloat(row.ot_pay) > 0 && parseInt(row.has_shift) === 0) {
+                        const _30_ot_pay = parseFloat(row.ot_pay) * 0.30;
+                        return '₱ '+_30_ot_pay.toFixed(2);
+                    } else { return '-'; }
+                }
+            }, { data: 'ot_ndiff_hrs', width: '8%', className: "text-right",
+                render: function (data) {
                     if (data && parseFloat(data) > 0) {
                         const ot_ndiff_hrs = parseFloat(data);
                         return ot_ndiff_hrs.toFixed(2);
                     }
                     return data;
                 }
-            }, { data: 'night_diff', className: "text-right", width: '15%', 
-                render: function (data, type, row) {
+            }, { data: 'night_diff', className: "text-right", width: '8%', 
+                render: function (data) {
                     if (data && parseFloat(data) > 0) {
                         const ot_ndiff_pay = parseFloat(data);
-                        return ot_ndiff_pay.toFixed(2);
+                        return '₱ '+ot_ndiff_pay.toFixed(2);
                     } else { return '-'; }
                 }
             }, { data: 'amount', className: "text-right pr-3", width: '10%', 
@@ -613,62 +627,64 @@ $(document).ready(function(){
             }
         ], rowGroup: {
             startRender: function ( _rows, group ) {
-                return $('<tr><td colspan="9" class="bg-secondary"><span class="m--font-boldest">' + group + '</span></td></tr>');
+                return $('<tr><td colspan="11" class="bg-secondary"><span class="m--font-boldest">' + group + '</span></td></tr>');
             },
             endRender: function ( rows, _group ) {
-                var OTadj = rows
-                        .data()
-                        .pluck('ot_adj')
-                        .reduce( function (a, b) {
-                            return b ? numberFormat(b) : 0.00;
-                        }, 0);
-                var totalAmount = rows
-                        .data()
-                        .pluck('amount')
-                        .reduce( function (a, b) {
-                            var totalOTAmount = parseFloat(a) + parseFloat(b);
-                            return numberFormat(totalOTAmount);
-                        }, 0);
+                let OTadj = rows
+                    .data()
+                    .pluck('ot_adj')
+                    .reduce( function (a, b) {
+                        return b ? toNumber(b) : 0.00;
+                    }, 0);
+                
+                let totalAmount = rows
+                .data()
+                .pluck('amount')
+                .reduce( function (a, b) {
+                    let totalOTAmount = parseFloat(a) + parseFloat(b);
+                    return toNumber(totalOTAmount);
+                }, 0);
                     
-                var total = parseFloat(totalAmount) + parseFloat(OTadj);
-                const uiAdjustment = parseFloat(OTadj) > 0 ? `<span>OT ADJ - ₱ ${numberFormat(OTadj)}</span>`: ``;
+                let total = parseFloat(totalAmount) + parseFloat(OTadj);
+                const uiAdjustment = parseFloat(OTadj) > 0 ? `<span class="m--font-boldest">OT ADJ</span>`: `&nbsp;`;
+                const uiAdjustmentAmount = parseFloat(OTadj) > 0 ? `<span class="m--font-boldest">₱ ${numberFormat(OTadj)}</span>`: `-`;
                 const uiTotal = `<strong>₱ ${numberFormat(total)}</strong>`;
 
                 const tempContainer = `<tr class="bg-secondary">
-                    <td colspan="7" class="text-right">&nbsp;</td>
-                    <td class="text-right pr-3">${uiAdjustment}</td>
+                    <td colspan="8" class="text-right">${uiAdjustment}</td>
+                    <td class="text-right">${uiAdjustmentAmount}</td>
+                    <td class="text-right"><span class="m--font-boldest">TOTAL</span></td>
                     <td class="text-right pr-3">${uiTotal}</td>
                     </tr>`;
 
-                    return $(tempContainer);
-                    
-                
+                return $(tempContainer);
             },
             dataSrc: [ 'employee_name' ],
             
         }, drawCallback: function () {
-            var api = this.api();
-            var tempData = api.data();
+            const api = this.api();
+            const tempData = api.data();
             const _dtActions = $("#table-actions");
             const hasRowData = tempData.length > 0;
             if (hasRowData && typeof _dtActions !== "undefined" && _dtActions.length == 1) {
-                if (_dtActions.hasClass("m--hide") == true) { _dtActions.removeClass("m--hide"); }
+                if (_dtActions.hasClass("m--hide") === true) { _dtActions.removeClass("m--hide"); }
             } else {
-                if (_dtActions.hasClass("m--hide") == false) { _dtActions.addClass("m--hide"); }
+                if (_dtActions.hasClass("m--hide") === false) { _dtActions.addClass("m--hide"); }
             }
 
             vmReportHeaders.show_header = hasRowData;
 
         }, footerCallback: function () {
-            var api = this.api();
-            var intVal = function (i) { return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0; };
-            let totalAmount = api.column(9).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const api = this.api();
+            const intVal = function (i) { return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : (typeof i === 'number') ? i : 0; };
+            const grandTotalIndex = 11;
+            let totalAmount = api.column(grandTotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
             
-            const footerLabelTotal = $(api.column(8).footer());
+            const footerLabelTotal = $(api.column(10).footer());
             footerLabelTotal.removeClass("text-center");
             footerLabelTotal.html(`<span class="m--font-boldest mr-3">GRAND TOTAL</span>`);
 
-            $(api.column(9).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAmount) + "</span>");
+            $(api.column(grandTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAmount) + "</span>");
         }
     });
 
