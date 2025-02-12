@@ -18,11 +18,11 @@ const months = [
     { id: 12, text: "December" }
 ];
 
-var _clearTable = true;
-var _tempFilter = {};
-var _globalFooterHtml = null;
+let _clearTable = true;
+let _tempFilter = {};
+let _globalFooterHtml = null;
 let _totalTaxable = 0;
-var _tempData = {
+let _tempData = {
     show_by_date: true, show_picker: false,
     year_picker: false, month_picker: false, company_ids: 0,
 };
@@ -37,22 +37,22 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     }
 }
 
-var vmGeneratejournal = new Vue({
+const vmGeneratejournal = new Vue({
     el: "#generate-journal_content",
     data: _tempData,
     methods: {
         tempShowByDates: function (id) {
-            var _this = this;
-            var currentElement = _this.$el;
+            const _this = this;
+            let currentElement = _this.$el;
             _this.show_by_date = (id == 1) ? true : false;
             _this.month_picker = (id == 2) ? true : false;
             _this.year_picker = (id == 3) ? true : false;
             _this.show_picker = false;
             if (id == 1) {
-                var filterDateRange = $(currentElement).find("#filter_date_range");
+                const filterDateRange = $(currentElement).find("#filter_date_range");
                 if (typeof filterDateRange !== "undefined" && filterDateRange.length == 1) {
                     filterDateRange.on("change", function () {
-                        var thisFilter = this;
+                        const thisFilter = this;
                         if (thisFilter.checked) {
                             $("#filter-by-date-range").removeClass('m--hide');
                             $("#filter-by-month-year").addClass('m--hide');
@@ -66,9 +66,9 @@ var vmGeneratejournal = new Vue({
             _this.renderSelect2Picker();
             return _this;
         }, tempShowPicker: function () {
-            var _this = this;
-            var currentElement = _this.$el;
-            _this.show_picker = (_this.show_picker == true) ? false : true;
+            const _this = this;
+            const currentElement = _this.$el;
+            _this.show_picker = !_this.show_picker;
             if (_this.show_picker === true) {
                 $(currentElement).find("#date-picker")
                     .daterangepicker({
@@ -80,9 +80,9 @@ var vmGeneratejournal = new Vue({
                         }
                     })
                     .on('apply.daterangepicker', function (ev, picker) {
-                        var tempStartDate = picker.startDate.format('MMM DD, YYYY');
-                        var tempEndDate = picker.endDate.format('MMM DD, YYYY');
-                        var tempFormat = tempStartDate + ' - ' + tempEndDate;
+                        const tempStartDate = picker.startDate.format('MMM DD, YYYY');
+                        const tempEndDate = picker.endDate.format('MMM DD, YYYY');
+                        const tempFormat = tempStartDate + ' - ' + tempEndDate;
                         $(currentElement).find("#date-range").val(tempFormat);
                     });
             } else {

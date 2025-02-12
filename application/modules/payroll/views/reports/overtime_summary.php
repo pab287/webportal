@@ -28,6 +28,15 @@
             </div>
             <div class="m-portlet__head-tools">
                 <ul class="m-portlet__nav">
+                    <li id="table-actions" class="m-portlet__nav-item text-right m-animate-fade-in m--hide">
+                        <button class='btn btn-brand m-btn' onclick='window.print()'>
+                            <span><i class="fa fa-print pr-1"></i> Print</span>
+                        </button>
+                        <button class='btn btn-warning m-btn text-white' onclick='exportExcel()'>
+                            <i class="fa fa-download pr-1"></i>
+                            <span>Export Excel</span>
+                        </button>
+                    </li>
                     <li class="m-portlet__nav-item">
                         <span data-toggle="modal"
                             data-target="#generate-report-modal">
@@ -48,7 +57,7 @@
         </div>
         <div class="m-portlet__body">
             <!--::dt begin::-->
-                <div class="row">
+                <!-- div class="row">
                     <div id="table-actions" class="col-12 col-md-12 col-lg-12 col-xl-12 col-sm-12 text-right m-animate-fade-in m--hide">
                         <button class='btn btn-brand m-btn' onclick='window.print()'>
                             <span><i class="fa fa-print pr-1"></i> Print</span>
@@ -58,7 +67,7 @@
                             <span>Export Excel</span>
                         </button>
                     </div>
-                </div>
+                </div -->
                 <div class="tbl-responsive-sm" id="overtime_summary_table">
                     <div id="report-header">
                         <template v-if="show_header">
