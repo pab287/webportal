@@ -10,6 +10,7 @@ class Configuration extends MY_Controller {
         $this->load->model("Sms_Configuration","sms_config");
         $this->load->model("Database_backup","database_backup");
         $this->load->model("Logs_model","logs");
+        $this->load->model("Telegram_bot_config", "telegram");
 	}
     
     public function index(){
@@ -42,6 +43,14 @@ class Configuration extends MY_Controller {
         $this->core_layout->addJs("js/configuration/sms/sms_protocol.js", true, $tempData);
 		$this->load->view('core/templates/header');
         $this->load->view('configuration/sms/sms_protocol');
+        $this->load->view('core/templates/footer');
+    }
+
+    public function telegram_protocol(){
+        $this->core_layout->setPrivilegeName("cfg_telegram_protocol");
+        $this->core_layout->addJs("js/configuration/telegram/telegram_protocol.js", true);
+		$this->load->view('core/templates/header');
+        $this->load->view('configuration/telegram/telegram_protocol');
         $this->load->view('core/templates/footer');
     }
 
