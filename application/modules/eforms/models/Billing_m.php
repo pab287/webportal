@@ -2315,16 +2315,33 @@ class Billing_m extends CI_Model {
     // (sum all received_amount) - (sum all net_payment) = balance
     // balance - balance_covered = over payment
     function computeOverPayment($customer_id){
-        $this->db->select("SUM(received_amount - net_payment) as balance, SUM(balance_covered) as balance_covered");
+        // Get total received amount
+        $this->db->select("SUM(received_amount) AS total_received_amount");
         $this->db->from("hydra_billing.payments");
-        $this->db->where("account_id",$customer_id);
-        $this->db->where("is_archive","0");
-        $query = $this->db->get()->row_array();
-        $balance = number_format((float)$query['balance'], 2, '.', '') - number_format((float)$query['balance_covered'], 2, '.', '');
-        if($balance < 0){
-          $balance = 0;
-        }
-		return number_format($balance, 2, '.', '');
+        $this->db->where("account_id", $customer_id);
+        $this->db->where("is_archive", "0");
+        $total_received_amount = $this->db->get()->row()->total_received_amount;
+
+        // Get total net payment (first occurrence per bill_id)
+        $this->db->select("SUM(p.net_payment) AS total_net_payment");
+        $this->db->from("hydra_billing.payments p");
+        $this->db->join("(SELECT bill_id, MIN(id) AS min_id FROM hydra_billing.payments WHERE account_id = $customer_id AND is_archive = 0 GROUP BY bill_id) AS first_payments", "p.id = first_payments.min_id");
+        $total_net_payment = $this->db->get()->row()->total_net_payment;
+
+        // Get total balance covered
+        $this->db->select("SUM(balance_covered) AS balance_covered");
+        $this->db->from("hydra_billing.payments");
+        $this->db->where("account_id", $customer_id);
+        $this->db->where("is_archive", "0");
+        $balance_covered = $this->db->get()->row()->balance_covered;
+
+        // Compute values
+        $received_net_payment = $total_received_amount - $total_net_payment;
+        $total = $received_net_payment - $balance_covered;
+        $total = $total < 0 ? 0 : $total;
+
+        // Return formatted value
+        return number_format($total, 2, '.', '');
     }
 
     function checkOverdue(){

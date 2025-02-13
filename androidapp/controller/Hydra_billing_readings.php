@@ -35,38 +35,6 @@ class Hydra_billing_readings extends Dbase{
     public function updatePrintCount(){
         echo $this->hydra_billing_readings_m->update_print();
     }
-
-    
-    public function test_compute_balance_last_bill(){
-        $account_id = 623;
-        $res = $this->hydra_billing_readings_m->test_compute_balance_last_bill($account_id);
-        var_dump($res);
-    }
-
-    public function testGetBilling(){
-        // $reading_id = 14760;
-        // $account_id = 623;
-
-        $reading_id = 14517;
-        $account_id = 111;
-        
-        // $reading_id = 14753;
-        // $account_id = 622;
-
-        $res = $this->hydra_billing_readings_m->testGetBilling($reading_id, $account_id);
-        var_dump($res);
-    }
-
-    public function test_computeOverPayment(){
-        $res = $this->hydra_billing_readings_m->test_computeOverPayment();
-        var_dump($res);
-    }
-
-    public function main_charges_bill(){
-        $account_id = $_POST['account_id'];
-        $res = $this->hydra_billing_readings_m->main_charges_bill($account_id);
-        var_dump($res);
-    }
 }
 
 ?>
