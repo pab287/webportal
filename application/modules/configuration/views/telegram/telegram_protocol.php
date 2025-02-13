@@ -74,7 +74,7 @@
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Add SMS Protocol</h5>
+                <h5 class="modal-title" id="exampleModalLabel">Add Telegram New Bot</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">×</span>
                 </button>
@@ -138,6 +138,81 @@
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-submit btn-primary btnSave">Save</button>
                     <button type="button" class="btn btn-metal text-white btnClose" data-dismiss="modal">Close</button>   
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="edit_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Edit Telegram Bot Protocol</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form id="edit_form" method="post" action="<?php echo site_url("configuration/update_telegram_protocol_settings"); ?>">
+                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                <div  id="edit-modal_body" class="col-12 modal-body">
+                    <input type="hidden" name="id" v-model="row.id" />
+                    <div class="form-group m-form__group row">
+                        <label class="col-6 col-form-label form-control-label">
+                            Bot Name *
+                        </label>
+                        <div class="col-12">
+                            <input type="text" class="form-control" name="bot_name" data-validation="required" autocomplete="off" v-model="row.bot_name"/>
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row">
+                        <label class="col-6 col-form-label form-control-label">
+                            Bot Description *
+                        </label>
+                        <div class="col-12">
+                            <input type="text" class="form-control" name="bot_description" data-validation="required" autocomplete="off" v-model="row.bot_description"/>
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row">
+                        <label class="col-6 col-form-label form-control-label">
+                            Module *
+                        </label>
+                        <div class="col-12">
+                            <select id="select2_module_edit" name="modules[]" class="form-control m-select2" data-validation="required" multiple  v-model="row.modules">
+                                <option></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row">
+                        <label class="col-6 col-form-label form-control-label">
+                            Bot Owner *
+                        </label>
+                        <div class="col-12">
+                            <select id="select2_owner_edit" name="owner_id" class="form-control m-select2" data-validation="required" v-model="row.owner_id">
+                                <option></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row">
+                        <label class="col-6 col-form-label form-control-label">
+                            Chat Id *
+                        </label>
+                        <div class="col-12">
+                            <input type="text" class="form-control" name="chat_id" data-validation="required" autocomplete="off" v-model="row.chat_id"/>
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row">
+                        <label class="col-6 col-form-label form-control-label">
+                            Telegram Bot Token *
+                        </label>
+                        <div class="col-12">
+                            <input type="text" class="form-control" name="telegram_bot_token" data-validation="required" autocomplete="off" v-model="row.telegram_bot_token"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-submit btn-primary btnSave">Save</button>
+                    <button type="button" class="btn btn-metal text-white btnClose" data-dismiss="modal">Close</button>
                 </div>
             </form>
         </div>

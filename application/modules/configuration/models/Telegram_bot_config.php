@@ -45,9 +45,29 @@ class Telegram_bot_config extends CI_Model{
 
         $i = $sortOrder[0]['column'];
         $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
-
         $query = $this->db->get();
-        return $query->result();
+        $results = $query->result();
+        foreach ($results as $row) {
+            if (!empty($row->modules)) {
+                $modules = unserialize($row->modules);
+                
+                if (is_array($modules)) {
+                    $this->db->select('label');
+                    $this->db->from('gccmaster.modules');
+                    $this->db->where_in('id', $modules);
+                    
+                    $row->modules = $this->db->get()->result();
+                }
+            }
+            if (!empty($row->owner_id)) {
+                $this->db->select('firstname, lastname, middlename');
+                $this->db->from('gccmaster.tblemployees');
+                $this->db->where('id', $row->owner_id);
+                $row->owner = $this->db->get()->result();
+            }
+        }
+
+        return $results;
 
     }
 
@@ -90,6 +110,39 @@ class Telegram_bot_config extends CI_Model{
         ];
         $this->core_layout->setEventLog($message, "insert", $success, "gccmaster", "user");
         return $result;
+    }
+
+    public function updateTelegramProtocolSettings() {
+        $post = $this->input->post();
+        unset($post['csrf_token']);
+        $post['modules'] = serialize($post['modules']);
+        $this->db->where('id', $post['id']);
+        $updated = $this->db->update($this->telegramConfigTable, $post);
+        if ($updated) {
+            $message = "Updated Telegram bot: {$post['bot_name']}";
+            $success = "success";
+        } else {
+            $message = "Failed to update Telegram bot: {$post['bot_name']}";
+            $success = "error"; // Changed to "error" to reflect the failure
+        }
+        $result = [
+            "response" => $updated,
+            "user" => "user",
+            "success" => $success,
+            "message" => $message
+        ];
+        $this->core_layout->setEventLog($message, "update", $success, "gccmaster", "user");
+        return $result;
+    }
+
+    public function getTelegramBotById($id){
+        $this->db->select("a.id, a.bot_name, a.bot_description, a.owner_id, a.status, a.modules, a.chat_id, a.telegram_bot_token, a.created_at");
+        $this->db->from($this->telegramConfigTable.' as a');
+        $this->db->where('a.id', $id);
+        $query = $this->db->get();
+        $results = $query->row();
+        $results->modules = @unserialize( $results->modules);
+        return array('response'=>$results);
     }
 
     public function select2OwnerData(){
