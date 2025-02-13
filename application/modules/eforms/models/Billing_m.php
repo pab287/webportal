@@ -1436,7 +1436,6 @@ class Billing_m extends CI_Model {
     }
 
     function generateBill(){
-        $resultarray = array();
         $post = $this->input->post();
 
         if(count($post["selectedReading"]) > 0){
@@ -1505,49 +1504,54 @@ class Billing_m extends CI_Model {
                         $this->updateReadingBilled($reading_id, "1", "Billed");
 
                         if($over_payment >= $charges){
-                        /* create payment */
-                          $resultarray = array();
-                          $code_insert = 'BHP';
-                          $ref_no_insert = $this->series($current_date, 'hydra_billing.payments', $code_insert);
-                          $ref_series_insert = explode("-",$ref_no_insert)[2];
-                          $ref_month_insert = explode("-",$ref_no_insert)[1];
-                          $ref_yr_insert = explode($code_insert,explode("-",$ref_no_insert)[0])[1];
+                            /* create payment */
+                            $resultarray = array();
+                            $code_insert = 'BHP';
+                            $ref_no_insert = $this->series($current_date, 'hydra_billing.payments', $code_insert);
+                            $ref_series_insert = explode("-",$ref_no_insert)[2];
+                            $ref_month_insert = explode("-",$ref_no_insert)[1];
+                            $ref_yr_insert = explode($code_insert,explode("-",$ref_no_insert)[0])[1];
 
-                          $insert_payment = array();
-                          $insert_payment['ref_no'] = $ref_no_insert;
-                          $insert_payment['ref_series'] = $ref_series_insert;
-                          $insert_payment['ref_yr'] = $ref_yr_insert;
-                          $insert_payment['ref_month'] = $ref_month_insert;
-                          $insert_payment["created_by"] = $this->getUserdata()['emp_id'];
-                          $insert_payment["created_date"] = $current_date;
-                          $insert_payment["balance_covered"] = preg_replace('/[^0-9a-zA-Z.]/', '', $charges);
-                          $insert_payment["received_amount"] = 0;
-                          $insert_payment["sub_total"] = preg_replace('/[^0-9a-zA-Z.]/', '', $charges);
-                          $insert_payment["net_payment"] = preg_replace('/[^0-9a-zA-Z.]/', '', $charges);
-                          $insert_payment["balance"] = 0;
-                          $insert_payment['acknowledgement_receipt'] = $this->generatePaymentAR();
-                          $insert_payment['bill_id'] = $bill_id;
-                          $insert_payment['payment_type'] = 'cash';
-                          $insert_payment['payment_date'] = date('Y-m-d', strtotime($current_date));
-                          $insert_payment['account_id'] = $currentReading['account_id'];
+                            $penalties = $this->generate_bill_insert_payment_check_overdue($bill_id, $currentReading['account_id'], $current_date);
+                            $_overdue = $penalties['array_penalties'][0]['overdue'];
+                            
+                            $insert_payment = array(
+                                'ref_no' => $ref_no_insert,
+                                'ref_series' => $ref_series_insert,
+                                'ref_yr' => $ref_yr_insert,
+                                'ref_month' => $ref_month_insert,
+                                'created_by' => $this->getUserdata()['emp_id'],
+                                'created_date' => $current_date,
+                                'balance_covered' => preg_replace('/[^0-9a-zA-Z.]/', '', $charges + $_overdue),
+                                'received_amount' => 0,
+                                'sub_total' => preg_replace('/[^0-9a-zA-Z.]/', '', $charges + $_overdue),
+                                'net_payment' => preg_replace('/[^0-9a-zA-Z.]/', '', $charges + $_overdue),
+                                'penalties' => $penalties['serialize_penalties'],
+                                'balance' => 0,
+                                'acknowledgement_receipt' => $this->generatePaymentAR(),
+                                'bill_id' => $bill_id,
+                                'payment_type' => 'cash',
+                                'payment_date' => date('Y-m-d', strtotime($current_date)),
+                                'account_id' => $currentReading['account_id']
+                            );
                           
-                          $query_insert_payment = $this->db->insert('hydra_billing.payments', $insert_payment);
+                            $query_insert_payment = $this->db->insert('hydra_billing.payments', $insert_payment);
 
-                          if($query_insert_payment){
-                              $this->updateBillingPaidStatus($bill_id, '1');
-                              $this->updateDisconnectionStatus($currentReading["account_id"]);
-                              $resultarray["status"] = TRUE;
-                              $resultarray["ar_code"] = $this->generatePaymentAR();
-                              $resultarray["msg"] = "Payment successfully saved.";
-                              $this->core_layout->setEventLog("Payments - Created payment ".$insert_payment['ref_no'],"insert", "success", "hydra_billing", "user");
-                          }else{
-                              $resultarray["status"] = FALSE;
-                              $resultarray["ar_code"] = FALSE;
-                              $resultarray["msg"] = "Error creating payment.";
-                              $this->core_layout->setEventLog("Payments - Error saving payment","insert", "error", "hydra_billing", "user");
-                          }
+                            if($query_insert_payment){
+                                $this->updateBillingPaidStatus($bill_id, '1');
+                                $this->updateDisconnectionStatus($currentReading["account_id"]);
+                                $response["status"] = TRUE;
+                                $response["ar_code"] = $this->generatePaymentAR();
+                                $response["msg"] = "Payment successfully saved.";
+                                $this->core_layout->setEventLog("Payments - Created payment ".$insert_payment['ref_no'],"insert", "success", "hydra_billing", "user");
+                            }else{
+                                $response["status"] = FALSE;
+                                $response["ar_code"] = FALSE;
+                                $response["msg"] = "Error creating payment.";
+                                $this->core_layout->setEventLog("Payments - Error saving payment","insert", "error", "hydra_billing", "user");
+                            }
                         }
-                        /*  */
+
                         $response["status"] = TRUE;
                         $response["ref_no"] = $currentReading["ref_no"];
                         $response["msg"] = "Successfully billed on the month of ".$month_words;
@@ -1581,6 +1585,60 @@ class Billing_m extends CI_Model {
 
         return $resultarray;
     }
+
+    public function generate_bill_insert_payment_check_overdue($bill_id, $customer_id, $current_date) {
+        $this->db->select("*");
+        $this->db->from("hydra_billing.bills");
+        $this->db->where("id", $bill_id);
+        $query = $this->db->get();
+        $row = $query->row_array();
+      
+        $result = array();
+        $array_penalties = array();
+      
+        $previous_payments = $this->getBillPayments($bill_id);
+        $penalties = $this->getPenalties();
+        $isDisconnectionStatus = $this->getCustomerDisconnectionStatus($customer_id);
+        $reconnectionFee = $this->getReconnectionFee();
+        $billing_amount = $row['total_charges'];
+        $due_date = $row['due_date'];
+        $total_amount = $billing_amount;
+        
+        $countDiff = $this->countMonthDiff($due_date, $current_date);
+        $result['countMonthDiff'] = $countDiff;
+        $isDisconnection = $isDisconnectionStatus=='1' ? true : false;
+      
+        if($current_date > $due_date){
+            $result['isPenalty'] = true;
+            $list = array();
+            if($penalties['type'] == 'percentage'){
+                $overdue = ($penalties['amount'] / 100) * $total_amount;
+                $total_amount = $overdue + $total_amount;
+            } else {
+                $overdue = $penalties['amount'];
+                $total_amount = $penalties['amount'] + $total_amount;
+            }
+      
+            $list['dueDate'] = $due_date;
+            $list['total_amount'] = number_format((float)$total_amount, 2, '.', '');
+            $list['overdue'] = number_format((float)$overdue, 2, '.', '');
+            $list['status'] = "due date";
+            $array_penalties[] = $list;
+        } else { // no penalty
+            $result['isPenalty'] = false;
+        }
+      
+        $net_payment = $isDisconnection ? ($total_amount + $reconnectionFee['amount']) : $total_amount;
+        
+        $result['isDisconnection'] = $isDisconnection;
+        $result['reconnectionFee'] = $isDisconnection ? $reconnectionFee : array();
+        $result['net_payment'] = $previous_payments ? (number_format((float)$net_payment, 2, '.', '') - $previous_payments) : number_format((float)$net_payment, 2, '.', '');
+        $result['billing_amount'] = $previous_payments ? ($billing_amount - $previous_payments) : $billing_amount;
+        $result['array_penalties'] = $array_penalties;
+        $result['serialize_penalties'] = serialize($array_penalties);
+        
+        return $result;
+      }
 
     function checkClientIsBilled($account_id, $reading_date){
         $current_m = date('m', strtotime($reading_date));
@@ -1731,7 +1789,6 @@ class Billing_m extends CI_Model {
                     // then set the net_payment into zero else remaining payment
                     if($net_payment < 0){
                         $net_payment = 0.00;
-                        // $overdue = 0.00;
                     } else {
                         $net_payment = $net_payment;
                     }
@@ -1746,19 +1803,17 @@ class Billing_m extends CI_Model {
                 }
                 $status = $_query["status"]=='1' ? 'Active' : 'Archive';
 
-                if($status=='Archive'){
+                if ($status=='Archive') {
                     $paid_status = 'Archive';
-                } else if($_query["is_paid"]=='1'){
+                } elseif ($_query["is_paid"]=='1') {
                     $paid_status = 'Paid';
-                } else if($current_date > $_query["due_date"]){
+                } elseif ($current_date > $_query["due_date"]) {
                     $paid_status = 'Overdue'; 
-                } else if($current_date == $_query["due_date"]){
+                } elseif ($current_date == $_query["due_date"]) {
                     $paid_status = 'Today due';
                 } else {
                     $paid_status = 'On going';
                 }
-
-                
 
                 $data["checkbox"] = "";
                 $data["name"] = $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
@@ -1770,18 +1825,34 @@ class Billing_m extends CI_Model {
                 $data["print_count"] = $_query["print_count"];
                 $data["billing_period"] = $_query["billing_from"] ." - ".$_query["billing_to"];
                 $data["due_date"] = $_query["due_date"];
-                // $data["total_charges"] = '₱ '.number_format((float)$_query["total_charges"], 2, '.', '');
                 $data["status"] = $paid_status;
                 $data['current_due'] = $_query['total_charges'];
                 $data["balance"] = $balance;
+                $data["balance_covered"] = $_query['balance_covered'];
                 $data["total_payments"] = $totalPayments;
+                $data["is_paid"] = $_query["is_paid"];
                 $data["balanceLastBill"] = $balanceLastBill;
                 $data["overdue"] = number_format(($overdue + $data["balanceLastBill"]["total_penalty"]),2,".",",");
                 $data["disconnection_fee"] = $disconnectionFee;
-                // $data["total_charges"] = number_format((($_query['total_charges'] + $balanceLastBill["total_amount"] + $overdue + $disconnectionFee) - $balance),2,".",",");
-                $data["total_charges"] = number_format((((int)$_query['total_charges'] + (int)$balanceLastBill["total_balance"] + (int)$disconnectionFee + (int)$data["overdue"]) - (int)$balance - (int)$totalPayments),2,".",",");
 
-                $data["solution"] = $_query['total_charges'] . " + " .  $balanceLastBill["total_balance"] . " + " . $disconnectionFee . " + " . $data["overdue"] . " - " . $balance  . " = " . $data["total_charges"];
+                $total_charges = ($_query['total_charges'] + $balanceLastBill["total_balance"] + $disconnectionFee + $data["overdue"]) - $balance - $totalPayments;
+
+                if ($_query["is_paid"] == 1 && $total_charges <= $_query['balance_covered']) {
+                    /**
+                     * Why i added $balance? because when total charges covered by overpayment or balanced_covered
+                     * the total charges return 0
+                     * Example: 300 + 0 + 0 + 6.00 - 306 = 0
+                     * 
+                     * Solution: 0 + 306 = 306.00
+                     */
+                    $_total_charges = $total_charges + $_query['balance_covered'];
+                } else {
+                    $_total_charges = $total_charges;
+                }
+
+                $data["total_charges"] = number_format($_total_charges, 2, ".", ",");
+                $data["solution"] = $_query['total_charges'] . " + " .  $balanceLastBill["total_balance"] . " + " . $disconnectionFee . " + " . $data["overdue"] . " - " . $balance  . " = " . $total_charges;
+                
                 $resultarray[] = $data;
             }
         }
