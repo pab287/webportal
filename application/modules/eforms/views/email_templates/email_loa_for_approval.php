@@ -87,9 +87,9 @@
             <tr>
                 <td class="content">
                     <h1 style="margin-top: 0; color: #333333;">Leave of Absence Request Notice</h1>
-                    <p>Hi! <?php echo $data['supervisor']; ?>,</p>
+                    <p>Hi! <?php echo strtoupper($data['supervisor']); ?>,</p>
 
-                    <p>Employee <?php echo $data['employeeDisplayName']?> filed a leave of absence</p>
+                    <p>Employee <?php echo $data['employeeDisplayName']?> filed a leave of absence request. Please find the details below:</p>
 
                     <div class="leave-details">
                         <p style="margin: 5px 0;"><strong>Reference Number:</strong> <?php echo $data['referenceNumber']; ?></p>

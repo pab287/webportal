@@ -845,7 +845,11 @@
         private function getLeaveDetails($id) {
             $query = $this->db->query("
                 SELECT
-                    l.*,
+                    l.type,
+                    l.reference_no,
+                    l.nature,
+                    l.approved_remarks,
+                    l.reason,
                     l.date_from,
                     l.date_to,
                     e.mobile_no,

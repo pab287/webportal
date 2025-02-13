@@ -155,7 +155,7 @@ function display_date_time($data) {
                 <td class="content">
                     <h1 style="margin-top: 0; color: #333333;">Leave of Absence Approval Notice</h1>
                     
-                    <p>Dear <?php echo $data['fullname']; ?>,</p>
+                    <p>Dear <?php echo strtoupper($data['fullname']); ?>,</p>
                     
                     <p>Your leave request has been approved. Please find the details below:</p>
                     
