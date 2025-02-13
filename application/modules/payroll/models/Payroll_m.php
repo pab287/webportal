@@ -4148,8 +4148,13 @@ class Payroll_m extends CI_Model
             $allowance->undertime_deduction = $undertime_deduction;
             $allowance->undertime_deduction_decimal = $undertime_deduction_decimal;
 
-            $allowance->allowance_net = $allowance_total - $undertime_deduction;
-            $allowance->allowance_net_decimal = floatval($allowance_total) - floatval($undertime_deduction_decimal);
+            $allowanceNet = $allowance_total - $undertime_deduction;
+            $totalAllowanceNet = $allowanceNet >= 0 && $target_minutes_worked > $total_unrendered_minutes ? $allowanceNet : 0;
+            $allowance->allowance_net = $totalAllowanceNet;
+
+            $decimalAllowanceNet = floatval($allowance_total) - floatval($undertime_deduction_decimal);
+            $totalDecimalAllowanceNet = $decimalAllowanceNet >= 0 && $target_minutes_worked > $total_unrendered_minutes ? $decimalAllowanceNet : 0;
+            $allowance->allowance_net_decimal = $totalDecimalAllowanceNet;
 
             $allowance->wdam = $working_days_in_a_month;
             $allowance->apd = $allowance_per_day;
