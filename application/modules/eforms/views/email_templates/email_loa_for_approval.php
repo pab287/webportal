@@ -68,20 +68,6 @@
             text-align: center;
         }
         
-        .button {
-            background-color: #28a745;
-            border-radius: 4px;
-            color: #ffffff;
-            display: inline-block;
-            font-size: 16px;
-            font-weight: bold;
-            line-height: 1.2;
-            padding: 12px 30px;
-            text-decoration: none;
-            text-align: center;
-            margin: 20px 0;
-        }
-
         .leave-details {
             background-color: #f8f9fa;
             border-radius: 4px;
@@ -89,6 +75,8 @@
             margin: 20px 0;
         }
     </style>
+
+    
 </head>
 <body>
     <div class="wrapper">
@@ -98,9 +86,22 @@
             <!-- Content -->
             <tr>
                 <td class="content">
+                    <h1 style="margin-top: 0; color: #333333;">Leave of Absence Request Notice</h1>
+                    <p>Hi! <?php echo $data['supervisor']; ?>,</p>
 
-                    Hello WOrld
-                    
+                    <p>Employee <?php echo $data['employeeDisplayName']?> filed a leave of absence</p>
+
+                    <div class="leave-details">
+                        <p style="margin: 5px 0;"><strong>Reference Number:</strong> <?php echo $data['referenceNumber']; ?></p>
+                        <p style="margin: 5px 0;"><strong>Nature:</strong> <?php echo $data['nature']; ?></p>
+                        <p style="margin: 5px 0;"><strong>Type:</strong> <?php echo $data['leaveType'] ?></p>
+                        <p style="margin: 5px 0;"><strong></strong> <?php echo $data['loa_date'] ?></p>
+                        <p style="margin: 5px 0;"><strong>Reason:</strong> <?php echo $data['reason']; ?></p>
+                        <p style="margin: 5px 0;"><strong>Address:</strong> <?php echo $data['address']; ?></p>
+                        <p style="margin: 5px 0;"><strong>Contact No:</strong> <?php echo $data['phone']; ?></p>
+                    </div>
+                    <p><a href="<?php echo $data['url']; ?>" class="button"> Click here to view the leave request</a></p>
+
                 </td>
             </tr>
             
