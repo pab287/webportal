@@ -9002,6 +9002,9 @@
                                 $fromValue = isset($fromContent[$key]) && $fromContent[$key] ? $fromContent[$key]: null;
                                 $toValue = isset($editedContent[$key]) && $editedContent[$key] ? $editedContent[$key]: null;
                                 
+                                $fromValue = is_numeric($fromValue) ? number_format($fromValue, 2, ".", ","): $fromValue;
+                                $toValue = is_numeric($toValue) ? number_format($toValue, 2, ".", ","): $toValue;
+                                
                                 $logMessage = $fromValue ? 
                                     "Employee named `$tempEmployeeName` with payroll allowance data field `$nKey` has been updated from `$fromValue` to `$toValue`.": 
                                     "Employee named `$tempEmployeeName` with payroll allowance data field `$nKey` has been updated into `$toValue`.";
@@ -10933,6 +10936,7 @@
             $historyStatus = false;
             $basic = 0;
 
+            if(!isset($arr["is_active"])){ $arr["is_active"] = 1; }
             $isActiveState = intval($arr["is_active"]) == 1;
 
             $this->db->select('b.name, a.basic_rate, a.payroll_type');
