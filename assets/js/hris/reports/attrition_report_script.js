@@ -576,7 +576,7 @@ var generateAttrition = new Vue({
         }, generateInitialChart(){
             const instance = this;
             $.ajax({
-                url: baseUrl('hris/reports/generate_attrition_chart'),
+                url: baseUrl('hris/reports/generate_attrition_chart')+'?t=' + new Date().getTime(),
                 type: "POST",
                 dataType: "json",
 		        data: {  

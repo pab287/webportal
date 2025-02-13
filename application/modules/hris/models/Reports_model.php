@@ -2074,7 +2074,7 @@ class Reports_model extends CI_Model{
         );
         $filter = "Filters: ";
         $year = isset($post['filter_year']) && $post['filter_year'] ? $post['filter_year'] : '2024';
-        $company = isset($post['company']) && $post['company'] ? $post['company'] : null;
+        $company = isset($post['company']) && $post['company'] ? $this->getGeneratedCompany($post['company']) : null;
         
         $filter .= "Year: <strong>" . $year . "</strong>, ";
         if($company){
