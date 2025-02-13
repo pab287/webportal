@@ -153,7 +153,7 @@
             }elseif($type == '3'){
                 $result = "WHOLE DAY";
             }else{
-                $result = "OTHERS";
+                $result = "CUSTOM";
             }
             return $result;
         }
