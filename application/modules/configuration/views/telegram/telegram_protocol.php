@@ -153,7 +153,7 @@
                     <span aria-hidden="true">×</span>
                 </button>
             </div>
-            <form id="edit_form" method="post" action="<?php echo site_url("configuration/update_telegram_protocol_settings"); ?>">
+            <form id="edit_form_telegram">
                 <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                 <div  id="edit-modal_body" class="col-12 modal-body">
                     <input type="hidden" name="id" v-model="row.id" />

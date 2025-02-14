@@ -4,6 +4,7 @@ let telegramProtocolTable = $("#table-telegram-protocol");
 let dtTableProtocol;
 let _owners = [];
 let _module =[];
+var modalEditProtocol = $("#edit_modal");
 let modalNewProtocol = $("#new_modal");
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.owner !== "undefined" && _tempContentData.owner.length > 0){ _owners = _tempContentData.owner; }
@@ -148,8 +149,100 @@ function renderStatus(data) {
             return '<a class="btn btn-danger m-btn m-btn--icon m-btn--icon-only btn-sm"><i class="fa-lg fa fa-remove" style="color:white"></i></a>';
             break;
     }
-}
+};
 
+
+
+
+
+
+var edit_protocol = function (id) {
+    if (id) {
+        $.ajax({
+            url: siteUrl("configuration/get_telegram_bot_by_id/" + id),
+            dataType: "json",
+            success: function (json) {
+                vmEditModal.row = Object.assign({}, json.response);
+                initializeSelect2Elements(vmEditModal.row);
+            }
+        });
+    } else {
+        return false;
+    }
+};
+
+var vmEditModal = new Vue({
+    el: "#edit_modal",
+    data: { row: {} }
+});
+
+
+$("#select2_owner").select2({
+    placeholder: 'SELECT AN OPTION',
+    dropdownParent: $("#new_modal"),
+    width: '100%',
+    data: _owners,
+});
+
+$("#select2_module").select2({
+    placeholder: 'SELECT AN OPTION',
+    dropdownParent: $("#new_modal"),
+    width: '100%',
+    data: _module,
+});
+
+let initializeSelect2Elements = (rowData) => {
+    $("#select2_owner_edit").select2({
+        placeholder: 'SELECT AN OPTION',
+        dropdownParent: $("#edit_modal"),
+        width: '100%',
+        data: _owners,
+    }).val(rowData.owner_id).trigger('change');
+
+    $("#select2_module_edit").select2({
+        placeholder: 'SELECT AN OPTION',
+        dropdownParent: $("#edit_modal"),
+        width: '100%',
+        data: _module,
+    }).val(rowData.modules).trigger('change');
+};
+
+$.validate({
+    form: "#edit_form_telegram",
+    lang: 'en',
+    onSuccess: function (form) {
+        let currentForm = form[0];
+        let formData = $(currentForm).serialize();
+        let url = siteUrl("configuration/update_telegram_protocol_settings");
+        $.ajax({
+            url: url,
+            type: "POST",
+            dataType: "json",
+            data: formData,
+            beforeSend: function () {
+                $(form[0])
+                    .find(".btn-submit")
+                    .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+            },
+            success: function (json) {
+                if (json.response) {
+                    currentForm.reset();
+                    dtTableProtocol.ajax.reload();
+                    $('#edit_modal').modal("hide");
+                    toastr.success(json.toastr_msg, "Protocol Settings", 5000);
+                } else {
+                    toastr.error(json.toastr_msg, "Protocol Settings", 5000);
+                }
+                $(form[0])
+                    .find(".btn-submit")
+                    .removeClass(
+                        "m-btn--custom m-loader m-loader--light m-loader--right"
+                    );
+            }
+        });
+        return false;
+    },
+});
 
 $.validate({
     form: "#new_form",
@@ -187,92 +280,3 @@ $.validate({
         return false;
     },
 });
-
-
-$.validate({
-    form: "#edit_form",
-    lang: 'en',
-    onSuccess: function (form) {
-        var currentForm = form[0];
-        var formUrl = currentForm.action;
-        var formData = $(currentForm).serialize();
-        $.ajax({
-            url: formUrl,
-            type: "POST",
-            dataType: "json",
-            data: formData,
-            beforeSend: function () {
-                $(form[0])
-                    .find(".btn-submit")
-                    .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-            },
-            success: function (json) {
-                if (json.response) {
-                    currentForm.reset();
-                    dtTableProtocol.ajax.reload();
-                    modalEditProtocol.modal("hide");
-                    toastr.success(json.toastr_msg, "Protocol Settings", 5000);
-                } else {
-                    toastr.error(json.toastr_msg, "Protocol Settings", 5000);
-                }
-                $(form[0])
-                    .find(".btn-submit")
-                    .removeClass(
-                        "m-btn--custom m-loader m-loader--light m-loader--right"
-                    );
-            }
-        });
-        return false;
-    },
-});
-
-var edit_protocol = function (id) {
-    if (id) {
-        $.ajax({
-            url: siteUrl("configuration/get_telegram_bot_by_id/" + id),
-            dataType: "json",
-            success: function (json) {
-                vmEditModal.row = Object.assign({}, json.response);
-                initializeSelect2Elements(vmEditModal.row);
-            }
-        });
-    } else {
-        return false;
-    }
-}
-
-var vmEditModal = new Vue({
-    el: "#edit_modal",
-    data: { row: {} }
-});
-
-
-$("#select2_owner").select2({
-    placeholder: 'SELECT AN OPTION',
-    dropdownParent: $("#new_modal"),
-    width: '100%',
-    data: _owners,
-});
-
-$("#select2_module").select2({
-    placeholder: 'SELECT AN OPTION',
-    dropdownParent: $("#new_modal"),
-    width: '100%',
-    data: _module,
-});
-
-let initializeSelect2Elements = (rowData) => {
-    $("#select2_owner_edit").select2({
-        placeholder: 'SELECT AN OPTION',
-        dropdownParent: $("#edit_modal"),
-        width: '100%',
-        data: _owners,
-    }).val(rowData.owner_id).trigger('change');
-
-    $("#select2_module_edit").select2({
-        placeholder: 'SELECT AN OPTION',
-        dropdownParent: $("#edit_modal"),
-        width: '100%',
-        data: _module,
-    }).val(rowData.modules).trigger('change');
-};

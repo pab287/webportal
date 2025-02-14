@@ -114,6 +114,7 @@ class Telegram_bot_config extends CI_Model{
 
     public function updateTelegramProtocolSettings() {
         $post = $this->input->post();
+        $result = array();
         unset($post['csrf_token']);
         $post['modules'] = serialize($post['modules']);
         $this->db->where('id', $post['id']);
@@ -131,7 +132,7 @@ class Telegram_bot_config extends CI_Model{
             "success" => $success,
             "message" => $message
         ];
-        $this->core_layout->setEventLog($message, "update", $success, "gccmaster", "user");
+        // $this->core_layout->setEventLog($message, "update", $success, "gccmaster", "user");
         return $result;
     }
 
