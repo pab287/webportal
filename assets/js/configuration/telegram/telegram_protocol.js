@@ -1,7 +1,9 @@
 
 
 let telegramProtocolTable = $("#table-telegram-protocol");
+let telegramProtocolArchiveTable = $("#table-telegram-protocol-archive");
 let dtTableProtocol;
+let dtTableProtocolArchive;
 let _owners = [];
 let _module =[];
 var modalEditProtocol = $("#edit_modal");
@@ -21,11 +23,11 @@ $('#generalSearch').donetyping(function (callback) {
 //     console.log("Hello WOrld");
 //     dtTableProtocol.ajax.reload();
 // });
-
-dtTableProtocol = telegramProtocolTable.DataTable({
+dtTableProtocolArchive = telegramProtocolArchiveTable.DataTable({
     dom: '<"toolbar">frtlip',
     serverSide: true,
     processing: true,
+    searching: false,
     ajax: {
         url: baseUrl("configuration/telegram_protocol_datatable_request"),
         type: "post",
@@ -33,14 +35,14 @@ dtTableProtocol = telegramProtocolTable.DataTable({
         data: function (d) {
             d.csrf_token = _csrf_hash;
             d.search['value'] = search_val;
+            d.archive = 1;
             return d;
         }
     },
-    searching: false,
     columns: [
         { data: "id", visible: false },
         { data: "bot_name"},
-        { data: "bot_description"},
+        { data: "bot_description", orderable: false},
         {
             data: "owner",
             title: "Owner",
@@ -75,9 +77,122 @@ dtTableProtocol = telegramProtocolTable.DataTable({
                     </div>`;
             }
         },
-        { data: "chat_id"},
-        { data: "telegram_bot_token"},
-        { data: "created_at"},
+        { data: "chat_id", orderable: false},
+        { data: "telegram_bot_token",orderable: false},
+        {
+            data: "created_at",
+            render: function(data) {
+                const dateStr = data.trim();
+                const dateParts = dateStr.split(' ');
+                const dateComponents = dateParts[0].split('-');
+                
+                // Create Date object for proper month formatting
+                const dateObj = new Date(dateComponents[0], parseInt(dateComponents[1])-1, dateComponents[2]);
+                
+                // Format the date parts
+                const month = dateObj.toLocaleString('default', { month: 'long' });
+                const day = dateComponents[2];
+                const year = dateComponents[0];
+        
+                return `${month} ${day}, ${year}`;
+            }
+        },
+        { data: null, className: "text-center" },
+    ],
+    columnDefs: [{
+        data: null,
+        defaultContent: "",
+        targets: -1,
+        orderable: false,
+        render: function(data, type, row, meta) {
+            return `
+                <button type="button" class="btn btn-default m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill btnRestore" onclick="restoreTelegramBot(${row.id})"
+                        data-toggle="m-tooltip" 
+                        data-placement="bottom" 
+                        data-skin="dark" 
+                        data-original-title="Restore Telegram Bot" 
+                        data-delay="{\"show\": 300}">
+                    <i class="la la-reply"></i>
+                </button>
+            `;
+        }
+    }]
+});
+
+dtTableProtocol = telegramProtocolTable.DataTable({
+    dom: '<"toolbar">frtlip',
+    serverSide: true,
+    processing: true,
+    ajax: {
+        url: baseUrl("configuration/telegram_protocol_datatable_request"),
+        type: "post",
+        dataType: "json",
+        data: function (d) {
+            d.csrf_token = _csrf_hash;
+            d.search['value'] = search_val;
+            d.archive = 0;
+            return d;
+        }
+    },
+    searching: false,
+    columns: [
+        { data: "id", visible: false },
+        { data: "bot_name"},
+        { data: "bot_description", orderable: false},
+        {
+            data: "owner",
+            title: "Owner",
+            render: function(data) {
+                if (!Array.isArray(data) || !data.length) {
+                    return '<span class="text-muted">No owner assigned</span>';
+                }
+        
+                const owner = data[0];
+                return `
+                    <div class="owner-info">
+                        ${owner.firstname} ${owner.lastname}
+                        ${owner.middlename ? `${owner.middlename}<br>` : ''}
+                    </div>
+                `;
+            }
+        },
+        { data: "status", className: "text-center", 
+            render: function (data) {
+                return renderStatus(data)
+            }
+        },
+        { 
+            data: "modules",
+            render: function(data) {
+                if (!Array.isArray(data)) return '';
+                
+                const labels = data.map(module => module.label);
+                return `
+                    <div class="module-tags">
+                        ${labels.map(label => `<span>${label}</span>`).join(', ')}
+                    </div>`;
+            }
+        },
+        { data: "chat_id", orderable: false},
+        { data: "telegram_bot_token",orderable: false},
+        {
+            data: "created_at",
+            render: function(data) {
+                const dateStr = data.trim();
+                const dateParts = dateStr.split(' ');
+                const dateComponents = dateParts[0].split('-');
+                
+                // Create Date object for proper month formatting
+                const dateObj = new Date(dateComponents[0], parseInt(dateComponents[1])-1, dateComponents[2]);
+                
+                // Format the date parts
+                const month = dateObj.toLocaleString('default', { month: 'long' });
+                const day = dateComponents[2];
+                const year = dateComponents[0];
+        
+                return `${month} ${day}, ${year}`;
+            }
+        },
         { data: null, className: "text-center" },
     ],
     columnDefs: [
@@ -102,34 +217,33 @@ dtTableProtocol = telegramProtocolTable.DataTable({
 					$.each(tempActions, function(ii, vv){
 						switch(vv){
 							case "edit":
-							tempHtml += `<a class="dropdown-item " data-toggle='modal' data-target='#edit_modal' href="javascript:void(0);" onclick='edit_protocol(`+row.id+`)'><i class="la la-edit"></i> Edit</a>`;
+							tempHtml += `<a class="dropdown-item btnEdit" data-toggle='modal' data-target='#edit_modal' href="javascript:void(0);" onclick='edit_protocol(`+row.id+`)'><i class="la la-edit"></i> Edit</a>`;
 							break;
 							case "delete":
-							tempHtml += `<a class="dropdown-item " data-toggle='modal' data-target='#delete_modal' href="javascript:void(0);" onclick='delete_protocol(`+row.id+`)'><i class="la la-trash"></i> Remove</a>`;
+							tempHtml += `<a class="dropdown-item btnArchive" data-toggle='modal' data-target='#delete_modal' href="javascript:void(0);" onclick='delete_telegram_bot(`+row.id+`)'><i class="la la-trash"></i> Remove</a>`;
 							break;
 							case "connect":
 								var tempLabel = "Deactivate";
 								var tempIconClass = "la la-unlink";
-								var tempEvent = 'toggle_connect_modal('+row.id +','+ row.is_connected +',\"'+ row.sms_ip+'\")';
-								if(row.is_connected == 0){
+								if(row.status == 0){
 									tempLabel = "Activate";
 									tempIconClass = "la la-link";
 								}
 								tempHtml += `<div class='dropdown-divider'></div>`;
-								tempHtml += `<a class="dropdown-item " href="javascript:void(0);" onclick='`+tempEvent+`'><i class="`+tempIconClass+`"></i> `+tempLabel+`</a>`;
+								tempHtml += `<a class="dropdown-item " href="javascript:void(0);" onclick='toggle_connect_modal(`+row.id+`,`+ row.status +`)'><i class="`+tempIconClass+`"></i> `+tempLabel+`</a>`;
 							break;
-                            case "exclude":
-                                if(row.role == 1){
-                                    var tempLabel = "Include (Admin only)";
-                                    var tempIconClass = "la la-unlink";
-                                    var tempEvent = 'toggle_exclude_modal('+row.id +','+ row.exclude +',\"'+ row.sms_ip+'\")';
-                                    if(row.exclude == 0){
-                                        tempLabel = "Exclude (Admin only)";
-                                        tempIconClass = "la la-link";
-                                    }
-                                    tempHtml += `<div class='dropdown-divider'></div>`;
-                                    tempHtml += `<a class="dropdown-item " href="javascript:void(0);" onclick='`+tempEvent+`'><i class="`+tempIconClass+`"></i> `+tempLabel+`</a>`;
-                                }
+                            // case "exclude":
+                            //     if(row.role == 1){
+                            //         var tempLabel = "Include (Admin only)";
+                            //         var tempIconClass = "la la-unlink";
+                            //         var tempEvent = 'toggle_exclude_modal('+row.id +','+ row.exclude'")';
+                            //         if(row.exclude == 0){
+                            //             tempLabel = "Exclude (Admin only)";
+                            //             tempIconClass = "la la-link";
+                            //         }
+                            //         tempHtml += `<div class='dropdown-divider'></div>`;
+                            //         tempHtml += `<a class="dropdown-item " href="javascript:void(0);" onclick='`+tempEvent+`'><i class="`+tempIconClass+`"></i> `+tempLabel+`</a>`;
+                            //     }
                             break;
 						}
 					});
@@ -248,9 +362,9 @@ $.validate({
     form: "#new_form",
     lang: 'en',
     onSuccess: function (form) {
-        var currentForm = form[0];
-        var formUrl = currentForm.action;
-        var formData = $(currentForm).serialize();
+        let currentForm = form[0];
+        let formUrl = currentForm.action;
+        let formData = $(currentForm).serialize();
         $.ajax({
             url: formUrl,
             type: "POST",
@@ -280,3 +394,134 @@ $.validate({
         return false;
     },
 });
+
+function delete_telegram_bot(id) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!',
+        reverseButtons: true,
+        position: 'top',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: siteUrl("configuration/delete_telegram_bot/" + id),
+                type: "POST", // Ensure the request is POST
+                dataType: "json",
+                data: {
+                    csrf_token: _csrf_hash
+                },
+                success: function (json) {
+                    if (json.response) {
+                        toastr.success(json.message, "Protocol Settings", 5000);
+                    } else {
+                        toastr.error(json.message, "Protocol Settings", 5000);
+                    }
+                    dtTableProtocol.ajax.reload();
+                },
+                error: function (xhr, status, error) {
+                    toastr.error("An error occurred while deleting the Telegram bot.", "Protocol Settings", 5000);
+                }
+            });
+        }
+    });
+}
+function toggle_connect_modal(id,is_connected){
+    console.log(id,is_connected);
+}
+
+function toggle_connect_modal(id,is_connected){
+    $.ajax({
+        url: siteUrl("configuration/toggle_telegram_bot_status/"+id),
+        type: "POST", 
+        dataType: "json",
+        data: {
+            csrf_token: _csrf_hash,
+            status: is_connected
+        },
+        success: function (json) {
+            if (json.response) {
+                toastr.success(json.toastr_msg, "Protocol Settings", 5000);
+                dtTableProtocol.ajax.reload();
+            } else {
+                toastr.error(json.toastr_msg, "Protocol Settings", 5000);
+            }
+        }
+    });
+}
+
+function toggle_connect_modal(id, is_connected) {
+    Swal.fire({
+        title: is_connected ? 'Deactivate Bot' : 'Activate Bot',
+        text: `Are you sure you want to ${is_connected ? 'deactivate' : 'activate'} this bot?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, proceed',
+        confirmButtonColor: '#3085d6',
+        cancelButtonText: 'Cancel',
+        cancelButtonColor: '#d33',
+        reverseButtons: true,
+        position: 'top',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: siteUrl("configuration/toggle_telegram_bot_status/" + id),
+                type: "POST",
+                dataType: "json",
+                data: {
+                    csrf_token: _csrf_hash,
+                    status: is_connected
+                },
+                success: function (json) {
+                    if (json.response) {
+                        toastr.success(json.message, "Protocol Settings", 5000);
+                        dtTableProtocol.ajax.reload();
+                    } else {
+                        toastr.error(json.message, "Protocol Settings", 5000);
+                    }
+                }
+            });
+        }
+    });
+}
+
+function restoreTelegramBot(id) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You are about to restore this Telegram bot. This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, restore it!',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        position: 'top',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: siteUrl("configuration/restore_telegram_bot/" + id),
+                type: "POST",
+                dataType: "json",
+                data: {
+                    csrf_token: _csrf_hash, 
+                },
+                success: function (json) {
+                    if (json.response) {
+                        toastr.success(json.message, "Protocol Settings", 5000);
+                        dtTableProtocolArchive.ajax.reload();
+                    } else {
+                        toastr.error(json.message, "Protocol Settings", 5000);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    toastr.error("An error occurred while restoring the Telegram bot.", "Protocol Settings", 5000);
+                }
+            });
+        }
+    });
+}

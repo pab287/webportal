@@ -16,8 +16,9 @@ class Telegram_bot_config extends CI_Model{
         $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
         $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
         $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
-        $rowData = $this->getDatatableRequest($search, $limit, $offset, $sortBy, $sortOrder);
-        $rowCount = $this->getDatatableRequestCount($search);
+        $archive = (isset($post["archive"]) && $post["archive"]) ? $post["archive"] : 0;
+        $rowData = $this->getDatatableRequest($search, $limit, $offset, $sortBy, $sortOrder,$archive);
+        $rowCount = $this->getDatatableRequestCount($search,$archive);
         $resultset["recordsTotal"] = $rowCount;
         $resultset["recordsFiltered"] = $rowCount;
         $resultset["data"] = $rowData;
@@ -25,11 +26,13 @@ class Telegram_bot_config extends CI_Model{
 
     }
 
-    private function getDatatableRequest($search, $limit, $offset, $sortBy, $sortOrder){
-        $filterFields = array('a.bot_name');
-        $this->db->select("a.id, a.bot_name, a.bot_description, a.owner_id, a.status, a.modules, a.chat_id, a.telegram_bot_token, a.created_at");
+    private function getDatatableRequest($search, $limit, $offset, $sortBy, $sortOrder,$archive){
+        $filterFields = array('a.bot_name','b.firstname','b.lastname');
+        $this->db->select("a.id, a.bot_name, a.bot_description, b.firstname, b.lastname, a.owner_id, a.status, a.modules, a.chat_id, a.telegram_bot_token, a.created_at");
         $this->db->from($this->telegramConfigTable.' as a');
-        $this->db->where('a.is_archive', 0);
+        $this->db->join('gccmaster.tblemployees as b', 'a.owner_id = b.id', 'left');
+        $this->db->where('a.is_archive', $archive ? 1 : 0);
+
 
         if (isset($search)) {
             $this->db->group_start();
@@ -71,11 +74,12 @@ class Telegram_bot_config extends CI_Model{
 
     }
 
-    private function getDatatableRequestCount($search){
-        $filterFields = array('a.bot_name');
+    private function getDatatableRequestCount($search,$archive){
+        $filterFields = array('a.bot_name','b.firstname','b.lastname' );
         $this->db->select("a.id, a.bot_name, a.bot_description, a.owner_id, a.status, a.modules, a.chat_id, a.telegram_bot_token, a.created_at");
         $this->db->from($this->telegramConfigTable.' as a');
-        $this->db->where('a.is_archive', 0);
+        $this->db->join('gccmaster.tblemployees as b', 'a.owner_id = b.id', 'left');
+        $this->db->where('a.is_archive', $archive ? 1 : 0);
 
         if (isset($search)) {
             $this->db->group_start();
@@ -100,7 +104,7 @@ class Telegram_bot_config extends CI_Model{
             $success = "success";
         } else {
             $message = "Failed to add new Telegram bot: {$post['bot_name']}";
-            $success = "error"; // Changed to "error" to reflect the failure
+            $success = "error";
         }
         $result = [
             "response" => $added,
@@ -109,6 +113,71 @@ class Telegram_bot_config extends CI_Model{
             "message" => $message
         ];
         $this->core_layout->setEventLog($message, "insert", $success, "gccmaster", "user");
+        return $result;
+    }
+
+    public function archiveTelegramBot($id) {
+        $this->db->where('id', $id);
+        $updated = $this->db->update($this->telegramConfigTable, array('is_archive' => 1,'status' => 0));
+        $botdata = $this->getTelegramBotById($id);
+        if ($updated) {
+            $message = "Archived Telegram bot: {$botdata['response']->bot_name}";
+            $success = "success";
+        } else {
+            $message = "Failed to archive Telegram bot: {$botdata['response']->bot_name}";
+            $success = "error";
+        }
+        $result = [
+            "response" => $updated,
+            "user" => "user",
+            "success" => $success,
+            "message" => $message
+        ];
+        $this->core_layout->setEventLog($message, "update", $success, "gccmaster", "user");
+        return $result;
+    }
+
+    public function restoreTelegramBot($id){
+        $this->db->where('id', $id);
+        $updated = $this->db->update($this->telegramConfigTable, array('is_archive' => 0));
+        $botdata = $this->getTelegramBotById($id);
+        if ($updated) {
+            $message = "Restored Telegram bot: {$botdata['response']->bot_name}";
+            $success = "success";
+        } else {
+            $message = "Failed to restore Telegram bot: {$botdata['response']->bot_name}";
+            $success = "error"; 
+        }
+        $result = [
+            "response" => $updated,
+            "user" => "user",
+            "success" => $success,
+            "message" => $message
+        ];
+        $this->core_layout->setEventLog($message, "update", $success, "gccmaster", "user");
+        return $result;
+    }
+
+    public function toggleTelegramStatus($id) {
+        $post = $this->input->post();
+        $post['status'] = ($post['status'] == 1) ? 0 : 1;
+        $this->db->where('id', $id);
+        $updated = $this->db->update($this->telegramConfigTable, array('status' => $post['status']));
+        $botdata = $this->getTelegramBotById($id);
+        if ($updated) {
+            $message = "Updated status of Telegram bot: {$botdata['response']->bot_name}";
+            $success = "success";
+        } else {
+            $message = "Failed to update status of Telegram bot: {$botdata['response']->bot_name}";
+            $success = "error"; 
+        }
+        $result = [
+            "response" => $updated,
+            "user" => "user",
+            "success" => $success,
+            "message" => $message
+        ];
+        $this->core_layout->setEventLog($message, "update", $success, "gccmaster", "user");
         return $result;
     }
 
@@ -124,7 +193,7 @@ class Telegram_bot_config extends CI_Model{
             $success = "success";
         } else {
             $message = "Failed to update Telegram bot: {$post['bot_name']}";
-            $success = "error"; // Changed to "error" to reflect the failure
+            $success = "error";
         }
         $result = [
             "response" => $updated,
@@ -132,7 +201,7 @@ class Telegram_bot_config extends CI_Model{
             "success" => $success,
             "message" => $message
         ];
-        // $this->core_layout->setEventLog($message, "update", $success, "gccmaster", "user");
+        $this->core_layout->setEventLog($message, "update", $success, "gccmaster", "user");
         return $result;
     }
 
@@ -165,6 +234,10 @@ class Telegram_bot_config extends CI_Model{
         $this->db->where('status', 1);
         $query = $this->db->get();
         return  $query->result();
+    }
+
+    private function logchanges($oldData,$newdata){
+
     }
 
     

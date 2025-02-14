@@ -10,6 +10,14 @@
 							</h3>
 						</div>
 					</div>
+                    <div class="m-portlet__head-tools">
+                        <a  href="<?php echo site_url("configuration/telegram_protocol_archive");?>" class="btnView">
+                            <i class="m-nav__link-icon flaticon-open-box"></i>
+                            <span class="m-nav__link-text">
+                                Archives
+                            </span>
+                        </a>
+                    </div>
 				</div>
                 <div class="m-portlet__body">
                     <div class="m-form m-form--label-align-right">
