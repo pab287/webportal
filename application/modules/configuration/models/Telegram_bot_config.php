@@ -2,9 +2,12 @@
 class Telegram_bot_config extends CI_Model{
 
     private $telegramConfigTable = "gccmaster.telegram_config";
+    private $user_data;
+
 
 	function __construct(){
         parent::__construct();
+        $this->user_data = $this->session->userdata("logged_in");
     }
 
     public function getTelegramDatatableRequest(){
@@ -32,7 +35,6 @@ class Telegram_bot_config extends CI_Model{
         $this->db->from($this->telegramConfigTable.' as a');
         $this->db->join('gccmaster.tblemployees as b', 'a.owner_id = b.id', 'left');
         $this->db->where('a.is_archive', $archive ? 1 : 0);
-
 
         if (isset($search)) {
             $this->db->group_start();
@@ -71,7 +73,6 @@ class Telegram_bot_config extends CI_Model{
         }
 
         return $results;
-
     }
 
     private function getDatatableRequestCount($search,$archive){
@@ -133,7 +134,7 @@ class Telegram_bot_config extends CI_Model{
             "success" => $success,
             "message" => $message
         ];
-        $this->core_layout->setEventLog($message, "update", $success, "gccmaster", "user");
+        $this->core_layout->setEventLog($message, "archive", $success, "gccmaster", "user");
         return $result;
     }
 
@@ -154,7 +155,7 @@ class Telegram_bot_config extends CI_Model{
             "success" => $success,
             "message" => $message
         ];
-        $this->core_layout->setEventLog($message, "update", $success, "gccmaster", "user");
+        $this->core_layout->setEventLog($message, "restore", $success, "gccmaster", "user");
         return $result;
     }
 
@@ -185,11 +186,17 @@ class Telegram_bot_config extends CI_Model{
         $post = $this->input->post();
         $result = array();
         unset($post['csrf_token']);
+        $currentData = $this->getTelegramBotById($post['id']);
         $post['modules'] = serialize($post['modules']);
+        $post['updated_at'] = date("Y-m-d H:i:s");
+        $post['updated_by'] = $this->user_data['emp_id'];
         $this->db->where('id', $post['id']);
         $updated = $this->db->update($this->telegramConfigTable, $post);
+        unset($post['updated_at'],$post['id'],$post['updated_at']);
+        $post['modules'] = @unserialize($post['modules']);
+        $changes = $this->logChanges($currentData['response'],$post);
         if ($updated) {
-            $message = "Updated Telegram bot: {$post['bot_name']}";
+            $message = "Updated Telegram bot: {$post['bot_name']} . $changes";
             $success = "success";
         } else {
             $message = "Failed to update Telegram bot: {$post['bot_name']}";
@@ -236,9 +243,43 @@ class Telegram_bot_config extends CI_Model{
         return  $query->result();
     }
 
-    private function logchanges($oldData,$newdata){
-
-    }
+	private function logChanges($currentData, $newData) {
+        if (is_object($currentData)) {
+            $currentData = (array) $currentData;
+        }
+    
+        if (is_object($newData)) {
+            $newData = (array) $newData;
+        }
+		$changes = array();
+		$changesString = '';
+		foreach ($currentData as $field => $value) {
+			if (isset($newData[$field]) && $newData[$field]!= $value) {
+				$changes[$field] = array(
+					'old' => $value,
+					'new' => $newData[$field]
+				);
+			}
+		}
+        foreach ($changes as $field => $change) {
+            if ($field != 'modules'){
+                $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
+            }
+        }
+        if (isset($newData['modules'])) {
+            sort($newData['modules']);
+            sort($currentData['modules']);
+            if (empty($newData['modules'])) {
+                $diff = array_diff($currentData['modules'], $newData['modules']);
+            } else {
+                $diff = array_diff($newData['modules'], $currentData['modules']);
+            }
+            if (!empty($diff)) {
+                $changesString.= " Field: modules, from: ' <strong>". implode(',', $currentData['modules']). "</strong> ', to: <strong>'". implode(',', $newData['modules']). "'</strong>\n";
+            }
+        }
+		return $changesString;
+	}
 
     
 }
