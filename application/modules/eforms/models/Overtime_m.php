@@ -166,8 +166,17 @@ class Overtime_m extends CI_Model {
             $this->core_layout->setEventLog("Overtime Masterfile - Search {$post["search"]['value']} in datatable.", "search", "success", "gcceforms", "user");
         }
 
-        $rowData = $this->masterfile_list($filtered,$filter,$search, $limit, $offset, $sortBy, $sortOrder, $qBuilder, $status);
-        $rowCount = $this->masterfile_count($filtered,$filter,$search, $qBuilder, $status);
+        $privilege = $this->core_layout->getCurrentActions();
+
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+        $companyDescription = null;
+
+        if ($view_by_company) {
+            $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+        }
+
+        $rowData = $this->masterfile_list($filtered,$filter,$search, $limit, $offset, $sortBy, $sortOrder, $qBuilder, $status, $view_by_company, $companyDescription);
+        $rowCount = $this->masterfile_count($filtered,$filter,$search, $qBuilder, $status, $view_by_company, $companyDescription);
 
         $totalNotFiltered = $rowCount;
 
@@ -178,7 +187,7 @@ class Overtime_m extends CI_Model {
         return $resultset;
     }
 
-    private function masterfile_list($filtered,$filter,$search=null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $qBuilder=null, $status = null) {
+    private function masterfile_list($filtered,$filter,$search=null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $qBuilder=null, $status = null, $view_by_company = false, $companyDescription = null) {
         // $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.reference_no", "a.position", "a.created_at", "b.firstname", "b.lastname", "b.middlename", "b.suffix");
         $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.reference_no", "a.position", "a.created_at", "b.firstname", "b.lastname");
         $this->db->select("a.id, a.reference_no, a.status, a.purpose, a.date_from, a.date_to, a.company, a.employee, a.department, a.created_at, a.position");
@@ -198,6 +207,15 @@ class Overtime_m extends CI_Model {
             $this->db->where('a.status', $status);
         }
         $this->db->where_not_in('a.status', "Cancelled");
+
+        if ($view_by_company) {
+            $this->db->where('b.company_id', $view_by_company);
+
+            if ($companyDescription) {
+                $this->db->where('a.company', $companyDescription);
+            }
+        }
+
         if($qBuilder){ $this->db->where($qBuilder); }
         if ($search) {
             $this->db->group_start();
@@ -269,7 +287,7 @@ class Overtime_m extends CI_Model {
         }
     }
     
-    private function masterfile_count($filtered,$filter,$search=null, $qBuilder=null, $status = null) {
+    private function masterfile_count($filtered,$filter,$search=null, $qBuilder=null, $status = null, $view_by_company = false, $companyDescription = null) {
         $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.position", "b.firstname", "b.lastname");
         $this->db->select("a.id, a.reference_no, a.status, a.purpose, a.date_from, a.date_to, a.company, a.employee, a.department, a.created_at, a.position");
         $this->db->from('gcceforms.overtime a');
@@ -289,6 +307,15 @@ class Overtime_m extends CI_Model {
         }
         
         $this->db->where_not_in('a.status', "Cancelled");
+
+        if ($view_by_company) {
+            $this->db->where('b.company_id', $view_by_company);
+
+            if ($companyDescription) {
+                $this->db->where('a.company', $companyDescription);
+            }
+        }
+
         if($qBuilder){ $this->db->where($qBuilder); }
         if ($search) {
           $this->db->group_start();
@@ -414,8 +441,17 @@ class Overtime_m extends CI_Model {
         $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : "";
 
-        $rowData = $this->archive_list($search, $limit, $offset, $sortBy, $sortOrder);
-        $rowCount = $this->archive_count($search);
+        $privilege = $this->core_layout->getCurrentActions();
+
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+        $companyDescription = null;
+
+        if ($view_by_company) {
+            $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+        }
+
+        $rowData = $this->archive_list($search, $limit, $offset, $sortBy, $sortOrder, $view_by_company, $companyDescription);
+        $rowCount = $this->archive_count($search, $view_by_company, $companyDescription);
         if($search){
             $this->core_layout->setEventLog("Archived Overtime - Search {$search} in datatable.", "search", "success", "gcceforms", "user");
         }
@@ -428,12 +464,20 @@ class Overtime_m extends CI_Model {
         return $resultset;
     }
 
-    private function archive_list($search=null, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
+    private function archive_list($search=null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $view_by_company = false, $companyDescription = null) {
         $filterFields = array("a.id", "status", "a.purpose","a.company", "a.department", "a.position", "b.firstname", "b.lastname", "b.middlename", "b.suffix", "a.reference_no");
         $this->db->select("a.id, a.reference_no, a.status, a.purpose, a.date_from, a.date_to, a.company, a.employee, a.department, a.created_at, a.position");
         $this->db->from('gcceforms.overtime a');
         $this->db->join('gccmaster.tblemployees b', 'a.employee = b.id', 'LEFT');
         $this->db->where('status', "Cancelled");
+
+        if ($view_by_company) {
+            $this->db->where('b.company_id', $view_by_company);
+
+            if ($companyDescription) {
+                $this->db->where('a.company', $companyDescription);
+            }
+        }
 
         if(isset($search)){
             $this->db->group_start();
@@ -476,12 +520,20 @@ class Overtime_m extends CI_Model {
         }
     }
 
-    private function archive_count($search=null) {
+    private function archive_count($search=null, $view_by_company = false, $companyDescription = null) {
         $filterFields = array("a.id", "status", "a.purpose","a.company", "a.department", "a.position", "b.firstname", "b.lastname", "b.middlename", "b.suffix");
         $this->db->select("a.id, a.reference_no, a.status, a.purpose, a.date_from, a.date_to, a.company, a.employee, a.department, a.created_at, a.position");
         $this->db->from('gcceforms.overtime a');
         $this->db->join('gccmaster.tblemployees b', 'a.employee = b.id', 'LEFT');
         $this->db->where('status', "Cancelled");
+
+        if ($view_by_company) {
+            $this->db->where('b.company_id', $view_by_company);
+
+            if ($companyDescription) {
+                $this->db->where('a.company', $companyDescription);
+            }
+        }
 
         if(isset($search)){
             $this->db->group_start();
@@ -504,16 +556,29 @@ class Overtime_m extends CI_Model {
     function getEmployee(){
       $post = $this->input->get();
       $resultarray = array();
+      $privilege = $this->core_layout->getCurrentActions();
+
+      $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+
       $this->db->select('id, firstname, lastname, middlename, suffix');
       $this->db->from('gccmaster.tblemployees');
       $this->db->where('employee_status', 'Active');
+
       if(isset($post['q'])){
-          $this->db->like('firstname', $post['q']);
-          $this->db->or_like('lastname', $post['q']);
+        $this->db->group_start();
+        $this->db->like('firstname', $post['q']);
+        $this->db->or_like('lastname', $post['q']);
+        $this->db->group_end();
       }
+
+      if ($view_by_company) {
+        $this->db->where('company_id', $this->user_data['company']);
+     }
+
       if(isset($post['company']) && !empty($post['company'])){
           $this->db->where('company_id', $post['company']);
       }
+
       $this->db->order_by('firstname', 'ASC');
       $this->db->limit(10);
       $query = $this->db->get();

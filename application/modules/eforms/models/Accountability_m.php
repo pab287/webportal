@@ -31,8 +31,17 @@ class Accountability_m extends CI_Model {
         $rowCount = 0;
         $rowData = array();
 
-        $rowData = $this->get_all_items($query_builder, $advanced_search, $search, $limit, $offset, $sortBy, $sortOrder, $status, $company);;
-        $rowCount = $this->get_all_items_count($query_builder, $advanced_search, $search, $status,$company);
+        $privilege = $this->core_layout->getCurrentActions();
+
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+        $companyDescription = null;
+
+        if ($view_by_company) {
+            $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+        }
+
+        $rowData = $this->get_all_items($query_builder, $advanced_search, $search, $limit, $offset, $sortBy, $sortOrder, $status, $company, $view_by_company, $companyDescription);
+        $rowCount = $this->get_all_items_count($query_builder, $advanced_search, $search, $status,$company, $view_by_company, $companyDescription);
 
         // if (!$search) {
         //     $rowData = $this->get_all_postv1($query_builder, $advanced_search, $limit, $offset, $sortBy, $sortOrder, $status,$company);
@@ -62,7 +71,7 @@ class Accountability_m extends CI_Model {
         return $resultset;
     }
 
-    function get_all_items($query_builder, $advanced_search, $search, $limit, $offset, $sortBy, $sortOrder, $status, $company){
+    function get_all_items($query_builder, $advanced_search, $search, $limit, $offset, $sortBy, $sortOrder, $status, $company, $view_by_company = false, $companyDescription = null){
         $date = date("Y-m-d", strtotime("-1 year"));
         $data = array();
 
@@ -74,7 +83,7 @@ class Accountability_m extends CI_Model {
         $this->db->join('gcceforms.accountability_body b', 'b.accountability_id = a.id', 'left');
         $this->db->join('gccmaster.tblemployees c', 'c.id = a.issued_to', 'left');
         $this->db->join('gcchris.tblcontractor d', 'd.id = a.issued_to', 'left');
-        $this->db->join('gcchris.tblcompanies e', 'e.id = a.company', 'left');
+        $this->db->join('gcchris.tblcompanies e', 'e.id = a.company OR e.description = a.company', 'left');
         
         if ($search || $advanced_search) {
             $this->db->join('gccasset.assets asset', 'asset.id = b.asset_id AND b.type = "Asset"', 'left');
@@ -85,6 +94,14 @@ class Accountability_m extends CI_Model {
 
         $this->db->where_not_in('a.status', array('Released', 'Cancelled'));
         $this->db->where("DATE(a.date_issued) >= '$date'", NULL, FALSE);
+
+        if ($view_by_company) {
+            $this->db->where('a.company', $view_by_company);
+
+            if ($companyDescription) {
+                $this->db->or_where('a.company', $companyDescription);
+            }
+        }
 
         if ($query_builder) { 
             $this->db->where($query_builder); 
@@ -159,7 +176,7 @@ class Accountability_m extends CI_Model {
         return $data;
     }
 
-    function get_all_items_count($query_builder, $advanced_search, $search, $status,$company){
+    function get_all_items_count($query_builder, $advanced_search, $search, $status,$company, $view_by_company = false, $companyDescription = null){
         $date = date("Y-m-d", strtotime("-1 year"));
         $sqlSelect = "a.id, a.status, a.reference_no, a.company, a.date_issued, a.is_contract, b.asset_id, b.asset_code, b.type, c.firstname, c.lastname, c.middlename, c.suffix, d.contractor";
 
@@ -180,6 +197,14 @@ class Accountability_m extends CI_Model {
 
         $this->db->where_not_in('a.status', array('Released', 'Cancelled'));
         $this->db->where("DATE(a.date_issued) >= '$date'", NULL, FALSE);
+
+        if ($view_by_company) {
+            $this->db->where('a.company', $view_by_company);
+
+            if ($companyDescription) {
+                $this->db->or_where('a.company', $companyDescription);
+            }
+        }
 
         if ($query_builder) { 
             $this->db->where($query_builder); 
@@ -552,8 +577,17 @@ class Accountability_m extends CI_Model {
         $advanced_search = (isset($post["advanced_search"]) && $post["advanced_search"]) ? $post["advanced_search"] : null;
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql']) ? $post["query_builder"]['sql'] : array();
 
-        $rowData = $this->get_all_archived_items($advanced_search, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder);
-        $rowCount = $this->get_all_archived_items_count($advanced_search, $query_builder, $search);
+        $privilege = $this->core_layout->getCurrentActions();
+
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+        $companyDescription = null;
+
+        if ($view_by_company) {
+            $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+        }
+
+        $rowData = $this->get_all_archived_items($advanced_search, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $view_by_company, $companyDescription);
+        $rowCount = $this->get_all_archived_items_count($advanced_search, $query_builder, $search, $view_by_company, $companyDescription);
         // if (!$search) {  // if not been search
         //     $rowData = $this->get_archive_postv1($advanced_search, $query_builder, $limit, $offset, $sortBy, $sortOrder);
         //     $rowCount = $this->get_archive_post_countv1($advanced_search, $query_builder);
@@ -576,7 +610,7 @@ class Accountability_m extends CI_Model {
         return $resultset;
     }
 
-    private function get_all_archived_items($advanced_search, $query_builder = null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder){
+    private function get_all_archived_items($advanced_search, $query_builder = null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $view_by_company = false, $companyDescription = null) {
         $data = array();
         $date = date("Y-m-d", strtotime("-1 year"));
 
@@ -602,6 +636,14 @@ class Accountability_m extends CI_Model {
                 $this->db->or_where("DATE(a.date_issued) <= '$date'", NULL, FALSE);
             }
         $this->db->group_end();
+
+        if ($view_by_company) {
+            $this->db->where('a.company', $view_by_company);
+
+            if ($companyDescription) {
+                $this->db->or_where('a.company', $companyDescription);
+            }
+        }
 
         if ($query_builder) {
             $this->db->where($query_builder);
@@ -673,7 +715,7 @@ class Accountability_m extends CI_Model {
         return $data;
     }
 
-    private function get_all_archived_items_count($advanced_search, $query_builder = null, $search = null){
+    private function get_all_archived_items_count($advanced_search, $query_builder = null, $search = null, $view_by_company = false, $companyDescription = null) {
         $date = date("Y-m-d", strtotime("-1 year"));
         $filterFields = array("a.status", "a.reference_no", "b.asset_code", "b.description", "asset.name", "vehicle.name", "c.company_id", "c.department_id", "c.firstname", "c.lastname", "c.middlename", "c.suffix", "d.contractor");
 
@@ -697,6 +739,14 @@ class Accountability_m extends CI_Model {
                 $this->db->or_where("DATE(a.date_issued) <= '$date'", NULL, FALSE);
             }
         $this->db->group_end();
+
+        if ($view_by_company) {
+            $this->db->where('a.company', $view_by_company);
+
+            if ($companyDescription) {
+                $this->db->or_where('a.company', $companyDescription);
+            }
+        }
 
         if ($query_builder) {
             $this->db->where($query_builder);
@@ -4208,6 +4258,15 @@ class Accountability_m extends CI_Model {
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql']) ? $post["query_builder"]['sql'] : array();
 
+        $privilege = $this->core_layout->getCurrentActions();
+
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+        $companyDescription = null;
+
+        if ($view_by_company) {
+            $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+        }
+
         // $rowCount = 0;
         // $rowData = array();
         // if (!$search) {
@@ -4227,8 +4286,8 @@ class Accountability_m extends CI_Model {
         // }
 
         // $totalNotFiltered = $rowCount;
-        $rowData = $this->get_all_assets($query_builder, $returned, $table1, $search, $limit, $offset, $sortBy, $sortOrder);
-        $rowCount = $this->get_all_assets_count($query_builder, $returned, $table1, $search);
+        $rowData = $this->get_all_assets($query_builder, $returned, $table1, $search, $limit, $offset, $sortBy, $sortOrder, $view_by_company, $companyDescription);
+        $rowCount = $this->get_all_assets_count($query_builder, $returned, $table1, $search, $view_by_company, $companyDescription);
 
         $resultset["recordsTotal"] = $rowCount;
         $resultset["recordsFiltered"] = $rowCount;
@@ -4237,7 +4296,7 @@ class Accountability_m extends CI_Model {
         return $resultset;
     }
 
-    function get_all_assets($query_builder = null, $returned, $table1, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder){
+    function get_all_assets($query_builder = null, $returned, $table1, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $view_by_company = false, $companyDescription = null) {
         $date = date("Y-m-d", strtotime("-1 year"));
         $data = array();
 
@@ -4258,6 +4317,14 @@ class Accountability_m extends CI_Model {
         if(isset($search) && $search){
             $this->db->join('gccasset.assets asset', 'asset.id = b.asset_id AND b.type = "Asset"', 'left');
             $this->db->join('gccasset.vehicles vehicle', 'vehicle.id = b.asset_id AND b.type = "Vehicle"', 'left');
+        }
+
+        if ($view_by_company) {
+            $this->db->where('a.company', $view_by_company);
+
+            if ($companyDescription) {
+                $this->db->or_where('a.company', $companyDescription);
+            }
         }
 
         if($returned == 0){
@@ -4327,7 +4394,7 @@ class Accountability_m extends CI_Model {
         return $data;
     }
 
-    function get_all_assets_count($query_builder = null, $returned, $table1, $search = null){
+    function get_all_assets_count($query_builder = null, $returned, $table1, $search = null, $view_by_company = false, $companyDescription = null) {
         $filterFields = array("a.status", "a.reference_no", "b.asset_code", "b.description", "d.contractor", "c.lastname", "asset.name", "vehicle.name", "a.company", "c.firstname", "d.company", "e.description");
 
         $sqlSelect = "a.id as acc_id, a.reference_no, a.is_contract, a.issued_to, b.asset_code, b.asset_id, b.amount, b.type, c.firstname, c.middlename, c.lastname, c.suffix, d.contractor, 
@@ -4341,6 +4408,14 @@ class Accountability_m extends CI_Model {
         $this->db->join('gccmaster.tblemployees c', 'a.issued_to = c.id', 'left');
         $this->db->join('gcchris.tblcontractor d', 'a.issued_to = d.id', 'left');
         $this->db->join('gcchris.tblcompanies e', 'e.id = a.company', 'left');
+
+        if ($view_by_company) {
+            $this->db->where('a.company', $view_by_company);
+
+            if ($companyDescription) {
+                $this->db->or_where('a.company', $companyDescription);
+            }
+        }
 
         if(isset($search) && $search){
             $this->db->join('gccasset.assets asset', 'asset.id = b.asset_id AND b.type = "Asset"', 'left');

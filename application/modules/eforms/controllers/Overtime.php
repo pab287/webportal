@@ -172,6 +172,7 @@ function select_employee() {
     }
 
     function overtime_masterfile(){
+        $this->core_layout->setPrivilegeName("overtime_masterfile");
         $data = $this->overtime->overtimeMasterfile();
 		$this->output
         ->set_content_type('json')
@@ -179,6 +180,7 @@ function select_employee() {
     }
 
     function overtime_archive(){
+        $this->core_layout->setPrivilegeName("overtime_archive");
         $data = $this->overtime->overtimeArchive();
 		$this->output
         ->set_content_type('json')
@@ -186,6 +188,7 @@ function select_employee() {
     }
 
     function get_employee(){
+        $this->core_layout->setPrivilegeName("overtime_masterfile");
         $data = $this->overtime->getEmployee();
 		$this->output
         ->set_content_type('json')
