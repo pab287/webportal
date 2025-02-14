@@ -492,7 +492,7 @@ var vmData = new Vue({
                         title: 'EMPLOYEES SALARY RANGE REPORT',
                         action: function (e, dt, node, config) {
                             const self = this;
-                            getExportData(e, dt, node, config, self, `${url}/1`, 'excelHtml5')
+                            getExportData(e, dt, node, config, self, `${url}/1`, 'pdfHtml5')
                                 .then(() => {
                                     dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
                                 });
@@ -503,7 +503,7 @@ var vmData = new Vue({
                         title: 'EMPLOYEES SALARY RANGE REPORT',
                         action: function (e, dt, node, config) {
                             const self = this;
-                            getExportData(e, dt, node, config, self, `${url}/1`, 'excelHtml5')
+                            getExportData(e, dt, node, config, self, `${url}/1`, 'print')
                                 .then(() => {
                                     dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
                                 });
@@ -588,11 +588,22 @@ var vmData = new Vue({
                     $(dropdown).appendTo("#table-employee-salary-range_wrapper .exportDropdown");
                     dropdownEl = $(".m-dropdown__toggle.export-as");
 
+                    var isDisable = _tableData > 0 ? '' : 'disabled';
+
+                    const search = `<label style="font-weight: normal; white-space: nowrap;"><input type="text" class="form-control" id="generalSearch" placeholder="Search..." disabled></label>`;
+
+                    $(search).appendTo('#table-employee-salary-range_wrapper .searchable');
+                }, drawCallback: function(){
+                    var api = this.api();
+                    $("#generalSearch").prop('disabled', false);
+                    var _tableData = this.api().rows({ page: 'current' }).data().length;
+                    
                     const tempExcel = $("#export-as-excel");
                     const tempPdf = $("#export-as-pdf");
                     const tempPrint = $("#export-as-print");
 
                     if (typeof tempExcel != 'undefined' && tempExcel.length > 0) {
+                        tempExcel.off();
                         tempExcel.on("click", function () {
                             if (_tableData > 0) { 
                                 table.button(".buttons-excel").trigger();
@@ -603,8 +614,10 @@ var vmData = new Vue({
                     }
 
                     if (typeof tempPdf != 'undefined' && tempPdf.length > 0) {
+                        tempPdf.off();
                         tempPdf.on("click", function () {
                             if (_tableData > 0) {
+                                table.button('.buttons-pdf').node().off('click');
                                 table.button(".buttons-pdf").trigger();
                             } else {
                                 toastr.warning('Generate range history report first before exporting it to pdf.', 'Salary Range Export to PDF', 10000);
@@ -613,6 +626,7 @@ var vmData = new Vue({
                     }
 
                     if (typeof tempPrint != 'undefined' && tempPrint.length > 0) {
+                        tempPrint.off();
                         tempPrint.on("click", function () {
                             if (_tableData > 0) {
                                 table.button(".buttons-print").trigger();
@@ -621,15 +635,6 @@ var vmData = new Vue({
                             }
                         });
                     }
-
-                    var isDisable = _tableData > 0 ? '' : 'disabled';
-
-                    const search = `<label style="font-weight: normal; white-space: nowrap;"><input type="text" class="form-control" id="generalSearch" placeholder="Search..." disabled></label>`;
-
-                    $(search).appendTo('#table-employee-salary-range_wrapper .searchable');
-                }, drawCallback: function(){
-                    var api = this.api();
-                    $("#generalSearch").prop('disabled', false);
                 }
             });
 
