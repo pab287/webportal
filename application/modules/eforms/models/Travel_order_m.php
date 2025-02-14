@@ -3633,60 +3633,61 @@
                 'status' => 'Pending',
             );
 
-            $checkPersonnel = $this->checkPersonnelTO($this->user_data['id']);
+            // commented for rollback
+            // $checkPersonnel = $this->checkPersonnelTO($this->user_data['id']);
 
-            if (empty($checkPersonnel)) {
-                $query = $this->db->insert('gcceforms.travel_order', $data);
-                if($query){
-    
-                    $to_last_id = $this->db->insert_id();
-    
-                    // save personnel
-                    $temp_personnel = $this->get_temp_personnel($this->user_data['id']);
-                    foreach ($temp_personnel as $row) {
-                        $data = array(
-                            'travel_order_id' => $to_last_id,
-                            'employee_id' => $row->employee_id
-                        );
-                        $this->save_personnel($data);
-                    }
-                    $this->delete_temp_all_personnel($this->user_data['id']);
-                    
-                    // save destination
-                    $temp_destination = $this->get_temp_destination($this->user_data['id']);
-                    foreach ($temp_destination as $row) {
-                        $data = array(
-                            'travel_order_id' => $to_last_id,
-                            'des_from' => $row->des_from,
-                            'des_to' => $row->des_to,
-                            'destination' => $row->destination,
-                            'requested_by' => $row->requested_by,
-                            'purpose' => $row->purpose,
-                            'date_from' => $row->date_from,
-                            'date_to' => $row->date_to,
-                            'instructions' => $row->instructions,
-                            'remarks' => $row->remarks,
-                            'travel_from' => $row->travel_from,
-                            'travel_to' => $row->travel_to,
-                            'coords_from' => $row->coords_from,
-                            'coords_to' => $row->coords_to,
-                        );
-                        $this->save_destination($data);
-                    }
-                    $this->delete_temp_all_destination($this->user_data['id']);
-    
-                    $resultarray['status'] = true;
-                    $resultarray['msg'] = 'Travel order has been created successfully.';
-                    $resultarray["redirect"] = site_url("eforms/travel_order/view_travel_order?id={$to_last_id}");
-                } else {
-                    $resultarray['status'] = false;
-                    $resultarray['msg'] = 'Failed to create new travel order entry!';
+            $query = $this->db->insert('gcceforms.travel_order', $data);
+            if($query){
+
+                $to_last_id = $this->db->insert_id();
+
+                // save personnel
+                $temp_personnel = $this->get_temp_personnel($this->user_data['id']);
+                foreach ($temp_personnel as $row) {
+                    $data = array(
+                        'travel_order_id' => $to_last_id,
+                        'employee_id' => $row->employee_id
+                    );
+                    $this->save_personnel($data);
                 }
+                $this->delete_temp_all_personnel($this->user_data['id']);
+                
+                // save destination
+                $temp_destination = $this->get_temp_destination($this->user_data['id']);
+                foreach ($temp_destination as $row) {
+                    $data = array(
+                        'travel_order_id' => $to_last_id,
+                        'des_from' => $row->des_from,
+                        'des_to' => $row->des_to,
+                        'destination' => $row->destination,
+                        'requested_by' => $row->requested_by,
+                        'purpose' => $row->purpose,
+                        'date_from' => $row->date_from,
+                        'date_to' => $row->date_to,
+                        'instructions' => $row->instructions,
+                        'remarks' => $row->remarks,
+                        'travel_from' => $row->travel_from,
+                        'travel_to' => $row->travel_to,
+                        'coords_from' => $row->coords_from,
+                        'coords_to' => $row->coords_to,
+                    );
+                    $this->save_destination($data);
+                }
+                $this->delete_temp_all_destination($this->user_data['id']);
+
+                $resultarray['status'] = true;
+                $resultarray['msg'] = 'Travel order has been created successfully.';
+                $resultarray["redirect"] = site_url("eforms/travel_order/view_travel_order?id={$to_last_id}");
             } else {
-                $resultarray['data'] = $checkPersonnel;
                 $resultarray['status'] = false;
-                $resultarray['msg'] = 'Failed to Create new Travel Order Entries.';
+                $resultarray['msg'] = 'Failed to create new travel order entry!';
             }
+            // if (empty($checkPersonnel)) {
+            // } else {
+            //     $resultarray['data'] = $checkPersonnel;
+            //     $resultarray['status'] = false;
+            //     $resultarray['msg'] = 'Failed to Create new Travel Order Entries.';
+            // }
 
             return $resultarray;
         }
@@ -3728,24 +3729,25 @@
                 'driver' => $driver_name,
             );
 
-            $checkPersonnel = $this->checkPersonnelEditTO($to_id);
+            // commented for rollback
+            // $checkPersonnel = $this->checkPersonnelEditTO($to_id);
 
-            if (empty($checkPersonnel)) {
-                $reference_no = $this->db->get_where("gcceforms.travel_order", array("id"=>$to_id))->row('reference_no');
-                if($this->update_travel_order(array('id' => $to_id), $data)){
-                    $resultarray['status'] = true;
-                    $resultarray['msg'] = 'Successfully update';
-                    $this->core_layout->setEventLog("Updated ".$reference_no.".","update", "success", "gcceforms", "user");
-                }else{
-                    $resultarray['status'] = false;
-                    $resultarray['msg'] = 'Failed to update';
-                    $this->core_layout->setEventLog("Failed updating ".$reference_no.".","update", "error", "gcceforms", "system");
-                }
-            } else {
-                $resultarray['data'] = $checkPersonnel;
+            $reference_no = $this->db->get_where("gcceforms.travel_order", array("id"=>$to_id))->row('reference_no');
+            if($this->update_travel_order(array('id' => $to_id), $data)){
+                $resultarray['status'] = true;
+                $resultarray['msg'] = 'Successfully update';
+                $this->core_layout->setEventLog("Updated ".$reference_no.".","update", "success", "gcceforms", "user");
+            }else{
                 $resultarray['status'] = false;
-                $resultarray['msg'] = 'Failed to Create new Travel Order Entries.';
+                $resultarray['msg'] = 'Failed to update';
+                $this->core_layout->setEventLog("Failed updating ".$reference_no.".","update", "error", "gcceforms", "system");
             }
+            // if (empty($checkPersonnel)) {
+            // } else {
+            //     $resultarray['data'] = $checkPersonnel;
+            //     $resultarray['status'] = false;
+            //     $resultarray['msg'] = 'Failed to Create new Travel Order Entries.';
+            // }
 
             return $resultarray;
         }
