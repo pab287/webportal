@@ -1513,7 +1513,7 @@ class Billing_m extends CI_Model {
                             $ref_yr_insert = explode($code_insert,explode("-",$ref_no_insert)[0])[1];
 
                             $penalties = $this->generate_bill_insert_payment_check_overdue($bill_id, $currentReading['account_id'], $current_date);
-                            $_overdue = $penalties['array_penalties'][0]['overdue'];
+                            $_overdue = (!empty($penalties['array_penalties'])) ? $penalties['array_penalties'][0]['overdue'] : 0;
                             
                             $insert_payment = array(
                                 'ref_no' => $ref_no_insert,
@@ -1845,7 +1845,7 @@ class Billing_m extends CI_Model {
                      * 
                      * Solution: 0 + 306 = 306.00
                      */
-                    $_total_charges = $total_charges + $_query['balance_covered'];
+                    $_total_charges = $_query['balance_covered'];
                 } else {
                     $_total_charges = $total_charges;
                 }
