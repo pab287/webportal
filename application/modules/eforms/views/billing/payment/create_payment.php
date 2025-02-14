@@ -107,7 +107,7 @@
                                     <div class="col-md-12">
                                         <div class="form-group form__group">
                                             <label>Total</label>
-                                            <input class="form-control m-input text-right total_balance" name="balance" step="0.01" readonly type="text">
+                                            <input class="form-control m-input text-right total_balance" step="0.01" readonly type="text">
                                         </div>
                                     </div>
                                 </div>
@@ -115,7 +115,7 @@
                                     <div class="col-md-12 remaining_balance_layout">
                                         <div class="form-group form__group">
                                             <label>Remaining</label>
-                                            <input class="form-control m-input text-right remaining_balance" step="0.01" readonly type="text">
+                                            <input class="form-control m-input text-right remaining_balance" name="balance" step="0.01" readonly type="text">
                                         </div>
                                     </div>
                                 </div>

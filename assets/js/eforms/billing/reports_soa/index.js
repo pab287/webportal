@@ -116,11 +116,12 @@ function getTotalBalanceEtc(){
         dataType: "JSON",
         data: { csrf_token: _csrf_hash, id: customer_id },
         success: function (result) {
+            var total_balance = (result.total_balance < 0) ? 0 : result.total_balance;
             $("#m_soa #balance").html('₱ '+numberWithCommas(result.lastbill.total_balance.toFixed(2)));
             $("#m_soa #total_penalty").html('₱ '+numberWithCommas(result.lastbill.total_penalty.toFixed(2)));
             $("#m_soa #overPayment").html('₱ '+numberWithCommas(result.overpayment));
             let final_bal = parseFloat(result.lastbill.total_amount) - parseFloat(result.overpayment);
-            $("#m_soa #total_balance").html('₱ '+result.totol_balance);
+            $("#m_soa #total_balance").html('₱ '+ numberWithCommas(total_balance.toFixed(2)));
         },
         error: function (request, status, error) {
             toastr.error("Please check your internet connection.", "Connection error");

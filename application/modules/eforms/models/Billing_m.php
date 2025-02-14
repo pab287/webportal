@@ -1503,7 +1503,12 @@ class Billing_m extends CI_Model {
                     if($query){
                         $this->updateReadingBilled($reading_id, "1", "Billed");
 
-                        if($over_payment >= $charges){
+                        $penalties = $this->generate_bill_insert_payment_check_overdue($bill_id, $currentReading['account_id'], $current_date);
+                        $_overdue = (!empty($penalties['array_penalties'])) ? $penalties['array_penalties'][0]['overdue'] : 0;
+                        $_is_penalty = (!empty($penalties['array_penalties'])) ? 1 : 0;
+                        $_net_payment = $charges + $_overdue;
+
+                        if($over_payment >= $_net_payment){
                             /* create payment */
                             $resultarray = array();
                             $code_insert = 'BHP';
@@ -1512,9 +1517,15 @@ class Billing_m extends CI_Model {
                             $ref_month_insert = explode("-",$ref_no_insert)[1];
                             $ref_yr_insert = explode($code_insert,explode("-",$ref_no_insert)[0])[1];
 
-                            $penalties = $this->generate_bill_insert_payment_check_overdue($bill_id, $currentReading['account_id'], $current_date);
-                            $_overdue = (!empty($penalties['array_penalties'])) ? $penalties['array_penalties'][0]['overdue'] : 0;
-                            
+                            /**
+                             * Why the net payment is 0??? because the net payment was covered by overpayment 
+                             * means he doesn't have to pay anything thats why its 0
+                             * beside this is the process in payment module where when creating payment 
+                             * if the overpayment is greater than the net pay
+                             * the net pay insert as 0 in database
+                             */
+                            $final_net_payment = 0;
+                            $over_payment_balance = $over_payment - $_net_payment;
                             $insert_payment = array(
                                 'ref_no' => $ref_no_insert,
                                 'ref_series' => $ref_series_insert,
@@ -1522,12 +1533,13 @@ class Billing_m extends CI_Model {
                                 'ref_month' => $ref_month_insert,
                                 'created_by' => $this->getUserdata()['emp_id'],
                                 'created_date' => $current_date,
-                                'balance_covered' => preg_replace('/[^0-9a-zA-Z.]/', '', $charges + $_overdue),
+                                'balance_covered' => preg_replace('/[^0-9a-zA-Z.]/', '', $_net_payment),
                                 'received_amount' => 0,
-                                'sub_total' => preg_replace('/[^0-9a-zA-Z.]/', '', $charges + $_overdue),
-                                'net_payment' => preg_replace('/[^0-9a-zA-Z.]/', '', $charges + $_overdue),
+                                'sub_total' => preg_replace('/[^0-9a-zA-Z.]/', '', $_net_payment),
+                                'net_payment' => preg_replace('/[^0-9a-zA-Z.]/', '', $final_net_payment),
                                 'penalties' => $penalties['serialize_penalties'],
-                                'balance' => 0,
+                                'balance' => $over_payment_balance,
+                                'is_penalty' => $_is_penalty,
                                 'acknowledgement_receipt' => $this->generatePaymentAR(),
                                 'bill_id' => $bill_id,
                                 'payment_type' => 'cash',
@@ -2602,10 +2614,16 @@ class Billing_m extends CI_Model {
           $post["net_payment"] = preg_replace('/[^0-9a-zA-Z.]/', '', $post['net_payment']);
           $post["balance"] = preg_replace('/[^0-9a-zA-Z.]/', '', $post['balance']);
           $post['acknowledgement_receipt'] = $this->generatePaymentAR();
+
+        //   echo "<pre>";
+        //   var_dump($post["balance_covered"], $post['received_amount'], $post['net_payment']);
+        //   echo "</pre>";
+        //   die();
+
           $query = $this->db->insert('hydra_billing.payments', $post);
 
           if($query){
-            if($post['received_amount'] >= $post['net_payment']){
+            if($post['received_amount'] >= $post['net_payment'] || $post['balance_covered'] >= $post['net_payment']){
               $this->updateBillingPaidStatus($post['bill_id'], '1');
               $this->updateDisconnectionStatus($post['account_id']);
             }
@@ -4542,7 +4560,7 @@ class Billing_m extends CI_Model {
       
         $data['lastbill'] = $balance;
         $data['overpayment'] = $overpayment;
-        $data['totol_balance'] = number_format(($balance['total_amount'] - $overpayment),2);
+        $data['total_balance'] = $balance['total_amount'] - $overpayment;
         return $data;
         
     }
