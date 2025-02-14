@@ -148,18 +148,27 @@ const vmLateAbsenteePreview = new Vue({
             }
 
             return className;
-        }, getLoaReference(empId, date){
-            let referenceNo = null;
-            if(typeof empId != "undefined" && typeof date != "undefined"){
-                const nDate = date.split(" - ");
-                if(nDate.length == 2){
-                    const keyDate = moment(new Date(nDate[0]), "dddd, MMMM D, YYYY h:m A").format("YYYY-MM-DD");
-                    if(typeof globalLoaReference[empId] != "undefined"){
-                        if(typeof globalLoaReference[empId][keyDate] != "undefined"){ referenceNo = globalLoaReference[empId][keyDate]; }
+        }, getLoaReference(employeeId, date) {
+            let referenceNumber = null;
+            const [startDate] = date.split(' - ');
+            const startDateObj = moment(new Date(startDate), 'dddd, MMMM D, YYYY h:m A');
+            const meridian = startDateObj.format('A');
+            const keyDate = startDateObj.format('YYYY-MM-DD');
+
+            if (globalLoaReference[employeeId] && globalLoaReference[employeeId][keyDate]) {
+                const { reference, whole_day, half_day, _meridian } = globalLoaReference[employeeId][keyDate];
+                if (reference) {
+                    if (whole_day) {
+                        referenceNumber = reference;
+                    } else if (half_day && _meridian === meridian) {
+                        referenceNumber = reference;
+                    }else if(whole_day === false && half_day === false){
+                        referenceNumber = reference;
                     }
                 }
             }
-            return referenceNo;
+
+            return referenceNumber;
         }
     }
 });

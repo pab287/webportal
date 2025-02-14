@@ -1617,11 +1617,19 @@ class Reports_model extends CI_Model{
                                 if($approvedLoa->num_rows() > 0){
                                     foreach ($approvedLoa->result() as $appLoa) {
                                         $isWholeDay = (intval($appLoa->type) === 3) ? true : false;
+                                        $isHalfDay = (intval($appLoa->type) === 2) ? true : false;
+
                                         $dateFrom = date("Y-m-d", strtotime($appLoa->date_from));
                                         $dateTo = $isWholeDay ? $dateFrom : date("Y-m-d", strtotime($appLoa->date_to));
                                         $cDate = date("Y-m-d", strtotime($dt));
+
+                                        $meridian = date("A", strtotime($dateFrom));
+
                                         if(strtotime($cDate) >= strtotime($dateFrom) && strtotime($cDate) <= strtotime($dateTo)){
-                                            $loaReference[$appLoa->employee][$cDate] = $appLoa->reference_no;
+                                            $loaReference[$appLoa->employee][$cDate]["reference"] = $appLoa->reference_no;
+                                            $loaReference[$appLoa->employee][$cDate]["whole_day"] = $isWholeDay;
+                                            $loaReference[$appLoa->employee][$cDate]["half_day"] = $isHalfDay;
+                                            $loaReference[$appLoa->employee][$cDate]["_meridian"] = $meridian;
                                         }
                                     }
                                 }
