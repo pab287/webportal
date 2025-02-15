@@ -152,17 +152,15 @@ const vmLateAbsenteePreview = new Vue({
             let referenceNumber = null;
             const [startDate] = date.split(' - ');
             const startDateObj = moment(new Date(startDate), 'dddd, MMMM D, YYYY h:m A');
-            const meridian = startDateObj.format('A');
+            let meridian = startDateObj.format('A');
             const keyDate = startDateObj.format('YYYY-MM-DD');
 
             if (globalLoaReference[employeeId] && globalLoaReference[employeeId][keyDate]) {
-                const { reference, whole_day, half_day, _meridian } = globalLoaReference[employeeId][keyDate];
+                const { reference, whole_day, half_day, _meridian, loa_type } = globalLoaReference[employeeId][keyDate];
                 if (reference) {
-                    if (whole_day) {
-                        referenceNumber = reference;
-                    } else if (half_day && _meridian === meridian) {
-                        referenceNumber = reference;
-                    }else if(whole_day === false && half_day === false){
+                    if ((half_day && _meridian === meridian) ||
+                        (whole_day && half_day === false) ||
+                        (loa_type == 4 && half_day === false)) {
                         referenceNumber = reference;
                     }
                 }
