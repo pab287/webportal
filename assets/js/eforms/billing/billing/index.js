@@ -85,7 +85,7 @@ var tblBillings = $("#table-billing").DataTable({
 });
 
 function numberWithCommas(x) {
-  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return parseFloat(x).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 function renderStatusDue(data) {

@@ -1862,7 +1862,7 @@ class Billing_m extends CI_Model {
                     $_total_charges = $total_charges;
                 }
 
-                $data["total_charges"] = number_format($_total_charges, 2, ".", ",");
+                $data["total_charges"] = $_total_charges;
                 $data["solution"] = $_query['total_charges'] . " + " .  $balanceLastBill["total_balance"] . " + " . $disconnectionFee . " + " . $data["overdue"] . " - " . $balance  . " = " . $total_charges;
                 
                 $resultarray[] = $data;
