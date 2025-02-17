@@ -3335,10 +3335,10 @@
                                             }
                                         }else{
                                             $dsRow = $_dStation->row();
-                                            $updated = $this->db->update($this->defaultStationTable, 
+                                            $_updated = $this->db->update($this->defaultStationTable, 
                                                 array("station_id"=>$locRow->id, "station_description"=>$locRow->site_name, "updated_at"=>date("Y-m-d H:i:s")), 
                                                 array("id"=>$dsRow->id)); 
-                                            if($updated){
+                                            if($_updated){
                                                 if($tempData){
                                                     $tempData = (object) $tempData;
                                                     $tempName = strtoupper($tempData->display_name_1);
@@ -11179,6 +11179,7 @@
             return $result;
         }
 
+        // change log where
         private function logChanges($currentData, $newData) {
                 // var_dump($currentData, $newData);
                 if (is_object($currentData)) {
@@ -11207,7 +11208,10 @@
                     else if (strtolower($field) == 'license_id'){
                         $changesString.= " Field: $field, from: <strong>". $this->getLicenseTypeById($change['old']). "</strong>, to: <strong>". $this->getLicenseTypeById($change['new']). "</strong>\n";
                     }
-                    else if ($field != 'work_station'){
+                    else if (strtolower($field) == 'tl_supervisory') {
+                        $changesString .= " Field: TWO LEVEL SUPERVISORY from: <strong>" . ($change['old'] == 1 ? 'YES' : 'NO') . "</strong>, to: <strong>" . ($change['new'] == 1 ? 'YES' : 'NO') . "</strong>\n";
+                    }
+                    else if ($field != 'work_station' && $field != 'supervisor_meta'){
                         $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
                     }
                 }
@@ -11223,6 +11227,41 @@
                         $changesString.= " Field: work_station, from: ' <strong>". implode(',', $currentData['work_station']). "</strong> ', to: <strong>'". implode(',', $newData['work_station']). "'</strong>\n";
                     }
                 } 
+
+                if (isset($newData['supervisor_meta'])) {
+                    $meta = @unserialize($newData['supervisor_meta']);
+                    $currentMeta = @unserialize($currentData['supervisor_meta']);
+
+                    if (is_array($currentMeta)) {
+                        $diff = array_diff($currentMeta, $meta);
+
+                        if (!empty($diff)) {
+
+                            if (isset($diff['supervisory']) && $diff['supervisory']) {
+                                $changesString.= " Field: supervisory, from: ' <strong>". $this->getEmployeeName($currentMeta['supervisory']). "</strong> ', to: <strong>'". $this->getEmployeeName($meta['supervisory']). "'</strong>\n";
+                            }
+
+                            if ($newData['tl_supervisory'] == 1) {
+                                if ((isset($diff['managerial']) && $diff['managerial'])) {
+                                    $changesString.= " Field: managerial, from: ' <strong>". $this->getEmployeeName($currentMeta['managerial']) . "</strong> ', to: <strong>'". $this->getEmployeeName($meta['managerial']) . "'</strong>\n";
+                                } else {
+                                    $changesString.= " Field: managerial, to: ' <strong>". $this->getEmployeeName($meta['managerial']) . "</strong> '\n";
+                                }
+                            }
+                        }
+                    } else {
+                        $_currentMeta = $currentData['supervisor_meta'];
+
+                        $changesString.= " Field: supervisory, from: 'NONE', to: <strong>'". $this->getEmployeeName($meta['supervisory']). "'</strong>\n";
+
+                        if ($newData['tl_supervisory'] == 1) {
+                            if (isset($meta['managerial']) && $meta['managerial']) {
+                                $changesString.= " Field: managerial, to: <strong>'". $this->getEmployeeName($meta['managerial']) . "'</strong>\n";
+                            }
+                        }
+                    }
+                }
+
                 return $changesString;
             }
 
