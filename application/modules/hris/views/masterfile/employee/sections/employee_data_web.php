@@ -1053,17 +1053,17 @@
         <div id="empEmploymentInfo-body" class="collapse" :class="{show :activeSection == 'empEmploymentInfo'}" aria-labelledby="empEmploymentInfo-head" data-parent="#accordionMain">
             <div class="card-body">
                 <ul class="nav nav-tabs nav-fill" id="offense-tabs">
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" @click="filterOffenses('offenses')">Offenses</a></li>
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" @click="filterOffenses('commendation')">Commendations</a></li>
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" @click="filterOffenses('notice')">Notices</a></li>
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" @click="filterOffenses('others')">Others</a></li>
+                    <li class="nav-item active"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('offenses')">Offenses</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('commendations')">Commendations</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('notices')">Notices</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('others')">Others</a></li>
                 </ul>
                 <div class="tab-content" id="offense-content">
-                    <div class="tab-pane active show" id="offenses-tab">
+                    <div id="offenses-tab">
                         <table class="responsive">
                             <thead class="customsalary">
                                 <tr>
-                                    <th scope="col" colspan="4">OFFENSE AND COMMENDATIONS</th>
+                                    <th scope="col" colspan="4" v-text="activeTab">OFFENSE AND COMMENDATIONS</th>
                                 </tr>
                             </thead>
                             <thead>
@@ -1086,7 +1086,7 @@
                                 <template v-else>
                                     <tr v-for="offense in filteredOffenses" :key="offense.id">
                                         <td data-label="TYPE" v-text="offense.offcom_type"></td>
-                                        <td data-label="DATE" v-text="offense.offcom_date"></td>
+                                        <td data-label="DATE" v-text="formatDate(offense.offcom_date)"></td>
                                         <td data-label="NATURE" v-text="offense.offcom_nature"></td>
                                         <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
                                     </tr>
@@ -1094,9 +1094,6 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="tab-pane" id="commendation-tab"><h2>Hello World</h2></div>
-                    <div class="tab-pane" id="notices-tab"><h2>Hello World 2</h2></div>
-                    <div class="tab-pane" id="others-tab"><h2>Hello World 3</h2></div>
                 </div>
                 <template v-if="salaries != 'not_allowed'">
                     <table class="responsive">

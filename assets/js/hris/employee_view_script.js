@@ -35,7 +35,8 @@ $(document).ready(function(){
 let employeeDataSheet = new Vue({
     el:"#m-content",
     data:{ 
-            filteredOffenses: [],
+            activeTab: 'offenses',
+            filteredOffenses: {},
             activeSection:"",
             main:[],
             supervisor:"",
@@ -166,10 +167,28 @@ let employeeDataSheet = new Vue({
              }
         }
     },
-
     methods:{
         filterOffenses(type) {
-            this.filteredOffenses = this.offenses.filter(offense => offense.offcom_type === type);
+            this.activeTab = type;
+            const offensesArray = Object.values(this.offenses);
+            
+            if (type === 'offenses') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    OFFENSE_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            } else if (type === 'commendations') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    COMMENDATION_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            } else if (type === 'notices') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    NOTICE_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            } else if (type === 'others') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    !OTHER_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            }
         },
         getSidebarData(){
             this.main = { ...this.$data.main, ..._tempContentData.data.main };
@@ -733,8 +752,8 @@ function getEmploymentInformation(){
                 employeeDataSheet.$data.offenses = false;
             } else {
                 employeeDataSheet.$data.offenses = { ...employeeDataSheet.$data.offenses, ...response.offenses };
-                console.log(employeeDataSheet.$data.offenses);
                 employeeDataSheet.$data.filteredOffenses = employeeDataSheet.$data.offenses;
+                employeeDataSheet.filterOffenses('offenses');
             }
 
             if (!response || Object.keys(response.stations).length == 0) {
@@ -1002,7 +1021,5 @@ $('#offense-tabs .nav-link').on('click', function(e) {
  });
 
  $('#empEmploymentInfo-body').on('shown.bs.collapse', function() {
-    $('#offense-tabs .nav-link').removeClass('active');
-    $('#offense-content .tab-pane').removeClass('active show');
-    $('#collapseOffenses .nav-tabs .nav-link:first').tab('show');
+    $('#offense-tabs .nav-item:first-child .nav-link').addClass('active');
 });
