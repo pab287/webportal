@@ -1227,6 +1227,7 @@ class Reports_model extends CI_Model{
                     $resultset["toastr_msg"] = "Last verified attendance date on `{$maxDate}`, A total of ({$ctrCount}) employee late attendance record/s found!";
                 }else{
                     $resultset["response"] = false;
+                    $resultset["filters"] = $arrFilter;
                     $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `{$tempMaxDate}`." : "No late attendance record/s found!";
                 }
             }else{
@@ -1603,19 +1604,33 @@ class Reports_model extends CI_Model{
                             foreach ($attDatex as $dt) {
                                 $this->db->select("date_from, date_to, employee, reference_no, type");
                                 $this->db->from("gcceforms.loa");
-                                $this->db->where("DATE(date_from) >=", $dt);
                                 $this->db->where("employee", $attx->emp_id);
                                 $this->db->where("status", "Approved");
+                                $this->db->group_start();
+                                $this->db->where("DATE(date_from) >=", $dt);
+                                $this->db->or_where("DATE(date_from) <=", $dt);
+                                $this->db->where("DATE(date_to) >=", $dt);
+                                $this->db->group_end();
                                 $this->db->order_by("date_from", "ASC");
                                 $approvedLoa = $this->db->get();
 
                                 if($approvedLoa->num_rows() > 0){
                                     foreach ($approvedLoa->result() as $appLoa) {
+                                        $isWholeDay = (intval($appLoa->type) === 3) ? true : false;
+                                        $isHalfDay = (intval($appLoa->type) === 2) ? true : false;
+                                        $loaType = intval($appLoa->type);
                                         $dateFrom = date("Y-m-d", strtotime($appLoa->date_from));
-                                        $dateTo = date("Y-m-d", strtotime($appLoa->date_to));
+                                        $dateTo = $isWholeDay ? $dateFrom : date("Y-m-d", strtotime($appLoa->date_to));
                                         $cDate = date("Y-m-d", strtotime($dt));
+
+                                        $meridian = date("A", strtotime($appLoa->date_from));
+
                                         if(strtotime($cDate) >= strtotime($dateFrom) && strtotime($cDate) <= strtotime($dateTo)){
-                                            $loaReference[$appLoa->employee][$cDate] = $appLoa->reference_no;
+                                            $loaReference[$appLoa->employee][$cDate]["reference"] = $appLoa->reference_no;
+                                            $loaReference[$appLoa->employee][$cDate]["whole_day"] = $isWholeDay;
+                                            $loaReference[$appLoa->employee][$cDate]["half_day"] = $isHalfDay;
+                                            $loaReference[$appLoa->employee][$cDate]["loa_type"] = $loaType;
+                                            $loaReference[$appLoa->employee][$cDate]["_meridian"] = $meridian;
                                         }
                                     }
                                 }
@@ -1666,6 +1681,7 @@ class Reports_model extends CI_Model{
                     $resultset["toastr_msg"] = "Last verified attendance date on `{$maxDate}`, A total of ({$ctrCount}) employee absentee attendance record/s found!";
                 }else{
                     $resultset["response"] = false;
+                    $resultset["filters"] = $arrFilter;
                     $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `{$tempMaxDate}`." : "No absentee attendance record/s found!";
                 }
             }else{

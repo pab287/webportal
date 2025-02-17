@@ -148,18 +148,25 @@ const vmLateAbsenteePreview = new Vue({
             }
 
             return className;
-        }, getLoaReference(empId, date){
-            let referenceNo = null;
-            if(typeof empId != "undefined" && typeof date != "undefined"){
-                const nDate = date.split(" - ");
-                if(nDate.length == 2){
-                    const keyDate = moment(new Date(nDate[0]), "dddd, MMMM D, YYYY h:m A").format("YYYY-MM-DD");
-                    if(typeof globalLoaReference[empId] != "undefined"){
-                        if(typeof globalLoaReference[empId][keyDate] != "undefined"){ referenceNo = globalLoaReference[empId][keyDate]; }
+        }, getLoaReference(employeeId, date) {
+            let referenceNumber = null;
+            const [startDate] = date.split(' - ');
+            const startDateObj = moment(new Date(startDate), 'dddd, MMMM D, YYYY h:m A');
+            let meridian = startDateObj.format('A');
+            const keyDate = startDateObj.format('YYYY-MM-DD');
+
+            if (globalLoaReference[employeeId] && globalLoaReference[employeeId][keyDate]) {
+                const { reference, whole_day, half_day, _meridian, loa_type } = globalLoaReference[employeeId][keyDate];
+                if (reference) {
+                    if ((half_day && _meridian === meridian) ||
+                        (whole_day && half_day === false) ||
+                        (loa_type == 4 && half_day === false)) {
+                        referenceNumber = reference;
                     }
                 }
             }
-            return referenceNo;
+
+            return referenceNumber;
         }
     }
 });
@@ -215,6 +222,22 @@ if(typeof hrisFilterLateAbsenteeReport !== "undefined" && hrisFilterLateAbsentee
             },
             processResults: function (data) { return data; }
         }, language: { errorLoading: function () { return "Searching..." } }
+    }).on("select2:select", function (e) {
+        const tempEmployeeSelector = hrisFilterLateAbsenteeReport.find("select#employee");
+        const tempPayrollGroupSelector = hrisFilterLateAbsenteeReport.find("select#payroll_group");
+
+        tempSelectorClear(tempEmployeeSelector);
+        tempSelectorClear(tempPayrollGroupSelector);
+        
+        $(e.target).validate();
+    }).on("select2:unselect", function (e) {
+        const tempEmployeeSelector = hrisFilterLateAbsenteeReport.find("select#employee");
+        const tempPayrollGroupSelector = hrisFilterLateAbsenteeReport.find("select#payroll_group");
+
+        setTimeout(() => {
+            tempSelectorClear(tempEmployeeSelector, true);
+            tempSelectorClear(tempPayrollGroupSelector, true);
+        }, 250);
     });
 
     hrisFilterLateAbsenteeReport.find("select#employee")
@@ -318,7 +341,8 @@ $.validate({
                     dtTableLateAbsenteeReport.clear();
                     dtTableLateAbsenteeReport.rows.add(json.data);
                     dtTableLateAbsenteeReport.draw(false);
-                    Object.assign(filterOptionsLateAbsentee, json.filters);
+                    filterOptionsLateAbsentee = { ...json.filters };
+                    globalLoaReference ={ ...json.loa_reference };
 
                     setTimeout(function () {
                         const rowCount = dtTableLateAbsenteeReport.rows().count();
