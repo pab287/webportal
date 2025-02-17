@@ -107,7 +107,13 @@
             $tempData = array();
 
             $_temp = $this->payroll->select2CompanyData();
-            $tempData["company"] = $this->userData["company"];
+            $companyId = (int)$this->userData["company"];
+
+            $filter = array_filter($_temp, function ($value) use ($companyId) {
+                return is_object($value) ? ((int)$value->id === $companyId) : ((int)$value['id'] === $companyId);
+            });
+
+            $tempData["company"] = $filter;
 
             $this->core_layout->setPageTitle("Payroll - Payslip");
             $this->core_layout->setPrivilegeName("payroll_payslip");
