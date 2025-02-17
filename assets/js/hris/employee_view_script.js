@@ -4,6 +4,28 @@ let employeeData = _tempContentData.data.main;
 let user_name = _tempContentData.data.user.display_name;
 let id = employeeData.id;
 let today = _tempContentData.data.timestamp;
+const OFFENSE_TYPES = [
+    'OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE',
+    '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE', 'DISMISSAL',
+    'WRITTEN WARNING', '3-DAYS-SUSPENSION', '6-DAYS-SUSPENSION', '1-2-DAYS-SUSPENSION'
+  ];
+  
+  const COMMENDATION_TYPES = ['COMMENDATION'];
+  const NOTICE_TYPES = [
+    'LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 
+    'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 'NOD', 
+    'NOTICE OF ADMINISTRATIVE', 'NOTICES', 'SUSPENSION'
+  ];
+  
+  const OTHER_TYPES = [
+    'OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE',
+    '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE', 'COMMENDATION', 
+    'LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 
+    'WRITTEN WARNING', 'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 
+    'NOD', 'DISMISSAL', 'NOTICE OF ADMINISTRATIVE HEARING', 'NOTICES',
+    '3-DAYS-SUSPENSION', '6-DAYS-SUSPENSION', '1-2-DAYS-SUSPENSION'
+  ];
+  
 $(document).ready(function(){
     $('#column-options').on('click', function (e) {
         e.stopPropagation();
@@ -13,6 +35,7 @@ $(document).ready(function(){
 let employeeDataSheet = new Vue({
     el:"#m-content",
     data:{ 
+            filteredOffenses: [],
             activeSection:"",
             main:[],
             supervisor:"",
@@ -145,6 +168,9 @@ let employeeDataSheet = new Vue({
     },
 
     methods:{
+        filterOffenses(type) {
+            this.filteredOffenses = this.offenses.filter(offense => offense.offcom_type === type);
+        },
         getSidebarData(){
             this.main = { ...this.$data.main, ..._tempContentData.data.main };
             this.path = _tempContentData.data.path;
@@ -707,6 +733,8 @@ function getEmploymentInformation(){
                 employeeDataSheet.$data.offenses = false;
             } else {
                 employeeDataSheet.$data.offenses = { ...employeeDataSheet.$data.offenses, ...response.offenses };
+                console.log(employeeDataSheet.$data.offenses);
+                employeeDataSheet.$data.filteredOffenses = employeeDataSheet.$data.offenses;
             }
 
             if (!response || Object.keys(response.stations).length == 0) {
@@ -964,5 +992,17 @@ function printEmployeeDataSheet(avatar, info, user, timestamp) {
     }, 1500);
 }
 
+$('#offense-tabs .nav-link').on('click', function(e) {
+    e.preventDefault();
+    $('#offense-tabs .nav-link').removeClass('active');
+    $('#offense-content .tab-pane').removeClass('active show');
+    $(this).addClass('active');
+    var targetId = $(this).attr('href');
+    $(targetId).addClass('active show');
+ });
 
-
+ $('#empEmploymentInfo-body').on('shown.bs.collapse', function() {
+    $('#offense-tabs .nav-link').removeClass('active');
+    $('#offense-content .tab-pane').removeClass('active show');
+    $('#collapseOffenses .nav-tabs .nav-link:first').tab('show');
+});
