@@ -276,7 +276,7 @@ Class Login_m extends CI_Model
         $response = array();
         $post = $this->input->post();
         $id = $post['emp_id'];
-        $this->db->select('key_code, expiry, gccmaster.two_factor_authentication.id,method');
+        $this->db->select('key_code, expiry, two_factor_authentication.id,method,two_factor_authentication.send_to');
         $this->db->join('gccmaster.tblusers', 'gccmaster.tblusers.emp_id = gccmaster.two_factor_authentication.emp_id');
         $this->db->from("gccmaster.two_factor_authentication");
         $this->db->where('gccmaster.two_factor_authentication.emp_id', $id);
@@ -289,6 +289,7 @@ Class Login_m extends CI_Model
             $response['expiry'] = $current_otp['expiry'];
             $response['method'] = $current_otp['method'];
             $response['attempts'] = $current_otp['key_code'];
+            $response['send_to'] = $current_otp['send_to'];
         }else {
             $response['status'] = "false";
         }

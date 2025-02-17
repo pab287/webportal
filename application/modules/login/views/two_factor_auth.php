@@ -272,7 +272,7 @@ input[type="radio"]:checked::after {
                             <div class="form-group m-form__group text-center">
                                 <img src="<?= base_url('assets/otp_icon.png')?>" width="23%">
                                 <h2 class="m-portlet__head-text p-2">OTP Verification</h2>
-                                <label id="otp_info">A verification code has been sent to your registered mobile number</label>
+                                <label id="otp_info">A verification code has been sent to your registered mobile number </label>
                             </div>
                             <div class="form-group m-form__group">
                                 <input type="text" id="otp" name="key_code" class="form-control m-input text-center otp-input" maxlength="10" placeholder="Enter OTP">
@@ -340,9 +340,11 @@ $(document).ready(function() {
             if (response.status == 'true') {
                 request_id = response.request_id;
                 method = response.method;
+                send_to = response.send_to;
                 $('#two_factor_auth button[type="submit"]').prop('disabled', true);
                 if(response.method == 'sms'){
-                        $('#otp_info').text('A verification code has been sent to your registered mobile number');
+                    const mobileLastFourDigits = send_to.replace(/\D/g, '').slice(-4);
+                    $('#otp_info').text(`A verification code has been sent to *** **** ${mobileLastFourDigits}`);
                     }else if(response.method == 'email'){
                         $('#otp_info').text('A verification code has been sent to your registered email address');
                     }
@@ -415,7 +417,8 @@ $(document).ready(function() {
                     request_id = response.request_id;
                     method = response.method;
                     if(response.method == 'sms'){
-                        $('#otp_info').text('A verification code has been sent to your registered mobile number');
+                        const mobileLastFourDigits = sessionData.contacts.mobile_no.toString().slice(-4);
+                        $('#otp_info').text(`A verification code has been sent to *** **** ${mobileLastFourDigits}`);
                     }else if(response.method == 'email'){
                         $('#otp_info').text('A verification code has been sent to your registered email address');
                     }
