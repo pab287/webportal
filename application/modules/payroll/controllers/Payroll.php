@@ -1,6 +1,9 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
     class Payroll extends MY_Controller {
+
+        protected $userData;
+
         function __construct() {
             parent::__construct();
             $this->authenticate->setModuleAccess("payroll");
@@ -12,6 +15,8 @@
             $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
             $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
             date_default_timezone_set('Asia/Manila');
+
+            $this->userData = $this->session->userdata("logged_in");
         }
 
         function dashboard() {
@@ -98,10 +103,16 @@
 
 
         public function payslip() {
+
+            $tempData = array();
+
+            $_temp = $this->payroll->select2CompanyData();
+            $tempData["company"] = $this->userData["company"];
+
             $this->core_layout->setPageTitle("Payroll - Payslip");
             $this->core_layout->setPrivilegeName("payroll_payslip");
             $this->core_layout->addJs("js/buttons.print.min.js", true);
-            $this->core_layout->addJs("js/payroll/payslip/payslip.script.js", true);
+            $this->core_layout->addJs("js/payroll/payslip/payslip.script.js", true, $tempData);
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
             $this->load->view('core/templates/header');

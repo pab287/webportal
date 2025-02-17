@@ -11,6 +11,11 @@ const exportOptions = {
 let dtEmployeeTimesheet;
 let dtPayslipTable;
 let dtPayrollIds = [];
+let companyId = 0;
+
+if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0) {
+    if(typeof _tempContentData.company !== "undefined" && _tempContentData.company){ companyId = _tempContentData.company; }
+}
 
 var vmPayslip = new Vue({
     el: "#generated-payslip",
@@ -47,6 +52,11 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
                 });
             }
         }
+
+        if (jQuery.inArray("view_by_company", _currentActions) !== -1) {
+            let option = new Option('GC&C', companyId, true, true);
+            modalGeneratePayslip.find("#company").append(option).trigger("change");
+        }
     });
 
     modalGeneratePayslip.find("#employees").select2({
@@ -81,8 +91,6 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
     }).on("select2:select", function (data) {
         selectedCompany = data.params.data;
     });
-
-
 
 
     //=====================END JV==============================
