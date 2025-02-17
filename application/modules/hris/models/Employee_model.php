@@ -11215,6 +11215,7 @@
                         $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
                     }
                 }
+
                 if (isset($newData['work_station'])) {
                     sort($newData['work_station']);
                     sort($currentData['work_station']);
@@ -11242,10 +11243,20 @@
                             }
 
                             if ($newData['tl_supervisory'] == 1) {
-                                if ((isset($diff['managerial']) && $diff['managerial'])) {
+                                if (isset($diff['managerial']) && $diff['managerial']) {
                                     $changesString.= " Field: managerial, from: ' <strong>". $this->getEmployeeName($currentMeta['managerial']) . "</strong> ', to: <strong>'". $this->getEmployeeName($meta['managerial']) . "'</strong>\n";
                                 } else {
                                     $changesString.= " Field: managerial, to: ' <strong>". $this->getEmployeeName($meta['managerial']) . "</strong> '\n";
+                                }
+                            } else {
+                                $changesString .= "Field: managerial, ' <strong>" . $this->getEmployeeName($currentMeta['managerial']) . "</strong> ' is ' <strong> Removed</strong> '\n";
+                            }
+                        } else {
+                            
+                            if ($newData['tl_supervisory'] == 1) {
+
+                                if ((isset($meta['managerial'])) && $meta['managerial']) {
+                                    $changesString .= " Field: managerial, to: <strong>'". $this->getEmployeeName($meta['managerial']) . "'</strong>\n";
                                 }
                             }
                         }
