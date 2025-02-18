@@ -8185,7 +8185,7 @@
             return $resultarray;
         }
 
-        function removeEmployeeAllowance($id) {
+        public function removeEmployeeAllowance($id) {
             $resultarray = array();
 
             /*** edited contents logging ***/
@@ -8230,7 +8230,7 @@
             $coreHistoryLog->setHistoryLogEmployeeId($employeeId);
 
             if ($updated && $this->db->affected_rows() > 0) {
-                $resultarray["status"] = TRUE;
+                $resultarray["status"] = true;
                 $resultarray["response"] = "Data has been removed!";
                 /*** edited contents logging ***/
                 $logMessage = "Employee named `$tempEmployeeName` with payroll allowance data rate of `$rate` and frequency of `$frequency` has been archived.";
@@ -8238,7 +8238,7 @@
                 $coreHistoryLog->saveLoggedEventHistory();
                 /*** edited contents logging ***/
             } else {
-                $resultarray["status"] = FALSE;
+                $resultarray["status"] = false;
                 $resultarray["response"] = $this->db->error();
                 /*** edited contents logging ***/
                 $logMessage = "Failed to archive payroll allowance data of employee named `$tempEmployeeName` with a rate of `$rate` and frequency of `$frequency`.";
@@ -8916,17 +8916,17 @@
                 $currentState = $row->is_active ? intval($row->is_active): 0;
 
                 if($currentRate !== $postRate){
-                    $editedContent["rate"] = number_format($post['rate'], 2, ".", ","); 
+                    $editedContent["rate"] = number_format($post['rate'], 2, ".", ",");
                     $fromContent["rate"] = number_format($row->rate, 2, ".", ",");
                 }
 
                 if((isset($post['frequency']) && $post['frequency'] && $row->frequency) && $row->frequency !== $post['frequency']){
-                    $editedContent["frequency"] = $post['frequency']; 
+                    $editedContent["frequency"] = $post['frequency'];
                     $fromContent["frequency"] = $row->frequency;
                 }
 
                 if($currentState !== $postIsActive){
-                    $editedContent["is_active"] = intval($post['is_active']) === 1 ? "Active": "Inactive"; 
+                    $editedContent["is_active"] = intval($post['is_active']) === 1 ? "Active": "Inactive";
                     $fromContent["is_active"] = intval($row->is_active) === 1 ? "Active": "Inactive";
                 }
             }
@@ -10936,7 +10936,7 @@
             $historyStatus = false;
             $basic = 0;
 
-            if(!isset($arr["is_active"])){ $arr["is_active"] = 1; }
+            if(!isset($arr["is_active"])){ $arr["is_active"] = 0; }
             $isActiveState = intval($arr["is_active"]) == 1;
 
             $this->db->select('b.name, a.basic_rate, a.payroll_type');
