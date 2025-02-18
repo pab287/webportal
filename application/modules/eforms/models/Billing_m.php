@@ -34,6 +34,7 @@ class Billing_m extends CI_Model {
         $post = $this->input->post();
         $post["created_by"] = $this->getUserdata()['emp_id'];
         $post["created_at"] = $current_date;
+        $post["meterno"] = trim($post["meterno"]);
         $post["meterno_raw"] = str_replace(" ", "", str_replace("-", "", $post["meterno"]));
         $resultarray = array();
 
