@@ -38,6 +38,14 @@ class Sms extends MY_Controller {
         $this->load->view('core/templates/footer');
     }
 
+    public function sms_test(){
+        $this->core_layout->setPrivilegeName("sms_testing");
+        $this->core_layout->addJs("js/sms/test.js", true);
+		$this->load->view('core/templates/header');
+        $this->load->view('sms/sms_test');
+        $this->load->view('core/templates/footer');
+    }
+
     function bulk_outbox(){
         $data = $this->bulk->bulkOutbox();
 		$this->output
