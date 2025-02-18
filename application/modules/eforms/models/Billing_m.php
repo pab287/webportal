@@ -1729,9 +1729,10 @@ class Billing_m extends CI_Model {
 
         $filterFields = array("a.middlename"," a.accountno", "a.meterno", "a.firstname", "a.lastname", "b.ref_no", "b.billing_from", "b.billing_to", "b.total_charges", "b.status", "b.due_date");
 
-        $this->db->select("b.print_count, b.reading_id, a.middlename, b.is_paid, b.id, a.id as customer_id, a.accountno, a.meterno, a.firstname, a.lastname, a.is_disconnected, b.ref_no, b.billing_from, b.billing_to, b.total_charges, b.status, b.due_date, p.net_payment, p.sub_total, p.penalties, p.reconnection_fee, p.balance_covered, p.is_penalty, p.acknowledgement_receipt");
+        $this->db->select("b.print_count, b.reading_id, a.middlename, b.is_paid, b.id, a.id as customer_id, a.accountno, a.meterno, a.firstname, a.lastname, a.is_disconnected, b.ref_no, b.billing_from, b.billing_to, b.total_charges, b.status, b.due_date, p.net_payment, p.sub_total, p.penalties, p.reconnection_fee, p.balance_covered, p.is_penalty, p.acknowledgement_receipt, r.ref_no as reading_ref_no");
         $this->db->from("hydra_billing.bills b");
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
+        $this->db->join("hydra_billing.readings r", "r.id = b.reading_id", "LEFT");
         $this->db->join("hydra_billing.payments as p", "p.bill_id = b.id", "LEFT");
         $this->db->where("b.status", "1");
         $this->db->group_by("b.id");
@@ -1840,6 +1841,7 @@ class Billing_m extends CI_Model {
                 $data["status"] = $paid_status;
                 $data['current_due'] = $_query['total_charges'];
                 $data["balance"] = $balance;
+                $data["reading_ref_no"] = $_query["reading_ref_no"];
                 $data["balance_covered"] = $_query['balance_covered'];
                 $data["total_payments"] = $totalPayments;
                 $data["is_paid"] = $_query["is_paid"];

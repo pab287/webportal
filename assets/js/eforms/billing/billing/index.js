@@ -23,6 +23,7 @@ var tblBillings = $("#table-billing").DataTable({
             return "<strong style='color: #525252;'>"+data+"</strong>";
           }
         },
+       { data: "reading_ref_no"},
        { data: "accountno"},
        { data: "name", orderable: false},
        { data: "meterno"},
