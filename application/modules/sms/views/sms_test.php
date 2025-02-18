@@ -15,18 +15,19 @@
                 </div>
                 <div class="m-portlet__body">
                     <div class="m-form m-form--label-align-right m--margin-top-10 m--margin-bottom-10">
-                        <form action="" id="form_sms">
+                        <form action="<?php echo site_url("sms/send_sms"); ?>" id="form_sms">
+                        <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                             <div class="row align-items-center">
                                 <div class="col-xl-8 order-2 order-xl-1">
                                     <div class="form-group m-form__group row align-items-center">
                                         <div class="col-md-4">
-                                            <input type="text" class="form-control m-input" id="mobile" name="mobile" placeholder="Mobile Number">
+                                            <input type="text" class="form-control m-input" id="mobile" name="mobile" placeholder="Mobile Number" data-validation="required">
                                         </div>
                                         <div class="col-md-4">
-                                            <input type="text" class="form-control m-input" id="message" name="message" placeholder="Message">
+                                            <input type="text" class="form-control m-input" id="message" name="message" placeholder="Message" data-validation="required">
                                         </div>
                                         <div class="col-md-4">
-                                            <button type="button" class="btn btn-primary btnSave" id="send_sms">Send</button>
+                                            <button type="submit" class="btn btn-primary btnSave" id="send_sms">Send</button>
                                         </div>
                                     </div>
                                 </div>

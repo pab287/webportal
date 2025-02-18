@@ -11,6 +11,7 @@ Class Login_m extends CI_Model
 
         $this->directAccess = sha1("direct_access-{$tempDate}");
         $this->load->model('core/Core_model', 'core');
+        $this->load->model("sms/services/Gateway_model","sms_gateway");
     }
 
     function login($username, $password)
@@ -421,7 +422,8 @@ Class Login_m extends CI_Model
                        "Your GC&C Conyxph One Time Password (OTP) is: {$data['key_code']}. " .
                        "If this was not you, please ignore.";
                 
-                $result = $this->sms->sendSMS($send_to, $msg);
+                // $result = $this->sms->sendSMS($send_to, $msg); this is for playsms
+                $result = $this->sms_gateway->sendTwoFactorSms($send_to, $msg);
                 if ($result['status'] == true) {
                     return true;
                 }

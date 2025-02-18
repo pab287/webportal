@@ -14,6 +14,7 @@ class Sms extends MY_Controller {
         $this->load->model("services/bulk_model","bulk");
         $this->load->model("services/corporate_model","corporate");
         $this->load->model("services/client_model","client");
+        $this->load->model("services/gateway_model","gateway");
 	}
     
     public function index(){
@@ -510,4 +511,10 @@ class Sms extends MY_Controller {
         ->set_content_type('json')
         ->set_output(json_encode($data));
     }
+
+    public function send_sms(){
+        $data = $this->gateway->sendTwoFactorSms();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }
