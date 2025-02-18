@@ -378,6 +378,8 @@ $.validate({
             success: function (json) {
                 if (json.response) {
                     currentForm.reset();
+                    $("#select2_owner").val(null).trigger('change');
+                    $("#select2_module").val(null).trigger('change');
                     dtTableProtocol.ajax.reload();
                     modalNewProtocol.modal("hide");
                     toastr.success(json.toastr_msg, "Protocol Settings", 5000);
