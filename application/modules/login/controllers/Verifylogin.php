@@ -159,6 +159,7 @@ class Verifylogin extends MY_Controller{
                     $this->db->where('username', $username);
                     $this->db->set('login_attempts', 'login_attempts + 1', false);
                     $this->db->set('lockout', 'IF(login_attempts >= 4, 1, lockout)', false);
+                    $this->db->set('lockout_dt', 'IF(login_attempts >= 4, NOW(), lockout_dt)', false);
                     $this->db->update('gccmaster.tblusers');
                     
                     $this->db->trans_complete();

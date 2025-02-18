@@ -355,6 +355,7 @@ Class Login_m extends CI_Model
             if ($current_attempts >= 4) {
                 $this->db->where('emp_id', $emp_id);
                 $this->db->set('lockout', 1, false);
+                $this->db->set('lockout_dt', 'NOW()', false);
                 $this->db->update('gccmaster.tblusers');
                 $url = site_url('login');
                 $response = array('status' => 'locked', 'message' => 'Error', 'redirect' => $url);
@@ -447,6 +448,10 @@ Class Login_m extends CI_Model
         return $query->row();
     }
 
+    public function getLockedAccounts(){
+        
+    }
+
     public function getAttempts($username) {
         $this->db->select('login_attempts,lockout');
         $this->db->from('gccmaster.tblusers');
@@ -454,5 +459,7 @@ Class Login_m extends CI_Model
         $query = $this->db->get();
         return $query->row();
     }
+
+
 
 }

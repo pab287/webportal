@@ -73,6 +73,13 @@ class Users extends MY_Controller{
         $this->load->view('core/templates/footer');
     }
 
+    public function locked_accounts(){
+        $this->core_layout->addJs("js/users/locked_accounts.js", true);
+        $this->load->view('core/templates/header');
+        $this->load->view('locked_accounts');
+        $this->load->view('core/templates/footer');
+    }
+
     function get_group()
     {
         $data = $this->user->getGroup();
@@ -243,5 +250,15 @@ class Users extends MY_Controller{
 		$data = $this->user->activate2FA();
 		$this->output->set_content_type('json')->set_output(json_encode($data));
 	}
+
+    public function get_locked_accounts(){
+        $data = $this->user->getLockedAccounts();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function unlock_account(){
+        $data = $this->user->unlockAccount();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
 
 }

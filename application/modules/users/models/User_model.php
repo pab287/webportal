@@ -463,5 +463,13 @@ class User_model extends CI_Model
         );
     }
 
+    public function unlockAccount(){
+        $post = $this->input->post();
+        $id = $post['id'];
+        $this->db->where('emp_id', $id);
+        $this->db->set('lockout', 0);
+        $this->db->update('gccmaster.tblusers');
+        $this->db->reset_query();
+    }
 
 }
