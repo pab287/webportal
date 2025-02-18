@@ -433,7 +433,7 @@ Class Login_m extends CI_Model
                 $send_email[] = $send_to;
                 $email_content = $this->load->view("two_factor_email_template.php",array("data" => $data), true);
                 $mailer['send_to'] = $send_email; 
-                $result = $this->core->send_email('core','Two Factor Authentication','Two Factor Authentication',$email_content,$mailer);
+                $result = $this->core->send_email('core','GC & C Conyx PH','Two Factor Authentication',$email_content,$mailer);
                 return $result;
                 
             case 'telegram':

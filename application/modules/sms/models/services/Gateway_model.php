@@ -10,6 +10,15 @@
 
         public function sendTwoFactorSms($mobile, $message){
             $result = array();
+
+            if (!preg_match('/^09\d{9}$/', $mobile)) {
+                return array(
+                    'status' => false,
+                    'output' => false,
+                    'message' => 'Invalid mobile number format. Must be 11 digits'
+                );
+            }
+
             $this->db->select('sms_ip,sms_pass,sms_user')->from('gccsms.tblsms')->where('is_connected', 1)->where('sms_user','CONYX');
             $query = $this->db->get()->row();
             $ch = curl_init();
@@ -36,6 +45,4 @@
             }
             return $result;
         }
-
-
     }
