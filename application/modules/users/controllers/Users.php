@@ -74,6 +74,8 @@ class Users extends MY_Controller{
     }
 
     public function locked_accounts(){
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
         $this->core_layout->addJs("js/users/locked_accounts.js", true);
         $this->load->view('core/templates/header');
         $this->load->view('locked_accounts');

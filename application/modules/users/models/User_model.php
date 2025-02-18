@@ -463,13 +463,98 @@ class User_model extends CI_Model
         );
     }
 
+    public function getLockedAccounts(){
+        $resultset = array();
+        $post = $this->input->post();
+        $order_val = array(array("column"=>"9", "dir"=>"desc"));
+        $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
+        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
+        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+        $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
+        $rowData = $this->getDatatableRequest($search, $limit, $offset, $sortBy, $sortOrder);
+        $rowCount = $this->getDatatableRequestCount($search);
+        $resultset["recordsTotal"] = $rowCount;
+        $resultset["recordsFiltered"] = $rowCount;
+        $resultset["data"] = $rowData;
+        return $resultset;
+    }
+
+    private function getDatatableRequest($search, $limit, $offset, $sortBy, $sortOrder){
+        $filterFields = array('employees.firstname', 'employees.lastname', 'employees.middlename', 'users.email', 'users.username');
+        $this->db->select("
+            users.id, 
+            users.email, 
+            employees.firstname, 
+            employees.lastname,
+            employees.middlename, 
+            users.username, 
+            DATE_FORMAT(users.lockout_dt, '%b %d, %Y %h:%i %p') as lockout_dt
+        ")
+        ->from('gccmaster.tblusers as users')
+        ->join('gccmaster.tblemployees as employees','users.emp_id = employees.id')
+        ->where('users.lockout', 1);
+
+        if ($search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                ($key == 0) ? $this->db->like($field, $search, "both") : $this->db->or_like($field, $search, "both");
+            }
+            $this->db->group_end();
+        }
+
+        if($limit != -1){
+            $this->db->limit($limit, $offset);
+        }
+
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        $query = $this->db->get();
+        $results = $query->result();
+        return $results;
+    }
+    private function getDatatableRequestCount($search){
+        $filterFields = array('employees.firstname', 'employees.lastname', 'employees.middlename', 'users.email', 'users.username');
+        $this->db->select("users.id, users.email, employees.firstname, employees.lastname,employees.middlename, users.username, users.lockout_dt")
+        ->from('gccmaster.tblusers as users')
+        ->join('gccmaster.tblemployees as employees','users.emp_id = employees.id')
+        ->where('users.lockout', 1);
+        if ($search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                ($key == 0) ? $this->db->like($field, $search, "both") : $this->db->or_like($field, $search, "both");
+            }
+            $this->db->group_end();
+        }
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
     public function unlockAccount(){
+        $resultset = array();
         $post = $this->input->post();
         $id = $post['id'];
-        $this->db->where('emp_id', $id);
+        $this->db->where('id', $id);
         $this->db->set('lockout', 0);
-        $this->db->update('gccmaster.tblusers');
-        $this->db->reset_query();
+        $this->db->set('auth', 0);
+        $this->db->set('lockout_dt', NULL);
+        $this->db->set('force_update',1);
+        $this->db->set('login_attempts', 0);
+        $this->db->set('reset_attempts', 0);
+        $update = $this->db->update('gccmaster.tblusers');
+        if ($update) {
+            $resultset['status'] = true;
+            $resultset['message'] = "Account unlocked successfully.";
+            $resultset['success'] ="success";
+            $resultset['action'] = 'user';
+        }else{
+            $resultset['status'] = false;
+            $resultset['message'] = "Failed to unlock account.";
+            $resultset['success'] ="error";
+            $resultset['action'] = 'system';
+        }
+        $this->core_layout->setEventLog("{$resultset['message']} User Id: $id","unlock", "{$resultset['success']}", "gccmaster", "{$resultset['action']}");
+        return $resultset;
     }
 
 }
