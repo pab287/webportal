@@ -1737,7 +1737,6 @@ class Billing_m extends CI_Model {
         $this->db->join("hydra_billing.readings r", "r.id = b.reading_id", "LEFT");
         $this->db->join("hydra_billing.payments as p", "p.bill_id = b.id", "LEFT");
         $this->db->where("b.status", "1");
-        $this->db->where("YEAR(b.created_at)", $current_year);
         $this->db->group_by("b.id");
         if($query_builder){
             $this->db->where($query_builder);
@@ -1753,6 +1752,8 @@ class Billing_m extends CI_Model {
                 }
             }
             $this->db->group_end();
+        } else {
+            $this->db->where("YEAR(b.created_at)", $current_year);
         }
         //$this->db->order_by('b.ref_no', 'DESC');
         $i = $sortOrder[0]['column'];
@@ -1885,7 +1886,6 @@ class Billing_m extends CI_Model {
         $this->db->from("hydra_billing.bills b");
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.readings r", "r.id = b.reading_id", "LEFT");
-        $this->db->where("YEAR(b.created_at)", $current_year);
         $this->db->where("b.status", "1");
         if($query_builder){
             $this->db->where($query_builder);
@@ -1900,6 +1900,8 @@ class Billing_m extends CI_Model {
                 }
             }
             $this->db->group_end();
+        } else {
+            $this->db->where("YEAR(b.created_at)", $current_year);
         }
         $this->db->order_by('b.ref_no', 'DESC');
         $query = $this->db->get();
@@ -5261,8 +5263,8 @@ class Billing_m extends CI_Model {
 
     function updateMeter($new_meterno, $id, $query_type){
         $array2 = array();
-        $array2['meterno'] = $new_meterno;
-        $array2['meterno_raw'] = str_replace(" ", "", str_replace("-", "", $new_meterno));
+        $array2['meterno'] = trim($new_meterno);
+        $array2['meterno_raw'] = trim(str_replace([" ", "-"], "", $new_meterno));
         $this->db->where("id", $id);
         $query = $this->db->update($query_type, $array2);
         return $query;
