@@ -15,7 +15,9 @@ let _company = [];
 let _companyId = 0;
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0) {
-    if(typeof _tempContentData.company !== "undefined" && _tempContentData.company){ _company = _tempContentData.company; _companyId = _tempContentData.company.id; }
+    if (jQuery.inArray("view_by_company", _currentActions) !== -1) {
+        if(typeof _tempContentData.company !== "undefined" && _tempContentData.company){ _company = _tempContentData.company; _companyId = _tempContentData.company.id; }
+    }
 }
 
 var vmPayslip = new Vue({
@@ -84,8 +86,10 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
                 return query;
             },
             processResults: function (data) {
-                if (data.results.length === 0) {
-                    toastr.warning("No Assigned Payroll Group found!", "Payroll Group");
+                if (jQuery.inArray("view_by_company", _currentActions) !== -1) {
+                    if (data.results.length === 0) {
+                        toastr.warning("No Assigned Payroll Group found!", "Payroll Group");
+                    }
                 }
                 
                 return data;
@@ -149,8 +153,10 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
                 return params;
             },
             processResults: function (data) {
-                if (data.results.length === 0) {
-                    toastr.warning("No Assigned Payroll Group found!", "Payroll Group");
+                if (jQuery.inArray("view_by_company", _currentActions) !== -1) {
+                    if (data.results.length === 0) {
+                        toastr.warning("No Assigned Payroll Group found!", "Payroll Group");
+                    }
                 }
 
                 return data;
