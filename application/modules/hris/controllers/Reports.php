@@ -258,7 +258,7 @@ class Reports extends MY_Controller{
     {
         $work_status = isset($_GET['work_status']) ? $_GET['work_status'] : null;
         $data = $this->report->getExpiringEmployees($export, $work_status);
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function get_company_collection()
@@ -276,7 +276,7 @@ class Reports extends MY_Controller{
     public function get_employees_for_salary_range($export=0)
     {
         $data = $this->report->getEmployeesForSalaryRange($export);
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function get_employee_leaves()
@@ -292,32 +292,32 @@ class Reports extends MY_Controller{
 
     public function generate_comprehensive_report(){
         $data = $this->report->generateComprehensiveReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_manpower_report(){
         $data = $this->report->generateManpowerReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_manpower_by_company_report(){
         $data = $this->report->generateManpowerByCompanyReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_training_seminars_report(){
         $data = $this->report->generateTrainingSeminarsReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_drivers_license_report(){
         $data = $this->report->generateDriversLicenseReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_licenses_certificate_report(){
         $data = $this->report->generateCertificateReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function get_salary_payinfo_datatable_request(){
@@ -337,7 +337,7 @@ class Reports extends MY_Controller{
 
     public function generate_late_absentee_report(){
         $data = $this->report->generateLateAbsenteeReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function select_payroll_group(){
@@ -403,6 +403,11 @@ class Reports extends MY_Controller{
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
+    }
+
+    public function log_export(){
+        $data = $this->report->logExport();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function mass_trigger_station_action($id = null){

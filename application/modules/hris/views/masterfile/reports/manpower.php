@@ -30,7 +30,7 @@
                                     <label class="m--font-bolder">FILTER BY <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">( Active Employees )</span></label>
                                     <div class="m-checkbox-inline">
                                         <label class="m-checkbox">
-                                            <input type="radio" id="all_employees" name="filter_by" value="all" data-validation="required" v-model="all_filter" />
+                                            <input type="radio" id="all_employees" name="filter_by" value="all" data-validation="required" v-model="all_filter" checked/>
                                             ALL<span></span>
                                         </label>
                                         <label class="m-checkbox">
