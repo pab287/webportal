@@ -513,7 +513,7 @@ class Ticket_m extends CI_Model
                 $config = array();
                 $config['upload_path'] = $imagesPath;
                 $config['allowed_types'] = 'jpg|jpeg|png|PNG|JPG|JPEG|pdf|PDF';
-                $config['max_size'] = 100000;
+                $config['max_size'] = 25600;
                 $config['create_thumbnail'] = true;
 
                 $session = $this->core_layout->getCurrentSession();
@@ -549,6 +549,9 @@ class Ticket_m extends CI_Model
                         $resultset["toastr_state"] = "error";
                     }
                 } else {
+                    if($data['message']== "<p>The file you are attempting to upload is larger than the permitted size.</p>"){
+                        $data['message'] ="<p>The file you are attempting to upload is larger than the permitted size. The maximum upload size is ". $config['max_size'] / 1024 . " MB</p>";
+                    }
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = $data["message"];
                     $resultset["toastr_state"] = "error";
