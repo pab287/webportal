@@ -8230,6 +8230,22 @@
             $coreHistoryLog->setHistoryLogEmployeeId($employeeId);
 
             if ($updated && $this->db->affected_rows() > 0) {
+                if($employeeId){
+                    $arrData = array();
+                    $this->db->select("emp_id, rate, frequency, is_active");
+                    $this->db->where("emp_id", $employeeId);
+                    $this->db->where("is_active", 1);
+                    $this->db->where("is_archived", 0);
+                    $this->db->order_by("created_at", "DESC");
+                    $this->db->limit(1);
+                    $qActiveAllowance = $this->db->get("gcchris.allowances");
+                    if($qActiveAllowance->num_rows() === 1){ $arrData = $qActiveAllowance->row_array(); }
+                    if(!isset($arrData["emp_id"])){ $arrData["emp_id"] = $employeeId;}
+                    $historyStatus = $this->set_approved_allowance($arrData);
+                    if($historyStatus){ $resultarray['salary_history'] = 'Salary History Generated.'; }
+                    else{ $resultarray['salary_history'] = 'Failed to generate Salary History.'; }
+                }
+
                 $resultarray["status"] = true;
                 $resultarray["response"] = "Data has been removed!";
                 /*** edited contents logging ***/
@@ -10947,15 +10963,14 @@
             $this->db->reset_query();
             $basic = $query->basic_rate;
 
-            if($query->payroll_type == 'daily'){
-                $payroll = 'Basic Daily Rate';
-            }else if($query->payroll_type == 'monthly'){
-                $payroll = 'Monthly Rate';
-            }else{
-                $payroll = 'Hourly Rate';
-            }
+            if($query->payroll_type == 'daily'){ $payroll = 'Basic Daily Rate'; }
+            else if($query->payroll_type == 'monthly'){ $payroll = 'Monthly Rate'; }
+            else{ $payroll = 'Hourly Rate'; }
 
-            $rate_fr = $arr['frequency'] == 'day' ? 'Daily Allowance' : 'Monthly Allowance';
+            if(isset($arr['frequency']) && $arr['frequency']){
+                $rate_fr = $arr['frequency'] == 'day' ? 'Daily Allowance' : 'Monthly Allowance';
+            }
+            
             $rate_remark = $isActiveState && $arr['rate'] && $rate_fr ? ' + '.$arr['rate'].' '.$rate_fr : '';
             $remarks = $basic.' '.$payroll.' '.$rate_remark;
             $basic_total = $isActiveState ? floatval($basic) + floatval($arr['rate']) : floatval($basic);
@@ -10971,7 +10986,6 @@
             );
 
             $historyStatus = $this->db->insert($this->employeeSalaryTable, $data);
-
             return $historyStatus;
         }
 

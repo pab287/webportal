@@ -1646,6 +1646,7 @@
             $historyStatus = false;
             $basic = 0;
 
+            if(!isset($arr["is_active"])){ $arr["is_active"] = 0; }
             $isActiveState = intval($arr["is_active"]) == 1;
 
             $this->db->select('b.name, a.basic_rate, a.payroll_type');
@@ -1656,15 +1657,14 @@
             $this->db->reset_query();
             $basic = $query->basic_rate;
 
-            if($query->payroll_type == 'daily'){
-                $payroll = 'Basic Daily Rate';
-            }else if($query->payroll_type == 'monthly'){
-                $payroll = 'Monthly Rate';
-            }else{
-                $payroll = 'Hourly Rate';
+            if($query->payroll_type == 'daily'){ $payroll = 'Basic Daily Rate'; }
+            else if($query->payroll_type == 'monthly'){ $payroll = 'Monthly Rate'; }
+            else{ $payroll = 'Hourly Rate'; }
+
+            if(isset($arr['frequency']) && $arr['frequency']){
+                $rate_fr = $arr['frequency'] == 'day' ? 'Daily Allowance' : 'Monthly Allowance';
             }
 
-            $rate_fr = $arr['frequency'] == 'day' ? 'Daily Allowance' : 'Monthly Allowance';
             $rate_remark = $isActiveState && $arr['rate'] && $rate_fr ? ' + '.$arr['rate'].' '.$rate_fr : '';
             $remarks = $basic.' '.$payroll.' '.$rate_remark;
             $basic_total = $isActiveState ? floatval($basic) + floatval($arr['rate']) : floatval($basic);
@@ -1680,7 +1680,6 @@
             );
 
             $historyStatus = $this->db->insert($this->employeeSalaryTable, $data);
-
             return $historyStatus;
         }
     }
