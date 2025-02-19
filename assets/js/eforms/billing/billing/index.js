@@ -23,12 +23,12 @@ var tblBillings = $("#table-billing").DataTable({
             return "<strong style='color: #525252;'>"+data+"</strong>";
           }
         },
-       { data: "reading_ref_no"},
-       { data: "accountno"},
+       { data: "reading_ref_no" },
+       { data: "accountno" },
        { data: "name", orderable: false},
-       { data: "meterno"},
-       { data: "billing_period", orderable: false, className: "text-center"},
-       { data: "due_date", className: "text-center"},
+       { data: "meterno" },
+       { data: "billing_period", orderable: false, className: "text-center" },
+       { data: "due_date", className: "text-center" },
        { data: "total_charges", className: "text-right", render: function (data) {
               return "<strong style='color: #525252;'>"+numberWithCommas(data)+"</strong>";
             }
