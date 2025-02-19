@@ -116,7 +116,7 @@
                             </div>
                             <!--right-->
                             <div class="col-xs-12 col-sm-12 col-md-6 row">
-                                <div class="col-sm-12 col-xs-12 col-md-4"> 
+                                <div class="col-sm-12 col-xs-12 col-md-12">
                                     <input type="hidden" class="form-control" name="pic[]" id="pic">
                                     <span class="btn btn-success fileinput-button">
                                         <em class="fa fa-upload"></em>
@@ -129,7 +129,7 @@
                                         <div class="progress-bar progress-bar-small progress-bar-success"></div>
                                     </div> 
                                 </div>
-                                <div class="col-sm-12 col-xs-12 col-md-8 col-lg-8 col-xl-8" id="uploaded_files">
+                                <div class="col-sm-12 col-xs-12 col-md-12 col-lg-12 col-xl-12" id="uploaded_files">
                                     <h6 id="no_attachment">NO ATTACHMENTS.</h6>
                                 </div>
                             </div>

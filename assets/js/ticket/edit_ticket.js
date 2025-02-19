@@ -83,6 +83,8 @@ $.ajax({
             let avatarImage = baseUrl("uploads/files/images/employee_files/empcode_"+ requestor +"/ticketing/" + filename);
             let renderImage = vmData.attachment;
             images.push(filename);
+            const filename1 = filename;
+            const shortenedName = filename1.length <= 20 ? filename1 : `${filename1.slice(0, 20)}...`;
             $("#picture").attr("src", renderImage);
             $("#pic").val(images);
             let icon = '';
@@ -130,7 +132,7 @@ $.ajax({
                         ''+
                         '</span><br>'+
                         '<span class="m-widget2__user-name">'+
-                        filename +
+                        shortenedName +
                         '</span>'+
                         '<span class="m-widget2__user-name">'+
                         '</span><br><br>'+
@@ -351,6 +353,9 @@ let fileUploadPhoto = function () {
                     var avatarImage = result.added_image;
                     var renderImage = result.render_image;
                     images.push(result.display_filename);
+                    const filename = result.display_filename;
+                    console.log(filename.length);
+                    const shortenedName = filename.length <= 20 ? filename : `${filename.slice(0, 20)}...`;
                     $("#picture").attr("src", renderImage);
                     $("#pic").val(images);
                     let ext = renderImage ? renderImage.split(".") : "";
@@ -386,7 +391,7 @@ let fileUploadPhoto = function () {
                                     </div>
                                     <div class="m-widget2__desc">
                                         <span class="m-widget2__user-text"></span><br>
-                                        <span class="m-widget2__user-name">${result.display_filename}</span>
+                                        <span class="m-widget2__user-name">${shortenedName}</span>
                                         <span class="m-widget2__user-name"></span><br><br>
                                     </div>
                                     <div class="m-widget2__actions">
