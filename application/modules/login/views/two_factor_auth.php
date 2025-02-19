@@ -309,7 +309,7 @@ input[type="radio"]:checked::after {
                         Error
                     </div>
                     <div class="modal-body">
-                        Cannot send otp at this time please try again later.
+                       <p id="otp-error-message">Cannot send otp at this time please try again later.</p>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
@@ -429,14 +429,14 @@ $(document).ready(function() {
                     startTimer(300);
                 }
                 else{
+                    if(response.error){
+                        $('#otp-error-message').text(response.error);
+                    }
                     $('#otp-error').modal('show');
                 }
             },
             error: function(xhr, status, error) {
-                // Show error modal when AJAX request fails
                 $('#otp-error').modal('show');
-                
-                // Optional: Log the error details
                 console.error('AJAX Error:', error);
             }
         });
