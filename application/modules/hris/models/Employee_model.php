@@ -6901,6 +6901,9 @@
                                         sal.sal_rate, sal.sal_date,
                                         IF(pos.id IS NULL, sal.sal_position, pos.`name`),
                                         sal.sal_position, sal.sal_remarks)", $searchValue, "BOTH");
+                $this->db
+                ->order_by("CASE WHEN sal.add_date = '0000-00-00 00:00:00' THEN 1 ELSE 0 END", "asc")
+                ->order_by("sal.sal_date, sal.id", "desc");
                 $this->db->order_by($order, $dir);
                 $this->db->limit($limit, $start);
 
@@ -11709,7 +11712,7 @@
                 ->select("sal.id, sal.add_date, sal.sal_date, sal.sal_rate, sal.sal_remarks, IF(pos.id IS NULL, sal.sal_position, pos.name) sal_position")
                 ->join("gcchris.tblposition pos", "pos.id = sal.sal_position", "LEFT")
                 ->order_by("CASE WHEN sal.add_date = '0000-00-00 00:00:00' THEN 1 ELSE 0 END", "asc")
-                ->order_by("sal.sal_date", "desc")
+                ->order_by("sal.sal_date, sal.id", "desc")
                 ->get_where($this->employeeSalaryTable . " sal", array("sal.emp_id" => $id, "sal.is_archived" => 0))
                 ->result();
             $this->db->reset_query();
