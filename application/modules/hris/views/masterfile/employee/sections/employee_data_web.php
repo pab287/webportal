@@ -1075,7 +1075,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template v-if="offenses == false">
+                                <template v-if="filteredOffenses == false">
                                     <tr>
                                         <td data-label="TYPE">NONE</td>
                                         <td data-label="DATE">NONE</td>

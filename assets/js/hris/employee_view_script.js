@@ -189,6 +189,9 @@ let employeeDataSheet = new Vue({
                     !OTHER_TYPES.includes(offense.offcom_type.toUpperCase())
                 );
             }
+            if (this.filteredOffenses.length === 0) {
+                this.filteredOffenses = false;
+            }
         },
         getSidebarData(){
             this.main = { ...this.$data.main, ..._tempContentData.data.main };
