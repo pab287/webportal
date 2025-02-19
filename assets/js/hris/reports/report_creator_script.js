@@ -99,6 +99,8 @@ const dbFieldEl = '' +
     '<option value="sal_remarks">Salary Remarks</option>' +
     '<option value="sal_date">Salary Effective</option>' +
     '<option value="IF(personnel.id IS NULL OR location.location_name IS NULL, \'No Station Assigned\', GROUP_CONCAT(DISTINCT location.location_name)) station">Station</option>' +
+    `<option value='supervisor'>Dept. Supervisor</option>` +
+    '<option value="manager">Dept. Manager</option>' +
     '';
 
 

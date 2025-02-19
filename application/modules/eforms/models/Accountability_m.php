@@ -3699,7 +3699,7 @@ class Accountability_m extends CI_Model {
         $query->returned_by_detail = $this->returnedByDetails($query->returned_by, $query->is_contract);
         $query->received_by = $this->receivedBy();
         $query->company = is_numeric($query->company) ? $this->getCompany($query->company) : $query->company;
-        $query->department = is_numeric($query->department) ? $this->getCompany($query->department) : $query->department;
+        $query->department = is_numeric($query->department) ? $this->getDepartment($query->department) : $query->department;
         // if (is_numeric($query->company)) {
         //     $query->company = $this->getCompany($query->company);
         // } else {

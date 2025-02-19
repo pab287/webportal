@@ -8,6 +8,9 @@ class Reports_model extends CI_Model{
     protected $employeeTrainingsTable = "gcchris.tbltrainings";
     protected $defaultStationTable = "gcchris.default_station_location";
     protected $tblAppLocationSites = "gcctimeutility.app_location_sites";
+    protected $tblPersonnel = "gcctimeutility.personnel";
+    protected $tblPersonnelLocation = "gcctimeutility.personnel_locations";
+    protected $tblDefaultLocation = "gcchris.default_station_location";
 
     protected $now = null;
     protected $user = null;
@@ -48,7 +51,41 @@ class Reports_model extends CI_Model{
     function generateEmployeeReport($export){
         $post = $this->utilities->parseFormDataToObject($this->input->post());
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($post);
+
+        if(in_array("supervisor", $post->fields)) {
+            $key = array_search("supervisor", $post->fields);
+            $post->fields[$key] = 'IF(UPPER(emp.level) = \'SUPERVISORY\' OR UPPER(emp.level) = \'MANAGERIAL\' OR UPPER(emp.level) = \'EXECUTIVE\', \'CHARLES ANTHONY M. DUMANCAS\',
+                (SELECT TRIM(UCASE(
+                    CONCAT(firstname, \' \',
+                        CASE WHEN middlename IS NOT NULL AND middlename != \'\' THEN CONCAT(\' \', substr(middlename,1,1),\'.\')
+                        ELSE \'\' END, \' \', lastname,
+                    CASE WHEN suffix IS NOT NULL AND suffix != \'\' AND suffix != \'N/A\' AND suffix != \'NONE\' THEN CONCAT(\' \', suffix)
+                        ELSE \'\' END)
+                    )) FROM gccmaster.tblemployees WHERE id = IF(REPLACE(
+                    SUBSTRING_INDEX(SUBSTRING_INDEX(emp.supervisor_meta, \';\', 1),\':\',-1),
+                    \'"\',\'\') = \'supervisory\', REPLACE(SUBSTRING_INDEX(SUBSTRING_INDEX(emp.supervisor_meta, \';\', 2),\':\',-1),\'"\',\'\'),
+                    \'\'
+                ))
+            ) as supervisor';
+        }
+
+        if(in_array("manager", $post->fields)) {
+            $key = array_search("manager", $post->fields);
+            $post->fields[$key] = '(SELECT TRIM(UCASE(
+                CONCAT(firstname, \' \',
+                    CASE WHEN middlename IS NOT NULL AND middlename != \'\' THEN CONCAT(\' \', substr(middlename,1,1),\'.\')
+                    ELSE \'\' END, \' \', lastname,
+                CASE WHEN suffix IS NOT NULL AND suffix != \'\' AND suffix != \'N/A\' AND suffix != \'NONE\' THEN CONCAT(\' \', suffix)
+                    ELSE \'\' END)
+                )) FROM gccmaster.tblemployees WHERE id = IF(REPLACE(
+                SUBSTRING_INDEX(SUBSTRING_INDEX(emp.supervisor_meta, \';\', 3),\':\',-1),
+                \'"\',\'\') = \'managerial\', REPLACE(SUBSTRING_INDEX(SUBSTRING_INDEX(emp.supervisor_meta, \';\', 4),\':\',-1),\'"\',\'\'),
+                \'\'
+            )) as manager';
+        }
+
         $select = implode(", ", $post->fields);
+
         $order_field = $post->order_field;
         $order_by = $post->order_by;
         $criteria = $post->criteria;
@@ -1639,19 +1676,33 @@ class Reports_model extends CI_Model{
                             foreach ($attDatex as $dt) {
                                 $this->db->select("date_from, date_to, employee, reference_no, type");
                                 $this->db->from("gcceforms.loa");
-                                $this->db->where("DATE(date_from) >=", $dt);
                                 $this->db->where("employee", $attx->emp_id);
                                 $this->db->where("status", "Approved");
+                                $this->db->group_start();
+                                $this->db->where("DATE(date_from) >=", $dt);
+                                $this->db->or_where("DATE(date_from) <=", $dt);
+                                $this->db->where("DATE(date_to) >=", $dt);
+                                $this->db->group_end();
                                 $this->db->order_by("date_from", "ASC");
                                 $approvedLoa = $this->db->get();
 
                                 if($approvedLoa->num_rows() > 0){
                                     foreach ($approvedLoa->result() as $appLoa) {
+                                        $isWholeDay = (intval($appLoa->type) === 3) ? true : false;
+                                        $isHalfDay = (intval($appLoa->type) === 2) ? true : false;
+                                        $loaType = intval($appLoa->type);
                                         $dateFrom = date("Y-m-d", strtotime($appLoa->date_from));
-                                        $dateTo = date("Y-m-d", strtotime($appLoa->date_to));
+                                        $dateTo = $isWholeDay ? $dateFrom : date("Y-m-d", strtotime($appLoa->date_to));
                                         $cDate = date("Y-m-d", strtotime($dt));
+
+                                        $meridian = date("A", strtotime($appLoa->date_from));
+
                                         if(strtotime($cDate) >= strtotime($dateFrom) && strtotime($cDate) <= strtotime($dateTo)){
-                                            $loaReference[$appLoa->employee][$cDate] = $appLoa->reference_no;
+                                            $loaReference[$appLoa->employee][$cDate]["reference"] = $appLoa->reference_no;
+                                            $loaReference[$appLoa->employee][$cDate]["whole_day"] = $isWholeDay;
+                                            $loaReference[$appLoa->employee][$cDate]["half_day"] = $isHalfDay;
+                                            $loaReference[$appLoa->employee][$cDate]["loa_type"] = $loaType;
+                                            $loaReference[$appLoa->employee][$cDate]["_meridian"] = $meridian;
                                         }
                                     }
                                 }
@@ -2358,4 +2409,55 @@ class Reports_model extends CI_Model{
         return $formattedName;
     }
 
+    public function setlastEmployeeStation($id = null){
+        $arrData = array();
+
+        $this->db->select('a.id as employee_id, a.biometricno, b.station_id, b.station_description');
+        $this->db->join($this->tblDefaultLocation.' as b', 'b.employee_id = a.id', 'LEFT');
+        $this->db->from($this->tblEmployees.' as a');
+        
+        if ($id) {
+            $this->db->where('a.id', $id);
+        } else {
+            $this->db->where('a.biometricno !=', 1); //excluded sir CMD
+            $this->db->where('a.biometricno != " "', null, true);
+        }
+        $this->db->where('b.station_id', null);
+
+        $query = $this->db->get();
+
+        $this->db->reset_query();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result() as $row) {
+                
+                $this->db->select('a.id as personnel_id, a.biometricno, b.site_location_id, b.location_name');
+                $this->db->join($this->tblPersonnelLocation.' as b', 'b.personnel_id = a.id', 'INNER');
+                $this->db->from($this->tblPersonnel.' as a');
+                $this->db->where('a.biometricno', $row->biometricno);
+                $this->db->order_by('b.id', 'DESC');
+                $this->db->limit(1);
+                $q = $this->db->get();
+
+                if ($q->num_rows() > 0) {
+                    $personnel = $q->row();
+
+                    $data = array(
+                        'employee_id' => $row->employee_id,
+                        'station_id' => $personnel->site_location_id,
+                        'station_description' => $personnel->location_name,
+                        'created_at' => date('Y-m-d H:i:s')
+                    );
+
+                    $insert = $this->db->insert($this->tblDefaultLocation, $data);
+                    
+                    if ($insert) {
+                        array_push($arrData, $data);
+                    }
+                }
+            }
+        }
+
+        return $arrData;
+    }
 }

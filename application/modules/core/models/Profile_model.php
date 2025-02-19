@@ -204,9 +204,10 @@ class Profile_model extends CI_Model
         $data['offenses'] =  $this->db->order_by('offcom_date', 'DESC')->get_where($this->employeeOffensesTable, array("emp_id" => $id,"is_archived" => 0))->result();
         $this->db->reset_query();
         $data['salaries'] = $this->db
-            ->select("sal.id,sal.add_date, sal.sal_date, sal.sal_rate, sal.sal_remarks, IF(pos.id IS NULL, sal.sal_position, pos.name) sal_position")
+            ->select("sal.id, sal.add_date, sal.sal_date, sal.sal_rate, sal.sal_remarks, IF(pos.id IS NULL, sal.sal_position, pos.name) sal_position")
             ->join("gcchris.tblposition pos", "pos.id = sal.sal_position", "LEFT")
-            ->order_by("sal.add_date", "desc")
+            ->order_by("CASE WHEN sal.add_date = '0000-00-00 00:00:00' THEN 1 ELSE 0 END", "asc")
+            ->order_by("sal.sal_date", "desc")
             ->get_where($this->employeeSalaryTable . " sal", array("sal.emp_id" => $id, "sal.is_archived" => 0))
             ->result();
         $this->db->reset_query();

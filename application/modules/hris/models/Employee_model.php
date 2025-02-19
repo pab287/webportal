@@ -3335,10 +3335,10 @@
                                             }
                                         }else{
                                             $dsRow = $_dStation->row();
-                                            $updated = $this->db->update($this->defaultStationTable, 
+                                            $_updated = $this->db->update($this->defaultStationTable, 
                                                 array("station_id"=>$locRow->id, "station_description"=>$locRow->site_name, "updated_at"=>date("Y-m-d H:i:s")), 
                                                 array("id"=>$dsRow->id)); 
-                                            if($updated){
+                                            if($_updated){
                                                 if($tempData){
                                                     $tempData = (object) $tempData;
                                                     $tempName = strtoupper($tempData->display_name_1);
@@ -4395,7 +4395,7 @@
                     "driverlicenses" => $driverlicenses,
                     "experiences" => $experiences,
                     "awards" => $awards,
-                    "skills" => $skills,
+                    "skillset" => $skills,
                     "organizations" => $organizations,
                     "trainings" => $trainings,
                     "references" => $references,
@@ -4411,6 +4411,11 @@
                     "station" => $station,
                     "allowance" => $allowance ? $allowance->rate : 0,
                     "default_station" => $default_station,
+                    "licensesAndCerts"=> array(
+                        "driverlicenses" => $driverlicenses,
+                        "licenses" => $licenses,
+                        "if_driver" => $driver
+                    ),
                 );
         }
 
@@ -11202,10 +11207,14 @@
                     else if (strtolower($field) == 'license_id'){
                         $changesString.= " Field: $field, from: <strong>". $this->getLicenseTypeById($change['old']). "</strong>, to: <strong>". $this->getLicenseTypeById($change['new']). "</strong>\n";
                     }
-                    else if ($field != 'work_station'){
+                    else if (strtolower($field) == 'tl_supervisory') {
+                        $changesString .= " Field: TWO LEVEL SUPERVISORY from: <strong>" . ($change['old'] == 1 ? 'YES' : 'NO') . "</strong>, to: <strong>" . ($change['new'] == 1 ? 'YES' : 'NO') . "</strong>\n";
+                    }
+                    else if ($field != 'work_station' && $field != 'supervisor_meta'){
                         $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
                     }
                 }
+
                 if (isset($newData['work_station'])) {
                     sort($newData['work_station']);
                     sort($currentData['work_station']);
@@ -11218,6 +11227,52 @@
                         $changesString.= " Field: work_station, from: ' <strong>". implode(',', $currentData['work_station']). "</strong> ', to: <strong>'". implode(',', $newData['work_station']). "'</strong>\n";
                     }
                 } 
+
+                if (isset($newData['supervisor_meta'])) {
+                    $meta = @unserialize($newData['supervisor_meta']);
+                    $currentMeta = @unserialize($currentData['supervisor_meta']);
+
+                    if (is_array($currentMeta)) {
+                        $diff = array_diff($currentMeta, $meta);
+
+                        if (!empty($diff)) {
+
+                            if (isset($diff['supervisory']) && $diff['supervisory']) {
+                                $_new = isset($meta['supervisory']) && $meta['supervisory'] ? $this->getEmployeeName($meta['supervisory']) : 'NONE';
+                                $changesString .= " Field: supervisory, from: ' <strong>". $this->getEmployeeName($currentMeta['supervisory']). "</strong> ', to: <strong>'". $_new. "'</strong>\n";
+                            } else {
+                                $changesString .= " Field: supervisory, from: ' <strong>NONE</strong> ', to: <strong>'". $this->getEmployeeName($meta['supervisory']). "'</strong>\n";
+                            }
+
+                            if ($newData['tl_supervisory'] == 1) {
+                                if (isset($diff['managerial']) && $diff['managerial']) {
+                                    $changesString .= " Field: managerial, from: ' <strong>". $this->getEmployeeName($currentMeta['managerial']) . "</strong> ', to: <strong>'". $this->getEmployeeName($meta['managerial']) . "'</strong>\n";
+                                } else {
+                                    $changesString .= " Field: managerial, to: ' <strong>". $this->getEmployeeName($meta['managerial']) . "</strong> '\n";
+                                }
+                            } else {
+
+                                if (isset($diff['managerial']) && $diff['managerial']) {
+                                    $changesString .= "Field: managerial, ' <strong>" . $this->getEmployeeName($currentMeta['managerial']) . "</strong> ' is ' <strong> Removed</strong> '\n";
+                                }
+                            }
+                        } else {
+                            
+                            if ($newData['tl_supervisory'] == 1) {
+                                if ((isset($meta['managerial'])) && $meta['managerial']) {
+                                    $changesString .= " Field: managerial, to: <strong>'". $this->getEmployeeName($meta['managerial']) . "'</strong>\n";
+                                }
+                            }
+                        }
+                    } else {
+                        $changesString .= " Field: supervisory, from: '<strong>NONE</strong>', to: <strong>'". $this->getEmployeeName($meta['supervisory']). "'</strong>\n";
+
+                        if (isset($meta['managerial']) && $meta['managerial']) {
+                            $changesString .= " Field: managerial, to: <strong>'". $this->getEmployeeName($meta['managerial']) . "'</strong>\n";
+                        }
+                    }
+                }
+
                 return $changesString;
             }
 
@@ -11615,9 +11670,10 @@
             $data['offenses'] =  $this->db->order_by('offcom_date', 'DESC')->get_where($this->employeeOffensesTable, array("emp_id" => $id,"is_archived" => 0))->result();
             $this->db->reset_query();
             $data['salaries'] = $this->db
-                ->select("sal.id,sal.add_date, sal.sal_date, sal.sal_rate, sal.sal_remarks, IF(pos.id IS NULL, sal.sal_position, pos.name) sal_position")
+                ->select("sal.id, sal.add_date, sal.sal_date, sal.sal_rate, sal.sal_remarks, IF(pos.id IS NULL, sal.sal_position, pos.name) sal_position")
                 ->join("gcchris.tblposition pos", "pos.id = sal.sal_position", "LEFT")
-                ->order_by("sal.add_date", "desc")
+                ->order_by("CASE WHEN sal.add_date = '0000-00-00 00:00:00' THEN 1 ELSE 0 END", "asc")
+                ->order_by("sal.sal_date", "desc")
                 ->get_where($this->employeeSalaryTable . " sal", array("sal.emp_id" => $id, "sal.is_archived" => 0))
                 ->result();
             $this->db->reset_query();
@@ -11632,7 +11688,7 @@
 
         public function getEmployee($emp_id){
             $data = array();
-            $this->db->select("emp.id, emp.lastname, emp.firstname, emp.middlename, emp.suffix, emp.curr_addr, emp.prov_addr, emp.citizenship, emp.religion, emp.languages, emp.email, emp.gender, emp.civil_stat, emp.bday, emp.birthplace, emp.bloodtype, emp.height, emp.weight, emp.hair_color, emp.complexion, emp.tel_no, emp.mobile_no, 
+            $this->db->select("emp.id,emp.mot_deceased,emp.fat_deceased, emp.lastname, emp.firstname, emp.middlename, emp.suffix, emp.curr_addr, emp.prov_addr, emp.citizenship, emp.religion, emp.languages, emp.email, emp.gender, emp.civil_stat, emp.bday, emp.birthplace, emp.bloodtype, emp.height, emp.weight, emp.hair_color, emp.complexion, emp.tel_no, emp.mobile_no, 
             emp.pic_filename, emp.idno, emp.biometricno, pos.name as position ,pos.id as position_id, emp.work_status, emp.employee_status, emp.date_start, emp.date_end, com.code as company_id, emp.level, emp.date_regular, emp.date_end_prob, emp.resign_reason, pos.job_desc, emp.tl_supervisory, emp.supervisor_meta, emp.ques1, emp.ques2, emp.ques3, emp.ques4, emp.ques5, emp.ques6, emp.ques7, emp.ques8, emp.ques9,
             emp.email, emp.tax_status, emp.tin_no, emp.phealth_no, emp.pagibig_no, emp.sss_no,
             emp.fat_name, emp.mot_name, emp.partner_type, emp.spo_deceased, emp.partners_deceased, emp.spo_name, emp.partners_name, emp.fat_addr, emp.mot_addr, emp.spo_addr, emp.partners_addr, emp.fat_company, emp.mot_company, emp.spo_company, emp.partners_company, emp.fat_occupation, emp.mot_occupation, emp.spo_occupation, emp.partners_occupation, emp.fat_contact, emp.mot_contact, emp.spo_contact, emp.partners_contact, emp.emer_addr, emp.emer_contact, emp.emer_name, 

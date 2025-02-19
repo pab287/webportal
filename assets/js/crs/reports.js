@@ -4,6 +4,7 @@ var recruitment_val=""
 var hired_date_val="";
 var interview_date_val="";
 var application_method_val ="";
+let application_date_val="";
 var order_val=[0,'DESC'];
 var tblReport = $("#table-crs-report").DataTable({
   dom: 'Brtlip',
@@ -22,6 +23,7 @@ var tblReport = $("#table-crs-report").DataTable({
           d.hired_date = hired_date_val;
           d.interview_date = interview_date_val;
           d.application_method = application_method_val;
+          d.application_date = application_date_val;
       }
   },
   searching: false,
@@ -159,9 +161,7 @@ $("#crs_report_recruitment").select2({
 
 $("#crs_report_recruitment").on("change", function(){
   recruitment_val = $("#crs_report_recruitment").val();
-  tblReport.ajax.reload();
-  console.log(recruitment_val);
-  
+  tblReport.ajax.reload();  
 });
 
 $("#application_method").select2({
@@ -176,57 +176,102 @@ $("#application_method").on("change", function(){
 });
 
 $('#hired_dt').daterangepicker({
-	todayHighlight: true,
-	autoclose: true,
-	pickerPosition: 'center',
-	todayBtn: 'linked',
-	format: 'yyyy/mm/dd',
+  alwaysShowCalendars: true,
+  todayHighlight: true,
+  showDropdowns: true,
+  autoclose: true,
+  pickerPosition: 'center', 
+  todayBtn: 'linked',
+  format: 'yyyy/mm/dd',
   autoUpdateInput: false,
+  minDate: new Date(2015, 0, 1),
+  maxDate: new Date(new Date().getFullYear(), 11, 31),
   ranges: {
-    'Clear': [null,null],
-    'Today': [moment(), moment()],
-    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-    'Last 365 Days': [moment().subtract(364, 'days'), moment()]
-}
-}).on('apply.daterangepicker', function(ev, picker) {
-  var startDate = picker.startDate.format('YYYY/MM/DD');
-  var endDate = picker.endDate.format('YYYY/MM/DD');
-  if (startDate === 'Invalid date' && endDate === 'Invalid date') {
-      $(this).val('SELECT DATE');
-  } else {
-      hired_date_val = startDate + ' - ' + endDate;
-      $(this).val(hired_date_val);
+      'Today': [moment(), moment()],
+      'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+      'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+      'Last 365 Days': [moment().subtract(364, 'days'), moment()]
+  },
+  locale: {
+      cancelLabel: 'Clear'  
   }
-
+}).on('apply.daterangepicker', function(ev, picker) {
+   ev.preventDefault();
+   let startDate = picker.startDate.format('YYYY/MM/DD');
+   let endDate = picker.endDate.format('YYYY/MM/DD');
+   hired_date_val = startDate + ' - ' + endDate;
+   $(this).val(hired_date_val);   
   tblReport.ajax.reload();
-  console.log(hired_date_val);
+}).on('cancel.daterangepicker', function(ev, picker) {
+  $(this).val('SELECT DATE');
+  hired_date_val = "";
+  tblReport.ajax.reload();
 });
 
 $('#interview_dt').daterangepicker({
-	todayHighlight: true,
-	autoclose: true,
-	pickerPosition: 'center',
-	todayBtn: 'linked',
-	format: 'yyyy/mm/dd',
+  alwaysShowCalendars: true,
+  todayHighlight: true,
+  showDropdowns: true,
+  autoclose: true,
+  pickerPosition: 'center', 
+  todayBtn: 'linked',
+  format: 'yyyy/mm/dd',
   autoUpdateInput: false,
+  minDate: new Date(2015, 0, 1),
+  // maxDate: new Date(new Date().getFullYear(), 11, 31),
   ranges: {
-    'Clear': [null, null],
-    'Today': [moment(), moment()],
-    'This Week': [moment().startOf('week'), moment().endOf('week')],
-    'This Month': [moment().startOf('month'), moment().endOf('month')],
-    'This Year': [moment().startOf('year'), moment().endOf('year')]
-}
-}).on('apply.daterangepicker', function(ev, picker) {
-  var startDate = picker.startDate.format('YYYY/MM/DD');
-  var endDate = picker.endDate.format('YYYY/MM/DD');
-  if (startDate === 'Invalid date' && endDate === 'Invalid date') {
-      $(this).val('SELECT DATE');
-  } else {
-    interview_date_val = startDate + ' - ' + endDate;
-      $(this).val(interview_date_val);
+      'Today': [moment(), moment()],
+      'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+      'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+      'Last 365 Days': [moment().subtract(364, 'days'), moment()]
+  },
+  locale: {
+      cancelLabel: 'Clear'  
   }
+}).on('apply.daterangepicker', function(ev, picker) {
+   ev.preventDefault();
+   let startDate = picker.startDate.format('YYYY/MM/DD');
+   let endDate = picker.endDate.format('YYYY/MM/DD');
+   interview_date_val = startDate + ' - ' + endDate;
+   $(this).val(interview_date_val);   
   tblReport.ajax.reload();
+}).on('cancel.daterangepicker', function(ev, picker) {
+  $(this).val('SELECT DATE');
+  interview_date_val = "";
+  tblReport.ajax.reload();
+});
+
+$('#application_dt').daterangepicker({
+  alwaysShowCalendars: true,
+   todayHighlight: true,
+   showDropdowns: true,
+   autoclose: true,
+   pickerPosition: 'center', 
+   todayBtn: 'linked',
+   format: 'yyyy/mm/dd',
+   autoUpdateInput: false,
+   minDate: new Date(2015, 0, 1),
+   maxDate: new Date(new Date().getFullYear(), 11, 31),
+   ranges: {
+       'Today': [moment(), moment()],
+       'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+       'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+       'Last 365 Days': [moment().subtract(364, 'days'), moment()]
+   },
+   locale: {
+       cancelLabel: 'Clear'  
+   }
+}).on('apply.daterangepicker', function(ev, picker) {
+    ev.preventDefault();
+    let startDate = picker.startDate.format('YYYY/MM/DD');
+    let endDate = picker.endDate.format('YYYY/MM/DD');
+    application_date_val = startDate + ' - ' + endDate;
+    $(this).val(application_date_val);   
+   tblReport.ajax.reload();
+}).on('cancel.daterangepicker', function(ev, picker) {
+   $(this).val('SELECT DATE');
+   application_date_val = "";
+   tblReport.ajax.reload();
 });
 
 function logexport(type){
@@ -241,3 +286,25 @@ function logexport(type){
       },
   });
 }
+
+$('#generalSearch').donetyping(function (callback) {
+  search_val = $(this).val();
+  // if(search_val.length >= 3){
+  //     $.ajax({
+  //         url: baseUrl("crs/search_confirm_val"),
+  //         type: "post",
+  //         data: {
+  //             csrf_token: _csrf_hash,
+  //             search_val: search_val
+  //         },
+  //         success: function(resp){
+  //             if(resp == true){
+  //                 toastr.error("This user status is currently Blacklisted.", "Invalid Data!", 10000);
+  //             }
+              
+  //         }
+  //     });
+  // }
+  tblReport.ajax.reload();
+  // tblResume.ajax.reload();
+});

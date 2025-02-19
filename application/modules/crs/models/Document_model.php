@@ -31,10 +31,11 @@ class Document_model extends CI_Model{
       $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
       $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
       $year = (isset($post["year"]) && $post["year"]) ? $post["year"] : date("Y");
+      $applicationDate = (isset($post["application_date"]) && $post["application_date"]) ? $post["application_date"] : false;
       $rowCount = 0;
       $rowData = array();
-      $rowData = $this->get_resume($search, $limit, $offset, $sortBy, $sortOrder, $year);
-      $rowCount = $this->get_resume_count($search,$year);
+      $rowData = $this->get_resume($search, $limit, $offset, $sortBy, $sortOrder, $applicationDate);
+      $rowCount = $this->get_resume_count($search,$applicationDate);
       $resultset["recordsTotal"] = $rowCount;
       $resultset["recordsFiltered"] = $rowCount;
       $resultset["data"] = $rowData;
@@ -42,7 +43,7 @@ class Document_model extends CI_Model{
         return $resultset;
     }
 
-    private function get_resume($search, $limit, $offset, $sortBy, $sortOrder, $year){
+    private function get_resume($search, $limit, $offset, $sortBy, $sortOrder, $applicationDate){
       $data = array();
       $filterFields = array("a.id", "a.status", "a.vacancy_status", "a.firstname", "a.lastname", "a.school", "a.course", "a.position", "a.tag1", "a.recruitment", "a.applied_dt", "a.contact_no", "a.description");
       $sql = "a.id, a.status, a.vacancy_status, CONCAT(a.firstname,' ',a.lastname) AS name, a.school, a.course, a.position, a.tag1, a.recruitment, a.applied_dt, b.filename, a.remarks, a.contact_no, a.description";
@@ -53,8 +54,14 @@ class Document_model extends CI_Model{
       $this->db->where('vacancy_status != ', 'archived');
       $this->db->where('status != ', 'hired');
       $this->db->where('status != ', 'blacklisted');
-      if ($year && $year != 'All'){
-        $this->db->where("YEAR(applied_dt)", $year);
+    //   $this->db->where("YEAR(applied_dt)", $year);
+      if($applicationDate){
+        list($startDate, $endDate) = explode(' - ', $applicationDate);
+        $startDateFormatted = DateTime::createFromFormat('Y/m/d', $startDate)->format('Y-m-d');
+        $endDateFormatted = DateTime::createFromFormat('Y/m/d', $endDate)->format('Y-m-d');
+        $this->db->where("a.applied_dt BETWEEN '{$startDateFormatted}' AND '{$endDateFormatted}'");
+      }else{
+        $this->db->where('YEAR(a.applied_dt)', date('Y'));
       }
 
           if ($search) {
@@ -108,7 +115,7 @@ class Document_model extends CI_Model{
     return $data;
     }
 
-    private function get_resume_count($search,$year){
+    private function get_resume_count($search,$applicationDate){
       $filterFields = array("a.id", "a.status", "a.vacancy_status", "a.firstname", "a.lastname", "a.school", "a.course", "a.position", "a.tag1", "a.recruitment", "a.applied_dt", "a.contact_no", "a.description");
       $sql = "a.id, a.status, a.vacancy_status, CONCAT(a.firstname,' ',a.lastname) AS name, a.school, a.course, a.position, a.tag1, a.recruitment, a.applied_dt, b.filename, a.remarks, a.contact_no, a.description";
       $this->db->select($sql);
@@ -118,8 +125,14 @@ class Document_model extends CI_Model{
       $this->db->where('vacancy_status != ', 'archived');
       $this->db->where('status != ', 'hired');
       $this->db->where('status != ', 'blacklisted');
-      if ($year && $year != 'All'){
-        $this->db->where("YEAR(applied_dt)", $year);
+
+      if($applicationDate){
+        list($startDate, $endDate) = explode(' - ', $applicationDate);
+        $startDateFormatted = DateTime::createFromFormat('Y/m/d', $startDate)->format('Y-m-d');
+        $endDateFormatted = DateTime::createFromFormat('Y/m/d', $endDate)->format('Y-m-d');
+        $this->db->where("a.applied_dt BETWEEN '{$startDateFormatted}' AND '{$endDateFormatted}'");
+      }else{
+        $this->db->where('YEAR(a.applied_dt)', date('Y'));
       }
 
           if ($search) {

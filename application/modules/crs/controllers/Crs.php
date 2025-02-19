@@ -105,6 +105,8 @@
         
         public function resume(){
             $this->core_layout->setPrivilegeName("crs_resume");
+            $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
+            $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
             $this->core_layout->addCss("global/plugins/uploadui/css/blueimp/blueimp-gallery.min.css", true);
             $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload.css", true);
             $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload-ui.css", true);
@@ -136,8 +138,7 @@
             $this->load->view('core/templates/footer');
         }
 
-        function get_resume_collection()
-        {
+        function get_resume_collection(){
             $data = $this->document->getResumeCollection();
             $this->output
                 ->set_content_type('json')
@@ -146,6 +147,8 @@
 
         function reports(){
             $this->core_layout->setPrivilegeName("crs_reports");
+            $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
+            $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
             $this->core_layout->addCss("global/plugins/uploadui/css/blueimp/blueimp-gallery.min.css", true);
             $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload.css", true);
             $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload-ui.css", true);
