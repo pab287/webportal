@@ -88,6 +88,8 @@ const dbFieldEl = '' +
     '<option value="emp.date_start">Date Hired</option>' +
     '<option value="emp.date_regular">Date Regularized</option>' +
     '<option value="emp.date_end">Date Separated</option>' +
+    '<option value="emp.resign_reason">Reason for Separation</option>' +
+    '<option value="emp.terminate_reason">Reason for Termination</option>' +
     '<option value="emp.date_end_prob">Date Probation End</option>' +
     '<option value="emp.latitude">Longitude</option>' +
     '<option value="emp.longitude">Latitude</option>' +
@@ -169,6 +171,8 @@ const dbSortFieldEl = '' +
     '<option value="emp.date_start">Date Hired</option>' +
     '<option value="emp.date_regular">Date Regularized</option>' +
     '<option value="emp.date_end">Date Separated</option>' +
+    '<option value="emp.resign_reason">Reason for Separation</option>' +
+    '<option value="emp.terminate_reason">Reason for Termination</option>' +
     '<option value="emp.date_end_prob">Date Probation End</option>' +
     '<option value="emp.latitude">Longitude</option>' +
     '<option value="emp.longitude">Latitude</option>' +
@@ -357,6 +361,8 @@ $(document).ready(function () {
                 { id: 'level', label: 'Level', type: 'string' },
                 { id: 'employee_status', label: 'Employee Status', type: 'string' },
                 { id: 'educ_degree', label: 'Educational Degree', type: 'string' },
+                { id: 'resign_reason', label: 'Reason for Separation', type: 'string' },
+                { id: 'terminate_reason', label: 'Reason for Termination', type: 'string' },
                 { id: 'LOWER(payout_schedule.name)', label: 'Payout Schedule', type: 'string' },
                 {
                     id: 'CAST(REPLACE(salaries.sal_rate,\',\',\'\') AS DECIMAL(10,2))',
