@@ -352,7 +352,7 @@ $(document).ready(function() {
                     backdrop: 'static',
                     keyboard: false
                 });
-                startTimer(300);
+                checkForExistingTimer();
             }
         },
     });
@@ -448,21 +448,37 @@ $(document).ready(function() {
 
 });
 
+// Function to start the timer
 function startTimer(seconds) {
-    let timeLeft = seconds;
+    let currentTime = Math.floor(Date.now() / 1000);
+    let storedEndTime = localStorage.getItem('timerEndTime');
+    if (storedEndTime && currentTime < storedEndTime) {
+        timeLeft = storedEndTime - currentTime;
+    } else {
+        timeLeft = seconds;
+        localStorage.setItem('timerEndTime', currentTime + seconds);
+    }
     $('.timer-text').show();
     timerInterval = setInterval(function() {
         timeLeft--;
-        timerSpan.text(timeLeft + ' seconds');
-        if (timeLeft === 0) {
-            clearInterval(timerInterval);
+        $('#timer').text(timeLeft + ' seconds');
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval); 
             $('.login-link').removeClass('disabled');
             $('.resend-action').show();
             $('.timer-text').hide();
-            timerSpan.text("");
+            $('#timer').text("");
+            localStorage.removeItem('timerEndTime');
         }
-
     }, 1000);
+}
+function checkForExistingTimer() {
+    let storedEndTime = localStorage.getItem('timerEndTime');
+    let currentTime = Math.floor(Date.now() / 1000);
+    if (storedEndTime && currentTime < storedEndTime) {
+        let remainingTime = storedEndTime - currentTime;
+        startTimer(remainingTime);
+    }
 }
 
 
