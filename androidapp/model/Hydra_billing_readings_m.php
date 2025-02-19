@@ -584,6 +584,10 @@ class Hydra_billing_readings_m extends Dbase{
 	}
 
 	private function getBillingDetails($reading_id){
+		$current_date = date("Y-m-d");
+		$penalties = $this->getPenalties();
+    	$overdue_charges = 0;
+
 		$list = array();
 		$reconnection_fee = $this->getReconnectionFee();
 		$dayOf_cutOff = $this->getAppliedCutOff();
@@ -620,7 +624,13 @@ class Hydra_billing_readings_m extends Dbase{
         $due_date = date('Y-m-d', strtotime("+".$dayOf_dueDate." day", strtotime($billing_to)));
 
         $reconnectionFee = $currentReading['is_disconnected']==1 ? $reconnection_fee : '0.00';
-        $total_amount_due = ($charges + $balance_last_bill['total_penalty'] + $balance_last_bill['total_balance'] + $reconnectionFee) - $over_payment;
+
+		if ($current_date > $due_date && $penalties['type'] == 'percentage') {
+			$overdue_charges = ($penalties['amount'] / 100) * $charges;
+		}
+
+        // $total_amount_due = ($charges + $balance_last_bill['total_penalty'] + $balance_last_bill['total_balance'] + $reconnectionFee) - $over_payment;
+		$total_amount_due = ($charges + $balance_last_bill['total_balance'] + $overdue_charges + $balance_last_bill['total_penalty'] + $reconnectionFee) - $over_payment;
 
         $list["current_reading_date"] = $current_reading_date;
         $list["reading_ref_no"] = $currentReading["reading_ref_no"];
@@ -644,8 +654,9 @@ class Hydra_billing_readings_m extends Dbase{
         $list["total_charges"] = number_format($charges, 2,'.','');
 		$list["actual_current_bill"] = number_format($actual_current_bill, 2,'.','');
         $list["over_payment"] = number_format($over_payment, 2,'.','');
-        $list["total_penalty"] = number_format($balance_last_bill['total_penalty'], 2,'.','');
-        $list["total_balance"] = number_format($balance_last_bill['total_balance'], 2,'.','');
+		$list['overdue_charges'] = $overdue_charges;
+        $list["total_penalty"] = number_format($overdue_charges, 2,'.','');
+        $list["total_balance"] = number_format($balance_last_bill['total_balance'] + $balance_last_bill['total_penalty'], 2,'.','');
         $list["total_amount_due"] = number_format($total_amount_due, 2,'.','');
         $list["reconnectionFee"] = number_format($reconnectionFee, 2,'.','');
         return $list;
