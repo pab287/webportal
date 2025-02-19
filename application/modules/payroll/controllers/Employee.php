@@ -422,4 +422,11 @@
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
         }
+        
+        function get_employee_list(){
+            $data = $this->employee->getEmployeeList();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
     }

@@ -11,10 +11,11 @@ const exportOptions = {
 let dtEmployeeTimesheet;
 let dtPayslipTable;
 let dtPayrollIds = [];
-let companyId = 0;
+let _company = [];
+let _companyId = 0;
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0) {
-    if(typeof _tempContentData.company !== "undefined" && _tempContentData.company){ companyId = _tempContentData.company; }
+    if(typeof _tempContentData.company !== "undefined" && _tempContentData.company){ _company = _tempContentData.company; _companyId = _tempContentData.company.id; }
 }
 
 var vmPayslip = new Vue({
@@ -54,8 +55,14 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
         }
 
         if (jQuery.inArray("view_by_company", _currentActions) !== -1) {
-            let option = new Option('GC&C', companyId, true, true);
-            modalGeneratePayslip.find("#company").append(option).trigger("change");
+            if (_company) {
+                let option = new Option(_company.text, _company.id, true, true);
+                modalGeneratePayslip.find("#company").append(option).trigger('change');
+                modalGeneratePayslip.find("#company").next().prop("hidden", true);
+                modalGeneratePayslip.find("#has_privi_company-text").text(_company.text);
+            }
+        } else {
+            modalGeneratePayslip.find("#has_privi_company-text").prop("hidden", true);
         }
     });
 
@@ -64,11 +71,23 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
         width: '100%',
         dropdownParent: modalGeneratePayslip,
         ajax: {
-            url: baseUrl("payroll/select_employee"),
+            url: baseUrl("payroll/select_employee_by_privileges"), //original controller is select_employee and changed to select_employee_by_privileges as the first controller is global
             dataType: "json",
             delay: 250,
             global: false,
+            data: function (params) {
+                var query = {
+                    q: params.term,
+                    company_id: _companyId
+                }
+
+                return query;
+            },
             processResults: function (data) {
+                if (data.results.length === 0) {
+                    toastr.warning("No Assigned Payroll Group found!", "Payroll Group");
+                }
+                
                 return data;
             }
         }
@@ -120,16 +139,20 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
         placeholder: 'Select',
         width: '100%',
         ajax: {
-            url: baseUrl("payroll/select_payroll_group"),
+            url: baseUrl("payroll/select_payroll_group_payslip"), //original controller is select_payroll_group and changed to select_payroll_group_payslip as the first controller is global
             dataType: "json",
             type: 'get',
             delay: 250,
             global: false,
             data: function (params) {
-                params.company_id = $("form#frm-payroll-posted select#company").val();
+                params.company_id = _companyId || $("form#frm-payroll-posted select#company").val();
                 return params;
             },
             processResults: function (data) {
+                if (data.results.length === 0) {
+                    toastr.warning("No Assigned Payroll Group found!", "Payroll Group");
+                }
+
                 return data;
             }
         }

@@ -113,7 +113,8 @@
                 return is_object($value) ? ((int)$value->id === $companyId) : ((int)$value['id'] === $companyId);
             });
 
-            $tempData["company"] = $filter;
+            $result = array_values($filter)[0] ?? null;
+            $tempData["company"] = $result;
 
             $this->core_layout->setPageTitle("Payroll - Payslip");
             $this->core_layout->setPrivilegeName("payroll_payslip");
@@ -769,6 +770,26 @@
 
         public function update_existing_payroll_sheet_data(){
             $data = $this->payroll->updateExistingPayrollSheetData();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function select_payroll_group_payslip() {
+            $this->core_layout->setPrivilegeName("payroll_payslip");
+            $privilege = $this->core_layout->getCurrentActions();
+
+            $data = $this->payroll->selectPayrollGroupPayslip($privilege);
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function select_employee_by_privileges() {
+            $this->core_layout->setPrivilegeName("payroll_payslip");
+            $privilege = $this->core_layout->getCurrentActions();
+
+            $data = $this->payroll->selectEmployeeByPrivileges($privilege);
             $this->output
                 ->set_content_type('json')
                 ->set_output(json_encode($data));

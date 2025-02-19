@@ -959,9 +959,32 @@
                         }
                     }
                     $vv->employees = $employees;
+
+                    // get assigned employees when have a privilege of view by company
+                    $allowed = array();
+                    $tempAssigned = @unserialize($vv->assigned_employee_id);
+
+                    if (!empty($tempAssigned)) {
+                        $this->db->select('id, firstname, lastname, middlename, suffix');
+                        $this->db->from($this->employeeTable);
+                        $this->db->where_in("id", $tempAssigned);
+                        $_qTempEmp = $this->db->get();
+                        if($_qTempEmp->num_rows() > 0){
+                            foreach($_qTempEmp->result() as $rs){
+                                $tempRs = (array) $rs;
+                                $_tempName = $this->core_layout->getDisplayName($tempRs);
+                                $_tempName = isset($_tempName["display_name_1"]) && $_tempName["display_name_1"] ? $_tempName["display_name_1"]: "No assigned name";
+                                $allowed[] = $_tempName;
+                            }
+                        }
+                    }
+                    $vv->assigned_employees = $allowed;
+                    // get assigned employees when have a privilege of view by company
+
+
                     $vv->edit_url = site_url("payroll/employee/get_employee_group_data/edit/{$vv->id}");
                     $vv->archive_url = site_url("payroll/employee/get_employee_group_data/archive/{$vv->id}");
-                    unset($vv->employee_id);
+                    unset($vv->employee_id, $vv->assigned_employee_id, $vv->is_allow_view);
                     $arrData[$kk] = $vv;
                 }
             }
@@ -1037,6 +1060,33 @@
                         }
                     }
                     $tempRow->employees = $employees;
+
+                    $this->db->reset_query();
+
+                    // get assigned employees when have a privilege of view by company
+                    $allowed = array();
+                    $tempRow->assigned_employee_id = @unserialize($tempRow->assigned_employee_id);
+
+                    if (!empty($tempRow->assigned_employee_id)) {
+                        $this->db->select('id, firstname, lastname, middlename, suffix');
+                        $this->db->from($this->employeeTable);
+                        $this->db->where_in("id", $tempRow->assigned_employee_id);
+                        $_qTempEmp = $this->db->get();
+                        if($_qTempEmp->num_rows() > 0){
+                            foreach($_qTempEmp->result() as $rs){
+                                $tempRs = (array) $rs;
+                                $tempName = $this->core_layout->getDisplayName($tempRs);
+                                $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                                $allowed[] = array(
+                                    "id"=>$rs->id,
+                                    "text"=>$tempName,
+                                );
+                            }
+                        }
+                    }
+                    $tempRow->allowed = $allowed;
+                    // get assigned employees when have a privilege of view by company
+
                     $arrData = array("data" => $tempRow);
                     $html = "";
                     switch($type){
@@ -1230,6 +1280,9 @@
                 $post["employee_id"] = serialize($post["employee_id"]);
                 $post["created_by"] = $this->core_layout->getCurrentEmployeeId();
                 $post["created_at"] = date("Y-m-d H:i:s");
+                $post['is_allow_view'] = isset($post['is_allow_view']) && $post['is_allow_view'] ? 1: 0;
+                $post['assigned_employee_id'] = isset($post['is_allow_view']) && $post['is_allow_view'] == 1 ? serialize($post['assigned_employee_id']) : serialize(array());
+
                 $added = $this->db->insert($this->payrollGroupTable, $post);
                 if($added){
                     $resultset["response"] = true;
@@ -1253,6 +1306,8 @@
                 $post["employee_id"] = serialize($post["employee_id"]);
                 $post["updated_by"] = $this->core_layout->getCurrentEmployeeId();
                 $post["updated_at"] = date("Y-m-d H:i:s");
+                $post['is_allow_view'] = isset($post['is_allow_view']) && $post['is_allow_view'] ? 1: 0;
+                $post['assigned_employee_id'] = isset($post['is_allow_view']) && $post['is_allow_view'] == 1 ? serialize($post['assigned_employee_id']) : serialize(array());
 
                 $updated = $this->db->update($this->payrollGroupTable, $post, $tempWhere);
                 if($updated && $this->db->affected_rows() > 0){
@@ -1600,5 +1655,43 @@
             $result = $qTemp->result();
 
             return $result;
+        }
+
+        public function getEmployeeList(){
+            $result = array();
+            $get = $this->input->get();
+
+            $this->db->select("id, UPPER(CONCAT(firstname, ' ',
+            CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND
+                    TRIM(middlename) !='' AND middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(middlename, 1, 1), '.') ELSE ''
+            END,' ', lastname,
+            CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND
+                UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND
+                suffix IS NOT NULL THEN CONCAT(' ', suffix) ELSE ''
+            END)) as text");
+            $this->db->from($this->employeeTable);
+            $this->db->where("employee_status", "active");
+
+            if (isset($get['company_id']) && $get['company_id']) {
+                $this->db->where('company_id', $get['company_id']);
+            }
+
+            if (isset($get['q']) && $get['q']) {
+                $this->db->group_start();
+                    $this->db->like('firstname', $get['q'], 'both');
+                    $this->db->or_like('lastname', $get['q'], 'both');
+                $this->db->group_end();
+            }
+
+            $this->db->order_by("firstname", "ASC");
+            $this->db->limit(10);
+            $qTemp = $this->db->get();
+
+            if($qTemp->num_rows() > 0){
+                $result = $qTemp->result();
+            }
+
+            return array('results' => $result);
         }
     }
