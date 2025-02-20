@@ -252,8 +252,8 @@ Class Login_m extends CI_Model
             $request_id = $this->db->insert_id();
             $data['first_name'] = $employee->firstname;
             $send_result = $this->sendOTP($send_to, $data, $method);
-            if (!$send_result) {
-                throw new Exception('Failed to send OTP.');
+            if (!$send_result['status']) {
+                throw new Exception($send_result['message']);
             }
     
             $this->db->trans_commit();
@@ -416,7 +416,7 @@ Class Login_m extends CI_Model
     }
 
     private function sendOTP($send_to, $data, $method) {
-        
+        $result = array();
         switch ($method) {
             case 'sms':
                 $msg = "NEVER SHARE YOUR OTP especially on social media, SMS, or email links. " .
@@ -425,16 +425,19 @@ Class Login_m extends CI_Model
                 
                 // $result = $this->sms->sendSMS($send_to, $msg); this is for playsms
                 $result = $this->sms_gateway->sendTwoFactorSms($send_to, $msg);
-                if ($result['status'] == true) {
-                    return true;
-                }
-                return false;
+                return $result;
                 
             case 'email':
+
                 $send_email[] = $send_to;
                 $email_content = $this->load->view("two_factor_email_template.php",array("data" => $data), true);
-                $mailer['send_to'] = $send_email; 
-                $result = $this->core->send_email('core','GC & C Conyx PH','Two Factor Authentication',$email_content,$mailer);
+                $mailer['send_to'] = $send_email;
+                $result['status'] = $this->core->send_email('core','GC & C Conyx PH','Two Factor Authentication',$email_content,$mailer);
+                if($result['status']){
+                    $result['message'] = 'Email sent successfully';
+                }else{
+                    $result['message'] = 'Failed to send email';
+                }
                 return $result;
                 
             case 'telegram':
