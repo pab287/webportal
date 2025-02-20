@@ -326,13 +326,28 @@ $.validate({
     lang: 'en',
     onSuccess: function (form) {
         let currentForm = form[0];
-        let formData = $(currentForm).serialize();
         let url = siteUrl("configuration/update_telegram_protocol_settings");
+        const select2Values = $("#select2_module_edit").val();
+        const select2Data = $("#select2_module_edit").select2('data');
+        const combinedData = select2Values.map((id, index) => {
+            return select2Data[index].text;
+        });
+        const combinedDataString = JSON.stringify(combinedData);
         $.ajax({
             url: url,
             type: "POST",
             dataType: "json",
-            data: formData,
+            data: {
+                csrf_token: _csrf_hash,
+                id: $("#id").val(),
+                bot_name: $("input[id='bot_name_edit']").val(),
+                bot_description: $("input[id='bot_description_edit']").val(),
+                owner_id: $("#select2_owner_edit").val(),
+                chat_id: $("input[id='chat_id_edit']").val(),
+                telegram_bot_token: $("input[id='telegram_bot_token_edit']").val(),
+                modules_array: combinedDataString,
+                modules: select2Values,
+            },
             beforeSend: function () {
                 $(form[0])
                     .find(".btn-submit")
@@ -364,12 +379,26 @@ $.validate({
     onSuccess: function (form) {
         let currentForm = form[0];
         let formUrl = currentForm.action;
-        let formData = $(currentForm).serialize();
+        const select2Values = $("#select2_module").val();
+        const select2Data = $("#select2_module").select2('data');
+        const combinedData = select2Values.map((id, index) => {
+            return select2Data[index].text;
+        });
+        const combinedDataString = JSON.stringify(combinedData);
         $.ajax({
             url: formUrl,
             type: "POST",
             dataType: "json",
-            data: formData,
+            data: {
+                csrf_token: _csrf_hash,
+                bot_name: $("input[name='bot_name']").val(),
+                bot_description: $("input[name='bot_description']").val(),
+                owner_id: $("#select2_owner").val(),
+                chat_id: $("input[name='chat_id']").val(),
+                telegram_bot_token: $("input[name='telegram_bot_token']").val(),
+                modules_array: combinedDataString,
+                modules: select2Values,
+            },
             beforeSend: function () {
                 $(form[0])
                     .find(".btn-submit")
@@ -432,29 +461,29 @@ function delete_telegram_bot(id) {
         }
     });
 }
-function toggle_connect_modal(id,is_connected){
-    console.log(id,is_connected);
-}
+// function toggle_connect_modal(id,is_connected){
+//     console.log(id,is_connected);
+// }
 
-function toggle_connect_modal(id,is_connected){
-    $.ajax({
-        url: siteUrl("configuration/toggle_telegram_bot_status/"+id),
-        type: "POST", 
-        dataType: "json",
-        data: {
-            csrf_token: _csrf_hash,
-            status: is_connected
-        },
-        success: function (json) {
-            if (json.response) {
-                toastr.success(json.toastr_msg, "Protocol Settings", 5000);
-                dtTableProtocol.ajax.reload();
-            } else {
-                toastr.error(json.toastr_msg, "Protocol Settings", 5000);
-            }
-        }
-    });
-}
+// function toggle_connect_modal(id,is_connected){
+//     $.ajax({
+//         url: siteUrl("configuration/toggle_telegram_bot_status/"+id),
+//         type: "POST", 
+//         dataType: "json",
+//         data: {
+//             csrf_token: _csrf_hash,
+//             status: is_connected
+//         },
+//         success: function (json) {
+//             if (json.response) {
+//                 toastr.success(json.toastr_msg, "Protocol Settings", 5000);
+//                 dtTableProtocol.ajax.reload();
+//             } else {
+//                 toastr.error(json.toastr_msg, "Protocol Settings", 5000);
+//             }
+//         }
+//     });
+// }
 
 function toggle_connect_modal(id, is_connected) {
     Swal.fire({

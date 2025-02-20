@@ -30,7 +30,7 @@ class Telegram_bot_config extends CI_Model{
     }
 
     private function getDatatableRequest($search, $limit, $offset, $sortBy, $sortOrder,$archive){
-        $filterFields = array('a.bot_name','b.firstname','b.lastname');
+        $filterFields = array('a.bot_name','b.firstname','b.lastname','a.modules_array');
         $this->db->select("a.id, a.bot_name, a.bot_description, b.firstname, b.lastname, a.owner_id, a.status, a.modules, a.chat_id, a.telegram_bot_token, a.created_at");
         $this->db->from($this->telegramConfigTable.' as a');
         $this->db->join('gccmaster.tblemployees as b', 'a.owner_id = b.id', 'left');
@@ -76,7 +76,7 @@ class Telegram_bot_config extends CI_Model{
     }
 
     private function getDatatableRequestCount($search,$archive){
-        $filterFields = array('a.bot_name','b.firstname','b.lastname' );
+        $filterFields = array('a.bot_name','b.firstname','b.lastname','a.modules_array');
         $this->db->select("a.id, a.bot_name, a.bot_description, a.owner_id, a.status, a.modules, a.chat_id, a.telegram_bot_token, a.created_at");
         $this->db->from($this->telegramConfigTable.' as a');
         $this->db->join('gccmaster.tblemployees as b', 'a.owner_id = b.id', 'left');

@@ -88,7 +88,6 @@
                 </button>
             </div>
             <form id="new_form" method="post" action="<?php echo site_url("configuration/set_telegram_protocol_settings"); ?>">
-                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                 <div class="col-12 modal-body">
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
@@ -162,15 +161,15 @@
                 </button>
             </div>
             <form id="edit_form_telegram">
-                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                <!-- <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>"> -->
                 <div  id="edit-modal_body" class="col-12 modal-body">
-                    <input type="hidden" name="id" v-model="row.id" />
+                    <input type="hidden" id="id" name="id" v-model="row.id" />
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
                             Bot Name *
                         </label>
                         <div class="col-12">
-                            <input type="text" class="form-control" name="bot_name" data-validation="required" autocomplete="off" v-model="row.bot_name"/>
+                            <input type="text" id="bot_name_edit" class="form-control" name="bot_name" data-validation="required" autocomplete="off" v-model="row.bot_name"/>
                         </div>
                     </div>
                     <div class="form-group m-form__group row">
@@ -178,7 +177,7 @@
                             Bot Description *
                         </label>
                         <div class="col-12">
-                            <input type="text" class="form-control" name="bot_description" data-validation="required" autocomplete="off" v-model="row.bot_description"/>
+                            <input type="text" id="bot_description_edit" class="form-control" name="bot_description" data-validation="required" autocomplete="off" v-model="row.bot_description"/>
                         </div>
                     </div>
                     <div class="form-group m-form__group row">
@@ -206,7 +205,7 @@
                             Chat Id *
                         </label>
                         <div class="col-12">
-                            <input type="text" class="form-control" name="chat_id" data-validation="required" autocomplete="off" v-model="row.chat_id"/>
+                            <input type="text" id="chat_id_edit" class="form-control" name="chat_id" data-validation="required" autocomplete="off" v-model="row.chat_id"/>
                         </div>
                     </div>
                     <div class="form-group m-form__group row">
@@ -214,7 +213,7 @@
                             Telegram Bot Token *
                         </label>
                         <div class="col-12">
-                            <input type="text" class="form-control" name="telegram_bot_token" data-validation="required" autocomplete="off" v-model="row.telegram_bot_token"/>
+                            <input type="text" id="telegram_bot_token_edit" class="form-control" name="telegram_bot_token" data-validation="required" autocomplete="off" v-model="row.telegram_bot_token"/>
                         </div>
                     </div>
                 </div>
