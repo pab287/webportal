@@ -120,7 +120,7 @@
                                         <b v-text="vm_tab1.responsibility"></b>
                                     </div>
                                 </div>
-                                <div class="form-group m-form__group row">
+                                <div v-if="vm_tab1.sub_category != 'Not set'" class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-6 col-sm-4">
                                         Module:
                                     </label>

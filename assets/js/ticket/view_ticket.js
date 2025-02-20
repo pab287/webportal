@@ -166,6 +166,7 @@ $.ajax({
         }else{
             vmData.status = "<span class='m-badge m-badge--metal m-badge--wide text-white'>"+vmData.status+"</span>";
         }
+        console.log(data);
         vmTab1.vm_tab1 = Object.assign({}, data);
     }
 });
