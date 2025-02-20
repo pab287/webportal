@@ -8032,6 +8032,7 @@
 
             $checkActiveAllowance = $this->db->get_where("gcchris.allowances", array("emp_id" => $post["emp_id"], "is_active" => 1, "is_archived" => 0));
             $hasActiveAllowance = $checkActiveAllowance->num_rows() > 0 ? true : false;
+            $this->db->reset_query();
 
             $data = array();
             $data["created_by"] = $user["employee_id"];
@@ -8044,7 +8045,8 @@
 
             $query = $this->db->insert("gcchris.allowances", $data);
             $lastInsertedId = $this->db->insert_id();
-
+            $this->db->reset_query();
+            
             /*** edited contents logging ***/
             $this->db->select("allw.rate, allw.frequency, allw.is_active, pallw.allowance_name, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
             CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
