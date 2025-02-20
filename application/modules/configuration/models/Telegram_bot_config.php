@@ -262,7 +262,7 @@ class Telegram_bot_config extends CI_Model{
 			}
 		}
         foreach ($changes as $field => $change) {
-            if ($field != 'modules'){
+            if ($field != 'modules' && $field != 'modules_array') {
                 $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
             }
         }
