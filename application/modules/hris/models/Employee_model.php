@@ -4841,9 +4841,10 @@
             $id = $form['id'];
             $where = array("xps.id" => $id);
             $this->db->select("xps.id, xps.emp_id, xps.work_to,
-                               xps.work_company, xps.work_status, xps.work_reason, xps.work_from, old_idno,
+                               IFNULL(comp.code, xps.work_company) as work_company, xps.work_status, xps.work_reason, xps.work_from, old_idno,
                                IF(pos.id IS NULL, xps.work_position, pos.`name`) work_position");
             $this->db->join($this->positionTable . " pos", "pos.id = xps.work_position", "LEFT");
+            $this->db->join($this->companyTable . " comp", "comp.id = xps.work_company AND (UPPER(xps.work_reason) = 'TRANSFER COMPANY' OR `xps`.`old_idno` != NULL OR `xps`.`old_idno` != '')", "LEFT");
             $query = $this->db->get_where($this->employeeWorkExperienceTable . " xps", $where)->row();
             return array("data" => $query);
         }
