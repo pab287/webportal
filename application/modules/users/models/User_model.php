@@ -10,7 +10,7 @@ class User_model extends CI_Model
         $this->load->model("access_control_model", "acl_model");
         $this->load->model("datatable_model", "dt_model");
         $this->load->model("ams/Utilities_model", "utilities");
-
+        $this->load->model("sms/services/gateway_model","gateway");
         $this->timestamp = new DateTime(null, new DateTimeZone('Asia/Manila'));
     }
 
@@ -534,6 +534,28 @@ class User_model extends CI_Model
         $resultset = array();
         $post = $this->input->post();
         $id = $post['id'];
+        $this->db->trans_start();
+        $sendOtp = $this->sendPlaySMS($id);
+        $update = $this->updatePassword($id,$sendOtp['otp']);
+
+        if ($update && $sendOtp['sent']) {
+            $resultset['status'] = true;
+            $resultset['message'] = "Account unlocked successfully.";
+            $resultset['success'] ="success";
+            $resultset['action'] = 'user';
+            $this->db->trans_commit();
+        }else{
+            $resultset['status'] = false;
+            $resultset['message'] = "Failed to unlock account.";
+            $resultset['success'] ="error";
+            $resultset['action'] = 'system';
+            $this->db->trans_rollback();
+        }
+        $this->core_layout->setEventLog("{$resultset['message']} User Id: $id","unlock", "{$resultset['success']}", "gccmaster", "{$resultset['action']}");
+        return $resultset;
+    }
+
+    private function updatePassword($id,$otp){
         $this->db->where('id', $id);
         $this->db->set('lockout', 0);
         $this->db->set('auth', 0);
@@ -541,20 +563,26 @@ class User_model extends CI_Model
         $this->db->set('force_update',1);
         $this->db->set('login_attempts', 0);
         $this->db->set('reset_attempts', 0);
+        $this->db->set('password', md5($otp));
         $update = $this->db->update('gccmaster.tblusers');
-        if ($update) {
-            $resultset['status'] = true;
-            $resultset['message'] = "Account unlocked successfully.";
-            $resultset['success'] ="success";
-            $resultset['action'] = 'user';
-        }else{
-            $resultset['status'] = false;
-            $resultset['message'] = "Failed to unlock account.";
-            $resultset['success'] ="error";
-            $resultset['action'] = 'system';
-        }
-        $this->core_layout->setEventLog("{$resultset['message']} User Id: $id","unlock", "{$resultset['success']}", "gccmaster", "{$resultset['action']}");
-        return $resultset;
+        return $update;
+    }
+
+    private function sendPlaySMS($id){
+        $response = array();
+        $this->db->select('emp.mobile_no');
+        $this->db->from('gccmaster.tblusers as users');
+        $this->db->join('gccmaster.tblemployees as emp','users.emp_id = emp.id');
+        $this->db->where('users.id', $id);
+        $OTP = bin2hex(random_bytes(3));
+        $message = "[GC&C] Your Conyxph account recovery code is: $OTP. For security reasons, do not share this code with anyone. If you did not request this, please ignore this message.";
+        $query = $this->db->get();
+        $result = $query->row();
+        $this->db->reset_query();
+        $mobile_no = $result->mobile_no;
+        $response['sent'] = $this->gateway->sendPlaySMS($mobile_no, $message);
+        $response['otp'] = $OTP;
+        return $response;
     }
 
 }

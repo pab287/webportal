@@ -55,4 +55,40 @@
             }
             return $result;
         }
+
+        function sendPlaySMS($phone, $msg){
+            $this->db->select("modem,sms_ip, sms_port, sms_user, sms_pass, department_id, exclude");
+            $this->db->from("gccsms.tblsms");
+            $this->db->where("is_connected",'1');
+            $this->db->where("sms_user",'VOP');
+            $sms = $this->db->get()->row_array();
+            if($sms && $phone){
+                if (substr($phone, 0, 1) === '9') {
+                    $phone = '0' . $phone;
+                }    
+                $user = $sms['sms_user'];
+                $password = $sms['sms_pass'];
+                $playsms_url = "https://" . $sms['sms_ip'] . ":" . $sms['sms_port'] . "/index.php?app=ws";
+                $url = '&u='.$user;
+                $url.= '&h='.$password;
+                $url.= '&op=pv';
+                $url.= '&smsc='.$sms['modem'];
+                $url.= '&to='.$phone;
+                $url.= '&msg='.urlencode($msg);
+                $urltouse =  $playsms_url.$url;
+                $arrContextOptions=array(
+                  "ssl"=>array(
+                       "verify_peer"=>false,
+                       "verify_peer_name"=>false,
+                  ),
+              );
+                $response['data']=file_get_contents($urltouse,false,stream_context_create($arrContextOptions));
+                $response['status']=true;
+            }else{
+                return false;
+            }
+        
+            return($response);
+        }
+
     }

@@ -313,10 +313,11 @@ Class Login_m extends CI_Model
         if($query->num_rows() == 1){
             $row = $query->row();
             $otp_id = $row->id;
+            $res = $this->login($username, $new_password);
             $this->db->set('confirmed', 1);
             $this->db->where('id', $otp_id);
+            $this->db->where('emp_id', $res[0]->emp_id);
             $this->db->update('gccmaster.two_factor_authentication');
-            $res = $this->login($username, $new_password);
             $id = $res[0]->id;
             $privileges = $this->get_privileges_by_id($id);
             $sess_array = array(
@@ -372,10 +373,10 @@ Class Login_m extends CI_Model
     public function resendOtp() {
         $post = $this->input->post();
         $old_request_id = $post['request_id'];
-        
+        $emp_id = $post['emp_id'];
         // Update record with transaction
         $this->db->trans_start();
-        $this->db->where('id', $old_request_id);
+        $this->db->where('emp_id', $emp_id);
         $this->db->set('expiry', date('Y-m-d H:i:s'));
         $this->db->update('gccmaster.two_factor_authentication');
         $this->db->trans_complete();

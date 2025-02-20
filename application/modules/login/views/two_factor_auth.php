@@ -478,6 +478,8 @@ function checkForExistingTimer() {
     if (storedEndTime && currentTime < storedEndTime) {
         let remainingTime = storedEndTime - currentTime;
         startTimer(remainingTime);
+    }else{
+        startTimer(300);
     }
 }
 
@@ -547,6 +549,7 @@ $('#verify_otp').on('submit', function(e) {
             data: {
                 csrf_token: $('input[name="csrf_token"]').val(),
                 request_id: request_id,
+                emp_id:sessionData.emp_id,
             },
             success: function(response) {
                 if (response) {
