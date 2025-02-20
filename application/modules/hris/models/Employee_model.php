@@ -8027,16 +8027,20 @@
         function saveEmployeeAllowance() {
             $date = date("Y-m-d");
             $resultarray = array();
-            $data = array();
             $post = $this->input->post();
             $user = $this->core_layout->getUserLoggedIn();
 
+            $checkActiveAllowance = $this->db->get_where("gcchris.allowances", array("emp_id" => $post["emp_id"], "is_active" => 1, "is_archived" => 0));
+            $hasActiveAllowance = $checkActiveAllowance->num_rows() > 0 ? true : false;
+
+            $data = array();
             $data["created_by"] = $user["employee_id"];
             $data['created_at'] = $date;
             $data["emp_id"] = $post["emp_id"];
             $data['frequency'] = $post['allowance_id'] == 1 ? 'day' : 'month';
             $data["allowance_id"] = $post["allowance_id"];
             $data["rate"] = $post["rate"];
+            $data["is_active"] = $hasActiveAllowance ? 0 : 1;
 
             $query = $this->db->insert("gcchris.allowances", $data);
             $lastInsertedId = $this->db->insert_id();
@@ -8883,6 +8887,7 @@
 
             $this->db->select("id, is_active");
             $this->db->where("emp_id", $post["emp_id"]);
+            $this->db->where("is_archived", 0);
             $qAllw = $this->db->get("gcchris.allowances");
             if($qAllw->num_rows() > 0){
                 $multipleAllowances = false;
@@ -11764,7 +11769,7 @@
             $resultset = array();
             if($id){
                 $this->db->select("id");
-                $ctrActive = $this->db->get_where($this->tblAllowances, array("emp_id" => $id, "is_active"=>1));
+                $ctrActive = $this->db->get_where($this->tblAllowances, array("emp_id" => $id, "is_active"=>1, "is_archived" => 0));
                 if($ctrActive->num_rows() == 2){
                     $arrIds = array();
                     foreach ($ctrActive->result() as $row) { $arrIds[] = $row->id; }
