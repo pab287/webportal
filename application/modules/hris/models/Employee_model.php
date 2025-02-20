@@ -8029,10 +8029,7 @@
             $resultarray = array();
             $post = $this->input->post();
             $user = $this->core_layout->getUserLoggedIn();
-
-            $checkActiveAllowance = $this->db->get_where("gcchris.allowances", array("emp_id" => $post["emp_id"], "is_active" => 1, "is_archived" => 0));
-            $hasActiveAllowance = $checkActiveAllowance->num_rows() > 0 ? true : false;
-            $this->db->reset_query();
+            $hasActiveAllowance = $this->checkHasActiveAllowance($post["emp_id"]);
 
             $data = array();
             $data["created_by"] = $user["employee_id"];
@@ -8043,10 +8040,10 @@
             $data["rate"] = $post["rate"];
             $data["is_active"] = $hasActiveAllowance ? 0 : 1;
 
-            $query = $this->db->insert("gcchris.allowances", $data);
+            $queryInsert = $this->db->insert("gcchris.allowances", $data);
             $lastInsertedId = $this->db->insert_id();
             $this->db->reset_query();
-            
+
             /*** edited contents logging ***/
             $this->db->select("allw.rate, allw.frequency, allw.is_active, pallw.allowance_name, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
             CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
@@ -8074,29 +8071,11 @@
             $this->db->reset_query();
             /*** edited contents logging ***/
 
-            if ($query) {
-                // $this->db->select('sal_remarks, id');
-                // $this->db->limit(1);
-                // $this->db->order_by('id', 'DESC');
-                // $q = $this->db->get_where($this->employeeSalaryTable, array('emp_id' => $post['emp_id'], 'is_archived' => 0));
-
-                // if($q->num_rows() > 0){
-                //     $row = $q->row();
-                //     $fr = ($frequency == 'day') ? 'Daily Allowance' : 'Monthly Allowance';
-                //     $data = array(
-                //         'sal_remarks' => $row->sal_remarks . ' + ' . $post["rate"] . ' ' . $fr,
-                //         'update_date' => date('Y-m-d H:i:s'),
-                //         'update_by' => $user["employee_id"]
-                //     );
-
-                //     $this->db->where('id', $row->id);
-                //     $this->db->update($this->employeeSalaryTable, $data);
-                // }
-
-                $checkAllowance = $this->check_has_no_allowance($post["emp_id"]);
-                if($checkAllowance){
+            if ($queryInsert) {
+                $allowSalaryHistoryLog = isset($data["is_active"]) && $data["is_active"] == 1;
+                $checkCurrentActiveAllowance = $this->checkHasActiveAllowance($post["emp_id"]);
+                if($checkCurrentActiveAllowance && $allowSalaryHistoryLog){
                     $historyStatus = $this->set_approved_allowance($data);
-    
                     if($historyStatus){
                         $resultarray['salary_history'] = 'Salary History Generated.';
                     }else{
@@ -11161,14 +11140,14 @@
             return ($query->num_rows() > 0) ? true : false;
         }
 
-        function check_has_no_allowance($id){
+        function checkHasActiveAllowance($id){
             $this->db->from($this->tblAllowances);
             $this->db->where('is_active', 1);
             $this->db->where('is_archived', 0);
             $this->db->where('emp_id', $id);
             $query = $this->db->get();
 
-            return ($query->num_rows() == 1) ? true : false;
+            return $query->num_rows() > 0;
         }
 
         function update_bank_info(){
