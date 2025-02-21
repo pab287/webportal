@@ -530,29 +530,48 @@ class User_model extends CI_Model
         return $query->num_rows();
     }
 
-    public function unlockAccount(){
-        $resultset = array();
+    public function unlockAccount() {
+        $resultset = [
+            'status'  => false,
+            'message' => '',
+            'success' => 'error',
+            'action'  => 'system',
+        ];
         $post = $this->input->post();
         $id = $post['id'];
         $this->db->trans_start();
-        $sendOtp = $this->sendPlaySMS($id);
-        $update = $this->updatePassword($id,$sendOtp['otp']);
-
-        if ($update && $sendOtp['sent']) {
-            $resultset['status'] = true;
-            $resultset['message'] = "Account unlocked successfully.";
-            $resultset['success'] ="success";
-            $resultset['action'] = 'user';
-            $this->db->trans_commit();
-        }else{
-            $resultset['status'] = false;
-            $resultset['message'] = "Failed to unlock account.";
-            $resultset['success'] ="error";
-            $resultset['action'] = 'system';
+        $sendOtp = $this->sendOTP($id);
+        if (!$sendOtp['sent']) {
+            $resultset['message'] = $sendOtp['message'];
             $this->db->trans_rollback();
+            $this->logEvent($resultset, $id);
+            return $resultset;
         }
-        $this->core_layout->setEventLog("{$resultset['message']} User Id: $id","unlock", "{$resultset['success']}", "gccmaster", "{$resultset['action']}");
+        $update = $this->updatePassword($id, $sendOtp['otp']);
+        if (!$update) {
+            $resultset['message'] = "Failed to update password.";
+            $this->db->trans_rollback();
+            $this->logEvent($resultset, $id);
+            return $resultset;
+        }
+        $resultset['status'] = true;
+        $resultset['message'] = "Account unlocked successfully.";
+        $resultset['success'] = "success";
+        $resultset['action'] = 'user';
+        $this->db->trans_commit();
+        $this->logEvent($resultset, $id);
+    
         return $resultset;
+    }
+    
+    private function logEvent($resultset, $userId) {
+        $this->core_layout->setEventLog(
+            "{$resultset['message']} User Id: $userId",
+            "unlock",
+            $resultset['success'],
+            "gccmaster",
+            $resultset['action']
+        );
     }
 
     private function updatePassword($id,$otp){
@@ -568,20 +587,33 @@ class User_model extends CI_Model
         return $update;
     }
 
-    private function sendPlaySMS($id){
-        $response = array();
-        $this->db->select('emp.mobile_no');
-        $this->db->from('gccmaster.tblusers as users');
-        $this->db->join('gccmaster.tblemployees as emp','users.emp_id = emp.id');
-        $this->db->where('users.id', $id);
-        $OTP = bin2hex(random_bytes(3));
-        $message = "[GC&C] Your Conyxph account recovery code is: $OTP. For security reasons, do not share this code with anyone. If you did not request this, please ignore this message.";
-        $query = $this->db->get();
-        $result = $query->row();
+    private function sendOTP($id)
+    {
+        $response = ['sent' => false,'otp' => null,'message' => ''];
+        $this->db->select('emp.mobile_no, users.email, emp.firstname')
+            ->from('gccmaster.tblusers as users')
+            ->join('gccmaster.tblemployees as emp', 'users.emp_id = emp.id')
+            ->where('users.id', $id);
+    
+        $result = $this->db->get()->row();
         $this->db->reset_query();
-        $mobile_no = $result->mobile_no;
-        $response['sent'] = $this->gateway->sendPlaySMS($mobile_no, $message);
+        if (!$result->mobile_no && !$result->email) {
+            $response['message'] = "No communication method found. Update mobile number or email address.";
+            return $response;
+        }
+        $OTP = strtoupper(bin2hex(random_bytes(3)));
         $response['otp'] = $OTP;
+        if ($result->mobile_no) {
+            $message = "[GC&C] Your Conyxph account recovery code is: $OTP. For security reasons, do not share this code with anyone. " . 
+                       "If you did not request this, please ignore this message.";
+            $response['sent'] = $this->gateway->sendPlaySMS($result->mobile_no, $message);
+            return $response;
+        }
+        $send_email[] = $result->email;
+        $mailer['send_to'] = $send_email;
+        $data = ['first_name' => $result->firstname,'key_code' => $OTP];
+        $email_content = $this->load->view("recovery_password_email.php",["data" => $data],true);
+        $response['sent'] = $this->core_layout->send_email('core','GC & C Conyx PH','Account Recovery',$email_content,$mailer);
         return $response;
     }
 
