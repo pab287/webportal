@@ -899,7 +899,6 @@ $(".m-content")
             const form = $(this);
             const url = form.attr("action");
             const formData = new FormData(this);
-
             const id = form.find("input[name='id']").val();
             const tr = $('.btnEditOffenses[data-id="' + id + '"]').closest("tr");
 
@@ -913,12 +912,15 @@ $(".m-content")
                     data: formData,
                     success: function (response) {
                         if (response.success) {
-                            dtOffenses.ajax.reload();
-                            const data = response.data;
-                            if (data) {
-                                Object.keys(data).forEach((item, i) => {
-                                    tr.find('td:eq(' + i + ')').html(data[item]);
-                                });
+                            if(selectedTable == 'offenses'){
+                                dtOffenses.ajax.reload();
+                            }else if(selectedTable == 'commendation'){
+                                dtCommendation.ajax.reload();
+                            }else if(selectedTable == 'notices'){
+                                dtNotices.ajax.reload();
+                            }
+                            else if(selectedTable == 'others'){
+                                dtOthers.ajax.reload();
                             }
                         }
 
@@ -1534,25 +1536,25 @@ function initRegularEditDialog(response) {
 }
 
 function initEditOffensesAndCommendationsDialog(response,selectedData) {
-
+        selectedTable = selectedData;
         let selectData = [];
         if (selectedData == 'offenses'){
             selectData =  [
-                { id: '1ST-OFFENSE', text: '1ST OFFENSE' },
-                { id: '2ND-OFFENSE', text: '2ND OFFENSE' },
-                { id: '3RD-OFFENSE', text: '3RD OFFENSE' },
-                { id: '4TH-OFFENSE', text: '4TH OFFENSE' },
-                { id: '5TH-OFFENSE', text: '5TH OFFENSE' },
-                { id: 'WRITTEN-WARNING', text: 'WRITTEN WARNING' },
-                { id: '3-DAYS-SUSPENSION', text: '3-DAYS SUSPENSION' },
-                { id: '6-DAYS-SUSPENSION', text: '6-DAYS SUSPENSION' },
-                { id: '1-2-DAYS-SUSPENSION', text: '1-2 DAYS SUSPENSION' },
+                { id: '1ST OFFENSE', text: '1ST OFFENSE' },
+                { id: '2ND OFFENSE', text: '2ND OFFENSE' },
+                { id: '3RD OFFENSE', text: '3RD OFFENSE' },
+                { id: '4TH OFFENSE', text: '4TH OFFENSE' },
+                { id: '5TH OFFENSE', text: '5TH OFFENSE' },
+                { id: 'WRITTEN WARNING', text: 'WRITTEN WARNING' },
+                { id: '3-DAYS SUSPENSION', text: '3-DAYS SUSPENSION' },
+                { id: '6-DAYS SUSPENSION', text: '6-DAYS SUSPENSION' },
+                { id: '1-2-DAYS SUSPENSION', text: '1-2 DAYS SUSPENSION' },
                 { id: 'DISMISSAL', text: 'DISMISSAL' }
             ]
         }
         else if(selectedData == 'commendation'){
             selectData =  [
-                { id: '1ST-COMMENDATION', text: 'COMMENDATION' },]
+                { id: 'COMMENDATION', text: 'COMMENDATION' },]
         }
         else if(selectedData == 'notices'){
             selectData =  [

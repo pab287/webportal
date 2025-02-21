@@ -48,7 +48,7 @@
                         <input type="file" id="fileupload_offenses" name="files" onchange="setFilename(this, '#temp_fileupload')"
                                accept=".jpg, .jpeg, .png, .pdf">
                     </span>
-                    <p id="temp_fileupload" class="form-control m-input m--margin-top-10" disabled="disabled">
+                    <p id="temp_fileupload" style='text-overflow: ellipsis; white-space: nowrap; overflow: hidden;' class="form-control m-input m--margin-top-10" disabled="disabled">
                         <?= $data->filename ?>
                     </p>
                 </div>

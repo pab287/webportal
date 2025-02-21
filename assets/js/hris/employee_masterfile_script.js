@@ -50,7 +50,7 @@ const classificationDropdown = $('select[name="employee_status"]');
 const status = $('select[name="work_status"]');
 
 loadEmployees();
-
+let selectedTable="";
 let _user = [];
 let acctgStatus = 2; // assigned as 2 to not trigger the 0 is_returned status to the first trigger of datatable;
 let exported_acctg = null;
@@ -3460,7 +3460,7 @@ if (typeof _tempContentData !== "undefined") {
         }
         else if(selectedData == 'commendation'){
             data =  [
-                { id: '1ST-COMMENDATION', text: 'COMMENDATION' },]
+                { id: 'COMMENDATION', text: 'COMMENDATION' },]
         }
         else if(selectedData == 'notices'){
             data =  [
@@ -3555,10 +3555,16 @@ if (typeof _tempContentData !== "undefined") {
                                         );
                                         currentForm.reset();
                                         modalTempContent.modal("hide");
-                                        dtOffenses.ajax.reload();
-                                        dtOthers.ajax.reload();
-                                        dtNotices.ajax.reload();
-                                        dtCommendation.ajax.reload();
+                                        if(selectedData == 'offenses'){
+                                            dtOffenses.ajax.reload();
+                                        }else if(selectedData == 'commendation'){
+                                            dtCommendation.ajax.reload();
+                                        }else if(selectedData == 'notices'){
+                                            dtNotices.ajax.reload();
+                                        }
+                                        else if(selectedData == 'others'){
+                                            dtOthers.ajax.reload();
+                                        }
                                         offComTrail.ajax.reload();
                                     } else {
                                         toastr.error(
