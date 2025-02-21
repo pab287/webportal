@@ -5,6 +5,7 @@ const dropdown = $(".m-dropdown__toggle.export-as");
 let template = null;
 let templateId = null;
 let dtReport = null;
+let type ="";
 
 const template_select_option = {
     width: '100%',
@@ -87,6 +88,8 @@ const dbFieldEl = '' +
     '<option value="emp.date_start">Date Hired</option>' +
     '<option value="emp.date_regular">Date Regularized</option>' +
     '<option value="emp.date_end">Date Separated</option>' +
+    '<option value="emp.resign_reason">Reason for Separation</option>' +
+    '<option value="emp.terminate_reason">Reason for Termination</option>' +
     '<option value="emp.date_end_prob">Date Probation End</option>' +
     '<option value="emp.latitude">Longitude</option>' +
     '<option value="emp.longitude">Latitude</option>' +
@@ -98,6 +101,8 @@ const dbFieldEl = '' +
     '<option value="sal_remarks">Salary Remarks</option>' +
     '<option value="sal_date">Salary Effective</option>' +
     '<option value="IF(personnel.id IS NULL OR location.location_name IS NULL, \'No Station Assigned\', GROUP_CONCAT(DISTINCT location.location_name)) station">Station</option>' +
+    `<option value='supervisor'>Dept. Supervisor</option>` +
+    '<option value="manager">Dept. Manager</option>' +
     '';
 
 
@@ -166,6 +171,8 @@ const dbSortFieldEl = '' +
     '<option value="emp.date_start">Date Hired</option>' +
     '<option value="emp.date_regular">Date Regularized</option>' +
     '<option value="emp.date_end">Date Separated</option>' +
+    '<option value="emp.resign_reason">Reason for Separation</option>' +
+    '<option value="emp.terminate_reason">Reason for Termination</option>' +
     '<option value="emp.date_end_prob">Date Probation End</option>' +
     '<option value="emp.latitude">Longitude</option>' +
     '<option value="emp.longitude">Latitude</option>' +
@@ -354,6 +361,8 @@ $(document).ready(function () {
                 { id: 'level', label: 'Level', type: 'string' },
                 { id: 'employee_status', label: 'Employee Status', type: 'string' },
                 { id: 'educ_degree', label: 'Educational Degree', type: 'string' },
+                { id: 'resign_reason', label: 'Reason for Separation', type: 'string' },
+                { id: 'terminate_reason', label: 'Reason for Termination', type: 'string' },
                 { id: 'LOWER(payout_schedule.name)', label: 'Payout Schedule', type: 'string' },
                 {
                     id: 'CAST(REPLACE(salaries.sal_rate,\',\',\'\') AS DECIMAL(10,2))',
@@ -825,14 +834,15 @@ $('.m-content')
 
 async function getExportData(e, dt, node, config, self, url, type) {
     const data = dt.ajax.params();
+    data['exportType'] = type;
     const result = await $.ajax({
         url,
         type: "POST",
         dataType: "JSON",
         data,
         success: function (response) {
-            dt.rows().remove();
-            dt.rows.add(response.data).draw();
+            // dt.rows().remove();
+            // dt.rows.add(response.data).draw();
             $.fn.dataTable.ext.buttons[type].action.call(self, e, dt, node, config);
         }
     });

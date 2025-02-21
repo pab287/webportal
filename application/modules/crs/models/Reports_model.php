@@ -22,17 +22,18 @@
     $hiredDate = (isset($post["hired_date"]) && $post["hired_date"]) ? $post["hired_date"] : false;
     $interviewDate = (isset($post["interview_date"]) && $post["interview_date"]) ? $post["interview_date"] : false;
     $application =  (isset($post["application_method"]) && $post["application_method"]) ? $post["application_method"] : null;
+    $applicationDate = (isset($post["application_date"]) && $post["application_date"]) ? $post["application_date"] : false;
     $rowCount = 0;
     $rowData = array();
-    $rowData = $this->getCrsReportData($limit, $offset, $sortBy, $sortOrder,$search,$status,$recruitment,$hiredDate,$interviewDate,$application);
-    $rowCount = $this->getCrsReportDataCount($search,$status,$recruitment,$hiredDate,$interviewDate,$application);
+    $rowData = $this->getCrsReportData($limit, $offset, $sortBy, $sortOrder,$search,$status,$recruitment,$hiredDate,$interviewDate,$application,$applicationDate);
+    $rowCount = $this->getCrsReportDataCount($search,$status,$recruitment,$hiredDate,$interviewDate,$application,$applicationDate);
     $resultset["recordsTotal"] = $rowCount;
     $resultset["recordsFiltered"] = $rowCount;
     $resultset["data"] = $rowData;
     return $resultset;
   }
 
-  private function getCrsReportData($limit, $offset, $sortBy, $sortOrder,$search,$status,$recruitment,$hiredDate,$interviewDate,$application){
+  private function getCrsReportData($limit, $offset, $sortBy, $sortOrder,$search,$status,$recruitment,$hiredDate,$interviewDate,$application,$applicationDate){
     $data = array();
     $filterFields = array('id','firstname','middlename','lastname', 'school', 'course', 'position', 'tag1', 'recruitment', 'applied_dt'); 
     $this->db->select('id, school, course, position, tag1, recruitment, applied_dt, CONCAT(firstname, " ", lastname) AS name,hired_dt,interview_dt,');
@@ -67,6 +68,13 @@
       $this->db->where("interview_dt BETWEEN '{$startDateFormatted}' AND '{$endDateFormatted}'");
     }
 
+    if($applicationDate){
+      list($startDate, $endDate) = explode(' - ', $applicationDate);
+      $startDateFormatted = DateTime::createFromFormat('Y/m/d', $startDate)->format('Y-m-d');
+      $endDateFormatted = DateTime::createFromFormat('Y/m/d', $endDate)->format('Y-m-d');
+      $this->db->where("applied_dt BETWEEN '{$startDateFormatted}' AND '{$endDateFormatted}'");
+    }
+
     if ($search) {
       $this->db->group_start();
       foreach ($filterFields as $key => $field) {
@@ -91,7 +99,7 @@ if ($query->num_rows() > 0) {
 return $data;
   }
 
-  private function getCrsReportDataCount($search,$status,$recruitment,$hiredDate,$interviewDate,$application){
+  private function getCrsReportDataCount($search,$status,$recruitment,$hiredDate,$interviewDate,$application,$applicationDate){
     $filterFields = array('id','firstname','middlename','lastname', 'school', 'course', 'position', 'tag1', 'recruitment', 'applied_dt');
     $this->db->select('*');
     $this->db->from('dbhrd.document_body');
@@ -123,6 +131,13 @@ return $data;
       $startDateFormatted = DateTime::createFromFormat('Y/m/d', $startDate)->format('Y-m-d 00:00:00');
       $endDateFormatted = DateTime::createFromFormat('Y/m/d', $endDate)->format('Y-m-d 23:59:59');
       $this->db->where("interview_dt BETWEEN '{$startDateFormatted}' AND '{$endDateFormatted}'");
+    }
+
+    if($applicationDate){
+      list($startDate, $endDate) = explode(' - ', $applicationDate);
+      $startDateFormatted = DateTime::createFromFormat('Y/m/d', $startDate)->format('Y-m-d');
+      $endDateFormatted = DateTime::createFromFormat('Y/m/d', $endDate)->format('Y-m-d');
+      $this->db->where("applied_dt BETWEEN '{$startDateFormatted}' AND '{$endDateFormatted}'");
     }
 
     if ($search) {

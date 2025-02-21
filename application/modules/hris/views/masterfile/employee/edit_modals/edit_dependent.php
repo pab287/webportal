@@ -29,8 +29,8 @@
                         <span class="input-group-addon">
                             <i class="la la-calendar"></i>
                         </span>
-                        <input type="text" name="dep_birthdate" maxlength="12" size="12" autocomplete="off"
-                               data-validation="required" class="form-control m-input date" value="<?= $data->dep_birthdate ?>"/>
+                        <input type="text" id="dep_birthdate"  name="dep_birthdate"  maxlength="12" size="12" autocomplete="off"
+                               data-validation="required" class="form-control m-input" value="<?= $data->dep_birthdate ?>" readonly/>
                     </div>
                 </div>
                 <div class="form-group">

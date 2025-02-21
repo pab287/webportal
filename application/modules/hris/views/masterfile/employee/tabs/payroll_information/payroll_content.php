@@ -73,9 +73,11 @@
                         </button>
                     </template>
                     <template v-else>
+                    <?php if(in_array("save", $this->core_layout->getCurrentActions())): ?>
                         <button type="submit" class="btn btnSave btn-primary m-btn m-btn--air m-btn--custom btn-submit">
                             <i class="la la-check mr-2"></i>Save
                         </button>
+                    <?php endif; ?>
                     </template>
                 </div>
             </div>
@@ -91,7 +93,7 @@
         <div class="row m--margin-bottom-25">
             <div class="col-10 ml-auto"><h3 class="m-form__header m-form__section">Bank Information</h3></div>
         </div>
-        <div class="row">
+        <div class="row mb-5">
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
                 <div class="form-group m-form__group row">
                     <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Bank Name: </label>
@@ -110,6 +112,7 @@
             </div>
         </div>
     </div>
+    <?php if(in_array("save", $this->core_layout->getCurrentActions())): ?>
     <div class="m-portlet__foot m-portlet__foot--fit m-portlet__no-border">
         <div class="m-form__actions">
             <div class="row">
@@ -121,11 +124,12 @@
             </div>
         </div>
     </div>
-    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x mt-0"></div>
+    <?php endif; ?>
+    <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-0x"></div>
 </form>
 
 <div class="m-form m-form--fit">
-    <div class="m-portlet__body pt-0">
+    <div class="m-portlet__body">
         <div class="form-group m-form__group row mb-0 pb-0">  
             <div class="col-12 ml-auto">
                 <h4 class="m-form__header m-form__section">Allowances</h4>
@@ -628,12 +632,6 @@
 ?>
 
 <script>
-$(document).ready(function(){
-    if(screen.width > 560 && screen.width < 1920){
-        $("#frmEditPayrollData-container label").addClass("text-right");
-        $("div label").addClass("text-right");
-    }
-});
     const editEmployeeAllowanceModal = $("#edit-employee-allowance-modal");
     const addEmployeeLoan = $("#mdl-newLoan");
     const editEmployeeLoan = $("#edit-employee-loan");
@@ -644,6 +642,37 @@ $(document).ready(function(){
 
     const loansDropdown = <?php echo json_encode($loans_dropdown); ?>;
     let loansCAReference = <?php echo json_encode($loans_ca_reference); ?>;
+    let dtAllowance = null, dtLoan = null, dtHistoryPayrollInfo = null, dtBenefits = null;
+    let generalSearchAllowances = null;
+    let generalSearchBenefits = null;
+
+    const getMultipleActiveAllowances = () => {
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_employee_allowance_count/"+<?php echo $data->id; ?>),
+        success: function (json) {
+            if(json.response){
+                Swal.fire({
+                    title: 'Multiple Active Allowances',
+                    html: json.toastr_msg,
+                    icon: 'warning',
+                });
+
+                setTimeout(function(){ dtAllowance.ajax.reload(); }, 250);
+            }
+        }
+    });
+}
+    $(document).ready(function(){
+        if(screen.width > 560 && screen.width < 1920){
+            $("#frmEditPayrollData-container label").addClass("text-right");
+            $("div label").addClass("text-right");
+        }
+
+        dtAllowance = dtTableAllowance();
+        dtLoan = dtTableLoan();
+        dtHistoryPayrollInfo = dtTableHistoryPayrollInfo();
+        dtBenefits = dtTableBenefits();
+    });
     
      // update payroll basic pay and type *** etc
     $.validate({
@@ -687,85 +716,87 @@ $(document).ready(function(){
         },
     });
 
-    var generalSearchAllowances = null;
-    var dtAllowance = $("#tbl-allowances").DataTable({
-        dom: 'frtlip',
-        serverSide: true,
-        processing: true,
-        autoWidth: false,
-        searching: false,
-        width: "100%",
-        ajax: {
-            url: baseUrl("hris/masterfile/get_employee_allowance"),
-            type: "post",
-            dataType: "json",
-            global: false,
-            data: function(d){
-                d.csrf_token = _csrf_hash, 
-                d.emp_id = <?php echo $data->id; ?>,
-                d.search['value'] = generalSearchAllowances
+    const dtTableAllowance = function () {
+        return $("#tbl-allowances").DataTable({
+            dom: 'frtlip',
+            serverSide: true,
+            processing: true,
+            autoWidth: false,
+            searching: false,
+            width: "100%",
+            ajax: {
+                url: baseUrl("hris/masterfile/get_employee_allowance"),
+                type: "post",
+                dataType: "json",
+                global: false,
+                data: function(d){
+                    d.csrf_token = _csrf_hash, 
+                    d.emp_id = <?php echo $data->id; ?>,
+                    d.search['value'] = generalSearchAllowances
+                }
+            },
+            columns: [
+                {
+                    width: "*",
+                    data: "allowance_name",
+                    render: function (data) {
+                        return `<span>${data}</span>`;
+                    }
+                },
+                {
+                    width: "15%",
+                    data: "rate",
+                    className: "text-right",
+                    render: function (data, type, row) {
+                        return `<span>${parseFloat(data).toFixed(2)} / ${row.frequency}</span>`;
+                    }
+                },
+                {
+                    width: "15%",
+                    data: "is_active",
+                    className: "text-center",
+                    orderable: false,
+                    render: function (data, type, row) {
+                        if (parseInt(data) === 1) {
+                            return `<span class="m-badge m-badge--success m-badge--wide m--font-boldest">YES</span>`;
+                        } else {
+                            return `<span class="m-badge m-badge--danger m-badge--wide m--font-boldest">NO</span>`;
+                        }
+                    }
+                },
+                {
+                    width: "12%",
+                    data: null,
+                    className: "text-center",
+                    orderable: false,
+                    render: function (data, type, row, meta) {
+                        let btnStr = ``;
+                        if (typeof _currentActions !== "undefined" && _currentActions.includes('edit')) {
+                            btnStr += ` <button class="btn btn-sm btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill m-btn--hover-primary"
+                                    onclick="openEditEmployeeAllowanceModal(${row.id}, '${row.allowance_name}', ${row.rate}, '${row.frequency}', '${row.is_active}')">
+                                <i class="fa fa-pencil"></i>
+                            </button>`;
+                        }
+
+                        if (typeof _currentActions !== "undefined" && _currentActions.includes('delete')) {
+                            btnStr += ` <button class="btn btn-sm btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill m-btn--hover-danger"
+                                    onclick="remove_allowance(${row.id})">
+                                <i class="fa fa-archive"></i>
+                            </button>`;
+                        }
+
+                        return btnStr;
+                    }
+                },
+            ], initComplete: function () { 
+                getMultipleActiveAllowances();
+                $('#generalSearchAllowances').donetyping(function (callback) {
+                    generalSearchAllowances = $(this).val();
+                    dtAllowance.ajax.reload();
+                });
             }
-        },
-        columns: [
-            {
-                width: "*",
-                data: "allowance_name",
-                render: function (data) {
-                    return `<span>${data}</span>`;
-                }
-            },
-            {
-                width: "15%",
-                data: "rate",
-                className: "text-right",
-                render: function (data, type, row) {
-                    return `<span>${parseFloat(data).toFixed(2)} / ${row.frequency}</span>`;
-                }
-            },
-            {
-                width: "15%",
-                data: "is_active",
-                className: "text-center",
-                orderable: false,
-                render: function (data, type, row) {
-                    if (parseInt(data) === 1) {
-                        return `<span class="m-badge m-badge--success m-badge--wide m--font-boldest">YES</span>`;
-                    } else {
-                        return `<span class="m-badge m-badge--danger m-badge--wide m--font-boldest">NO</span>`;
-                    }
-                }
-            },
-            {
-                width: "12%",
-                data: null,
-                className: "text-center",
-                orderable: false,
-                render: function (data, type, row, meta) {
-                    let btnStr = ``;
-                    if (_currentActions.includes('edit')) {
-                        btnStr += ` <button class="btn btn-sm btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill m-btn--hover-primary"
-                                            onclick="openEditEmployeeAllowanceModal(${row.id}, '${row.allowance_name}', ${row.rate}, '${row.frequency}', '${row.is_active}')">
-                                        <i class="fa fa-pencil"></i>
-                                    </button>`;
-                    }
-
-                    if (_currentActions.includes('delete')) {
-                        btnStr += ` <button class="btn btn-sm btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill m-btn--hover-danger"
-                                            onclick="remove_allowance(${row.id})">
-                                        <i class="fa fa-archive"></i>
-                                    </button>`;
-                    }
-
-                    return btnStr;
-                }
-            },
-        ],
-    });
-
-    $('#generalSearchAllowances').donetyping(function (callback) {
-        generalSearchAllowances = $(this).val();
-        dtAllowance.ajax.reload();
-    });
+        });
+    }
 
     function openEditEmployeeBenefitModal(id, rate, benefit_id) {
         console.log(id);
@@ -785,72 +816,78 @@ $(document).ready(function(){
         editEmployeeAllowanceModal.modal("show");
     }
 
-    var generalSearchBenefits = null;
-    var dtBenefits = $("#tbl-benefits").DataTable({
-        dom: 'frtlip',
-        serverSide: true,
-        processing: true,
-        autoWidth: false,
-        searching: false,
-        width: "100%",
-        ajax: {
-            url: baseUrl("hris/masterfile/get_employee_benefits"),
-            type: "post",
-            dataType: "json",
-            global: false,
-            data: function(d){
-                d.csrf_token = _csrf_hash, 
-                d.emp_id = <?php echo $data->id; ?>, 
-                d.search['value'] = generalSearchBenefits 
-            }
-        },
-        columns: [
-            {data: "benefit_name", width: "*"},
-            {data: "rate", className: "text-right", width: "15%"},
-            {data: null, className: "text-center", orderable: false, width: "8%", 
-                render: function (data, type, row) {
-                    let btn = ``;
-                    if (_currentActions.includes("edit")) {
-                        btn += ` <button title="Edit"
-                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
-                                onclick="openEditEmployeeBenefitModal(${row.id}, '${row.rate}', '${row.benefit_id}')">
-                        <i class="fa fa-pencil"></i>
-                        </button>`;
-                    }
-                    if (_currentActions.includes("archive")) {
-                            btn += ` <button title="Archive"
-                                             class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-danger" onclick="remove_benefit(${row.id})">
-                                         <i class="fa fa-archive"></i>
-                                     </button>`;
-                        }
-                    return btn;
+    const dtTableBenefits = function () {
+        return $("#tbl-benefits").DataTable({
+            dom: 'frtlip',
+            serverSide: true,
+            processing: true,
+            autoWidth: false,
+            searching: false,
+            width: "100%",
+            ajax: {
+                url: baseUrl("hris/masterfile/get_employee_benefits"),
+                type: "post",
+                dataType: "json",
+                global: false,
+                data: function(d){
+                    d.csrf_token = _csrf_hash, 
+                    d.emp_id = <?php echo $data->id; ?>, 
+                    d.search['value'] = generalSearchBenefits 
                 }
             },
-        ],
-    });
+            columns: [
+                {data: "benefit_name", width: "*"},
+                {data: "rate", className: "text-right", width: "15%"},
+                {data: null, className: "text-center", orderable: false, width: "8%", 
+                    render: function (data, type, row) {
+                        let btn = ``;
+                        if (typeof _currentActions !== "undefined" && _currentActions.includes("edit")) {
+                            btn += ` <button title="Edit"
+                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
+                                onclick="openEditEmployeeBenefitModal(${row.id}, '${row.rate}', '${row.benefit_id}')">
+                            <i class="fa fa-pencil"></i>
+                            </button>`;
+                        }
+                        if (typeof _currentActions !== "undefined" && _currentActions.includes("archive")) {
+                                btn += ` <button title="Archive"
+                                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-danger" onclick="remove_benefit(${row.id})">
+                                <i class="fa fa-archive"></i>
+                                </button>`;
+                            }
+                        return btn;
+                    }
+                },
+            ], initComplete: function () {
+                $('#generalSearchBenefits').donetyping(function (callback) {
+                    generalSearchBenefits = $(this).val();
+                    dtBenefits.ajax.reload();
+                });
+            }
+        });
+    }
 
-    $('#generalSearchBenefits').donetyping(function (callback) {
-        generalSearchBenefits = $(this).val();
-        dtBenefits.ajax.reload();
-    });
+    
+
+    
 
     var loan_search_val = '';
-    var dtLoans = $("#tbl-loans").DataTable({
-        dom: 'frtlip',
-        serverSide: true,
-        processing: true,
-        autoWidth: false,
-        ordering: false,
-        searching: false,
-        width: "100%",
-        ajax: {
-            url: baseUrl("hris/masterfile/get_employee_loans"),
-            type: "post",
-            dataType: "json",
-            global: false,
-            data: function (d) {d.csrf_token = _csrf_hash, d.emp_id = <?php echo $data->id; ?>, d.search['value'] = loan_search_val }
-        },
-        columns: [
+    const dtTableLoan = function () {
+        return $("#tbl-loans").DataTable({
+            dom: 'frtlip',
+            serverSide: true,
+            processing: true,
+            autoWidth: false,
+            ordering: false,
+            searching: false,
+            width: "100%",
+            ajax: {
+                url: baseUrl("hris/masterfile/get_employee_loans"),
+                type: "post",
+                dataType: "json",
+                global: false,
+                data: function (d) {d.csrf_token = _csrf_hash, d.emp_id = <?php echo $data->id; ?>, d.search['value'] = loan_search_val }
+            },
+            columns: [
                 {
                     data: "loan_name",
                     width: "*",
@@ -963,7 +1000,7 @@ $(document).ready(function(){
                         const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
                         if(balance <= 0){ tempIsPaid = true; }
 
-                        if (_currentActions.includes("edit") && (isPaid !== 1 && tempIsPaid === false)) {
+                        if (typeof _currentActions !== "undefined" && _currentActions.includes("edit") && (isPaid !== 1 && tempIsPaid === false)) {
                             btn += `<button title="Edit"
                                     class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
                                     onclick="openEditEmployeeLoanModal(${row.id})">
@@ -979,12 +1016,12 @@ $(document).ready(function(){
                             ctrActions++;
                         }
 
-                        if (_currentActions.includes("view")) {
+                        if (typeof _currentActions !== "undefined" && _currentActions.includes("view")) {
                             btn += `<button title="View payment history"
-                                             class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
-                                             onclick="openLoanPaymentHistoryModal(${row.id})">
+                                            class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
+                                            onclick="openLoanPaymentHistoryModal(${row.id})">
                                         <i class="fa fa-list-ol"></i>
-                                     </button> `;
+                                    </button> `;
                             listActions += `<li class="m-nav__item">
                                 <a href="javascript:void(0)" class="m-nav__link"
                                 onclick="openLoanPaymentHistoryModal(${row.id})">
@@ -995,12 +1032,12 @@ $(document).ready(function(){
                             ctrActions++;
                         }
 
-                        if (_currentActions.includes("archive")) {
+                        if (typeof _currentActions !== "undefined" && _currentActions.includes("archive")) {
                             btn += `<button title="Archive"
                                         onclick="remove_loan(${row.id})"
-                                             class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-danger">
-                                         <i class="fa fa-archive"></i>
-                                     </button> `;
+                                            class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-danger">
+                                        <i class="fa fa-archive"></i>
+                                    </button> `;
                             listActions += `<li class="m-nav__item">
                                 <a href="javascript:void(0)" class="m-nav__link"
                                 onclick="remove_loan(${row.id})">
@@ -1049,7 +1086,8 @@ $(document).ready(function(){
             }, drawCallback: function(){
                 setTimeout(getCAReferences(), 750);
             }
-    });
+        });
+    }
 
     function openEditEmployeeLoanModal(id) {
         $.ajax({
@@ -1557,49 +1595,51 @@ $(document).ready(function(){
     }
 
     var generalSearchHistory = null;
-    var dtHistoryPayrollInfo = $("#tbl-payroll_history").DataTable({
-        dom: 'frtlip',
-        serverSide: true,
-        processing: true,
-        autoWidth: false,
-        ordering: false,
-        searching: false,
-        ajax: {
-            url: "<?php echo base_url("hris/masterfile/get_history_payroll_information"); ?>",
-            type: "post",
-            dataType: "json",
-            global: false,
-            data: function (d) {
-                d.csrf_token = _csrf_hash; 
-                d.emp_id = <?php echo $data->id; ?>;
-                d.search["value"] = generalSearchHistory;
-            }
-        },
-        columns: [{
-                data: "log_message",
-                width: "*",
-            },{
-                data: "user_action",
-                width: "15%",
-            },{
-                data: "employee_name",
-                width: "25%",
-                render: function (data, meta, row) { 
-                    const html = `<p class='mb-0'>${data}</p>
-                    <small><span class='m--font-boldest'>${row.created_at_formatted}</span></small>`;
-                    return html; 
+    const dtTableHistoryPayrollInfo = function (){
+        return $("#tbl-payroll_history").DataTable({
+            dom: 'frtlip',
+            serverSide: true,
+            processing: true,
+            autoWidth: false,
+            ordering: false,
+            searching: false,
+            ajax: {
+                url: "<?php echo base_url("hris/masterfile/get_history_payroll_information"); ?>",
+                type: "post",
+                dataType: "json",
+                global: false,
+                data: function (d) {
+                    d.csrf_token = _csrf_hash; 
+                    d.emp_id = <?php echo $data->id; ?>;
+                    d.search["value"] = generalSearchHistory;
                 }
             },
+            columns: [{
+                    data: "log_message",
+                    width: "*",
+                },{
+                    data: "user_action",
+                    width: "15%",
+                },{
+                    data: "employee_name",
+                    width: "25%",
+                    render: function (data, meta, row) { 
+                        const html = `<p class='mb-0'>${data}</p>
+                        <small><span class='m--font-boldest'>${row.created_at_formatted}</span></small>`;
+                        return html; 
+                    }
+                },
 
-        ],
-        initComplete: function (_settings, json) {
-            if(typeof vmPayInfo != "undefined"){ vmPayInfo.psInfoCtr = json.recordsTotal; }
-            $('#generalSearchHistory').donetyping(function(callback) {
-                generalSearchHistory = $(this).val();
-                dtHistoryPayrollInfo.ajax.reload();
-            });
-        }
-    });
+            ],
+            initComplete: function (_settings, json) {
+                if(typeof vmPayInfo != "undefined"){ vmPayInfo.psInfoCtr = json.recordsTotal; }
+                $('#generalSearchHistory').donetyping(function(callback) {
+                    generalSearchHistory = $(this).val();
+                    dtHistoryPayrollInfo.ajax.reload();
+                });
+            }
+        });
+    }
     
     function openLoanPaymentHistoryModal(id) {
         loanPaymentHistoryModal.attr("data-id", id);

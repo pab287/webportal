@@ -576,7 +576,7 @@
         </div>
 
         <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x"></div>
-        <div class="row">
+        <div class="row mb-5">
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
                 <div class="form-group m-form__group row">
                     <label for="emer_name" class="col-sm-6 col-md-4 col-lg-4 col-xl-5 col-form-label">Added By</label>
@@ -599,6 +599,7 @@
             </div>
         </div>
     </div>
+    <?php if(in_array("save", $this->core_layout->getCurrentActions())): ?>
     <div class="m-portlet__foot m-portlet__foot--fit">
         <div class="m-form__actions">
             <div class="row">
@@ -610,6 +611,7 @@
             </div>
         </div>
     </div>
+    <?php endif; ?>
     <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-0x"></div>
 </form>
 <input type="hidden" id="change_additional_info">

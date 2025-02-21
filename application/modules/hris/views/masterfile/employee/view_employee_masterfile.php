@@ -376,29 +376,6 @@
                                         <?php endif; ?>
                                     </tbody>
                                 </table>
-                                <?php $this->load->view("core/profile/modals/payroll_payslip"); ?>
-                                <script>
-                                    const viewPayrollPayslipModal = $("#view-payroll-payslip-modal");
-
-                                    var vmPayslipContent = new Vue({
-                                        el: "#temp-payslip_content",
-                                        data: { row: {} },
-                                    });
-
-                                    $("#table-payroll_sheet-payslip").DataTable({ ordering: false });
-                                    $("#table-payroll_sheet-payslip_filter input[type='search']").removeClass("form-control-sm");
-                                    const getPayrollSheetData = function(id){
-                                        if(id){
-                                            $.get(siteUrl('core/profile/get_payroll_sheet_data'), { id: id }, "json")
-                                            .done(function(data){
-                                                const json = JSON.parse(data);
-                                                let tempRow = json.response ? Object.assign({}, json.data) : {};
-                                                vmPayslipContent.row = Object.assign({}, tempRow);
-                                                if(json.response){ viewPayrollPayslipModal.modal("show"); }
-                                            });
-                                        }
-                                    }
-                                </script>
                             </div>
                         </div>
                     </div>
@@ -408,3 +385,30 @@
         </div>
     </div>
 </div>
+
+<?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0)): ?>
+<div id="temp-payslip_content--container">
+<?php $this->load->view("core/profile/modals/payroll_payslip"); ?>
+<script>
+    const viewPayrollPayslipModal = $("#view-payroll-payslip-modal");
+    var vmPayslipContent = new Vue({
+        el: "#temp-payslip_content",
+        data: { row: {} },
+    });
+
+    $("#table-payroll_sheet-payslip").DataTable({ ordering: false });
+    $("#table-payroll_sheet-payslip_filter input[type='search']").removeClass("form-control-sm");
+    const getPayrollSheetData = function(id){
+        if(id){
+            $.get(siteUrl('core/profile/get_payroll_sheet_data'), { id: id }, "json")
+            .done(function(data){
+                const json = JSON.parse(data);
+                let tempRow = json.response ? Object.assign({}, json.data) : {};
+                vmPayslipContent.row = Object.assign({}, tempRow);
+                if(json.response){ viewPayrollPayslipModal.modal("show"); }
+            });
+        }
+    }
+</script>
+</div>
+<?php endif; ?>

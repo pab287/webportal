@@ -13,19 +13,39 @@ class Verifylogin extends MY_Controller{
 
     public function index()
     {
-        //This method will have the credentials validation
-        $this->form_validation->set_error_delimiters('<div class="m-alert m-alert--outline alert alert-danger alert-dismissible" role="alert">', '<button type="button" class="close" data-dismiss="alert" aria-label="Close"></button>
-		<span></span>
-		</div>');
-        $this->form_validation->set_rules('username', 'Username', 'trim|required|prep_for_form');
-        $this->form_validation->set_rules('password', 'Password', 'trim|required|callback_check_database|prep_for_form');
-
-        if ($this->form_validation->run() === FALSE) {
-            //Field validation failed.  User redirected to login page
-            $this->load->view('login_v');
+        if ($this->input->post()) {
+            $post = $this->input->post();
+            // Check for force_update before validation
+            $query = $this->db->select('force_update, password')->from('gccmaster.tblusers')->where('username', $post['username'],)->get()->row_array();
+    
+            if (isset($query['force_update']) && $query['force_update'] == 1 && $query['password'] == md5($post['password'])) {
+                $data = array(
+                    'modal' => "show",
+                    'post' => $post,
+                );
+                $this->session->set_userdata($data);
+                redirect('login/change_password', 'refresh');
+            }
+    
+            // Proceed with form validation if no force_update is required
+            $this->form_validation->set_error_delimiters(
+                '<div class="m-alert m-alert--outline alert alert-danger alert-dismissible" role="alert">',
+                '<button type="button" class="close" data-dismiss="alert" aria-label="Close"></button><span></span></div>'
+            );
+    
+            $this->form_validation->set_rules('username', 'Username', 'trim|required|prep_for_form');
+            $this->form_validation->set_rules('password', 'Password', 'trim|required|callback_check_database|prep_for_form');
+    
+            if ($this->form_validation->run() === FALSE) {
+                // Field validation failed. User redirected to login page
+                $this->load->view('login_v');
+            } else {
+                // Go to private area
+                redirect('portal/index', 'refresh');
+            }
         } else {
-            //Go to private area
-            redirect('portal/index', 'refresh');
+            // Display login view for GET requests
+            $this->load->view('login_v');
         }
     }
 
@@ -137,7 +157,7 @@ class Verifylogin extends MY_Controller{
 						$loginUrl = $redirectLink;
 					}
 				}
-			}		
+			}
         }
         
         return $loginUrl;

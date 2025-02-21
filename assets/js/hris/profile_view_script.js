@@ -192,26 +192,38 @@ let employeeDataSheet = new Vue({
                 this.main = { ...this.$data.main, ..._tempContentData.data.main };
             }
         },
-        calculateAge(birthdate){
-            if (!birthdate || birthdate == '0000-00-00') {
-                return '---';
-              }
-            const currentDate = new Date();
-            const birthdateObj = new Date(birthdate);
-            const diffMs = currentDate - birthdateObj;
-            const diffYears = currentDate.getFullYear() - birthdateObj.getFullYear();
-            const diffMonths = currentDate.getMonth() - birthdateObj.getMonth();
-            const diffDays = currentDate.getDate() - birthdateObj.getDate();
-    
-            if (diffYears == 0 && diffMonths == 0) {
-                const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                return days > 1 ? `${days} Days Old` : '1 Day Old';
-            } else if (diffYears == 0) {
-                const months = diffMonths >= 0 ? diffMonths : diffMonths + 12;
-                return months > 1 ? `${months} Months Old` : '1 Month Old';
-            } else {
-                return diffYears > 1 ? `${diffYears} Years Old` : '1 Year Old';
+        calculateAge(birthdate) {
+            if (!birthdate || birthdate == '0000-00-00') return '---';
+            const today = new Date();
+            const birth = new Date(birthdate);
+            let years = today.getFullYear() - birth.getFullYear();
+            let months = today.getMonth() - birth.getMonth();
+            let days = today.getDate() - birth.getDate();
+            if (days < 0) {
+                months--;
+                const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                days += prevMonth.getDate();
             }
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+            const parts = [];
+    
+            if (years > 0) {
+                parts.push(`${years} ${years === 1 ? 'Year' : 'Years'}`);
+            }
+            
+            if (months > 0) {
+                parts.push(`${months} ${months === 1 ? 'Month' : 'Months'}`);
+            }
+            
+            if (days > 0) {
+                parts.push(`${days} ${days === 1 ? 'Day' : 'Days'}`);
+            }
+            
+            if (parts.length === 0) return 'Less than a day old';
+            return `${parts.join(' ')} old`;
         },
         displayName(lastname, firstname, middlename, suffix) {
             const middleInitial = middlename?.trim()?.[0]?.toUpperCase() || '';
@@ -301,6 +313,16 @@ let employeeDataSheet = new Vue({
             return hasListItems 
               ? this.job_desc 
               : this.job_desc.replace(/\n/g, '<br>');
+          },
+          formattedJobDescPrint(data) {
+            if (!data) return '';
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data;
+            const hasListItems = tempDiv.getElementsByTagName('li').length > 0;
+
+            return hasListItems 
+              ? data 
+              : data.replace(/\n/g, '<br>');
           },
     }
 })

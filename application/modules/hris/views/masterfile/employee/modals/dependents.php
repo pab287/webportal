@@ -10,7 +10,7 @@
 <div class="modal-body">
     <div class="form-group">
 		<label for="dep_name" class="form-control-label">Name *</label>
-		<input id="dep_name" name="dep_name" type="text" maxlength="100" size="100" autocomplete="off" data-validation="required" class="form-control m-input" />
+		<input id="dep_name" name="dep_name" type="text" maxlength="100" size="100" autocomplete="off" data-validation="required" class="form-control m-input"/>
 	</div>
     <div class="form-group">
 		<label for="dep_birthdate" class="form-control-label">Birth Date *</label>
@@ -18,7 +18,7 @@
             <span class="input-group-addon">
                 <i class="la la-calendar"></i>
             </span>
-            <input id="dep_birthdate" type="text" name="dep_birthdate" maxlength="12" size="12" autocomplete="off" data-validation="required" class="form-control m-input" />
+            <input id="dep_birthdate" type="text" name="dep_birthdate" maxlength="12" size="12" autocomplete="off" data-validation="required" class="form-control m-input" readonly/>
         </div>
 	</div>
     <div class="form-group">

@@ -53,9 +53,9 @@
                     <th>House Model</th>
                     <th>Block No.</th>
                     <th>Lot No.</th>
-                    <th>AR</th>
+                    <!-- <th>AR</th> -->
                     <!-- <th>Status</th> -->
-                    <th class="notExport">Action</th>
+                    <!-- <th class="notExport">Action</th> -->
                   </tr>
                 </thead>
                 <tbody>	

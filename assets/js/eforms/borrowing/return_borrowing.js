@@ -19,17 +19,19 @@ var tblBorrowing = $("#table-borrowing").DataTable({
     searching: true,
     columns: [
         { data: "reference_no"},        
-        { data: "display_name", // data: "firstname"
+        { data: "firstname",
             render: function (data, type, row, meta) {
                 var html = ``;
-                // return displayName(row.display_name)
-
                 if(data){
-                    html += `<b>${ data }</b>`;
-                    html += `<p class="m-0">${ row.company }</p>`;
-                    html += `<p class="m-0">${ row.department }</p>`;
-                    html += `<p class="m-0">${ row.position }</p>`;
+                    html += `<b>${ row.display_name }</b>`;
+                    
+                } else {
+                    html += 'No Assigned Name';
                 }
+
+                html += `<p class="m-0">${ row.company }</p>`;
+                html += `<p class="m-0">${ row.department }</p>`;
+                html += `<p class="m-0">${ row.position }</p>`;
 
                 return html;
             }
