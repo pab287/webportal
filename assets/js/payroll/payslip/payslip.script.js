@@ -85,10 +85,12 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
 
                 return query;
             },
-            processResults: function (data) {
+            processResults: function (data, params) {
                 if (jQuery.inArray("view_by_company", _currentActions) !== -1) {
-                    if (data.results.length === 0) {
-                        toastr.warning("No Assigned Payroll Group found!", "Payroll Group");
+                    if (typeof params.term == "undefined") {
+                        if (data.results.length === 0) {
+                            toastr.warning("No Assigned Payroll Group found!", "Payroll Group");
+                        }
                     }
                 }
                 
@@ -152,10 +154,12 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
                 params.company_id = _companyId || $("form#frm-payroll-posted select#company").val();
                 return params;
             },
-            processResults: function (data) {
+            processResults: function (data, params) {
                 if (jQuery.inArray("view_by_company", _currentActions) !== -1) {
-                    if (data.results.length === 0) {
-                        toastr.warning("No Assigned Payroll Group found!", "Payroll Group");
+                    if (typeof params.term == "undefined") {
+                        if (data.results.length === 0) {
+                            toastr.warning("No Assigned Payroll Group found!", "Payroll Group");
+                        }
                     }
                 }
 

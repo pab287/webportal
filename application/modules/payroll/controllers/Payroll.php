@@ -329,6 +329,7 @@
         }
 
         function generate_payroll_payslip() {
+            $this->core_layout->setPrivilegeName("payroll_payslip");
             echo json_encode($this->payroll->generatePayrollPayslip());
         }
 

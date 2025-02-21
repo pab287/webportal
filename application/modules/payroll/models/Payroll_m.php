@@ -5203,6 +5203,9 @@ class Payroll_m extends CI_Model
     function generatePayrollPayslip(){
         $resultset = array();
         $post = $this->input->post();
+        $privilege = $this->core_layout->getCurrentActions();
+        $hasViewByCompany = (in_array('view_by_company', $privilege)) ? true : false;
+
         if(isset($post) && $post){
             $tempPayDate = date("Y-m-d", strtotime($post["pay_date"]));
             $post["pay_date"] = date("Y/m/d", strtotime($post["pay_date"]));
@@ -5227,6 +5230,11 @@ class Payroll_m extends CI_Model
                     }
                 }
                 $employee_ids = array_unique($employee_ids);
+            } else {
+                // added to get all employees by payroll group assigned if no employees are selected
+                if ($hasViewByCompany && empty($employee_ids)) {
+                    $employee_ids = $this->getEmployeesByPrivilege($this->user_data['emp_id'], $post["company"], $privilege);
+                }
             }
 
             $company = $this->db->where("id", $post["company"])->get("gcchris.tblcompanies")->row();
@@ -5244,7 +5252,14 @@ class Payroll_m extends CI_Model
 
             $this->db->where("ps.posted", 1);
             $this->db->where("ps.is_bonus", $isBonus);
-            if (!empty($employee_ids)) { $this->db->where_in("emp.id", $employee_ids); }
+            
+            if (!empty($employee_ids)) { 
+                $this->db->where_in("emp.id", $employee_ids); 
+            } else { 
+                // added to prevent generating all employees if view by company privilege is enabled
+                if ($hasViewByCompany) { $this->db->where("emp.id", 0); }
+            }
+
             if (!empty($company)) {
                 $this->db->where("ps.company_id", $company->id);
             }
@@ -7903,6 +7918,7 @@ class Payroll_m extends CI_Model
         }
 
         $resultset["results"] = $arrData;
+        $resultSet['results']['term'] = isset($get['term']) ? $get['term'] : '';
         return $resultset;
     }
 
