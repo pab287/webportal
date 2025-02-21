@@ -1442,7 +1442,7 @@
             }
         }
 
-        function getEmployeeOffenses() {
+        function getEmployeeOffenses($type) {
             $post = $this->input->post();
             if ($post) {
                 $columns = array("offcom_type", "offcom_date", "offcom_nature", "offcom_action", "id", "emp_id","filename");
@@ -1463,9 +1463,36 @@
                 $parameters = array();
                 $parameters["emp_id"] = $post["emp_id"];
                 $parameters["is_archived"] = 0;
-
                 $dtTable->setWhereParameters($parameters);
-
+                if ($type !== null) {
+                    $prms = array();
+                    switch (strtoupper($type)) {
+                        case "OFFENSES":
+                            $prms = array('OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE', '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE', 'DISMISSAL','WRITTEN WARNING','3-DAYS SUSPENSION','6-DAYS SUSPENSION','1-2-DAYS SUSPENSION');
+                            break;
+                        case "COMMENDATION":
+                            $prms = array('COMMENDATION');
+                            break;
+                        case "NOTICES":
+                            $prms = array('LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 'NOD', 'NOTICE OF ADMINISTRATIVE','NOTICES','SUSPENSION');
+                            break;
+                        case "OTHERS":
+                            $prms = array(
+                                'OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE', '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE',
+                                'COMMENDATION', 'LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 'WRITTEN WARNING', 'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 'NOD','DISMISSAL', 'NOTICE OF ADMINISTRATIVE HEARING', 'NOTICES','3-DAYS SUSPENSION','6-DAYS SUSPENSION','1-2-DAYS SUSPENSION',
+                                );
+                            break;
+                        default:
+                            break;
+                    }
+                    if ($type === "Others") {
+                        $dtTable->setWhereNotInParameters('offcom_type', $prms);
+                    } else {
+                        $dtTable->setWhereInParameters('offcom_type', $prms);
+                    }
+                }
+                // $param2['offcom_type']='Commendation';
+                // $dtTable->setWhereNotInParameters('offcom_type',$param2);
                 $totalData = $dtTable->dtAllPostsCount();
                 $totalFiltered = $totalData;
 
@@ -2286,7 +2313,7 @@
                         }
                     } else {
                         $resultset["response"] = false;
-                        $resultset["toastr_msg"] = "File upload failed!";
+                        $resultset["toastr_msg"] = "File upload failed! ".$data["message"];
                         $resultset["toastr_state"] = "error";
                         $this->core_layout->setEventLog("Employee Offense - File upload failed.","file upload", "error", "gcchris", "system");
                     }
@@ -5016,7 +5043,7 @@
 
                 $config = array();
                 $config['upload_path'] = $uploadPath;
-                $config['allowed_types'] = 'jpg|jpeg|png|PNG|JPG|JPEG|pdf|doc|docx';
+                $config['allowed_types'] = 'jpg|jpeg|png|pdf|PNG|JPG|JPEG|PDF';
                 $config['max_size'] = 10000;
                 $config['create_thumbnail'] = false;
 
