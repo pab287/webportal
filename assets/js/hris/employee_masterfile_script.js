@@ -45,6 +45,7 @@ const changeEmployeeCompanyDialog = $("#change-employee-company-dialog");
 
 const classificationDropdown = $('select[name="employee_status"]');
 const status = $('select[name="work_status"]');
+let dtWorkExperience = null;
 
 loadEmployees();
 
@@ -1868,181 +1869,6 @@ if (typeof _tempContentData !== "undefined") {
                                             toastr.error(
                                                 json.toastr_msg,
                                                 "Error updating employee driver's license!",
-                                                5000
-                                            );
-                                        }
-
-                                        $(currentForm)
-                                            .find(".btn-submit")
-                                            .removeClass(
-                                                "m-btn--custom m-loader m-loader--light m-loader--right"
-                                            );
-                                    }
-                                });
-                                return false;
-                            }
-                        });
-                    }
-                }
-            });
-        });
-    }
-
-    if (typeof tableWorkExperience !== "undefined") {
-        var dtWorkExperience = tableWorkExperience.DataTable({
-            dom: '<"toolbar dt-toolbar_work_experience">frtlip',
-            serverSide: true,
-            processing: true,
-            ordering: false,
-            ajax: {
-                url: baseUrl("hris/masterfile/get_employee_work_experience"),
-                type: "post",
-                dataType: "json",
-                data: { csrf_token: _csrf_hash, emp_id: tempDataId }
-            },
-            columns: [
-                { data: "work_company", title: "Company" },
-                { data: "work_from", title: "From" },
-                { data: "work_to", title: "To" },
-                { data: "work_position", title: "Position" },
-                { data: "old_idno", title: "ID No" },
-                { data: "work_status", title: "Status" },
-                { data: "work_reason", title: "Reason For Leaving" },
-                { data: null, title: "Action", width: "8%", className: "text-center" }
-            ],
-            columnDefs: [
-                {
-                    data: null,
-                    defaultContent: "",
-                    targets: -1,
-                    orderable: false,
-                    render: function (data, type, row, meta) {
-                        return workExperienceDataTableActions(row.id);
-                    }
-                },
-                {
-                    targets: "_all",
-                    defaultContent: ""
-                }
-            ],
-            initComplete: function () {
-                $(".dt-toolbar_work_experience").append(
-                    "<button type='button' class='btn btn-sm btn-success mb-2 btnNew btnAddWorkExperience'><i class='la la-plus mr-1'></i>New</button>"
-                );
-
-                let search_thread = null;
-                $("#tbl-work_experiences_list_filter input")
-                    .unbind()
-                    .bind("input", function (e) {
-                        clearTimeout(search_thread);
-                        search_thread = setTimeout(function () {
-                            const dtTableApi = tableWorkExperience.dataTable().api();
-                            const elem = $("#tbl-work_experiences_list_filter input");
-                            return dtTableApi.search($(elem).val()).draw();
-                        }, 1000);
-                    });
-            }
-        });
-
-        function workExperienceDataTableActions($id) {
-            if ($id) {
-                var _actionButton = "";
-                if (jQuery.inArray("edit", _currentActions) !== -1) {
-                    _actionButton +=
-                        " <button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditWorkExperience' data-id='" + $id + "'><i class='la la-edit'></i></button>";
-                }
-                if (jQuery.inArray("archive", _currentActions) !== -1) {
-                    _actionButton +=
-                        " <button type='button' class='btn btn-default m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill btnRemoveWorkExperience' data-id='" +
-                        $id +
-                        "'><i class='la la-file-archive-o'></i></button>";
-                }
-                _actionButton = (_actionButton) ? _actionButton : "---";
-                return _actionButton;
-            } else {
-                return false;
-            }
-        }
-
-        $(document).on("click", ".btnAddWorkExperience", function () {
-            $.ajax({
-                url: baseUrl("hris/masterfile/get_modal_work_experience/" + tempDataId),
-                dataType: "json",
-                success: function (json) {
-                    var modalContent = modalTempContent.find(".modal-content");
-                    if (typeof modalContent !== "undefined" && typeof json.html !== "undefined") {
-                        modalContent.empty();
-                        modalContent.append(json.html);
-                        modalTempContent.modal("show");
-
-                        var dtPickerWorkFromDate = modalContent.find("#work_from").datepicker({
-                            todayHighlight: true,
-                            orientation: "bottom left",
-                            templates: {
-                                leftArrow: '<i class="la la-angle-left"></i>',
-                                rightArrow: '<i class="la la-angle-right"></i>'
-                            },
-                            format: "yyyy",
-                            viewMode: "years",
-                            minViewMode: "years",
-                            autoclose: true
-                        })
-                            .on("changeDate", function (e) {
-                                var currentDt = moment(e.date).format("YYYY");
-                                var self = $(e.target);
-                                self.validate();
-                            });
-
-                        var dtPickerWorkToDate = modalContent.find("#work_to").datepicker({
-                            todayHighlight: true,
-                            orientation: "bottom left",
-                            templates: {
-                                leftArrow: '<i class="la la-angle-left"></i>',
-                                rightArrow: '<i class="la la-angle-right"></i>'
-                            },
-                            format: "yyyy",
-                            viewMode: "years",
-                            minViewMode: "years",
-                            autoclose: true
-                        })
-                            .on("changeDate", function (e) {
-                                var currentDt = moment(e.date).format("YYYY");
-                                var self = $(e.target);
-                                self.validate();
-                            });
-
-                        $.validate({
-                            form: "#form-work_experience",
-                            lang: "en",
-                            onSuccess: function (form) {
-                                var currentForm = form[0];
-                                var formUrl = currentForm.action;
-                                var formData = $(currentForm).serialize();
-
-                                $.ajax({
-                                    url: formUrl,
-                                    type: "post",
-                                    dataType: "json",
-                                    data: formData,
-                                    beforeSend: function () {
-                                        $(currentForm)
-                                            .find(".btn-submit")
-                                            .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                                    },
-                                    success: function (json) {
-                                        if (json.response) {
-                                            toastr.success(
-                                                json.toastr_msg,
-                                                "Employee work experience has been saved.",
-                                                5000
-                                            );
-                                            currentForm.reset();
-                                            modalTempContent.modal("hide");
-                                            dtWorkExperience.ajax.reload();
-                                        } else {
-                                            toastr.error(
-                                                json.toastr_msg,
-                                                "Error updating employee work experience!",
                                                 5000
                                             );
                                         }
@@ -4119,9 +3945,178 @@ $(document).ready(function () {
         $("#frmEditEmploymentData label").addClass("text-right");
         $("div label").addClass("text-right");
     }
+
+    dtWorkExperience = dtTableWorkExperience();
 });
 
+const dtTableWorkExperience = function (){
+    if (typeof tableWorkExperience !== "undefined") {
+        function getWorkExperienceDataTableActions($id) {
+            let actionButton = "";
+            if (typeof _currentActions !== "undefined") {
+                if ($.inArray("edit", _currentActions) !== -1) {
+                    actionButton += `<button type="button" class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditWorkExperience" data-id="${$id}"><i class="la la-edit"></i></button>`;
+                }
+                if ($.inArray("archive", _currentActions) !== -1) {
+                    actionButton += `<button type="button" class="btn btn-default m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill btnRemoveWorkExperience" data-id="${$id}"><i class="la la-file-archive-o"></i></button>`;
+                }
+            }
+            return (actionButton) ? actionButton : "---";
+        }
 
+        $(document).on("click", ".btnAddWorkExperience", function () {
+            $.ajax({
+                url: baseUrl("hris/masterfile/get_modal_work_experience/" + tempDataId),
+                dataType: "json",
+                success: function (json) {
+                    var modalContent = modalTempContent.find(".modal-content");
+                    if (typeof modalContent !== "undefined" && typeof json.html !== "undefined") {
+                        modalContent.empty();
+                        modalContent.append(json.html);
+                        modalTempContent.modal("show");
+
+                        var dtPickerWorkFromDate = modalContent.find("#work_from").datepicker({
+                            todayHighlight: true,
+                            orientation: "bottom left",
+                            templates: {
+                                leftArrow: '<i class="la la-angle-left"></i>',
+                                rightArrow: '<i class="la la-angle-right"></i>'
+                            },
+                            format: "yyyy",
+                            viewMode: "years",
+                            minViewMode: "years",
+                            autoclose: true
+                        })
+                            .on("changeDate", function (e) {
+                                var currentDt = moment(e.date).format("YYYY");
+                                var self = $(e.target);
+                                self.validate();
+                            });
+
+                        var dtPickerWorkToDate = modalContent.find("#work_to").datepicker({
+                            todayHighlight: true,
+                            orientation: "bottom left",
+                            templates: {
+                                leftArrow: '<i class="la la-angle-left"></i>',
+                                rightArrow: '<i class="la la-angle-right"></i>'
+                            },
+                            format: "yyyy",
+                            viewMode: "years",
+                            minViewMode: "years",
+                            autoclose: true
+                        })
+                            .on("changeDate", function (e) {
+                                var currentDt = moment(e.date).format("YYYY");
+                                var self = $(e.target);
+                                self.validate();
+                            });
+
+                        $.validate({
+                            form: "#form-work_experience",
+                            lang: "en",
+                            onSuccess: function (form) {
+                                var currentForm = form[0];
+                                var formUrl = currentForm.action;
+                                var formData = $(currentForm).serialize();
+
+                                $.ajax({
+                                    url: formUrl,
+                                    type: "post",
+                                    dataType: "json",
+                                    data: formData,
+                                    beforeSend: function () {
+                                        $(currentForm)
+                                            .find(".btn-submit")
+                                            .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                                    },
+                                    success: function (json) {
+                                        if (json.response) {
+                                            toastr.success(
+                                                json.toastr_msg,
+                                                "Employee work experience has been saved.",
+                                                5000
+                                            );
+                                            currentForm.reset();
+                                            modalTempContent.modal("hide");
+                                            dtWorkExperience.ajax.reload();
+                                        } else {
+                                            toastr.error(
+                                                json.toastr_msg,
+                                                "Error updating employee work experience!",
+                                                5000
+                                            );
+                                        }
+
+                                        $(currentForm)
+                                            .find(".btn-submit")
+                                            .removeClass(
+                                                "m-btn--custom m-loader m-loader--light m-loader--right"
+                                            );
+                                    }
+                                });
+                                return false;
+                            }
+                        });
+                    }
+                }
+            });
+        });
+        return tableWorkExperience.DataTable({
+            dom: '<"toolbar dt-toolbar_work_experience">frtlip',
+            serverSide: true,
+            processing: true,
+            ordering: false,
+            ajax: {
+                url: baseUrl("hris/masterfile/get_employee_work_experience"),
+                type: "post",
+                dataType: "json",
+                data: { csrf_token: _csrf_hash, emp_id: tempDataId }
+            },
+            columns: [
+                { data: "work_company", title: "Company" },
+                { data: "work_from", title: "From" },
+                { data: "work_to", title: "To" },
+                { data: "work_position", title: "Position" },
+                { data: "old_idno", title: "ID No" },
+                { data: "work_status", title: "Status" },
+                { data: "work_reason", title: "Reason For Leaving" },
+                { data: null, title: "Action", width: "8%", className: "text-center" }
+            ],
+            columnDefs: [
+                {
+                    data: null,
+                    defaultContent: "",
+                    targets: -1,
+                    orderable: false,
+                    render: function (data, type, row, meta) {
+                        return getWorkExperienceDataTableActions(row.id);
+                    }
+                },
+                {
+                    targets: "_all",
+                    defaultContent: ""
+                }
+            ],
+            initComplete: function () {
+                $(".dt-toolbar_work_experience").append(
+                    "<button type='button' class='btn btn-sm btn-success mb-2 btnNew btnAddWorkExperience'><i class='la la-plus mr-1'></i>New</button>"
+                );
+
+                let search_thread = null;
+                $("#tbl-work_experiences_list_filter input")
+                    .unbind()
+                    .bind("input", function (e) {
+                        clearTimeout(search_thread);
+                        search_thread = setTimeout(function () {
+                            const dtTableApi = tableWorkExperience.dataTable().api();
+                            const elem = $("#tbl-work_experiences_list_filter input");
+                            return dtTableApi.search($(elem).val()).draw();
+                        }, 1000);
+                    });
+            }
+        });
+    }else{ return false; }
+}
 
 
 $(document).on("change", ".m--partner_switch", function () {
