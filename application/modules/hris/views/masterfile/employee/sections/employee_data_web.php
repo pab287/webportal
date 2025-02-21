@@ -1053,7 +1053,7 @@
         <div id="empEmploymentInfo-body" class="collapse" :class="{show :activeSection == 'empEmploymentInfo'}" aria-labelledby="empEmploymentInfo-head" data-parent="#accordionMain">
             <div class="card-body">
                 <ul class="nav nav-tabs nav-fill" id="offense-tabs">
-                    <li class="nav-item active"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('offenses')">Offenses</a></li>
+                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="" @click="filterOffenses('offenses')" aria-expanded="true">Offenses</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('commendations')">Commendations</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('notices')">Notices</a></li>
                     <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('others')">Others</a></li>
@@ -1075,20 +1075,20 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template v-if="filteredOffenses == false">
-                                    <tr>
-                                        <td data-label="TYPE">NONE</td>
-                                        <td data-label="DATE">NONE</td>
-                                        <td data-label="NATURE">NONE</td>
-                                        <td data-label="ACTION TAKEN">NONE</td>
-                                    </tr>
-                                </template>
-                                <template v-else>
+                                <template v-if="!filteredOffenses == false">
                                     <tr v-for="offense in filteredOffenses" :key="offense.id">
                                         <td data-label="TYPE" v-text="offense.offcom_type"></td>
                                         <td data-label="DATE" v-text="formatDate(offense.offcom_date)"></td>
                                         <td data-label="NATURE" v-text="offense.offcom_nature"></td>
                                         <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
+                                    </tr>
+                                </template>
+                                <template v-else>
+                                    <tr>
+                                        <td data-label="TYPE">NONE</td>
+                                        <td data-label="DATE">NONE</td>
+                                        <td data-label="NATURE">NONE</td>
+                                        <td data-label="ACTION TAKEN">NONE</td>
                                     </tr>
                                 </template>
                             </tbody>

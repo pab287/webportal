@@ -7,7 +7,7 @@ let today = _tempContentData.data.timestamp;
 const OFFENSE_TYPES = [
     'OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE',
     '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE', 'DISMISSAL',
-    'WRITTEN WARNING', '3-DAYS-SUSPENSION', '6-DAYS-SUSPENSION', '1-2-DAYS-SUSPENSION'
+    'WRITTEN WARNING', '3-DAYS SUSPENSION', '6-DAYS SUSPENSION', '1-2-DAYS SUSPENSION'
   ];
   
   const COMMENDATION_TYPES = ['COMMENDATION'];
@@ -23,7 +23,7 @@ const OFFENSE_TYPES = [
     'LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 
     'WRITTEN WARNING', 'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 
     'NOD', 'DISMISSAL', 'NOTICE OF ADMINISTRATIVE HEARING', 'NOTICES',
-    '3-DAYS-SUSPENSION', '6-DAYS-SUSPENSION', '1-2-DAYS-SUSPENSION'
+    '3-DAYS SUSPENSION', '6-DAYS SUSPENSION', '1-2-DAYS SUSPENSION'
   ];
   
 $(document).ready(function(){
@@ -36,7 +36,7 @@ let employeeDataSheet = new Vue({
     el:"#m-content",
     data:{ 
             activeTab: 'offenses',
-            filteredOffenses: {},
+            filteredOffenses: false,
             activeSection:"",
             main:[],
             supervisor:"",
@@ -1023,6 +1023,9 @@ $('#offense-tabs .nav-link').on('click', function(e) {
     $(targetId).addClass('active show');
  });
 
- $('#empEmploymentInfo-body').on('shown.bs.collapse', function() {
-    $('#offense-tabs .nav-item:first-child .nav-link').addClass('active');
-});
+//  $('#empEmploymentInfo-body').on('shown.bs.collapse', function() {
+//     console.log('Hello WOlrd');
+//     $('#offense-tabs .nav-link').addClass('active');
+//     $("#offenses-tab").show();
+    
+// });

@@ -3024,7 +3024,7 @@ if (typeof _tempContentData !== "undefined") {
     function openFile(employeeId, name) {
         // Construct the full URL of the file
         var fileUrl = baseUrl("uploads/files/documents/employee_files/empcode_" + employeeId + "/offenses_commendation/" + encodeURIComponent(name));
-    
+        console.log(fileUrl,name);
         // Function to check if file exists and get its MIME type
         function checkFileExists(url, callback) {
             $.ajax({
@@ -3090,7 +3090,7 @@ if (typeof _tempContentData !== "undefined") {
                 },
                 { data: "offcom_nature", },
                 { data: "offcom_action", },
-                { data:"",className: "text-center",
+                { data: "filename",className: "text-center",
                     render:  function(data, type, row, meta){
                         return `
                         <span>
@@ -3105,9 +3105,10 @@ if (typeof _tempContentData !== "undefined") {
                     data: "filename",
                     width: "10%",
                     render: function(data, type, row, meta) {
+                        const truncatedData = data.length > 20 ? data.substring(0, 20) + '...' : data;
                         return `
                         <span>
-                            <span>${data}</span>
+                            <span>${truncatedData}</span>
                         </span>`;
                     },
                 },
@@ -3181,7 +3182,7 @@ if (typeof _tempContentData !== "undefined") {
                 },
                 { data: "offcom_nature", },
                 { data: "offcom_action", },
-                { data:"",className: "text-center",
+                { data: "filename",className: "text-center",
                     render:  function(data, type, row, meta){
                         return `
                         <span>
@@ -3196,9 +3197,10 @@ if (typeof _tempContentData !== "undefined") {
                     data: "filename",
                     width: "10%",
                     render: function(data, type, row, meta) {
+                        const truncatedData = data.length > 20 ? data.substring(0, 20) + '...' : data;
                         return `
                         <span>
-                            <span>${data}</span>
+                            <span>${truncatedData}</span>
                         </span>`;
                     },
                 },
@@ -3271,7 +3273,7 @@ if (typeof _tempContentData !== "undefined") {
                 },
                 { data: "offcom_nature", },
                 { data: "offcom_action", },
-                { data:"",className: "text-center",
+                { data: "filename",className: "text-center",
                     render:  function(data, type, row, meta){
                         return `
                         <span>
@@ -3286,9 +3288,10 @@ if (typeof _tempContentData !== "undefined") {
                     data: "filename",
                     width: "10%",
                     render: function(data, type, row, meta) {
+                        const truncatedData = data.length > 20 ? data.substring(0, 20) + '...' : data;
                         return `
                         <span>
-                            <span>${data}</span>
+                            <span>${truncatedData}</span>
                         </span>`;
                     },
                 },
@@ -3361,7 +3364,7 @@ if (typeof _tempContentData !== "undefined") {
                 },
                 { data: "offcom_nature", },
                 { data: "offcom_action", },
-                { data:"",className: "text-center",
+                { data: "filename",className: "text-center",
                     render:  function(data, type, row, meta){
                         return `
                         <span>
@@ -3376,9 +3379,10 @@ if (typeof _tempContentData !== "undefined") {
                     data: "filename",
                     width: "10%",
                     render: function(data, type, row, meta) {
+                        const truncatedData = data.length > 20 ? data.substring(0, 20) + '...' : data;
                         return `
                         <span>
-                            <span>${data}</span>
+                            <span>${truncatedData}</span>
                         </span>`;
                     },
                 },
@@ -3443,15 +3447,15 @@ if (typeof _tempContentData !== "undefined") {
         let data = [];
         if (selectedData == 'offenses'){
             data =  [
-                { id: '1ST-OFFENSE', text: '1ST OFFENSE' },
-                { id: '2ND-OFFENSE', text: '2ND OFFENSE' },
-                { id: '3RD-OFFENSE', text: '3RD OFFENSE' },
-                { id: '4TH-OFFENSE', text: '4TH OFFENSE' },
-                { id: '5TH-OFFENSE', text: '5TH OFFENSE' },
-                { id: 'WRITTEN-WARNING', text: 'WRITTEN WARNING' },
-                { id: '3-DAYS-SUSPENSION', text: '3-DAYS SUSPENSION' },
-                { id: '6-DAYS-SUSPENSION', text: '6-DAYS SUSPENSION' },
-                { id: '1-2-DAYS-SUSPENSION', text: '1-2 DAYS SUSPENSION' },
+                { id: '1ST OFFENSE', text: '1ST OFFENSE' },
+                { id: '2ND OFFENSE', text: '2ND OFFENSE' },
+                { id: '3RD OFFENSE', text: '3RD OFFENSE' },
+                { id: '4TH OFFENSE', text: '4TH OFFENSE' },
+                { id: '5TH OFFENSE', text: '5TH OFFENSE' },
+                { id: 'WRITTEN WARNING', text: 'WRITTEN WARNING' },
+                { id: '3-DAYS SUSPENSION', text: '3-DAYS SUSPENSION' },
+                { id: '6-DAYS SUSPENSION', text: '6-DAYS SUSPENSION' },
+                { id: '1-2-DAYS SUSPENSION', text: '1-2 DAYS SUSPENSION' },
                 { id: 'DISMISSAL', text: 'DISMISSAL' }
             ]
         }

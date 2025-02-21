@@ -1514,7 +1514,7 @@
                     $prms = array();
                     switch (strtoupper($type)) {
                         case "OFFENSES":
-                            $prms = array('OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE', '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE', 'DISMISSAL','WRITTEN WARNING','3-DAYS-SUSPENSION','6-DAYS-SUSPENSION','1-2-DAYS-SUSPENSION');
+                            $prms = array('OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE', '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE', 'DISMISSAL','WRITTEN WARNING','3-DAYS SUSPENSION','6-DAYS SUSPENSION','1-2-DAYS SUSPENSION');
                             break;
                         case "COMMENDATION":
                             $prms = array('COMMENDATION');
@@ -1525,7 +1525,7 @@
                         case "OTHERS":
                             $prms = array(
                                 'OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE', '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE',
-                                'COMMENDATION', 'LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 'WRITTEN WARNING', 'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 'NOD','DISMISSAL', 'NOTICE OF ADMINISTRATIVE HEARING', 'NOTICES','3-DAYS-SUSPENSION','6-DAYS-SUSPENSION','1-2-DAYS-SUSPENSION',
+                                'COMMENDATION', 'LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 'WRITTEN WARNING', 'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 'NOD','DISMISSAL', 'NOTICE OF ADMINISTRATIVE HEARING', 'NOTICES','3-DAYS SUSPENSION','6-DAYS SUSPENSION','1-2-DAYS SUSPENSION',
                                 );
                             break;
                         default:
