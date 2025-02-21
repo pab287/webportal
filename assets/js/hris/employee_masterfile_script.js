@@ -3024,7 +3024,6 @@ if (typeof _tempContentData !== "undefined") {
     function openFile(employeeId, name) {
         // Construct the full URL of the file
         var fileUrl = baseUrl("uploads/files/documents/employee_files/empcode_" + employeeId + "/offenses_commendation/" + encodeURIComponent(name));
-        console.log(fileUrl,name);
         // Function to check if file exists and get its MIME type
         function checkFileExists(url, callback) {
             $.ajax({
