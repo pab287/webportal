@@ -341,6 +341,29 @@ let fileUploadPhoto = function () {
         },
     ];
 
+    $('#fileupload').on('change', function(e) {
+        let valid = true;
+        let errorMessage = '';
+        
+        $.each(e.target.files, function(index, file) {
+            // Get filename without extension
+            const fileName = file.name.substring(0, file.name.lastIndexOf('.'));
+            
+            // Check for special characters
+            if (!/^[a-zA-Z0-9\s._-]+$/g.test(fileName)) {
+                valid = false;
+                errorMessage = 'File "' + file.name + '" contains special characters. Please rename the file without special characters.';
+                return false; // Break the loop
+            }
+        });
+
+        if (!valid) {
+            toastr.error(errorMessage, "Upload Image", 5000);
+            $(this).val(''); // Clear input
+            return false;
+        }
+    });
+
     $("#fileupload")
         .fileupload({
             url: url,

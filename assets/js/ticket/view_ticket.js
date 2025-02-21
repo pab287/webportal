@@ -63,6 +63,8 @@ $.ajax({
             var avatarImage = baseUrl("uploads/files/images/employee_files/empcode_"+ created_by +"/ticketing/" + filename);
             var renderImage = vmData.picture;
             images.push(filename);
+            const filename1 = filename;
+            const shortenedName = filename1.length <= 20 ? filename1 : `${filename1.slice(0, 20)}...`;
             $("#picture").attr("src", renderImage);
             $("#pic").val(images);
             let icon = '';
@@ -104,7 +106,7 @@ $.ajax({
                         ''+
                         '</span><br>'+
                         '<span class="m-widget2__user-name">'+
-                        filename +
+                        shortenedName +
                         '</span>'+
                         '<span class="m-widget2__user-name">'+
                         '</span><br><br>'+
