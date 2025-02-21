@@ -6901,6 +6901,9 @@
                                         sal.sal_rate, sal.sal_date,
                                         IF(pos.id IS NULL, sal.sal_position, pos.`name`),
                                         sal.sal_position, sal.sal_remarks)", $searchValue, "BOTH");
+                $this->db
+                ->order_by("CASE WHEN sal.add_date = '0000-00-00 00:00:00' THEN 1 ELSE 0 END", "asc")
+                ->order_by("sal.sal_date, sal.id", "desc");
                 $this->db->order_by($order, $dir);
                 $this->db->limit($limit, $start);
 
@@ -8024,19 +8027,22 @@
         function saveEmployeeAllowance() {
             $date = date("Y-m-d");
             $resultarray = array();
-            $data = array();
             $post = $this->input->post();
             $user = $this->core_layout->getUserLoggedIn();
+            $hasActiveAllowance = $this->checkHasActiveAllowance($post["emp_id"]);
 
+            $data = array();
             $data["created_by"] = $user["employee_id"];
             $data['created_at'] = $date;
             $data["emp_id"] = $post["emp_id"];
             $data['frequency'] = $post['allowance_id'] == 1 ? 'day' : 'month';
             $data["allowance_id"] = $post["allowance_id"];
             $data["rate"] = $post["rate"];
+            $data["is_active"] = $hasActiveAllowance ? 0 : 1;
 
-            $query = $this->db->insert("gcchris.allowances", $data);
+            $queryInsert = $this->db->insert("gcchris.allowances", $data);
             $lastInsertedId = $this->db->insert_id();
+            $this->db->reset_query();
 
             /*** edited contents logging ***/
             $this->db->select("allw.rate, allw.frequency, allw.is_active, pallw.allowance_name, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
@@ -8065,29 +8071,11 @@
             $this->db->reset_query();
             /*** edited contents logging ***/
 
-            if ($query) {
-                // $this->db->select('sal_remarks, id');
-                // $this->db->limit(1);
-                // $this->db->order_by('id', 'DESC');
-                // $q = $this->db->get_where($this->employeeSalaryTable, array('emp_id' => $post['emp_id'], 'is_archived' => 0));
-
-                // if($q->num_rows() > 0){
-                //     $row = $q->row();
-                //     $fr = ($frequency == 'day') ? 'Daily Allowance' : 'Monthly Allowance';
-                //     $data = array(
-                //         'sal_remarks' => $row->sal_remarks . ' + ' . $post["rate"] . ' ' . $fr,
-                //         'update_date' => date('Y-m-d H:i:s'),
-                //         'update_by' => $user["employee_id"]
-                //     );
-
-                //     $this->db->where('id', $row->id);
-                //     $this->db->update($this->employeeSalaryTable, $data);
-                // }
-
-                $checkAllowance = $this->check_has_no_allowance($post["emp_id"]);
-                if($checkAllowance){
+            if ($queryInsert) {
+                $allowSalaryHistoryLog = isset($data["is_active"]) && $data["is_active"] == 1;
+                $checkCurrentActiveAllowance = $this->checkHasActiveAllowance($post["emp_id"]);
+                if($checkCurrentActiveAllowance && $allowSalaryHistoryLog){
                     $historyStatus = $this->set_approved_allowance($data);
-    
                     if($historyStatus){
                         $resultarray['salary_history'] = 'Salary History Generated.';
                     }else{
@@ -8185,7 +8173,7 @@
             return $resultarray;
         }
 
-        function removeEmployeeAllowance($id) {
+        public function removeEmployeeAllowance($id) {
             $resultarray = array();
 
             /*** edited contents logging ***/
@@ -8230,7 +8218,23 @@
             $coreHistoryLog->setHistoryLogEmployeeId($employeeId);
 
             if ($updated && $this->db->affected_rows() > 0) {
-                $resultarray["status"] = TRUE;
+                if($employeeId){
+                    $arrData = array();
+                    $this->db->select("emp_id, rate, frequency, is_active");
+                    $this->db->where("emp_id", $employeeId);
+                    $this->db->where("is_active", 1);
+                    $this->db->where("is_archived", 0);
+                    $this->db->order_by("created_at", "DESC");
+                    $this->db->limit(1);
+                    $qActiveAllowance = $this->db->get("gcchris.allowances");
+                    if($qActiveAllowance->num_rows() === 1){ $arrData = $qActiveAllowance->row_array(); }
+                    if(!isset($arrData["emp_id"])){ $arrData["emp_id"] = $employeeId;}
+                    $historyStatus = $this->set_approved_allowance($arrData);
+                    if($historyStatus){ $resultarray['salary_history'] = 'Salary History Generated.'; }
+                    else{ $resultarray['salary_history'] = 'Failed to generate Salary History.'; }
+                }
+
+                $resultarray["status"] = true;
                 $resultarray["response"] = "Data has been removed!";
                 /*** edited contents logging ***/
                 $logMessage = "Employee named `$tempEmployeeName` with payroll allowance data rate of `$rate` and frequency of `$frequency` has been archived.";
@@ -8238,7 +8242,7 @@
                 $coreHistoryLog->saveLoggedEventHistory();
                 /*** edited contents logging ***/
             } else {
-                $resultarray["status"] = FALSE;
+                $resultarray["status"] = false;
                 $resultarray["response"] = $this->db->error();
                 /*** edited contents logging ***/
                 $logMessage = "Failed to archive payroll allowance data of employee named `$tempEmployeeName` with a rate of `$rate` and frequency of `$frequency`.";
@@ -8853,6 +8857,8 @@
 
         public function updateEmployeeAllowance() {
             $post = $this->input->post();
+            $postStdClass = json_decode(json_encode($post), false);
+
             $id = $post["id"];
             $hasApprovingAuthority = isset($post["approving_authority"]) ? json_decode($post["approving_authority"]): false;
             unset($post["id"], $post["approving_authority"]);
@@ -8860,6 +8866,30 @@
             $postIsActive = isset($post["is_active"]) && $post['is_active'] ? 1 : 0;
             $resultSet = array();
 
+            $this->db->select("id, is_active");
+            $this->db->where("emp_id", $post["emp_id"]);
+            $this->db->where("is_archived", 0);
+            $qAllw = $this->db->get("gcchris.allowances");
+            if($qAllw->num_rows() > 0){
+                $multipleAllowances = false;
+                $recordCount = $qAllw->num_rows();
+                $checkColumn = array_column($qAllw->result_array(), "is_active");
+                $isActiveColumn = array_count_values($checkColumn);
+                if(($recordCount > 1 && isset($isActiveColumn[1]) && $isActiveColumn[1] == $recordCount) ||
+                 ($recordCount > 1 && $postStdClass->is_active && (isset($isActiveColumn[0]) && $isActiveColumn[0] > 0) && (isset($isActiveColumn[1]) && $isActiveColumn[1] > 0))){
+                    $multipleAllowances = true;
+                }
+
+                if($multipleAllowances){
+                    $resultSet["success"] = false;
+                    $resultSet["message"] = "Multiple active allowances is not allowed!";
+                    $resultSet["title"] = "Update Allowance Data";
+                    $resultSet["toast"] = "error";
+                    return $resultSet;
+                }
+            }
+
+            $this->db->reset_query();
             /*** edited contents logging ***/
             $editedContent = array();
             $fromContent = array();
@@ -8891,17 +8921,17 @@
                 $currentState = $row->is_active ? intval($row->is_active): 0;
 
                 if($currentRate !== $postRate){
-                    $editedContent["rate"] = number_format($post['rate'], 2, ".", ","); 
+                    $editedContent["rate"] = number_format($post['rate'], 2, ".", ",");
                     $fromContent["rate"] = number_format($row->rate, 2, ".", ",");
                 }
 
                 if((isset($post['frequency']) && $post['frequency'] && $row->frequency) && $row->frequency !== $post['frequency']){
-                    $editedContent["frequency"] = $post['frequency']; 
+                    $editedContent["frequency"] = $post['frequency'];
                     $fromContent["frequency"] = $row->frequency;
                 }
 
                 if($currentState !== $postIsActive){
-                    $editedContent["is_active"] = intval($post['is_active']) === 1 ? "Active": "Inactive"; 
+                    $editedContent["is_active"] = intval($post['is_active']) === 1 ? "Active": "Inactive";
                     $fromContent["is_active"] = intval($row->is_active) === 1 ? "Active": "Inactive";
                 }
             }
@@ -8932,8 +8962,6 @@
                 if((!isset($forApproval[$key]) || $hasApprovingAuthority) && isset($editedContent[$key])){ $tempData[$key] = $post[$key]; }
             }
 
-            /*** for approval ***/           
-
             $updated = false;
             $forApprovalData = is_array($forApproval) && count($forApproval) > 0;
             $cancelApprovalWhere = array("unique_id"=>$employeeId, "table_id"=>$id, "database_table"=>"gcchris.allowances", "module"=>"hris", "is_approved"=>0);
@@ -8942,10 +8970,6 @@
                 $this->db->where("id", $id);
                 $this->db->set($tempData);
                 $updated = $this->db->update("gcchris.allowances");
-                /*** 
-                 * $tempUpdate = $this->db->update("gcchris.allowances");
-                 * $updated = $tempUpdate && $this->db->affected_rows() > 0; 
-                 * ***/
             }
 
             $coreHistoryLog = $this->core_layout->coreHistoryLogs();
@@ -8954,19 +8978,18 @@
             $coreHistoryLog->setHistoryLogTableFieldId($id);
             $coreHistoryLog->setHistoryLogEmployeeId($employeeId);
 
-            if($updated && $this->db->trans_status() === TRUE){
-                $resultSet["success"] = TRUE;
+            if($updated && $this->db->trans_status() === true){
+                $resultSet["success"] = true;
                 $resultSet["message"] = "Allowance data has been updated successfully.";
                 $resultSet["title"] = "Update Allowance Data";
                 $resultSet["toast"] = "success";
 
                 if($hasApprovingAuthority){
                     $historyStatus = $this->set_approved_allowance($post);
-
                     if($historyStatus){
-                        $resultarray['salary_history'] = 'Salary History Generated.';
+                        $resultSet['salary_history'] = 'Salary History Generated.';
                     }else{
-                        $resultarray['salary_history'] = 'Failed to generate Salary History.';
+                        $resultSet['salary_history'] = 'Failed to generate Salary History.';
                     }
                 }
 
@@ -8983,6 +9006,9 @@
                             if(isset($tempData[$key]) && $tempData[$key]){
                                 $fromValue = isset($fromContent[$key]) && $fromContent[$key] ? $fromContent[$key]: null;
                                 $toValue = isset($editedContent[$key]) && $editedContent[$key] ? $editedContent[$key]: null;
+                                
+                                $fromValue = is_numeric($fromValue) ? number_format($fromValue, 2, ".", ","): $fromValue;
+                                $toValue = is_numeric($toValue) ? number_format($toValue, 2, ".", ","): $toValue;
                                 
                                 $logMessage = $fromValue ? 
                                     "Employee named `$tempEmployeeName` with payroll allowance data field `$nKey` has been updated from `$fromValue` to `$toValue`.": 
@@ -10915,6 +10941,7 @@
             $historyStatus = false;
             $basic = 0;
 
+            if(!isset($arr["is_active"])){ $arr["is_active"] = 0; }
             $isActiveState = intval($arr["is_active"]) == 1;
 
             $this->db->select('b.name, a.basic_rate, a.payroll_type');
@@ -10925,15 +10952,14 @@
             $this->db->reset_query();
             $basic = $query->basic_rate;
 
-            if($query->payroll_type == 'daily'){
-                $payroll = 'Basic Daily Rate';
-            }else if($query->payroll_type == 'monthly'){
-                $payroll = 'Monthly Rate';
-            }else{
-                $payroll = 'Hourly Rate';
-            }
+            if($query->payroll_type == 'daily'){ $payroll = 'Basic Daily Rate'; }
+            else if($query->payroll_type == 'monthly'){ $payroll = 'Monthly Rate'; }
+            else{ $payroll = 'Hourly Rate'; }
 
-            $rate_fr = $arr['frequency'] == 'day' ? 'Daily Allowance' : 'Monthly Allowance';
+            if(isset($arr['frequency']) && $arr['frequency']){
+                $rate_fr = $arr['frequency'] == 'day' ? 'Daily Allowance' : 'Monthly Allowance';
+            }
+            
             $rate_remark = $isActiveState && $arr['rate'] && $rate_fr ? ' + '.$arr['rate'].' '.$rate_fr : '';
             $remarks = $basic.' '.$payroll.' '.$rate_remark;
             $basic_total = $isActiveState ? floatval($basic) + floatval($arr['rate']) : floatval($basic);
@@ -10949,7 +10975,6 @@
             );
 
             $historyStatus = $this->db->insert($this->employeeSalaryTable, $data);
-
             return $historyStatus;
         }
 
@@ -11115,14 +11140,14 @@
             return ($query->num_rows() > 0) ? true : false;
         }
 
-        function check_has_no_allowance($id){
+        function checkHasActiveAllowance($id){
             $this->db->from($this->tblAllowances);
             $this->db->where('is_active', 1);
             $this->db->where('is_archived', 0);
             $this->db->where('emp_id', $id);
             $query = $this->db->get();
 
-            return ($query->num_rows() == 1) ? true : false;
+            return $query->num_rows() > 0;
         }
 
         function update_bank_info(){
@@ -11673,7 +11698,7 @@
                 ->select("sal.id, sal.add_date, sal.sal_date, sal.sal_rate, sal.sal_remarks, IF(pos.id IS NULL, sal.sal_position, pos.name) sal_position")
                 ->join("gcchris.tblposition pos", "pos.id = sal.sal_position", "LEFT")
                 ->order_by("CASE WHEN sal.add_date = '0000-00-00 00:00:00' THEN 1 ELSE 0 END", "asc")
-                ->order_by("sal.sal_date", "desc")
+                ->order_by("sal.sal_date, sal.id", "desc")
                 ->get_where($this->employeeSalaryTable . " sal", array("sal.emp_id" => $id, "sal.is_archived" => 0))
                 ->result();
             $this->db->reset_query();
@@ -11719,5 +11744,49 @@
         public function getEmpJobDescription($id){
             $data = $this->db->select('job_desc')->get_where($this->positionTable, array("id" => $id))->row();
             return $data;
+        }
+
+        public function getEmployeeAllowanceCount($id=null){
+            $resultset = array();
+            if($id){
+                $this->db->select("id");
+                $ctrActive = $this->db->get_where($this->tblAllowances, array("emp_id" => $id, "is_active"=>1, "is_archived" => 0));
+                if($ctrActive->num_rows() == 2){
+                    $arrIds = array();
+                    foreach ($ctrActive->result() as $row) { $arrIds[] = $row->id; }
+                    if(!empty($arrIds)){
+                        $this->db->select("id, rate, frequency");
+                        $this->db->from($this->tblAllowances);
+                        $this->db->where_in("id", $arrIds);
+                        $this->db->order_by("created_at", "ASC");
+                        $this->db->limit(1);
+                        $qTemp = $this->db->get();
+                        if($qTemp->num_rows() == 1){
+                            $rowData = $qTemp->row();
+                            $updatedAllowance = $this->db->update($this->tblAllowances, array("is_active" => 0), array("id" => $rowData->id));
+                            if($updatedAllowance && $this->db->affected_rows() == 1){
+                                $tempRate = number_format($rowData->rate, 2, '.', '');
+                                $tempFrequency = strtoupper($rowData->frequency);
+
+                                $resultset["response"] = true;
+                                $resultset["toastr_msg"] = "System has detected a multiple active allowances. 
+                                The previous active allowance has been deactivated. Allowance Rate `<strong>{$tempRate}</strong>` and Frequency `<strong>{$tempFrequency}</strong>`.";
+                            }else{
+                                $resultset["response"] = false;
+                            }
+                        }else{
+                            $resultset["response"] = false;
+                        }
+                    }else{
+                        $resultset["response"] = true;
+                    }
+                }else{
+                    $resultset["response"] = false;
+                }
+            }else{
+                $resultset["response"] = false;
+            }
+
+            return $resultset;
         }
     }
