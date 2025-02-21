@@ -989,7 +989,13 @@ class Overtime_m extends CI_Model {
         $this->db->limit(1);
         $queryDetails = $this->db->get();
         if($queryDetails->num_rows() == 1){
+            $rawData = $queryDetails->row();
+            $tempMaxDate = strtotime(trim($rawData->max_date));
+            $tempDateFrom = strtotime(trim($rawData->date_from));
+            $validOTDates = $tempDateFrom > $tempMaxDate;
+
             $resultarray = $queryDetails->row_array();
+            $resultarray["valid_ot_dates"] = $validOTDates;
             $resultarray["images"] = array();
             $resultarray["has_attachment"] = false;
 

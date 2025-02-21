@@ -30,6 +30,9 @@ $.ajax({
         vmTab1.vm_tab1 = { ...data };
         vmTab1.loading_content = false;
 
+        const timestampMaxDate = moment(new Date(data.max_date), "YYYY-MM-DD").toDate().getTime();
+        console.log(timestampMaxDate);
+
         (data.requested_remarks == "") ? $("#requested_remarks").hide() : $("#requested_remarks").show();
         (data.cancelled_remarks == "") ? $("#cancelled_remarks").hide() : $("#cancelled_remarks").show();
         (data.status != "Approved") ? $("#approved_by").hide() : $("#approved_by").show();
@@ -278,7 +281,7 @@ const getCurrentUploadFiles = function () {
             if (json.response) {
                 const tempRows = json.rows.sort(SortByDate);
                 vmTempImages.rows = { ...tempRows };
-                vmTempImages.count = tempCount;
+                vmTempImages.count = json.count;
             }
         }
     });
