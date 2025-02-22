@@ -167,32 +167,8 @@ let employeeDataSheet = new Vue({
              }
         }
     },
+
     methods:{
-        filterOffenses(type) {
-            this.activeTab = type;
-            const offensesArray = Object.values(this.offenses);
-            
-            if (type === 'offenses') {
-                this.filteredOffenses = offensesArray.filter(offense =>
-                    OFFENSE_TYPES.includes(offense.offcom_type.toUpperCase())
-                );
-            } else if (type === 'commendations') {
-                this.filteredOffenses = offensesArray.filter(offense =>
-                    COMMENDATION_TYPES.includes(offense.offcom_type.toUpperCase())
-                );
-            } else if (type === 'notices') {
-                this.filteredOffenses = offensesArray.filter(offense =>
-                    NOTICE_TYPES.includes(offense.offcom_type.toUpperCase())
-                );
-            } else if (type === 'others') {
-                this.filteredOffenses = offensesArray.filter(offense =>
-                    !OTHER_TYPES.includes(offense.offcom_type.toUpperCase())
-                );
-            }
-            if (this.filteredOffenses.length === 0) {
-                this.filteredOffenses = false;
-            }
-        },
         getSidebarData(){
             this.main = { ...this.$data.main, ..._tempContentData.data.main };
             this.path = _tempContentData.data.path;
@@ -240,26 +216,38 @@ let employeeDataSheet = new Vue({
                 this.main = { ...this.$data.main, ..._tempContentData.data.main };
             }
         },
-        calculateAge(birthdate){
-            if (!birthdate || birthdate == '0000-00-00') {
-                return '---';
-              }
-            const currentDate = new Date();
-            const birthdateObj = new Date(birthdate);
-            const diffMs = currentDate - birthdateObj;
-            const diffYears = currentDate.getFullYear() - birthdateObj.getFullYear();
-            const diffMonths = currentDate.getMonth() - birthdateObj.getMonth();
-            const diffDays = currentDate.getDate() - birthdateObj.getDate();
-    
-            if (diffYears == 0 && diffMonths == 0) {
-                const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                return days > 1 ? `${days} Days Old` : '1 Day Old';
-            } else if (diffYears == 0) {
-                const months = diffMonths >= 0 ? diffMonths : diffMonths + 12;
-                return months > 1 ? `${months} Months Old` : '1 Month Old';
-            } else {
-                return diffYears > 1 ? `${diffYears} Years Old` : '1 Year Old';
+        calculateAge(birthdate) {
+            if (!birthdate || birthdate == '0000-00-00') return '---';
+            const today = new Date();
+            const birth = new Date(birthdate);
+            let years = today.getFullYear() - birth.getFullYear();
+            let months = today.getMonth() - birth.getMonth();
+            let days = today.getDate() - birth.getDate();
+            if (days < 0) {
+                months--;
+                const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                days += prevMonth.getDate();
             }
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+            const parts = [];
+    
+            if (years > 0) {
+                parts.push(`${years} ${years === 1 ? 'Year' : 'Years'}`);
+            }
+            
+            if (months > 0) {
+                parts.push(`${months} ${months === 1 ? 'Month' : 'Months'}`);
+            }
+            
+            if (days > 0) {
+                parts.push(`${days} ${days === 1 ? 'Day' : 'Days'}`);
+            }
+            
+            if (parts.length === 0) return 'Less than a day old';
+            return `${parts.join(' ')} old`;
         },
         displayName(lastname, firstname, middlename, suffix) {
             const middleInitial = middlename?.trim()?.[0]?.toUpperCase() || '';
@@ -349,6 +337,16 @@ let employeeDataSheet = new Vue({
             return hasListItems 
               ? this.job_desc 
               : this.job_desc.replace(/\n/g, '<br>');
+          },
+          formattedJobDescPrint(data) {
+            if (!data) return '';
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data;
+            const hasListItems = tempDiv.getElementsByTagName('li').length > 0;
+
+            return hasListItems 
+              ? data 
+              : data.replace(/\n/g, '<br>');
           },
     }
 })
@@ -500,7 +498,7 @@ function showRemarks(remarks) {
 
 function getAdditionalInformation(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_additional_info/")+id,
+        url: baseUrl("core/profile/get_additional_info/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -516,7 +514,7 @@ function getAdditionalInformation(){
 
 function getEducationBackground(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_education_background/")+id,
+        url: baseUrl("core/profile/get_education_background/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -533,7 +531,7 @@ function getEducationBackground(){
 
 function getLicenseAndCert(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_license_and_cert/")+id,
+        url: baseUrl("core/profile/get_license_and_cert/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -545,7 +543,7 @@ function getLicenseAndCert(){
 
 function getWorkExperience(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_work_experience/")+id,
+        url: baseUrl("core/profile/get_work_experience/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -562,7 +560,7 @@ function getWorkExperience(){
 
 function getAwardsAndAchievements(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_awards_and_achievements/")+id,
+        url: baseUrl("core/profile/get_awards_and_achievements/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -578,7 +576,7 @@ function getAwardsAndAchievements(){
 
 function getEmpSkills(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_emp_skills/")+id,
+        url: baseUrl("core/profile/get_emp_skills/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -594,7 +592,7 @@ function getEmpSkills(){
 
 function getEmpOrgs(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_orgs/")+id,
+        url: baseUrl("core/profile/get_orgs/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -610,7 +608,7 @@ function getEmpOrgs(){
 
 function getTrainingsAndSeminars(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_trainings_and_seminars/")+id,
+        url: baseUrl("core/profile/get_trainings_and_seminars/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -627,7 +625,7 @@ function getTrainingsAndSeminars(){
 
 function getPersonalReferences(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_personal_references/")+id,
+        url: baseUrl("core/profile/get_personal_references/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -643,7 +641,7 @@ function getPersonalReferences(){
 
 function getMedicalHistory(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_medical_history/")+id,
+        url: baseUrl("core/profile/get_medical_history/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -659,7 +657,7 @@ function getMedicalHistory(){
 
 function getLegalHistory(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_legal_history/")+id,
+        url: baseUrl("core/profile/get_legal_history/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -675,7 +673,7 @@ function getLegalHistory(){
 
 function getAccountability(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_accountability/")+id,
+        url: baseUrl("core/profile/get_accountability/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -736,7 +734,7 @@ function getAccountability(){
 
 function getEmploymentInformation(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_employment_information/")+id,
+        url: baseUrl("core/profile/get_employment_information/")+id,
         type: "post",
         data:{csrf_token: _csrf_hash,biono : employeeData.biometricno},
         dataType: "JSON",
@@ -755,8 +753,6 @@ function getEmploymentInformation(){
                 employeeDataSheet.$data.offenses = false;
             } else {
                 employeeDataSheet.$data.offenses = { ...employeeDataSheet.$data.offenses, ...response.offenses };
-                employeeDataSheet.$data.filteredOffenses = employeeDataSheet.$data.offenses;
-                employeeDataSheet.filterOffenses('offenses');
             }
 
             if (!response || Object.keys(response.stations).length == 0) {
@@ -777,7 +773,7 @@ function getEmploymentInformation(){
 
 function getJobDescription(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_job_description/")+employeeDataSheet.$data.main.position_id,
+        url: baseUrl("core/profile/get_job_description/")+employeeDataSheet.$data.main.position_id,
         type: "post",
         data:{csrf_token: _csrf_hash},
         dataType: "JSON",
@@ -794,7 +790,7 @@ function getJobDescription(){
 
 function printFetch(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_print_data/")+id,
+        url: baseUrl("core/profile/get_print_data/")+id,
         type: "post",
         data:{csrf_token: _csrf_hash},
         dataType: "JSON",
@@ -1013,19 +1009,3 @@ function printEmployeeDataSheet(avatar, info, user, timestamp) {
         newWin.close();
     }, 1500);
 }
-
-$('#offense-tabs .nav-link').on('click', function(e) {
-    e.preventDefault();
-    $('#offense-tabs .nav-link').removeClass('active');
-    $('#offense-content .tab-pane').removeClass('active show');
-    $(this).addClass('active');
-    var targetId = $(this).attr('href');
-    $(targetId).addClass('active show');
- });
-
-//  $('#empEmploymentInfo-body').on('shown.bs.collapse', function() {
-//     console.log('Hello WOlrd');
-//     $('#offense-tabs .nav-link').addClass('active');
-//     $("#offenses-tab").show();
-    
-// });
