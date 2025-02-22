@@ -167,11 +167,12 @@ let employeeDataSheet = new Vue({
              }
         }
     },
+
     methods:{
         filterOffenses(type) {
             this.activeTab = type;
             const offensesArray = Object.values(this.offenses);
-            
+
             if (type === 'offenses') {
                 this.filteredOffenses = offensesArray.filter(offense =>
                     OFFENSE_TYPES.includes(offense.offcom_type.toUpperCase())
@@ -522,7 +523,7 @@ function showRemarks(remarks) {
 
 function getAdditionalInformation(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_additional_info/")+id,
+        url: baseUrl("core/profile/get_additional_info/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -538,7 +539,7 @@ function getAdditionalInformation(){
 
 function getEducationBackground(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_education_background/")+id,
+        url: baseUrl("core/profile/get_education_background/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -555,7 +556,7 @@ function getEducationBackground(){
 
 function getLicenseAndCert(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_license_and_cert/")+id,
+        url: baseUrl("core/profile/get_license_and_cert/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -567,7 +568,7 @@ function getLicenseAndCert(){
 
 function getWorkExperience(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_work_experience/")+id,
+        url: baseUrl("core/profile/get_work_experience/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -584,7 +585,7 @@ function getWorkExperience(){
 
 function getAwardsAndAchievements(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_awards_and_achievements/")+id,
+        url: baseUrl("core/profile/get_awards_and_achievements/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -600,7 +601,7 @@ function getAwardsAndAchievements(){
 
 function getEmpSkills(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_emp_skills/")+id,
+        url: baseUrl("core/profile/get_emp_skills/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -616,7 +617,7 @@ function getEmpSkills(){
 
 function getEmpOrgs(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_orgs/")+id,
+        url: baseUrl("core/profile/get_orgs/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -632,7 +633,7 @@ function getEmpOrgs(){
 
 function getTrainingsAndSeminars(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_trainings_and_seminars/")+id,
+        url: baseUrl("core/profile/get_trainings_and_seminars/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -649,7 +650,7 @@ function getTrainingsAndSeminars(){
 
 function getPersonalReferences(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_personal_references/")+id,
+        url: baseUrl("core/profile/get_personal_references/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -665,7 +666,7 @@ function getPersonalReferences(){
 
 function getMedicalHistory(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_medical_history/")+id,
+        url: baseUrl("core/profile/get_medical_history/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -681,7 +682,7 @@ function getMedicalHistory(){
 
 function getLegalHistory(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_legal_history/")+id,
+        url: baseUrl("core/profile/get_legal_history/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -697,7 +698,7 @@ function getLegalHistory(){
 
 function getAccountability(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_accountability/")+id,
+        url: baseUrl("core/profile/get_accountability/")+id,
         type: "GET",
         dataType: "JSON",
         global: false,
@@ -758,7 +759,7 @@ function getAccountability(){
 
 function getEmploymentInformation(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_employment_information/")+id,
+        url: baseUrl("core/profile/get_employment_information/")+id,
         type: "post",
         data:{csrf_token: _csrf_hash,biono : employeeData.biometricno},
         dataType: "JSON",
@@ -777,8 +778,6 @@ function getEmploymentInformation(){
                 employeeDataSheet.$data.offenses = false;
             } else {
                 employeeDataSheet.$data.offenses = { ...employeeDataSheet.$data.offenses, ...response.offenses };
-                employeeDataSheet.$data.filteredOffenses = employeeDataSheet.$data.offenses;
-                employeeDataSheet.filterOffenses('offenses');
             }
 
             if (!response || Object.keys(response.stations).length == 0) {
@@ -799,7 +798,7 @@ function getEmploymentInformation(){
 
 function getJobDescription(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_job_description/")+employeeDataSheet.$data.main.position_id,
+        url: baseUrl("core/profile/get_job_description/")+employeeDataSheet.$data.main.position_id,
         type: "post",
         data:{csrf_token: _csrf_hash},
         dataType: "JSON",
@@ -816,7 +815,7 @@ function getJobDescription(){
 
 function printFetch(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_print_data/")+id,
+        url: baseUrl("core/profile/get_print_data/")+id,
         type: "post",
         data:{csrf_token: _csrf_hash},
         dataType: "JSON",
@@ -1044,10 +1043,3 @@ $('#offense-tabs .nav-link').on('click', function(e) {
     var targetId = $(this).attr('href');
     $(targetId).addClass('active show');
  });
-
-//  $('#empEmploymentInfo-body').on('shown.bs.collapse', function() {
-//     console.log('Hello WOlrd');
-//     $('#offense-tabs .nav-link').addClass('active');
-//     $("#offenses-tab").show();
-    
-// });
