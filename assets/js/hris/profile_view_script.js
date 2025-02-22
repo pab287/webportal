@@ -1009,3 +1009,12 @@ function printEmployeeDataSheet(avatar, info, user, timestamp) {
         newWin.close();
     }, 1500);
 }
+
+$('#offense-tabs .nav-link').on('click', function(e) {
+    e.preventDefault();
+    $('#offense-tabs .nav-link').removeClass('active');
+    $('#offense-content .tab-pane').removeClass('active show');
+    $(this).addClass('active');
+    var targetId = $(this).attr('href');
+    $(targetId).addClass('active show');
+ });
