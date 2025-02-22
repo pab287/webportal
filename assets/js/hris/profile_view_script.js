@@ -169,6 +169,31 @@ let employeeDataSheet = new Vue({
     },
 
     methods:{
+        filterOffenses(type) {
+            this.activeTab = type;
+            const offensesArray = Object.values(this.offenses);
+
+            if (type === 'offenses') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    OFFENSE_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            } else if (type === 'commendations') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    COMMENDATION_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            } else if (type === 'notices') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    NOTICE_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            } else if (type === 'others') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    !OTHER_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            }
+            if (this.filteredOffenses.length === 0) {
+                this.filteredOffenses = false;
+            }
+        },
         getSidebarData(){
             this.main = { ...this.$data.main, ..._tempContentData.data.main };
             this.path = _tempContentData.data.path;
