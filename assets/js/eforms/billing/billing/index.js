@@ -3,9 +3,9 @@ const initReadingEndDate = moment();
 let selectedReadingStartDate = moment();
 let selectedReadingEndDate = moment();
 
-var search_val = "";
-var query_builder = "";
-var tblBillings = $("#table-billing").DataTable({
+let search_val = "";
+let query_builder = "";
+const tblBillings = $("#table-billing").DataTable({
    dom: '<"toolbar">rtlip',
    serverSide: true, 
    processing: true,
@@ -91,11 +91,6 @@ var tblBillings = $("#table-billing").DataTable({
        }
    ]
 });
-
-tblBillings.button('.buttons-csv').enable(false);
-setTimeout(() => {
-    tblBillings.button('.buttons-csv').enable(true);
-}, 1000);
 
 function numberWithCommas(x) {
   return parseFloat(x).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
