@@ -107,7 +107,8 @@
             $tempData = array();
 
             $_temp = $this->payroll->select2CompanyData();
-            $companyId = (int)$this->userData["company"];
+            $_company = $this->db->select('IFNULL(company_id, 0) as company_id')->get_where('gccmaster.tblemployees', array('id' => $this->userData['emp_id']))->row();
+            $companyId = (int)$_company->company_id;
 
             $filter = array_filter($_temp, function ($value) use ($companyId) {
                 return is_object($value) ? ((int)$value->id === $companyId) : ((int)$value['id'] === $companyId);
