@@ -579,27 +579,33 @@ $(document).ready(function(){
                     return data;
                 }
             }, { data: 'ot_pay', width: '8%', className: "text-right",
-                render: function (data, _type, row) {
+                render: function (data) {
                     if (data && parseFloat(data) > 0) {
                         let ot_pay = parseFloat(data);
-                        if(parseInt(row.has_shift) === 1) { ot_pay = ot_pay - (ot_pay * 0.25); }
-                        else if(parseInt(row.has_shift) === 0) { ot_pay = ot_pay - (ot_pay * 0.30); }
                         return '₱ '+ot_pay.toFixed(2);
                     }else{ return '-'; }
                 }
-            }, { data: null, className: "text-right", width: '8%', 
-                render: function (_data, _type, row) {
-                    if (row.ot_pay && parseFloat(row.ot_pay) > 0 && parseInt(row.has_shift) === 1) {
+            }, { data: 'ot_pay_20', className: "text-right", width: '8%', 
+                render: function (data) {
+                    /*** if (row.ot_pay && parseFloat(row.ot_pay) > 0 && parseInt(row.has_shift) === 1) {
                         const _25_ot_pay = parseFloat(row.ot_pay) * 0.25;
                         return '₱ '+_25_ot_pay.toFixed(2);
-                    } else { return '-'; }
+                    } else { return '-'; } ***/
+                    if (data && parseFloat(data) > 0) {
+                        let ot_pay_20 = parseFloat(data);
+                        return '₱ '+ot_pay_20.toFixed(2);
+                    }else{ return '-'; }
                 }
-            }, { data: null, className: "text-right", width: '8%', 
-                render: function (_data, _type, row) {
-                    if (row.ot_pay && parseFloat(row.ot_pay) > 0 && parseInt(row.has_shift) === 0) {
+            }, { data: 'ot_pay_30', className: "text-right", width: '8%', 
+                render: function (data) {
+                    /*** if (row.ot_pay && parseFloat(row.ot_pay) > 0 && parseInt(row.has_shift) === 0) {
                         const _30_ot_pay = parseFloat(row.ot_pay) * 0.30;
                         return '₱ '+_30_ot_pay.toFixed(2);
-                    } else { return '-'; }
+                    } else { return '-'; } ***/
+                    if (data && parseFloat(data) > 0) {
+                        let ot_pay_30 = parseFloat(data);
+                        return '₱ '+ot_pay_30.toFixed(2);
+                    }else{ return '-'; }
                 }
             }, { data: 'ot_ndiff_hrs', width: '8%', className: "text-right",
                 render: function (data) {
@@ -616,7 +622,11 @@ $(document).ready(function(){
                         return '₱ '+ot_ndiff_pay.toFixed(2);
                     } else { return '-'; }
                 }
-            }, { data: 'amount', className: "text-right pr-3", width: '10%', 
+            },
+            { data: null, className: "text-right", width: '5%', 
+                render: function () { return '-'; }
+            }, 
+            { data: 'amount', className: "text-right pr-3", width: '10%', 
                 render: function (data, type, row) {
                     if (data && parseFloat(data) > 0) {
                         const amount = parseFloat(data);
@@ -627,7 +637,7 @@ $(document).ready(function(){
             }
         ], rowGroup: {
             startRender: function ( _rows, group ) {
-                return $('<tr><td colspan="11" class="bg-secondary"><span class="m--font-boldest">' + group + '</span></td></tr>');
+                return $('<tr><td colspan="12" class="bg-secondary"><span class="m--font-boldest">' + group + '</span></td></tr>');
             },
             endRender: function ( rows, _group ) {
                 let OTadj = rows
@@ -646,14 +656,13 @@ $(document).ready(function(){
                 }, 0);
                     
                 let total = parseFloat(totalAmount) + parseFloat(OTadj);
-                const uiAdjustment = parseFloat(OTadj) > 0 ? `<span class="m--font-boldest">OT ADJ</span>`: `&nbsp;`;
+                /*** const uiAdjustment = parseFloat(OTadj) > 0 ? `<span class="m--font-boldest">OT ADJ</span>`: `&nbsp;`; ***/
                 const uiAdjustmentAmount = parseFloat(OTadj) > 0 ? `<span class="m--font-boldest">₱ ${numberFormat(OTadj)}</span>`: `-`;
                 const uiTotal = `<strong>₱ ${numberFormat(total)}</strong>`;
 
                 const tempContainer = `<tr class="bg-secondary">
-                    <td colspan="8" class="text-right">${uiAdjustment}</td>
+                    <td colspan="10" class="text-right">&nbsp;</td>
                     <td class="text-right">${uiAdjustmentAmount}</td>
-                    <td class="text-right"><span class="m--font-boldest">TOTAL</span></td>
                     <td class="text-right pr-3">${uiTotal}</td>
                     </tr>`;
 
@@ -677,13 +686,26 @@ $(document).ready(function(){
         }, footerCallback: function () {
             const api = this.api();
             const intVal = function (i) { return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : (typeof i === 'number') ? i : 0; };
-            const grandTotalIndex = 11;
+            const otPayTotalIndex = 6;
+            const otPay20TotalIndex = 7;
+            const otPay30TotalIndex = 8;
+            const nDiffTotalIndex = 10;
+            const grandTotalIndex = 12;
+
+            let otPayTotalAmount = api.column(otPayTotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let otPay20TotalAmount = api.column(otPay20TotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let otPay30TotalAmount = api.column(otPay30TotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let nDiffTotalAmount = api.column(nDiffTotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
             let totalAmount = api.column(grandTotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
             
-            const footerLabelTotal = $(api.column(10).footer());
+            const footerLabelTotal = $(api.column(5).footer());
             footerLabelTotal.removeClass("text-center");
             footerLabelTotal.html(`<span class="m--font-boldest mr-3">GRAND TOTAL</span>`);
 
+            $(api.column(otPayTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otPayTotalAmount) + "</span>");
+            $(api.column(otPay20TotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otPay20TotalAmount) + "</span>");
+            $(api.column(otPay30TotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otPay30TotalAmount) + "</span>");
+            $(api.column(nDiffTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(nDiffTotalAmount) + "</span>");
             $(api.column(grandTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAmount) + "</span>");
         }
     });

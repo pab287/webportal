@@ -4034,7 +4034,7 @@ class Reports_m extends CI_Model{
         if (is_array($filteredIds) && count($filteredIds) > 0) {
             $select = "a.id, a.emp_id, b.firstname, b.lastname, b.middlename, b.suffix, b.company_id, b.idno,
             a.total_accredited_ot_hrs as ot_hrs, a.total_accredited_ndiff_ot_hrs as ot_ndiff_hrs,
-            DATE(a.overtime_in) as overtime_in, b.basic_rate, a.has_overtime, a.has_shift";
+            DATE(a.overtime_in) as overtime_in, b.basic_rate, a.has_overtime, a.has_shift, IF((a.shift_am_start && a.shift_am_end) || (a.shift_pm_start && a.shift_pm_end), '1', '0') as ampm_shift";
 
             $this->db->select($select);
             $this->db->from('gcctimeutility.timesheet a');
@@ -4055,20 +4055,22 @@ class Reports_m extends CI_Model{
                     $item->employee_name = $employeeName;
                     $item->day = date('D', strtotime($item->overtime_in));
                     $item->daily_rate = $item->basic_rate;
-
+                    $item->has_shift = $item->ampm_shift === "0" ? "0": $item->has_shift;
+                    
                     $item->allowance = intval($item->has_shift) === 0 && $item->ot_hrs >= 4 ? $this->getOvertimeAllowance($item->emp_id): '';
                     $item->ot_hrs = ($item->ot_hrs == 0) ? '-' : $item->ot_hrs;
-                    $totalOtPay = ($item->daily_rate / 8) * (int) $item->ot_hrs;
-
-                    $otPay = intval($item->has_shift) === 1 ? $totalOtPay : $totalOtPay * 1.3;
-                    $item->ot_pay = $otPay;
+                    $totalOtPay = ($item->daily_rate / 8) * floatval($item->ot_hrs);
+                    $item->ot_pay = $totalOtPay;
+                    $item->ot_pay_20 = intval($item->has_shift) === 1 ? $totalOtPay * 0.25 : '';
+                    $item->ot_pay_30 = intval($item->has_shift) === 0 ? $totalOtPay * 0.30 : '';
+                    $totalOtPayable = intval($item->has_shift) === 1 ? $totalOtPay : $totalOtPay * 1.3;
 
                     $item->ot_ndiff_hrs = ($item->ot_ndiff_hrs == 0) ? '-' : $item->ot_ndiff_hrs;
                     $totalOtNdPay = ($item->daily_rate / 8) * floatval($item->ot_ndiff_hrs);
                     $nightDiffPay = $totalOtNdPay * 0.10;
                     $item->night_diff = $nightDiffPay ? $nightDiffPay : '';
                     $item->ot_adj = $this->getOTAdjustment($coverageDate, $item->emp_id);
-                    $item->amount = $item->ot_pay + $nightDiffPay;
+                    $item->amount = $totalOtPayable + $nightDiffPay;
                     $item->total_pay = $item->amount;
                     $data[$key] = $item;
                 }
