@@ -1,6 +1,8 @@
 let _years = [];
 let _companies = [];
-
+let filterExport = {};
+let totalEntries = 0;
+let typeReport ="";
 toastr.options = { newestOnTop: true, positionClass: "toast-bottom-right" };
 
 const hrisFilterLateAbsenteeReport = $("#frm-filter-hris-late_absentee_report");
@@ -148,18 +150,25 @@ const vmLateAbsenteePreview = new Vue({
             }
 
             return className;
-        }, getLoaReference(empId, date){
-            let referenceNo = null;
-            if(typeof empId != "undefined" && typeof date != "undefined"){
-                const nDate = date.split(" - ");
-                if(nDate.length == 2){
-                    const keyDate = moment(new Date(nDate[0]), "dddd, MMMM D, YYYY h:m A").format("YYYY-MM-DD");
-                    if(typeof globalLoaReference[empId] != "undefined"){
-                        if(typeof globalLoaReference[empId][keyDate] != "undefined"){ referenceNo = globalLoaReference[empId][keyDate]; }
+        }, getLoaReference(employeeId, date) {
+            let referenceNumber = null;
+            const [startDate] = date.split(' - ');
+            const startDateObj = moment(new Date(startDate), 'dddd, MMMM D, YYYY h:m A');
+            let meridian = startDateObj.format('A');
+            const keyDate = startDateObj.format('YYYY-MM-DD');
+
+            if (globalLoaReference[employeeId] && globalLoaReference[employeeId][keyDate]) {
+                const { reference, whole_day, half_day, _meridian, loa_type } = globalLoaReference[employeeId][keyDate];
+                if (reference) {
+                    if ((half_day && _meridian === meridian) ||
+                        (whole_day && half_day === false) ||
+                        (loa_type == 4 && half_day === false)) {
+                        referenceNumber = reference;
                     }
                 }
             }
-            return referenceNo;
+
+            return referenceNumber;
         }
     }
 });
@@ -215,6 +224,22 @@ if(typeof hrisFilterLateAbsenteeReport !== "undefined" && hrisFilterLateAbsentee
             },
             processResults: function (data) { return data; }
         }, language: { errorLoading: function () { return "Searching..." } }
+    }).on("select2:select", function (e) {
+        const tempEmployeeSelector = hrisFilterLateAbsenteeReport.find("select#employee");
+        const tempPayrollGroupSelector = hrisFilterLateAbsenteeReport.find("select#payroll_group");
+
+        tempSelectorClear(tempEmployeeSelector);
+        tempSelectorClear(tempPayrollGroupSelector);
+        
+        $(e.target).validate();
+    }).on("select2:unselect", function (e) {
+        const tempEmployeeSelector = hrisFilterLateAbsenteeReport.find("select#employee");
+        const tempPayrollGroupSelector = hrisFilterLateAbsenteeReport.find("select#payroll_group");
+
+        setTimeout(() => {
+            tempSelectorClear(tempEmployeeSelector, true);
+            tempSelectorClear(tempPayrollGroupSelector, true);
+        }, 250);
     });
 
     hrisFilterLateAbsenteeReport.find("select#employee")
@@ -307,7 +332,7 @@ $.validate({
 
         const formData = $(currentForm).serialize();
         if(propDisabled){ tempEmployeeFilter.prop("disabled", true); }
-
+        filterExport = $(currentForm).serialize();
         $.ajax({
             url: siteUrl("hris/reports/generate_late_absentee_report"),
             type: "post",
@@ -315,10 +340,13 @@ $.validate({
             data: formData,
             success: function(json){
                 if(json.response){
+                    typeReport =  document.querySelector('input[name="report_type"]:checked').value;
                     dtTableLateAbsenteeReport.clear();
                     dtTableLateAbsenteeReport.rows.add(json.data);
                     dtTableLateAbsenteeReport.draw(false);
-                    Object.assign(filterOptionsLateAbsentee, json.filters);
+                    totalEntries = dtTableLateAbsenteeReport.rows().count();
+                    filterOptionsLateAbsentee = { ...json.filters };
+                    globalLoaReference ={ ...json.loa_reference };
 
                     setTimeout(function () {
                         const rowCount = dtTableLateAbsenteeReport.rows().count();
@@ -432,6 +460,9 @@ if(typeof dtTableLateAbsentee !== "undefined" && dtTableLateAbsentee.length > 0)
             exportOptions: {
                 columns: [0, 1, 2, 3],
                 stripHtml: true,
+            },
+            customize: function (xlsx) {
+                export_log(filterExport, `${typeReport} Report`, "excel", totalEntries);
             }
         }, {
             extend: 'print',
@@ -472,6 +503,7 @@ if(typeof dtTableLateAbsentee !== "undefined" && dtTableLateAbsentee.length > 0)
 
                 head.appendChild(style);
                 win.document.title = "Late/Absentee Report Printable Page";
+                export_log(filterExport, `${typeReport} Report`, "print", totalEntries);
             }, exportOptions: {
                 columns: [0, 1, 2, 3],
                 stripHtml: true,
@@ -568,3 +600,34 @@ $("#toggleCollapse").on("click", function(){
         isCollapsedPortlet = true;
     }
 });
+
+async function export_log(datas, type, name, count) {
+    const filters = {};
+    datas.split('&').forEach(pair => {
+        const [key, value] = pair.split('=');
+        filters[key] = decodeURIComponent(value);
+    });
+
+    try {
+        const response = await $.ajax({
+            url: siteUrl("hris/reports/log_export") + '?t=' + new Date().getTime(),
+            type: "POST",
+            data: { 
+                filters,
+                type: type,
+                name: name,
+                count: count,
+                csrf_token: _csrf_hash 
+            },
+            // dataType: 'json'
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            },
+        });
+        return response;
+    } catch (error) {
+        console.error('Error exporting log:', error);
+        throw error;
+    }
+}

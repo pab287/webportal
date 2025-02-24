@@ -925,7 +925,10 @@
     const loansDropdown = <?php echo json_encode($loans_dropdown); ?>;
     let loansCAReference = <?php echo json_encode($loans_ca_reference); ?>;
 
-    // update payroll basic pay and type *** etc
+    let dtAllowance = null, dtLoans = null, dtHistoryPayrollInfo = null, dtCancelledLoanHistory = null, dtBenefits = null, dtPaidLoanHistory = null;
+    let generalSearchAllowances = null, generalSearchHistory = null, generalCancelledSearchHistory = null, generalLoanSearchHistory = null,
+    generalSearchBenefits = null, generalPaidLoanSearchHistory = null;
+
     $.validate({
         form: '#frmEditPayrollData',
         lang: 'en',
@@ -957,85 +960,86 @@
         },
     });
 
-    var generalSearchAllowances = null;
-    var dtAllowance = $("#tbl-allowances").DataTable({
-        dom: 'frtlip',
-        serverSide: true,
-        processing: true,
-        autoWidth: false,
-        searching: false,
-        width: "100%",
-        ajax: {
-            url: "<?php echo base_url("payroll/employee/get_employee_allowance");?>",
-            type: "post",
-            dataType: "json",
-            global: false,
-            data: function(d){ 
-                d.csrf_token = _csrf_hash, 
-                d.emp_id = <?php echo $data->id; ?>, 
-                d.search['value'] = generalSearchAllowances 
+    const dtTableAllowance = function(){
+       return $("#tbl-allowances").DataTable({
+            dom: 'frtlip',
+            serverSide: true,
+            processing: true,
+            autoWidth: false,
+            searching: false,
+            width: "100%",
+            ajax: {
+                url: "<?php echo base_url("payroll/employee/get_employee_allowance");?>",
+                type: "post",
+                dataType: "json",
+                global: false,
+                data: function(d){ 
+                    d.csrf_token = _csrf_hash, 
+                    d.emp_id = <?php echo $data->id; ?>, 
+                    d.search['value'] = generalSearchAllowances 
+                }
+            },
+            columns: [
+                {
+                    width: "*",
+                    data: "allowance_name",
+                    render: function (data) {
+                        return `<span>${data}</span>`;
+                    }
+                },
+                {
+                    width: "15%",
+                    data: "rate",
+                    className: "text-right",
+                    render: function (data, type, row) {
+                        return `<span>${parseFloat(data).toFixed(2)} / ${row.frequency}</span>`;
+                    }
+                },
+                {
+                    width: "15%",
+                    data: "is_active",
+                    className: "text-center",
+                    orderable: false,
+                    render: function (data, type, row) {
+                        if (parseInt(data) === 1) {
+                            return `<span class="m-badge m-badge--success m-badge--wide m--font-boldest">YES</span>`;
+                        } else {
+                            return `<span class="m-badge m-badge--danger m-badge--wide m--font-boldest">NO</span>`;
+                        }
+                    }
+                },
+                {
+                    width: "12%",
+                    data: null,
+                    className: "text-center",
+                    orderable: false,
+                    render: function (data, type, row, meta) {
+                        let btnStr = ``;
+                        if (typeof _currentActions != "undefined" && _currentActions.includes('edit')) {
+                            btnStr += ` <button class="btn btn-sm btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill m-btn--hover-primary"
+                                                onclick="openEditEmployeeAllowanceModal(${row.id}, '${row.allowance_name}', ${row.rate}, '${row.frequency}', '${row.is_active}')">
+                                            <i class="fa fa-pencil"></i>
+                                        </button>`;
+                        }
+
+                        if (typeof _currentActions != "undefined" && _currentActions.includes('archive')) {
+                            btnStr += ` <button class="btn btn-sm btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill m-btn--hover-danger"
+                                                onclick="remove_allowance(${row.id})">
+                                            <i class="fa fa-archive"></i>
+                                        </button>`;
+                        }
+
+                        return btnStr;
+                    }
+                },
+            ], initComplete: function () {
+                $('#generalSearchAllowances').donetyping(function (callback) {
+                    generalSearchAllowances = $(this).val();
+                    dtAllowance.ajax.reload();
+                });
             }
-        },
-        columns: [
-            {
-                width: "*",
-                data: "allowance_name",
-                render: function (data) {
-                    return `<span>${data}</span>`;
-                }
-            },
-            {
-                width: "15%",
-                data: "rate",
-                className: "text-right",
-                render: function (data, type, row) {
-                    return `<span>${parseFloat(data).toFixed(2)} / ${row.frequency}</span>`;
-                }
-            },
-            {
-                width: "15%",
-                data: "is_active",
-                className: "text-center",
-                orderable: false,
-                render: function (data, type, row) {
-                    if (parseInt(data) === 1) {
-                        return `<span class="m-badge m-badge--success m-badge--wide m--font-boldest">YES</span>`;
-                    } else {
-                        return `<span class="m-badge m-badge--danger m-badge--wide m--font-boldest">NO</span>`;
-                    }
-                }
-            },
-            {
-                width: "12%",
-                data: null,
-                className: "text-center",
-                orderable: false,
-                render: function (data, type, row, meta) {
-                    let btnStr = ``;
-                    if (_currentActions.includes('edit')) {
-                        btnStr += ` <button class="btn btn-sm btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill m-btn--hover-primary"
-                                            onclick="openEditEmployeeAllowanceModal(${row.id}, '${row.allowance_name}', ${row.rate}, '${row.frequency}', '${row.is_active}')">
-                                        <i class="fa fa-pencil"></i>
-                                    </button>`;
-                    }
-
-                    if (_currentActions.includes('archive')) {
-                        btnStr += ` <button class="btn btn-sm btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill m-btn--hover-danger"
-                                            onclick="remove_allowance(${row.id})">
-                                        <i class="fa fa-archive"></i>
-                                    </button>`;
-                    }
-
-                    return btnStr;
-                }
-            },
-        ],
-    });
-
-    $('#generalSearchAllowances').donetyping(function (callback) {
-        generalSearchAllowances = $(this).val();
-        dtAllowance.ajax.reload();
-    });
+        });
+    }
 
     function openEditEmployeeAllowanceModal(id, allowance_name, amount, frequency, is_active) {
         $("#id", editEmployeeAllowanceModal).val(id);
@@ -1046,58 +1050,58 @@
         editEmployeeAllowanceModal.modal("show");
     }
 
-    var generalSearchBenefits = null;
-    var dtBenefits = $("#tbl-benefits").DataTable({
-        dom: 'frtlip',
-        serverSide: true,
-        processing: true,
-        autoWidth: false,
-        searching: false,
-        width: "100%",
-        ajax: {
-            url: "<?php echo base_url("payroll/employee/get_employee_benefits"); ?>",
-            type: "post",
-            dataType: "json",
-            global: false,
-            data: function(d){
-                d.csrf_token = _csrf_hash, 
-                d.emp_id = <?php echo $data->id; ?>, 
-                d.search['value'] = generalSearchBenefits 
-            }
-        },
-        columns: [
-            {data: "benefit_name", width: "*"},
-            {data: "rate", className: "text-right", width: "15%"},
-            {data: null, className: "text-center", orderable: false, width: "12%", 
-                render: function (data, type, row) {
-                    let btn = ``;
-                    if (_currentActions.includes("edit")) {
-                        btn += ` <button title="Edit"
-                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
-                                onclick="openEditEmployeeBenefitModal(${row.id}, '${row.rate}', '${row.benefit_id}')">
-                        <i class="fa fa-pencil"></i>
-                        </button>`;
-                    }
-                    if (_currentActions.includes("archive")) {
-                            btn += ` <button title="Archive"
-                                             class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-danger" onclick="remove_benefit(${row.id})">
-                                         <i class="fa fa-archive"></i>
-                                     </button>`;
-                        }
-                    return btn;
+    const dtTableBenefits = function(){
+        return $("#tbl-benefits").DataTable({
+            dom: 'frtlip',
+            serverSide: true,
+            processing: true,
+            autoWidth: false,
+            searching: false,
+            width: "100%",
+            ajax: {
+                url: "<?php echo base_url("payroll/employee/get_employee_benefits"); ?>",
+                type: "post",
+                dataType: "json",
+                global: false,
+                data: function(d){
+                    d.csrf_token = _csrf_hash,
+                    d.emp_id = <?php echo $data->id; ?>,
+                    d.search['value'] = generalSearchBenefits
                 }
             },
-        ],
-    });
+            columns: [
+                {data: "benefit_name", width: "*"},
+                {data: "rate", className: "text-right", width: "15%"},
+                {data: null, className: "text-center", orderable: false, width: "12%", 
+                    render: function (data, type, row) {
+                        let btn = ``;
+                        if (typeof _currentActions != "undefined" && _currentActions.includes("edit")) {
+                            btn += ` <button title="Edit"
+                                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
+                                    onclick="openEditEmployeeBenefitModal(${row.id}, '${row.rate}', '${row.benefit_id}')">
+                            <i class="fa fa-pencil"></i>
+                            </button>`;
+                        }
+                        if (typeof _currentActions != "undefined" && _currentActions.includes("archive")) {
+                                btn += ` <button title="Archive"
+                                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-danger" onclick="remove_benefit(${row.id})">
+                                            <i class="fa fa-archive"></i>
+                                        </button>`;
+                            }
+                        return btn;
+                    }
+                },
+            ], initComplete: function () {
+                $('#generalSearchBenefits').donetyping(function (callback) {
+                    generalSearchBenefits = $(this).val();
+                    dtBenefits.ajax.reload();
+                });
+            }
+        });
+    }
 
-    $('#generalSearchBenefits').donetyping(function (callback) {
-        generalSearchBenefits = $(this).val();
-        dtBenefits.ajax.reload();
-    });
-
-    var loan_search_val = '';
-    var dtLoans = $("#tbl-loans")
-        .DataTable({
+    const dtTableLoans = function(){
+        return $("#tbl-loans").DataTable({
             dom: 'frtlip',
             serverSide: true,
             processing: true,
@@ -1110,7 +1114,7 @@
                 type: "post",
                 dataType: "json",
                 global: false,
-                data: function (d) {d.csrf_token = _csrf_hash, d.emp_id = <?php echo $data->id; ?>, d.search['value'] = loan_search_val }
+                data: function (d) {d.csrf_token = _csrf_hash, d.emp_id = <?php echo $data->id; ?>, d.search['value'] = generalLoanSearchHistory }
             },
             columns: [
                 {
@@ -1234,7 +1238,7 @@
                         if(balance <= 0){ tempIsPaid = true; }
 
                         const rawData = JSON.stringify(row);
-                        if (_currentActions.includes("new") && (isPaid !== 1 && tempIsPaid === false)) {
+                        if (typeof _currentActions != "undefined" && _currentActions.includes("new") && (isPaid !== 1 && tempIsPaid === false)) {
                             if(allowMerge){
                                 btn += `<button title="Mergeable Loan"
                                     class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary" 
@@ -1253,7 +1257,7 @@
                             }
                         }
                         
-                        if (_currentActions.includes("edit") && (isPaid !== 1 && tempIsPaid === false)) {
+                        if (typeof _currentActions != "undefined" && _currentActions.includes("edit") && (isPaid !== 1 && tempIsPaid === false)) {
                             btn += `<button title="Edit"
                                     class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
                                     onclick="openEditEmployeeLoanModal(${row.id})">
@@ -1269,7 +1273,7 @@
                             ctrActions++;
                         }
 
-                        if(_currentActions.includes('view') && (row.image != 0)){
+                        if(typeof _currentActions != "undefined" && _currentActions.includes('view') && (row.image != 0)){
                             btn += `<button title="View payment history"
                                              class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
                                              onclick="openLoanAttachmentModal(${row.id})">
@@ -1283,9 +1287,9 @@
                                 </a>
                             </li>`;
                             ctrActions++;
-                        }
+                        }_currentActions
 
-                        if (_currentActions.includes("view")) {
+                        if (typeof _currentActions != "undefined" && _currentActions.includes("view")) {
                             btn += `<button title="View payment history"
                                              class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
                                              onclick="openLoanPaymentHistoryModal(${row.id})">
@@ -1301,7 +1305,7 @@
                             ctrActions++;
                         }
 
-                        if (_currentActions.includes("archive")) {
+                        if (typeof _currentActions != "undefined" && _currentActions.includes("archive")) {
                             btn += `<button title="Archive"
                                         onclick="remove_loan(${row.id})"
                                              class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-danger">
@@ -1349,515 +1353,518 @@
             ],
             initComplete: function () {
                 $('#generalSearchLoans').donetyping(function(callback) {
-                    loan_search_val = $(this).val();
+                    generalLoanSearchHistory = $(this).val();
                     dtLoans.ajax.reload();
                 });
             }, drawCallback: function(){
                 setTimeout(getCAReferences(), 750);
             }
         });
+    } 
 
-    var history_search_val = '';
-    var dtLoanHistory = $("#tbl-deduction-history").DataTable({
-        dom: 'frtlip',
-        serverSide: true,
-        processing: true,
-        autoWidth: false,
-        ordering: false,
-        searching: false,
-        ajax: {
-            url: "<?php echo base_url("payroll/employee/get_employee_loans_history");?>",
-            type: "post",
-            dataType: "json",
-            global: false,
-            data: function (d) {d.csrf_token = _csrf_hash, d.emp_id = <?php echo $data->id; ?>, d.search['value'] = history_search_val }
-        },
-        columns: [
-            {
-                data: "loan_name",
-                width: "*",
-                render: function (data, type, row) {
-                    var ref, mergeState=``, dnRefs=``;
-                    if(row.reference === '' || row.reference === null){ ref = ``; }
-                    else{ ref = `<p class='m-0'><small><span class="m--font-bolder">Reference:</span> ${row.reference}</small></p>`; }
-
-                    if(parseInt(row.merged_count) > 0){
-                        mergeState = `<span class="m-badge m-badge--wide m-badge--warning text-white m--margin-left-15 m--regular-font-size-sm5">Merged</span>`;
-                    }
-
-                    if(typeof row.debit_note != "undefined" && row.debit_note){
-                        dnRefs = `<span class='m--font-primary m--font-boldest m--margin-left-15 m--regular-font-size-lg1'>${row.debit_note}</span>`;
-                    }
-
-                    let tempHtml = `<p class="mb-1 m--font-bolder">${data} ${dnRefs} ${mergeState}</p>`+ref+`
-                    <p class='m-0'><small><span class="m--font-bolder">Created By:</span> ${row.created_by}</small></p>
-                    <p class='m-0'><small><span class="m--font-bolder">Created Date:</span> ${row.created_at}</small></p>`;
-
-                    return tempHtml;
-                }
+    const dtTablePaidLoanHitory = function(){
+        return $("#tbl-deduction-history").DataTable({
+            dom: 'frtlip',
+            serverSide: true,
+            processing: true,
+            autoWidth: false,
+            ordering: false,
+            searching: false,
+            ajax: {
+                url: "<?php echo base_url("payroll/employee/get_employee_loans_history");?>",
+                type: "post",
+                dataType: "json",
+                global: false,
+                data: function (d) {d.csrf_token = _csrf_hash, d.emp_id = <?php echo $data->id; ?>, d.search['value'] = generalPaidLoanSearchHistory }
             },
-            {
-                data: "amount",
-                className: "text-right",
-                width: "14%",
-                render: function (data) {
-                    return `<span class="m--font-boldest">
-                                ${parseFloat(data).toLocaleString('en-US', {maximumFractionDigits: 2})}
-                            </span>`;
-                }
-            },
-            {
-                data: "total_amount_paid",
-                className: "text-right m--padding-right-30",
-                width: "10%",
-                render: function (data) {
-                    return `<span class="m--font-boldest">
-                                ${parseFloat(data).toLocaleString('en-US', {maximumFractionDigits: 2})}
-                            </span>`;
-                }
-            },
-            {
-                data: null,
-                className: "text-right m--padding-right-30",
-                width: "10%",
-                render: function (data, type, row) {
-                    const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
-                    return `<span class="m--font-boldest">
-                                ${parseFloat(balance).toLocaleString('en-US', {maximumFractionDigits: 2})}
-                            </span>`;
-                }
-            },
-            {
-                data: "deduction_type",
-                width: "10%",
-                render: function (data, type, row) {
-                    return parseInt(data) === 0 ? "Percentage" : "Fix Amount";
-                }
-            },
-            {
-                data: null,
-                width: "8%",
-                render: function (data, type, row) {
-                    if (parseInt(row.deduction_type) === 0) {
-                        return parseFloat(row.percentage).toLocaleString('en-US', {maximumFractionDigits: 2}) + "" + "%";
-                    } else {
-                        return parseFloat(row.fixed_deduction_amt).toLocaleString('en-US', {maximumFractionDigits: 2});
-                    }
-                }
-            },{
-                data: "active",
-                className: "text-center",
-                width: "10%",
-                render: function (data, type, row) {
-                    let tempStatus = parseInt(data);
-                    let badgeColor = "m-badge--warning";
-                    let badgeText = "Suspended";
-                    if(row.paid == 1 && tempStatus !== 2){ tempStatus = 2; }
+            columns: [
+                {
+                    data: "loan_name",
+                    width: "*",
+                    render: function (data, type, row) {
+                        var ref, mergeState=``, dnRefs=``;
+                        if(row.reference === '' || row.reference === null){ ref = ``; }
+                        else{ ref = `<p class='m-0'><small><span class="m--font-bolder">Reference:</span> ${row.reference}</small></p>`; }
 
-                    const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
-                    if(balance <= 0){ tempStatus = 2; }
-
-                    switch (tempStatus) {
-                        case 1:
-                            badgeColor = "m-badge--info";
-                            badgeText = "Active";
-                            break;
-                        case 2:
-                            badgeColor = "m-badge--success";
-                            badgeText = "Paid";
-                            break;
-                        default:
-                            badgeColor = "m-badge--warning";
-                            badgeText = "Suspended";
-                            break;
-                    }
-                    return `<span class="m-badge m-badge--wide m--font-bolder ${badgeColor}" style="width: 75%;">${badgeText}</span>`;
-                }
-            },
-            {
-                width: "7%",
-                data: null,
-                className: "text-center",
-                orderable: false,
-                render: function (data, type, row) {
-                    let btn = ``;
-                    let ctrActions = 0;
-                    let listActions = ``;
-                    const isPaid = parseInt(row.paid);
-
-                    let tempIsPaid = false;
-                    const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
-                    if(balance <= 0){ tempIsPaid = true; }
-
-                    if (_currentActions.includes("edit") && (isPaid !== 1 && tempIsPaid === false)) {
-                        btn += `<button title="Edit"
-                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
-                                onclick="openEditEmployeeLoanModal(${row.id})">
-                        <i class="fa fa-pencil"></i>
-                        </button> `;
-                        listActions += `<li class="m-nav__item">
-                            <a href="javascript:void(0)" class="m-nav__link"
-                            onclick="openEditEmployeeLoanModal(${row.id})">
-                                <i class="m-nav__link-icon flaticon-coins"></i>
-                                <span class="m-nav__link-text">EDIT LOAN</span>
-                            </a>
-                        </li>`;
-                        ctrActions++;
-                    }
-
-                    if(_currentActions.includes('view')){
-                        btn += `<button title="View payment history"
-                                            class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
-                                            onclick="openLoanAttachmentModal(${row.id})">
-                                    <i class="la la-image"></i>
-                                    </button> `;
-                        listActions += `<li class="m-nav__item">
-                            <a href="javascript:void(0)" class="m-nav__link"
-                            onclick="openLoanAttachmentModal(${row.id})">
-                                <i class="m-nav__link-icon la la-image"></i>
-                                <span class="m-nav__link-text">Attachments</span>
-                            </a>
-                        </li>`;
-                        ctrActions++;
-                    }
-
-                    if (_currentActions.includes("view")) {
-                        btn += `<button title="View payment history"
-                                            class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
-                                            onclick="openLoanPaymentHistoryModal(${row.id})">
-                                    <i class="fa fa-list-ol"></i>
-                                    </button> `;
-                        listActions += `<li class="m-nav__item">
-                            <a href="javascript:void(0)" class="m-nav__link"
-                            onclick="openLoanPaymentHistoryModal(${row.id})">
-                                <i class="m-nav__link-icon flaticon-list"></i>
-                                <span class="m-nav__link-text">PAYMENT HISTORY</span>
-                            </a>
-                        </li>`;
-                        ctrActions++;
-                    }
-
-                    if (_currentActions.includes("archive")) {
-                        btn += `<button title="Archive"
-                                    onclick="remove_loan(${row.id})"
-                                            class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-danger">
-                                        <i class="fa fa-archive"></i>
-                                    </button> `;
-                        listActions += `<li class="m-nav__item">
-                            <a href="javascript:void(0)" class="m-nav__link"
-                            onclick="remove_loan(${row.id})">
-                                <i class="m-nav__link-icon flaticon-interface-2"></i>
-                                <span class="m-nav__link-text">ARCHIVE LOAN</span>
-                            </a>
-                        </li>`;
-                        ctrActions++;
-                    }
-
-                    const _tempAction = `<div class="m-dropdown m-dropdown--inline m-dropdown--align-right m-dropdown--large"
-                            data-dropdown-toggle="click" aria-expanded="true">
-                        <a href="#" class="m-dropdown__toggle btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill"
-                            data-toggle="m-tooltip" data-original-title="More Options" data-skin="dark"
-                            data-delay='{"show": 500}'>
-                            <i class="fa fa-ellipsis-v"></i>
-                        </a>
-                        <div class="m-dropdown__wrapper">
-                            <span class="m-dropdown__arrow m-dropdown__arrow--right"></span>
-                            <div class="m-dropdown__inner">
-                                <div class="m-dropdown__body">
-                                    <div class="m-dropdown__content">
-                                        <ul class="m-nav">
-                                            <li class="m-nav__section m-nav__section--first">
-                                                <span class="m-nav__section-text">OPTIONS</span>
-                                            </li>
-                                            ${listActions}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>`;
-
-                    if(ctrActions > 1){ btn = _tempAction; }
-                    if(ctrActions == 0){ btn = '--'; }
-                    return btn;
-                }
-            },
-
-        ],
-        initComplete: function () {
-            $('#generalSearchPaidLoans').donetyping(function(callback) {
-                history_search_val = $(this).val();
-                dtLoanHistory.ajax.reload();
-            });
-        }
-        
-    });
-
-    var cancelled_history_search_val = '';
-    var dtCancelledLoanHistory = $("#tbl-deduction-cancelled").DataTable({
-        dom: 'frtlip',
-        serverSide: true,
-        processing: true,
-        autoWidth: false,
-        ordering: false,
-        searching: false,
-        ajax: {
-            url: "<?php echo base_url("payroll/employee/get_employee_loans_history"); ?>",
-            type: "post",
-            dataType: "json",
-            global: false,
-            data: function (d) {
-                d.csrf_token = _csrf_hash; 
-                d.emp_id = <?php echo $data->id; ?>; 
-                d.search['value'] = cancelled_history_search_val;
-                d.loan_status = 3; }
-        },
-        columns: [
-            {
-                data: "loan_name",
-                width: "*",
-                render: function (data, type, row) {
-                    var ref, mergeState=``, mergedAmount = ``, dnRefs = ``;
-                    if(row.reference === '' || row.reference === null){
-                        ref = ``;
-                    }else{
-                        ref = `<p class='m-0'><small><span class="m--font-bolder">Reference:</span> ${row.reference}</small></p>`;
-                    }
-
-                    if(parseInt(row.merged_id) > 0){
-                        mergeState = `<span class="m-badge m-badge--wide m-badge--warning text-white m--margin-left-15 m--regular-font-size-sm5">Merged</span>`;
-                        if(parseFloat(row.merged_amount) > 0){
-                            const tempAmount = numberFormat(row.merged_amount);
-                            mergedAmount = `<p class='mt-2 mb-2'><small><span class="m--font-bolder">Merged to Loan Amount:</span></small>
-                                <span class="m--font-danger m--font-boldest m--margin-left-15 m--regular-font-size-lg2">${tempAmount}</span></p>`;
+                        if(parseInt(row.merged_count) > 0){
+                            mergeState = `<span class="m-badge m-badge--wide m-badge--warning text-white m--margin-left-15 m--regular-font-size-sm5">Merged</span>`;
                         }
-                    }
 
-                    if(typeof row.debit_note != "undefined" && row.debit_note){
-                        dnRefs = `<span class='m--font-primary m--font-boldest m--margin-left-15 m--regular-font-size-lg1'>${row.debit_note}</span>`;
-                    }
+                        if(typeof row.debit_note != "undefined" && row.debit_note){
+                            dnRefs = `<span class='m--font-primary m--font-boldest m--margin-left-15 m--regular-font-size-lg1'>${row.debit_note}</span>`;
+                        }
 
-                    let tempHtml = `<p class="mb-1 m--font-bolder">${data} ${dnRefs} ${mergeState}</p>
-                        ${mergedAmount}${ref}
+                        let tempHtml = `<p class="mb-1 m--font-bolder">${data} ${dnRefs} ${mergeState}</p>`+ref+`
                         <p class='m-0'><small><span class="m--font-bolder">Created By:</span> ${row.created_by}</small></p>
                         <p class='m-0'><small><span class="m--font-bolder">Created Date:</span> ${row.created_at}</small></p>`;
 
-                    return tempHtml;
-                }
-            },
-            {
-                data: "amount",
-                className: "text-right",
-                width: "14%",
-                render: function (data) {
-                    return `<span class="m--font-boldest">
-                                ${parseFloat(data).toLocaleString('en-US', {maximumFractionDigits: 2})}
-                            </span>`;
-                }
-            },
-            {
-                data: "total_amount_paid",
-                className: "text-right m--padding-right-30",
-                width: "10%",
-                render: function (data) {
-                    return `<span class="m--font-boldest">
-                                ${parseFloat(data).toLocaleString('en-US', {maximumFractionDigits: 2})}
-                            </span>`;
-                }
-            },
-            {
-                data: null,
-                className: "text-right m--padding-right-30",
-                width: "10%",
-                render: function (data, type, row) {
-                    const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
-                    return `<span class="m--font-boldest">
-                                ${parseFloat(balance).toLocaleString('en-US', {maximumFractionDigits: 2})}
-                            </span>`;
-                }
-            },
-            {
-                data: "deduction_type",
-                width: "10%",
-                render: function (data, type, row) {
-                    return parseInt(data) === 0 ? "Percentage" : "Fix Amount";
-                }
-            },
-            {
-                data: null,
-                width: "8%",
-                render: function (data, type, row) {
-                    if (parseInt(row.deduction_type) === 0) {
-                        return parseFloat(row.percentage).toLocaleString('en-US', {maximumFractionDigits: 2}) + "" + "%";
-                    } else {
-                        return parseFloat(row.fixed_deduction_amt).toLocaleString('en-US', {maximumFractionDigits: 2});
+                        return tempHtml;
                     }
-                }
-            },{
-                data: "active",
-                className: "text-center",
-                width: "10%",
-                render: function (data, type, row) {
-                    let tempStatus = parseInt(data);
-                    let badgeColor = "m-badge--warning";
-                    let badgeText = "Suspended";
-                    if(row.paid == 1 && tempStatus < 2){ tempStatus = 2; }
-
-                    const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
-                    if(balance <= 0){ tempStatus = 2; }
-
-                    switch (tempStatus) {
-                        case 1:
-                            badgeColor = "m-badge--info";
-                            badgeText = "Active";
-                            break;
-                        case 2:
-                            badgeColor = "m-badge--success";
-                            badgeText = "Paid";
-                            break;
-                        case 3:
-                            badgeColor = "m-badge--metal text-white";
-                            badgeText = "Cancelled";
-                            break;
-                        default:
-                            badgeColor = "m-badge--warning";
-                            badgeText = "Suspended";
-                            break;
+                },
+                {
+                    data: "amount",
+                    className: "text-right",
+                    width: "14%",
+                    render: function (data) {
+                        return `<span class="m--font-boldest">
+                                    ${parseFloat(data).toLocaleString('en-US', {maximumFractionDigits: 2})}
+                                </span>`;
                     }
-                    return `<span class="m-badge m-badge--wide m--font-bolder ${badgeColor}" style="width: 75%;">${badgeText}</span>`;
-                }
-            },
-            {
-                width: "7%",
-                data: null,
-                className: "text-center",
-                orderable: false,
-                render: function (data, type, row) {
-                    let btn = ``;
-                    let ctrActions = 0;
-                    let listActions = ``;
-                    const isPaid = parseInt(row.paid);
+                },
+                {
+                    data: "total_amount_paid",
+                    className: "text-right m--padding-right-30",
+                    width: "10%",
+                    render: function (data) {
+                        return `<span class="m--font-boldest">
+                                    ${parseFloat(data).toLocaleString('en-US', {maximumFractionDigits: 2})}
+                                </span>`;
+                    }
+                },
+                {
+                    data: null,
+                    className: "text-right m--padding-right-30",
+                    width: "10%",
+                    render: function (data, type, row) {
+                        const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                        return `<span class="m--font-boldest">
+                                    ${parseFloat(balance).toLocaleString('en-US', {maximumFractionDigits: 2})}
+                                </span>`;
+                    }
+                },
+                {
+                    data: "deduction_type",
+                    width: "10%",
+                    render: function (data, type, row) {
+                        return parseInt(data) === 0 ? "Percentage" : "Fix Amount";
+                    }
+                },
+                {
+                    data: null,
+                    width: "8%",
+                    render: function (data, type, row) {
+                        if (parseInt(row.deduction_type) === 0) {
+                            return parseFloat(row.percentage).toLocaleString('en-US', {maximumFractionDigits: 2}) + "" + "%";
+                        } else {
+                            return parseFloat(row.fixed_deduction_amt).toLocaleString('en-US', {maximumFractionDigits: 2});
+                        }
+                    }
+                },{
+                    data: "active",
+                    className: "text-center",
+                    width: "10%",
+                    render: function (data, type, row) {
+                        let tempStatus = parseInt(data);
+                        let badgeColor = "m-badge--warning";
+                        let badgeText = "Suspended";
+                        if(row.paid == 1 && tempStatus !== 2){ tempStatus = 2; }
 
-                    let tempIsPaid = false;
-                    const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
-                    if(balance <= 0){ tempIsPaid = true; }
+                        const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                        if(balance <= 0){ tempStatus = 2; }
 
-                    if (_currentActions.includes("view")) {
-                        btn += `<button title="View payment history"
-                                            class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
-                                            onclick="openLoanPaymentHistoryModal(${row.id})">
-                                    <i class="fa fa-list-ol"></i>
-                                    </button> `;
-                        listActions += `<li class="m-nav__item">
-                            <a href="javascript:void(0)" class="m-nav__link"
-                            onclick="openLoanPaymentHistoryModal(${row.id})">
-                                <i class="m-nav__link-icon flaticon-list"></i>
-                                <span class="m-nav__link-text">PAYMENT HISTORY</span>
+                        switch (tempStatus) {
+                            case 1:
+                                badgeColor = "m-badge--info";
+                                badgeText = "Active";
+                                break;
+                            case 2:
+                                badgeColor = "m-badge--success";
+                                badgeText = "Paid";
+                                break;
+                            default:
+                                badgeColor = "m-badge--warning";
+                                badgeText = "Suspended";
+                                break;
+                        }
+                        return `<span class="m-badge m-badge--wide m--font-bolder ${badgeColor}" style="width: 75%;">${badgeText}</span>`;
+                    }
+                },
+                {
+                    width: "7%",
+                    data: null,
+                    className: "text-center",
+                    orderable: false,
+                    render: function (data, type, row) {
+                        let btn = ``;
+                        let ctrActions = 0;
+                        let listActions = ``;
+                        const isPaid = parseInt(row.paid);
+
+                        let tempIsPaid = false;
+                        const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                        if(balance <= 0){ tempIsPaid = true; }
+
+                        if (typeof _currentActions != "undefined" && _currentActions.includes("edit") && (isPaid !== 1 && tempIsPaid === false)) {
+                            btn += `<button title="Edit"
+                                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
+                                    onclick="openEditEmployeeLoanModal(${row.id})">
+                            <i class="fa fa-pencil"></i>
+                            </button> `;
+                            listActions += `<li class="m-nav__item">
+                                <a href="javascript:void(0)" class="m-nav__link"
+                                onclick="openEditEmployeeLoanModal(${row.id})">
+                                    <i class="m-nav__link-icon flaticon-coins"></i>
+                                    <span class="m-nav__link-text">EDIT LOAN</span>
+                                </a>
+                            </li>`;
+                            ctrActions++;
+                        }
+
+                        if(typeof _currentActions != "undefined" && _currentActions.includes('view')){
+                            btn += `<button title="View payment history"
+                                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
+                                                onclick="openLoanAttachmentModal(${row.id})">
+                                        <i class="la la-image"></i>
+                                        </button> `;
+                            listActions += `<li class="m-nav__item">
+                                <a href="javascript:void(0)" class="m-nav__link"
+                                onclick="openLoanAttachmentModal(${row.id})">
+                                    <i class="m-nav__link-icon la la-image"></i>
+                                    <span class="m-nav__link-text">Attachments</span>
+                                </a>
+                            </li>`;
+                            ctrActions++;
+                        }
+
+                        if (typeof _currentActions != "undefined" && _currentActions.includes("view")) {
+                            btn += `<button title="View payment history"
+                                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
+                                                onclick="openLoanPaymentHistoryModal(${row.id})">
+                                        <i class="fa fa-list-ol"></i>
+                                        </button> `;
+                            listActions += `<li class="m-nav__item">
+                                <a href="javascript:void(0)" class="m-nav__link"
+                                onclick="openLoanPaymentHistoryModal(${row.id})">
+                                    <i class="m-nav__link-icon flaticon-list"></i>
+                                    <span class="m-nav__link-text">PAYMENT HISTORY</span>
+                                </a>
+                            </li>`;
+                            ctrActions++;
+                        }
+
+                        if (typeof _currentActions != "undefined" && _currentActions.includes("archive")) {
+                            btn += `<button title="Archive"
+                                        onclick="remove_loan(${row.id})"
+                                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-danger">
+                                            <i class="fa fa-archive"></i>
+                                        </button> `;
+                            listActions += `<li class="m-nav__item">
+                                <a href="javascript:void(0)" class="m-nav__link"
+                                onclick="remove_loan(${row.id})">
+                                    <i class="m-nav__link-icon flaticon-interface-2"></i>
+                                    <span class="m-nav__link-text">ARCHIVE LOAN</span>
+                                </a>
+                            </li>`;
+                            ctrActions++;
+                        }
+
+                        const _tempAction = `<div class="m-dropdown m-dropdown--inline m-dropdown--align-right m-dropdown--large"
+                                data-dropdown-toggle="click" aria-expanded="true">
+                            <a href="#" class="m-dropdown__toggle btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill"
+                                data-toggle="m-tooltip" data-original-title="More Options" data-skin="dark"
+                                data-delay='{"show": 500}'>
+                                <i class="fa fa-ellipsis-v"></i>
                             </a>
-                        </li>`;
-                        ctrActions++;
-                    }
-
-                    if (_currentActions.includes("archive")) {
-                        btn += `<button title="Archive"
-                                    onclick="remove_loan(${row.id})"
-                                            class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-danger">
-                                        <i class="fa fa-archive"></i>
-                                    </button> `;
-                        listActions += `<li class="m-nav__item">
-                            <a href="javascript:void(0)" class="m-nav__link"
-                            onclick="remove_loan(${row.id})">
-                                <i class="m-nav__link-icon flaticon-interface-2"></i>
-                                <span class="m-nav__link-text">ARCHIVE LOAN</span>
-                            </a>
-                        </li>`;
-                        ctrActions++;
-                    }
-
-                    const _tempAction = `<div class="m-dropdown m-dropdown--inline m-dropdown--align-right m-dropdown--large"
-                            data-dropdown-toggle="click" aria-expanded="true">
-                        <a href="#" class="m-dropdown__toggle btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill"
-                            data-toggle="m-tooltip" data-original-title="More Options" data-skin="dark"
-                            data-delay='{"show": 500}'>
-                            <i class="fa fa-ellipsis-v"></i>
-                        </a>
-                        <div class="m-dropdown__wrapper">
-                            <span class="m-dropdown__arrow m-dropdown__arrow--right"></span>
-                            <div class="m-dropdown__inner">
-                                <div class="m-dropdown__body">
-                                    <div class="m-dropdown__content">
-                                        <ul class="m-nav">
-                                            <li class="m-nav__section m-nav__section--first">
-                                                <span class="m-nav__section-text">OPTIONS</span>
-                                            </li>
-                                            ${listActions}
-                                        </ul>
+                            <div class="m-dropdown__wrapper">
+                                <span class="m-dropdown__arrow m-dropdown__arrow--right"></span>
+                                <div class="m-dropdown__inner">
+                                    <div class="m-dropdown__body">
+                                        <div class="m-dropdown__content">
+                                            <ul class="m-nav">
+                                                <li class="m-nav__section m-nav__section--first">
+                                                    <span class="m-nav__section-text">OPTIONS</span>
+                                                </li>
+                                                ${listActions}
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>`;
+                        </div>`;
 
-                    if(ctrActions > 1){ btn = _tempAction; }
-                    if(ctrActions == 0){ btn = '--'; }
-                    return btn;
-                }
-            },
+                        if(ctrActions > 1){ btn = _tempAction; }
+                        if(ctrActions == 0){ btn = '--'; }
+                        return btn;
+                    }
+                },
 
-        ],
-        initComplete: function () {
-            $('#generalSearchCancelledLoans').donetyping(function(callback) {
-                cancelled_history_search_val = $(this).val();
-                dtCancelledLoanHistory.ajax.reload();
-            });
-        } 
-    });
-
-    var generalSearchHistory = null;
-    var dtHistoryPayrollInfo = $("#tbl-payroll_history").DataTable({
-        dom: 'frtlip',
-        serverSide: true,
-        processing: true,
-        autoWidth: false,
-        ordering: false,
-        searching: false,
-        ajax: {
-            url: "<?php echo base_url("payroll/employee/get_history_payroll_information"); ?>",
-            type: "post",
-            dataType: "json",
-            global: false,
-            data: function (d) {
-                d.csrf_token = _csrf_hash; 
-                d.emp_id = <?php echo $data->id; ?>;
-                d.search["value"] = generalSearchHistory;
+            ],
+            initComplete: function () {
+                $('#generalSearchPaidLoans').donetyping(function(callback) {
+                    generalPaidLoanSearchHistory = $(this).val();
+                    dtPaidLoanHistory.ajax.reload();
+                });
             }
-        },
-        columns: [{
-                data: "log_message",
-                width: "*",
-            },{
-                data: "user_action",
-                width: "15%",
-            },{
-                data: "employee_name",
-                width: "25%",
-                render: function (data, meta, row) { 
-                    const html = `<p class='mb-0'>${data}</p>
-                    <small><span class='m--font-boldest'>${row.created_at_formatted}</span></small>`;
-                    return html; 
+        });
+    }
+
+    const dtTableCancelledLoanHistory = function(){
+        return $("#tbl-deduction-cancelled").DataTable({
+            dom: 'frtlip',
+            serverSide: true,
+            processing: true,
+            autoWidth: false,
+            ordering: false,
+            searching: false,
+            ajax: {
+                url: "<?php echo base_url("payroll/employee/get_employee_loans_history"); ?>",
+                type: "post",
+                dataType: "json",
+                global: false,
+                data: function (d) {
+                    d.csrf_token = _csrf_hash; 
+                    d.emp_id = <?php echo $data->id; ?>; 
+                    d.search['value'] = generalCancelledSearchHistory;
+                    d.loan_status = 3; }
+            },
+            columns: [
+                {
+                    data: "loan_name",
+                    width: "*",
+                    render: function (data, type, row) {
+                        var ref, mergeState=``, mergedAmount = ``, dnRefs = ``;
+                        if(row.reference === '' || row.reference === null){
+                            ref = ``;
+                        }else{
+                            ref = `<p class='m-0'><small><span class="m--font-bolder">Reference:</span> ${row.reference}</small></p>`;
+                        }
+
+                        if(parseInt(row.merged_id) > 0){
+                            mergeState = `<span class="m-badge m-badge--wide m-badge--warning text-white m--margin-left-15 m--regular-font-size-sm5">Merged</span>`;
+                            if(parseFloat(row.merged_amount) > 0){
+                                const tempAmount = numberFormat(row.merged_amount);
+                                mergedAmount = `<p class='mt-2 mb-2'><small><span class="m--font-bolder">Merged to Loan Amount:</span></small>
+                                    <span class="m--font-danger m--font-boldest m--margin-left-15 m--regular-font-size-lg2">${tempAmount}</span></p>`;
+                            }
+                        }
+
+                        if(typeof row.debit_note != "undefined" && row.debit_note){
+                            dnRefs = `<span class='m--font-primary m--font-boldest m--margin-left-15 m--regular-font-size-lg1'>${row.debit_note}</span>`;
+                        }
+
+                        let tempHtml = `<p class="mb-1 m--font-bolder">${data} ${dnRefs} ${mergeState}</p>
+                            ${mergedAmount}${ref}
+                            <p class='m-0'><small><span class="m--font-bolder">Created By:</span> ${row.created_by}</small></p>
+                            <p class='m-0'><small><span class="m--font-bolder">Created Date:</span> ${row.created_at}</small></p>`;
+
+                        return tempHtml;
+                    }
+                },
+                {
+                    data: "amount",
+                    className: "text-right",
+                    width: "14%",
+                    render: function (data) {
+                        return `<span class="m--font-boldest">
+                                    ${parseFloat(data).toLocaleString('en-US', {maximumFractionDigits: 2})}
+                                </span>`;
+                    }
+                },
+                {
+                    data: "total_amount_paid",
+                    className: "text-right m--padding-right-30",
+                    width: "10%",
+                    render: function (data) {
+                        return `<span class="m--font-boldest">
+                                    ${parseFloat(data).toLocaleString('en-US', {maximumFractionDigits: 2})}
+                                </span>`;
+                    }
+                },
+                {
+                    data: null,
+                    className: "text-right m--padding-right-30",
+                    width: "10%",
+                    render: function (data, type, row) {
+                        const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                        return `<span class="m--font-boldest">
+                                    ${parseFloat(balance).toLocaleString('en-US', {maximumFractionDigits: 2})}
+                                </span>`;
+                    }
+                },
+                {
+                    data: "deduction_type",
+                    width: "10%",
+                    render: function (data, type, row) {
+                        return parseInt(data) === 0 ? "Percentage" : "Fix Amount";
+                    }
+                },
+                {
+                    data: null,
+                    width: "8%",
+                    render: function (data, type, row) {
+                        if (parseInt(row.deduction_type) === 0) {
+                            return parseFloat(row.percentage).toLocaleString('en-US', {maximumFractionDigits: 2}) + "" + "%";
+                        } else {
+                            return parseFloat(row.fixed_deduction_amt).toLocaleString('en-US', {maximumFractionDigits: 2});
+                        }
+                    }
+                },{
+                    data: "active",
+                    className: "text-center",
+                    width: "10%",
+                    render: function (data, type, row) {
+                        let tempStatus = parseInt(data);
+                        let badgeColor = "m-badge--warning";
+                        let badgeText = "Suspended";
+                        if(row.paid == 1 && tempStatus < 2){ tempStatus = 2; }
+
+                        const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                        if(balance <= 0){ tempStatus = 2; }
+
+                        switch (tempStatus) {
+                            case 1:
+                                badgeColor = "m-badge--info";
+                                badgeText = "Active";
+                                break;
+                            case 2:
+                                badgeColor = "m-badge--success";
+                                badgeText = "Paid";
+                                break;
+                            case 3:
+                                badgeColor = "m-badge--metal text-white";
+                                badgeText = "Cancelled";
+                                break;
+                            default:
+                                badgeColor = "m-badge--warning";
+                                badgeText = "Suspended";
+                                break;
+                        }
+                        return `<span class="m-badge m-badge--wide m--font-bolder ${badgeColor}" style="width: 75%;">${badgeText}</span>`;
+                    }
+                },
+                {
+                    width: "7%",
+                    data: null,
+                    className: "text-center",
+                    orderable: false,
+                    render: function (data, type, row) {
+                        let btn = ``;
+                        let ctrActions = 0;
+                        let listActions = ``;
+                        const isPaid = parseInt(row.paid);
+
+                        let tempIsPaid = false;
+                        const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                        if(balance <= 0){ tempIsPaid = true; }
+
+                        if (typeof _currentActions != "undefined" && _currentActions.includes("view")) {
+                            btn += `<button title="View payment history"
+                                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
+                                                onclick="openLoanPaymentHistoryModal(${row.id})">
+                                        <i class="fa fa-list-ol"></i>
+                                        </button> `;
+                            listActions += `<li class="m-nav__item">
+                                <a href="javascript:void(0)" class="m-nav__link"
+                                onclick="openLoanPaymentHistoryModal(${row.id})">
+                                    <i class="m-nav__link-icon flaticon-list"></i>
+                                    <span class="m-nav__link-text">PAYMENT HISTORY</span>
+                                </a>
+                            </li>`;
+                            ctrActions++;
+                        }
+
+                        if (typeof _currentActions != "undefined" && _currentActions.includes("archive")) {
+                            btn += `<button title="Archive"
+                                        onclick="remove_loan(${row.id})"
+                                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-danger">
+                                            <i class="fa fa-archive"></i>
+                                        </button> `;
+                            listActions += `<li class="m-nav__item">
+                                <a href="javascript:void(0)" class="m-nav__link"
+                                onclick="remove_loan(${row.id})">
+                                    <i class="m-nav__link-icon flaticon-interface-2"></i>
+                                    <span class="m-nav__link-text">ARCHIVE LOAN</span>
+                                </a>
+                            </li>`;
+                            ctrActions++;
+                        }
+
+                        const _tempAction = `<div class="m-dropdown m-dropdown--inline m-dropdown--align-right m-dropdown--large"
+                                data-dropdown-toggle="click" aria-expanded="true">
+                            <a href="#" class="m-dropdown__toggle btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill"
+                                data-toggle="m-tooltip" data-original-title="More Options" data-skin="dark"
+                                data-delay='{"show": 500}'>
+                                <i class="fa fa-ellipsis-v"></i>
+                            </a>
+                            <div class="m-dropdown__wrapper">
+                                <span class="m-dropdown__arrow m-dropdown__arrow--right"></span>
+                                <div class="m-dropdown__inner">
+                                    <div class="m-dropdown__body">
+                                        <div class="m-dropdown__content">
+                                            <ul class="m-nav">
+                                                <li class="m-nav__section m-nav__section--first">
+                                                    <span class="m-nav__section-text">OPTIONS</span>
+                                                </li>
+                                                ${listActions}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+
+                        if(ctrActions > 1){ btn = _tempAction; }
+                        if(ctrActions == 0){ btn = '--'; }
+                        return btn;
+                    }
+                },
+
+            ],
+            initComplete: function () {
+                $('#generalSearchCancelledLoans').donetyping(function(callback) {
+                    generalCancelledSearchHistory = $(this).val();
+                    dtCancelledLoanHistory.ajax.reload();
+                });
+            }
+        });
+    }
+
+    const dtTableHistoryPayrollInfo = function () {
+        return $("#tbl-payroll_history").DataTable({
+            dom: 'frtlip',
+            serverSide: true,
+            processing: true,
+            autoWidth: false,
+            ordering: false,
+            searching: false,
+            ajax: {
+                url: "<?php echo base_url("payroll/employee/get_history_payroll_information"); ?>",
+                type: "post",
+                dataType: "json",
+                global: false,
+                data: function (d) {
+                    d.csrf_token = _csrf_hash; 
+                    d.emp_id = <?php echo $data->id; ?>;
+                    d.search["value"] = generalSearchHistory;
                 }
             },
+            columns: [{
+                    data: "log_message",
+                    width: "*",
+                },{
+                    data: "user_action",
+                    width: "15%",
+                },{
+                    data: "employee_name",
+                    width: "25%",
+                    render: function (data, meta, row) {
+                        const html = `<p class='mb-0'>${data}</p>
+                        <small><span class='m--font-boldest'>${row.created_at_formatted}</span></small>`;
+                        return html;
+                    }
+                },
 
-        ],
-        initComplete: function (_settings, json) {
-            vmPayInfo.psInfoCtr = json.recordsTotal;
+            ],
+            initComplete: function (_settings, json) {
+                vmPayInfo.psInfoCtr = json.recordsTotal;
 
-            $('#generalSearchHistory').donetyping(function(callback) {
-                generalSearchHistory = $(this).val();
-                dtHistoryPayrollInfo.ajax.reload();
-            });
-        }
-    });
+                $('#generalSearchHistory').donetyping(function(callback) {
+                    generalSearchHistory = $(this).val();
+                    dtHistoryPayrollInfo.ajax.reload();
+                });
+            }
+        });
+    }
 
     function openLoanPaymentHistoryModal(id) {
         loanPaymentHistoryModal.attr("data-id", id);
@@ -2914,6 +2921,13 @@
             vmSaveAction.approving_authority = _tempContentData.approving_authority;
             vmSaveEditAllowanceAction.approving_authority = _tempContentData.approving_authority;
         }
+
+        dtAllowance = dtTableAllowance();
+        dtHistoryPayrollInfo = dtTableHistoryPayrollInfo();
+        dtLoans = dtTableLoans();
+        dtCancelledLoanHistory = dtTableCancelledLoanHistory();
+        dtBenefits = dtTableBenefits();
+        dtPaidLoanHistory = dtTablePaidLoanHitory();
     });
 
     $.validate({

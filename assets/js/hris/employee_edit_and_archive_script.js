@@ -99,6 +99,7 @@ $('table')
         })
     .on('click', '.btnEditOffenses',
         function () {
+            let selectedData = $(this).attr('data-select');
             const id = $(this).attr('data-id');
             $.ajax({
                 url: baseUrl("hris/masterfile/open_edit_modal"),
@@ -113,7 +114,7 @@ $('table')
                     init_modal_data_function: 'getOffensesAndCommendations'
                 },
                 success: function (response) {
-                    initEditOffensesAndCommendationsDialog(response);
+                    initEditOffensesAndCommendationsDialog(response,selectedData);
                 }
             });
         })
@@ -898,7 +899,6 @@ $(".m-content")
             const form = $(this);
             const url = form.attr("action");
             const formData = new FormData(this);
-
             const id = form.find("input[name='id']").val();
             const tr = $('.btnEditOffenses[data-id="' + id + '"]').closest("tr");
 
@@ -912,12 +912,15 @@ $(".m-content")
                     data: formData,
                     success: function (response) {
                         if (response.success) {
-                            dtOffenses.ajax.reload();
-                            const data = response.data;
-                            if (data) {
-                                Object.keys(data).forEach((item, i) => {
-                                    tr.find('td:eq(' + i + ')').html(data[item]);
-                                });
+                            if(selectedTable == 'offenses'){
+                                dtOffenses.ajax.reload();
+                            }else if(selectedTable == 'commendation'){
+                                dtCommendation.ajax.reload();
+                            }else if(selectedTable == 'notices'){
+                                dtNotices.ajax.reload();
+                            }
+                            else if(selectedTable == 'others'){
+                                dtOthers.ajax.reload();
                             }
                         }
 
@@ -1545,21 +1548,60 @@ function initRegularEditDialog(response) {
     _modal.modal('show');
 }
 
-function initEditOffensesAndCommendationsDialog(response) {
+function initEditOffensesAndCommendationsDialog(response,selectedData) {
+        selectedTable = selectedData;
+        let selectData = [];
+        if (selectedData == 'offenses'){
+            selectData =  [
+                { id: '1ST OFFENSE', text: '1ST OFFENSE' },
+                { id: '2ND OFFENSE', text: '2ND OFFENSE' },
+                { id: '3RD OFFENSE', text: '3RD OFFENSE' },
+                { id: '4TH OFFENSE', text: '4TH OFFENSE' },
+                { id: '5TH OFFENSE', text: '5TH OFFENSE' },
+                { id: 'WRITTEN WARNING', text: 'WRITTEN WARNING' },
+                { id: '3-DAYS SUSPENSION', text: '3-DAYS SUSPENSION' },
+                { id: '6-DAYS SUSPENSION', text: '6-DAYS SUSPENSION' },
+                { id: '1-2-DAYS SUSPENSION', text: '1-2 DAYS SUSPENSION' },
+                { id: 'DISMISSAL', text: 'DISMISSAL' }
+            ]
+        }
+        else if(selectedData == 'commendation'){
+            selectData =  [
+                { id: 'COMMENDATION', text: 'COMMENDATION' },]
+        }
+        else if(selectedData == 'notices'){
+            selectData =  [
+                { id: 'NOTICES', text: 'NOTICE' },]
+        }
+        else if(selectedData == 'others'){
+            selectData =  [
+                { id: 'OTHERS', text: 'OTHERS' },]
+        }
+
     const html = response.html;
     const data = response.info.data;
     const _modal = $('.document-modal-container');
     _modal.empty();
     _modal.append(html);
 
-    const select2_offense = _modal.find("#offcom_type");
     const _offcom_type = data.offcom_type;
-    select2_offense.val(_offcom_type).trigger('change');
-    select2_offense.select2({
-        placeholder: "Select Type",
+    const select2Element = _modal.find("#offcom_type_edit");
+    select2Element.select2({
         width: "100%",
-        dropdownParent: $(".document-modal-container")
+        placeholder: "Select an option",
+        // dropdownParent: modalTempContent,
+        data: selectData,
     });
+
+    if (selectedData == 'offenses') {
+        select2Element
+            .val(_offcom_type)
+            .trigger('change');
+    }
+
+    if (selectData.length === 1) {
+        select2Element.val(selectData[0].id).trigger('change');
+    }
 
     _modal.find("input.date")
         .datepicker({
@@ -1579,6 +1621,7 @@ function initEditOffensesAndCommendationsDialog(response) {
         }
     _modal.modal('show');
 }
+
 
 function initEditPerformanceEvaluationDialog(response) {
     if (!response) {
@@ -1689,7 +1732,6 @@ function initEditLicenses(response) {
     }).on('select2:select', function (e) {
         var data = e.params.data;
         const id = data.id;
-        console.log(id);
         if(id == "Certificate"){
             $('#cert_name').show();
         } else {
