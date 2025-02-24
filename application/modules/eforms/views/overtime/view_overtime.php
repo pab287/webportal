@@ -96,9 +96,7 @@
                                     <div class="row mb-5">
                                         <div class="col-md-6 col-sm-12">
                                             <div class="m-alert m-alert--icon m-alert--outline alert alert-danger" role="alert">
-                                                <div class="m-alert__icon">
-                                                    <i class="la la-warning"></i>
-                                                </div>
+                                                <div class="m-alert__icon"><i class="la la-warning"></i></div>
                                                 <div class="m-alert__text">
                                                     <strong>Invalid Overtime Request!</strong> The overtime request is invalid. Please check the dates and times.<br>Current Overtime Request is <strong>`Behind Payroll Posted Date`.</strong>
                                                 </div>
