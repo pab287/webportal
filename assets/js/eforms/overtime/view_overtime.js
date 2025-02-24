@@ -27,11 +27,9 @@ $.ajax({
     dataType: "JSON",
     global: false,
     success: function (data) {
+        const { valid_ot_dates } = data;
         vmTab1.vm_tab1 = { ...data };
         vmTab1.loading_content = false;
-
-        const timestampMaxDate = moment(new Date(data.max_date), "YYYY-MM-DD").toDate().getTime();
-        console.log(timestampMaxDate);
 
         (data.requested_remarks == "") ? $("#requested_remarks").hide() : $("#requested_remarks").show();
         (data.cancelled_remarks == "") ? $("#cancelled_remarks").hide() : $("#cancelled_remarks").show();
@@ -57,6 +55,41 @@ $.ajax({
                 $("#status_state").addClass("alert alert-metal text-white");
                 break;
         }
+        
+        if (valid_ot_dates === false) {
+            setTimeout(() => {
+                Swal.fire({
+                    title: 'Invalid Overtime Request!',
+                    text: 'The overtime request is invalid. Please check the dates and times.',
+                    icon: 'warning',
+                });
+            }, 750);
+        }
+
+        /*** Swal.fire({
+            title: 'Invalid Overtime Request?',
+            html: "Testing",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, '+tempTitle+' it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: siteUrl("hris/masterfile/approval_updated_payroll_data/"+nType),
+                    type: "post",
+                    data: { csrf_token: _csrf_hash, id: id },
+                    dataType: "json",
+                    success: function(json){
+                        if(json.response){ 
+                            toastr.success(json.toastr_msg, "For Approval");
+                            dtForApproval.clear().rows.add(json.data).draw();
+                        }else{ toastr.error(json.toastr_msg, "For Approval"); }
+                    }
+                });
+            }
+        }); ***/
     }
 });
 

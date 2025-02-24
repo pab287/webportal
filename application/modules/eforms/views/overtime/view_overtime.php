@@ -91,7 +91,21 @@
                                         </template>
                                     </div>
                                 </div>
-                                <br><div class="m-separator m-separator--dashed d-xl-12"></div><br>
+                                <br><div class="m-separator m-separator--dashed d-xl-12"></div>
+                                <template v-if="vm_tab1.valid_ot_dates === false">
+                                    <div class="row mb-5">
+                                        <div class="col-md-6 col-sm-12">
+                                            <div class="m-alert m-alert--icon m-alert--outline alert alert-danger" role="alert">
+                                                <div class="m-alert__icon">
+                                                    <i class="la la-warning"></i>
+                                                </div>
+                                                <div class="m-alert__text">
+                                                    <strong>Invalid Overtime Request!</strong> The overtime request is invalid. Please check the dates and times.<br>Current Overtime Request is <strong>`Behind Payroll Posted Date`.</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
                                 <div class="row">
                                     <div class="col-md-6 col-sm-12">
                                         <div class="form-group m-form__group row" id="status">
@@ -102,25 +116,19 @@
                                         </div>
                                         <br>
                                         <div class="form-group m-form__group row">
-                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                                From: 
-                                            </label>
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">From:</label>
                                             <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                                 <b v-text="moment(vm_tab1.date_from).format('LLL')"></b>
                                             </div>
                                         </div>
                                         <div class="form-group m-form__group row">
-                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                                To: 
-                                            </label>
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">To:</label>
                                             <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
                                                 <b v-text="moment(vm_tab1.date_to).format('LLL')"></b>
                                             </div>
                                         </div>
                                         <div class="form-group m-form__group row">
-                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                                Purpose:
-                                            </label>
+                                            <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Purpose:</label>
                                             <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="purpose">
                                                 <b v-text="vm_tab1.purpose"></b>
                                             </div>
@@ -203,6 +211,7 @@
 
                     <div class="m-portlet__foot m--align-right" id="buttons" :class="loading_content === true ? 'm--hide':''">
                         <?php $current_action = $this->core_layout->getCurrentActions(); ?>
+                        <template v-if="vm_tab1.valid_ot_dates">
                         <?php if(in_array("approve_action", $current_action)): ?>
                             <a class="btn btn-success m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnApprove_action btnPending"
                                 href="#" data-toggle="modal" data-target="#approve_modal">
@@ -214,6 +223,7 @@
                                 Disapprove
                             </a>
                         <?php endif; ?>
+                        </template>
                         <?php if(in_array("edit", $current_action)): ?>
                             <button type="button" class="btn btn-warning m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnEdit text-white btnPending" onclick="edit()">
                                 Edit
