@@ -12,11 +12,14 @@ let getUrlParameter = function getUrlParameter(sParam) {
 };
 
 param_id = getUrlParameter('id');
-
+let requested_id = 0;
+let filenames ="";
+let element = "";
 jQuery(document).ready(function () {
     fileUploadPhoto();
     $("#progress").hide();
     $("#webportal").hide();
+    $("#dept-res").hide();
 });
 
 $('#date_required_group').datepicker({
@@ -34,7 +37,7 @@ $('#date_required_group').datetimepicker({
     todayBtn: true,
     dateTimeFormat: 'yyyy-mm-dd hh:mm',
 });
-
+let arrImg = [];
 let images = [];
 $.ajax({
     url: baseUrl("ticket/ticket/ticket_details/") + param_id,
@@ -70,8 +73,8 @@ $.ajax({
 
         const picUrl = vmData.attachment ? baseUrl("uploads/files/images/employee_files/" + vmData.attachment) : baseUrl('assets/images/ams/images/no_image.jpg');
         const requestor = vmData.requestor;
-
-        const arrImg = vmData.attachment.split(',');
+        requested_id = requestor;
+        arrImg = vmData.attachment.split(',');
         arrImg.forEach(function(file){
             const fileArr = file.split("/");
             const filename = fileArr[fileArr.length - 1];
@@ -80,6 +83,8 @@ $.ajax({
             let avatarImage = baseUrl("uploads/files/images/employee_files/empcode_"+ requestor +"/ticketing/" + filename);
             let renderImage = vmData.attachment;
             images.push(filename);
+            const filename1 = filename;
+            const shortenedName = filename1.length <= 20 ? filename1 : `${filename1.slice(0, 20)}...`;
             $("#picture").attr("src", renderImage);
             $("#pic").val(images);
             let icon = '';
@@ -127,7 +132,7 @@ $.ajax({
                         ''+
                         '</span><br>'+
                         '<span class="m-widget2__user-name">'+
-                        filename +
+                        shortenedName +
                         '</span>'+
                         '<span class="m-widget2__user-name">'+
                         '</span><br><br>'+
@@ -143,30 +148,87 @@ $.ajax({
        
         
         vmTab1.vm_tab1 = Object.assign({}, data);
+
+        $("#performed_by").select2({
+            width: "100%",
+            placeholder: "Select an option",
+            data: _tempContentData.performed_by,
+            allowClear: true,
+        });
         
+        $("#department").select2({
+            width: "100%",
+            placeholder: "Select an option",
+            data: _tempContentData.department,
+            allowClear: true,
+        });
+        
+        $("#category").select2({
+            width: "100%",
+            placeholder: "Select an option",
+            data: _tempContentData.category,
+            allowClear: true,
+        });
+        
+        $("#sub_category").select2({
+            width: "100%",
+            placeholder: "Select an option",
+            data: _tempContentData.subcategory,
+            allowClear: true,
+        });
+        
+        $("#category").on("change", function (e) {
+            let type = $("#category option:selected").text();
+            if(type == 'webportal'){
+                $("#webportal").show();
+            }else{
+                $("#webportal").hide();
+            }
+            if(type == 'software'){
+                $("#dept-res").show();
+            }else{
+                $("#dept-res").hide();
+            }
+        });
+        
+        
+        $("#status").select2({
+            width: "100%",
+            placeholder: "Select an option",
+            data: _tempContentData.status,
+            allowClear: true,
+        });
+        
+        $("#severity").select2({
+            width: "100%",
+            placeholder: "Select an option",
+            data: _tempContentData.severity,
+            allowClear: true,
+        });
+
+        $("#responsibility").select2({
+            width: "100%",
+            placeholder: "Select an option",
+            data: _tempContentData.responsibility,
+            allowClear: true,
+        });
 
         let category = new Option(vmData.category, vmData.category, true, true);
-        $('#category').append(category).trigger('change');
+
         
         if(vmData.category == 'webportal'){
             $("#webportal").show();
-            let sub_category = new Option(vmData.sub_category, vmData.sub_category, true, true);
-            $('#sub_category').append(sub_category).trigger('change');
+            $('#sub_category').val(data.sub_category).trigger('change');
         }
-
-
-        let department = new Option(vmData.department, vmData.department_id, true, true);
-        $('#department').append(department).trigger('change');
-
-        let status = new Option(vmData.status, vmData.status, true, true);
-        $('#status').append(status).trigger('change');
-
-        let performed_by = new Option(vmData.performed_by_det, vmData.performed_by_id, true, true);
-        $('#performed_by').append(performed_by).trigger('change');
-
-        let severity = new Option(vmData.severity, vmData.severity, true, true);
-        $('#severity').append(severity).trigger('change');
-
+        if(vmData.category == 'software'){
+            $("#dept-res").show();
+            $('#responsibility').val(data.responsibility).trigger('change');
+        }
+        $('#status').val(data.status).trigger('change');
+        $('#performed_by').val(data.performed_by_id).trigger('change');
+        $('#category').val(data.category).trigger('change');
+        $('#severity').val(data.severity_id).trigger('change');
+        $('#department').val(data.department_id).trigger('change');
     }
 });
 
@@ -210,20 +272,21 @@ $.validate({
     form: '#frm-add-comment',
     lang: 'en',
     onSuccess: function (form) {
+        var comment = $('#comment').val().trim();
+        if (!comment) {
+            toastr.error("Comment cannot be empty or contain only spaces.", "Validation Error!", 5000);
+            return false; 
+        }
         $.ajax({
             url: baseUrl("ticket/ticket/add_comment"),
             type: "POST",
             dataType: "json",
             data: $("#frm-add-comment").find("input,textarea").serialize(),
-            // beforeSend: function () {
-            //     $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-            // },
             success: function (data) {
                 if (data) {
-                    toastr.success("Comment successfully saved.", "Saved.", 5000)
-                    setTimeout(() => {
-                        getComments();
-                    }, 700);
+                    $('#comment').val('');
+                    toastr.success("Comment successfully saved.", "Saved.", 5000);
+                    getComments();
                 } else {
                     toastr.error(data.toastr_msg, "Notice: Error!", 5000);
                 }
@@ -231,94 +294,6 @@ $.validate({
         });
         return false;
     },
-});
-
-$("#performed_by").select2({
-    width: "100%",
-    placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_performed_by"),
-        dataType: "json",
-        delay: 1200,
-        processResults: function (data) {
-            return data;
-        }
-    }
-});
-
-$("#department").select2({
-    width: "100%",
-    placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_department_collection"),
-        dataType: "json",
-        delay: 1200,
-        processResults: function (data) {
-            return data;
-        }
-    }
-});
-
-$("#category").select2({
-    width: "100%",
-    placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_category_collection/") + 'category',
-        dataType: "json",
-        delay: 1200,
-        processResults: function (data) {
-            return data;
-        }
-    }
-});
-
-$("#sub_category").select2({
-    width: "100%",
-    placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_category_collection/") + 'sub-category',
-        dataType: "json",
-        delay: 1200,
-        processResults: function (data) {
-            return data;
-        }
-    }
-});
-
-$("#category").on("change", function (e) {
-    let type = $("#category option:selected").text();
-    if(type == 'webportal'){
-        $("#webportal").show();
-    }else{
-        $("#webportal").hide();
-    }
-});
-
-
-$("#status").select2({
-    width: "100%",
-    placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_category_collection/") + 'status',
-        dataType: "json",
-        delay: 1200,
-        processResults: function (data) {
-            return data;
-        }
-    }
-});
-
-$("#severity").select2({
-    width: "100%",
-    placeholder: "Select an option",
-    ajax: {
-        url: baseUrl("ticket/ticket/get_category_collection/") + 'severity',
-        dataType: "json",
-        delay: 1200,
-        processResults: function (data) {
-            return data;
-        }
-    }
 });
 
 // $('#need_dt_group').datetimepicker({
@@ -354,11 +329,11 @@ let fileUploadPhoto = function () {
             icon: "jpg.svg",
             color: "success"
         },
-        {
-            _type: ["docx", "DOCX"],
-            icon: "doc.svg",
-            color: "info"
-        },
+        // {
+        //     _type: ["docx", "DOCX"],
+        //     icon: "doc.svg",
+        //     color: "info"
+        // },
         {
             _type: ["pdf", "PDF"],
             icon: "pdf.svg",
@@ -366,20 +341,44 @@ let fileUploadPhoto = function () {
         },
     ];
 
+    $('#fileupload').on('change', function(e) {
+        let valid = true;
+        let errorMessage = '';
+        
+        $.each(e.target.files, function(index, file) {
+            // Get filename without extension
+            const fileName = file.name.substring(0, file.name.lastIndexOf('.'));
+            
+            // Check for special characters
+            if (!/^[a-zA-Z0-9\s._-]+$/g.test(fileName)) {
+                valid = false;
+                errorMessage = 'File "' + file.name + '" contains special characters. Please rename the file without special characters.';
+                return false; // Break the loop
+            }
+        });
+
+        if (!valid) {
+            toastr.error(errorMessage, "Upload Image", 5000);
+            $(this).val(''); // Clear input
+            return false;
+        }
+    });
+
     $("#fileupload")
         .fileupload({
             url: url,
             dataType: "json",
-            formData: {csrf_token: _csrf_hash},
+            formData: {csrf_token: _csrf_hash, ticket_id: param_id},
             done: function (e, data) {
                 var result = data.result;
                 console.log(result.response);
                 if (result.response) {
-                    
-                alert(e);
                     var avatarImage = result.added_image;
                     var renderImage = result.render_image;
                     images.push(result.display_filename);
+                    const filename = result.display_filename;
+                    console.log(filename.length);
+                    const shortenedName = filename.length <= 20 ? filename : `${filename.slice(0, 20)}...`;
                     $("#picture").attr("src", renderImage);
                     $("#pic").val(images);
                     let ext = renderImage ? renderImage.split(".") : "";
@@ -405,35 +404,30 @@ let fileUploadPhoto = function () {
                                     ' <i class="la la-eye"></i>' +
                                 ' </button>';
                         }
-                    const uploadlist = ' ' + 
-                            '<div class="m-widget2">'+
-                            '<div class="m-widget2__item m-widget2__item--'+ color +'">' +
-                                '<div class="m-widget2__checkbox">'+
-                                    '<div class="m-widget2__img m-widget2__img--icon">'+
-                                    '<img src='+ icon_path +' width="45" alt>' +
-                                    '</div>'+
-                                '</div>'+
-                                '<div class="m-widget2__desc">'+
-                                    '<span class="m-widget2__user-text">'+
-                                    ''+
-                                    '</span><br>'+
-                                    '<span class="m-widget2__user-name">'+
-                                    result.display_filename +
-                                    '</span>'+
-                                    '<span class="m-widget2__user-name">'+
-                                    '</span><br><br>'+
-                                '</div>' +
-                                '<div class="m-widget2__actions">' +
-                                   ''  + previewButton +
-                                    ' <button ' +
-                                    ' type="button" ' +
-                                    ' onclick="removeDocument(this)"'+
-                                    ' class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView" data-name="'+result.display_filename+'">'+
-                                    ' <i class="la la-times"></i>'+
-                                    ' </button>'+
-                                '</div>'+
-                            '</div>'+
-                            '</div>';
+                        const uploadlist = `
+                            <div class="m-widget2">
+                                <div class="m-widget2__item m-widget2__item--${color}">
+                                    <div class="m-widget2__checkbox">
+                                        <div class="m-widget2__img m-widget2__img--icon">
+                                            <img src="${icon_path}" width="45" alt>
+                                        </div>
+                                    </div>
+                                    <div class="m-widget2__desc">
+                                        <span class="m-widget2__user-text"></span><br>
+                                        <span class="m-widget2__user-name">${shortenedName}</span>
+                                        <span class="m-widget2__user-name"></span><br><br>
+                                    </div>
+                                    <div class="m-widget2__actions">
+                                        ${previewButton}
+                                        <button type="button"
+                                                onclick="removeDocument(this, '${result.display_filename}')"
+                                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView"
+                                                data-name="${result.display_filename}">
+                                            <i class="la la-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>`;
                     $("#uploaded_files").append(uploadlist);
                     toastr.success(result.toastr_msg, "Upload Image", 5000);
                 } else {
@@ -522,32 +516,70 @@ function removeFile(el){
     
 }
 
-function removeDocument(el,filename){
-    $("#remove-file-confirmation-modal").modal("show");
-
-    $("#frm-remove-file").submit(function(e){
-        e.preventDefault();
-        $.ajax({
-            url: baseUrl("ticket/ticket/remove_file"),
-            type: 'POST',
-            dataType: "json",
-            data: {
-                csrf_token : _csrf_hash,
-                filename : filename
-            },
-            success: function (response) {
-                if (response.result) {
-                    const _name = $(el).attr("data-name");
-                    const parent = $(el).closest('.m-widget2__item');
-                    images = images.filter((n) => {return n != _name});
-                    $(parent).remove();
-                    $("#pic").val(images);
-
-                    $("#remove-file-confirmation-modal").modal("hide");
-                    toastr.success(_name,"Removed File", 5000);
+function removeDocument(el, filename) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl("ticket/ticket/remove_file"),
+                type: 'POST',
+                dataType: "json",
+                data: {
+                    csrf_token : _csrf_hash,
+                    filename : filename,
+                    ticket_id : param_id,
+                    requested_id : requested_id,
+                },
+                success: function (response) {
+                    if (response.result) {
+                        const _name = $(el).attr("data-name");
+                        const parent = $(el).closest('.m-widget2__item');
+                        images = images.filter((n) => {return n != _name});
+                        $(parent).remove();
+                        $("#pic").val(images);
+                        console.log(images)
+                        $("#remove-file-confirmation-modal").modal("hide");
+                        toastr.success(_name,"Removed File", 5000);
+                    } else {
+                        toastr.error("File not found","Error", 5000);
+                    }
                 }
-            }
-        });
+            });
+        }
     });
-    
+}
+
+function delete_comment(id){
+    Swal.fire({
+        title: "Comments",
+        text:'Are you sure you want to remove this comment?!',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, Remove it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl("ticket/ticket/remove_actionstkn"),
+                type: 'POST',
+                dataType: "json",
+                data: {
+                    csrf_token : _csrf_hash,
+                    id : id
+                },
+                success: function (response) {
+                    getComments();
+                    toastr.success("Success", "Deleted.", 5000);
+                }
+            })
+        }
+      });
 }

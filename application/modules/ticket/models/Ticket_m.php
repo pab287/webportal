@@ -5,6 +5,7 @@ class Ticket_m extends CI_Model
     private $user_data = array();
     protected $tickets = "gccticket";
     private $current_actions =  array();
+    private $category = "gccticket.category";
 
     public function __construct(){
         parent::__construct();
@@ -46,14 +47,34 @@ class Ticket_m extends CI_Model
     }
 
     public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request){
-        $filterFields = array("a.reference_no", "a.category", "a.sub_category", "a.status", "a.priority", 'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname');
-        $this->db->select("*, a.id");
-        $this->db->from("gccticket.ticket a");
+        $resultset = array();
+        $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
+        $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id");
+        $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
         $this->db->join("gccmaster.tblemployees as c", "c.id = a.performed_by", 'LEFT');
+        $this->db->join("gccticket.category as cat" , "cat.name = a.category", 'LEFT');
+        $this->db->join("gccticket.category as sub" , "sub.name = a.sub_category", 'LEFT');
+        $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
+        $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '0');
         $this->db->where('a.status !=', "cancelled");
-        if($search){
+        if($view_own_request){
+            $this->db->where('requestor', $this->user_data['emp_id']);
+        }
+        if ($query_builder) {
+            $lower_query = strtolower($query_builder);
+            if (
+                strpos($lower_query, 'c.firstname') !== false &&
+                strpos($lower_query, 'c.lastname') !== false &&
+                strpos($lower_query, '%not set%') !== false
+            ) {
+                $this->db->where('a.performed_by', '0');
+            } else {
+                $this->db->where($query_builder);
+            }
+        }
+        if ($search) {
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
                 if ($key == 0) {
@@ -63,107 +84,58 @@ class Ticket_m extends CI_Model
                 }
             }
             $this->db->group_end();
-            /*** if ($sortBy) {
-                $this->db->order_by($sortBy, $sortOrder);
-            } else {
-                $this->db->order_by("id", "DESC");
-            } ***/
+        }
+        $i = $sortOrder[0]['column'];
+        if($sortBy[$i]['data'] == "priority"){
+            $this->db->order_by("prio.id", $sortOrder[0]['dir']);
+        }
+        else if($sortBy[$i]['data'] == "performed_by"){
+            $this->db->order_by("c.firstname", $sortOrder[0]['dir']);
+        }
+        else{
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
         }
 
+        if ($limit != -1) {
+            $this->db->limit($limit, $offset);
+        }
+        $this->db->group_by("a.id");
+        $query = $this->db->get();
+        if ($query->num_rows() > 0) {
+            $resultset = $query->result();
+            foreach ($resultset as $rs) {
+                $rs->performed_by = $this->requested_by($rs->performed_by);
+                $rs->requestor = $this->requested_by($rs->requestor);
+            }
+            if(!empty($query_builder)){
+                $this->core_layout->setEventLog("User generated ticket masterfile through query builder `".$query_builder."`.","generate", "success", "gcceforms", "user");
+            }
+            if($search){
+                $this->core_layout->setEventLog("User searched `".$search."` on ticket datatable.","search", "success", "gccticket", "user");
+            }
+        } else {
+            $resultset= [];
+        }
+        return $resultset;
+    }
+    
+    private function get_ticket_masterfile_count($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request){
+        $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
+        $this->db->from("gccticket.ticket as a");
+        $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
+        $this->db->join("gccmaster.tblemployees as c", "c.id = a.performed_by", 'LEFT');
+        $this->db->join("gccticket.category as cat" , "cat.name = a.category", 'LEFT');
+        $this->db->join("gccticket.category as sub" , "sub.name = a.sub_category", 'LEFT');
+        $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
+        $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
+        $this->db->where('a.is_archived', '0');
+        $this->db->where('a.status !=', "cancelled");
         if($view_own_request){
             $this->db->where('requestor', $this->user_data['emp_id']);
         }
         if($query_builder){
             $this->db->where($query_builder);
         }
-
-        if($limit != -1){
-            $this->db->limit($limit, $offset);
-        }
-        $i = $sortOrder[0]['column'];
-        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
-        $query = $this->db->get();
-        //var_dump($this->db->last_query());
-        if ($query->num_rows() > 0) {
-            $arrData = array();
-            foreach ($query->result() as $key => $rs) {
-
-                $check_status = $rs->status;
-                $date_needed = new DateTime($rs->requested_date);
-                $date_now = new DateTime();
-
-                if($rs->priority == 'low'){
-                    $priority = "<span class='m-badge m-badge--info m-badge--wide text-white'><strong>".$rs->priority."</strong></span>";
-                }elseif($rs->priority == 'medium'){
-                    $priority = "<span class='m-badge m-badge--warning m-badge--wide text-white'><strong>".$rs->priority."</strong></span>";
-                }else{
-                    $priority = "<span class='m-badge m-badge--danger m-badge--wide text-white'><strong>".$rs->priority."</strong></span>";
-                }
-
-                if($rs->status == 'completed'){
-                    $status = "<span class='m-badge m-badge--success m-badge--wide text-white'><strong>".$rs->status."</strong></span>";
-                }elseif($rs->status == 'open'){
-                    $status = "<span class='m-badge m-badge--brand m-badge--wide text-white'><strong>".$rs->status."</strong></span>";
-                }elseif($rs->status == 'cancelled'){
-                    $status = "<span class='m-badge m-badge--danger m-badge--wide text-white'><strong>".$rs->status."</strong></span>";
-                }elseif($rs->status == 'in progress'){
-                    $status = "<span class='m-badge m-badge--accent m-badge--wide text-white'><strong>".$rs->status."</strong></span>";
-                }else{
-                    $status = "<span class='m-badge m-badge--metal m-badge--wide text-white'><strong>".$rs->status."</strong></span>";
-                }
-                
-                $rs->status = $status;
-
-                $rs->priority = $priority;
-                $rs->category = $this->getCategoryLabel($rs->category);
-                $rs->sub_category = $this->getCategoryLabel($rs->sub_category);
-                $rs->department_id = $this->getDepartmentName($rs->department_id);
-                $rs->requested_date = date("M d, Y h:i A", strtotime($rs->requested_date));
-
-                if($check_status == 'open' || $check_status == 'in progress'){
-                    if($date_now > $date_needed){
-                        $rs->days_overdue = $date_needed->diff($date_now)->format('%d Day(s)');
-                    }else{
-                        $rs->days_overdue = ' ';    
-                    }
-                }else if($check_status == 'RESOLVED' || $check_status == 'completed' || $check_status == 'cancelled'){
-                    $rs->days_overdue = ' ';
-                }else{
-                    $rs->days_overdue = '0 Day(s)';
-                }
-                $rs->requestor = $this->requested_by($rs->requestor);//($tempFullname->display_name_1)? $tempFullname->display_name_1: "No Assigned Name";
-                $rs->performed_by = $this->requested_by($rs->performed_by);
-                $arrData[$key] = $rs;
-            }
-            $data = array();
-            foreach ($arrData as $k => $v) {
-                $data[] = $v;
-            }
-
-            if(!empty($search)){
-                $this->core_layout->setEventLog("User searched `".$search."` on ticket datatable.","search", "success", "gccticket", "user");
-            }
-            if(!empty($query_builder)){
-                $this->core_layout->setEventLog("User generated ticket masterfile through query builder `".$query_builder."`.","generate", "success", "gcceforms", "user");
-            }
-
-            return $data;
-        } else {
-            return array();
-        }
-    }
-    
-    private function get_ticket_masterfile_count($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request){
-        $filterFields = array("a.reference_no", "a.category", "a.sub_category", "a.status", "a.priority", 'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname');
-        $this->db->select("*, a.id");
-        $this->db->from("gccticket.ticket a");
-        $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
-        $this->db->join("gccmaster.tblemployees as c", "c.id = a.performed_by", 'LEFT');
-        $this->db->where('a.is_archived', '0');
-        $this->db->where('a.status !=', "cancelled");
-        // if($view_own_request){
-        //     $this->db->where('requestor', $this->user_data['emp_id']);
-        // }
         if($search){
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
@@ -174,19 +146,8 @@ class Ticket_m extends CI_Model
                 }
             }
             $this->db->group_end();
-            // if ($sortBy) {
-            //     $this->db->order_by($sortBy, $sortOrder);
-            // } else {
-            //     $this->db->order_by("id", "DESC");
-            // }
         }
-        if($query_builder){
-            $this->db->where($query_builder);
-        }
-        // if($limit != -1){
-        //     $this->db->limit($limit, $offset);
-        // }
-
+        $this->db->group_by("a.id");
         $query = $this->db->get();
         return $query->num_rows();
     }
@@ -221,122 +182,70 @@ class Ticket_m extends CI_Model
     }
 
     public function get_ticket_archive_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request){
-        $filterFields = array("a.reference_no", "a.category", "a.sub_category", "a.status", "a.priority", 'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname');
-        $this->db->select("*, a.id");
-        $this->db->from("gccticket.ticket a");
+        $resultset = array();
+        $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
+        $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id");
+        $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
         $this->db->join("gccmaster.tblemployees as c", "c.id = a.performed_by", 'LEFT');
+        $this->db->join("gccticket.category as cat" , "cat.name = a.category", 'LEFT');
+        $this->db->join("gccticket.category as sub" , "sub.name = a.sub_category", 'LEFT');
+        $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
+        $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '1');
         $this->db->or_where('a.status', "cancelled");
-        if($search){
-            $this->db->group_start();
-            foreach ($filterFields as $key => $field) {
-                if ($key == 0) {
-                    $this->db->like($field, $search, "both");
-                } else {
-                    $this->db->or_like($field, $search, "both");
-                }
-            }
-            $this->db->group_end();
-            /*** if ($sortBy) {
-                $this->db->order_by($sortBy, $sortOrder);
-            } else {
-                $this->db->order_by("id", "DESC");
-            } ***/
-        }
-
         if($view_own_request){
             $this->db->where('requestor', $this->user_data['emp_id']);
         }
         if($query_builder){
             $this->db->where($query_builder);
         }
-
-        if($limit != -1){
-            $this->db->limit($limit, $offset);
+        if ($search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
         }
         $i = $sortOrder[0]['column'];
         $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        if ($limit != -1) {
+            $this->db->limit($limit, $offset);
+        }
         $query = $this->db->get();
-        //var_dump($this->db->last_query());
         if ($query->num_rows() > 0) {
-            $arrData = array();
-            foreach ($query->result() as $key => $rs) {
-
-                $check_status = $rs->status;
-                $date_needed = new DateTime($rs->requested_date);
-                $date_now = new DateTime();
-
-                if($rs->priority == 'low'){
-                    $priority = "<span class='m-badge m-badge--info m-badge--wide text-white'><strong>".$rs->priority."</strong></span>";
-                }elseif($rs->priority == 'medium'){
-                    $priority = "<span class='m-badge m-badge--warning m-badge--wide text-white'><strong>".$rs->priority."</strong></span>";
-                }else{
-                    $priority = "<span class='m-badge m-badge--danger m-badge--wide text-white'><strong>".$rs->priority."</strong></span>";
-                }
-
-                if($rs->status == 'completed'){
-                    $status = "<span class='m-badge m-badge--success m-badge--wide text-white'><strong>".$rs->status."</strong></span>";
-                }elseif($rs->status == 'open'){
-                    $status = "<span class='m-badge m-badge--brand m-badge--wide text-white'><strong>".$rs->status."</strong></span>";
-                }elseif($rs->status == 'cancelled'){
-                    $status = "<span class='m-badge m-badge--danger m-badge--wide text-white'><strong>".$rs->status."</strong></span>";
-                }else{
-                    $status = "<span class='m-badge m-badge--metal m-badge--wide text-white'><strong>".$rs->status."</strong></span>";
-                }
-                
-                $rs->status = $status;
-
-                $rs->priority = $priority;
-                $rs->category = $this->getCategoryLabel($rs->category);
-                $rs->sub_category = $this->getCategoryLabel($rs->sub_category);
-                $rs->department_id = $this->getDepartmentName($rs->department_id);
-                $rs->requested_date = date("M d, Y h:i A", strtotime($rs->requested_date));
-
-                if($check_status == 'open' || $check_status == 'in progress'){
-                    if($date_now > $date_needed){
-                        $rs->days_overdue = $date_needed->diff($date_now)->format('%d Day(s)');
-                    }else{
-                        $rs->days_overdue = ' ';    
-                    }
-                }else if($check_status == 'RESOLVED' || $check_status == 'completed' || $check_status == 'cancelled'){
-                    $rs->days_overdue = ' ';
-                }else{
-                    $rs->days_overdue = '0 Day(s)';
-                }
-                $rs->requestor = $this->requested_by($rs->requestor);//($tempFullname->display_name_1)? $tempFullname->display_name_1: "No Assigned Name";
+            $resultset = $query->result();
+            foreach ($resultset as $rs) {
                 $rs->performed_by = $this->requested_by($rs->performed_by);
-                $arrData[$key] = $rs;
-            }
-            $data = array();
-            foreach ($arrData as $k => $v) {
-                $data[] = $v;
-            }
-
-            if(!empty($search)){
-                $this->core_layout->setEventLog("User searched `".$search."` on ticket datatable.","search", "success", "gccticket", "user");
+                $rs->requestor = $this->requested_by($rs->requestor);
             }
             if(!empty($query_builder)){
                 $this->core_layout->setEventLog("User generated ticket masterfile through query builder `".$query_builder."`.","generate", "success", "gcceforms", "user");
             }
-
-            return $data;
+            if($search){
+                $this->core_layout->setEventLog("User searched `".$search."` on ticket archive datatable.","search", "success", "gccticket", "user");
+            }
         } else {
-            return array();
+            $resultset= [];
         }
+        return $resultset;
     }
     
     private function get_ticket_archive_masterfile_count($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request){
-        $filterFields = array("a.reference_no", "a.category", "a.sub_category", "a.status", "a.priority", 'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname');
-        $this->db->select("*, a.id");
-        $this->db->from("gccticket.ticket a");
+        $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
+        $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
         $this->db->join("gccmaster.tblemployees as c", "c.id = a.performed_by", 'LEFT');
+        $this->db->join("gccticket.category as cat" , "cat.name = a.category", 'LEFT');
+        $this->db->join("gccticket.category as sub" , "sub.name = a.sub_category", 'LEFT');
+        $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
+        $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '1');
         $this->db->or_where('a.status', "cancelled");
-        // if($view_own_request){
-        //     $this->db->where('requestor', $this->user_data['emp_id']);
-        // }
         if($search){
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
@@ -347,19 +256,10 @@ class Ticket_m extends CI_Model
                 }
             }
             $this->db->group_end();
-            // if ($sortBy) {
-            //     $this->db->order_by($sortBy, $sortOrder);
-            // } else {
-            //     $this->db->order_by("id", "DESC");
-            // }
         }
         if($query_builder){
             $this->db->where($query_builder);
         }
-        // if($limit != -1){
-        //     $this->db->limit($limit, $offset);
-        // }
-
         $query = $this->db->get();
         return $query->num_rows();
     }
@@ -391,11 +291,11 @@ class Ticket_m extends CI_Model
 
     // function to pull all data from database of ticketing system
     private function get_category_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null){
-        $resultArray = array();
-        $resultData = array();
+        $resultset = array();
         $filterFields = array("type", "name");
-        $this->db->select("*");
+        $this->db->select("id,type,name,status");
         $this->db->from("gccticket.category");
+        $this->db->where('is_archived', '0');
         if($search){
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
@@ -406,11 +306,6 @@ class Ticket_m extends CI_Model
                 }
             }
             $this->db->group_end();
-            // if ($sortBy) {
-            //     $this->db->order_by($sortBy, $sortOrder);
-            // } else {
-            //     $this->db->order_by("id", "DESC");
-            // }
         }
         if($limit != -1){
             $this->db->limit($limit, $offset);
@@ -419,26 +314,29 @@ class Ticket_m extends CI_Model
         $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
         $query = $this->db->get();
         if ($query->num_rows() > 0) {
-            $arrData = array();
-            foreach ($query->result() as $key => $rs) {
-                $arrData[$key] = $rs;
-            }
-
-            $data = array();
-            foreach ($arrData as $k => $v) {
-                $data[] = $v;
-            }
+            $resultset = $query->result();
             if(!empty($search)){
                 $this->core_layout->setEventLog("User searched `".$search."` on category datatable.","search", "success", "gccticket", "user");
             }
-            return $data;
-        } else {
-            return array();
         }
+        return $resultset;
     }
 
-    private function get_category_masterfile_count(){
+    private function get_category_masterfile_count($search = null){
+        $filterFields = array("type", "name");
         $this->db->from("gccticket.category");
+        $this->db->where('is_archived', '0');
+        if($search){
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
         $query = $this->db->get();
         return $query->num_rows();
     }
@@ -589,6 +487,7 @@ class Ticket_m extends CI_Model
 
     // function for uploading photo
     function uploadTicketPhoto(){
+        $post = $this->input->post();
         $resultset = array();
         $employeeId = $this->user_data['emp_id'];
         if ($employeeId) {
@@ -613,8 +512,8 @@ class Ticket_m extends CI_Model
             } else {
                 $config = array();
                 $config['upload_path'] = $imagesPath;
-                $config['allowed_types'] = 'jpg|jpeg|png|PNG|JPG|JPEG|docx|pdf';
-                $config['max_size'] = 100000;
+                $config['allowed_types'] = 'jpg|jpeg|png|PNG|JPG|JPEG|pdf|PDF';
+                $config['max_size'] = 25600;
                 $config['create_thumbnail'] = true;
 
                 $session = $this->core_layout->getCurrentSession();
@@ -627,6 +526,15 @@ class Ticket_m extends CI_Model
 
                     $icon = base_url('assets/images/file_icons/jpg.svg');
                     if ($filename) {
+                        if(isset($post['ticket_id'])){
+                            $this->db->reset_query();
+                            $ticketData = $this->db->select("attachment")->where('id',  $post['ticket_id'] )->get('gccticket.ticket')->row();
+                            $this->db->reset_query();
+                            $attachments = explode(',', $ticketData->attachment);
+                            array_push($attachments, "empcode_{$employeeId}/ticketing/{$filename}");
+                            $updated_attachment = implode(',', array_filter(array_unique($attachments)));
+                            $this->db->where('id', $post['ticket_id'])->update('gccticket.ticket', array('attachment' => $updated_attachment));
+                        }
                         $resultset["response"] = true;
                         $resultset["added_image"] = base_url("uploads/files/images/employee_files/empcode_{$employeeId}/ticketing/{$filename}");
                         $resultset["icon"] = $icon;
@@ -641,8 +549,11 @@ class Ticket_m extends CI_Model
                         $resultset["toastr_state"] = "error";
                     }
                 } else {
+                    if($data['message']== "<p>The file you are attempting to upload is larger than the permitted size.</p>"){
+                        $data['message'] ="<p>The file you are attempting to upload is larger than the permitted size. The maximum upload size is ". $config['max_size'] / 1024 . " MB</p>";
+                    }
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = "Image upload failed!";
+                    $resultset["toastr_msg"] = $data["message"];
                     $resultset["toastr_state"] = "error";
                 }
             }
@@ -726,9 +637,9 @@ class Ticket_m extends CI_Model
         $get = $this->input->get();
         $resultarray = array();
         if (isset($get['q'])) {
-            $query = $this->db->query("SELECT  `id`, `name` FROM gccticket.category WHERE `name` LIKE '%{$get['q']}%' AND `type` = '$type' AND `status` = 0 AND `is_archived` = 0");
+            $query = $this->db->query("SELECT  `id`, `name` FROM gccticket.category WHERE `name` LIKE '%{$get['q']}%' AND `type` = '$type' AND `status` = 0 AND `is_archived` = 0 AND `name` != 'Cancelled'");
         } else {
-            $query = $this->db->query("SELECT  `id`, `name` FROM gccticket.category WHERE `type` = '$type' AND `status` = 0 AND `is_archived` = 0");
+            $query = $this->db->query("SELECT  `id`, `name` FROM gccticket.category WHERE `type` = '$type' AND `status` = 0 AND `is_archived` = 0 AND `name` != 'Cancelled'");
         }
         if ($query->num_rows() > 0) {
             foreach ($query->result_array() as $_query) {
@@ -762,11 +673,34 @@ class Ticket_m extends CI_Model
 
     function saveTicket(){
         $post = $this->input->post();
-        if(isset($post['sub_category'])){
-            $sub_category = $this->input->post('sub_category');
-        }else{
-            $sub_category = "";
+        if(isset($post['category']) && $post['category'] == "webportal"){
+            if(isset($post['sub_category'])){
+                $sub_category = $post['sub_category'];
+            }
         }
+        else{
+            $sub_category = 0;
+        }
+
+        switch($post['category']) {
+            case 'webportal':
+            case 'website':
+                $responsibility = "SOFTWARE DEVELOPMENT";
+                break;
+                
+            case 'hardware':
+            case 'outlook':
+                $responsibility = "IT SUPPORT";
+                break;
+                
+            case 'software':
+                $responsibility = $post['responsibility'];
+                break;
+            default:
+                $responsibility = "IT SUPPORT";
+                break;
+        }
+
         $requested_date = date('Y-m-d H:i', strtotime($post['date_required']));
         $date = date('Y-m-d H:i:s');
         $year = substr($date, 2, 2);
@@ -815,7 +749,8 @@ class Ticket_m extends CI_Model
             'attachment' => implode(",",$img_arr),
             'priority' => 'low',
             'status' => 'open',
-            'created_at' => $date
+            'created_at' => $date,
+            'responsibility' => $responsibility
         );
         $result = $this->db->insert('gccticket.ticket', $data);
         $last_id = $this->db->insert_id();
@@ -842,13 +777,33 @@ class Ticket_m extends CI_Model
         return $query->result();
     }
 
-    function updateTicket($id){   
+    function updateTicket($id){
         $post = $this->input->post();
-        if(isset($post['sub_category'])){
-            $sub_category = $post['sub_category'];
-        }else{
+        if(isset($post['category']) && $post['category'] == "webportal"){
+            if(isset($post['sub_category'])){
+                $sub_category = $post['sub_category'];
+            }
+        }
+        else{
             $sub_category = 0;
         }
+
+        switch($post['category']) {
+            case 'webportal':
+            case 'website':
+                $responsibility = "SOFTWARE DEVELOPMENT";
+                break;
+                
+            case 'hardware':
+            case 'outlook':
+                $responsibility = "IT SUPPORT";
+                break;
+                
+            case 'software':
+                $responsibility = $post['responsibility'];
+                break;
+        }
+
         $requested_date = date('Y-m-d H:i', strtotime($post['date_required']));
         $employeeId = $this->user_data['emp_id'];
         $date = date('Y-m-d H:i:s');
@@ -856,10 +811,10 @@ class Ticket_m extends CI_Model
         $str_pic = implode(",",$this->input->post('pic'));
         $arr_pic = explode(",",$str_pic);
         
-        $img_arr = array();
-        foreach($arr_pic as $img){
-            $img_arr[] = "empcode_{$employeeId}/ticketing/".$img;
-        }
+        // $img_arr = array();
+        // foreach($arr_pic as $img){
+        //     $img_arr[] = "empcode_{$employeeId}/ticketing/".$img;
+        // }
         
         $data = array(
             'department_id' => $post['department'],
@@ -867,10 +822,11 @@ class Ticket_m extends CI_Model
             'category' => $post['category'],
             'sub_category' => $sub_category,
             'message' => $post['issue'],
-            'attachment' => implode(",",$img_arr),
+            // 'attachment' => implode(",",$img_arr),
             'priority' => $post['severity'],
             'performed_by' => $post['performed_by'],
-            'status' => $post['status']
+            'status' => $post['status'],
+            'responsibility' => $responsibility
         );
         if(empty($str_pic)){
             $data['attachment'] = "";
@@ -889,25 +845,36 @@ class Ticket_m extends CI_Model
     }
 
     function removeFile(){
+        $post = $this->input->post();
         $result = array();
-        $id = $this->user_data['emp_id'];
-        $file = $this->input->post('filename');
-        $url = realpath("uploads/files/images/employee_files/empcode_".$id."/ticketing/".$file);
-        
-        if(!file_exists($url)){
-            $result['result'] = false;
-        }else{
-            unlink($url);
-            $result['result'] = true;
-            $result['file'] = $file;
+        $id = isset($post['requested_id']) ? $post['requested_id'] : $this->user_data['emp_id'];
+        $file = $post['filename'];
+        $file_path = "uploads/files/images/employee_files/empcode_{$id}/ticketing/{$file}";
+        $full_path = FCPATH . $file_path;
+
+        if (isset($post['ticket_id'])) {
+            $ticket = $post['ticket_id'];
+            $ticketData = $this->db->select("attachment")->where('id', $ticket)->get('gccticket.ticket')->row();
+            $this->db->reset_query();
+            $update = explode(',', $ticketData->attachment);
+            $file = "empcode_{$id}/ticketing/{$file}";
+            if (in_array($file, $update)) {
+                $new_update = array_diff($update, array($file));
+                $data = implode(',', $new_update);
+                $this->db->where('id', $ticket)->update('gccticket.ticket', array('attachment' => $data));
+            }
         }
+        $result["result"] = file_exists($full_path) ? unlink($full_path) : false;
+        $result["file"] = $file;
         return $result;
     }
 
     function deleteTicket($id){
         $this->db->where('id', $id);
         $data = array(
-            'is_archived' => 1
+            'status' => 'Cancelled',
+            'is_archived' => 1,
+
         );
         $query = $this->db->update('gccticket.ticket', $data);
         return $query;
@@ -1111,6 +1078,7 @@ class Ticket_m extends CI_Model
             $telegram_msg .= '<b>Reference #</b>: '.strtoupper($data['reference_no']).chr(10);
             $telegram_msg .= '<b>Priority</b>: '.strtoupper($data['priority']).chr(10);
             $telegram_msg .= '<b>Category</b>: '.strtoupper($category).chr(10);
+            $telegram_msg .= '<b>Department Responsible</b>: '.strtoupper($data['responsibility']).chr(10);
             $telegram_msg .= '<b>Issue</b>: '.strtoupper($data['message']).chr(10);
             $telegram_msg .= '<b>Requested By</b>: '.strtoupper($requestor['display_name_1']).chr(10);
             $telegram_msg .= '<b>Date Needed</b>: '.strtoupper($data['requested_date']).chr(10);
@@ -1171,5 +1139,56 @@ class Ticket_m extends CI_Model
 			return false;
 		}
 	}
+
+    public function select2DepartmentData(){
+        $this->db->select('id, description AS text');
+        $this->db->from('gcchris.tbldepartments');
+        $this->db->where('description !=', '');
+        $this->db->where('is_archived', 0);
+        $this->db->order_by('description', 'ASC');
+        $query = $this->db->get();
+        return $query->result_array();
+    }
+
+    public function select2CategoryData($type){
+        $this->db->select("cat.name as text, cat.name as id");
+        $this->db->from($this->category. ' as cat');
+        $this->db->where('cat.type', $type);
+        $this->db->where('cat.status', 0);
+        if($type == 'sub-category'){
+            $this->db->order_by("id", "ASC");
+        }elseif ($type == 'severity' || $type == 'status' || $type == 'responsibility') {
+            $this->db->order_by("cat.id", "ASC");
+        }else{
+            $this->db->order_by("cat.name", "ASC");
+        }
+        
+        $results = $this->db->get()->result();
+        return $results;
+    }
+
+    public function select2PerformedByData(){
+        $query = $this->db->query("SELECT  c.id, CONCAT(c.firstname,' ',c.lastname) as emp_name FROM gccmaster.tblusers b, gccmaster.tblemployees c WHERE b.emp_id=c.id AND b.group_id='1' AND c.employee_status = 'Active' AND b.group_id=1 ORDER BY c.firstname ASC");
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $data["id"] = $_query["id"];
+                $data["text"] = $_query["emp_name"];
+                $resultarray[] = $data;
+            }
+        }
+        return  $resultarray;
+    }
+
+    function removeActionstkn(){
+        $post = $this->input->post();
+        $id = $post['id'];
+        $comment = $this->db->select("comment")->get_where("gccticket.comments", array("id"=>$id))->row();
+        $delete = $this->db->query("DELETE FROM gccticket.comments WHERE id = ?", $id);
+        if ($delete){
+            $this->core_layout->setEventLog("User deleted comment: {$comment->comment}","search", "success", "gccticket", "user");
+        }
+        return $delete;
+      }
 
 }

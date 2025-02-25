@@ -80,6 +80,8 @@ $.validate({
             success: function (data) {
                 if (data) {
                     currentForm.reset();
+                    $('#status').val(null).trigger('change');
+                    $('#type').val(null).trigger('change');
                     tbl.ajax.reload();
                     $("#add_category").modal('hide');
                     toastr.success(data.toastr_msg, "Successfully saved!", 5000);
@@ -245,7 +247,7 @@ $(document).on("click", ".btnEditCategory", function () {
                     });
 
                     modalWindow.modal("show");
-                   
+
                     $.validate({
                         form: "#form_category",
                         lang: "en",
