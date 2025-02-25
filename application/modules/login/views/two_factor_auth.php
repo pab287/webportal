@@ -494,6 +494,7 @@ $('#verify_otp').on('submit', function(e) {
         data: formData,
         dataType: 'json',
         success: function(response) {
+            localStorage.removeItem('timerEndTime');
             if (response.status == 'true') {
                 $('.otp-error').removeClass('show');
                 $('#otp').removeClass('error');
