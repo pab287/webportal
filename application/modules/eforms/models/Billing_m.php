@@ -1882,7 +1882,7 @@ class Billing_m extends CI_Model {
     function getBillingCount($search,$query_builder){
         $current_year = date('Y');
         $filterFields = array("a.middlename"," a.accountno", "a.meterno", "a.firstname", "a.lastname", "b.ref_no", "b.billing_from", "b.billing_to", "b.total_charges", "b.status", "b.due_date", "r.ref_no");
-        $this->db->select("a.middlename, b.is_paid, b.id, a.accountno, a.meterno, a.firstname, a.lastname, b.ref_no, b.billing_from, b.billing_to, b.total_charges, b.status, b.due_date");
+        $this->db->select("a.middlename, b.is_paid, b.id, a.accountno, a.meterno, a.firstname, a.lastname, b.ref_no, b.billing_from, b.billing_to, b.total_charges, b.status, b.due_date, r.ref_no as reading_ref_no");
         $this->db->from("hydra_billing.bills b");
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.readings r", "r.id = b.reading_id", "LEFT");
