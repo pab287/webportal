@@ -516,7 +516,7 @@ function initDatatable(columns, fields, order_field, order_by, criteria) {
             buttons: [
                 {
                     extend: 'excelHtml5',
-                    title: exportTitle,
+                    title: "",
                     action: function (e, dt, node, config) {
                         const self = this;
                         Swal.fire({
@@ -537,7 +537,7 @@ function initDatatable(columns, fields, order_field, order_by, criteria) {
                             }
                         }).then(result => {
                             if (result.isConfirmed) {
-                                config.title = result.value;
+                                config.filename = result.value;
                                 dropdown.addClass("m-btn--custom m-loader m-loader--light m-loader--left"); 
                                 getExportData(e, dt, node, config ,self,baseUrl('hris/reports/generate_employee_report/1'),'excelHtml5')
                                 .then(() => {
@@ -549,7 +549,7 @@ function initDatatable(columns, fields, order_field, order_by, criteria) {
                 },
                 {
                     extend: 'pdfHtml5',
-                    title: exportTitle,
+                    title: " ",
                     action: function(e, dt, node, config) {
                         const self = this;
                         
@@ -573,7 +573,7 @@ function initDatatable(columns, fields, order_field, order_by, criteria) {
                         }).then(result => {
                             if (result.isConfirmed) {
                                 dropdown.addClass("m-btn--custom m-loader m-loader--light m-loader--left");
-                                config.title = result.value;
+                                config.filename = result.value;
                                 getExportData(e, dt, node, config, self, baseUrl('hris/reports/generate_employee_report/1'), 'pdfHtml5')
                                     .then(() => {
                                         dropdown.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
@@ -584,36 +584,12 @@ function initDatatable(columns, fields, order_field, order_by, criteria) {
                 },
                 {
                     extend: 'print',
-                    title: exportTitle,
+                    title: "",
                     action: function(e, dt, node, config) {
                         const self = this;
-                        
-                        Swal.fire({
-                            title: 'Print Report',
-                            html: '<input type="text" id="filename-input" class="swal2-input" placeholder="Enter report name">',
-                            showCancelButton: true,
-                            confirmButtonText: 'Print',
-                            cancelButtonText: 'Cancel',
-                            focusConfirm: false,
-                            preConfirm: () => {
-                                const input = document.querySelector('#filename-input');
-                                const reportName = input ? input.value : '';
-                                
-                                if (!reportName) {
-                                    Swal.showValidationMessage(`Please enter a report name`);
-                                    return false;
-                                }
-                                return reportName;
-                            }
-                        }).then(result => {
-                            if (result.isConfirmed) {
-                                dropdown.addClass("m-btn--custom m-loader m-loader--light m-loader--left");
-                                config.title = result.value;
-                                getExportData(e, dt, node, config, self, baseUrl('hris/reports/generate_employee_report/1'), 'print')
-                                    .then(() => {
-                                        dropdown.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
-                                    });
-                            }
+                        getExportData(e, dt, node, config, self, baseUrl('hris/reports/generate_employee_report/1'), 'print')
+                        .then(() => {
+                            dropdown.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
                         });
                     }
                 }
