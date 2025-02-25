@@ -56,7 +56,7 @@
               </span>
             </span>
                             </a> -->
-                      <button class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--pill massPrint text-white"><i class="la la-print"></i> Print</button>
+                      <button class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill massPrint text-white"><i class="la la-print"></i> Print</button>
                                         <button class="btn btn-primary m-btn m-btn--icon m-btn--pill btnAdvance_search" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <span><i class="fa fa-search"></i><span>Filter</span><span class="dropdown-toggle"></span></span>
                       </button>
