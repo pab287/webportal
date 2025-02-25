@@ -25,10 +25,11 @@
             date_default_timezone_set("Asia/Taipei");
         }
 
-        function getScheduledEvent($dateTime = null) {
+        public function getScheduledEvent($dateTime = null) {
             $response = false;
             $dateStart = date("Y-m-1");
-            $dateEnd = date("Y-m-31");
+            $dateEnd = date("Y-m-t", strtotime($dateStart));
+
             $dateTime = ($dateTime) ? date("Y-m-d H:i", strtotime($dateTime)) : date("Y-m-d H:i");
 
             $dateToday = date("Y-m-d", strtotime($dateTime));
