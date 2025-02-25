@@ -33,6 +33,7 @@ class Timesheet_model extends CI_Model{
     protected $tbl_time_adjustments_manual_overtime = "gcctimeutility.time_adjustment_manual_overtime";
 
     protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
+    protected $tbl_payroll_sheet = "payroll.payroll_sheet";
 
     private $db_debug;
     private $logged_in_user;
@@ -6728,7 +6729,7 @@ class Timesheet_model extends CI_Model{
         return $resultSet;
     }
 
-    function importAndGenerateTimesheet()
+    public function importAndGenerateTimesheet()
     {
         $logged_in_user_emp_id = $this->logged_in_user["emp_id"];
         $post = $this->arrayToStdClass($this->input->post());
@@ -6736,14 +6737,14 @@ class Timesheet_model extends CI_Model{
         $start = date('Y-m-d', strtotime($inclusive_dates[0]));
         $end = date('Y-m-d', strtotime($inclusive_dates[1]));
         $file = $this->arrayToStdClass($_FILES['file_import']);
-        $non_existing = array(); // not in employees
+        $non_existing = array(); 
+
         $not_in_personnel = array();
         $no_shifts = array();
         $emp_id_to_generate = array();
         $exist_in_timesheet = array();
         $this->db_debug = $this->db->db_debug;
         $possible_duplicate = array();
-        // $this->db->db_debug = false;
 
         $import_data = array(
             "filename" => $file->name,
@@ -6756,6 +6757,8 @@ class Timesheet_model extends CI_Model{
         );
 
         $resultSet = array();
+        $invalidRecords = array();
+        $invalidCtr = 0;
 
         $this->db->trans_begin();
         $this->db->insert($this->tbl_timesheet_imports, $import_data);
@@ -6763,8 +6766,7 @@ class Timesheet_model extends CI_Model{
 
         $upload = $this->do_upload('./uploads/timesheet/imports/' . $import_insert_id, '*', 'file_import');
         if (!empty($upload->error)) {
-            $resultSet = array("success" => false, "title" => "Upload Error", "message" => $upload->error);
-            return $resultSet;
+            return array("success" => false, "title" => "Upload Error", "message" => $upload->error);
         } else {
             $resultSet["upload_data"] = $upload->upload_data;
             $this->db->where("id", $import_insert_id);
@@ -6792,147 +6794,88 @@ class Timesheet_model extends CI_Model{
                         $tempTime = date('H:i', strtotime(trim($parts[1])));
                         $date = date('Y-m-d', strtotime(trim($parts[1])));
 
-                        if (strtotime($date) >= strtotime($start) && strtotime($date) <= strtotime($end)) {
-                            $attendance_exist = $this->db
-                                ->where("biometric_id", $biometric_id)
-                                /*** ->where("datetime", $datetime) ***/
-                                ->where("DATE(datetime)", $date)
-                                ->like("TIME(datetime)", $tempTime, "both")
-                                ->count_all_results($this->tbl_attendance);
+                        $resultResponse = $this->setAttendanceLogImportData([ 
+                            "biometric_id" => $biometric_id, 
+                            "datetime" => $datetime, 
+                            "temptime" => $tempTime, 
+                            "date" => $date,
+                            "start" => $start,
+                            "end" => $end,
+                            "device_id" => $post->device_id,
+                            "insert_id" => $import_insert_id,
+                            "user_id" => $logged_in_user_emp_id
+                        ]);
 
-                            if (intval($attendance_exist) <= 0) {
-                                $this->db->insert($this->tbl_attendance,
-                                    array(
-                                        "biometric_id" => $biometric_id,
-                                        "state" => 1,
-                                        "device_id" => $post->device_id,
-                                        "longtitude" => "",
-                                        "latitude" => "",
-                                        "temp_id" => 0,
-                                        "is_custom" => 1,
-                                        "is_custom_by" => $logged_in_user_emp_id,
-                                        "approved_by" => 0,
-                                        "approval_status" => 0,
-                                        "datetime" => $datetime,
-                                        "timesheet_imports_id" => $import_insert_id));
-                            }
-
-                            $exist = $this->db->select("personnel.biometric_id, emp.id, personnel.shift_id")
-                                ->where("personnel.biometric_id", $biometric_id)
-                                ->join($this->tbl_employees . " emp", "emp.biometricno = personnel.biometricno", "LEFT")
-                                ->get($this->tbl_personnel . " personnel")
-                                ->row();
-
-
-                            if (empty($exist)) {
-                                if (!in_array($biometric_id, $non_existing)) {
-                                    array_push($non_existing, $biometric_id);
-                                }
+                        if($resultResponse !== false && isset($resultResponse["response"]) && $resultResponse["response"] === true){
+                            if(isset($resultResponse["shift_id"]) && intval($resultResponse["shift_id"]) > 0){
+                                if(!in_array($resultResponse["emp_id"], $emp_id_to_generate)){ array_push($emp_id_to_generate, $resultResponse["emp_id"]); }
                             } else {
-                                if (!empty($exist->id)) {
-                                    if (intval($exist->shift_id) > 0) {
-                                        if (!in_array($exist->id, $emp_id_to_generate)) {
-                                            array_push($emp_id_to_generate, $exist->id);
-                                        }
-                                    } else {
-                                        if (!in_array($biometric_id, $no_shifts)) {
-                                            array_push($no_shifts, $biometric_id);
-                                        }
-                                    }
-                                } else {
-                                    if (!in_array($biometric_id, $non_existing)) {
-                                        array_push($non_existing, $biometric_id);
-                                    }
-                                }
+                                if (!in_array($biometric_id, $no_shifts)) { array_push($no_shifts, $biometric_id); }
                             }
+                        } elseif ($resultResponse !== false && isset($resultResponse["invalid_entries"]) && !empty($resultResponse["invalid_entries"])) {
+                            $invalidEntries = (object) $resultResponse["invalid_entries"];
+                            $invalidRecords[$invalidEntries->emp_id]["biometric_id"] = $invalidEntries->biometric_id;
+                            $invalidRecords[$invalidEntries->emp_id]["employee_name"] = $invalidEntries->employee_name;
+                            if(!isset($invalidRecords[$invalidEntries->emp_id]["dates"])){ $invalidRecords[$invalidEntries->emp_id]["dates"] = array(); }
+                            $invalidRecords[$invalidEntries->emp_id]["dates"][] = date("Y/m/d H:i", strtotime($datetime));
+                            $invalidCtr++;
+                        } elseif ($resultResponse !== false && isset($resultResponse["employee_not_found"]) && $resultResponse["employee_not_found"] === true){
+                            if (!in_array($biometric_id, $non_existing)) { array_push($non_existing, $biometric_id); }
                         }
                     }
                 }
             } elseif (in_array($upload->upload_data->file_ext, [".xls", ".xlsx"])) {
-                // TODO: UPDATE READ FUNCTION LOOPING, FORMAT IS CHANGED
                 $file_path = $upload->upload_data->full_path;
                 $objPHPExcel = PHPExcel_IOFactory::load($file_path);
                 $allDataInSheet = $objPHPExcel->getActiveSheet()->toArray(null, true, true, true);
                 $arrayCount = count($allDataInSheet);
 
-                
                 if (intval($arrayCount) >= 1) {
                     for ($i = 2; $i <= $arrayCount; $i++) {
                         $biometric_id = $allDataInSheet[$i]["A"];
                         $datetime = date('Y-m-d H:i', strtotime($allDataInSheet[$i]["D"]));
                         $tempTime = date('H:i', strtotime($allDataInSheet[$i]["D"]));
                         $date = date('Y-m-d', strtotime($allDataInSheet[$i]["D"]));
-                        
-                        if (strtotime($date) >= strtotime($start) && strtotime($date) <= strtotime($end)) {
-                            $attendance_exist = $this->db
-                                ->where("biometric_id", $biometric_id)
-                                /*** ->where("datetime", $datetime) ***/
-                                ->where("DATE(datetime)", $date)
-                                ->like("TIME(datetime)", $tempTime, "both")
-                                ->count_all_results($this->tbl_attendance);
 
-                            if (intval($attendance_exist) <= 0) {
-                                $this->db->insert($this->tbl_attendance,
-                                    array(
-                                        "biometric_id" => $biometric_id,
-                                        "state" => 1,
-                                        "device_id" => $post->device_id,
-                                        "longtitude" => "",
-                                        "latitude" => "",
-                                        "temp_id" => 0,
-                                        "is_custom" => 1,
-                                        "is_custom_by" => $logged_in_user_emp_id,
-                                        "approved_by" => 0,
-                                        "approval_status" => 0,
-                                        "datetime" => $datetime,
-                                        "timesheet_imports_id" => $import_insert_id));
-                            }
+                        $resultResponse = $this->setAttendanceLogImportData([ 
+                            "biometric_id" => $biometric_id, 
+                            "datetime" => $datetime, 
+                            "temptime" => $tempTime, 
+                            "date" => $date,
+                            "start" => $start,
+                            "end" => $end,
+                            "device_id" => $post->device_id,
+                            "insert_id" => $import_insert_id,
+                            "user_id" => $logged_in_user_emp_id
+                        ]);
 
-                            $exist = $this->db->select("personnel.biometric_id, emp.id, personnel.shift_id")
-                                ->where("personnel.biometric_id", $biometric_id)
-                                ->join($this->tbl_employees . " emp", "emp.biometricno = personnel.biometricno", "LEFT")
-                                ->get($this->tbl_personnel . " personnel")
-                                ->row();
-
-
-                            if (empty($exist)) {
-                                if (!in_array($biometric_id, $non_existing)) {
-                                    array_push($non_existing, $biometric_id);
-                                }
+                        if($resultResponse !== false && isset($resultResponse["response"]) && $resultResponse["response"] === true){
+                            if(isset($resultResponse["shift_id"]) && intval($resultResponse["shift_id"]) > 0){
+                                if(!in_array($resultResponse["emp_id"], $emp_id_to_generate)){ array_push($emp_id_to_generate, $resultResponse["emp_id"]); }
                             } else {
-                                if (!empty($exist->id)) {
-                                    if (intval($exist->shift_id) > 0) {
-                                        if (!in_array($exist->id, $emp_id_to_generate)) {
-                                            array_push($emp_id_to_generate, $exist->id);
-                                        }
-                                    } else {
-                                        if (!in_array($biometric_id, $no_shifts)) {
-                                            array_push($no_shifts, $biometric_id);
-                                        }
-                                    }
-                                } else {
-                                    if (!in_array($biometric_id, $non_existing)) {
-                                        array_push($non_existing, $biometric_id);
-                                    }
-                                }
+                                if (!in_array($biometric_id, $no_shifts)) { array_push($no_shifts, $biometric_id); }
                             }
+                        } elseif ($resultResponse !== false && isset($resultResponse["invalid_entries"]) && !empty($resultResponse["invalid_entries"])) {
+                            $invalidEntries = (object) $resultResponse["invalid_entries"];
+                            $invalidRecords[$invalidEntries->emp_id]["biometric_id"] = $invalidEntries->biometric_id;
+                            $invalidRecords[$invalidEntries->emp_id]["employee_name"] = $invalidEntries->employee_name;
+                            if(!isset($invalidRecords[$invalidEntries->emp_id]["dates"])){ $invalidRecords[$invalidEntries->emp_id]["dates"] = array(); }
+                            $invalidRecords[$invalidEntries->emp_id]["dates"][] = date("Y/m/d H:i", strtotime($datetime));
+                            $invalidCtr++;
+                        } elseif ($resultResponse !== false && isset($resultResponse["employee_not_found"]) && $resultResponse["employee_not_found"] === true){
+                            if (!in_array($biometric_id, $non_existing)) { array_push($non_existing, $biometric_id); }
                         }
                     }
                 }
             } elseif ($upload->upload_data->file_ext === ".csv") {
-                // TODO: UPDATE READ FUNCTION LOOPING, FORMAT IS CHANGED
                 $file_path = $upload->upload_data->full_path;
                 $contents = file_get_contents($file_path);
                 $lines = explode("\n", $contents);
 
                 if (sizeof($lines) >= 2) {
                     array_splice($lines, 0, 1);
-
-                    foreach ($lines as $k => $line) {
-                        if (empty($line)) {
-                            continue;
-                        }
-
+                    foreach ($lines as $line) {
+                        if (empty($line)) { continue; }
                         $parts = explode(",", trim($line));
 
                         if (!empty($parts)) {
@@ -6941,59 +6884,33 @@ class Timesheet_model extends CI_Model{
                             $tempTime = date('H:i', strtotime(trim($parts[3])));
                             $date = date('Y-m-d', strtotime(trim($parts[3])));
 
-                            if (strtotime($date) >= strtotime($start) && strtotime($date) <= strtotime($end)) {
-                                $attendance_exist = $this->db
-                                    ->where("biometric_id", $biometric_id)
-                                    /*** ->where("datetime", $datetime) ***/
-                                    ->where("DATE(datetime)", $date)
-                                    ->like("TIME(datetime)", $tempTime, "both")
-                                    ->count_all_results($this->tbl_attendance);
+                            $resultResponse = $this->setAttendanceLogImportData([ 
+                                "biometric_id" => $biometric_id, 
+                                "datetime" => $datetime, 
+                                "temptime" => $tempTime, 
+                                "date" => $date,
+                                "start" => $start,
+                                "end" => $end,
+                                "device_id" => $post->device_id,
+                                "insert_id" => $import_insert_id,
+                                "user_id" => $logged_in_user_emp_id
+                            ]);
 
-                                if (intval($attendance_exist) <= 0) {
-                                    $this->db->insert($this->tbl_attendance,
-                                        array(
-                                            "biometric_id" => $biometric_id,
-                                            "state" => 1,
-                                            "device_id" => $post->device_id,
-                                            "longtitude" => "",
-                                            "latitude" => "",
-                                            "temp_id" => 0,
-                                            "is_custom" => 1,
-                                            "is_custom_by" => $logged_in_user_emp_id,
-                                            "approved_by" => 0,
-                                            "approval_status" => 0,
-                                            "datetime" => $datetime,
-                                            "timesheet_imports_id" => $import_insert_id));
-                                }
-
-                                $exist = $this->db->select("personnel.biometric_id, emp.id, personnel.shift_id")
-                                    ->where("personnel.biometric_id", $biometric_id)
-                                    ->join($this->tbl_employees . " emp", "emp.biometricno = personnel.biometricno", "LEFT")
-                                    ->get($this->tbl_personnel . " personnel")
-                                    ->row();
-
-
-                                if (empty($exist)) {
-                                    if (!in_array($biometric_id, $non_existing)) {
-                                        array_push($non_existing, $biometric_id);
-                                    }
+                            if($resultResponse !== false && isset($resultResponse["response"]) && $resultResponse["response"] === true){
+                                if(isset($resultResponse["shift_id"]) && intval($resultResponse["shift_id"]) > 0){
+                                    if(!in_array($resultResponse["emp_id"], $emp_id_to_generate)){ array_push($emp_id_to_generate, $resultResponse["emp_id"]); }
                                 } else {
-                                    if (!empty($exist->id)) {
-                                        if (intval($exist->shift_id) > 0) {
-                                            if (!in_array($exist->id, $emp_id_to_generate)) {
-                                                array_push($emp_id_to_generate, $exist->id);
-                                            }
-                                        } else {
-                                            if (!in_array($biometric_id, $no_shifts)) {
-                                                array_push($no_shifts, $biometric_id);
-                                            }
-                                        }
-                                    } else {
-                                        if (!in_array($biometric_id, $non_existing)) {
-                                            array_push($non_existing, $biometric_id);
-                                        }
-                                    }
+                                    if (!in_array($biometric_id, $no_shifts)) { array_push($no_shifts, $biometric_id); }
                                 }
+                            } elseif ($resultResponse !== false && isset($resultResponse["invalid_entries"]) && !empty($resultResponse["invalid_entries"])) {
+                                $invalidEntries = (object) $resultResponse["invalid_entries"];
+                                $invalidRecords[$invalidEntries->emp_id]["biometric_id"] = $invalidEntries->biometric_id;
+                                $invalidRecords[$invalidEntries->emp_id]["employee_name"] = $invalidEntries->employee_name;
+                                if(!isset($invalidRecords[$invalidEntries->emp_id]["dates"])){ $invalidRecords[$invalidEntries->emp_id]["dates"] = array(); }
+                                $invalidRecords[$invalidEntries->emp_id]["dates"][] = date("Y/m/d H:i", strtotime($datetime));
+                                $invalidCtr++;
+                            } elseif ($resultResponse !== false && isset($resultResponse["employee_not_found"]) && $resultResponse["employee_not_found"] === true){
+                                if (!in_array($biometric_id, $non_existing)) { array_push($non_existing, $biometric_id); }
                             }
                         }
                     }
@@ -7010,9 +6927,7 @@ class Timesheet_model extends CI_Model{
                 $period = new DatePeriod($dateStart, $interval, $dateEnd);
                 foreach ($period as $dt) {
                     $date = $dt->format("Y-m-d");
-
                     $create = $this->create($date, 1, $emp_id_to_generate, $import_insert_id);
-
                     if (sizeof($create["updatedTimesheets"]) >= 1) {
                         $exist_in_timesheet = array_unique(array_merge($create["updatedTimesheets"], $exist_in_timesheet));
                     }
@@ -7022,6 +6937,8 @@ class Timesheet_model extends CI_Model{
             $resultSet["success"] = true;
             $resultSet["message"] = "Attendance successfully imported & Timesheet was successfully generated.";
             $resultSet["title"] = "Import & Generate Successful.";
+            $resultSet["invalid_records"] = $invalidRecords;
+            $resultSet["invalid_count"] = $invalidCtr;
         } else {
             // import timesheet function from excel template
             $file_path = $upload->upload_data->full_path;
@@ -7036,22 +6953,25 @@ class Timesheet_model extends CI_Model{
                     if(isset($rows[$i]["A"], $rows[$i]["B"]) && ($rows[$i]["A"] && $rows[$i]["B"])){
                         $biometric = $rows[$i]["A"];
                         $date = date('Y-m-d', strtotime($rows[$i]["B"]));
-                        $am_in = (isset($rows[$i]["C"]) && $rows[$i]["C"])? $rows[$i]["C"]: NULL;
-                        $am_out = (isset($rows[$i]["D"]) && $rows[$i]["D"])? $rows[$i]["D"]: NULL;
-                        $pm_in = (isset($rows[$i]["E"]) && $rows[$i]["E"])? $rows[$i]["E"]: NULL;
-                        $pm_out = (isset($rows[$i]["F"]) && $rows[$i]["F"])? $rows[$i]["F"]: NULL;
+                        $am_in = (isset($rows[$i]["C"]) && $rows[$i]["C"])? $rows[$i]["C"]: null;
+                        $am_out = (isset($rows[$i]["D"]) && $rows[$i]["D"])? $rows[$i]["D"]: null;
+                        $pm_in = (isset($rows[$i]["E"]) && $rows[$i]["E"])? $rows[$i]["E"]: null;
+                        $pm_out = (isset($rows[$i]["F"]) && $rows[$i]["F"])? $rows[$i]["F"]: null;
                         $ot = (isset($rows[$i]["G"]) && $rows[$i]["G"])? $rows[$i]["G"]: 0;
                         $ndot = (isset($rows[$i]["H"]) && $rows[$i]["H"])? $rows[$i]["H"]: 0;
+
+                        $maxPayrollDate = $this->getPayrollMaxDate($biometric);
+                        $isValidDate = $maxPayrollDate !== false ? strtotime($date) > strtotime($maxPayrollDate) : false;
 
                         $date_check = $date;
                         $weekday = strtolower(date('l', strtotime($date)));
                         $ot = floatval($ot);
                         $ndot = floatval($ndot);
 
-                        $tempAmIn = ($am_in)? date("H:i:s", strtotime($am_in)): NULL;
-                        $tempAmOut = ($am_out)? date("H:i:s", strtotime($am_out)): NULL;
-                        $tempPmIn = ($pm_in)? date("H:i:s", strtotime($pm_in)): NULL;
-                        $tempPmOut = ($pm_out)? date("H:i:s", strtotime($pm_out)): NULL;
+                        $tempAmIn = ($am_in)? date("H:i:s", strtotime($am_in)): null;
+                        $tempAmOut = ($am_out)? date("H:i:s", strtotime($am_out)): null;
+                        $tempPmIn = ($pm_in)? date("H:i:s", strtotime($pm_in)): null;
+                        $tempPmOut = ($pm_out)? date("H:i:s", strtotime($pm_out)): null;
 
                         /*** attendance rework ***/
                         $next_day = new DateTime($date);
@@ -7069,34 +6989,27 @@ class Timesheet_model extends CI_Model{
                             $isNextDay = true;
                         }
                         
-                        if(($tempAmOut && $tempPmIn) && (strtotime($tempPmIn) < strtotime($tempAmOut)) || $isNextDay == true){
+                        if(($tempAmOut && $tempPmIn) && (strtotime($tempPmIn) < strtotime($tempAmOut)) || $isNextDay === true){
                             $_pm_in = date("Y-m-d H:i", strtotime($tempAlteredDate . " " . $tempPmIn));
                             $isNextDay = true;
                         }
                         
-                        if(($tempPmIn && $tempPmOut) && (strtotime($tempPmOut) < strtotime($tempPmIn)) || $isNextDay == true){
+                        if(($tempPmIn && $tempPmOut) && (strtotime($tempPmOut) < strtotime($tempPmIn)) || $isNextDay === true){
                             $_pm_out = date("Y-m-d H:i", strtotime($tempAlteredDate . " " . $tempPmOut));
                             $isNextDay = true;
                         }
                         /*** attendance rework ***/
 
                         $currentDateTime = array();
-                        if($tempAmIn && $tempAmIn !== NULL){  $currentDateTime[] = date("Y-m-d H:i:s", strtotime($_am_in)); }
-                        if($tempAmOut && $tempAmOut !== NULL){ $currentDateTime[] = date("Y-m-d H:i:s", strtotime($_am_out)); }
-                        if($tempPmIn && $tempPmIn !== NULL){ $currentDateTime[] = date("Y-m-d H:i:s", strtotime($_pm_in)); }
-                        if($tempPmOut && $tempPmOut !== NULL){ $currentDateTime[] = date("Y-m-d H:i:s", strtotime($_pm_out)); }
+                        if($tempAmIn && $tempAmIn !== null){  $currentDateTime[] = date("Y-m-d H:i:s", strtotime($_am_in)); }
+                        if($tempAmOut && $tempAmOut !== null){ $currentDateTime[] = date("Y-m-d H:i:s", strtotime($_am_out)); }
+                        if($tempPmIn && $tempPmIn !== null){ $currentDateTime[] = date("Y-m-d H:i:s", strtotime($_pm_in)); }
+                        if($tempPmOut && $tempPmOut !== null){ $currentDateTime[] = date("Y-m-d H:i:s", strtotime($_pm_out)); }
 
-                        if (!(strtotime($date) >= strtotime($start) && strtotime($date) <= strtotime($end))) {
-                            continue;
-                        }
+                        if (!(strtotime($date) >= strtotime($start) && strtotime($date) <= strtotime($end))) { continue; }
 
-                        $employee = $this->db
-                            ->select("personnel.*, emp.id emp_id, emp.lastname, emp.firstname")
-                            ->where("personnel.biometric_id", $biometric)
-                            ->join($this->tbl_personnel . " personnel", "emp.biometricno = personnel.biometric_id", "LEFT")
-                            ->get($this->tbl_employees . " emp");
-
-                        if($employee->num_rows() == 1){
+                        $employee = $this->getExistingEmployeeePersonnel($biometric);
+                        if($employee !== false && $employee->num_rows() == 1){
                             $empRow = $employee->row();
                             $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $empRow->emp_id);
                             $getHourlyTimeSheet = $this->getEmployeePerHourShashPartimer($empRow->emp_id);
@@ -7124,8 +7037,8 @@ class Timesheet_model extends CI_Model{
                             $no_shift_schedule = false;
 
                             $tempHoliday = (object) $this->getCurrentDateIsHoliday($date);
-                            $isHoliday = ($tempHoliday->is_holiday == true)? 1: 0;
-                            $payRateId = ($tempHoliday->is_holiday == true && $tempHoliday->payrate_id)? $tempHoliday->payrate_id: 0;
+                            $isHoliday = $tempHoliday->is_holiday ? 1: 0;
+                            $payRateId = $tempHoliday->is_holiday && $tempHoliday->payrate_id ? $tempHoliday->payrate_id: 0;
 
                             $employee_time_sheet = new StdClass();
                             $employee_time_sheet->emp_id = $empRow->emp_id;
@@ -7190,27 +7103,26 @@ class Timesheet_model extends CI_Model{
                             $alteredCustomShiftId = 0;
                             $alteredHasShiftSchedule = 1;
 
-                            if(isset($alteredShifts) && $alteredShifts && count(get_object_vars($alteredShifts)) > 0){
-                                if(isset($alteredShifts->has_shift)){
-                                    $ctrAlteredSchedule = false;
-                                    $tempHasShift = $alteredShifts->has_shift;
-                                    $alteredHasShiftSchedule = intval($tempHasShift);
+                            if(isset($alteredShifts) && $alteredShifts && count(get_object_vars($alteredShifts)) > 0 && isset($alteredShifts->has_shift)){
+                                $ctrAlteredSchedule = false;
+                                $tempHasShift = $alteredShifts->has_shift;
+                                $alteredHasShiftSchedule = intval($tempHasShift);
 
-                                    foreach ($alteredShifts->schedule as $kkx => $vvx) {
-                                        if(isset($schedule->{$kkx}) && $schedule->{$kkx} && $schedule->{$kkx} !== $vvx && $vvx !== null && intval($tempHasShift) == 1){
-                                            $schedule->{$kkx} = $vvx;
-                                            $ctrAlteredSchedule = true;
-                                        }
-                                        if(intval($tempHasShift) == 0){
-                                            $schedule->{$kkx} = null;
-                                            $ctrAlteredSchedule = true;
-                                        }
+                                foreach ($alteredShifts->schedule as $kkx => $vvx) {
+                                    if(isset($schedule->{$kkx}) && $schedule->{$kkx} && $schedule->{$kkx} !== $vvx && $vvx !== null && intval($tempHasShift) == 1){
+                                        $schedule->{$kkx} = $vvx;
+                                        $ctrAlteredSchedule = true;
                                     }
-                                    if($ctrAlteredSchedule == true && $alteredShifts->custom_shift_id !== "0"){
-                                        $alteredCustomShiftId = $alteredShifts->custom_shift_id;
+                                    if(intval($tempHasShift) == 0){
+                                        $schedule->{$kkx} = null;
+                                        $ctrAlteredSchedule = true;
                                     }
                                 }
+                                if($ctrAlteredSchedule === true && $alteredShifts->custom_shift_id !== "0"){
+                                    $alteredCustomShiftId = $alteredShifts->custom_shift_id;
+                                }
                             }
+
                             $_has_shift = $alteredCustomShiftId !== 0? intval($alteredHasShiftSchedule): 1;
                             $employee_time_sheet->has_shift = $_has_shift;
                             $employee_time_sheet->custom_shift_id = $alteredCustomShiftId;
@@ -7250,11 +7162,9 @@ class Timesheet_model extends CI_Model{
                             }
 
                             $tempMergedTimeSheet = array_merge((array) $employee_time_sheet, (array) $updatedTimeSheet);
-
-                            $employee_time_sheet = new StdClass();
                             $employee_time_sheet = (object) $tempMergedTimeSheet;
 
-                            if (sizeof((array) $timesheet_exist) >= 1) {
+                            if (sizeof((array) $timesheet_exist) >= 1 && $isValidDate === true){
                                 $tempEmployeeData = (object) $this->core_layout->getEmployeeData($empRow->emp_id);
                                 $tempName = isset($tempEmployeeData->display_name_1) && $tempEmployeeData->display_name_1 ? $tempEmployeeData->display_name_1: "No assigned name";
                                 $timesheet_exist->emp_name = $tempName;
@@ -7266,11 +7176,11 @@ class Timesheet_model extends CI_Model{
                                     "changes_str" => json_encode($employee_time_sheet)
                                 ));
                             }else{
-                                if(sizeof((array) $employee_time_sheet) >= 1 && count($currentDateTime) > 0){
+                                if(sizeof((array) $employee_time_sheet) >= 1 && !empty($currentDateTime)){
                                     $this->db->from($this->tbl_timesheet);
                                     $this->db->where("emp_id", $employee_time_sheet->emp_id);
                                     $this->db->where("date", $employee_time_sheet->date);
-                                    foreach ($currentDateTime as $key => $datetime) {
+                                    foreach ($currentDateTime as $datetime) {
                                         $this->db->group_start();
                                         $timeAttendance = date("H:i:s", strtotime($datetime));
                                         $this->db->where("am_in", $timeAttendance);
@@ -7280,14 +7190,19 @@ class Timesheet_model extends CI_Model{
                                         $this->db->group_end();
                                     }
                                     $tempQuery = $this->db->get();
-                                    if($tempQuery->num_rows() == 0){
+                                    if($tempQuery->num_rows() == 0 && $isValidDate === true){
                                         array_push($timesheet, $employee_time_sheet);
+                                    }elseif($tempQuery->num_rows() == 0 && $isValidDate === false){
+                                        $invalidRecords[$employee_time_sheet->emp_id]["biometric_id"] = $empRow->biometric_id;
+                                        $invalidRecords[$employee_time_sheet->emp_id]["employee_name"] = $empRow->employee_name;
+                                        $invalidRecords[$employee_time_sheet->emp_id]["dates"][] = date("Y/m/d", strtotime($date));
+                                        $invalidCtr++;
                                     }
                                 }
                             }
 
-                            if(count($currentDateTime) > 0){
-                                foreach ($currentDateTime as $key => $value) {
+                            if(!empty($currentDateTime)){
+                                foreach ($currentDateTime as $value) {
                                     $tempRow = new stdClass();
                                     $tempRow->biometric_id = $empRow->biometric_id;
                                     $tempRow->datetime = $value;
@@ -7301,15 +7216,16 @@ class Timesheet_model extends CI_Model{
 
             if (!empty($timesheet)) {
                 $this->db->insert_batch($this->tbl_timesheet, $timesheet);
-                if($this->db->affected_rows() > 0){}
             }
 
             $resultSet["success"] = true;
             $resultSet["message"] = "Timesheet was successfully imported.";
             $resultSet["title"] = "Import Successful.";
+            $resultSet["invalid_records"] = $invalidRecords;
+            $resultSet["invalid_count"] = $invalidCtr;
         }
 
-        if ($this->db->trans_status() === TRUE) {
+        if ($this->db->trans_status() === true) {
             $this->db->trans_commit();
         } else {
             $this->db->trans_rollback();
@@ -7358,6 +7274,89 @@ class Timesheet_model extends CI_Model{
         $resultSet["possible_duplicate"] = $possible_duplicate;
         $resultSet["type"] = $post->type;
         return $resultSet;
+    }
+
+    protected function getPayrollMaxDate($biometric_id=null){
+        if($biometric_id){
+            $this->db->select("MAX(ps.date_end) as max_date");
+            $this->db->from($this->tbl_employees." emp");
+            $this->db->join($this->tbl_payroll_sheet." ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+            $this->db->where("emp.biometricno", $biometric_id);
+            $this->db->group_by("emp.id");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() == 1){ return $qTemp->row()->max_date; }
+            else{ return false; }
+        }else{ return false; }
+        
+    }
+
+    protected function getExistingEmployeeePersonnel($biometric_id=null){
+        if($biometric_id){
+            $employee = $this->db
+            ->select("personnel.biometric_id, personnel.shift_id, personnel.is_flexi, emp.id emp_id, emp.lastname, emp.firstname,
+                UCASE(CONCAT(emp.lastname,
+                    CASE WHEN emp.suffix != 'N/A' AND emp.suffix !='NONE' AND emp.suffix !='' AND emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''  END, ', ',
+                    emp.firstname, ' ', CASE WHEN emp.middlename != 'N/A' AND emp.middlename != 'NONE'
+                    AND emp.middlename !='' AND emp.middlename IS NOT NULL THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE '' END)) as employee_name")
+            ->where("personnel.biometric_id", $biometric_id)
+            ->join($this->tbl_personnel . " personnel", "emp.biometricno = personnel.biometric_id", "LEFT")
+            ->get($this->tbl_employees . " emp");
+            return $employee;
+        }else{ return false; }
+    }
+
+    protected function setAttendanceLogImportData(array $parameters){
+        if (empty($parameters['biometric_id']) || empty($parameters['datetime']) || empty($parameters['temptime']) || empty($parameters['date']) ||
+        empty($parameters['start']) || empty($parameters['end'])){
+            return false;
+        }
+        $result = array();
+        $maxPayrollDate = $this->getPayrollMaxDate($parameters['biometric_id']);
+        $isValidDate = $maxPayrollDate !== false ? strtotime($parameters['date']) > strtotime($maxPayrollDate) : false;
+        $employee = $this->getExistingEmployeeePersonnel($parameters['biometric_id']);
+        if ($employee !== false && $employee->num_rows() == 1){
+            $empRow = $employee->row();
+            if (strtotime($parameters['date']) >= strtotime($parameters['start']) && strtotime($parameters['date']) <= strtotime($parameters['end']) &&
+                $isValidDate){
+                $attendanceExist = $this->db
+                    ->where('biometric_id', $empRow->biometric_id)
+                    ->where('DATE(datetime)', $parameters['date'])
+                    ->like('TIME(datetime)', $parameters['temptime'], 'both')
+                    ->count_all_results($this->tbl_attendance);
+                if (intval($attendanceExist) <= 0){
+                    $addedAttendance = $this->db->insert($this->tbl_attendance, [
+                        'biometric_id' => $empRow->biometric_id,
+                        'state' => 1,
+                        'device_id' => $parameters['device_id'],
+                        'longtitude' => '',
+                        'latitude' => '',
+                        'temp_id' => 0,
+                        'is_custom' => 1,
+                        'is_custom_by' => $parameters['user_id'],
+                        'approved_by' => 0,
+                        'approval_status' => 0,
+                        'datetime' => $parameters['datetime'],
+                        'timesheet_imports_id' => $parameters['insert_id'],
+                    ]);
+                    $result['response'] = $addedAttendance && $this->db->affected_rows() > 0;
+                    $result["emp_id"] = $empRow->emp_id;
+                    $result["shift_id"] = $empRow->shift_id;
+                } else { $result['response'] = false; }
+            } elseif (strtotime($parameters['date']) >= strtotime($parameters['start']) && strtotime($parameters['date']) <= strtotime($parameters['end']) &&
+            $isValidDate == false){
+                $result['response'] = false;
+                $result['invalid_entries'] = [
+                    'emp_id' => $empRow->emp_id,
+                    'biometric_id' => $empRow->biometric_id,
+                    'employee_name' => $empRow->employee_name,
+                    'date' => $parameters['date'],
+                ];
+            }
+        } else { 
+            $result['response'] = false;
+            $result['employee_not_found'] = true;
+        }
+        return $result;
     }
 
     private function do_upload($upload_path, $allowed_types, $file)

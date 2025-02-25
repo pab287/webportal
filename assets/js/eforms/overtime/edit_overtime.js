@@ -1,8 +1,7 @@
-var getUrlParameter = function getUrlParameter(sParam) {
-  var sPageURL = decodeURIComponent(window.location.search.substring(1)),
-    sURLVariables = sPageURL.split("&"),
-    sParameterName,
-    i;
+const getUrlParameter = function getUrlParameter(sParam) {
+  const sPageURL = decodeURIComponent(window.location.search.substring(1));
+  const sURLVariables = sPageURL.split("&");
+  let sParameterName, i; 
 
   for (i = 0; i < sURLVariables.length; i++) {
     sParameterName = sURLVariables[i].split("=");
@@ -12,16 +11,15 @@ var getUrlParameter = function getUrlParameter(sParam) {
   }
 };
 
-param_id = getUrlParameter("id");
-
-var vmTab1 = new Vue({
+const param_id = getUrlParameter("id");
+const vmTab1 = new Vue({
   el: "#form_overtime",
-  data: { 
-    vm_tab1: {
-      company: '',
-      department: '',
-      position: '',
-    } 
+  data: { vm_tab1: {}, loading_content: true },
+  methods: {
+    displayEmployeeCompany: function () {
+      const { details } = this.vm_tab1;
+      return  details;
+    }
   }
 });
 
@@ -29,15 +27,17 @@ $.ajax({
   url: baseUrl("eforms/overtime/get_overtime_request_details/") + param_id,
   type: "GET",
   dataType: "JSON",
+  global: false,
   success: function (data) {
+    vmTab1.vm_tab1 = { ...data };
+    vmTab1.loading_content = false;
     $("#purpose").val(data.purpose);
-    vmTab1.vm_tab1 = Object.assign({}, data);
-
-    var employee = new Option(data.display_name, data.employee, true, true);
+    const employee = new Option(data.display_name, data.employee, true, true);
     $('#employee').append(employee).trigger('change');
-
-    var requested_by = new Option(data.display_requested_by, data.requested_by, true, true);
+    const requested_by = new Option(data.display_requested_by, data.requested_by, true, true);
     $('#requested_by').append(requested_by).trigger('change');
+    const tempMinDate = moment(new Date(data.max_date), "YYYY-MM-DD").add(1, 'days').format("YYYY-MM-DD");
+    dateTimeRangePicker(tempMinDate, data.date_from, data.date_to);
   }
 });
 
@@ -81,26 +81,40 @@ $("#employee").on("select2:select", function () {
         $("#company").val(data.company);
         $("#department").val(data.department);
         $("#position").val(data.position);
+
+        if(data.max_date){
+          const tempMinDate = moment(new Date(data.max_date), "YYYY-MM-DD").add(1, 'days').format("YYYY-MM-DD");
+          dateTimeRangePicker(tempMinDate);
+        }
       }
     }
   });
 });
 
-$("#date_time").daterangepicker({
-  timePicker: true,
-  minDate: moment().subtract(2, 'years'),
-  startDate: moment().startOf('hour'),
-  endDate: moment().startOf('hour').add(32, 'hour'),
-  locale: {
-    format: 'M/DD hh:mm A'
-  }
-});
+const dateTimeRangePicker = function (minDate, startDate, endDate) {
+  $("#date_from, #date_to, #date").val("");
+  const nMinDate = minDate ? new Date(minDate) : moment().subtract(2, 'years');
+  const nStartDate = startDate ? new Date(startDate) : moment().startOf('hour');
+  const nEndDate = endDate ? new Date(endDate) : moment().startOf('hour').add(32, 'hour');
+  $("#date_time").daterangepicker({
+      timePicker: true,
+      minDate: nMinDate,
+      startDate: nStartDate,
+      endDate: nEndDate,
+      locale: {
+        format: 'M/DD hh:mm A'
+      }
+  }).on('apply.daterangepicker', function (ev, picker) {
+      vmTab1.vm_tab1.date_from = picker.startDate.format('YYYY-MM-DD HH:mm:ss');
+      vmTab1.vm_tab1.date_to = picker.endDate.format('YYYY-MM-DD HH:mm:ss');
 
-$('#date_time').on('apply.daterangepicker', function (ev, picker) {
-  $("#date_from").val(picker.startDate.format('YYYY-MM-DD HH:mm:ss'));
-  $("#date_to").val(picker.endDate.format('YYYY-MM-DD HH:mm:ss'));
-  $("#date").val(picker.startDate.format('MM/DD/YYYY hh:mm a') + ' - ' + picker.endDate.format('MM/DD/YYYY hh:mm a'));
-});
+      /*** $("#date_from").val(picker.startDate.format('YYYY-MM-DD HH:mm:ss'));
+      $("#date_to").val(picker.endDate.format('YYYY-MM-DD HH:mm:ss'));
+      $("#date").val(picker.startDate.format('MM/DD/YYYY hh:mm a') + ' - ' + picker.endDate.format('MM/DD/YYYY hh:mm a')).validate(); ***/
+  });
+}
+
+dateTimeRangePicker();
 
 function save() {
   $.validate({
