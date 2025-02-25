@@ -1,5 +1,4 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
-
     class Shift_management_model extends CI_Model {
         protected $absentTable = "gcctimeutility.absent";
         protected $attendanceTable = "gcctimeutility.attendance";
@@ -18,86 +17,60 @@
         protected $eformsTpTable = "gcceforms.travel_personnel";
         protected $eformsTdTable = "gcceforms.travel_destination";
 
-        function __construct() {
+        public function __construct() {
             parent::__construct();
             $this->load->model("gcctime/attendance_model", "adm_attendance");
 
             date_default_timezone_set("Asia/Taipei");
         }
 
-        function getScheduledEvent($dateTime = null) {
+        protected function hasScheduledEvent($dateTime = null, $queryResult = null): bool {
+            if (!$queryResult || $queryResult->num_rows() === 0 || !$dateTime) { return false; }
             $response = false;
-            $dateStart = date("Y-m-1");
-            $dateEnd = date("Y-m-31");
-            $dateTime = ($dateTime) ? date("Y-m-d H:i", strtotime($dateTime)) : date("Y-m-d H:i");
-
-            $dateToday = date("Y-m-d", strtotime($dateTime));
-            $timeToday = date("H:i", strtotime($dateTime));
-
-            $this->db->from($this->shiftScheduleCalendarTable);
-            $this->db->where("start_date >=", $dateStart);
-            $this->db->where("end_date <=", $dateEnd);
-            $query = $this->db->get();
-
-            if ($query->num_rows() > 0) {
-                foreach ($query->result() as $rs) {
-                    $startDate = ($rs->start_date && $rs->start_date !== "0000-00-00") ? date("Y-m-d", strtotime($rs->start_date)) : "";
-                    $endDate = ($rs->end_date && $rs->end_date !== "0000-00-00") ? date("Y-m-d", strtotime($rs->end_date)) : "";
-
-                    if (($startDate && $endDate) && ($dateToday >= $startDate && $dateToday <= $endDate)) {
-                        $startTime = ($rs->start_time && $rs->start_time !== "00:00:00") ? date("H:i", strtotime($rs->start_time)) : "00:00";
-                        $endTime = ($rs->end_time && $rs->end_time !== "00:00:00") ? date("H:i", strtotime($rs->end_time)) : "24:59";
-
-                        if (($startTime && $endTime) && ($timeToday >= $startTime && $timeToday <= $endTime)) {
-                            $response = true;
-                        }
-                        if ($rs->start_time == "00:00:00" && $rs->end_time == "00:00:00") {
-                            $response = true;
-                        }
-                    }
+            $dateToday = date('Y-m-d', strtotime($dateTime));
+            $timeToday = date('H:i', strtotime($dateTime));
+            foreach ($queryResult->result() as $result) {
+                $startDate = $result->start_date ? date('Y-m-d', strtotime($result->start_date)) : '';
+                $endDate = $result->end_date ? date('Y-m-d', strtotime($result->end_date)) : '';
+                if (($startDate && $endDate) && ($dateToday >= $startDate && $dateToday <= $endDate)) {
+                    $startTime = $result->start_time ? date('H:i', strtotime($result->start_time)) : '00:00';
+                    $endTime = $result->end_time ? date('H:i', strtotime($result->end_time)) : '24:59';
+                    if (($startTime && $endTime) && ($timeToday >= $startTime && $timeToday <= $endTime)) { $response = true; }
+                    if ($result->start_time === '00:00:00' && $result->end_time === '00:00:00') { $response = true; }
                 }
             }
-
             return $response;
         }
 
-        function getScheduledEventByDate($_startDate = null, $_endDate = null, $dateTime = null) {
-            $response = false;
-            $dateStart = (isset($_startDate) && $_startDate) ? date("Y-m-d", strtotime($_startDate)) : date("Y-m-1");
-            $dateEnd = (isset($_endDate) && $_endDate) ? date("Y-m-d", strtotime($_endDate)) : date("Y-m-31");
+        public function getScheduledEvent($dateTime = null){
+            $startOfTheMonth = date('Y-m-01');
+            $endOfTheMonth = date('Y-m-t', strtotime($startOfTheMonth));
+            $dateTime = $dateTime ? date('Y-m-d H:i', strtotime($dateTime)) : date('Y-m-d H:i');
 
-            $dateTime = ($dateTime) ? date("Y-m-d H:i", strtotime($dateTime)) : date("Y-m-d H:i");
+            $query = $this->db->select('start_date, start_time, end_date, end_time')
+                ->from($this->shiftScheduleCalendarTable)
+                ->where('start_date >=', $startOfTheMonth)
+                ->where('end_date <=', $endOfTheMonth)
+                ->get();
 
-            $dateToday = date("Y-m-d", strtotime($dateTime));
-            $timeToday = date("H:i", strtotime($dateTime));
-
-            $this->db->from($this->shiftScheduleCalendarTable);
-            $this->db->where("start_date >=", $dateStart);
-            $this->db->where("end_date <=", $dateEnd);
-            $query = $this->db->get();
-
-            if ($query->num_rows() > 0) {
-                foreach ($query->result() as $rs) {
-                    $startDate = ($rs->start_date && $rs->start_date !== "0000-00-00") ? date("Y-m-d", strtotime($rs->start_date)) : "";
-                    $endDate = ($rs->end_date && $rs->end_date !== "0000-00-00") ? date("Y-m-d", strtotime($rs->end_date)) : "";
-                    if (($startDate && $endDate) && ($dateToday >= $startDate && $dateToday <= $endDate)) {
-                        $startTime = ($rs->start_time && $rs->start_time !== "00:00:00") ? date("H:i", strtotime($rs->start_time)) : "";
-                        $endTime = ($rs->end_time && $rs->end_time !== "00:00:00") ? date("H:i", strtotime($rs->end_time)) : "";
-
-                        if (($startTime && $endTime) && ($timeToday >= $startTime && $timeToday <= $endTime)) {
-                            $response = true;
-                        }
-                        if ($rs->start_time == "00:00:00" && $rs->end_time == "00:00:00") {
-                            $response = true;
-                        }
-                    }
-                }
-            }
-
-            return $response;
+            return $this->hasScheduledEvent($dateTime, $query);
         }
 
-        function getPersonnelAttendanceCount($biometric_id = null, $datetime = null) {
+        public function getScheduledEventByDate($_startDate = null, $_endDate = null, $dateTime = null) {
+            $dateStart = date('Y-m-d', strtotime($_startDate ?? date('Y-m-1')));
+            $dateEnd = date('Y-m-d', strtotime($_endDate ?? date('Y-m-t')));
+            $dateTime = date('Y-m-d H:i', strtotime($dateTime ?? date('Y-m-d H:i')));
+
+            $query = $this->db
+                ->from($this->shiftScheduleCalendarTable)
+                ->where('start_date >=', $dateStart)
+                ->where('end_date <=', $dateEnd)
+                ->get();
+
+            return $this->hasScheduledEvent($dateTime, $query);
+        }
+
+        public function getPersonnelAttendanceCount($biometric_id = null, $datetime = null) {
             $counter = 0;
             if ($biometric_id && $datetime) {
                 $this->db->from($this->attendanceTable);
@@ -113,7 +86,7 @@
             return intval($counter);
         }
 
-        function getPersonnelCount($biometric_id = null, $datetime = null, $current_meredien = null) {
+        public function getPersonnelCount($biometric_id = null, $datetime = null, $current_meredien = null) {
             $counter = 0;
             if ($biometric_id && $datetime) {
                 $this->db->from($this->attendanceTable);
@@ -151,7 +124,7 @@
             return $counter;
         }
 
-        function getPersonnelAttendance($biometric_id = null, $datetime = null, $ampm = "AM") {
+        public function getPersonnelAttendance($biometric_id = null, $datetime = null, $ampm = "AM") {
             $flag = false;
             if ($biometric_id && $datetime) {
                 $this->db->from($this->attendanceTable);
@@ -161,13 +134,9 @@
 
                 if ($query->num_rows() > 0) {
                     $result = $query->result();
-                    $count = $query->num_rows();
-
                     foreach ($result as $rs) {
                         $meredien = date("A", strtotime($rs->datetime));
-                        if ($meredien == $ampm) {
-                            $flag = true;
-                        }
+                        if ($meredien == $ampm) { $flag = true; }
                     }
                 }
             }
