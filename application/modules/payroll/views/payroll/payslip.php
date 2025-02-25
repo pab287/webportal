@@ -282,6 +282,7 @@
                                 <label class="required mb-1" style="font-weight: 600;">Company</label>
                                 <select name="company" id="company"
                                         class="form-control" data-validation="required"></select>
+                                <p class="form-control m-0" id="has_privi_company-text" disabled></p>
                             </div>
                         </div>
                     </div>

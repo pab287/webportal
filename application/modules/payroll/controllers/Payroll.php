@@ -1,6 +1,9 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
     class Payroll extends MY_Controller {
+
+        protected $userData;
+
         function __construct() {
             parent::__construct();
             $this->authenticate->setModuleAccess("payroll");
@@ -12,6 +15,8 @@
             $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
             $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
             date_default_timezone_set('Asia/Manila');
+
+            $this->userData = $this->session->userdata("logged_in");
         }
 
         function dashboard() {
@@ -98,10 +103,24 @@
 
 
         public function payslip() {
+
+            $tempData = array();
+
+            $_temp = $this->payroll->select2CompanyData();
+            $_company = $this->db->select('IFNULL(company_id, 0) as company_id')->get_where('gccmaster.tblemployees', array('id' => $this->userData['emp_id']))->row();
+            $companyId = (int)$_company->company_id;
+
+            $filter = array_filter($_temp, function ($value) use ($companyId) {
+                return is_object($value) ? ((int)$value->id === $companyId) : ((int)$value['id'] === $companyId);
+            });
+
+            $result = array_values($filter)[0] ?? null;
+            $tempData["company"] = $result;
+
             $this->core_layout->setPageTitle("Payroll - Payslip");
             $this->core_layout->setPrivilegeName("payroll_payslip");
             $this->core_layout->addJs("js/buttons.print.min.js", true);
-            $this->core_layout->addJs("js/payroll/payslip/payslip.script.js", true);
+            $this->core_layout->addJs("js/payroll/payslip/payslip.script.js", true, $tempData);
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
             $this->load->view('core/templates/header');
@@ -311,6 +330,7 @@
         }
 
         function generate_payroll_payslip() {
+            $this->core_layout->setPrivilegeName("payroll_payslip");
             echo json_encode($this->payroll->generatePayrollPayslip());
         }
 
@@ -752,6 +772,26 @@
 
         public function update_existing_payroll_sheet_data(){
             $data = $this->payroll->updateExistingPayrollSheetData();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function select_payroll_group_payslip() {
+            $this->core_layout->setPrivilegeName("payroll_payslip");
+            $privilege = $this->core_layout->getCurrentActions();
+
+            $data = $this->payroll->selectPayrollGroupPayslip($privilege);
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function select_employee_by_privileges() {
+            $this->core_layout->setPrivilegeName("payroll_payslip");
+            $privilege = $this->core_layout->getCurrentActions();
+
+            $data = $this->payroll->selectEmployeeByPrivileges($privilege);
             $this->output
                 ->set_content_type('json')
                 ->set_output(json_encode($data));

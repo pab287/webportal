@@ -47,6 +47,24 @@ if (typeof tablePayrollGroup !== "undefined") {
                 }
             },
             { data: "description", title: "Description", width: "25%" },
+            { 
+                data: 'assigned_employees', title: "User Restriction", width: "20%", render: function (data, meta, row) {
+                    let tempHtml = ``;
+
+                    if (typeof data !== "undefined" && data.length > 0) {
+                        tempHtml += `<p class='m--marginless' style='line-height: 28px; height: auto;'>`;
+                        tempHtml += '<span class="fa fa-exclamation-circle mr-2" style="font-size: 18px; color: #36a3f7 !important;" ata-skin="dark" data-toggle="m-tooltip" data-placement="top" title="User can only view this payroll group!" data-original-title="User can only view this payroll group!"></span>';
+                        $.each(data, function (i, v) {
+                            tempHtml += `<span class='m-badge m-badge--metal m-badge--wide m-badge--rounded mr-1'>${v}</span>`;
+                        });
+                        tempHtml += `</p>`;
+                    } else {
+                        tempHtml += `<span class='m-badge m-badge--warning m-badge--wide m-badge--rounded m--font-boldest'>No Restriction</span>`;
+                    }
+
+                    return tempHtml;
+                }
+            },
             {
                 data: null, title: "Status", width: "5%", className: "text-center", render: function (data, meta, row) {
                     let tempClass = typeof row.status !== "undefined" && parseInt(row.status) == 1 ? "btn-success" : "btn-danger";
@@ -107,6 +125,8 @@ btnNewEmployeeGroup.on("click", function () {
                 const employeeSelect2 = documentModal.find("select#employee_id");
                 const companySelect2 = documentModal.find("select#company_id");
                 const companyAllFilter = documentModal.find("input#all_company_filter");
+                const allowView = documentModal.find("input#allow_view");
+                const assignSelect = documentModal.find('select#assign_employee_id');
 
                 if (typeof companyAllFilter !== "undefined" && companyAllFilter.length == 1) {
                     companyAllFilter.on("change", function (e) {
@@ -115,6 +135,13 @@ btnNewEmployeeGroup.on("click", function () {
                         companySelect2.prop("disabled", isChecked);
                         if (isChecked) { companySelect2.val("").trigger("change"); }
                         if (isChecked == false) { employeeSelect2.val([]).trigger("change"); }
+
+                        allowView.prop('disabled', isChecked);
+                        if (allowView.is(":checked")) { 
+                            allowView.prop('checked', false); 
+                            assignSelect.val([]).trigger("change"); 
+                            documentModal.find('#assign_employee_div').prop("hidden", true);
+                        }
                     });
                 }
 
@@ -157,6 +184,34 @@ btnNewEmployeeGroup.on("click", function () {
                         },
                         templateSelection: function (data) {
                             return data.text;
+                        }
+                    });
+                }
+
+                if (typeof allowView !== "undefined" && allowView.length == 1) {
+                    allowView.on("change", function (e) {
+                        let isChecked = e.target.checked;
+                        documentModal.find('#assign_employee_div').prop("hidden", !isChecked);
+                        if (isChecked == false) { assignSelect.val([]).trigger("change"); }
+                    })
+                }
+
+                if (typeof assignSelect !== "undefined" && assignSelect.length == 1) {
+                    assignSelect.select2({
+                        width: "100%",
+                        placeholder: "select an option",
+                        dropdownParent: documentModal,
+                        ajax: {
+                            delay: 1000,
+                            global: false,
+                            url: baseUrl('payroll/employee/get_employee_list'),
+                            dataType: 'json',
+                            type: 'get',
+                            data: function (params) {
+                                params.q = params.term;
+                                params.company_id = companySelect2.val();
+                                return params;
+                            }
                         }
                     });
                 }
@@ -216,6 +271,8 @@ $(document).on("click", "button.btnEditGroup", function () {
                 const employeeSelect2 = documentModal.find("select#employee_id");
                 const companySelect2 = documentModal.find("select#company_id");
                 const companyAllFilter = documentModal.find("input#all_company_filter");
+                const allowView = documentModal.find("input#allow_view");
+                const assignSelect = documentModal.find('select#assign_employee_id');
 
                 if (typeof companyAllFilter !== "undefined" && companyAllFilter.length == 1) {
                     companyAllFilter.on("change", function (e) {
@@ -224,6 +281,13 @@ $(document).on("click", "button.btnEditGroup", function () {
                         companySelect2.prop("disabled", isChecked);
                         if (isChecked) { companySelect2.val("").trigger("change"); }
                         if (isChecked == false) { employeeSelect2.val([]).trigger("change"); }
+
+                        allowView.prop('disabled', isChecked);
+                        if (allowView.is(":checked")) { 
+                            allowView.prop('checked', false); 
+                            assignSelect.val([]).trigger("change"); 
+                            documentModal.find('#assign_employee_div').prop("hidden", true);
+                        }
                     });
                 }
 
@@ -274,6 +338,46 @@ $(document).on("click", "button.btnEditGroup", function () {
                         $.each(tempRow.employees, function (ii, vv) {
                             var tempOption = new Option(vv.text, vv.id, true, true);
                             employeeSelect2.append(tempOption);
+                        });
+                    }
+                }
+
+                if (typeof allowView !== "undefined" && allowView.length == 1) {
+                    const _isCheked = tempRow.is_allow_view == 1 ? true : false;
+                    allowView.prop("checked", _isCheked);
+                    documentModal.find('#assign_employee_div').prop("hidden", !_isCheked);
+
+                    allowView.on("change", function (e) {
+                        let isChecked = e.target.checked;
+                        documentModal.find('#assign_employee_div').prop("hidden", !isChecked);
+                        if (isChecked == false) { assignSelect.val([]).trigger("change"); }
+                    });
+                }
+
+                if (typeof assignSelect !== "undefined" && assignSelect.length == 1) {
+                    assignSelect.select2({
+                        width: "100%",
+                        placeholder: "select an option",
+                        dropdownParent: documentModal,
+                        ajax: {
+                            delay: 1000,
+                            global: false,
+                            url: baseUrl('payroll/employee/get_employee_list'),
+                            dataType: 'json',
+                            type: 'get',
+                            data: function (params) {
+                                params.q = params.term;
+                                params.company_id = companySelect2.val();
+                                return params;
+                            }
+                        }
+                    });
+
+                    if (typeof tempRow.allowed == "object" && typeof tempRow.allowed !== "undefined") {
+                        assignSelect.empty();
+                        $.each(tempRow.allowed, function (ii, vv) {
+                            var tempOption = new Option(vv.text, vv.id, true, true);
+                            assignSelect.append(tempOption);
                         });
                     }
                 }
