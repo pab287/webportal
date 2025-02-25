@@ -5,10 +5,10 @@ class Hydra_billing_readings_m extends Dbase{
 	public function get_customer_details(){
 		$conn = $this->conn();
 		$current_date = date('Y-m-d');
-		$response['account_details'] = array();
-
 		$year = date('Y');
 		$month = date('m');
+
+		$response['account_details'] = array();
 		$meterno = $_POST["meterno"];
 
 		try {
@@ -23,10 +23,12 @@ class Hydra_billing_readings_m extends Dbase{
 			if ($sth->rowCount() > 0) {
 
 				$row = $sth->fetch(PDO::FETCH_ASSOC);
+				$account_id = $row['id'];
  
-				$checkReading = $this->checkReading($conn, $row['id'], $month, $year, $meterno);
+				// Check if has reading for this current month reading
+				$checkReading = $this->checkReading($conn, $account_id, $month, $year, $meterno);
 				
-				if ($checkReading && count($checkReading) > 0) {
+				if ($checkReading && !empty($checkReading)) {
 					$checkReading_id = $checkReading[0]['id'];
 					$checkReading_is_billed = $checkReading[0]['is_billed'];
 					$checkReading_count = 1;
@@ -37,9 +39,9 @@ class Hydra_billing_readings_m extends Dbase{
 					$checkReading_count = 0;
 					$checkReading_account_id = 0;
 				}
-
+				
 				$list['status'] = "exist";
-				$list['id'] = $row['id'];
+				$list['id'] = $account_id;
 				$list['model'] = ucfirst($row['model']);
 				$list['account_status'] = $row['status'];
 				$list['accountno'] = $row['accountno'];
@@ -47,11 +49,12 @@ class Hydra_billing_readings_m extends Dbase{
 				$list['current_date'] = $current_date;
 				$list['subdivision'] = $row['subdivision'];
 				$list['name'] = strtoupper(utf8_encode($row['firstname']." ".$row['lastname']));
-				$list['previous_reading'] = $this->getPreviousReading($row['id'], $meterno);
+				$list['previous_reading'] = $this->getPreviousReading($account_id, $meterno);
 				$list['reading_id'] = $checkReading_id;
 				$list['is_billed'] = $checkReading_is_billed;
 				$list['isAlreadyReading'] = $checkReading_count;
- 
+
+				// If reading for this current month reading is true
 				if ($checkReading_is_billed == 1) {
 					$billing = $this->getBilling($checkReading_id, $checkReading_account_id);
 					$list['previous'] = $billing["previous"];
@@ -59,6 +62,7 @@ class Hydra_billing_readings_m extends Dbase{
 					$list['rate'] = $billing["rate"];
 					$list['usage'] = $billing["usage"];
 					$list['total_charges'] = $billing["total_charges"];
+					$list['actual_current_bill'] = $billing["actual_current_bill"];
 					$list['billing_date'] = $billing["billing_date"];
 					$list['due_date'] = $billing["due_date"];
 					$list['over_payment'] = $billing["over_payment"];
@@ -82,9 +86,12 @@ class Hydra_billing_readings_m extends Dbase{
 	}
 
 	private function getBilling($reading_id,$account_id){
+		$current_date = date("Y-m-d");
+		$penalties = $this->getPenalties();
+		$overdue_charges = 0;
+
 		$conn = $this->conn();
-		$sth = $conn->prepare("SELECT a.previous, a.current, a.rate, a.usage, a.total_charges, concat(a.billing_from,' - ',a.billing_to) as billing_date, 
-							   		  a.due_date, b.is_disconnected, a.ref_no, a.id
+		$sth = $conn->prepare("SELECT a.reading_id, a.previous, a.current, a.rate, a.usage, a.total_charges, a.actual_current_bill, concat(a.billing_from,' - ',a.billing_to) as billing_date, a.due_date, b.is_disconnected, a.ref_no, a.id
 			  				   FROM hydra_billing.bills a
 			  				   LEFT JOIN hydra_billing.accounts b
 			  				   ON a.account_id = b.id
@@ -98,9 +105,15 @@ class Hydra_billing_readings_m extends Dbase{
 		$balance_last_bill = $this->computeBalanceLastBill($account_id);
 
 		$reconnectionFee = $row['is_disconnected']==1 ? $reconnection_fee : '0.00';
-		$total_amount_due = ($row["total_charges"] + $balance_last_bill['total_penalty'] + $balance_last_bill['total_balance'] + $reconnectionFee) - $over_payment;
 
+		if ($current_date > $row['due_date'] && $penalties['type'] == 'percentage') {
+			$overdue_charges = ($penalties['amount'] / 100) * $row['total_charges'];
+		}
+
+		$total_amount_due = ($row["total_charges"] + $balance_last_bill['total_balance'] + $overdue_charges + $balance_last_bill['total_penalty'] + $reconnectionFee) - $over_payment;
+	
 		$list = array();
+		$list['reading_id'] = $row['reading_id'];
 		$list['bill_id'] = $row["id"];
 		$list['ref_no'] = $row["ref_no"];
 		$list['previous'] = number_format($row["previous"],2,'.','');
@@ -108,12 +121,16 @@ class Hydra_billing_readings_m extends Dbase{
 		$list['rate'] = $row["rate"];
 		$list['usage'] = number_format($row["usage"],2,'.','');
 		$list['total_charges'] = number_format($row["total_charges"],2,'.','');
+		$list['actual_current_bill'] = number_format($row["actual_current_bill"],2,'.','');
 		$list['billing_date'] = $row["billing_date"];
 		$list['due_date'] = $row["due_date"];
         $list["reconnectionFee"] = number_format($reconnectionFee, 2,'.','');
+		$list['overdue_charges'] = $overdue_charges;
+		$list['balance_last_bill'] = $balance_last_bill;
 		$list['over_payment'] = $over_payment;
-        $list["total_penalty"] = number_format($balance_last_bill['total_penalty'], 2,'.','');
-        $list["total_balance"] = number_format($balance_last_bill['total_balance'], 2,'.','');
+        $list["total_penalty"] = number_format($overdue_charges, 2,'.',''); // Total penalty of current bill only
+        $list["total_balance"] = number_format($balance_last_bill['total_balance'] + $balance_last_bill['total_penalty'], 2,'.','');
+		$list['formula'] = $row["total_charges"] . " + " . $balance_last_bill['total_balance'] . " + " . $overdue_charges . " + " .  $reconnectionFee . " + " .  $balance_last_bill['total_penalty'] . " - " . $over_payment;
         $list["total_amount_due"] = number_format($total_amount_due, 2,'.','');
 		return $list;
 	}
@@ -158,7 +175,7 @@ class Hydra_billing_readings_m extends Dbase{
 							   ON a.account_id = b.id
 							   LEFT JOIN hydra_billing.subdivision c
 							   ON b.subdivision_id = c.id
-							   WHERE a.created_by='$user_id' AND a.meterno = b.meterno_raw AND a.is_archived='0' AND month(a.created_at)='$current_m' AND year(a.created_at)='$current_y'
+							   WHERE a.created_by='$user_id' AND a.meterno = b.meterno_raw AND a.is_archived='0' AND month(a.reading_date)='$current_m' AND year(a.reading_date)='$current_y'
 							   ORDER BY a.ref_no DESC");
    		$sth->execute();
 
@@ -224,15 +241,15 @@ class Hydra_billing_readings_m extends Dbase{
 			return false;
 		}
 	}
-	
 
 	public function save_reading(){
 		$conn = $this->conn();
-		$current_date = date("Y-m-d H:i:s");
 		$response['response_array'] = array();
 
+		$current_date = date("Y-m-d H:i:s");
 		$ref_yr = substr($current_date, 2, 2);
 	   	$ref_month = substr($current_date, 5, 2);
+
 	   	$ref_series = $this->getSeries($ref_month,$ref_yr,"hydra_billing.readings");
 	   	$reference_no = 'MRR' . $ref_yr . '-' . $ref_month . '-' . $ref_series;
 
@@ -393,9 +410,8 @@ class Hydra_billing_readings_m extends Dbase{
 
 		$sth = $conn->prepare("INSERT INTO hydra_billing.user_logs_event(`type`, `user_action`, `user_id`, `log_message`, `ip_address`, `created_at`) 
 							   VALUES ('$type','$user_action','$user_id','$log_message','$ip_address','$current_date')");
-		$sth->execute();
-
-		if ($sth) {
+		
+		if ($sth->execute()) {
 			return true;
 		} else {
 			return false;
@@ -466,6 +482,7 @@ class Hydra_billing_readings_m extends Dbase{
 				$over_payment = $billingDetails["over_payment"];
 				$reconnectionFee = $billingDetails["reconnectionFee"];
 				$total_balance = $billingDetails["total_balance"];
+				$actual_current_bill = $billingDetails["actual_current_bill"];
 				$total_penalty = $billingDetails["total_penalty"];
 				$total_amount_due = $billingDetails["total_amount_due"];
 				$reading_ref_no = $billingDetails["reading_ref_no"];
@@ -491,9 +508,9 @@ class Hydra_billing_readings_m extends Dbase{
 					$list["message"] = "This account was archived, please contact the finance officer.";
 				} else {
 					if (isset($_POST['reading_id']) && $_POST['reading_id'] != "" && $_POST['reading_id'] != 0 && isset($_POST['user_id']) && $_POST['user_id'] != "" && $_POST['user_id'] != 0) {
-						$sth = $conn->prepare("INSERT INTO hydra_billing.bills(`billing_from`, `billing_to`, `due_date`, `ref_no`, `ref_series`, `ref_yr`, `ref_month`, `created_by`, `created_at`, `status`, `reading_id`, `prev_reading_id`, `account_id`, `current`, `previous`, `usage`, `rate`, `total_charges`)
-						VALUES (:billing_from, :billing_to, :due_date, :reference_no, :ref_series, :ref_yr, :ref_month, :user_id, :current_date, :status, :reading_id, :prev_reading_id, :account_id, :current, :previous, :totalUsage, :rate, :charges)");
-		
+						$sth = $conn->prepare("INSERT INTO hydra_billing.bills(`billing_from`, `billing_to`, `due_date`, `ref_no`, `ref_series`, `ref_yr`, `ref_month`, `created_by`, `created_at`, `status`, `reading_id`, `prev_reading_id`, `account_id`, `current`, `previous`, `usage`, `rate`, `total_charges`, `actual_current_bill`)
+						VALUES (:billing_from, :billing_to, :due_date, :reference_no, :ref_series, :ref_yr, :ref_month, :user_id, :current_date, :status, :reading_id, :prev_reading_id, :account_id, :current, :previous, :totalUsage, :rate, :charges, :actual_current_bill)");
+
 						$sth->bindParam(':billing_from', $billing_from);
 						$sth->bindParam(':billing_to', $billing_to);
 						$sth->bindParam(':due_date', $due_date);
@@ -512,34 +529,39 @@ class Hydra_billing_readings_m extends Dbase{
 						$sth->bindParam(':totalUsage', $totalUsage);
 						$sth->bindParam(':rate', $rate);
 						$sth->bindParam(':charges', $charges);
+						$sth->bindParam(':actual_current_bill', $actual_current_bill);
 		
 						if ($sth->execute()) {
 							$bill_id = $conn->lastInsertId();
 							$this->updateReadingStatus("Billed", "1", $reading_id);
 							$this->saveLogs("success", "insert", $user_id, "[Mobile] Readings - Generate bill of " . $reading_ref_no);
 		
+							$bill_info = $this->getBillingDetails($reading_id);
+
 							$list["status"] = true;
 							$list["message"] = "Successfully generate bill.";
-							$list['model'] = $model;
+							$list['model'] = $bill_info["model"];
 							$list['bill_id'] = $bill_id;
-							$list['name'] = strtoupper($name);
-							$list['subdivision'] = $subdivision;
-							$list['previous'] = $previous;
-							$list['current'] = $current;
-							$list['rate'] = $rate;
-							$list['usage'] = $totalUsage;
-							$list['total_charges'] = $charges;
-							$list['billing_date'] = $billing_from . ' - ' . $billing_to;
-							$list['due_date'] = $due_date;
-							$list['over_payment'] = $over_payment;
-							$list['reconnectionFee'] = $reconnectionFee;
-							$list['total_balance'] = $total_balance;
-							$list['total_penalty'] = $total_penalty;
-							$list['total_amount_due'] = $total_amount_due;
+							$list['name'] = strtoupper($bill_info["name"]);
+							$list['subdivision'] = $bill_info["subdivision"];
+							$list['previous'] = $bill_info["previous"];
+							$list['current'] = $bill_info["current"];
+							$list['rate'] = $bill_info["rate"];
+							$list['usage'] = $bill_info["usage"];
+							$list['total_charges'] = $bill_info["total_charges"];
+							$list['actual_current_bill'] = $bill_info["actual_current_bill"];
+							$list['billing_date'] = $bill_info["billing_from"] . ' - ' . $bill_info["billing_to"];
+							$list['due_date'] = $bill_info["due_date"];
+							$list['over_payment'] = $bill_info["over_payment"];
+							$list['reconnectionFee'] = $bill_info["reconnectionFee"];
+							$list['total_balance'] = $bill_info["total_balance"];
+							$list['total_penalty'] = $bill_info["total_penalty"];
+							$list['total_amount_due'] = $bill_info["total_amount_due"];
 							$list['ref_no'] = $reference_no;
 						} else {
+							$errorInfo = $sth->errorInfo();
 							$list["status"] = false;
-							$list["message"] = "Query error, Failed to save.";
+							$list["message"] = "Query error, Failed to save. Error: " . $errorInfo[2];
 							$this->saveLogs("error", "insert", $user_id, "[Mobile] Readings - Generate bill of " . $reading_ref_no);
 						}
 					} else {
@@ -562,6 +584,10 @@ class Hydra_billing_readings_m extends Dbase{
 	}
 
 	private function getBillingDetails($reading_id){
+		$current_date = date("Y-m-d");
+		$penalties = $this->getPenalties();
+    	$overdue_charges = 0;
+
 		$list = array();
 		$reconnection_fee = $this->getReconnectionFee();
 		$dayOf_cutOff = $this->getAppliedCutOff();
@@ -588,6 +614,8 @@ class Hydra_billing_readings_m extends Dbase{
 
         $totalUsage = $this->computeTotalUsage($current_reading, $prev_reading);
         $charges = $this->computeTotalCharges($rate, $totalUsage);
+
+		$actual_current_bill = $this->computeActualCurrentBill($rate, $totalUsage);
         $over_payment = $this->computeOverPayment($account_id);
         $balance_last_bill = $this->computeBalanceLastBill($account_id);
         
@@ -596,7 +624,13 @@ class Hydra_billing_readings_m extends Dbase{
         $due_date = date('Y-m-d', strtotime("+".$dayOf_dueDate." day", strtotime($billing_to)));
 
         $reconnectionFee = $currentReading['is_disconnected']==1 ? $reconnection_fee : '0.00';
-        $total_amount_due = ($charges + $balance_last_bill['total_penalty'] + $balance_last_bill['total_balance'] + $reconnectionFee) - $over_payment;
+
+		if ($current_date > $due_date && $penalties['type'] == 'percentage') {
+			$overdue_charges = ($penalties['amount'] / 100) * $charges;
+		}
+
+        // $total_amount_due = ($charges + $balance_last_bill['total_penalty'] + $balance_last_bill['total_balance'] + $reconnectionFee) - $over_payment;
+		$total_amount_due = ($charges + $balance_last_bill['total_balance'] + $overdue_charges + $balance_last_bill['total_penalty'] + $reconnectionFee) - $over_payment;
 
         $list["current_reading_date"] = $current_reading_date;
         $list["reading_ref_no"] = $currentReading["reading_ref_no"];
@@ -618,9 +652,11 @@ class Hydra_billing_readings_m extends Dbase{
         $list["usage"] = number_format($totalUsage, 2,'.','');
 	   	$list["rate"] = number_format($rate, 2,'.','');
         $list["total_charges"] = number_format($charges, 2,'.','');
+		$list["actual_current_bill"] = number_format($actual_current_bill, 2,'.','');
         $list["over_payment"] = number_format($over_payment, 2,'.','');
-        $list["total_penalty"] = number_format($balance_last_bill['total_penalty'], 2,'.','');
-        $list["total_balance"] = number_format($balance_last_bill['total_balance'], 2,'.','');
+		$list['overdue_charges'] = $overdue_charges;
+        $list["total_penalty"] = number_format($overdue_charges, 2,'.','');
+        $list["total_balance"] = number_format($balance_last_bill['total_balance'] + $balance_last_bill['total_penalty'], 2,'.','');
         $list["total_amount_due"] = number_format($total_amount_due, 2,'.','');
         $list["reconnectionFee"] = number_format($reconnectionFee, 2,'.','');
         return $list;
@@ -638,39 +674,94 @@ class Hydra_billing_readings_m extends Dbase{
     }
 
 	// current_y & current_m added in the condition for not include the current billing.
-	private function computeBalanceLastBill($account_id){
-		$array = array();
-		$conn = $this->conn();
-		$current_date = date("Y-m-d");
-		$current_y = date("Y");
-		$current_m = date("m");
-		$penalties = $this->getPenalties();
-		$total_balance = 0;
-		$total_penalty = 0;
+	private function computeBalanceLastBill($account_id) {
+		try {
+			$current_bill_id = $this->get_current_bill_id($account_id);
+			$array = array();
+			$conn = $this->conn();
+			$current_date = date("Y-m-d");
+			$current_y = date("Y");
+			$current_m = date("m");
+			$penalties = $this->getPenalties();
+			$total_balance = 0;
+			$total_penalty = 0;
+			$sth = $conn->prepare("SELECT id, total_charges, due_date, billing_to
+								   FROM hydra_billing.bills
+								   WHERE account_id = :account_id
+								   AND is_paid = '0'
+								   AND status = '1'
+								   AND id != :current_bill_id
+								   AND (month(billing_to) != :current_m
+								   OR year(billing_to) != :current_y)");
+			$sth->bindParam(':current_bill_id', $current_bill_id, PDO::PARAM_INT);
+			$sth->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+			$sth->bindParam(':current_m', $current_m, PDO::PARAM_INT);
+			$sth->bindParam(':current_y', $current_y, PDO::PARAM_INT);
+			$sth->execute();
+			while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+				$bill_payments = $this->computeBillsPaid($row['id']);
+				$overdue_charges = 0;
 
-		$sth = $conn->prepare("SELECT total_charges, due_date, billing_to
-							   FROM hydra_billing.bills
-							   WHERE account_id='$account_id' AND is_paid='0' AND status='1' AND (month(billing_to)!='$current_m' OR year(billing_to)!='$current_y')");
-		$sth->execute();
-		while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+				if ($current_date > $row['due_date']) {
+					if ($penalties['type'] == 'percentage') {
+						$overdue_charges = ($penalties['amount'] / 100) * $row['total_charges'];
+					} else {
+						$overdue_charges = $penalties['amount'];
+					}
+				}
 
-			$total_charges = $row['total_charges'];
-			$overdue_charges = 0;
+				$total = $row['total_charges'] - $bill_payments;
 
-			if ($current_date > $row['due_date']) {
-				if($penalties['type'] == 'percentage'){
-                    $overdue_charges = ($penalties['amount'] / 100) * $total_charges;
-                } else {
-                    $overdue_charges = $penalties['amount'];
-                }
+				$total_penalty += $overdue_charges;
+				$total_balance += $total;
 			}
-			$total_penalty = $total_penalty + $overdue_charges;
-			$total_balance = $total_balance + $total_charges;
+	
+			$array['total_penalty'] = $total_penalty;
+			$array['total_balance'] = $total_balance;
+			// $array['current_bill_id'] = $current_bill_id;
+			return $array;
+		} catch (PDOException $e) {
+			// Handle the exception
+			$err = error_log("Error in computeBalanceLastBill: " . $e->getMessage());
+			return array('total_penalty' => 0, 'total_balance' => 0, 'err_msgg' => $err); // or handle it in a way that makes sense for your application
 		}
+	}
 
-		$array['total_penalty'] = $total_penalty;
-		$array['total_balance'] = $total_balance;
-		return $array;
+	public function get_current_bill_id($account_id) {
+		$conn = $this->conn();
+		$sth = $conn->prepare("SELECT id 
+							   FROM hydra_billing.bills 
+							   WHERE account_id = :account_id 
+							   AND status = '1'
+							    AND is_paid = '0'
+							   ORDER BY billing_to DESC 
+							   LIMIT 1");
+		$sth->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+		$sth->execute();
+		$result = $sth->fetch(PDO::FETCH_ASSOC);
+		return $result ? $result['id'] : null;
+	}
+
+	public function computeBillsPaid($bill_id){
+		try {
+			$conn = $this->conn();
+			$arrData = array();
+	
+			$sth = $conn->prepare("SELECT * FROM hydra_billing.payments WHERE bill_id = :bill_id AND is_archive = 0");
+			$sth->bindParam(':bill_id', $bill_id, PDO::PARAM_INT);
+			$sth->execute();
+	
+			$partialAmount = 0;
+			while ($tempData = $sth->fetch(PDO::FETCH_ASSOC)) {
+				$actual_amount = $tempData['received_amount'];
+				$partialAmount += $actual_amount;
+			}
+			return $partialAmount;
+		} catch (PDOException $e) {
+			// Handle the exception
+			error_log("Error in computeBillsPaid: " . $e->getMessage());
+			return 0; // or handle it in a way that makes sense for your application
+		}
 	}
 
 	public function update_print(){
@@ -707,14 +798,55 @@ class Hydra_billing_readings_m extends Dbase{
 	}
 
 	private function computeOverPayment($account_id){
-		$conn = $this->conn();
-		$sth = $conn->prepare("SELECT SUM(received_amount - net_payment) as balance, SUM(balance_covered) as balance_covered 
-							   FROM hydra_billing.payments
-							   WHERE account_id='$account_id' AND is_archive='0'");
-		$sth->execute();
-		$result = $sth->fetch();
-		$balance = number_format((float)$result['balance'], 2,'.','') - number_format((float)$result['balance_covered'], 2,'.','');
-		return number_format($balance, 2,'.','');
+		try {
+			$conn = $this->conn();
+
+			$res = array();
+			$sth = $conn->prepare("SELECT 
+										(SELECT SUM(received_amount) 
+										 FROM hydra_billing.payments 
+										 WHERE account_id = :account_id AND is_archive = 0) AS total_received_amount, 
+										
+										 SUM(p.net_payment) AS total_net_payment, 
+										
+										(SELECT SUM(balance_covered) 
+										 FROM hydra_billing.payments 
+										 WHERE account_id = :account_id AND is_archive = 0) AS balance_covered
+										
+									FROM (
+										-- Select only the first occurrence of each bill_id
+										 SELECT 
+											bill_id,
+											MIN(id) AS min_id
+										 FROM hydra_billing.payments
+										 WHERE account_id = :account_id AND is_archive = 0
+										 GROUP BY bill_id
+									) AS first_payments
+									JOIN hydra_billing.payments p ON p.id = first_payments.min_id");
+
+			$sth->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+			$sth->execute();
+			$result = $sth->fetch(PDO::FETCH_ASSOC);
+			
+			$total_received_amount = $result['total_received_amount'];
+			$net_payment = $result['total_net_payment'];
+			$balance_covered = $result['balance_covered'];
+
+			$received_net_payment = $total_received_amount - $net_payment;
+			$total = $received_net_payment - $balance_covered;
+
+			$res['total_received_amount'] = $total_received_amount;
+			$res['net_payment'] = $net_payment;
+			$res['balance_covered'] = $balance_covered;
+			$res['total'] = $total;
+
+			return number_format($total < 0 ? 0 : $total, 2,'.','');
+			
+		} catch (PDOException $e) {
+			// Handle the exception
+			error_log("Error in computeOverPayment: " . $e->getMessage());
+			return number_format(0, 2, '.', ''); // or handle it in a way that makes sense for your application
+		}
 	}
 
 	private function getPenalties(){
@@ -804,8 +936,13 @@ class Hydra_billing_readings_m extends Dbase{
             $charges = (float)$usage * (float)$rate;
             return number_format((float)$charges, 2,'.','');
         }
-        return '300.00';
+        return $_ENV['HYDRA_MINIMUM_BILLING_AMOUNT'];
     }
+
+	private function computeActualCurrentBill($rate, $usage){
+		$charges = (float)$usage * (float)$rate;
+		return number_format((float)$charges, 2,'.','');
+	}
 
     function getBillingDateFrom($previousReadingDate, $currentReadingDate, $dayOf_cutOff){
         if($previousReadingDate){

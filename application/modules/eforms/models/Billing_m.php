@@ -34,6 +34,7 @@ class Billing_m extends CI_Model {
         $post = $this->input->post();
         $post["created_by"] = $this->getUserdata()['emp_id'];
         $post["created_at"] = $current_date;
+        $post["meterno"] = trim($post["meterno"]);
         $post["meterno_raw"] = str_replace(" ", "", str_replace("-", "", $post["meterno"]));
         $resultarray = array();
 
@@ -1436,7 +1437,6 @@ class Billing_m extends CI_Model {
     }
 
     function generateBill(){
-        $resultarray = array();
         $post = $this->input->post();
 
         if(count($post["selectedReading"]) > 0){
@@ -1504,50 +1504,67 @@ class Billing_m extends CI_Model {
                     if($query){
                         $this->updateReadingBilled($reading_id, "1", "Billed");
 
-                        if($over_payment >= $charges){
-                        /* create payment */
-                          $resultarray = array();
-                          $code_insert = 'BHP';
-                          $ref_no_insert = $this->series($current_date, 'hydra_billing.payments', $code_insert);
-                          $ref_series_insert = explode("-",$ref_no_insert)[2];
-                          $ref_month_insert = explode("-",$ref_no_insert)[1];
-                          $ref_yr_insert = explode($code_insert,explode("-",$ref_no_insert)[0])[1];
+                        $penalties = $this->generate_bill_insert_payment_check_overdue($bill_id, $currentReading['account_id'], $current_date);
+                        $_overdue = (!empty($penalties['array_penalties'])) ? $penalties['array_penalties'][0]['overdue'] : 0;
+                        $_is_penalty = (!empty($penalties['array_penalties'])) ? 1 : 0;
+                        $_net_payment = $charges + $_overdue;
 
-                          $insert_payment = array();
-                          $insert_payment['ref_no'] = $ref_no_insert;
-                          $insert_payment['ref_series'] = $ref_series_insert;
-                          $insert_payment['ref_yr'] = $ref_yr_insert;
-                          $insert_payment['ref_month'] = $ref_month_insert;
-                          $insert_payment["created_by"] = $this->getUserdata()['emp_id'];
-                          $insert_payment["created_date"] = $current_date;
-                          $insert_payment["balance_covered"] = preg_replace('/[^0-9a-zA-Z.]/', '', $charges);
-                          $insert_payment["received_amount"] = 0;
-                          $insert_payment["sub_total"] = preg_replace('/[^0-9a-zA-Z.]/', '', $charges);
-                          $insert_payment["net_payment"] = preg_replace('/[^0-9a-zA-Z.]/', '', $charges);
-                          $insert_payment["balance"] = 0;
-                          $insert_payment['acknowledgement_receipt'] = $this->generatePaymentAR();
-                          $insert_payment['bill_id'] = $bill_id;
-                          $insert_payment['payment_type'] = 'cash';
-                          $insert_payment['payment_date'] = date('Y-m-d', strtotime($current_date));
-                          $insert_payment['account_id'] = $currentReading['account_id'];
+                        if($over_payment >= $_net_payment){
+                            /* create payment */
+                            $resultarray = array();
+                            $code_insert = 'BHP';
+                            $ref_no_insert = $this->series($current_date, 'hydra_billing.payments', $code_insert);
+                            $ref_series_insert = explode("-",$ref_no_insert)[2];
+                            $ref_month_insert = explode("-",$ref_no_insert)[1];
+                            $ref_yr_insert = explode($code_insert,explode("-",$ref_no_insert)[0])[1];
+
+                            /**
+                             * Why the net payment is 0??? because the net payment was covered by overpayment 
+                             * means he doesn't have to pay anything thats why its 0
+                             * beside this is the process in payment module where when creating payment 
+                             * if the overpayment is greater than the net pay
+                             * the net pay insert as 0 in database
+                             */
+                            $final_net_payment = 0;
+                            $over_payment_balance = $over_payment - $_net_payment;
+                            $insert_payment = array(
+                                'ref_no' => $ref_no_insert,
+                                'ref_series' => $ref_series_insert,
+                                'ref_yr' => $ref_yr_insert,
+                                'ref_month' => $ref_month_insert,
+                                'created_by' => $this->getUserdata()['emp_id'],
+                                'created_date' => $current_date,
+                                'balance_covered' => preg_replace('/[^0-9a-zA-Z.]/', '', $_net_payment),
+                                'received_amount' => 0,
+                                'sub_total' => preg_replace('/[^0-9a-zA-Z.]/', '', $_net_payment),
+                                'net_payment' => preg_replace('/[^0-9a-zA-Z.]/', '', $final_net_payment),
+                                'penalties' => $penalties['serialize_penalties'],
+                                'balance' => $over_payment_balance,
+                                'is_penalty' => $_is_penalty,
+                                'acknowledgement_receipt' => $this->generatePaymentAR(),
+                                'bill_id' => $bill_id,
+                                'payment_type' => 'cash',
+                                'payment_date' => date('Y-m-d', strtotime($current_date)),
+                                'account_id' => $currentReading['account_id']
+                            );
                           
-                          $query_insert_payment = $this->db->insert('hydra_billing.payments', $insert_payment);
+                            $query_insert_payment = $this->db->insert('hydra_billing.payments', $insert_payment);
 
-                          if($query_insert_payment){
-                              $this->updateBillingPaidStatus($bill_id, '1');
-                              $this->updateDisconnectionStatus($currentReading["account_id"]);
-                              $resultarray["status"] = TRUE;
-                              $resultarray["ar_code"] = $this->generatePaymentAR();
-                              $resultarray["msg"] = "Payment successfully saved.";
-                              $this->core_layout->setEventLog("Payments - Created payment ".$insert_payment['ref_no'],"insert", "success", "hydra_billing", "user");
-                          }else{
-                              $resultarray["status"] = FALSE;
-                              $resultarray["ar_code"] = FALSE;
-                              $resultarray["msg"] = "Error creating payment.";
-                              $this->core_layout->setEventLog("Payments - Error saving payment","insert", "error", "hydra_billing", "user");
-                          }
+                            if($query_insert_payment){
+                                $this->updateBillingPaidStatus($bill_id, '1');
+                                $this->updateDisconnectionStatus($currentReading["account_id"]);
+                                $response["status"] = TRUE;
+                                $response["ar_code"] = $this->generatePaymentAR();
+                                $response["msg"] = "Payment successfully saved.";
+                                $this->core_layout->setEventLog("Payments - Created payment ".$insert_payment['ref_no'],"insert", "success", "hydra_billing", "user");
+                            }else{
+                                $response["status"] = FALSE;
+                                $response["ar_code"] = FALSE;
+                                $response["msg"] = "Error creating payment.";
+                                $this->core_layout->setEventLog("Payments - Error saving payment","insert", "error", "hydra_billing", "user");
+                            }
                         }
-                        /*  */
+
                         $response["status"] = TRUE;
                         $response["ref_no"] = $currentReading["ref_no"];
                         $response["msg"] = "Successfully billed on the month of ".$month_words;
@@ -1581,6 +1598,60 @@ class Billing_m extends CI_Model {
 
         return $resultarray;
     }
+
+    public function generate_bill_insert_payment_check_overdue($bill_id, $customer_id, $current_date) {
+        $this->db->select("*");
+        $this->db->from("hydra_billing.bills");
+        $this->db->where("id", $bill_id);
+        $query = $this->db->get();
+        $row = $query->row_array();
+      
+        $result = array();
+        $array_penalties = array();
+      
+        $previous_payments = $this->getBillPayments($bill_id);
+        $penalties = $this->getPenalties();
+        $isDisconnectionStatus = $this->getCustomerDisconnectionStatus($customer_id);
+        $reconnectionFee = $this->getReconnectionFee();
+        $billing_amount = $row['total_charges'];
+        $due_date = $row['due_date'];
+        $total_amount = $billing_amount;
+        
+        $countDiff = $this->countMonthDiff($due_date, $current_date);
+        $result['countMonthDiff'] = $countDiff;
+        $isDisconnection = $isDisconnectionStatus=='1' ? true : false;
+      
+        if($current_date > $due_date){
+            $result['isPenalty'] = true;
+            $list = array();
+            if($penalties['type'] == 'percentage'){
+                $overdue = ($penalties['amount'] / 100) * $total_amount;
+                $total_amount = $overdue + $total_amount;
+            } else {
+                $overdue = $penalties['amount'];
+                $total_amount = $penalties['amount'] + $total_amount;
+            }
+      
+            $list['dueDate'] = $due_date;
+            $list['total_amount'] = number_format((float)$total_amount, 2, '.', '');
+            $list['overdue'] = number_format((float)$overdue, 2, '.', '');
+            $list['status'] = "due date";
+            $array_penalties[] = $list;
+        } else { // no penalty
+            $result['isPenalty'] = false;
+        }
+      
+        $net_payment = $isDisconnection ? ($total_amount + $reconnectionFee['amount']) : $total_amount;
+        
+        $result['isDisconnection'] = $isDisconnection;
+        $result['reconnectionFee'] = $isDisconnection ? $reconnectionFee : array();
+        $result['net_payment'] = $previous_payments ? (number_format((float)$net_payment, 2, '.', '') - $previous_payments) : number_format((float)$net_payment, 2, '.', '');
+        $result['billing_amount'] = $previous_payments ? ($billing_amount - $previous_payments) : $billing_amount;
+        $result['array_penalties'] = $array_penalties;
+        $result['serialize_penalties'] = serialize($array_penalties);
+        
+        return $result;
+      }
 
     function checkClientIsBilled($account_id, $reading_date){
         $current_m = date('m', strtotime($reading_date));
@@ -1648,6 +1719,7 @@ class Billing_m extends CI_Model {
         $resultarray = array();
         $post = $this->input->post();
         $current_date = date("Y-m-d");
+        $current_year = date('Y');
 
         $order_val = array(array("column"=>"1", "dir"=>"desc"));
         $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
@@ -1657,11 +1729,12 @@ class Billing_m extends CI_Model {
         $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
 
-        $filterFields = array("a.middlename"," a.accountno", "a.meterno", "a.firstname", "a.lastname", "b.ref_no", "b.billing_from", "b.billing_to", "b.total_charges", "b.status", "b.due_date");
+        $filterFields = array("a.middlename"," a.accountno", "a.meterno", "a.firstname", "a.lastname", "b.ref_no", "b.billing_from", "b.billing_to", "b.total_charges", "b.status", "b.due_date", "r.ref_no");
 
-        $this->db->select("b.print_count, b.reading_id, a.middlename, b.is_paid, b.id, a.id as customer_id, a.accountno, a.meterno, a.firstname, a.lastname, a.is_disconnected, b.ref_no, b.billing_from, b.billing_to, b.total_charges, b.status, b.due_date, p.net_payment, p.sub_total, p.penalties, p.reconnection_fee, p.balance_covered, p.is_penalty, p.acknowledgement_receipt");
+        $this->db->select("b.print_count, b.reading_id, a.middlename, b.is_paid, b.id, a.id as customer_id, a.accountno, a.meterno, a.firstname, a.lastname, a.is_disconnected, b.ref_no, b.billing_from, b.billing_to, b.total_charges, b.status, b.due_date, p.net_payment, p.sub_total, p.penalties, p.reconnection_fee, p.balance_covered, p.is_penalty, p.acknowledgement_receipt, r.ref_no as reading_ref_no");
         $this->db->from("hydra_billing.bills b");
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
+        $this->db->join("hydra_billing.readings r", "r.id = b.reading_id", "LEFT");
         $this->db->join("hydra_billing.payments as p", "p.bill_id = b.id", "LEFT");
         $this->db->where("b.status", "1");
         $this->db->group_by("b.id");
@@ -1679,6 +1752,8 @@ class Billing_m extends CI_Model {
                 }
             }
             $this->db->group_end();
+        } else {
+            $this->db->where("YEAR(b.created_at)", $current_year);
         }
         //$this->db->order_by('b.ref_no', 'DESC');
         $i = $sortOrder[0]['column'];
@@ -1692,6 +1767,7 @@ class Billing_m extends CI_Model {
 
         if($query->num_rows() > 0){
             foreach($query->result_array() as $_query){
+                $bill_id = $_query['id'];
                 $data = array();
                 $due_date = $_query["due_date"];
 
@@ -1730,12 +1806,13 @@ class Billing_m extends CI_Model {
                     // then set the net_payment into zero else remaining payment
                     if($net_payment < 0){
                         $net_payment = 0.00;
-                        // $overdue = 0.00;
                     } else {
                         $net_payment = $net_payment;
                     }
-                } else {
 
+                    $totalPayments = $this->totalPayments($bill_id); // Check for partial payment of current bill
+                } else {
+                    $totalPayments = 0;
                     $due_date = $_query["due_date"];
                     $overdue = $_query["is_penalty"] ? unserialize($_query["penalties"])[0]["overdue"] : 0.00;
                     $disconnectionFee = $_query["reconnection_fee"];
@@ -1743,13 +1820,13 @@ class Billing_m extends CI_Model {
                 }
                 $status = $_query["status"]=='1' ? 'Active' : 'Archive';
 
-                if($status=='Archive'){
+                if ($status=='Archive') {
                     $paid_status = 'Archive';
-                } else if($_query["is_paid"]=='1'){
+                } elseif ($_query["is_paid"]=='1') {
                     $paid_status = 'Paid';
-                } else if($current_date > $_query["due_date"]){
+                } elseif ($current_date > $_query["due_date"]) {
                     $paid_status = 'Overdue'; 
-                } else if($current_date == $_query["due_date"]){
+                } elseif ($current_date == $_query["due_date"]) {
                     $paid_status = 'Today due';
                 } else {
                     $paid_status = 'On going';
@@ -1765,18 +1842,35 @@ class Billing_m extends CI_Model {
                 $data["print_count"] = $_query["print_count"];
                 $data["billing_period"] = $_query["billing_from"] ." - ".$_query["billing_to"];
                 $data["due_date"] = $_query["due_date"];
-                // $data["total_charges"] = '₱ '.number_format((float)$_query["total_charges"], 2, '.', '');
                 $data["status"] = $paid_status;
-
                 $data['current_due'] = $_query['total_charges'];
                 $data["balance"] = $balance;
+                $data["reading_ref_no"] = $_query["reading_ref_no"];
+                $data["balance_covered"] = $_query['balance_covered'];
+                $data["total_payments"] = $totalPayments;
+                $data["is_paid"] = $_query["is_paid"];
                 $data["balanceLastBill"] = $balanceLastBill;
                 $data["overdue"] = number_format(($overdue + $data["balanceLastBill"]["total_penalty"]),2,".",",");
                 $data["disconnection_fee"] = $disconnectionFee;
-                // $data["total_charges"] = number_format((($_query['total_charges'] + $balanceLastBill["total_amount"] + $overdue + $disconnectionFee) - $balance),2,".",",");
-                $data["total_charges"] = number_format((((int)$_query['total_charges'] + (int)$balanceLastBill["total_balance"] + (int)$disconnectionFee + (int)$data["overdue"]) - (int)$balance),2,".",",");
 
-                $data["solution"] = $_query['total_charges'] . " + " .  $balanceLastBill["total_balance"] . " + " . $disconnectionFee . " + " . $data["overdue"] . " - " . $balance  . " = " . $data["total_charges"];
+                $total_charges = ($_query['total_charges'] + $balanceLastBill["total_balance"] + $disconnectionFee + $data["overdue"]) - $balance - $totalPayments;
+
+                if ($_query["is_paid"] == 1 && $total_charges <= $_query['balance_covered']) {
+                    /**
+                     * Why i added $balance? because when total charges covered by overpayment or balanced_covered
+                     * the total charges return 0
+                     * Example: 300 + 0 + 0 + 6.00 - 306 = 0
+                     * 
+                     * Solution: 0 + 306 = 306.00
+                     */
+                    $_total_charges = $_query['balance_covered'];
+                } else {
+                    $_total_charges = $total_charges;
+                }
+
+                $data["total_charges"] = $_total_charges;
+                $data["solution"] = $_query['total_charges'] . " + " .  $balanceLastBill["total_balance"] . " + " . $disconnectionFee . " + " . $data["overdue"] . " - " . $balance  . " = " . $total_charges;
+                
                 $resultarray[] = $data;
             }
         }
@@ -1786,10 +1880,12 @@ class Billing_m extends CI_Model {
     }
 
     function getBillingCount($search,$query_builder){
-        $filterFields = array("a.middlename"," a.accountno", "a.meterno", "a.firstname", "a.lastname", "b.ref_no", "b.billing_from", "b.billing_to", "b.total_charges", "b.status", "b.due_date");
-        $this->db->select("a.middlename, b.is_paid, b.id, a.accountno, a.meterno, a.firstname, a.lastname, b.ref_no, b.billing_from, b.billing_to, b.total_charges, b.status, b.due_date");
+        $current_year = date('Y');
+        $filterFields = array("a.middlename"," a.accountno", "a.meterno", "a.firstname", "a.lastname", "b.ref_no", "b.billing_from", "b.billing_to", "b.total_charges", "b.status", "b.due_date", "r.ref_no");
+        $this->db->select("a.middlename, b.is_paid, b.id, a.accountno, a.meterno, a.firstname, a.lastname, b.ref_no, b.billing_from, b.billing_to, b.total_charges, b.status, b.due_date, r.ref_no as reading_ref_no");
         $this->db->from("hydra_billing.bills b");
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
+        $this->db->join("hydra_billing.readings r", "r.id = b.reading_id", "LEFT");
         $this->db->where("b.status", "1");
         if($query_builder){
             $this->db->where($query_builder);
@@ -1804,6 +1900,8 @@ class Billing_m extends CI_Model {
                 }
             }
             $this->db->group_end();
+        } else {
+            $this->db->where("YEAR(b.created_at)", $current_year);
         }
         $this->db->order_by('b.ref_no', 'DESC');
         $query = $this->db->get();
@@ -2310,16 +2408,33 @@ class Billing_m extends CI_Model {
     // (sum all received_amount) - (sum all net_payment) = balance
     // balance - balance_covered = over payment
     function computeOverPayment($customer_id){
-        $this->db->select("SUM(received_amount - net_payment) as balance, SUM(balance_covered) as balance_covered");
+        // Get total received amount
+        $this->db->select("SUM(received_amount) AS total_received_amount");
         $this->db->from("hydra_billing.payments");
-        $this->db->where("account_id",$customer_id);
-        $this->db->where("is_archive","0");
-        $query = $this->db->get()->row_array();
-        $balance = number_format((float)$query['balance'], 2, '.', '') - number_format((float)$query['balance_covered'], 2, '.', '');
-        if($balance < 0){
-          $balance = 0;
-        }
-		return number_format($balance, 2, '.', '');
+        $this->db->where("account_id", $customer_id);
+        $this->db->where("is_archive", "0");
+        $total_received_amount = $this->db->get()->row()->total_received_amount;
+
+        // Get total net payment (first occurrence per bill_id)
+        $this->db->select("SUM(p.net_payment) AS total_net_payment");
+        $this->db->from("hydra_billing.payments p");
+        $this->db->join("(SELECT bill_id, MIN(id) AS min_id FROM hydra_billing.payments WHERE account_id = $customer_id AND is_archive = 0 GROUP BY bill_id) AS first_payments", "p.id = first_payments.min_id");
+        $total_net_payment = $this->db->get()->row()->total_net_payment;
+
+        // Get total balance covered
+        $this->db->select("SUM(balance_covered) AS balance_covered");
+        $this->db->from("hydra_billing.payments");
+        $this->db->where("account_id", $customer_id);
+        $this->db->where("is_archive", "0");
+        $balance_covered = $this->db->get()->row()->balance_covered;
+
+        // Compute values
+        $received_net_payment = $total_received_amount - $total_net_payment;
+        $total = $received_net_payment - $balance_covered;
+        $total = $total < 0 ? 0 : $total;
+
+        // Return formatted value
+        return number_format($total, 2, '.', '');
     }
 
     function checkOverdue(){
@@ -2509,10 +2624,16 @@ class Billing_m extends CI_Model {
           $post["net_payment"] = preg_replace('/[^0-9a-zA-Z.]/', '', $post['net_payment']);
           $post["balance"] = preg_replace('/[^0-9a-zA-Z.]/', '', $post['balance']);
           $post['acknowledgement_receipt'] = $this->generatePaymentAR();
+
+        //   echo "<pre>";
+        //   var_dump($post["balance_covered"], $post['received_amount'], $post['net_payment']);
+        //   echo "</pre>";
+        //   die();
+
           $query = $this->db->insert('hydra_billing.payments', $post);
 
           if($query){
-            if($post['received_amount'] >= $post['net_payment']){
+            if($post['received_amount'] >= $post['net_payment'] || $post['balance_covered'] >= $post['net_payment']){
               $this->updateBillingPaidStatus($post['bill_id'], '1');
               $this->updateDisconnectionStatus($post['account_id']);
             }
@@ -4449,7 +4570,7 @@ class Billing_m extends CI_Model {
       
         $data['lastbill'] = $balance;
         $data['overpayment'] = $overpayment;
-        $data['totol_balance'] = number_format(($balance['total_amount'] - $overpayment),2);
+        $data['total_balance'] = $balance['total_amount'] - $overpayment;
         return $data;
         
     }
@@ -4474,10 +4595,11 @@ class Billing_m extends CI_Model {
     function computeBalanceLastBill($account_id, $bill_id = -0, $bill_date){
 		$array = array();
 		$current_date = date("Y-m-d");
-    $penalties = $this->getPenalties();
-    $total_balance = 0;
+        $penalties = $this->getPenalties();
+        $total_balance = 0;
 		$total_penalty = 0;
-    $bills_payments = 0;
+        $bills_payments = 0;
+        $totalPayments = 0;
         $this->db->select("id, total_charges, due_date, billing_to");
         $this->db->from("hydra_billing.bills");
         $this->db->where("account_id", $account_id);
@@ -4504,14 +4626,37 @@ class Billing_m extends CI_Model {
                 $total_penalty = $total_penalty + $overdue_charges;
                 $total_balance = $total_balance + $total_charges;
                 $bills_payments = $this->computeBillsPaid($row['id']);
+                /**
+                 * Last Bill of the current bill that was sent here
+                 * Example : $bill_id = 130
+                 * The bill ID that was sent here is $row['id'] = (129)
+                 */
+                $totalPayments = $this->totalPayments($row['id']); // 
             }
         }
 
-    $array['total_penalty'] = floor(($total_penalty*100))/100;
-		$array['total_balance'] = floor(($total_balance*100))/100;
+        $array['total_penalty'] = floor(($total_penalty*100))/100;
+		$array['total_balance'] = floor((($total_balance - $totalPayments)*100))/100;
 		$array['total_amount'] = ($array['total_balance'] + $array['total_penalty']) - floor(($bills_payments*100))/100;
-    $array['bills_payment'] = $bills_payments;
+        $array['bills_payment'] = $bills_payments;
+        $array['total_payments'] = $totalPayments;
 		return $array;
+    }
+
+    public function totalPayments($bill_id){
+        $arrData = array();
+        $this->db->select("received_amount");
+        $this->db->from("hydra_billing.payments");
+        $this->db->where("bill_id", $bill_id);
+        $this->db->where("is_archive", 0);
+        $query = $this->db->get();
+
+        $partialAmount = 0;
+        foreach($query->result_array() as $tempData){
+            $actual_amount = $tempData['received_amount'];
+            $partialAmount += $actual_amount;
+        }
+        return $partialAmount;
     }
 
     function computeBillsPaid($bill_id){
@@ -5118,8 +5263,8 @@ class Billing_m extends CI_Model {
 
     function updateMeter($new_meterno, $id, $query_type){
         $array2 = array();
-        $array2['meterno'] = $new_meterno;
-        $array2['meterno_raw'] = str_replace(" ", "", str_replace("-", "", $new_meterno));
+        $array2['meterno'] = trim($new_meterno);
+        $array2['meterno_raw'] = trim(str_replace([" ", "-"], "", $new_meterno));
         $this->db->where("id", $id);
         $query = $this->db->update($query_type, $array2);
         return $query;
