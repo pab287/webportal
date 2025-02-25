@@ -98,8 +98,8 @@ class Curl_request extends MY_Controller {
 		$_weekday = strtolower($_weekday);
 		$meredien = ($ampm)? $ampm: "AM";
 		$currentDate = date("Y-m-d H:i:s", strtotime($this->today));
-		
 		$responseEvent = $this->shift_manangement->getScheduledEvent($currentDate);
+
 		$tempResponseLogger = array();
 		if($_weekday !== "sunday" && $responseEvent === false){
 			$syncResponse = $this->getLastSyncRecord();
