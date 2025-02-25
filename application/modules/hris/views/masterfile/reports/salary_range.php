@@ -158,7 +158,7 @@
 
         <template v-if="filter == 2">
             <div class="col-xl-9 col-lg-9 col-md-8 col-sm-12">
-                <div class="m-portlet m-portlet--mobile">
+                <div class="m-portlet m-portlet--mobile" m-portlet="true">
                     <div class="m-portlet__head">
                         <div class="m-portlet__head-caption">
                             <div class="m-portlet__head-title">
@@ -169,6 +169,15 @@
                                     </small>
                                 </h3>
                             </div>
+                        </div>
+                        <div class="m-portlet__head-tools">
+                            <!-- <ul class="m-portlet__nav">
+                                <li class="m-portlet__nav-item">
+                                    <a href="#" m-portlet-tool="fullscreen" class="m-portlet__nav-link m-portlet__nav-link--icon" aria-describedby="tooltip_rfyqdeac9m">
+                                        <i class="la la-expand"></i>
+                                    </a>
+                                </li>
+                            </ul> -->
                         </div>
                     </div>
                     <div class="m-portlet__body">

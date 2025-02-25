@@ -708,13 +708,13 @@ var vmData = new Vue({
                                     },
                                     { title: 'Salary', data: null, orderable: false,
                                         render: function (data, type, row, meta) {
-                                            var _year = row[value];
+                                            var _year = row.data[value];
                                             return typeof _year !== 'undefined' ? _year.sal_rate : '0.00';
                                         }
                                     }, 
                                     { title: 'Eff Date', data: null, orderable: false, 
                                         render: function (data, type, row, meta) {
-                                            var _year = row[value];
+                                            var _year = row.data[value];
                                             return typeof _year !== 'undefined' ? _year.sal_date : '---';
                                         }
                                     }
@@ -899,7 +899,7 @@ var vmData = new Vue({
                 searching: true,
                 data: instance.instanceData,
                 scrollX: true,
-                autoWidth: false,
+                // autoWidth: false,
                 initComplete: function (settings, json) {
                     const nTable = settings.nTable;
                     var _tableData = settings.aoData.length;

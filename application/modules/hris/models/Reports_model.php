@@ -2318,38 +2318,35 @@ class Reports_model extends CI_Model{
                 $this->db->where('YEAR(a.sal_date) <=', $date_to);
             $this->db->group_end();
 
+            $this->db->order_by('a.sal_date', 'DESC');
             $query = $this->db->get();
 
             if ($query->num_rows() > 0) {
-                foreach ($query->result() as $key => $row) {
-                    if (isset($arrData[$row->biometricno][$row->year]) && $arrData[$row->biometricno][$row->year]) {
-                        if (in_array($row->year, $arrData[$row->biometricno])) {
-                            $arrData[$row->biometricno][$row->year] = $row;
-                        } else {
-                            $arrData[$row->biometricno.'_'.$key]['id'] = $row->id;
-                            $arrData[$row->biometricno.'_'.$key]['name'] = $row->name;
-                            $arrData[$row->biometricno.'_'.$key]['biometricno'] = $row->biometricno;
-                            $arrData[$row->biometricno.'_'.$key][$row->year] = $row;
-                        }
-                    } else {
-                        $arrData[$row->biometricno]['id'] = $row->id;
-                        $arrData[$row->biometricno]['name'] = $row->name;
-                        $arrData[$row->biometricno]['biometricno'] = $row->biometricno;
-                        $arrData[$row->biometricno][$row->year] = $row;
+                $groupedByBiometric = [];
+                $array = $query->result_array();
+                $_arrData = $this->getGroupedData($array);
+
+                $_test = array();
+                foreach($_arrData as $key => $value){
+                    foreach($value as $k => $v){
+                        $_test[] = $v;
                     }
                 }
+
+                $arrData = $_test;
             }
         }
-        array_multisort(array_column($arrData, 'name'), SORT_ASC, $arrData);
-        array_multisort(array_column($arrData, 'id'), SORT_DESC, $arrData);
 
-        $_arrData = array_values($arrData); //reverting the index to number
+        // array_multisort(array_column($arrData, 'name'), SORT_ASC, $arrData);
+        // array_multisort(array_column($arrData, 'sal_date'), SORT_ASC, $arrData);
+
+        $__arrData = array_values($arrData); //reverting the index to number
         
         $resultset['generated_years'] = $this->generatedYears($post['date_from'], $date_to);
         $resultset['company'] = isset($post['company']) ? $this->getCompanyCodeById($post['company']) : null;
         $resultset['department'] = isset($post['department']) ? $this->getDepartmentCodeById($post['department']) : null;
         $resultset['position'] = isset($post['position']) ? $this->getPositionNameById($post['position']) : null;
-        $resultset['data'] = $_arrData;
+        $resultset['data'] = $__arrData;
 
         $message = "Employee Salary History has been generated with filters";
         
@@ -2417,5 +2414,60 @@ class Reports_model extends CI_Model{
             return $query->row()->name;
         }
         return false;
+    }
+
+    function getGroupedData($array){
+        $groupedByBiometric = [];
+
+        // Step 1: Group by biometricno
+        foreach ($array as $entry) {
+            $biometricno = $entry['biometricno'];
+            $groupedByBiometric[$biometricno][] = $entry;
+        }
+
+        $finalResult = [];
+
+        // Step 2: Process each biometric group to ensure unique years
+        foreach ($groupedByBiometric as $biometricno => $entries) {
+            $currentGroup = [];
+            $processedYears = [];
+            $biometricResult = [];
+
+            foreach ($entries as $entry) {
+                $year = date('Y', strtotime($entry['sal_date'])); // Extract year
+
+                // If the year already exists in the current group, start a new one
+                if (in_array($year, $processedYears)) {
+                    // Add name and biometricno to the current group
+                    $biometricResult[] = [
+                        'name' => $entry['name'],
+                        'biometricno' => $biometricno,
+                        'id' => $entry['id'],
+                        'data' => $currentGroup
+                    ];
+                    $currentGroup = [];
+                    $processedYears = [];
+                }
+
+                // Add entry to the current group
+                $currentGroup[$year] = $entry;
+                $processedYears[] = $year;
+            }
+
+            // Add the last group
+            if (!empty($currentGroup)) {
+                $biometricResult[] = [
+                    'name' => $entries[0]['name'], // Keep name consistent
+                    'biometricno' => $biometricno,
+                    'id' => $entries[0]['id'],
+                    'data' => $currentGroup
+                ];
+            }
+
+            // Add this biometric group to the final result
+            $finalResult[] = $biometricResult;
+        }
+
+        return $finalResult;
     }
 }
