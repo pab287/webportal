@@ -69,7 +69,7 @@ const tblBillings = $("#table-billing").DataTable({
         }
    ],
    select: {
-    style:    'os',
+    style:    'multi',
     selector: 'td:first-child'
    },
    buttons: [
@@ -88,7 +88,37 @@ const tblBillings = $("#table-billing").DataTable({
            exportOptions: {
                columns: "thead th:not(.notExport)"
            }
-       }
+       },
+       {
+        text: 'Export Selected to Excel',
+        action: function ( e, dt, button, config ) {
+            let selectedData = dt.rows({ selected: true }).data().toArray();
+            let exportData = dt.buttons.exportData({
+                columns: "thead th:not(.notExport)",
+                modifier: {
+                    selected: true
+                }
+            });
+
+            // Create a new DataTable instance for exporting
+            let exportTable = $('<table>').DataTable({
+                data: selectedData,
+                columns: dt.settings().init().columns,
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'excel',
+                        exportOptions: {
+                            columns: "thead th:not(.notExport)"
+                        }
+                    }
+                ]
+            });
+
+            // Trigger the export
+            exportTable.button('.buttons-excel').trigger();
+        }
+    }
    ]
 });
 
