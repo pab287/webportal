@@ -437,7 +437,6 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 $('#otp-error').modal('show');
-                console.error('AJAX Error:', error);
             }
         });
     });

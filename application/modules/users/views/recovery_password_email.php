@@ -48,7 +48,7 @@
     </style>
 </head>
 <body>
-    <h2>Hello <?php echo $data['first_name'] ?? 'User'; ?>,</h2>
+    <h2>Hello <?php echo ucfirst($data['first_name'] ?? 'User'); ?>,</h2>
     <p>We received a request to unlock your Conyx account.</p>
     <p>To unlock your account, please use the following password:</p>
     <div class="verification-code"><?php echo $data['key_code']; ?></div>

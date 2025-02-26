@@ -541,7 +541,7 @@ class User_model extends CI_Model
         $id = $post['id'];
         $this->db->trans_start();
         $sendOtp = $this->sendOTP($id);
-        if (!$sendOtp['sent']) {
+        if (!$sendOtp['sent_sms'] && !$sendOtp['sent_email']) {
             $resultset['message'] = $sendOtp['message'];
             $this->db->trans_rollback();
             $this->logEvent($resultset, $id);
@@ -602,18 +602,19 @@ class User_model extends CI_Model
             return $response;
         }
         $OTP = strtoupper(bin2hex(random_bytes(3)));
+        $OTP = strtoupper(bin2hex(random_bytes(3)));
         $response['otp'] = $OTP;
-        if ($result->mobile_no) {
-            $message = "[GC&C] Your Conyxph account recovery code is: $OTP. For security reasons, do not share this code with anyone. " . 
-                       "If you did not request this, please ignore this message.";
-            $response['sent'] = $this->gateway->sendPlaySMS($result->mobile_no, $message);
-            return $response;
-        }
         $send_email[] = $result->email;
         $mailer['send_to'] = $send_email;
         $data = ['first_name' => $result->firstname,'key_code' => $OTP];
         $email_content = $this->load->view("recovery_password_email.php",["data" => $data],true);
-        $response['sent'] = $this->core_layout->send_email('core','GC & C Conyx PH','Account Recovery',$email_content,$mailer);
+        if ($result->mobile_no) {
+            $message = "[GC&C] Your Conyxph account recovery code is: $OTP. For security reasons, do not share this code with anyone. " .
+                       "If you did not request this, please ignore this message.";
+            $response['sent_sms'] = $this->gateway->sendPlaySMS($result->mobile_no, $message);
+        }
+        
+        $response['sent_email'] = $this->core_layout->send_email('core','GC & C Conyx PH','Account Recovery',$email_content,$mailer);
         return $response;
     }
 
