@@ -312,6 +312,9 @@
             $availableLoa = $this->getAvailableLoav3($ndate);
             $this->db->reset_query();
 
+            $currentAttendance = $this->getAllAttendance($ndate);
+            $this->db->reset_query();
+
             $personnelTempAttendance = $this->getPersonneCurrentAttendance($ndate);
             $this->db->reset_query();
 
@@ -451,7 +454,7 @@
                                     $dataTime["start"] = date("Y-m-d H:i:s", strtotime("{$ndate} 12:00:00"));
                                     $dataTime["end"] = date("Y-m-d H:i:s", strtotime("{$ndate} 13:00:00"));
 
-                                    $afternoonAttendance = $this->getSingleAttendanceByDateRangeDatav2($biometric_id, $dataTime['start'], $dataTime['end'], $currentAttendance);
+                                    $afternoonAttendance = $this->getSingleAttendanceByDateRangeDataV2($biometric_id, $dataTime['start'], $dataTime['end'], $currentAttendance);
                                     if ($afternoonAttendance == true && $pmCount == 0) {
                                         if (isset($availableLoa[$empId]) && $availableLoa[$empId]) {
                                             $reference_no = $availableLoa[$empId]->reference_no;
@@ -935,15 +938,16 @@
             $data = array();
 
             if ($currentDate) {
-                $this->db->select('biometric_id');
+                $this->db->select('biometric_id, datetime, device_id');
                 $this->db->from("gcctimeutility.attendance");
                 $this->db->where("DATE(datetime)", date("Y-m-d", strtotime($currentDate)));
                 $query = $this->db->get();
 
                 if ($query->num_rows() > 0){
-                    foreach($query->result() as $row){
-                        array_push($data, $row->biometric_id);
-                    }
+                    $data = $query->result();
+                    // foreach($query->result() as $row){
+                    //     array_push($data, $row->biometric_id);
+                    // }
                 }
             }
 
