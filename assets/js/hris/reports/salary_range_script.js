@@ -286,6 +286,7 @@ var vmData = new Vue({
                     ];
 
                     instance.instanceColumn = _temp;
+                    instance.instanceData = [];
                     instance.salaryHistoryDataTable();
                     instance.employeeSelect2("#employee", true);
                     instance.yearSelect2("#yearFrom", true, _years);
