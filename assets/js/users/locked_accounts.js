@@ -75,14 +75,14 @@ function unlockAccount(id) {
                 },
                 success: function (json) {
                     if (json.status) {
-                        toastr.success(json.message, "Protocol Settings", 5000);
+                        toastr.success(json.message, "Locked Accounts", 5000);
                         tblLockedUsers.ajax.reload();
                     } else {
-                        toastr.error(json.message, "Protocol Settings", 5000);
+                        toastr.error(json.message, "Locked Accounts", 5000);
                     }
                 },
                 error: function (xhr, status, error) {
-                    toastr.error("An error occurred while restoring the Telegram bot.", "Protocol Settings", 5000);
+                    toastr.error("An error occurred while restoring Account.", "Locked Accounts", 5000);
                 }
             });
         }

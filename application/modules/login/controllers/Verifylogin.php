@@ -29,6 +29,7 @@ class Verifylogin extends MY_Controller{
             else {
                 $this->db->where('username', $post['username']);
                 $this->db->set('login_attempts', '0', false);
+                $this->db->set('lockout_dt', 'NULL', false);
                 $this->db->update('gccmaster.tblusers');
 
                 $query = $this->db->select('force_update, password, auth, emp_id,resend_attempts')
@@ -149,27 +150,22 @@ class Verifylogin extends MY_Controller{
         } else {
             $this->core_layout->setEventLog("User ".$username." logged in with Invalid credentials for username or password.","login", "error", "gccmaster", "user");
             $attempts = $this->Login_m->getAttempts($username);
-            if( isset($attempts->login_attempts) && isset($attempts->lockout)){
-                if ($attempts->login_attempts <= 3) {
-                    $resend_attempts = 4 - $attempts->login_attempts;
-                    $this->form_validation->set_message('check_database', 'Invalid username or password! You have (' . $resend_attempts . ') remaining tries left before your account is locked.');
-
-                    $this->db->trans_start();
-                
-                    $this->db->where('username', $username);
-                    $this->db->set('login_attempts', 'login_attempts + 1', false);
-                    $this->db->set('lockout', 'IF(login_attempts >= 4, 1, lockout)', false);
-                    $this->db->set('lockout_dt', 'IF(login_attempts >= 4, NOW(), lockout_dt)', false);
-                    $this->db->update('gccmaster.tblusers');
-                    
-                    $this->db->trans_complete();
-
-                }else if($attempts->login_attempts > 3 && $attempts->lockout == 1){
+            if(isset($attempts->login_attempts) && isset($attempts->lockout) && $attempts->lockout == 0){
+                $resend_attempts = 4 - $attempts->login_attempts;
+                $this->db->trans_start();
+                $this->db->where('username', $username);
+                if($resend_attempts <= 0){
+                    $this->db->set('lockout', '1', false);
+                    $this->db->set('lockout_dt', 'NOW()', false);
                     $this->form_validation->set_message('check_database', 'This user account is locked. Please contact IT Support');
+                }else{
+                    $this->db->set('login_attempts', 'login_attempts + 1', false);
+                    $this->form_validation->set_message('check_database', 'Invalid username or password! You have (' . ($resend_attempts) . ') remaining tries left before your account is locked.');
                 }
-            }
-            else{
-                $this->form_validation->set_message('check_database', 'Invalid username or password!');
+                $this->db->update('gccmaster.tblusers');
+                $this->db->trans_complete();
+            }else if($attempts->lockout == 1){
+                $this->form_validation->set_message('check_database', 'This user account is locked. Please contact IT Support');
             }
             return false;
         }
