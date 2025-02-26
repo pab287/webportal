@@ -209,7 +209,7 @@ class Overtime_m extends CI_Model {
         $this->db->where_not_in('a.status', "Cancelled");
 
         if ($view_by_company) {
-            $this->db->where('b.company_id', $view_by_company);
+            $this->db->where('b.company_id', (int)$this->user_data['company']);
 
             if ($companyDescription) {
                 $this->db->where('a.company', $companyDescription);
@@ -309,7 +309,7 @@ class Overtime_m extends CI_Model {
         $this->db->where_not_in('a.status', "Cancelled");
 
         if ($view_by_company) {
-            $this->db->where('b.company_id', $view_by_company);
+            $this->db->where('b.company_id', (int)$this->user_data['company']);
 
             if ($companyDescription) {
                 $this->db->where('a.company', $companyDescription);

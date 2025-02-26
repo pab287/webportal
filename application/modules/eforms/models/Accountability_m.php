@@ -96,10 +96,10 @@ class Accountability_m extends CI_Model {
         $this->db->where("DATE(a.date_issued) >= '$date'", NULL, FALSE);
 
         if ($view_by_company) {
-            $this->db->where('a.company', $view_by_company);
+            $this->db->where('a.company', $this->user_data['company']);
 
             if ($companyDescription) {
-                $this->db->or_where('a.company', $companyDescription);
+                $this->db->where('a.company', $companyDescription);
             }
         }
 

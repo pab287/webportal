@@ -80,11 +80,13 @@ class Borrowing_m extends CI_Model
         $this->db->where("DATE(a.date_trans) >= ", $check);
 
         if ($view_by_company) {
-            $this->db->where('a.company', $view_by_company);
-
-            if ($companyDescription) {
-                $this->db->or_where('a.company', $companyDescription);
-            }
+            $this->db->group_start();
+                $this->db->where('a.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('a.company', $companyDescription);
+                }
+            $this->db->group_end();
         }
 
         if (isset($query_builder) && $query_builder) {
@@ -161,11 +163,13 @@ class Borrowing_m extends CI_Model
         }
 
         if ($view_by_company) {
-            $this->db->where('a.company', $view_by_company);
-
-            if ($companyDescription) {
-                $this->db->or_where('a.company', $companyDescription);
-            }
+            $this->db->group_start();
+                $this->db->where('a.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('a.company', $companyDescription);
+                }
+            $this->db->group_end();
         }
 
         if (isset($query_builder) && $query_builder) {
@@ -834,11 +838,13 @@ class Borrowing_m extends CI_Model
         $this->db->where('c.status !=', 'Pending');
 
         if ($view_by_company) {
-            $this->db->where('c.company', $view_by_company);
-
-            if ($companyDescription) {
-                $this->db->or_where('c.company', $companyDescription);
-            }
+            $this->db->group_start();
+                $this->db->where('c.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('c.company', $companyDescription);
+                }
+            $this->db->group_end();
         }
 
         if (isset($query_builder) && $query_builder) {
@@ -902,11 +908,13 @@ class Borrowing_m extends CI_Model
         $this->db->where('c.status !=', 'Pending');
 
         if ($view_by_company) {
-            $this->db->where('c.company', $view_by_company);
-
-            if ($companyDescription) {
-                $this->db->or_where('c.company', $companyDescription);
-            }
+            $this->db->group_start();
+                $this->db->where('c.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('c.company', $companyDescription);
+                }
+            $this->db->group_end();
         }
 
         if (isset($query_builder) && $query_builder) {
@@ -1223,11 +1231,13 @@ class Borrowing_m extends CI_Model
         $this->db->where('a.is_returned', '1');
 
         if ($view_by_company) {
-            $this->db->where('c.company', $view_by_company);
-
-            if ($companyDescription) {
-                $this->db->or_where('c.company', $companyDescription);
-            }
+            $this->db->group_start();
+                $this->db->where('c.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('c.company', $companyDescription);
+                }
+            $this->db->group_end();
         }
 
         if (isset($query_builder) && $query_builder) {
@@ -1259,8 +1269,8 @@ class Borrowing_m extends CI_Model
 
             foreach ($query->result() as $key => $rs) {
                 $rs->company = (is_numeric($rs->company)) ? $this->getCompany($rs->company) : $rs->company; 
-                $rs->company = (is_numeric($rs->department)) ? $this->getDepartment($rs->department) : $rs->department; 
-                $rs->company = (is_numeric($rs->position)) ? $this->getPosition($rs->position) : $rs->position; 
+                $rs->department = (is_numeric($rs->department)) ? $this->getDepartment($rs->department) : $rs->department; 
+                $rs->position = (is_numeric($rs->position)) ? $this->getPosition($rs->position) : $rs->position; 
 
                 $tempRs = (array)$rs;
                 $fullname = $this->core_layout->getDisplayName($tempRs);
@@ -1293,11 +1303,13 @@ class Borrowing_m extends CI_Model
         $this->db->where('a.is_returned', '1');
 
         if ($view_by_company) {
-            $this->db->where('c.company', $view_by_company);
-
-            if ($companyDescription) {
-                $this->db->or_where('c.company', $companyDescription);
-            }
+            $this->db->group_start();
+                $this->db->where('c.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('c.company', $companyDescription);
+                }
+            $this->db->group_end();
         }
         
         if (isset($query_builder) && $query_builder) {
@@ -1630,11 +1642,13 @@ class Borrowing_m extends CI_Model
         $this->db->group_end();
 
         if ($view_by_company) {
-            $this->db->where('c.company', $view_by_company);
-
-            if ($companyDescription) {
-                $this->db->or_where('c.company', $companyDescription);
-            }
+            $this->db->group_start();
+                $this->db->where('c.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('c.company', $companyDescription);
+                }
+            $this->db->group_end();
         }
 
         if (isset($query_builder) && $query_builder) {
@@ -1703,11 +1717,13 @@ class Borrowing_m extends CI_Model
         $this->db->group_end();
 
         if ($view_by_company) {
-            $this->db->where('c.company', $view_by_company);
-
-            if ($companyDescription) {
-                $this->db->or_where('c.company', $companyDescription);
-            }
+            $this->db->group_start();
+                $this->db->where('c.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('c.company', $companyDescription);
+                }
+            $this->db->group_end();
         }
 
         if (isset($query_builder) && $query_builder) {

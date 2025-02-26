@@ -106,7 +106,7 @@ class Cash_advance_m extends CI_Model {
         }
 
         if ($view_by_company) {
-            $this->db->where('b.company_id', $this->user_data['company']);
+            $this->db->where('b.company_id', (int)$this->user_data['company']);
 
             if ($companyDescription) {
                 $this->db->where('a.company', $companyDescription);
@@ -220,7 +220,7 @@ class Cash_advance_m extends CI_Model {
             }
 
             if ($view_by_company) {
-                $this->db->where('b.company_id', $this->user_data['company']);
+                $this->db->where('b.company_id', (int)$this->user_data['company']);
 
                 if ($companyDescription) {
                     $this->db->where('a.company', $companyDescription);
@@ -1565,15 +1565,19 @@ class Cash_advance_m extends CI_Model {
         }
 
         if ($view_by_company) {
-            $this->db->where('b.company_id', $this->user_data['company']);
+            $this->db->group_start();
+                $this->db->where('b.company_id', (int)$this->user_data['company']);
 
-            if ($companyDescription) {
-                $this->db->where('a.company', $companyDescription);
-            }
+                if ($companyDescription) {
+                    $this->db->where('a.company', $companyDescription);
+                }
+            $this->db->group_end();
         }
 
-        $this->db->where("a.created_dt <=", $date);
-        $this->db->or_where_in("a.status","Cancelled");      
+        $this->db->group_start();
+            $this->db->where("a.created_dt <=", $date);
+            $this->db->or_where_in("a.status","Cancelled");
+        $this->db->group_end();  
            
         if($limit != -1){
             $this->db->limit($limit, $offset);
@@ -1583,6 +1587,7 @@ class Cash_advance_m extends CI_Model {
         $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
 
         $query = $this->db->get();
+
         if($query->num_rows() > 0){
             $arrData = array();
             foreach($query->result() as $key => $rs){
@@ -1614,15 +1619,20 @@ class Cash_advance_m extends CI_Model {
         }
 
         if ($view_by_company) {
-            $this->db->where('b.company_id', $this->user_data['company']);
+            $this->db->group_start();
+                $this->db->where('b.company_id', (int)$this->user_data['company']);
 
-            if ($companyDescription) {
-                $this->db->where('a.company', $companyDescription);
-            }
+                if ($companyDescription) {
+                    $this->db->where('a.company', $companyDescription);
+                }
+            $this->db->group_end();
         }
 
-        $this->db->where("a.created_dt <=", $date);
-        $this->db->or_where_in("a.status","Cancelled");
+        $this->db->group_start();
+            $this->db->where("a.created_dt <=", $date);
+            $this->db->or_where_in("a.status","Cancelled");
+        $this->db->group_end();
+
         $query = $this->db->get();
         return $query->num_rows();
     }
@@ -1641,14 +1651,18 @@ class Cash_advance_m extends CI_Model {
             }
 
             if ($view_by_company) {
-                $this->db->where('b.company_id', $this->user_data['company']);
-
-                if ($companyDescription) {
-                    $this->db->where('a.company', $companyDescription);
-                }
+                $this->db->group_start();
+                    $this->db->where('b.company_id', (int)$this->user_data['company']);
+    
+                    if ($companyDescription) {
+                        $this->db->where('a.company', $companyDescription);
+                    }
+                $this->db->group_end();
             }
 
-            $this->db->where("(a.created_dt <= '$date' OR a.status = 'Cancelled')");
+            $this->db->group_start();
+                $this->db->where("(a.created_dt <= '$date' OR a.status = 'Cancelled')");
+            $this->db->group_end();
               
             if($limit != -1){
                 $this->db->limit($limit, $offset);
@@ -1704,11 +1718,13 @@ class Cash_advance_m extends CI_Model {
             }
 
             if ($view_by_company) {
-                $this->db->where('b.company_id', $this->user_data['company']);
-
-                if ($companyDescription) {
-                    $this->db->where('a.company', $companyDescription);
-                }
+                $this->db->group_start();
+                    $this->db->where('b.company_id', (int)$this->user_data['company']);
+    
+                    if ($companyDescription) {
+                        $this->db->where('a.company', $companyDescription);
+                    }
+                $this->db->group_end();
             }
 
             $this->db->where("(a.created_dt <= '$date' OR a.status = 'Cancelled')");

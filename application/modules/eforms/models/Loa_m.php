@@ -83,7 +83,7 @@
             }
 
             if ($view_by_company) {
-                $this->db->where('b.company_id', $this->user_data['company']);
+                $this->db->where('b.company_id', (int)$this->user_data['company']);
 
                 if ($companyDescription) {
                     $this->db->where('a.company', $companyDescription);
@@ -165,7 +165,7 @@
             }
 
             if ($view_by_company) {
-                $this->db->where('b.company_id', $this->user_data['company']);
+                $this->db->where('b.company_id', (int)$this->user_data['company']);
 
                 if ($companyDescription) {
                     $this->db->where('a.company', $companyDescription);
