@@ -2337,9 +2337,6 @@ class Reports_model extends CI_Model{
             }
         }
 
-        // array_multisort(array_column($arrData, 'name'), SORT_ASC, $arrData);
-        // array_multisort(array_column($arrData, 'sal_date'), SORT_ASC, $arrData);
-
         $__arrData = array_values($arrData); //reverting the index to number
         
         $resultset['generated_years'] = $this->generatedYears($post['date_from'], $date_to);
