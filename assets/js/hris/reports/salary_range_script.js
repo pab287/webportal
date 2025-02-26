@@ -289,7 +289,7 @@ var vmData = new Vue({
                         instance.instanceColumn = _temp;
                         instance.instanceData = [];
                     }
-                    
+
                     instance.salaryHistoryDataTable();
                     instance.employeeSelect2("#employee", true);
                     instance.yearSelect2("#yearFrom", true, _years);
@@ -494,6 +494,7 @@ var vmData = new Vue({
                     {
                         extend: 'pdfHtml5',
                         title: 'EMPLOYEES SALARY RANGE REPORT',
+                        orientation: 'landscape',
                         action: function (e, dt, node, config) {
                             const self = this;
                             getExportData(e, dt, node, config, self, `${url}/1`, 'pdfHtml5')
@@ -635,7 +636,6 @@ var vmData = new Vue({
                         tempPdf.off();
                         tempPdf.on("click", function () {
                             if (_tableData > 0) {
-                                table.button('.buttons-pdf').node().off('click');
                                 table.button(".buttons-pdf").trigger();
                             } else {
                                 toastr.warning('Generate range history report first before exporting it to pdf.', 'Salary Range Export to PDF', 10000);
