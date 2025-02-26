@@ -12,6 +12,32 @@
                     </div>
                 </div>
                 <div class="m-portlet__body">
+                    <div class="m-form m-form--label-align-right m--marginless row">
+                        <div class="col-xl-2 col-lg-3 col-md-3 col-sm-12">
+                            <div class="form-group">
+                                <label class="control-label">Company</label>
+                                <select id="company" name="company"class="form-control" data-validation="required">
+                                    <option></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-xl-2 col-lg-3 col-md-3 col-sm-12">
+                            <div class="form-group">
+                                <label class="control-label">Station</label>
+                                <select id="station" name="station"class="form-control" data-validation="required">
+                                    <option></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-xl-2 col-lg-3 col-md-3 col-sm-12">
+                            <div class="form-group">
+                                <label class="control-label">Department</label>
+                                <select id="department" name="department"class="form-control" data-validation="required">
+                                    <option></option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                     <div class="col-12 table-responsive">
                         <table id="hris_age_reports" class="table table-bordered table-hover" width="100%">
                             <tbody></tbody>

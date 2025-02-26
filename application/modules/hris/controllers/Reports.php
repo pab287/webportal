@@ -256,9 +256,13 @@ class Reports extends MY_Controller{
 
     public function age(){
         $this->core_layout->setPageTitle("HRIS - Age");
+        $tempData = array();
+        $tempData["company"] = $this->company->select2CompanyData();
+        $tempData['station'] = $this->employee->getSitePointStations();
+        $tempData["department"] = $this->department->select2DepartmentData();
         $this->core_layout->addJs("js/buttons.print.min.js", true);
         $this->core_layout->setPrivilegeName("hris_report_age");
-        $this->core_layout->addJs("js/hris/reports/age_report.js", true,);
+        $this->core_layout->addJs("js/hris/reports/age_report.js", true,$tempData);
         $this->load->view("core/templates/header");
         $this->load->view("masterfile/reports/age");
         $this->load->view("core/templates/footer");

@@ -1,9 +1,20 @@
 let dropdownEl = null;
 let search_val = "";
 let thisMonth = moment();
+let _companies = [], _stations = [], _departments =[];
+let station = 0;
+let company = 0;
+let department = 0;
+let dateRange ="";
+if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
+    if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){ _companies = _tempContentData.company; }
+    if(typeof _tempContentData.station !== "undefined" && _tempContentData.station.length > 0){ _stations = _tempContentData.station; }
+    if(typeof _tempContentData.department !== "undefined" && _tempContentData.department.length > 0){ _departments = _tempContentData.department; }
+}
+
 const tblHrisAgeReport = $('#hris_age_reports')
     .DataTable({
-        dom: "<'row mb-3'<'col-xl-3 col-lg-3 col-md-3 col-sm-12 exportDropdown'><'col-xl-9 col-lg-9 col-md-9 col-sm-12 p-0  exportSearch'f>>" +
+        dom: "<'row mb-3'<'col-xl-3 col-lg-3 col-md-3 col-sm-12 exportDropdown'><'col-xl-9 col-lg-9 col-md-9 col-sm-12 p-0 exportSearch'f>>" +
             "<'row'<'col-12'rt>>" +
             "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
             buttons: [
@@ -135,7 +146,10 @@ const tblHrisAgeReport = $('#hris_age_reports')
             data: function (d) {
                 d.csrf_token = _csrf_hash;
                 d.search['value'] = search_val;
-                // d.dateRange = dateRange;
+                d.company = company;
+                d.station = station;
+                d.department = department;
+                d.dateRange = dateRange;
             }
         },
         columns: [
@@ -277,7 +291,6 @@ const tblHrisAgeReport = $('#hris_age_reports')
             dataType: "JSON",
             data: {
                 csrf_token : _csrf_hash,
-                dateRange : dateRange,
                 total : totalRecords,
             },
             success: function (response) {
@@ -320,3 +333,34 @@ const tblHrisAgeReport = $('#hris_age_reports')
         
         return `${age} Years Old`;
     }
+
+
+    $("#company").select2({
+        width: '100%',
+        data: _companies,
+        placeholder: 'Select an option',
+        allowClear: true,
+    }).on("select2:select", function(e){
+        const { id } = e.params.data;
+        company = id;
+    });
+
+    $("#station").select2({
+        width: "100%",
+        placeholder: "Select an option",
+        data: _stations,
+        allowClear: true,
+    }).on("select2:select", function(e){
+        const { id } = e.params.data;
+        station = id;
+    });
+
+    $("#department").select2({
+        width: "100%",
+        placeholder: "Select an option",
+        data: _departments,
+        allowClear: true,
+    }).on("select2:select", function(e){
+        const { id } = e.params.data;
+        department = id;
+    });
