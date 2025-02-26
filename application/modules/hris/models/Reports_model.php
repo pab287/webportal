@@ -2459,4 +2459,82 @@ class Reports_model extends CI_Model{
 
         return $arrData;
     }
+
+    public function getAgeReport(){
+        $rowCount = 0;
+        $rowData = array();
+        $resultset = array();
+        $post = $this->input->post();
+        $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+        $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
+        $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+        $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+        $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
+        $dateRange = (isset($post["dateRange"]) && $post["dateRange"]) ? $post["dateRange"] : null;
+        $rowData = $this->getAgeReportData($search, $limit, $offset, $sortBy, $sortOrder,$dateRange);
+        $total = $this->getAgeReportDataCount($search,$dateRange);
+        $resultset["recordsTotal"] = $total;
+        $resultset["recordsFiltered"] =  $total;
+        $resultset["data"] = isset($rowData) && $rowData ? $rowData: array();
+        return $resultset;
+    }
+
+    private function getAgeReportData($search, $limit, $offset, $sortBy, $sortOrder,$dateRange){
+        $filterFields = array("emp.firstname","emp.lastname");
+        $this->db->select('
+            emp.id as empid, emp.firstname, emp.lastname, emp.middlename, emp.suffix, emp.date_start as hired_date, 
+            emp.bday as birthday, 
+            dept.description as department,comp.description as company, sss_no, tin_no, pagibig_no, phealth_no, 
+            pos.name as position, dsl.station_description as station
+            ');
+        $this->db->from($this->tblEmployees.' as emp');
+        $this->db->join($this->departmentTable." as dept", "emp.department_id =dept.id", "LEFT");
+        $this->db->join($this->companyTable." as comp", "emp.company_id = comp.id", "LEFT");
+        $this->db->join($this->positionTable." as pos", "emp.position = pos.id", "LEFT");
+        $this->db->join($this->defaultStationTable." as dsl", "emp.id = dsl.employee_id", "LEFT");
+        $this->db->where('emp.employee_status', 'Active');
+        $this->db->group_by('emp.id');
+        if(isset($search)){
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+        if ($limit != -1) {
+            $this->db->limit($limit, $offset);
+        }
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        $query = $this->db->get();
+        return $query->result_array();
+    }
+
+    private function getAgeReportDataCount($search,$dateRange){
+        $filterFields = array("emp.firstname","emp.lastname");
+        $this->db->from($this->tblEmployees.' as emp');
+        $this->db->join($this->departmentTable." as dept", "emp.department_id =dept.id", "LEFT");
+        $this->db->join($this->companyTable." as comp", "emp.company_id = comp.id", "LEFT");
+        $this->db->join($this->positionTable." as pos", "emp.position = pos.id", "LEFT");
+        $this->db->join($this->defaultStationTable." as dsl", "emp.id = dsl.employee_id", "LEFT");
+        $this->db->where('emp.employee_status', 'Active');
+        if(isset($search)){
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
 }
