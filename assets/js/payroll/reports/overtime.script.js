@@ -1,3 +1,7 @@
+let globalPrintableSignatory = [];
+const psSignatoryModal = $("#modal-ps--signatory");
+const psResetSignatoryModal = $("#modal-ps--reset-signatory");
+
 let _years = [];
 let _companies = [];
 let psEmployeeGroup = [];
@@ -685,11 +689,30 @@ $(document).ready(function(){
 
         }, footerCallback: function () {
             const api = this.api();
+            const tempData = api.data();
+            let arrAdjustments = {};
+            if(tempData.length > 0) {
+                $.each(tempData, function (_i, row) {
+                    if (row.ot_adj && parseFloat(row.ot_adj) > 0) {
+                        if(jQuery.isEmptyObject(arrAdjustments[row.emp_id])) { arrAdjustments[row.emp_id] = []; }
+                        if(jQuery.inArray(row.ot_adj, arrAdjustments[row.emp_id]) == -1) { arrAdjustments[row.emp_id].push(row.ot_adj); }
+                    }
+                })
+            }
+
+            let totalAdjustmentAmount = 0;
+            if(Object.keys(arrAdjustments).length > 0) {
+                $.each(arrAdjustments, function (_i, adjAmount) {
+                    totalAdjustmentAmount += parseFloat(adjAmount);
+                });
+            }
+            
             const intVal = function (i) { return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : (typeof i === 'number') ? i : 0; };
             const otPayTotalIndex = 6;
             const otPay20TotalIndex = 7;
             const otPay30TotalIndex = 8;
             const nDiffTotalIndex = 10;
+            const adjustmentIndex = 11;
             const grandTotalIndex = 12;
 
             let otPayTotalAmount = api.column(otPayTotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
@@ -698,6 +721,7 @@ $(document).ready(function(){
             let nDiffTotalAmount = api.column(nDiffTotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
             let totalAmount = api.column(grandTotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
             
+            const grandTotalAmount = parseFloat(totalAmount) + parseFloat(totalAdjustmentAmount);
             const footerLabelTotal = $(api.column(5).footer());
             footerLabelTotal.removeClass("text-center");
             footerLabelTotal.html(`<span class="m--font-boldest mr-3">GRAND TOTAL</span>`);
@@ -706,7 +730,8 @@ $(document).ready(function(){
             $(api.column(otPay20TotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otPay20TotalAmount) + "</span>");
             $(api.column(otPay30TotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otPay30TotalAmount) + "</span>");
             $(api.column(nDiffTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(nDiffTotalAmount) + "</span>");
-            $(api.column(grandTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAmount) + "</span>");
+            $(api.column(adjustmentIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(nDiffTotalAmount) + "</span>");
+            $(api.column(grandTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(grandTotalAmount) + "</span>");
         }
     });
 
@@ -717,20 +742,16 @@ $(document).ready(function(){
         onSuccess: function (form) {
             let propDisabled = false;
             
-            var currentForm = form[0];
-            var formUrl = currentForm.action;
-            var formData = $(currentForm).serialize();
+            const currentForm = form[0];
+            const formUrl = currentForm.action;
 
             const tempEmployeeFilter = $(currentForm).find("select#employee");
             if(typeof tempEmployeeFilter !== "undefined"){
                 propDisabled = tempEmployeeFilter.is(":disabled");
                 if(propDisabled){ tempEmployeeFilter.prop("disabled", false); }
             }
-
-            const payrollGroup = $(currentForm).find("select#payroll_group").val();
-            console.log(payrollGroup);
             
-            var formData = $(currentForm).serialize();
+            const formData = $(currentForm).serialize();
             if(propDisabled){ tempEmployeeFilter.prop("disabled", true); }
             
             getScriptRendering(formUrl, formData, currentForm);
@@ -738,7 +759,7 @@ $(document).ready(function(){
         }
     });
     
-    var getScriptRendering = function (formUrl, formData, currentForm) {
+    const getScriptRendering = function (formUrl, formData, currentForm) {
         $.ajax({
             url: formUrl,
             type: "post",
@@ -751,12 +772,12 @@ $(document).ready(function(){
                     .prop("disabled", true);
             },
             success: function (json) {
-                _tempFilter = Object.assign({});
+                _tempFilter = {};
                 if (json.response) {
                     _clearTable = false;
                     _tempIds = json.data;
-                    _tempFilter = Object.assign({}, json.filters);
-                    vmReportHeaders.filters = Object.assign({}, _tempFilter);
+                    _tempFilter = { ...json.filters };
+                    vmReportHeaders.filters = { ...json.filters };
 
                     toastr.success(json.toastr_msg, "Filtered Overtime Summary Report");
                 } else {
@@ -765,6 +786,22 @@ $(document).ready(function(){
                 }
     
                 dtOTSummary.ajax.reload();
+
+                const currentSelectCompanyId = $(currentForm).find("#company").val();
+                if (typeof currentSelectCompanyId !== "undefined" && parseInt(currentSelectCompanyId) > 0) {
+                    $.ajax({
+                        url: siteUrl("payroll/reports/get_current_signatory_by_company_and_type/" + currentSelectCompanyId + "/2"),
+                        dataType: "json",
+                        success: function (json) {
+                            let tempRow = {};
+                            let ctr = json.count ? json.count : 0;
+                            if (json.response) { tempRow = { ...json.data }; }
+        
+                            vmPortletSignatories.row = { ...tempRow };
+                            vmPortletSignatories.count = ctr;
+                        }
+                    });
+                }
             }
         });
     }
@@ -773,3 +810,183 @@ $(document).ready(function(){
 const exportExcel = function(){
     dtOTSummary.button(".buttons-excel").trigger();
 }
+
+const vmPortletSignatories = new Vue({
+    el: "#portlet--signatories",
+    data: { row: {}, count: 0 },
+    methods: {
+        openModalSignatory: function () {
+            return psSignatoryModal.modal("show");
+        },
+        resetModalSignatory: function () {
+            return psResetSignatoryModal.modal("show");
+        }
+    }
+});
+
+const vmTempSignatory = new Vue({
+    el: "#signatory--content",
+    data: { row: {}, count: 0 },
+    methods: {
+        setGlobalSignatories: function () {
+            const _this = this;
+            const currentRow = _this.row;
+            globalPrintableSignatory = [];
+            if (typeof currentRow.meta_field !== "undefined" && typeof currentRow.meta_field == "object") {
+                $.each(currentRow.meta_field, function (i, v) {
+                    const tempData = { label: v.label, value: v.value, is_active: v.is_active };
+                    globalPrintableSignatory.push(tempData);
+                });
+            }
+            return globalPrintableSignatory;
+        },
+        activeSignatory: function (e) {
+            const currentTarget = e.target;
+            const formGroup = $(currentTarget).closest(".form-group.m-form__group.row");
+            if (typeof formGroup !== "undefined" && formGroup.length == 1) {
+                let isChecked = $(currentTarget).is(":checked");
+                const select2Container = formGroup.find(".select2--value");
+                if (typeof select2Container !== "undefined" && select2Container.length == 1) {
+                    if (isChecked) {
+                        if (select2Container.is(":disabled") === true) {
+                            select2Container.prop("disabled", false);
+                        }
+                    } else {
+                        if (select2Container.is(":disabled") === false) {
+                            select2Container.prop("disabled", true);
+                        }
+                    }
+                }
+            }
+        }, setModalSelect2: function () {
+            const _this = this;
+            const _currentElement = _this.$el;
+            const psModalSignatory = $(_currentElement)
+                .closest("#modal-ps--signatory");
+            if (typeof psModalSignatory !== "undefined" && psModalSignatory.length == 1) {
+                initSelect2Employee(psModalSignatory);
+            }
+        }, validateFields: function () {
+            const _this = this;
+            const currentElement = _this.$el;
+            const tempForm = $(currentElement).find("form#updatePrintableSignatories");
+            if (typeof tempForm !== "undefined") {
+                $.validate({
+                    form: tempForm,
+                    lang: 'en',
+                    onSuccess: function (form) {
+                        const tempUrl = form[0].action;
+                        const tempType = form[0].method;
+                        const formData = $(form[0]).serialize();
+
+                        $.ajax({
+                            url: tempUrl,
+                            type: tempType,
+                            dataType: "json",
+                            data: formData,
+                            beforeSend: function () {
+                                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            },
+                            success: function (json) {
+                                const currentModal = $(currentElement).closest(".modal");
+                                if (json.response) {
+                                    const currentData = json.data;
+                                    if (Object.keys(currentData).length > 0) {
+                                        const metaFields = currentData.meta_field;
+                                        const ctr = metaFields.length;
+
+                                        _this.row = { ...currentData };
+                                        _this.count = ctr;
+                                        _this.setGlobalSignatories();
+
+                                        vmPortletSignatories.row = { ...currentData };
+                                        vmPortletSignatories.count = ctr;
+
+                                        vmResetSignatories.row = { ...currentData };
+                                        vmResetSignatories.count = ctr;
+
+                                        if (typeof currentModal !== "undefined" && currentModal.length == 1) {
+                                            currentModal.modal("hide");
+                                        }
+                                    }
+                                } else {
+                                    toastr.error("Payroll Signatory", json.toastr_msg);
+                                }
+                                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            }
+                        });
+                        return false;
+                    },
+
+                });
+            }
+        }
+    }, mounted: function () {
+        const _this = this;
+        setTimeout(function () {
+            _this.setModalSelect2();
+            _this.setGlobalSignatories();
+            _this.validateFields();
+        }, 500);
+    }
+});
+
+const vmResetSignatories = new Vue({
+    el: "#reset-signatory--content",
+    data: { row: {}, count: 0 },
+    methods: {
+        validateFields: function () {
+            const _this = this;
+            const currentElement = _this.$el;
+            const tempForm = $(currentElement).find("form#resetPrintableSignatories");
+            if (typeof tempForm !== "undefined") {
+                $.validate({
+                    form: tempForm,
+                    lang: 'en',
+                    onSuccess: function (form) {
+                        const tempUrl = form[0].action;
+                        const tempType = form[0].method;
+                        const formData = $(form[0]).serialize();
+
+                        $.ajax({
+                            url: tempUrl,
+                            type: tempType,
+                            dataType: "json",
+                            data: formData,
+                            beforeSend: function () {
+                                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            },
+                            success: function (json) {
+                                let tempRow = {};
+                                let ctr = 0;
+
+                                if (json.response) {
+                                    tempRow = { ...json.data };
+                                    ctr = json.count;
+                                }
+                                vmTempSignatory.row = { ...tempRow };
+                                vmTempSignatory.count = ctr;
+                                vmTempSignatory.$mount();
+
+                                vmPortletSignatories.row = { ...tempRow };
+                                vmPortletSignatories.count = ctr;
+
+                                _this.row = { ...tempRow };
+                                _this.count = ctr;
+                                const currentModal = $(currentElement).closest(".modal");
+                                currentModal.modal("hide");
+
+                                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            }
+                        });
+                        return false;
+                    },
+
+                });
+            }
+        }
+    }, mounted: function () {
+        const _this = this;
+        _this.validateFields();
+    }
+});

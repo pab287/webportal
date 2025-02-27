@@ -3852,8 +3852,8 @@ class Reports_m extends CI_Model{
             $tempGroup = "PAY DATE";
             $arrGroup = array(1=>"PAY DATE", 2=>"MONTH", 3=>"YEAR");
             $group = (isset($post["group"]) && $post["group"])? intval($post["group"]): 1;
-            $payrollGroup = isset($post["payroll_group"]) && $post["payroll_group"] ? $post["payroll_group"]: array(); 
-            
+            $payrollGroup = isset($post["payroll_group"]) && $post["payroll_group"] ? $post["payroll_group"]: array();
+
             $arrCompany = array();
             $employeeIds = array();
             $tempStartDate = null;
@@ -3878,6 +3878,7 @@ class Reports_m extends CI_Model{
                 }
             }
 
+            
             $tempCompRow = array();
             if(isset($post["company"]) && $post["company"]){
                 $this->db->from("gcchris.tblcompanies");
@@ -3895,8 +3896,7 @@ class Reports_m extends CI_Model{
 
                 $filterPayrollGroup = $qPG->row()->payroll_group;
             }
-
-
+            
             $this->db->select("a.id");
             $this->db->from("gccmaster.tblemployees a");
             if(isset($post["employee"]) && $post["employee"]){
@@ -3912,6 +3912,7 @@ class Reports_m extends CI_Model{
                 }
             }
 
+            
             $isDateRange = isset($post["date_range"]) && $post["date_range"];
             $isFilterMonth = isset($post["filter_month"]) && $post["filter_month"];
 
@@ -3941,7 +3942,7 @@ class Reports_m extends CI_Model{
                 $tempStartDate = date("Y-m-d", strtotime($post["pay_date"]));
                 $tempEndDate = date("Y-m-d", strtotime($post["pay_date"]));
             }
-            
+
             if($tempStartDate && $tempEndDate){
                 $xDateFrom = date("F d, Y", strtotime($tempStartDate));
                 $xDateTo = date("F d, Y", strtotime($tempEndDate));
@@ -3955,7 +3956,7 @@ class Reports_m extends CI_Model{
                 $this->db->where('DATE(ts.overtime_in) BETWEEN "' . $tempStartDate . '" AND "' . $tempEndDate . '"', NULL, FALSE);
                 $this->db->where('DATE(ts.overtime_out) BETWEEN "' . $tempStartDate . '" AND "' . $tempEndDate . '"', NULL, FALSE);
                 $this->db->group_end();
-                if($hasDataFilter && count($employeeIds) > 0){
+                if($hasDataFilter && !empty($employeeIds)){
                     $this->db->where_in("emp_id", $employeeIds);
                 }
                 if(isset($post["company"]) && $post["company"]){
@@ -3963,7 +3964,8 @@ class Reports_m extends CI_Model{
                 }
                 $this->db->order_by("DATE(ts.overtime_in)");
                 $query = $this->db->get();
-                $tempSql = $this->db->last_query();
+                $resultset["sql"] = $this->db->last_query();
+
                 if($query->num_rows() > 0){
                     $ids = array();
                     foreach ($query->result() as $key => $value) {
@@ -3973,7 +3975,7 @@ class Reports_m extends CI_Model{
                     }
                     $tempCount = count($ids);
 
-                    if($isDateRange == false && $isFilterMonth){ $tempArrFilter["month"] = strtoupper(date("Y F", strtotime("{$post["filter_year"]}-{$post["filter_month"]}"))); }
+                    if($isDateRange === false && $isFilterMonth){ $tempArrFilter["month"] = strtoupper(date("Y F", strtotime("{$post["filter_year"]}-{$post["filter_month"]}"))); }
                     $tempArrFilter["company_description"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? strtoupper(trim($tempCompRow['description'])): "";
                     $tempArrFilter["company_address"] = isset($tempCompRow['company_address']) && $tempCompRow['company_address']  ? strtoupper(trim($tempCompRow['company_address'])): "";
                     $tempArrFilter["has_comp_desc"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? true: false;
@@ -4042,6 +4044,10 @@ class Reports_m extends CI_Model{
             $this->db->join('gcchris.tblcompanies comp', 'comp.id = b.company_id', 'LEFT');
             $this->db->where_in('a.id', $filteredIds);
             $this->db->where('a.has_overtime', 1);
+            $this->db->group_start();
+            $this->db->where('a.total_accredited_ot_hrs >', 0);
+            $this->db->or_where('a.total_accredited_ndiff_ot_hrs >', 0);
+            $this->db->group_end();
             if ($limit != -1) {
                 $this->db->limit($limit, $offset);
             }
