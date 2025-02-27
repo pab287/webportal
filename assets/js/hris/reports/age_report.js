@@ -5,7 +5,7 @@ let _companies = [], _stations = [], _departments =[];
 let station = 0;
 let company = 0;
 let department = 0;
-let dateRange ="";
+let ageRange ="";
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){ _companies = _tempContentData.company; }
     if(typeof _tempContentData.station !== "undefined" && _tempContentData.station.length > 0){ _stations = _tempContentData.station; }
@@ -20,7 +20,7 @@ const tblHrisAgeReport = $('#hris_age_reports')
             buttons: [
                 {
                     extend: 'excelHtml5',
-                    title: 'CASH ADVANCE REPORTS',
+                    title: 'Age Report',
                     exportOptions: {
                         columns: [1, 2,],
                         format: {
@@ -39,7 +39,7 @@ const tblHrisAgeReport = $('#hris_age_reports')
                 },
                 {
                     extend: 'pdfHtml5',
-                    title: 'CASH ADVANCE REPORTS',
+                    title: 'Age Report',
                     exportOptions: {
                         columns: [1, 2,],
                         format: {
@@ -95,7 +95,7 @@ const tblHrisAgeReport = $('#hris_age_reports')
                 },
                 {
                     extend: 'print',
-                    title: 'CASH ADVANCE REPORTS',
+                    title: 'Age Report',
                     exportOptions: {
                         columns: [1, 2,],
                         format: {
@@ -149,7 +149,7 @@ const tblHrisAgeReport = $('#hris_age_reports')
                 d.company = company;
                 d.station = station;
                 d.department = department;
-                d.dateRange = dateRange;
+                d.ageRange = ageRange;
             }
         },
         columns: [
@@ -170,32 +170,46 @@ const tblHrisAgeReport = $('#hris_age_reports')
             { data: 'company', title: 'COMPANY',},
             { data: 'department', title: 'DEPARTMENT',},
             { data: 'position', title: 'Position',},
-            { data: 'station', title: 'Station',},
-            {
-                data: 'birthday',
-                title: 'Age',
+            { data: 'station', title: 'Station',
+                render: function(data, type, row) {
+                    return data ? data : '---';
+                }
+            },
+            { data: 'birthday', title: 'Age',
                 render: function(data, type, row, meta) {
                     return calculateAge(data);
                 }
             },            
-            {
-                data: 'birthday',
-                title: 'Birthdate',
+            { data: 'birthday',title: 'Birthdate',
                 render: function(data, type, row, meta) {
                     return formatDate(data);
                 }
             },
-            {
-                data: 'hired_date',
-                title: 'Date hired',
+            { data: 'hired_date',title: 'Date hired',
                 render: function(data, type, row, meta) {
                     return formatDate(data);
                 }
             },
-            { data: 'tin_no', title: 'TIN',},
-            { data: 'sss_no', title: 'SSS',},
-            { data: 'pagibig_no', title: 'PAG-IBIG',},
-            { data: 'phealth_no', title: 'PhilHealth',},
+            { data: 'tin_no', title: 'TIN', orderable: false,
+                render: function(data, type, row) {
+                    return data ? data : "---";
+                }
+            },
+            { data: 'sss_no', title: 'SSS', orderable: false,
+                render: function(data, type, row) {
+                    return data ? data : "---";
+                }
+            },
+            { data: 'pagibig_no', title: 'PAG-IBIG', orderable: false,
+                render: function(data, type, row) {
+                    return data ? data : "---";
+                }
+            },
+            { data: 'phealth_no', title: 'PhilHealth', orderable: false,
+                render: function(data, type, row) {
+                    return data ? data : "---";
+                }
+            },
         ],
         initComplete: function () {
             const dropdown = '' +
@@ -340,9 +354,10 @@ const tblHrisAgeReport = $('#hris_age_reports')
         data: _companies,
         placeholder: 'Select an option',
         allowClear: true,
-    }).on("select2:select", function(e){
-        const { id } = e.params.data;
-        company = id;
+    }).on("select2:select select2:unselect", function(e){
+        const { id } = e.params?.data || {};
+        company = id || null;
+        tblHrisAgeReport.ajax.reload();
     });
 
     $("#station").select2({
@@ -350,9 +365,10 @@ const tblHrisAgeReport = $('#hris_age_reports')
         placeholder: "Select an option",
         data: _stations,
         allowClear: true,
-    }).on("select2:select", function(e){
-        const { id } = e.params.data;
-        station = id;
+    }).on("select2:select select2:unselect", function(e){
+        const { id } = e.params?.data || {};
+        station = id || null;
+        tblHrisAgeReport.ajax.reload();
     });
 
     $("#department").select2({
@@ -360,7 +376,19 @@ const tblHrisAgeReport = $('#hris_age_reports')
         placeholder: "Select an option",
         data: _departments,
         allowClear: true,
-    }).on("select2:select", function(e){
-        const { id } = e.params.data;
-        department = id;
+    }).on("select2:select select2:unselect", function(e){
+        const { id } = e.params?.data || {};
+        department = id || null;
+        tblHrisAgeReport.ajax.reload();
+    });
+
+    $("#age_range").select2({
+        width: "100%",
+        minimumResultsForSearch: -1,
+        placeholder: "Select an option",
+        allowClear: true,
+    }).on("select2:select select2:unselect", function(e){
+        const { id } = e.params?.data || {};
+        ageRange = id || null;
+        tblHrisAgeReport.ajax.reload();
     });
