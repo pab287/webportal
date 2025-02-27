@@ -164,8 +164,10 @@ class Verifylogin extends MY_Controller{
                 }
                 $this->db->update('gccmaster.tblusers');
                 $this->db->trans_complete();
-            }else if($attempts->lockout == 1){
+            }else if(isset($attempts->lockout) && $attempts->lockout == 1){
                 $this->form_validation->set_message('check_database', 'This user account is locked. Please contact IT Support');
+            }else{
+                $this->form_validation->set_message('check_database', 'Invalid username or password');
             }
             return false;
         }
