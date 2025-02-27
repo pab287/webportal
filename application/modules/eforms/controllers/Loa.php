@@ -506,14 +506,15 @@
             if($this->loa->update(array('id' => $id), $data)){
                 $details = $this->getLeaveDetails($id);
                 $send_to = $details['email'];
+                $loa_date = $this->get_loa_date_sms($details['type'], $details['date_from'], $details['date_to']);
+                $sms_date = trim(strip_tags($loa_date));
                 $contactPerson = $this->getContactPerson($details['supervisor_meta']);
                 if (!empty($details['mobile_no']) && preg_match('/^(\+63|0)[0-9]{10}$/', $details['mobile_no'])) {
                     $message = sprintf(
-                        "Hi %s,\n\nYour leave from %s to %s is approved. Contact %s if you have any questions or concerns.\n\nThis is a computer generated message please do not reply to this number.\n\nThank you!",
-                        $details['fullname'],
-                        (new DateTime($details['date_from']))->format('F j'),
-                        (new DateTime($details['date_to']))->format('F j'),
-                        $contactPerson
+                "Hi %s,\n\nYour leave for %s is approved. Contact %s if you have any questions or concerns.\n\nThis is a computer generated message please do not reply to this number.\n\nThank you!",
+                ucwords($details['fullname']),
+                        $sms_date,
+                        ucwords($contactPerson)
                     );
                     $this->contacts->sendSMS($details['mobile_no'], $message);
                 }
@@ -971,21 +972,4 @@
             }
             return null;
         }
-
-        public function test_email(){
-            $data = array();
-            $data['supervisor'] = "John Doe";
-            $data['employee'] = "Juan De la Cruz";
-            $data['type'] = "Custom";
-            $data['nature'] = "Leave of Absence";
-            $data['reference_no'] = "LOA25-02-0001";
-            $data['date_from'] = "2025-02-14";
-            $data['date_to'] = "2025-02-15";
-            $data['reason'] = "Hello world this is my reason";
-            $data['address'] = "Hello world this is my address";
-            $data['contact_no'] = "09451479010";
-            $data['url'] = "http://localhost/portaldev/eforms/loa/view_loa?id=29182";
-            $this->load->view('eforms/email_templates/email_loa_for_approval',array('data'=>$data));
-        }
-
     }
