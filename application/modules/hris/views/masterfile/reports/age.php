@@ -13,7 +13,7 @@
                 </div>
                 <div class="m-portlet__body">
                     <div class="m-form m-form--label-align-right m--marginless row">
-                        <div class="col-xl-2 col-lg-3 col-md-3 col-sm-12">
+                        <div class="col-xxl-3 col-xl-3 col-lg-4 col-md-4 col-sm-12">
                             <div class="form-group">
                                 <label class="control-label">Company</label>
                                 <select id="company" name="company"class="form-control">
@@ -21,7 +21,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-xl-2 col-lg-3 col-md-3 col-sm-12">
+                        <div class="col-xxl-3 col-xl-3 col-lg-4 col-md-4 col-sm-12">
                             <div class="form-group">
                                 <label class="control-label">Station</label>
                                 <select id="station" name="station"class="form-control">
@@ -30,7 +30,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-xl-2 col-lg-3 col-md-3 col-sm-12">
+                        <div class="col-xxl-3 col-xl-3 col-lg-4 col-md-4 col-sm-12">
                             <div class="form-group">
                                 <label class="control-label">Department</label>
                                 <select id="department" name="department"class="form-control">
@@ -38,18 +38,22 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-xl-2 col-lg-3 col-md-3 col-sm-12">
+                        <div class="col-xxl-3 col-xl-3 col-lg-6 col-md-6 col-sm-12" >
                             <div class="form-group">
-                                <label class="control-label">Age Range</label>
-                                <select id="age_range" name="age_range"class="form-control">
-                                    <option></option>
-                                    <option value="18-24">18-24 years</option>
-                                    <option value="25-34">25-34 years</option>
-                                    <option value="35-44">35-44 years</option>
-                                    <option value="45-54">45-54 years</option>
-                                    <option value="55-64">55-64 years</option>
-                                    <option value="above">65+ years</option>
-                                </select>
+                                <div class="row mb-2">
+                                    <div class="col-4 col-md-4">
+                                        <label class="control-label">Age range: </label>
+                                    </div>
+                                    <div class="col-2">
+                                        <strong><label class="control-label" id="age_range_min"></label></strong>
+                                    </div>
+                                    <div class="col-2">
+                                        <strong><label class="control-label" id="age_range_max"></label></strong>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div id="age_range_slider"></div>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -5,7 +5,7 @@ let _companies = [], _stations = [], _departments =[];
 let station = 0;
 let company = 0;
 let department = 0;
-let ageRange ="";
+let ageRange ="18-25";
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){ _companies = _tempContentData.company; }
     if(typeof _tempContentData.station !== "undefined" && _tempContentData.station.length > 0){ _stations = _tempContentData.station; }
@@ -17,123 +17,6 @@ const tblHrisAgeReport = $('#hris_age_reports')
         dom: "<'row mb-3'<'col-xl-3 col-lg-3 col-md-3 col-sm-12 exportDropdown'><'col-xl-9 col-lg-9 col-md-9 col-sm-12 p-0 exportSearch'f>>" +
             "<'row'<'col-12'rt>>" +
             "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
-            buttons: [
-                {
-                    extend: 'excelHtml5',
-                    title: 'Age Report',
-                    exportOptions: {
-                        columns: [1, 2,],
-                        format: {
-                            body: function(data, row, column, node) {
-                                return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
-                            }
-                        }
-                    },
-                    action: function(e, dt, node, config) {
-                        const self = this;
-                        getExportData(e, dt, node, config, self, baseUrl('eforms/cash_advance/export_report/') + 'excel', 'excelHtml5')
-                            .then(() => {
-                                dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
-                            });
-                    },
-                },
-                {
-                    extend: 'pdfHtml5',
-                    title: 'Age Report',
-                    exportOptions: {
-                        columns: [1, 2,],
-                        format: {
-                            body: function(data, row, column, node) {
-                                return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
-                            }
-                        }
-                    },
-                    customize: function(doc) {
-                        doc.defaultStyle.fontSize = 6;  // Reduced from 8 to 6
-                        doc.pageOrientation = 'landscape';
-                        
-                        doc.pageSize = 'A4';
-                        
-                        var table = doc.content[1].table;
-                        var colCount = table.body[0].length;
-                        
-                        var columnWidths = new Array(colCount).fill('auto');
-                        doc.content[1].table.widths = columnWidths;
-                        
-                        doc.pageMargins = [10, 10, 10, 10]; // [left, top, right, bottom]
-                        
-                        doc.styles.tableHeader = {
-                            fontSize: 6,
-                            bold: true,
-                            fillColor: '#f3f3f3',
-                            alignment: 'center'
-                        };
-                        
-                        doc.styles.tableBodyEven = {
-                            fontSize: 6
-                        };
-                        
-                        doc.styles.tableBodyOdd = {
-                            fontSize: 6
-                        };
-                        
-                        doc.content[1].table.keepWithHeaderRows = 1;
-                        doc.content[1].layout = {
-                            hLineWidth: function(i, node) { return 0.1; },
-                            vLineWidth: function(i, node) { return 0.1; },
-                            fillColor: function(i, node) { return (i % 2 === 0) ? '#f3f3f3' : null; }
-                        };
-                    },
-                    action: function(e, dt, node, config) {
-                        const self = this;
-                        getExportData(e, dt, node, config, self, baseUrl('eforms/cash_advance/export_report/') + 'pdf', 'pdfHtml5')
-                            .then(() => {
-                                dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
-                            });
-                    },
-                    orientation: 'landscape'
-                },
-                {
-                    extend: 'print',
-                    title: 'Age Report',
-                    exportOptions: {
-                        columns: [1, 2,],
-                        format: {
-                            body: function(data, row, column, node) {
-                                return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
-                            }
-                        }
-                    },
-                    customize: function(win) { 
-                        var css = '@page { size: landscape; }' +
-                                  'table { font-size: 6pt; width: 100% }' +
-                                  'table thead th { background-color: #f3f3f3; text-align: center; font-weight: bold; }' +
-                                  'table tbody tr:nth-child(even) { background-color: #f3f3f3; }' +
-                                  'h1 { font-size: 12pt; text-align: center; margin: 10px 0; }'  +
-                                  'table th, table td { padding: 2px; border: 0.1pt solid #ddd; }';
-                        
-                        $(win.document.head).append('<style>' + css + '</style>');
-
-                        $(win.document.body).find('table')
-                            .addClass('compact')
-                            .css('font-size', '6pt')
-                            .css('border-collapse', 'collapse')
-                            .css('width', '100%');
-                        $(win.document.body).find('h1')
-                            .css('text-align', 'center')
-                            .css('font-size', '12pt')
-                            .css('margin', '10px 0');
-                    },
-                    action: function(e, dt, node, config) {
-                        const self = this;
-                        getExportData(e, dt, node, config, self, baseUrl('eforms/cash_advance/export_report/') + 'print', 'print')
-                            .then(() => {
-                                dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
-                            });
-                    },
-                    orientation: 'landscape'
-                }
-            ],
         serverSide: true,
         ordering: true,
         searching: false,
@@ -190,22 +73,22 @@ const tblHrisAgeReport = $('#hris_age_reports')
                     return formatDate(data);
                 }
             },
-            { data: 'tin_no', title: 'TIN', orderable: false,
+            { data: 'tin_no', title: 'TIN', orderable: false,  width: '7%',
                 render: function(data, type, row) {
                     return data ? data : "---";
                 }
             },
-            { data: 'sss_no', title: 'SSS', orderable: false,
+            { data: 'sss_no', title: 'SSS', orderable: false, width: '7%',
                 render: function(data, type, row) {
                     return data ? data : "---";
                 }
             },
-            { data: 'pagibig_no', title: 'PAG-IBIG', orderable: false,
+            { data: 'pagibig_no', title: 'PAG-IBIG', orderable: false, width: '7%',
                 render: function(data, type, row) {
                     return data ? data : "---";
                 }
             },
-            { data: 'phealth_no', title: 'PhilHealth', orderable: false,
+            { data: 'phealth_no', title: 'PhilHealth', orderable: false, width: '7%',
                 render: function(data, type, row) {
                     return data ? data : "---";
                 }
@@ -323,7 +206,7 @@ const tblHrisAgeReport = $('#hris_age_reports')
     
         const options = {
             year: 'numeric',
-            month: 'long',
+            month: 'short',
             day: 'numeric'
         };
         
@@ -391,4 +274,39 @@ const tblHrisAgeReport = $('#hris_age_reports')
         const { id } = e.params?.data || {};
         ageRange = id || null;
         tblHrisAgeReport.ajax.reload();
+    });
+    let slider = document.getElementById('age_range_slider');
+    noUiSlider.create(slider, {
+        start: [18, 25],
+        step: 1,
+        connect: true,
+        range: {
+            'min': 18,
+            'max': 85
+        },
+        format: {
+            to: function (value) {
+                return Math.round(value);
+            },
+            from: function (value) {
+                return Number(value);
+            }
+        }
+    });
+
+    slider.noUiSlider.on('update', function (values, handle) {
+        if (handle === 0) {
+            $('#age_range_min').text(values[0]);
+        } else {
+            $('#age_range_max').text(values[1]);
+        }
+    });
+
+    let ageRangeTimeout;
+    slider.noUiSlider.on('change', function (values) {
+        ageRange = values[0] + '-' + values[1];
+        clearTimeout(ageRangeTimeout);
+        ageRangeTimeout = setTimeout(function() {
+            tblHrisAgeReport.ajax.reload();
+        }, 2000); 
     });

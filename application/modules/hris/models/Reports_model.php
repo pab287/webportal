@@ -2511,15 +2511,11 @@ class Reports_model extends CI_Model{
             }
         }
         if ($ageRange) {
-            if ($ageRange == 'above') {
-                $this->db->where('emp.bday <=', date('Y-m-d', strtotime('-65 years')));
-            } else {
                 $rangeParts = explode('-', $ageRange);
                 $minAge = (int)$rangeParts[0];
                 $maxAge = (int)$rangeParts[1];
                 $this->db->where('emp.bday >', date('Y-m-d', strtotime('-' . ($maxAge + 1) . ' years +1 day')));
                 $this->db->where('emp.bday <=', date('Y-m-d', strtotime('-' . $minAge . ' years')));
-            }
         }
         $this->db->group_by('emp.id');
         if(isset($search)){
