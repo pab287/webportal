@@ -188,13 +188,13 @@ const vmGeneratejournal = new Vue({
             }
         },
     }, mounted: function () {
-        var _this = this;
+        const _this = this;
         _this.renderSelect2Picker();
     }
 });
 
 
-var vmReportHeaders = new Vue({
+const vmReportHeaders = new Vue({
     el: "#report-header",
     data: { show_header: false, filters: {} }
 });
@@ -558,7 +558,7 @@ $(document).ready(function(){
                     }
                     return tempNode;
                 }
-            },
+            }
         }], columns: [
             { visible: false, data: 'employee_name' },
             { data: 'overtime_in', width: '10%' },
@@ -796,7 +796,11 @@ $(document).ready(function(){
                             let tempRow = {};
                             let ctr = json.count ? json.count : 0;
                             if (json.response) { tempRow = { ...json.data }; }
-        
+                            
+                            vmTempSignatory.row = { ...tempRow };
+                            vmTempSignatory.count = ctr;
+                            vmTempSignatory.$mount();
+
                             vmPortletSignatories.row = { ...tempRow };
                             vmPortletSignatories.count = ctr;
                         }
@@ -990,3 +994,33 @@ const vmResetSignatories = new Vue({
         _this.validateFields();
     }
 });
+
+const initSelect2Employee = function (tempModal, portlet) {
+    if (typeof tempModal !== "undefined" && tempModal.length == 1) {
+        let tempSelector = tempModal.find("select.select2--value");
+        if (typeof portlet !== "undefined") { tempSelector = portlet.find("select.select2--value"); }
+        if (typeof tempSelector !== "undefined") {
+            tempSelector.select2({
+                tags: true,
+                allowClear: true,
+                placeholder: 'Select an option',
+                width: '100%',
+                dropdownParent: tempModal,
+                ajax: {
+                    url: baseUrl("payroll/reports/select_employee"),
+                    dataType: "json",
+                    delay: 250,
+                    global: false,
+                    processResults: function (data) {
+                        let tempData = [];
+                        $.each(data.results, function (i, v) {
+                            const dd = { id: v.text, text: v.text };
+                            tempData.push(dd);
+                        });
+                        return { results: tempData };
+                    }
+                }
+            });
+        }
+    }
+}
