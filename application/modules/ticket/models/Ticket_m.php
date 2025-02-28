@@ -13,7 +13,7 @@ class Ticket_m extends CI_Model
         $this->load->model("datatable_model", "dt_model");
         $this->user_data = $this->session->userdata("logged_in");
         $this->load->model("core/upload_model", "file_upload");
-        $this->current_action = $this->core_layout->getCurrentActions();
+        $this->current_actions = $this->core_layout->getCurrentActions();
     }
 
     //function to display all ticketing entries
@@ -31,11 +31,10 @@ class Ticket_m extends CI_Model
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
         $rowCount = 0;
         $rowData = array();
-
         $view_own_request = (in_array("view_own_request", $this->core_layout->getCurrentActions())) ? true : false;
-
-        $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request);
-        $rowCount = $this->get_ticket_masterfile_count($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request);
+        $payroll =  (in_array("ca_payroll_notif", $this->core_layout->getCurrentActions())) ? true : false;
+        $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll);
+        $rowCount = $this->get_ticket_masterfile_count($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll);
 
         $totalNotFiltered = $rowCount;
 
@@ -46,7 +45,7 @@ class Ticket_m extends CI_Model
         return $resultset;
     }
 
-    public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request){
+    public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll){
         $resultset = array();
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id");
@@ -59,7 +58,10 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '0');
         $this->db->where('a.status !=', "cancelled");
-        if($view_own_request){
+        if($payroll){
+            $this->db->where('category', 'payroll');
+        }
+        elseif($view_own_request){
             $this->db->where('requestor', $this->user_data['emp_id']);
         }
         if ($query_builder) {
@@ -119,7 +121,7 @@ class Ticket_m extends CI_Model
         return $resultset;
     }
     
-    private function get_ticket_masterfile_count($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request){
+    private function get_ticket_masterfile_count($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll){
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
@@ -130,7 +132,10 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '0');
         $this->db->where('a.status !=', "cancelled");
-        if($view_own_request){
+        if($payroll){
+            $this->db->where('category', 'payroll');
+        }
+        elseif($view_own_request){
             $this->db->where('requestor', $this->user_data['emp_id']);
         }
         if($query_builder){
