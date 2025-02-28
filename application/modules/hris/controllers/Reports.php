@@ -24,7 +24,8 @@ class Reports extends MY_Controller{
         $this->core_layout->setPrivilegeName("hris_report_creator");
         $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', true);
         $this->core_layout->addJs('js/querybuilder/query-builder.standalone.min.js', true);
-
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
         /* DATATABLE PRINT CONFIG */
         $this->core_layout->addJs("js/dataTables.buttons.min.js", true);
         $this->core_layout->addJs("js/buttons.flash.min.js", true);
