@@ -91,7 +91,7 @@
                 <div class="col-12 modal-body">
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
-                            Bot Name *
+                            Bot Name <span style="color: red;">*</span>
                         </label>
                         <div class="col-12">
                             <input type="text" class="form-control" name="bot_name" data-validation="required" autocomplete="off" />
@@ -99,7 +99,7 @@
                     </div>
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
-                            Bot Description *
+                            Bot Description <span style="color: red;">*</span>
                         </label>
                         <div class="col-12">
                             <input type="text" class="form-control" name="bot_description" data-validation="required" autocomplete="off" />
@@ -107,7 +107,7 @@
                     </div>
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
-                            Module *
+                            Module <span style="color: red;">*</span>
                         </label>
                         <div class="col-12">
                             <select id="select2_module" name="modules[]" class="form-control m-select2" data-validation="required" multiple>
@@ -117,7 +117,7 @@
                     </div>
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
-                            Bot Owner *
+                            Bot Owner <span style="color: red;">*</span>
                         </label>
                         <div class="col-12">
                             <select id="select2_owner" name="owner_id" class="form-control m-select2" data-validation="required">
@@ -127,15 +127,15 @@
                     </div>
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
-                            Chat Id *
+                            Chat Id 
                         </label>
                         <div class="col-12">
-                            <input type="text" class="form-control" name="chat_id" data-validation="required" autocomplete="off" />
+                            <input type="text" class="form-control" name="chat_id" autocomplete="off" />
                         </div>
                     </div>
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
-                            Telegram Bot Token *
+                            Telegram Bot Token <span style="color: red;">*</span>
                         </label>
                         <div class="col-12">
                             <input type="text" class="form-control" name="telegram_bot_token" data-validation="required" autocomplete="off" />
@@ -166,7 +166,7 @@
                     <input type="hidden" id="id" name="id" v-model="row.id" />
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
-                            Bot Name *
+                            Bot Name <span style="color: red;">*</span>
                         </label>
                         <div class="col-12">
                             <input type="text" id="bot_name_edit" class="form-control" name="bot_name" data-validation="required" autocomplete="off" v-model="row.bot_name"/>
@@ -174,7 +174,7 @@
                     </div>
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
-                            Bot Description *
+                            Bot Description <span style="color: red;">*</span>
                         </label>
                         <div class="col-12">
                             <input type="text" id="bot_description_edit" class="form-control" name="bot_description" data-validation="required" autocomplete="off" v-model="row.bot_description"/>
@@ -182,7 +182,7 @@
                     </div>
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
-                            Module *
+                            Module <span style="color: red;">*</span>
                         </label>
                         <div class="col-12">
                             <select id="select2_module_edit" name="modules[]" class="form-control m-select2" data-validation="required" multiple  v-model="row.modules">
@@ -192,7 +192,7 @@
                     </div>
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
-                            Bot Owner *
+                            Bot Owner <span style="color: red;">*</span>
                         </label>
                         <div class="col-12">
                             <select id="select2_owner_edit" name="owner_id" class="form-control m-select2" data-validation="required" v-model="row.owner_id">
@@ -202,15 +202,15 @@
                     </div>
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
-                            Chat Id *
+                            Chat Id
                         </label>
                         <div class="col-12">
-                            <input type="text" id="chat_id_edit" class="form-control" name="chat_id" data-validation="required" autocomplete="off" v-model="row.chat_id"/>
+                            <input type="text" id="chat_id_edit" class="form-control" name="chat_id" autocomplete="off" v-model="row.chat_id"/>
                         </div>
                     </div>
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
-                            Telegram Bot Token *
+                            Telegram Bot Token <span style="color: red;">*</span>
                         </label>
                         <div class="col-12">
                             <input type="text" id="telegram_bot_token_edit" class="form-control" name="telegram_bot_token" data-validation="required" autocomplete="off" v-model="row.telegram_bot_token"/>

@@ -19,10 +19,6 @@ $('#generalSearch').donetyping(function (callback) {
     dtTableProtocol.ajax.reload();
 });
 
-// $(document).ready(function() {
-//     console.log("Hello WOrld");
-//     dtTableProtocol.ajax.reload();
-// });
 dtTableProtocolArchive = telegramProtocolArchiveTable.DataTable({
     dom: '<"toolbar">frtlip',
     serverSide: true,
@@ -66,7 +62,7 @@ dtTableProtocolArchive = telegramProtocolArchiveTable.DataTable({
             }
         },
         { 
-            data: "modules",
+            data: "modules", orderable: false,
             render: function(data) {
                 if (!Array.isArray(data)) return '';
                 
@@ -162,7 +158,7 @@ dtTableProtocol = telegramProtocolTable.DataTable({
             }
         },
         { 
-            data: "modules",
+            data: "modules", orderable: false,
             render: function(data) {
                 if (!Array.isArray(data)) return '';
                 

@@ -47,9 +47,13 @@ class Telegram_bot_config extends CI_Model{
         if($limit != -1){
             $this->db->limit($limit, $offset);
         }
-
         $i = $sortOrder[0]['column'];
-        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        if($sortBy[$i]['data'] == "owner"){
+            $this->db->order_by("b.firstname", $sortOrder[0]['dir']);
+        }
+        else{
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        }
         $query = $this->db->get();
         $results = $query->result();
         foreach ($results as $row) {
