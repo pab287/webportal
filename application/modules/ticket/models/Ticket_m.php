@@ -32,7 +32,7 @@ class Ticket_m extends CI_Model
         $rowCount = 0;
         $rowData = array();
         $view_own_request = (in_array("view_own_request", $this->core_layout->getCurrentActions())) ? true : false;
-        $payroll =  (in_array("ca_payroll_notif", $this->core_layout->getCurrentActions())) ? true : false;
+        $payroll =  (in_array("payroll_ticket", $this->core_layout->getCurrentActions())) ? true : false;
         $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll);
         $rowCount = $this->get_ticket_masterfile_count($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll);
 
