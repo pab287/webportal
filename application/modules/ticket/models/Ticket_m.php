@@ -58,11 +58,16 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '0');
         $this->db->where('a.status !=', "cancelled");
-        if($payroll){
-            $this->db->where('category', 'payroll');
+        $current_user_id = $this->user_data['emp_id'];
+        if($payroll) {
+            $this->db->where('cat.name', 'payroll');
         }
-        elseif($view_own_request){
-            $this->db->where('requestor', $this->user_data['emp_id']);
+        if($view_own_request) {
+            if($payroll) {
+                $this->db->or_where('a.requestor', $current_user_id);
+            } else {
+                $this->db->where('a.requestor', $current_user_id);
+            }
         }
         if ($query_builder) {
             $lower_query = strtolower($query_builder);
@@ -132,11 +137,16 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '0');
         $this->db->where('a.status !=', "cancelled");
-        if($payroll){
-            $this->db->where('category', 'payroll');
+        $current_user_id = $this->user_data['emp_id']; 
+        if($payroll) {
+            $this->db->where('cat.name', 'payroll');
         }
-        elseif($view_own_request){
-            $this->db->where('requestor', $this->user_data['emp_id']);
+        if($view_own_request) {
+            if($payroll) {
+                $this->db->or_where('a.requestor', $current_user_id);
+            } else {
+                $this->db->where('a.requestor', $current_user_id);
+            }
         }
         if($query_builder){
             $this->db->where($query_builder);
