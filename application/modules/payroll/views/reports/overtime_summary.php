@@ -111,76 +111,36 @@
                         </table>
                     </div>
                 </div>
+
+                <div id="portlet--signatories">
+                <template v-if="count > 0">
+                <table style='margin-top: 60px; width: 100%;'>
+                    <thead>
+                        <tr><th>&nbsp;</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                            <template v-for="(item, index) in row.meta_field" v-if="item.is_active === true">
+                                <div style='display: inline-block; position: relative; width: 25%; margin-top: 30px;'>
+                                    <p style='font-weight: bold; margin-left: 10px;'>{{item.label}}:</p>
+                                    <p style='font-weight: 600; margin-left: 10px; margin-right: 50px; margin-top: 50px; padding-top: 10px; border-top: 1px solid #000000;'>{{item.value}}</p>
+                                </div>
+                            </template>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                </template>
+                </div>
             </div>
             <!--::dt end::-->
         </div>
     </div>
-
-    <div id="portlet--signatories">
-        <template v-if="count > 0">
-        <div class="m-portlet m-portlet--bordered m-portlet--rounded m-portlet--unair m-portlet--head-sm mb-0 mt-2">
-            <div class="m-portlet__head">
-                <div class="m-portlet__head-caption">
-                    <div class="m-portlet__head-title">
-                        <h3 class="m-portlet__head-text">
-                            Printable Signatories
-                        </h3>
-                    </div>
-                </div>
-                <div class="m-portlet__head-tools">
-                    <ul class="m-portlet__nav">
-                        <li class="m-portlet__nav-item">
-                            <a href="javascript:void(0);" class="btnEdit m-portlet__nav-link m-portlet__nav-link--icon" @click="openModalSignatory()">
-                                <i class="la la-pencil"></i>
-                            </a>
-                        </li>
-                        <template v-if="row.allow_reset === true">
-                            <li class="m-portlet__nav-item">
-                                <a href="javascript:void(0);" class="btnEdit m-portlet__nav-link m-portlet__nav-link--icon" @click="resetModalSignatory()">
-                                    <i class="la la-refresh"></i>
-                                </a>
-                            </li>
-                        </template>
-                    </ul>
-                </div>
-            </div>
-            <div class="m-portlet__body">
-                <template v-if="count > 0">
-                    <div class="row justify-content-center">
-                        <template v-for="(item, index) in row.meta_field">
-                            <template v-if="item.is_active === true">
-                                <div class="col-4 col-md-4 col-lg-4 col-sm-12">
-                                    <div class="form-group m-form__group text-center">
-                                        <label class="m--font-boldest">{{item.label}}</label>
-                                        <p class="m--font-bolder mb-0">{{item.value}}</p>
-                                    </div>
-                                </div>
-                            </template>
-                        </template>
-                    </div>
-                </template>
-                <template v-else>
-                    <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
-                        <div class="m-alert__icon">
-                            <i class="flaticon-exclamation-1"></i>
-                            <span></span>
-                        </div>
-                        <div class="m-alert__text">
-                            <strong>
-                                NO ASSIGNED SIGNATORIES!
-                            </strong>
-                            Please add/update the signatory.
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </div>
-        </template>
-    </div>
 </div>
 
-<div class="modal fade" tabindex="-1" role="dialog" id="generate-report-modal">
-    <div class="modal-dialog modal-lg" role="document">
+<div class="modal fade" tabindex="-1" id="generate-report-modal">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content" id="generate-journal_content">
             <div class="modal-header">
                 <h5 class="modal-title">Generate Report</h5>
