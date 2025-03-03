@@ -128,6 +128,7 @@
                 <tr>
                   <th></th>
                   <th>Reference No.</th>
+				  <th>Reading Ref No.</th>
                   <th>Account No.</th>
                   <th>Account Name</th>
                   <th>Meter No.</th>

@@ -56,29 +56,39 @@
                             <div class="col-xs-12 col-sm-12 col-md-6">
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Category
+                                        Category <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <select id="category" name="category"  data-validation="required">
-
+                                            <option></option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group m-form__group row" id="dept-res">
+                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
+                                        Department Responsible: <span style="color:red;">*</span>
+                                    </label>
+                                    <div class="col-sm-12 col-xs-12 col-md-9">
+                                        <select id="responsiblity" name="responsibility"  data-validation="required">
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="webportal">
                                     <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Module
+                                        Module <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <select id="sub_category" name="sub_category"  data-validation="required">
-
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Date Needed
+                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
+                                        Date Needed <span style="color:red;">*</span>
                                     </label>
-                                    <div class="col-sm-12 col-xs-12 col-md-8 input-group date">
+                                    <div class="col-sm-12 col-xs-12 col-md-9 input-group date">
                                         <input class="form-control m-input" type="text" name="date_required" id="date_required" data-validation="required"/>
                                         <span class="input-group-addon">
 											<i class="la la-calendar glyphicon-th"></i>
@@ -87,17 +97,17 @@
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Department
+                                        Department <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <select id="department" name="department" data-validation="required">
-
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Issue
+                                        Issue <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <textarea class="form-control m-input" id="issue" name="issue" rows="4" data-validation="required"></textarea>
@@ -106,12 +116,12 @@
                             </div>
                             <!--right-->
                             <div class="col-xs-12 col-sm-12 col-md-6 row">
-                                <div class="col-sm-12 col-xs-12 col-md-4"> 
+                                <div class="col-sm-12 col-xs-12 col-md-12">
                                     <input type="hidden" class="form-control" name="pic[]" id="pic">
                                     <span class="btn btn-success fileinput-button">
                                         <em class="fa fa-upload"></em>
                                         <span>SELECT FILE</span>
-                                        <input type="file" id="fileupload" multiple name="files">
+                                        <input type="file" id="fileupload" multiple name="files" accept=".jpg,.jpeg,.png,.pdf" >
                                     </span>
                                     <br>
                                     <br>
@@ -119,7 +129,7 @@
                                         <div class="progress-bar progress-bar-small progress-bar-success"></div>
                                     </div> 
                                 </div>
-                                <div class="col-sm-12 col-xs-12 col-md-8 col-lg-8 col-xl-8" id="uploaded_files">
+                                <div class="col-sm-12 col-xs-12 col-md-12 col-lg-12 col-xl-12" id="uploaded_files">
                                     <h6 id="no_attachment">NO ATTACHMENTS.</h6>
                                 </div>
                             </div>

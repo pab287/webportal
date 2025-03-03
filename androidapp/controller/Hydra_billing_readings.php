@@ -35,6 +35,7 @@ class Hydra_billing_readings extends Dbase{
     public function updatePrintCount(){
         echo $this->hydra_billing_readings_m->update_print();
     }
+
 }
 
 ?>

@@ -193,7 +193,7 @@ class Datatable_model extends CI_Model{
 		if(isset($this->whereParameters) && $this->whereParameters){ $this->db->where($this->whereParameters); }
 		if(isset($this->whereOrParameters) && $this->whereOrParameters){ $this->db->or_where($this->whereOrParameters); }
 		if(isset($this->whereInParameters, $this->whereInField) && $this->whereInParameters && $this->whereInField){
-			$this->db->where_in($this->whereInField, $this->whereInParameters);
+			$this->db->where("UPPER($this->whereNotInField) IN ('".implode("','", array_map('strtoupper', $this->whereNotInParameters))."')");
 		}
 
 		if(isset($this->orWhereInParameters, $this->orWhereInField) && $this->orWhereInParameters && $this->orWhereInField){
@@ -201,7 +201,7 @@ class Datatable_model extends CI_Model{
 		}
 
 		if(isset($this->whereNotInParameters, $this->whereNotInField) && $this->whereNotInParameters && $this->whereNotInField){
-			$this->db->where_not_in($this->whereNotInField, $this->whereNotInParameters);
+			$this->db->where("UPPER($this->whereNotInField) NOT IN ('".implode("','", array_map('strtoupper', $this->whereNotInParameters))."')");
 		}
 
 		if(isset($this->orWhereNotInParameters, $this->orWhereNotInField) && $this->orWhereNotInParameters && $this->orWhereNotInField){

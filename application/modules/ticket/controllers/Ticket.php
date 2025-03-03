@@ -60,11 +60,17 @@ class Ticket extends MY_Controller {
     function index(){
         $this->core_layout->setPrivilegeName("ticket");
         $this->core_layout->setPageTitle("TICKET - Add Ticket");
+        $tempData["department"] = $this->ticket->select2DepartmentData();
+        $tempData["category"] = $this->ticket->select2CategoryData('category');
+        $tempData["subcategory"] = $this->ticket->select2CategoryData('sub-category');
+        $tempData["responsibility"] = $this->ticket->select2CategoryData('responsibility');
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
         $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
         $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
-        $this->core_layout->addJs("js/ticket/new_ticket.js", true);
+        $this->core_layout->addJs("js/ticket/new_ticket.js", true,$tempData);
 		$this->load->view('core/templates/header');
         $this->load->view('ticket/new_ticket');
         $this->load->view('core/templates/footer');
@@ -77,7 +83,16 @@ class Ticket extends MY_Controller {
         $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
-        $this->core_layout->addJs("js/ticket/edit_ticket.js", true);
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
+        $tempData["department"] = $this->ticket->select2DepartmentData();
+        $tempData["category"] = $this->ticket->select2CategoryData('category');
+        $tempData["subcategory"] = $this->ticket->select2CategoryData('sub-category');
+        $tempData["status"] = $this->ticket->select2CategoryData('status');
+        $tempData["severity"] = $this->ticket->select2CategoryData('severity');
+        $tempData["responsibility"] = $this->ticket->select2CategoryData('responsibility');
+        $tempData["performed_by"] = $this->ticket->select2PerformedByData();
+        $this->core_layout->addJs("js/ticket/edit_ticket.js", true,$tempData);
 		$this->load->view('core/templates/header');
         $this->load->view('ticket/edit_ticket');
         $this->load->view('core/templates/footer');
@@ -86,6 +101,8 @@ class Ticket extends MY_Controller {
     function view_ticket(){
         $this->core_layout->setPrivilegeName("ticket_transaction");
         $this->core_layout->setPageTitle("TICKET - View Ticket");
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
         $this->core_layout->addJs("js/ticket/view_ticket.js", true);
 		$this->load->view('core/templates/header');
         $this->load->view('ticket/view_ticket');
@@ -300,5 +317,10 @@ class Ticket extends MY_Controller {
         $data = $this->ticket->sendTelegram($data, 455);
         var_dump($data);
     }
+
+    function remove_actionstkn(){
+        $data = $this->ticket->removeActionstkn();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+      }
     
 }

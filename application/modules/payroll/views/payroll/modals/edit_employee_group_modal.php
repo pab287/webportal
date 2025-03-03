@@ -49,6 +49,29 @@
             <label for="description">Description *</label>
             <input id="description" type="text" class="form-control m-input" name="description" data-validation="required" value="<?= $data->description; ?>" />
         </div>
+
+        <div class="form-group m-form__group row align-items-center">
+            <div class="col-md-4 pr-0">
+              <label>Allow view by Company </label>
+            </div>
+            <div class="col-md-4 pl-0 d-flex align-items-center">
+              <span class="m-switch m-switch--sm mr-2">
+                <label class="m-0">
+                  <input type="checkbox" value="1" name="is_allow_view" id="allow_view" />
+                  <span class="m-0"></span>
+                </label>
+              </span>
+              <span class="fa fa-question-circle" data-toggle="tooltip" title="Toggle this to assign employee" style="font-size: 18px"></span>
+            </div>
+        </div>
+
+        <div id="assign_employee_div" class="form-group m-form_group" hidden>
+            <label for="assign_employee_id">Assign Employee(s) *</label>
+            <select id="assign_employee_id" class="form-control m-input" name="assigned_employee_id[]" multiple="multiple" data-validation="required">
+                <option value="">&nbsp;<option>
+            </select>
+        </div>
+
         <div class="m-form__group form-group">
           <label>
             Group Status

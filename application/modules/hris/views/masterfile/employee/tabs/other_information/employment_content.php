@@ -25,8 +25,8 @@
                     </div>
                     <div id="collapseLegalHistory" class="collapse show" role="tabpanel" aria-labelledby="headingLegalHistory"
                          data-parent="#accordionOtherEmploymentData">
-                        <div class="card-body m-portlet__body--custom ">
-                            <table id="tbl-legal_history_list" class="table display table-bordered table-striped table-responsive" width="100%" style="width: 100%;">
+                        <div class="card-body m-portlet__body--custom table-responsive">
+                            <table id="tbl-legal_history_list" class="table display table-bordered table-striped " width="100%" style="width: 100%;">
                                 <col width="10%">
                                 <col width="25%">
                                 <col width="10%">
@@ -47,7 +47,7 @@
                                 <a class="m-portlet__nav-link collapsed" data-toggle="collapse" data-parent="#accordionOtherEmploymentData"
                                    href="#collapseOffenses" aria-expanded="false" aria-controls="collapseOffenses">
                                     <h5 class="m-portlet__head-text">
-                                        <span>Offenses and Commendations</span>
+                                        <span>Offenses And Commendations</span>
                                         <i class="la pull-right la-angle-down"></i>
                                     </h5>
                                 </a>
@@ -56,20 +56,79 @@
                     </div>
                     <div id="collapseOffenses" class="collapse" role="tabpanel" aria-labelledby="headingOffenses"
                          data-parent="#accordionOtherEmploymentData">
-                        <div class="card-body m-portlet__body--custom">
-                            <table id="tbl-offenses_list" class="table display table-bordered table-striped table-responsive" width="100%">
-                                <thead>
-                                    <tr>
-                                        <th>Type</th>
-                                        <th>Dates</th>
-                                        <th>Nature</th>
-                                        <th>Sanction/Remarks</th>
-                                        <th>File</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
+                         <div class="card-body m-portlet__body--custom table-responsive">
+                            <ul class="nav nav-tabs nav-fill" id="offense-tabs">
+                                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#offenses-tab">Offenses</a></li>
+                                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#commendation-tab">Commendations</a></li>
+                                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#notices-tab">Notices</a></li>
+                                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#others-tab">Others</a></li>
+                            </ul>
+                            <div class="tab-content" id="offense-content">
+                                <div class="tab-pane" id="offenses-tab" role="tabpanel">
+                                    <table id="tbl-offenses_list" class="table display table-bordered table-striped " width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Type</th>
+                                                <th>Dates</th>
+                                                <th>Nature</th>
+                                                <th>Sanction/Remarks</th>
+                                                <th></th>
+                                                <th>File</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                                <div class="tab-pane" id="commendation-tab" role="tabpanel">
+                                    <table id="tbl-commendation_list" class="table display table-bordered table-striped " width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Type</th>
+                                                <th>Dates</th>
+                                                <th>Nature</th>
+                                                <th>Sanction/Remarks</th>
+                                                <th></th>
+                                                <th>File</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                                <div class="tab-pane" id="notices-tab" role="tabpanel">
+                                    <table id="tbl-notices_list" class="table display table-bordered table-striped " width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Type</th>
+                                                <th>Dates</th>
+                                                <th>Nature</th>
+                                                <th>Sanction/Remarks</th>
+                                                <th></th>
+                                                <th>File</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                                <div class="tab-pane" id="others-tab" role="tabpanel">
+                                    <table id="tbl-others_list" class="table display table-bordered table-striped " width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Type</th>
+                                                <th>Dates</th>
+                                                <th>Nature</th>
+                                                <th>Sanction/Remarks</th>
+                                                <th></th>
+                                                <th>File</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

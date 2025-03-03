@@ -1052,40 +1052,49 @@
         </div>
         <div id="empEmploymentInfo-body" class="collapse" :class="{show :activeSection == 'empEmploymentInfo'}" aria-labelledby="empEmploymentInfo-head" data-parent="#accordionMain">
             <div class="card-body">
-                <table class="responsive">
-                    <thead class="customsalary">
-                        <tr>
-                            <th scope="col" colspan="4">OFFENSE AND COMMENDATIONS</th>
-                        </tr>
-                    </thead>
-                    <thead>
-                        <tr>
-                            <th class="" scope="col">TYPE</th>
-                            <th class="" scope="col" style="width: 13%">DATE</th>
-                            <th class="" scope="col">NATURE</th>
-                            <th class="" scope="col">ACTION TAKEN</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <template v-if="offenses == false">
-                            <tr>
-                                <td data-label="TYPE">NONE</td>
-                                <td data-label="DATE">NONE</td>
-                                <td data-label="NATURE">NONE</td>
-                                <td data-label="ACTION TAKEN">NONE</td>
-                            </tr>
-                        </template>
-                        <template v-else>
-                            <tr v-for="offense in offenses" :key="offense.id">
-                                <td data-label="TYPE" v-text="offense.offcom_type"></td>
-                                <td data-label="DATE" v-text="offense.offcom_date"></td>
-                                <td data-label="NATURE" v-text="offense.offcom_nature"></td>
-                                <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
-
+                <ul class="nav nav-tabs nav-fill" id="offense-tabs">
+                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="" @click="filterOffenses('offenses')" aria-expanded="true">Offenses</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('commendations')">Commendations</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('notices')">Notices</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('others')">Others</a></li>
+                </ul>
+                <div class="tab-content" id="offense-content">
+                    <div id="offenses-tab">
+                        <table class="responsive">
+                            <thead class="customsalary">
+                                <tr>
+                                    <th scope="col" colspan="4" v-text="activeTab">OFFENSE AND COMMENDATIONS</th>
+                                </tr>
+                            </thead>
+                            <thead>
+                                <tr>
+                                    <th class="" scope="col">TYPE</th>
+                                    <th class="" scope="col" style="width: 13%">DATE</th>
+                                    <th class="" scope="col">NATURE</th>
+                                    <th class="" scope="col">ACTION TAKEN</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template v-if="!filteredOffenses == false">
+                                    <tr v-for="offense in filteredOffenses" :key="offense.id">
+                                        <td data-label="TYPE" v-text="offense.offcom_type"></td>
+                                        <td data-label="DATE" v-text="formatDate(offense.offcom_date)"></td>
+                                        <td data-label="NATURE" v-text="offense.offcom_nature"></td>
+                                        <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
+                                    </tr>
+                                </template>
+                                <template v-else>
+                                    <tr>
+                                        <td data-label="TYPE">NONE</td>
+                                        <td data-label="DATE">NONE</td>
+                                        <td data-label="NATURE">NONE</td>
+                                        <td data-label="ACTION TAKEN">NONE</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 <template v-if="salaries != 'not_allowed'">
                     <table class="responsive">
                             <thead class="customsalary">
@@ -1223,18 +1232,18 @@
                     </thead>
                     <thead>
                     <tr>
-                        <th class="" scope="col" style="width: 13%">DATE REGULARIZED</th>
                         <th class="" scope="col" style="width: 13%">PROBEE END DATE</th>
+                        <th class="" scope="col" style="width: 13%">DATE REGULARIZED</th>
                         <th class="" scope="col" style="width: 13%">DATE SEPARATED</th>
                         <th class="text-center" scope="col" style="width: 20%">REASON FOR SEPARATION</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr>
-                        <td data-label="DATE REGULARIZED" v-text="formatDate(main.date_regular)"></td>
                         <td data-label="PROBEE END DATE" v-text="formatDate(main.date_end_prob)"></td>
-                        <td data-label="DATE SEPARATED" v-text="(main.employee_status === 'Active' && (main.date_end !== '0000-00-00' || main.date_end === null)) ? 'N/A' : formatDate(main.date_end)"></td>
-                        <td data-label="REASON FOR SEPARATION" v-text="(main.employee_status === 'Active' && main.resign_reason) ? 'N/A' : (main.resign_reason ? main.resign_reason : 'N/A')"></td>
+                        <td data-label="DATE REGULARIZED" v-text="formatDate(main.date_regular)"></td>
+                        <td data-label="DATE SEPARATED" v-text="(main.employee_status === 'Active' && (main.date_end !== '0000-00-00' || main.date_end === null)) ? '---' : formatDate(main.date_end)"></td>
+                        <td data-label="REASON FOR SEPARATION" v-text="(main.employee_status === 'Active' && main.resign_reason) ? '---' : (main.resign_reason ? main.resign_reason : '---')"></td>
                     </tr>
                     </tbody>
                 </table>

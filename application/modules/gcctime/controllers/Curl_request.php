@@ -93,14 +93,15 @@ class Curl_request extends MY_Controller {
 		}
 	}
 	
-	function attendance_report($ampm="AM"){
+	public function attendance_report($ampm="AM"){
 		$_weekday = date("l", strtotime($this->today));
 		$_weekday = strtolower($_weekday);
 		$meredien = ($ampm)? $ampm: "AM";
 		$currentDate = date("Y-m-d H:i:s", strtotime($this->today));
 		$responseEvent = $this->shift_manangement->getScheduledEvent($currentDate);
+
 		$tempResponseLogger = array();
-		if($_weekday !== "sunday" && $responseEvent == false){
+		if($_weekday !== "sunday" && $responseEvent === false){
 			$syncResponse = $this->getLastSyncRecord();
 
 			if($syncResponse){
@@ -119,9 +120,9 @@ class Curl_request extends MY_Controller {
 					$responseAM = $this->generateMorningAbsenteeData();
 					if($responseAM){
 						$this->trigger_email_late($meredien);
-						$this->trigger_email_absent($meredien);						
+						$this->trigger_email_absent($meredien);
 					}
-				}else if(($createdAt >= $pmStart && $createdAt <= $pmEnd) && $meredien == "PM"){
+				}elseif(($createdAt >= $pmStart && $createdAt <= $pmEnd) && $meredien == "PM"){
 					$responsePM = $this->generateAfternoonAbsenteeData();
 					if($responsePM){
 						$this->trigger_email_late($meredien);
@@ -130,7 +131,7 @@ class Curl_request extends MY_Controller {
 				}else{
 					$this->core_layout->logNotification("{$meredien} - Sending of email reports failed, sync data is outdated!", "error", "gcctimeV2");
 					$this->sendTelegramMessage("{$meredien} - Sending of email reports failed! [ Created At - {$createdAt} | Start Date - {$tempStart} | End Date - {$tempEnd} ]");
-					$tempResponseLogger = $this->sendTelegramMessage("{$meredien} - Sending of email reports failed, sync data is outdated!");					
+					$tempResponseLogger = $this->sendTelegramMessage("{$meredien} - Sending of email reports failed, sync data is outdated!");
 				}
 			}else{
 				$this->core_layout->logNotification("No last sync record found!", "error", "gcctimeV2");
@@ -138,8 +139,8 @@ class Curl_request extends MY_Controller {
 			}
 		}
 		
-		if($responseEvent == true){
-			$this->core_layout->logNotification("No email reporting for late and absent, scheduled event is currently active.", "info", "gcctimeV2");				
+		if($responseEvent === true){
+			$this->core_layout->logNotification("No email reporting for late and absent, scheduled event is currently active.", "info", "gcctimeV2");
 		}
 		if($tempResponseLogger["response"]){
 			$this->core_layout->logNotification($tempResponseLogger["message"], "success", "gcctimeV2");

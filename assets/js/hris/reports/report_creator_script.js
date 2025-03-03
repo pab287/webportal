@@ -5,7 +5,8 @@ const dropdown = $(".m-dropdown__toggle.export-as");
 let template = null;
 let templateId = null;
 let dtReport = null;
-
+let type ="";
+let exportTitle = "GCC HRIS - EMPLOYEE REPORT";
 const template_select_option = {
     width: '100%',
     placeholder: "Load Template",
@@ -87,6 +88,8 @@ const dbFieldEl = '' +
     '<option value="emp.date_start">Date Hired</option>' +
     '<option value="emp.date_regular">Date Regularized</option>' +
     '<option value="emp.date_end">Date Separated</option>' +
+    '<option value="emp.resign_reason">Reason for Separation</option>' +
+    '<option value="emp.terminate_reason">Reason for Termination</option>' +
     '<option value="emp.date_end_prob">Date Probation End</option>' +
     '<option value="emp.latitude">Longitude</option>' +
     '<option value="emp.longitude">Latitude</option>' +
@@ -168,6 +171,8 @@ const dbSortFieldEl = '' +
     '<option value="emp.date_start">Date Hired</option>' +
     '<option value="emp.date_regular">Date Regularized</option>' +
     '<option value="emp.date_end">Date Separated</option>' +
+    '<option value="emp.resign_reason">Reason for Separation</option>' +
+    '<option value="emp.terminate_reason">Reason for Termination</option>' +
     '<option value="emp.date_end_prob">Date Probation End</option>' +
     '<option value="emp.latitude">Longitude</option>' +
     '<option value="emp.longitude">Latitude</option>' +
@@ -356,6 +361,8 @@ $(document).ready(function () {
                 { id: 'level', label: 'Level', type: 'string' },
                 { id: 'employee_status', label: 'Employee Status', type: 'string' },
                 { id: 'educ_degree', label: 'Educational Degree', type: 'string' },
+                { id: 'resign_reason', label: 'Reason for Separation', type: 'string' },
+                { id: 'terminate_reason', label: 'Reason for Termination', type: 'string' },
                 { id: 'LOWER(payout_schedule.name)', label: 'Payout Schedule', type: 'string' },
                 {
                     id: 'CAST(REPLACE(salaries.sal_rate,\',\',\'\') AS DECIMAL(10,2))',
@@ -509,35 +516,81 @@ function initDatatable(columns, fields, order_field, order_by, criteria) {
             buttons: [
                 {
                     extend: 'excelHtml5',
-                    title: 'GCC HRIS - EMPLOYEE REPORT',
+                    title: "",
                     action: function (e, dt, node, config) {
                         const self = this;
-                        getExportData(e, dt, node, config, self, baseUrl('hris/reports/generate_employee_report/1'), 'excelHtml5')
-                            .then(() => {
-                                dropdown.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
-                            });
+                        Swal.fire({
+                            title: 'Export Report',
+                            html: '<input type="text" id="filename-input" class="swal2-input" placeholder="Enter filename">',
+                            showCancelButton: true,
+                            confirmButtonText: 'Export',
+                            cancelButtonText: 'Cancel',
+                            focusConfirm: false,
+                            preConfirm: () => {
+                                const input = document.querySelector('#filename-input');
+                                const filename = input ? input.value : '';
+                                if (!filename) {
+                                    Swal.showValidationMessage(`Please enter a filename`);
+                                    return false;
+                                }
+                                return filename;
+                            }
+                        }).then(result => {
+                            if (result.isConfirmed) {
+                                config.filename = result.value;
+                                dropdown.addClass("m-btn--custom m-loader m-loader--light m-loader--left"); 
+                                getExportData(e, dt, node, config ,self,baseUrl('hris/reports/generate_employee_report/1'),'excelHtml5')
+                                .then(() => {
+                                    dropdown.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
+                                });
+                            }
+                        });
                     }
                 },
                 {
                     extend: 'pdfHtml5',
-                    title: 'GCC HRIS - EMPLOYEE REPORT',
-                    action: function (e, dt, node, config) {
+                    title: " ",
+                    action: function(e, dt, node, config) {
                         const self = this;
-                        getExportData(e, dt, node, config, self, baseUrl('hris/reports/generate_employee_report/1'), 'pdfHtml5')
-                            .then(() => {
-                                dropdown.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
-                            });
+                        
+                        Swal.fire({
+                            title: 'Export Report',
+                            html: '<input type="text" id="filename-input" class="swal2-input" placeholder="Enter filename">',
+                            showCancelButton: true,
+                            confirmButtonText: 'Export',
+                            cancelButtonText: 'Cancel',
+                            focusConfirm: false,
+                            preConfirm: () => {
+                                const input = document.querySelector('#filename-input');
+                                const filename = input ? input.value : '';
+                                
+                                if (!filename) {
+                                    Swal.showValidationMessage(`Please enter a filename`);
+                                    return false;
+                                }
+                                return filename;
+                            }
+                        }).then(result => {
+                            if (result.isConfirmed) {
+                                dropdown.addClass("m-btn--custom m-loader m-loader--light m-loader--left");
+                                config.filename = result.value;
+                                getExportData(e, dt, node, config, self, baseUrl('hris/reports/generate_employee_report/1'), 'pdfHtml5')
+                                    .then(() => {
+                                        dropdown.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
+                                    });
+                            }
+                        });
                     }
                 },
                 {
                     extend: 'print',
-                    title: 'GCC HRIS - EMPLOYEE REPORT',
-                    action: function (e, dt, node, config) {
+                    title: "",
+                    action: function(e, dt, node, config) {
                         const self = this;
                         getExportData(e, dt, node, config, self, baseUrl('hris/reports/generate_employee_report/1'), 'print')
-                            .then(() => {
-                                dropdown.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
-                            });
+                        .then(() => {
+                            dropdown.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
+                        });
                     }
                 }
             ],
@@ -827,14 +880,15 @@ $('.m-content')
 
 async function getExportData(e, dt, node, config, self, url, type) {
     const data = dt.ajax.params();
+    data['exportType'] = type;
     const result = await $.ajax({
         url,
         type: "POST",
         dataType: "JSON",
         data,
         success: function (response) {
-            dt.rows().remove();
-            dt.rows.add(response.data).draw();
+            // dt.rows().remove();
+            // dt.rows.add(response.data).draw();
             $.fn.dataTable.ext.buttons[type].action.call(self, e, dt, node, config);
         }
     });

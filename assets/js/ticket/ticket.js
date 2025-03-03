@@ -32,23 +32,99 @@ let tbl = $("#table-tickets").DataTable({
     searching: false,
     order: [[0, 'desc']],
     columns: [
+        {data: "id", visible: false},
         {data: "reference_no"},
         {data: "category"},
-        {data: "sub_category"},
-        {data: "priority"},
-        {data: "status"},
-        {data: "requested_date"},
-        {data: "days_overdue"},
+        {data: "sub_category",
+            render: function (data, type, row) {
+                return row.sub_category ? row.sub_category : 'NOT SET';
+        }},
+        {data: "priority",
+            render: function (data, type, row) {
+                if (!row.priority) return "<span class='m-badge m-badge--secondary m-badge--wide text-white'><strong>NOT SET</strong></span>";
+                
+                let badgeClass = '';
+                
+                switch(row.priority.toLowerCase()) {
+                    case 'low':
+                        badgeClass = 'm-badge--info';
+                        break;
+                    case 'medium':
+                        badgeClass = 'm-badge--warning';
+                        break;
+                    default:
+                        badgeClass = 'm-badge--danger';
+                        break;
+                }
+                
+                return `<span class='m-badge ${badgeClass} m-badge--wide text-white'><strong>${row.priority}</strong></span>`;
+            }
+        },
+        {data: "status",
+            render: function (data, type, row) {
+                if (!row.status) return "<span class='m-badge m-badge--metal m-badge--wide text-white'><strong>NOT SET</strong></span>";
+                
+                let badgeClass = '';
+                
+                switch(row.status.toLowerCase()) {
+                    case 'completed':
+                        badgeClass = 'm-badge--success';
+                        break;
+                    case 'open':
+                        badgeClass = 'm-badge--brand';
+                        break;
+                    case 'cancelled':
+                        badgeClass = 'm-badge--danger';
+                        break;
+                    case 'in progress':
+                        badgeClass = 'm-badge--accent';
+                        break;
+                    default:
+                        badgeClass = 'm-badge--metal';
+                        break;
+                }
+                
+                return `<span class='m-badge ${badgeClass} m-badge--wide text-white'><strong>${row.status}</strong></span>`;
+            }
+        },        
+        {data: "requested_date",
+            render: function (data, type, row) {
+                return moment(row.requested_date).format('MMM D, YYYY hh:mm A');
+            }
+        },
+        {
+            data: null,
+            render: function (data, type, row) {
+                if(row.status == 'Completed' || row.status == 'RESOLVED') {
+                    return 'Ticket Completed';
+                }
+                if (!row.requested_date) return '---';
+                
+                const today = new Date();
+                const requestDate = new Date(row.requested_date);
+                
+                // Return empty if invalid date
+                if (isNaN(requestDate.getTime())) return '';
+                
+                // Calculate difference in days
+                const diffTime = today - requestDate;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays <= 0) return 'Not Overdue';
+                
+                return `${diffDays.toLocaleString()} ${diffDays === 1 ? 'Day' : 'Days'}`;
+            }
+        },        
         {data: "requestor"},
         {data: "performed_by"},
         {data: null, width: "10%", className: "text-center"},
     ],
     columnDefs: [
         {
-            targets: [5], width: "15%",
+            targets: [6], width: "15%",
         },
         {
-            targets: [6],
+            targets: [7],
             orderable: false
         },
         {
@@ -218,15 +294,15 @@ $(document).ready(function () {
         filters: [
             // { id: 'dept.description', label: 'Department', type: 'string', operators: ['contains', 'equal', 'not_equal'] },
             {
-                id: 'a.created_dt',
+                id: 'a.requested_date',
                 label: 'Date Requested',
                 type: 'date',
                 plugin: 'datepicker',
-                plugin_config: { format: 'yyyy-mm-dd'},
+                plugin_config: { format: 'yyyy-mm-dd' },
                 operators: ['equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'between', 'not_between']
             }, 
             {
-                id: 'status',
+                id: 'a.status',
                 label: 'Status',
                 type: 'string',
                 input: 'select',
@@ -246,7 +322,7 @@ $(document).ready(function () {
                 operators: ['equal', 'not_equal']
             },
             {
-                id: 'category',
+                id: 'cat.name',
                 label: 'Category',
                 type: 'string',
                 input: 'select',
@@ -266,7 +342,7 @@ $(document).ready(function () {
                 operators: ['equal', 'not_equal']
             },
             {
-                id: 'sub_category',
+                id: 'sub.name',
                 label: 'Sub Category',
                 type: 'string',
                 input: 'select',
@@ -285,10 +361,19 @@ $(document).ready(function () {
                 },
                 operators: ['equal', 'not_equal']
             },
-            { id: 'reference_no', label: 'Reference No', type: 'string', operators: ['contains','equal', 'not_equal'] },
+            { id: 'a.reference_no', label: 'Reference No', type: 'string', operators: ['contains','equal', 'not_equal'] },
             { id: 'requestor', field: 'CONCAT(b.firstname, " ",b.lastname) ', label: 'Requested By', type: 'string', operators: ['contains'] },
             { id: 'performed_by', field: 'CONCAT(c.firstname, " ", c.lastname) ', label: 'Performed By', type: 'string', operators: ['contains'] },
-            { id: 'Priority', label: 'Priority', type: 'string', operators: ['contains','equal', 'not_equal'] },
+            { id: 'Priority', label: 'Priority', type: 'string',
+                input: 'select',
+                plugin: 'select2',
+                operators: ['equal', 'not_equal'],
+                plugin_config: {
+                    placeholder: 'Select. .',
+                    width: '200%',
+                    data: [{id: '', text: ''},{id: 'low', text: 'Low'}, {id: 'medium', text: 'Medium'}, {id: 'high', text: 'High'}],
+                 }
+                },
             { id: 'message', label: 'Issue', type: 'string', operators: ['contains'] },
         ]
     });
@@ -297,7 +382,6 @@ $(document).ready(function () {
 
 $('#query-builder-btn').on('click', function () {
     var result = $('#query-builder').queryBuilder('getSQL');
-    console.log(result);
     if (!$.isEmptyObject(result)) {
         query_builder = result;
         tbl.ajax.reload();

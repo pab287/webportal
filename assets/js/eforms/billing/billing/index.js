@@ -23,11 +23,12 @@ var tblBillings = $("#table-billing").DataTable({
             return "<strong style='color: #525252;'>"+data+"</strong>";
           }
         },
-       { data: "accountno"},
+       { data: "reading_ref_no" },
+       { data: "accountno" },
        { data: "name", orderable: false},
-       { data: "meterno"},
-       { data: "billing_period", orderable: false, className: "text-center"},
-       { data: "due_date", className: "text-center"},
+       { data: "meterno" },
+       { data: "billing_period", orderable: false, className: "text-center" },
+       { data: "due_date", className: "text-center" },
        { data: "total_charges", className: "text-right", render: function (data) {
               return "<strong style='color: #525252;'>"+numberWithCommas(data)+"</strong>";
             }
@@ -85,7 +86,7 @@ var tblBillings = $("#table-billing").DataTable({
 });
 
 function numberWithCommas(x) {
-  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return parseFloat(x).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 function renderStatusDue(data) {

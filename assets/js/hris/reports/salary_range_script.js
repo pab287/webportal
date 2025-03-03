@@ -4,6 +4,7 @@ let _years = [];
 let generate = true;
 
 function filterEmployeesOfSalaryRange(form) {
+    let generate = true;
     const _form = $(form);
     const formValues = _form.serializeArray();
     const objFormValues = formValues.reduce((acc, item) => {
@@ -16,13 +17,26 @@ function filterEmployeesOfSalaryRange(form) {
         $('#table-employee-salary-range').DataTable().destroy();
         tblEmployeeSalaryRange = $('#table-employee-salary-range')
             .DataTable({
-                dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'f>>" +
+                dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportSearch'f>>" +
                     "<'row'<'col-12'rt>>" +
                     "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
                 buttons: [
                     {
                         extend: 'excelHtml5',
                         title: 'EMPLOYEES SALARY RANGE REPORT',
+                        exportOptions: {
+                            columns: function (settings, cols) {
+                                return cols.map(function (idx, col) {
+                                    return { title: col.title };
+                                });
+                            },
+                            format: {
+                                body: function (data, row, column, node) {
+                                    // Capitalize all text in the cell
+                                    return data.toString().toUpperCase();
+                                }
+                            }
+                        },
                         action: function (e, dt, node, config) {
                             const self = this;
                             getExportData(e, dt, node, config, self, `${url}/1`, 'excelHtml5')
@@ -56,7 +70,7 @@ function filterEmployeesOfSalaryRange(form) {
                 ],
                 serverSide: true,
                 processing: true,
-                searching: true,
+                searching: false,
                 ordering: true,
                 ajax: {
                     url,
@@ -65,6 +79,8 @@ function filterEmployeesOfSalaryRange(form) {
                     data: function (d) {
                         d.csrf_token = _csrf_hash;
                         d.filter = objFormValues;
+                        d.search['value'] = search_val;
+                        d.generate = generate;
                     },
                     global: false
                 },
@@ -95,12 +111,27 @@ function filterEmployeesOfSalaryRange(form) {
                     {
                         data: 'date_start',
                         render: function(data, type, row, meta){
-                            return row.tenureship;
+                            const startDate = new Date(data);
+                            const diffDate = new Date(new Date() - startDate);
+                            const tempYear = diffDate.toISOString().slice(0, 4) - 1970;
+                            const tempMonth = diffDate.getMonth();
+
+                            let renderYear = '';
+                            if (tempYear === 1) { renderYear = `${tempYear} YEAR`; } 
+                            else if (tempYear > 1) { renderYear = `${tempYear} YEARS`; }
+
+                            let renderMonth = '';
+                            if (tempMonth === 1) { renderMonth = `${tempMonth} MONTH`; }
+                            else if (tempMonth > 1) { renderMonth = `${tempMonth} MONTHS`; }
+
+                            const renderFormattedDate = `${renderYear} ${renderMonth}`;
+                            return renderFormattedDate.trim();
                         }
                     }
                 ],
                 order: [[2, 'asc']],
                 initComplete: function () {
+                    generate = false;
                     $("#table-employee-salary-range_filter input[type='search']")
                         .removeClass("form-control-sm");
 
@@ -151,6 +182,25 @@ function filterEmployeesOfSalaryRange(form) {
 
                     $(dropdown).appendTo("#table-employee-salary-range_wrapper .exportDropdown");
                     dropdownEl = $(".m-dropdown__toggle.export-as");
+                    const filterDiv = $('<div>').addClass('dataTables_filter');
+                    const searchInput = $('<input>')
+                        .attr('type', 'text')
+                        .addClass('form-control')
+                        .attr('placeholder', 'Search...')
+                        .attr('id', 'generalSearch');
+                    filterDiv.append(searchInput);
+                    $(filterDiv).appendTo("#table-employee-salary-range_wrapper .exportSearch");
+                    $('#generalSearch').donetyping(function(callback) {
+                        search_val = $(this).val();
+                        tblEmployeeSalaryRange.ajax.reload();
+                      },1000,3);
+                      $("#generalSearch").on('keyup', function (e) {
+                        var val = $(this).val();
+                        if (val == ""){
+                            search_val="";
+                            tblEmployeeSalaryRange.ajax.reload();
+                        }
+                    });
                 },
             });
     }
@@ -177,20 +227,13 @@ function exportAs(type) {
 
 async function getExportData(e, dt, node, config, self, url, type) {
     const data = dt.ajax.params();
+    data['exportType'] = type; 
     const result = await $.ajax({
         url,
         type: "POST",
         dataType: "JSON",
         data,
         success: function (response) {
-            const capitalizedData = response.data.map(row => {
-                return Object.keys(row).reduce((acc, key) => {
-                    acc[key] = typeof row[key] === 'string' ? row[key].toUpperCase() : row[key];
-                    return acc;
-                }, {});
-            });
-            dt.rows().remove();
-            dt.rows.add(capitalizedData).draw();
             $.fn.dataTable.ext.buttons[type].action.call(self, e, dt, node, config);
         }
     });
