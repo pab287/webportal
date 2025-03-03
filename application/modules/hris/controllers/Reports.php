@@ -169,7 +169,17 @@ class Reports extends MY_Controller{
         $this->core_layout->addJs("js/vfs_fonts.js", true);
         $this->core_layout->addJs("js/buttons.html5.min.js", true);
         $this->core_layout->addJs("js/buttons.print.min.js", true);
-        $arrData["dropdown_data"] = $this->report->getDropdownSelectData();
+        
+        $dropdown = array(
+            'dropdown_company' => $this->report->getSelect2Companies(),
+            'dropdown_department' => $this->report->getSelect2Departments(),
+            'dropdown_position' => $this->report->getSelect2Positions(),
+        );
+
+        // $arrData["dropdown_data"] = $this->report->getDropdownSelectData();
+        $arrData['dropdown_data'] = $dropdown;
+        $arrData['years'] = $this->report->getSelect2Year();
+
         $this->core_layout->addCss("css/buttons.dataTables.min.css", true);
         /* END DATATABLE PRINT CONFIG */
 
@@ -276,6 +286,7 @@ class Reports extends MY_Controller{
 
     public function get_employees_for_salary_range($export=0)
     {
+        $post = $this->input->post();
         $data = $this->report->getEmployeesForSalaryRange($export);
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
@@ -419,5 +430,19 @@ class Reports extends MY_Controller{
             ->set_content_type('json')
             ->set_output(json_encode($data));
         echo '</pre>';
+    }
+
+    public function get_employee_select2_data(){
+        $data = $this->report->getSelect2Employee();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function get_employees_history(){
+        $data = $this->report->getEmployeeSalaryHistory();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
     }
 }

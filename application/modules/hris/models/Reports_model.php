@@ -11,6 +11,7 @@ class Reports_model extends CI_Model{
     protected $tblPersonnel = "gcctimeutility.personnel";
     protected $tblPersonnelLocation = "gcctimeutility.personnel_locations";
     protected $tblDefaultLocation = "gcchris.default_station_location";
+    protected $tblSalaryHistory = 'gcchris.tblsalaries';
 
     protected $now = null;
     protected $user = null;
@@ -1856,8 +1857,8 @@ class Reports_model extends CI_Model{
             if($hasDepartment){
                 $this->db->join($this->departmentTable.' c', 'c.id = a.department_id OR c.code = a.department_id', 'LEFT');
 
-                if(isset($post['department']) && $post['department']){
-                    $this->db->where('a.department_id', $post['department']);
+                if(isset($department) && $department){
+                    $this->db->where('a.department_id', $department);
                 }
             }
 
@@ -1924,8 +1925,8 @@ class Reports_model extends CI_Model{
             if($hasDepartment){
                 $this->db->join($this->departmentTable.' c', 'c.id = a.department_id OR c.code = a.department_id', 'LEFT');
 
-                if(isset($post['department']) && $post['department']){
-                    $this->db->where('a.department_id', $post['department']);
+                if(isset($department) && $department){
+                    $this->db->where('a.department_id', $department);
                 }
             }
 
@@ -2008,7 +2009,7 @@ class Reports_model extends CI_Model{
             $_first = date('Y-m-d', strtotime($_dateParam));
             $_last = date('Y-m-t', strtotime($_dateParam));
             $_company = isset($post['company']) && $post['company'] ? $post['company'] : null;
-            $_department = isset($post['department']) && $post['department'] ? $post['department'] : null;
+            $_department = isset($department) && $department ? $department : null;
 
             $monthData['d'] = $_month["name"];
             $monthData['hired'] = (int) $this->getNewlyHired($_first, $_last, $_company, $hasDepartment, $_department);
@@ -2458,5 +2459,246 @@ class Reports_model extends CI_Model{
         }
 
         return $arrData;
+    }
+
+    public function getSelect2Positions(){
+        $this->db->select('id, name as text');
+        $this->db->where('is_archived', 0);
+        return $this->db->get($this->positionTable)->result();
+    }
+
+    public function getSelect2Employee(){
+        $result = array();
+
+        $get = $this->input->get();
+        $search = isset($get['search']['term']) ? $get['search']['term'] : null;
+
+        $this->db->select('id, CONCAT(firstname, " ", lastname) as text');
+        $this->db->where('is_archived', 0);
+
+        if (isset($get['employee_status']) && $get['employee_status']) {
+            $this->db->where('employee_status', $get['employee_status']);
+        } else {
+            $this->db->where('employee_status', 'Active');
+        }
+
+        if (isset($get['company_id']) && $get['company_id']) {
+            $this->db->where('company_id', $get['company_id']);
+        }
+
+        if (isset($get['department_id']) && $get['department_id']) {
+            $this->db->where('department_id', $get['department_id']);
+        }
+
+        if (isset($get['position_id']) && $get['position_id']) {
+            $this->db->where('position', $get['position_id']);
+        }
+
+        if (isset($search) && $search) {
+            $this->db->group_start();
+                $this->db->like('CONCAT(firstname, " ", lastname)', $search, 'both');
+                $this->db->or_like('firstname', $search, 'both');
+                $this->db->or_like('lastname', $search, 'both');
+            $this->db->group_end();
+        }
+
+        $query = $this->db->get($this->tblEmployees);
+
+        if ($query->num_rows() > 0) {
+            $result = $query->result();
+        }
+
+        return array('results' => $result);
+    }
+
+    public function getEmployeeSalaryHistory(){
+        $post = $this->input->post()['filter'];
+        $resultset = array();
+        $arrData = array();
+
+        if (isset($post) && $post) {
+
+            $date_to = isset($post['date_to']) ? $post['date_to'] : date('Y');
+
+            $sql = 'a.id, a.sal_date, a.sal_rate, a.sal_remarks, a.add_date, 
+                UPPER(CONCAT(TRIM(b.firstname), " ", TRIM(b.lastname))) as name, b.biometricno, date_format(a.sal_date, "%Y") as year';
+
+            $this->db->select($sql);
+            $this->db->join($this->tblEmployees.' as b', 'b.id = a.emp_id', 'LEFT');
+            $this->db->from($this->tblSalaryHistory.' as a');
+    
+            if (isset($post['employee_status']) && $post['employee_status']) {
+                $this->db->where('b.employee_status', $post['employee_status']);
+            }
+    
+            if (isset($post['company']) && $post['company']) {
+                $this->db->where('b.company_id', $post['company']);
+            }
+    
+            if (isset($post['department']) && $post['department']) {
+                $this->db->where('b.department_id', $post['department']);
+            }
+    
+            if (isset($post['position']) && $post['position']) {
+                $this->db->where('b.position', $post['position']);
+            }
+
+            if (isset($post['employee']) && $post['employee']) {
+                $this->db->where_in('b.id', $post['employee']);
+            }
+
+            $this->db->group_start();
+                $this->db->where('YEAR(a.sal_date) >=', $post['date_from']);
+                $this->db->where('YEAR(a.sal_date) <=', $date_to);
+            $this->db->group_end();
+
+            $this->db->order_by('a.sal_date', 'DESC');
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                $groupedByBiometric = [];
+                $array = $query->result_array();
+                $_arrData = $this->getGroupedData($array);
+
+                $_test = array();
+                foreach($_arrData as $key => $value){
+                    foreach($value as $k => $v){
+                        $_test[] = $v;
+                    }
+                }
+
+                $arrData = $_test;
+            }
+        }
+
+        $__arrData = array_values($arrData); //reverting the index to number
+        
+        $resultset['generated_years'] = $this->generatedYears($post['date_from'], $date_to);
+        $resultset['company'] = isset($post['company']) ? $this->getCompanyCodeById($post['company']) : null;
+        $resultset['department'] = isset($post['department']) ? $this->getDepartmentCodeById($post['department']) : null;
+        $resultset['position'] = isset($post['position']) ? $this->getPositionNameById($post['position']) : null;
+        $resultset['data'] = $__arrData;
+
+        $message = "Employee Salary History has been generated with filters";
+        
+        if (isset($post['company']) && $post['company']) {
+            $message .= ' - Company: '.$resultset['company'];
+        }
+        
+        if (isset($post['department']) && $post['department']) {
+            $message .= ' - Department: '.$resultset['department'];
+        }
+
+        if (isset($post['position']) && $post['position']) {
+            $message .= ' - Position: '.$resultset['position'];
+        }
+
+        if (isset($post['employee']) && $post['employee']) {
+            if (is_array($post['employee'])) {
+                $message .= ' - Employees ID: '.implode(',', $post['employee']);
+            } else {
+                $message .= ' - Employee ID: '.$post['employee'];
+            }
+        }
+
+        $message .= ' and date range from '.$post['date_from'].' to '.$date_to;
+
+        $this->core_layout->setEventLog($message,"Salary History", "search", "gcchris", "user");
+        return $resultset;
+    }
+
+    function generatedYears($from, $to){
+        $years = array();
+
+        for($nYear = $to; $nYear >= $from; $nYear--){
+            array_push($years, (int)$nYear); //changed first value from string to a number
+        }
+
+        return $years;
+    }
+
+    function getCompanyCodeById($id){
+        $this->db->select('code');
+        $this->db->where('id', $id);
+        $query = $this->db->get($this->companyTable);
+        if ($query->num_rows() > 0) {
+            return $query->row()->code;
+        }
+        return false;
+    }
+
+    function getDepartmentCodeById($id){
+        $this->db->select('code');
+        $this->db->where('id', $id);
+        $query = $this->db->get($this->departmentTable);
+        if ($query->num_rows() > 0) {
+            return $query->row()->code;
+        }
+        return false;
+    }
+
+    function getPositionNameById($id){
+        $this->db->select('name');
+        $this->db->where('id', $id);
+        $query = $this->db->get($this->positionTable);
+        if ($query->num_rows() > 0) {
+            return $query->row()->name;
+        }
+        return false;
+    }
+
+    function getGroupedData($array){
+        $groupedByBiometric = [];
+
+        // Step 1: Group by biometricno
+        foreach ($array as $entry) {
+            $biometricno = $entry['biometricno'];
+            $groupedByBiometric[$biometricno][] = $entry;
+        }
+
+        $finalResult = [];
+
+        // Step 2: Process each biometric group to ensure unique years
+        foreach ($groupedByBiometric as $biometricno => $entries) {
+            $currentGroup = [];
+            $processedYears = [];
+            $biometricResult = [];
+
+            foreach ($entries as $entry) {
+                $year = date('Y', strtotime($entry['sal_date'])); // Extract year
+
+                // If the year already exists in the current group, start a new one
+                if (in_array($year, $processedYears)) {
+                    // Add name and biometricno to the current group
+                    $biometricResult[] = [
+                        'name' => $entry['name'],
+                        'biometricno' => $biometricno,
+                        'id' => $entry['id'],
+                        'data' => $currentGroup
+                    ];
+                    $currentGroup = [];
+                    $processedYears = [];
+                }
+
+                // Add entry to the current group
+                $currentGroup[$year] = $entry;
+                $processedYears[] = $year;
+            }
+
+            // Add the last group
+            if (!empty($currentGroup)) {
+                $biometricResult[] = [
+                    'name' => $entries[0]['name'], // Keep name consistent
+                    'biometricno' => $biometricno,
+                    'id' => $entries[0]['id'],
+                    'data' => $currentGroup
+                ];
+            }
+
+            // Add this biometric group to the final result
+            $finalResult[] = $biometricResult;
+        }
+
+        return $finalResult;
     }
 }
