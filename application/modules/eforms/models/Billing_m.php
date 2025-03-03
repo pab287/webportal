@@ -2408,33 +2408,81 @@ class Billing_m extends CI_Model {
     // (sum all received_amount) - (sum all net_payment) = balance
     // balance - balance_covered = over payment
     function computeOverPayment($customer_id){
-        // Get total received amount
-        $this->db->select("SUM(received_amount) AS total_received_amount");
-        $this->db->from("hydra_billing.payments");
-        $this->db->where("account_id", $customer_id);
-        $this->db->where("is_archive", "0");
-        $total_received_amount = $this->db->get()->row()->total_received_amount;
+        // // Get total received amount
+        // $this->db->select("SUM(received_amount) AS total_received_amount");
+        // $this->db->from("hydra_billing.payments");
+        // $this->db->where("account_id", $customer_id);
+        // $this->db->where("is_archive", "0");
+        // $total_received_amount = $this->db->get()->row()->total_received_amount;
 
-        // Get total net payment (first occurrence per bill_id)
-        $this->db->select("SUM(p.net_payment) AS total_net_payment");
-        $this->db->from("hydra_billing.payments p");
-        $this->db->join("(SELECT bill_id, MIN(id) AS min_id FROM hydra_billing.payments WHERE account_id = $customer_id AND is_archive = 0 GROUP BY bill_id) AS first_payments", "p.id = first_payments.min_id");
-        $total_net_payment = $this->db->get()->row()->total_net_payment;
+        // // Get total net payment (first occurrence per bill_id)
+        // $this->db->select("SUM(p.net_payment) AS total_net_payment");
+        // $this->db->from("hydra_billing.payments p");
+        // $this->db->join("(SELECT bill_id, MIN(id) AS min_id FROM hydra_billing.payments WHERE account_id = $customer_id AND is_archive = 0 GROUP BY bill_id) AS first_payments", "p.id = first_payments.min_id");
+        // $total_net_payment = $this->db->get()->row()->total_net_payment;
 
-        // Get total balance covered
-        $this->db->select("SUM(balance_covered) AS balance_covered");
-        $this->db->from("hydra_billing.payments");
-        $this->db->where("account_id", $customer_id);
-        $this->db->where("is_archive", "0");
-        $balance_covered = $this->db->get()->row()->balance_covered;
+        // // Get total balance covered
+        // $this->db->select("SUM(balance_covered) AS balance_covered");
+        // $this->db->from("hydra_billing.payments");
+        // $this->db->where("account_id", $customer_id);
+        // $this->db->where("is_archive", "0");
+        // $balance_covered = $this->db->get()->row()->balance_covered;
 
-        // Compute values
+        // // Compute values
+        // $received_net_payment = $total_received_amount - $total_net_payment;
+        // $total = $received_net_payment - $balance_covered;
+        // $total = $total < 0 ? 0 : $total;
+
+        // // Return formatted value
+        // return number_format($total, 2, '.', '');
+
+        $sql = "SELECT p.id, p.ref_no, p.bill_id, p.received_amount, p.net_payment, p.balance_covered
+                FROM
+                    (SELECT
+                        MIN(id) AS min_id,
+                        bill_id
+                    FROM
+                        hydra_billing.payments
+                    WHERE
+                        account_id = ?
+                        AND is_archive = 0
+                    GROUP BY
+                        bill_id) AS first_payments
+                JOIN
+                    hydra_billing.payments p ON p.id = first_payments.min_id
+                WHERE
+                    p.account_id = ?
+                ORDER BY
+                    p.bill_id ASC";
+
+        /**
+         * Whys there 2 parameters?
+         * This is because the query is using the same table twice
+         * The first parameter is for the first instance of the table
+         * The second parameter is for the second instance of the table
+         */
+        $query = $this->db->query($sql, array($customer_id, $customer_id));
+        $result = $query->result_array();
+
+        $total_received_amount = 0;
+        $total_net_payment = 0;
+        $total_balance_covered = 0;
+
+        foreach ($result as $row) {
+            $total_received_amount += $row['received_amount'];
+            $total_net_payment += $row['net_payment'];
+            $total_balance_covered += $row['balance_covered'];
+        }
+
         $received_net_payment = $total_received_amount - $total_net_payment;
-        $total = $received_net_payment - $balance_covered;
-        $total = $total < 0 ? 0 : $total;
+        $total = $received_net_payment - $total_balance_covered;
 
-        // Return formatted value
-        return number_format($total, 2, '.', '');
+        $res['total_received_amount'] = $total_received_amount;
+        $res['net_payment'] = $total_net_payment;
+        $res['balance_covered'] = $total_balance_covered;
+        $res['total'] = $total;
+
+        return number_format($total < 0 ? 0 : $total, 2, '.', '');
     }
 
     function checkOverdue(){
