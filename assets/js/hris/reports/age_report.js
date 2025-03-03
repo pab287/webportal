@@ -38,7 +38,7 @@ const tblHrisAgeReport = $('#hris_age_reports')
         columns: [
             { data: 'empid', visible: false },
             {
-                data: 'lastname', width: '15%',
+                data: 'firstname', width: '15%',
                 title: 'EMPLOYEE NAME',
                 render: function(data, type, row, meta) {
                     const middleInitial = row['middlename'] ? 
@@ -237,9 +237,13 @@ const tblHrisAgeReport = $('#hris_age_reports')
         data: _companies,
         placeholder: 'Select an option',
         allowClear: true,
-    }).on("select2:select select2:unselect", function(e){
+    })
+    .on("select2:select", function(e) {
         const { id } = e.params?.data || {};
-        company = id || null;
+        company = id;
+        tblHrisAgeReport.ajax.reload();
+    }).on("select2:unselecting", function(e) {
+        company = 0; 
         tblHrisAgeReport.ajax.reload();
     });
 
@@ -248,9 +252,12 @@ const tblHrisAgeReport = $('#hris_age_reports')
         placeholder: "Select an option",
         data: _stations,
         allowClear: true,
-    }).on("select2:select select2:unselect", function(e){
+    }).on("select2:select", function(e) {
         const { id } = e.params?.data || {};
-        station = id || null;
+        station = id;
+        tblHrisAgeReport.ajax.reload();
+    }).on("select2:unselecting", function(e) {
+        station = 0;
         tblHrisAgeReport.ajax.reload();
     });
 
@@ -259,22 +266,26 @@ const tblHrisAgeReport = $('#hris_age_reports')
         placeholder: "Select an option",
         data: _departments,
         allowClear: true,
-    }).on("select2:select select2:unselect", function(e){
+    }).on("select2:select", function(e) {
         const { id } = e.params?.data || {};
-        department = id || null;
+        department = id || 0;
+        tblHrisAgeReport.ajax.reload();
+    }).on("select2:unselecting", function(e) {
+        department = 0;
         tblHrisAgeReport.ajax.reload();
     });
 
-    $("#age_range").select2({
-        width: "100%",
-        minimumResultsForSearch: -1,
-        placeholder: "Select an option",
-        allowClear: true,
-    }).on("select2:select select2:unselect", function(e){
-        const { id } = e.params?.data || {};
-        ageRange = id || null;
-        tblHrisAgeReport.ajax.reload();
-    });
+    // $("#age_range").select2({
+    //     width: "100%",
+    //     minimumResultsForSearch: -1,
+    //     placeholder: "Select an option",
+    //     allowClear: true,
+    // }).on("select2:select select2:unselect", function(e){
+    //     const { id } = e.params?.data || {};
+    //     ageRange = id || null;
+    //     tblHrisAgeReport.ajax.reload();
+    // });
+
     let slider = document.getElementById('age_range_slider');
     noUiSlider.create(slider, {
         start: [18, 25],

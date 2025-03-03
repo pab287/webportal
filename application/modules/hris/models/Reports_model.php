@@ -2486,7 +2486,7 @@ class Reports_model extends CI_Model{
     private function getAgeReportData($search, $limit, $offset, $sortBy, $sortOrder, $ageRange, $company, $department, $station){
         $filterFields = array("emp.firstname","emp.lastname");
         $this->db->select('
-            emp.id as empid, emp.firstname, emp.lastname, emp.middlename, emp.suffix, emp.date_start as hired_date, 
+            emp.id as empid, emp.firstname, emp.lastname, emp.middlename, emp.suffix, emp.date_start as hired_date, dsl.station_id as station_id, 
             emp.bday as birthday, 
             dept.description as department,comp.description as company, sss_no, tin_no, pagibig_no, phealth_no, 
             pos.name as position, dsl.station_description as station
@@ -2507,7 +2507,7 @@ class Reports_model extends CI_Model{
             if($station == 'not_assigned'){
                 $this->db->where('dsl.station_description', null);
             }else{
-                $this->db->where('dsl.id', $station);
+                $this->db->where('dsl.station_id', $station);
             }
         }
         if ($ageRange) {
