@@ -281,7 +281,7 @@ function select_employee() {
     
     function print_overtime($id){
         $data = array();
-        $query = $this->overtime->getOvertimeRequestDetails($id);
+        $query = (object) $this->overtime->getOvertimeRequestDetails($id);
         
         $data["query"] = $query;
         $this->load->view('eforms/overtime/print_overtime', $data);
