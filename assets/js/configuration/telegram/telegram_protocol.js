@@ -19,236 +19,242 @@ $('#generalSearch').donetyping(function (callback) {
     dtTableProtocol.ajax.reload();
 });
 
-dtTableProtocolArchive = telegramProtocolArchiveTable.DataTable({
-    dom: '<"toolbar">frtlip',
-    serverSide: true,
-    processing: true,
-    searching: false,
-    ajax: {
-        url: baseUrl("configuration/telegram_protocol_datatable_request"),
-        type: "post",
-        dataType: "json",
-        data: function (d) {
-            d.csrf_token = _csrf_hash;
-            d.search['value'] = search_val;
-            d.archive = 1;
-            return d;
-        }
-    },
-    columns: [
-        { data: "id", visible: false },
-        { data: "bot_name"},
-        { data: "bot_description", orderable: false},
-        {
-            data: "owner",
-            title: "Owner",
-            render: function(data) {
-                if (!Array.isArray(data) || !data.length) {
-                    return '<span class="text-muted">No owner assigned</span>';
-                }
-        
-                const owner = data[0];
-                return `
-                    <div class="owner-info">
-                        ${owner.firstname} ${owner.lastname}
-                        ${owner.middlename ? `${owner.middlename}<br>` : ''}
-                    </div>
-                `;
-            }
-        },
-        { data: "status", className: "text-center", 
-            render: function (data) {
-                return renderStatus(data)
-            }
-        },
-        { 
-            data: "modules", orderable: false,
-            render: function(data) {
-                if (!Array.isArray(data)) return '';
-                
-                const labels = data.map(module => module.label);
-                return `
-                    <div class="module-tags">
-                        ${labels.map(label => `<span>${label}</span>`).join(', ')}
-                    </div>`;
-            }
-        },
-        { data: "chat_id", orderable: false},
-        { data: "telegram_bot_token",orderable: false},
-        {
-            data: "created_at",
-            render: function(data) {
-                const dateStr = data.trim();
-                const dateParts = dateStr.split(' ');
-                const dateComponents = dateParts[0].split('-');
-                
-                // Create Date object for proper month formatting
-                const dateObj = new Date(dateComponents[0], parseInt(dateComponents[1])-1, dateComponents[2]);
-                
-                // Format the date parts
-                const month = dateObj.toLocaleString('default', { month: 'long' });
-                const day = dateComponents[2];
-                const year = dateComponents[0];
-        
-                return `${month} ${day}, ${year}`;
-            }
-        },
-        { data: null, className: "text-center" },
-    ],
-    columnDefs: [{
-        data: null,
-        defaultContent: "",
-        targets: -1,
-        orderable: false,
-        render: function(data, type, row, meta) {
-            return `
-                <button type="button" class="btn btn-default m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill btnRestore" onclick="restoreTelegramBot(${row.id})"
-                        data-toggle="m-tooltip" 
-                        data-placement="bottom" 
-                        data-skin="dark" 
-                        data-original-title="Restore Telegram Bot" 
-                        data-delay="{\"show\": 300}">
-                    <i class="la la-reply"></i>
-                </button>
-            `;
-        }
-    }]
-});
 
-dtTableProtocol = telegramProtocolTable.DataTable({
-    dom: '<"toolbar">frtlip',
-    serverSide: true,
-    processing: true,
-    ajax: {
-        url: baseUrl("configuration/telegram_protocol_datatable_request"),
-        type: "post",
-        dataType: "json",
-        data: function (d) {
-            d.csrf_token = _csrf_hash;
-            d.search['value'] = search_val;
-            d.archive = 0;
-            return d;
-        }
-    },
-    searching: false,
-    columns: [
-        { data: "id", visible: false },
-        { data: "bot_name"},
-        { data: "bot_description", orderable: false},
-        {
-            data: "owner",
-            title: "Owner",
-            render: function(data) {
-                if (!Array.isArray(data) || !data.length) {
-                    return '<span class="text-muted">No owner assigned</span>';
+$(function() {
+
+    dtTableProtocolArchive = telegramProtocolArchiveTable.DataTable({
+        dom: '<"toolbar">frtlip',
+        serverSide: true,
+        processing: true,
+        searching: false,
+        ajax: {
+            url: baseUrl("configuration/telegram_protocol_datatable_request"),
+            type: "post",
+            dataType: "json",
+            data: function (d) {
+                d.csrf_token = _csrf_hash;
+                d.search['value'] = search_val;
+                d.archive = 1;
+                return d;
+            }
+        },
+        columns: [
+            { data: "id", visible: false },
+            { data: "bot_name"},
+            { data: "bot_description", orderable: false},
+            {
+                data: "owner",
+                title: "Owner",
+                render: function(data) {
+                    if (!Array.isArray(data) || !data.length) {
+                        return '<span class="text-muted">No owner assigned</span>';
+                    }
+            
+                    const owner = data[0];
+                    return `
+                        <div class="owner-info">
+                            ${owner.firstname} ${owner.lastname}
+                            ${owner.middlename ? `${owner.middlename}<br>` : ''}
+                        </div>
+                    `;
                 }
-        
-                const owner = data[0];
-                return `
-                    <div class="owner-info">
-                        ${owner.firstname} ${owner.lastname}
-                        ${owner.middlename ? `${owner.middlename}<br>` : ''}
-                    </div>
-                `;
-            }
-        },
-        { data: "status", className: "text-center", 
-            render: function (data) {
-                return renderStatus(data)
-            }
-        },
-        { 
-            data: "modules", orderable: false,
-            render: function(data) {
-                if (!Array.isArray(data)) return '';
-                
-                const labels = data.map(module => module.label);
-                return `
-                    <div class="module-tags">
-                        ${labels.map(label => `<span>${label}</span>`).join(', ')}
-                    </div>`;
-            }
-        },
-        { data: "chat_id", orderable: false},
-        { data: "telegram_bot_token",orderable: false},
-        {
-            data: "created_at",
-            render: function(data) {
-                const dateStr = data.trim();
-                const dateParts = dateStr.split(' ');
-                const dateComponents = dateParts[0].split('-');
-                
-                // Create Date object for proper month formatting
-                const dateObj = new Date(dateComponents[0], parseInt(dateComponents[1])-1, dateComponents[2]);
-                
-                // Format the date parts
-                const month = dateObj.toLocaleString('default', { month: 'long' });
-                const day = dateComponents[2];
-                const year = dateComponents[0];
-        
-                return `${month} ${day}, ${year}`;
-            }
-        },
-        { data: null, className: "text-center" },
-    ],
-    columnDefs: [
-        {
+            },
+            { data: "status", className: "text-center", 
+                render: function (data) {
+                    return renderStatus(data)
+                }
+            },
+            { 
+                data: "modules", orderable: false,
+                render: function(data) {
+                    if (!Array.isArray(data)) return '';
+                    
+                    const labels = data.map(module => module.label);
+                    return `
+                        <div class="module-tags">
+                            ${labels.map(label => `<span>${label}</span>`).join(', ')}
+                        </div>`;
+                }
+            },
+            { data: "chat_id", orderable: false},
+            { data: "telegram_bot_token",orderable: false},
+            {
+                data: "created_at",
+                render: function(data) {
+                    const dateStr = data.trim();
+                    const dateParts = dateStr.split(' ');
+                    const dateComponents = dateParts[0].split('-');
+                    
+                    // Create Date object for proper month formatting
+                    const dateObj = new Date(dateComponents[0], parseInt(dateComponents[1])-1, dateComponents[2]);
+                    
+                    // Format the date parts
+                    const month = dateObj.toLocaleString('default', { month: 'long' });
+                    const day = dateComponents[2];
+                    const year = dateComponents[0];
+            
+                    return `${month} ${day}, ${year}`;
+                }
+            },
+            { data: null, className: "text-center" },
+        ],
+        columnDefs: [{
             data: null,
             defaultContent: "",
             targets: -1,
             orderable: false,
-            render: function (data, type, row, meta) {
-                var tempHtml = "---";
-				var tempActions = [];
-				var currentActions = ["edit", "delete", "connect", "exclude"];
-				$.each(currentActions, function(index, value){
-                    tempActions.push(value);
-                });
+            render: function(data, type, row, meta) {
+                return `
+                    <button type="button" class="btn btn-default m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill btnRestore" onclick="restoreTelegramBot(${row.id})"
+                            data-toggle="m-tooltip" 
+                            data-placement="bottom" 
+                            data-skin="dark" 
+                            data-original-title="Restore Telegram Bot" 
+                            data-delay="{\"show\": 300}">
+                        <i class="la la-reply"></i>
+                    </button>
+                `;
+            }
+        }]
+    });
 
-                tempHtml = `<div class="dropdown">
-						<a href="#" class="btn m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" data-toggle="dropdown"> 
-							<i class="la la-ellipsis-h"></i>
-						</a>
-						<div class="dropdown-menu dropdown-menu-right">`;
-					$.each(tempActions, function(ii, vv){
-						switch(vv){
-							case "edit":
-							tempHtml += `<a class="dropdown-item btnEdit" data-toggle='modal' data-target='#edit_modal' href="javascript:void(0);" onclick='edit_protocol(`+row.id+`)'><i class="la la-edit"></i> Edit</a>`;
-							break;
-							case "delete":
-							tempHtml += `<a class="dropdown-item btnArchive" data-toggle='modal' data-target='#delete_modal' href="javascript:void(0);" onclick='delete_telegram_bot(`+row.id+`)'><i class="la la-trash"></i> Remove</a>`;
-							break;
-							case "connect":
-								var tempLabel = "Deactivate";
-								var tempIconClass = "la la-unlink";
-								if(row.status == 0){
-									tempLabel = "Activate";
-									tempIconClass = "la la-link";
-								}
-								tempHtml += `<div class='dropdown-divider'></div>`;
-								tempHtml += `<a class="dropdown-item " href="javascript:void(0);" onclick='toggle_connect_modal(`+row.id+`,`+ row.status +`)'><i class="`+tempIconClass+`"></i> `+tempLabel+`</a>`;
-							break;
-                            // case "exclude":
-                            //     if(row.role == 1){
-                            //         var tempLabel = "Include (Admin only)";
-                            //         var tempIconClass = "la la-unlink";
-                            //         var tempEvent = 'toggle_exclude_modal('+row.id +','+ row.exclude'")';
-                            //         if(row.exclude == 0){
-                            //             tempLabel = "Exclude (Admin only)";
-                            //             tempIconClass = "la la-link";
-                            //         }
-                            //         tempHtml += `<div class='dropdown-divider'></div>`;
-                            //         tempHtml += `<a class="dropdown-item " href="javascript:void(0);" onclick='`+tempEvent+`'><i class="`+tempIconClass+`"></i> `+tempLabel+`</a>`;
-                            //     }
-                            break;
-						}
-					});
-					tempHtml += `</div></div>`;
-                return tempHtml;
+    dtTableProtocol = telegramProtocolTable.DataTable({
+        dom: '<"toolbar">frtlip',
+        serverSide: true,
+        processing: true,
+        ajax: {
+            url: baseUrl("configuration/telegram_protocol_datatable_request"),
+            type: "post",
+            dataType: "json",
+            data: function (d) {
+                d.csrf_token = _csrf_hash;
+                d.search['value'] = search_val;
+                d.archive = 0;
+                return d;
+            }
+        },
+        searching: false,
+        columns: [
+            { data: "id", visible: false },
+            { data: "bot_name"},
+            { data: "bot_description", orderable: false},
+            {
+                data: "owner",
+                title: "Owner",
+                render: function(data) {
+                    if (!Array.isArray(data) || !data.length) {
+                        return '<span class="text-muted">No owner assigned</span>';
+                    }
+            
+                    const owner = data[0];
+                    return `
+                        <div class="owner-info">
+                            ${owner.firstname} ${owner.lastname}
+                            ${owner.middlename ? `${owner.middlename}<br>` : ''}
+                        </div>
+                    `;
+                }
             },
-        }
-    ]
+            { data: "status", className: "text-center", 
+                render: function (data) {
+                    return renderStatus(data)
+                }
+            },
+            { 
+                data: "modules", orderable: false,
+                render: function(data) {
+                    if (!Array.isArray(data)) return '';
+                    
+                    const labels = data.map(module => module.label);
+                    return `
+                        <div class="module-tags">
+                            ${labels.map(label => `<span>${label}</span>`).join(', ')}
+                        </div>`;
+                }
+            },
+            { data: "chat_id", orderable: false},
+            { data: "telegram_bot_token",orderable: false},
+            {
+                data: "created_at",
+                render: function(data) {
+                    const dateStr = data.trim();
+                    const dateParts = dateStr.split(' ');
+                    const dateComponents = dateParts[0].split('-');
+                    
+                    // Create Date object for proper month formatting
+                    const dateObj = new Date(dateComponents[0], parseInt(dateComponents[1])-1, dateComponents[2]);
+                    
+                    // Format the date parts
+                    const month = dateObj.toLocaleString('default', { month: 'long' });
+                    const day = dateComponents[2];
+                    const year = dateComponents[0];
+            
+                    return `${month} ${day}, ${year}`;
+                }
+            },
+            { data: null, className: "text-center" },
+        ],
+        columnDefs: [
+            {
+                data: null,
+                defaultContent: "",
+                targets: -1,
+                orderable: false,
+                render: function (data, type, row, meta) {
+                    var tempHtml = "---";
+                    var tempActions = [];
+                    var currentActions = ["edit", "delete", "connect", "exclude"];
+                    $.each(currentActions, function(index, value){
+                        tempActions.push(value);
+                    });
+    
+                    tempHtml = `<div class="dropdown">
+                            <a href="#" class="btn m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" data-toggle="dropdown"> 
+                                <i class="la la-ellipsis-h"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right">`;
+                        $.each(tempActions, function(ii, vv){
+                            switch(vv){
+                                case "edit":
+                                tempHtml += `<a class="dropdown-item btnEdit" data-toggle='modal' data-target='#edit_modal' href="javascript:void(0);" onclick='edit_protocol(`+row.id+`)'><i class="la la-edit"></i> Edit</a>`;
+                                break;
+                                case "delete":
+                                tempHtml += `<a class="dropdown-item btnArchive" data-toggle='modal' data-target='#delete_modal' href="javascript:void(0);" onclick='delete_telegram_bot(`+row.id+`)'><i class="la la-trash"></i> Remove</a>`;
+                                break;
+                                case "connect":
+                                    var tempLabel = "Deactivate";
+                                    var tempIconClass = "la la-unlink";
+                                    if(row.status == 0){
+                                        tempLabel = "Activate";
+                                        tempIconClass = "la la-link";
+                                    }
+                                    tempHtml += `<div class='dropdown-divider'></div>`;
+                                    tempHtml += `<a class="dropdown-item " href="javascript:void(0);" onclick='toggle_connect_modal(`+row.id+`,`+ row.status +`)'><i class="`+tempIconClass+`"></i> `+tempLabel+`</a>`;
+                                break;
+                                // case "exclude":
+                                //     if(row.role == 1){
+                                //         var tempLabel = "Include (Admin only)";
+                                //         var tempIconClass = "la la-unlink";
+                                //         var tempEvent = 'toggle_exclude_modal('+row.id +','+ row.exclude'")';
+                                //         if(row.exclude == 0){
+                                //             tempLabel = "Exclude (Admin only)";
+                                //             tempIconClass = "la la-link";
+                                //         }
+                                //         tempHtml += `<div class='dropdown-divider'></div>`;
+                                //         tempHtml += `<a class="dropdown-item " href="javascript:void(0);" onclick='`+tempEvent+`'><i class="`+tempIconClass+`"></i> `+tempLabel+`</a>`;
+                                //     }
+                                break;
+                            }
+                        });
+                        tempHtml += `</div></div>`;
+                    return tempHtml;
+                },
+            }
+        ]
+    });
 });
+
+
 
 function renderStatus(data) {
     switch (data) {
