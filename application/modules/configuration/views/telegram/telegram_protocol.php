@@ -111,7 +111,6 @@
                         </label>
                         <div class="col-12">
                             <select id="select2_module" name="modules[]" class="form-control m-select2" data-validation="required" multiple>
-                                <option></option>
                             </select>
                         </div>
                     </div>
@@ -186,7 +185,6 @@
                         </label>
                         <div class="col-12">
                             <select id="select2_module_edit" name="modules[]" class="form-control m-select2" data-validation="required" multiple  v-model="row.modules">
-                                <option></option>
                             </select>
                         </div>
                     </div>

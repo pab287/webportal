@@ -59,7 +59,7 @@ $(function() {
                     `;
                 }
             },
-            { data: "status", className: "text-center", 
+            { data: "status", className: "text-center", orderable: false,
                 render: function (data) {
                     return renderStatus(data)
                 }
@@ -76,7 +76,11 @@ $(function() {
                         </div>`;
                 }
             },
-            { data: "chat_id", orderable: false},
+            { data: "chat_id", orderable: false,
+                render: function(data, type, row) {
+                    return data || 'N/A';
+                }
+            },
             { data: "telegram_bot_token",orderable: false},
             {
                 data: "created_at",
@@ -155,7 +159,7 @@ $(function() {
                     `;
                 }
             },
-            { data: "status", className: "text-center", 
+            { data: "status", className: "text-center", orderable: false,
                 render: function (data) {
                     return renderStatus(data)
                 }
@@ -172,7 +176,11 @@ $(function() {
                         </div>`;
                 }
             },
-            { data: "chat_id", orderable: false},
+            { data: "chat_id", orderable: false,
+                render: function(data, type, row) {
+                    return data || 'N/A';
+                }
+            },
             { data: "telegram_bot_token",orderable: false},
             {
                 data: "created_at",
@@ -558,3 +566,16 @@ function restoreTelegramBot(id) {
         }
     });
 }
+
+modalNewProtocol.on('hidden.bs.modal', function (e) {
+    // Clear all input fields and textareas
+    $(this).find('input').val('');
+    $(this).find('textarea').val('');
+    
+    // Reset Select2 dropdowns
+    $(this).find('.select2').val(null).trigger('change');
+    
+    // Reset specific dropdowns
+    $("#select2_owner").val(null).trigger('change');
+    $("#select2_module").val(null).trigger('change');
+});
