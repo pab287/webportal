@@ -761,9 +761,11 @@
             }
 
             if (isset($get['q']) && $get['q']) {
-                $this->db->like('firstname', $get['q'], 'both');
-                $this->db->or_like('middlename', $get['q'], 'both');
-                $this->db->or_like('lastname', $get['q'], 'both');
+                $this->db->group_start();
+                    $this->db->like('firstname', $get['q'], 'both');
+                    $this->db->or_like('middlename', $get['q'], 'both');
+                    $this->db->or_like('lastname', $get['q'], 'both');
+                $this->db->group_end();
             }
 
             $query = $this->db->get();
