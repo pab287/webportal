@@ -2589,8 +2589,4 @@ class Reports_model extends CI_Model{
         return $query->num_rows();
     }
 
-    public function exportAgeReport(){
-
-    }
-
 }
