@@ -99,7 +99,7 @@ class Accountability_m extends CI_Model {
             $this->db->where('a.company', $this->user_data['company']);
 
             if ($companyDescription) {
-                $this->db->where('a.company', $companyDescription);
+                $this->db->or_where('a.company', $companyDescription);
             }
         }
 
@@ -202,7 +202,7 @@ class Accountability_m extends CI_Model {
             $this->db->where('a.company', $this->user_data['company']);
 
             if ($companyDescription) {
-                $this->db->where('a.company', $companyDescription);
+                $this->db->or_where('a.company', $companyDescription);
             }
         }
 
@@ -4323,7 +4323,7 @@ class Accountability_m extends CI_Model {
             $this->db->where('a.company', $this->user_data['company']);
 
             if ($companyDescription) {
-                $this->db->where('a.company', $companyDescription);
+                $this->db->or_where('a.company', $companyDescription);
             }
         }
 
@@ -4413,7 +4413,7 @@ class Accountability_m extends CI_Model {
             $this->db->where('a.company', $this->user_data['company']);
 
             if ($companyDescription) {
-                $this->db->where('a.company', $companyDescription);
+                $this->db->or_where('a.company', $companyDescription);
             }
         }
 
