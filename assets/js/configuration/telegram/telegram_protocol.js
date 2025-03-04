@@ -17,6 +17,7 @@ let search_val = "";
 $('#generalSearch').donetyping(function (callback) {
     search_val = $(this).val();
     dtTableProtocol.ajax.reload();
+    dtTableProtocolArchive.ajax.reload();
 });
 
 
@@ -578,4 +579,6 @@ modalNewProtocol.on('hidden.bs.modal', function (e) {
     // Reset specific dropdowns
     $("#select2_owner").val(null).trigger('change');
     $("#select2_module").val(null).trigger('change');
+    const form = $(this).find('form');
+    form[0].reset();
 });
