@@ -21,52 +21,117 @@ const tblHrisAgeReport = $('#hris_age_reports')
             buttons: [
                 {
                     extend: 'excelHtml5',
-                    text: 'EXCEL',
                     title: 'HRIS AGE REPORT',
                     exportOptions: {
                       columns: [1,2,3,4,5,6,7,8,9,10,11,12] ,
                     },
                   action: function (e, dt, button, config) {
                     $.fn.dataTable.ext.buttons.excelHtml5.action.call(this, e, dt, button, config);
-                    export_log(filters, "Excel", "HRIS AGE REPORT", 1).then(() => {
+                    export_log(filters, "Excel", "HRIS AGE REPORT", tblHrisAgeReport.page.info().recordsTotal).then(() => {
                         dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
                     });
                     }
                 },
                 {
                     extend: 'pdfHtml5',
-                    text: 'PDF',
                     title: 'CRS REPORTS',
                     className: 'btnPdfAction',
                     orientation: 'landscape',
                     pageSize: 'LEGAL',
                     exportOptions: {
-                        columns: [1,2,3,4,5,6,7,8,13,] ,
+                        columns: [1,2,3,4,5,6,7,8,9,10,11,12] ,
                         stripHtml: false
                     },
                     customize: function (doc) {
-                        doc.content[1].table.widths = Array(doc.content[1].table.body[0].length + 1).join('*').split('');
-                        export_log(filters, "Excel", "HRIS AGE REPORT", 1).then(() => {
+                        for (let i = 0; i < doc.content[1].table.body.length; i++) {
+                            if (doc.content[1].table.body[i][0]) {
+                                doc.content[1].table.body[i][0].text = doc.content[1].table.body[i][0].text.toUpperCase();
+                            }
+                        }
+                        doc.content[1].table.widths = Array(doc.content[1].table.body[0].length).fill('*');
+                        doc.pageMargins = [10, 10, 10, 10];
+                        doc.defaultStyle.fontSize = 8;
+                        doc.styles.tableHeader = {
+                            fillColor: '#2c3e50',
+                            color: '#ffffff',
+                            fontSize: 10,
+                            bold: true,
+                            alignment: 'center'
+                        };
+                        doc.styles.tableBodyEven = {
+                            fillColor: '#f8f9fa',
+                            fontSize: 8,
+                            alignment: 'left'
+                        };
+                        doc.styles.tableBodyOdd = {
+                            fillColor: '#ffffff',
+                            fontSize: 8,
+                            alignment: 'left'
+                        };
+                        export_log(filters, "PDF", "HRIS AGE REPORT", tblHrisAgeReport.page.info().recordsTotal).then(() => {
                             dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
                         });
-                    },
+                    }
                     
                 },
                 {
                     extend: 'print',
-                    text: 'PDF',
                     title: 'CRS REPORTS',
                     orientation: 'landscape',
                     pageSize: 'LEGAL',
                     exportOptions: {
-                        columns: [1,2,3,4,5,6,7,8,9,] ,
+                        columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                     },
-                    customize: function (doc) {
-                        doc.content[1].table.widths = Array(doc.content[1].table.body[0].length + 1).join('*').split('');
-                        export_log("CRS - REPORTS PDF");
-                    },
+                    customize: function (win) {
+                        var css = `@page { size: landscape; margin: 0.5cm; }
+                        .dt-print-view table { font-size: 12px; } 
+                        .dt-print-view table.dataTable tfoot tr:first-child th { border-top: 1px solid #000000; }
+                        .dt-print-view table.dataTable tfoot tr:first-child th { border-bottom: 4px double #000000; }`,
+                            head = win.document.head || win.document.getElementsByTagName('head')[0],
+                            style = win.document.createElement('style');
                     
-                },
+                        style.type = 'text/css';
+                        if (style.styleSheet) {
+                            style.styleSheet.cssText = css;
+                        } else {
+                            style.appendChild(win.document.createTextNode(css));
+                        }
+                    
+                        head.appendChild(style);
+
+                        $(win.document.body).find('table').css({
+                            'width': '100%',
+                            'font-size': '8pt',
+                            'border-collapse': 'collapse'
+                        });
+                
+                        $(win.document.body).find('table td:nth-child(1)').each(function () {
+                            $(this).text($(this).text().toUpperCase());
+                        });
+                
+                        $(win.document.body).find('h1').css({
+                            'text-align': 'center',
+                            'font-size': '14pt',
+                            'margin-bottom': '10px'
+                        });
+                
+                        $(win.document.body).find('th').css({
+                            'font-size': '10pt',
+                            'font-weight': 'bold',
+                            'text-align': 'center'
+                        });
+                
+                        $(win.document.body).find('td').css({
+                            'font-size': '8pt',
+                            'padding': '5px',
+                            'border': '1px solid #ddd'
+                        });
+                
+                        export_log(filters, "Print", "HRIS AGE REPORT", tblHrisAgeReport.page.info().recordsTotal).then(() => {
+                            dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
+                        });
+                    }
+                }
             ],
         serverSide: true,
         ordering: true,
@@ -144,17 +209,6 @@ const tblHrisAgeReport = $('#hris_age_reports')
                     return data ? data : "---";
                 }
             },
-            { data: 'phealth_no', title: 'Government IDs', visible: false, width: '15%',
-                render: function(data, type, row) {
-                    let govIds = [
-                        `<span>TIN: ${row.tin || "---"}</span>\n`,
-                        `<span>SSS: ${row.SSS || "---"}</span>\n`,
-                        `<span>PAG-IBIG: ${row.pagibig_no || "---"}</span>\n`,
-                        `<span>PhilHealth: ${row.phealth_no || "---"}</span>\n`
-                    ];
-                    return govIds.join("\n");
-                }
-            }
         ],
         initComplete: function () {
             const dropdown = '' +
@@ -318,11 +372,11 @@ const tblHrisAgeReport = $('#hris_age_reports')
     }).on("select2:select", function(e) {
         const { id } = e.params?.data || {};
         station = id;
-        filters.station_id = station;
+        filters.station = station;
         tblHrisAgeReport.ajax.reload();
     }).on("select2:unselecting", function(e) {
         station = 0;
-        filters.station_id = station;
+        filters.station = station;
         tblHrisAgeReport.ajax.reload();
     });
 
