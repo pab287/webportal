@@ -267,10 +267,10 @@ $(function() {
 function renderStatus(data) {
     switch (data) {
         case "1":
-            return '<a class="btn btn-success m-btn m-btn--icon m-btn--icon-only btn-sm"><i class="fa-lg fa fa-check" style="color:white"></i></a>';
+            return '<span class="m-badge m-badge--success m-badge--wide" style="cursor: default"><i class="fa-lg fa fa-check" style="color:white"></i></span>';
             break;
         default:
-            return '<a class="btn btn-danger m-btn m-btn--icon m-btn--icon-only btn-sm"><i class="fa-lg fa fa-remove" style="color:white"></i></a>';
+            return '<span class="m-badge m-badge--danger m-badge--wide" style="cursor: default"><i class="fa-lg fa fa-remove" style="color:white"></i></span>';
             break;
     }
 };
