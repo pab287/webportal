@@ -2199,6 +2199,7 @@
         }
 
         function getCompanyCollection() {
+            $this->core_layout->setPrivilegeName("to_masterfile");
             $get = $this->input->get();
             $resultarray = array();
             // if (isset($get['q'])) {
@@ -2206,9 +2207,16 @@
             // } else {
             //     $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tblcompanies ORDER BY `description` ASC");
             // }
+            $privilege = $this->core_layout->getCurrentActions();
+
+            $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
 
             $sql = "id, description";
             $this->db->select($sql);
+
+            if ($view_by_company) {
+                $this->db->where('id', $this->user_data['company']);
+            }
 
             if (isset($get['q']) && $get['q']){
                 $this->db->like('description', $get['q'], 'both');
@@ -2344,9 +2352,9 @@
 
             $this->db->where('employee_status', 'Active');
 
-            if ($view_by_company) {
-                $this->db->where('company_id', $this->user_data['company']);
-            }
+            // if ($view_by_company) {
+            //     $this->db->where('company_id', $this->user_data['company']);
+            // }
 
             $this->db->limit(10);
             $this->db->order_by('firstname', 'ASC');

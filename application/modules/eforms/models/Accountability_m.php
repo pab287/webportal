@@ -95,14 +95,6 @@ class Accountability_m extends CI_Model {
         $this->db->where_not_in('a.status', array('Released', 'Cancelled'));
         $this->db->where("DATE(a.date_issued) >= '$date'", NULL, FALSE);
 
-        if ($view_by_company) {
-            $this->db->where('a.company', $this->user_data['company']);
-
-            if ($companyDescription) {
-                $this->db->or_where('a.company', $companyDescription);
-            }
-        }
-
         if ($query_builder) { 
             $this->db->where($query_builder); 
         }
@@ -141,6 +133,14 @@ class Accountability_m extends CI_Model {
             unset($advanced_search['description']);
 
             $this->db->like($advanced_search, "both");
+        }
+
+        if ($view_by_company) {
+            $this->db->where('a.company', $this->user_data['company']);
+
+            if ($companyDescription) {
+                $this->db->or_where('a.company', $companyDescription);
+            }
         }
 
         if ($limit != -1) { 
@@ -198,14 +198,6 @@ class Accountability_m extends CI_Model {
         $this->db->where_not_in('a.status', array('Released', 'Cancelled'));
         $this->db->where("DATE(a.date_issued) >= '$date'", NULL, FALSE);
 
-        if ($view_by_company) {
-            $this->db->where('a.company', $this->user_data['company']);
-
-            if ($companyDescription) {
-                $this->db->or_where('a.company', $companyDescription);
-            }
-        }
-
         if ($query_builder) { 
             $this->db->where($query_builder); 
         }
@@ -246,6 +238,14 @@ class Accountability_m extends CI_Model {
             unset($advanced_search['description']);
 
             $this->db->like($advanced_search, "both");
+        }
+
+        if ($view_by_company) {
+            $this->db->where('a.company', $this->user_data['company']);
+
+            if ($companyDescription) {
+                $this->db->or_where('a.company', $companyDescription);
+            }
         }
 
         $query = $this->db->get();
@@ -4319,6 +4319,22 @@ class Accountability_m extends CI_Model {
             $this->db->join('gccasset.vehicles vehicle', 'vehicle.id = b.asset_id AND b.type = "Vehicle"', 'left');
         }
 
+        if(isset($search) && $search){
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+
+        if ($query_builder) {
+            $this->db->where($query_builder);
+        }
+
         if ($view_by_company) {
             $this->db->where('a.company', $this->user_data['company']);
 
@@ -4337,22 +4353,6 @@ class Accountability_m extends CI_Model {
         }
 
         $this->db->where('a.status', 'Released');
-
-        if ($query_builder) {
-            $this->db->where($query_builder);
-        }
-
-        if(isset($search) && $search){
-            $this->db->group_start();
-            foreach ($filterFields as $key => $field) {
-                if ($key == 0) {
-                    $this->db->like($field, $search, "both");
-                } else {
-                    $this->db->or_like($field, $search, "both");
-                }
-            }
-            $this->db->group_end();
-        }
 
         if ($limit != -1) {
             $this->db->limit($limit, $offset);
@@ -4409,29 +4409,10 @@ class Accountability_m extends CI_Model {
         $this->db->join('gcchris.tblcontractor d', 'a.issued_to = d.id', 'left');
         $this->db->join('gcchris.tblcompanies e', 'e.id = a.company', 'left');
 
-        if ($view_by_company) {
-            $this->db->where('a.company', $this->user_data['company']);
-
-            if ($companyDescription) {
-                $this->db->or_where('a.company', $companyDescription);
-            }
-        }
-
         if(isset($search) && $search){
             $this->db->join('gccasset.assets asset', 'asset.id = b.asset_id AND b.type = "Asset"', 'left');
             $this->db->join('gccasset.vehicles vehicle', 'vehicle.id = b.asset_id AND b.type = "Vehicle"', 'left');
         }
-
-        if($returned == 0){
-            $this->db->group_start();
-                $this->db->where("b.is_returned", 0);
-                $this->db->or_where("b.is_returned", 2);
-            $this->db->group_end();
-        }else{
-            $this->db->where("b.is_returned", $returned);
-        }
-
-        $this->db->where('a.status', 'Released');
 
         if ($query_builder) {
             $this->db->where($query_builder);
@@ -4448,6 +4429,28 @@ class Accountability_m extends CI_Model {
             }
             $this->db->group_end();
         }
+
+        if ($view_by_company) {
+            $this->db->group_start();
+                $this->db->where('a.company', $this->user_data['company']);
+
+                if ($companyDescription) {
+                    $this->db->or_where('a.company', $companyDescription);
+                }
+            $this->db->group_end();
+        }
+
+
+        if($returned == 0){
+            $this->db->group_start();
+                $this->db->where("b.is_returned", 0);
+                $this->db->or_where("b.is_returned", 2);
+            $this->db->group_end();
+        }else{
+            $this->db->where("b.is_returned", $returned);
+        }
+
+        $this->db->where('a.status', 'Released');
 
         $query = $this->db->get();
         $rowCount = $query->num_rows();

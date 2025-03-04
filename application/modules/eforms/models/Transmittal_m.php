@@ -1156,6 +1156,7 @@
             return $rowCount;
         }
 
+        //here
         function getCompanyCollection() {
             $get = $this->input->get();
             $resultarray = array();
@@ -1168,6 +1169,12 @@
             $this->db->select('id, description');
             $this->db->from('gcchris.tblcompanies');
             
+            $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+
+            if ($view_by_company) {
+                $this->db->where('id', $this->user_data['company']);
+            }
+
             if (isset($get['q']) && $get['q']) {
                 $this->db->like('description', $get['q'], 'both');
             }
@@ -1251,6 +1258,17 @@
             $this->db->select('id, firstname, lastname, middlename, suffix');
             $this->db->from('gccmaster.tblemployees');
             $this->db->where('employee_status', 'Active');
+
+            $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+
+            if ($view_by_company) {
+                $this->db->where('company_id', $this->user_data['company']);
+            }
+
+            if (isset($get['q']) && $get['q']) {
+                $this->db->like('firstname', $get['q'], 'both');
+                $this->db->or_like('lastname', $get['q'], 'both');
+            }
             
             if (isset($get['q']) && $get['q']) {
                 $this->db->group_start();
