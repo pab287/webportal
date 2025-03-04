@@ -1008,7 +1008,11 @@ class Accountability_m extends CI_Model {
     }
     /** v1 */
 
+    //here
     public function issuedToLookup() {
+        $privilege = $this->core_layout->getCurrentActions();
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+
         $get = $this->input->get();
         $resultarray = array();
         // if (isset($get['q'])) {
@@ -1019,6 +1023,10 @@ class Accountability_m extends CI_Model {
         $sql = "id, firstname, lastname, middlename, suffix";
         $this->db->select($sql);
         $this->db->where('employee_status', 'Active');
+
+        if ($view_by_company) {
+            $this->db->where("company_id", $this->user_data['company']);
+        }
 
         if (isset($get['q']) && $get['q']) {
             $this->db->group_start();
@@ -4918,8 +4926,15 @@ class Accountability_m extends CI_Model {
     }
 
     function getCompanyList() {
+        $privilege = $this->core_layout->getCurrentActions();
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+
         $this->db->select("id, code");
+        if ($view_by_company) {
+            $this->db->where("id", $this->user_data['company']);
+        }
         $query = $this->db->get("gcchris.tblcompanies");
+
         return $query->result();
     }
 

@@ -143,6 +143,7 @@ class Accountability extends MY_Controller {
     }
 
     function issued_to_lookup(){
+        $this->core_layout->setPrivilegeName("accountability_for_releasing");
         $data = $this->accountability->issuedToLookup();
 		$this->output
         ->set_content_type('json')
