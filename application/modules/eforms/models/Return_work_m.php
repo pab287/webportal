@@ -798,6 +798,13 @@ class Return_work_m extends CI_Model {
             $arrIds = array();
             $filteredIds = array();
 
+			$view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+			$companyDescription = null;
+	
+			if ($view_by_company) {
+				$companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+			}
+
             if(isset($post["date_time"]) && $post["date_time"]){
                 $tempDates = explode("-", $post["date_time"]);
                 $this->db->from($this->returnToWorkTable);
@@ -835,6 +842,12 @@ class Return_work_m extends CI_Model {
                 $this->db->where_in("id", $filteredIds);
             }
             if(isset($post["date_time"]) && $post["date_time"] && count($filteredIds) == 0){ $tempHasError = true; }
+
+			if ($view_by_company) {
+				if (isset($companyDescription) && $companyDescription) {
+					$this->db->where("company", strtoupper($companyDescription));
+				}
+			}
 
 			$queryFilter = $this->db->get();
             if($queryFilter->num_rows() > 0){
