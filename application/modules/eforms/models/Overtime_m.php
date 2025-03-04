@@ -606,9 +606,17 @@ class Overtime_m extends CI_Model {
         //     $query = $this->db->query("SELECT id, description FROM gcchris.tblcompanies WHERE is_archived = 0 LIMIT 10");
         //   }
 
+        $privilege = $this->core_layout->getCurrentActions();
+
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+
         $this->db->select("id, description");
         $this->db->from("gcchris.tblcompanies");
         $this->db->where("is_archived", 0);
+
+        if ($view_by_company) {
+            $this->db->where('id', $this->user_data['company']);
+        }
 
         if (isset($get['q'])) {
             $this->db->like("description", $get['q'], "both");

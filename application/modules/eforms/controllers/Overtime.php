@@ -195,10 +195,11 @@ function select_employee() {
         ->set_output(json_encode($data));
     }
     function get_company(){
-      $data = $this->overtime->getCompanyList();
-  $this->output
-      ->set_content_type('json')
-      ->set_output(json_encode($data));
+        $this->core_layout->setPrivilegeName("overtime_masterfile");
+        $data = $this->overtime->getCompanyList();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
   }
 
     function get_employee_department_head(){
