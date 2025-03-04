@@ -92,6 +92,7 @@ class Ticket extends MY_Controller {
         $tempData["severity"] = $this->ticket->select2CategoryData('severity');
         $tempData["responsibility"] = $this->ticket->select2CategoryData('responsibility');
         $tempData["performed_by"] = $this->ticket->select2PerformedByData();
+        $tempData["performed_by_payroll"] = $this->ticket->select2PerformedByPayrollData();
         $this->core_layout->addJs("js/ticket/edit_ticket.js", true,$tempData);
 		$this->load->view('core/templates/header');
         $this->load->view('ticket/edit_ticket');

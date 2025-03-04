@@ -1,3 +1,4 @@
+let performed_by = [];
 let getUrlParameter = function getUrlParameter(sParam) {
     let sPageURL = decodeURIComponent(window.location.search.substring(1)),
         sURLVariables = sPageURL.split('&'),
@@ -149,10 +150,16 @@ $.ajax({
         
         vmTab1.vm_tab1 = Object.assign({}, data);
 
+        if(vmTab1.vm_tab1.category == "payroll"){
+           performed_by = _tempContentData.performed_by_payroll;
+        }else{
+           performed_by = _tempContentData.performed_by;
+        }
+        
         $("#performed_by").select2({
             width: "100%",
             placeholder: "Select an option",
-            data: _tempContentData.performed_by,
+            data: performed_by,
             allowClear: true,
         });
         

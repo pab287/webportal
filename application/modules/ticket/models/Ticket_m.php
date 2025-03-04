@@ -707,6 +707,9 @@ class Ticket_m extends CI_Model
             case 'outlook':
                 $responsibility = "IT SUPPORT";
                 break;
+            case 'payroll':
+                $responsibility = "PAYROLL";
+                break;
                 
             case 'software':
                 $responsibility = $post['responsibility'];
@@ -812,6 +815,10 @@ class Ticket_m extends CI_Model
             case 'hardware':
             case 'outlook':
                 $responsibility = "IT SUPPORT";
+                break;
+
+            case 'payroll':
+                $responsibility = "PAYROLL";
                 break;
                 
             case 'software':
@@ -1205,5 +1212,27 @@ class Ticket_m extends CI_Model
         }
         return $delete;
       }
+
+      public function select2PerformedByPayrollData() {
+        $query = $this->db->query("SELECT c.id, CONCAT(c.firstname,' ',c.lastname) as emp_name 
+                                  FROM gccmaster.tblusers b, gccmaster.tblemployees c 
+                                  WHERE b.emp_id = c.id 
+                                  AND c.employee_status = 'Active' 
+                                  AND (b.role_id = 14 OR b.role_id = 124 OR b.role_id = 144) 
+                                  ORDER BY c.firstname ASC");
+        
+        $resultarray = array();
+        
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $data["id"] = $_query["id"];
+                $data["text"] = $_query["emp_name"];
+                $resultarray[] = $data;
+            }
+        }
+        
+        return $resultarray;
+    }
 
 }
