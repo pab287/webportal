@@ -2349,9 +2349,13 @@ class Reports_model extends CI_Model{
         $station_id = isset($post['filters']['station']) ? intval($post['filters']['station']) : 0;
         $training = isset($post['filters']['training']) ? $post['filters']['training'] : '';
         $title = isset($post['filters']['title']) ? $post['filters']['title'] : '';
+        $ageRange = isset($post['filters']['age_range']) ? $post['filters']['age_range'] : '18-25';
 
         if(!empty($title)){
             $filters .= "LIcense and certificate title: <strong>" . $title . "</strong> ";
+        }
+        if(!empty($ageRange)){
+            $filters .= "Age range: <strong>" . $ageRange . "</strong> ";
         }
         if(!empty($training)){
             $filters .= "Training title: <strong>" . $training . "</strong> ";
@@ -2583,6 +2587,10 @@ class Reports_model extends CI_Model{
         }
         $query = $this->db->get();
         return $query->num_rows();
+    }
+
+    public function exportAgeReport(){
+
     }
 
 }

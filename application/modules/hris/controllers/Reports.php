@@ -260,8 +260,10 @@ class Reports extends MY_Controller{
         $tempData["company"] = $this->company->select2CompanyData();
         $tempData['station'] = $this->employee->getSitePointStations();
         $tempData["department"] = $this->department->select2DepartmentData();
-        $this->core_layout->addJs("js/buttons.print.min.js", true);
         $this->core_layout->setPrivilegeName("hris_report_age");
+        $this->core_layout->addJs("js/buttons.print.min.js", true);
+        $this->core_layout->addJs("js/jszip.min.js", true);
+        // $this->core_layout->addJs("js/pdfmake.min.js", true);
         $this->core_layout->addJs("js/hris/reports/age_report.js", true,$tempData);
         $this->load->view("core/templates/header");
         $this->load->view("masterfile/reports/age");
@@ -436,6 +438,11 @@ class Reports extends MY_Controller{
 
     public function get_age_report(){
         $data = $this->report->getAgeReport();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function export_age_report(){
+        $data = $this->report->exportAgeReport();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 

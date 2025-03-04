@@ -2,6 +2,7 @@ let dropdownEl = null;
 let search_val = "";
 let thisMonth = moment();
 let _companies = [], _stations = [], _departments =[];
+let filters ={};
 let station = 0;
 let company = 0;
 let department = 0;
@@ -11,12 +12,62 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     if(typeof _tempContentData.station !== "undefined" && _tempContentData.station.length > 0){ _stations = _tempContentData.station; }
     if(typeof _tempContentData.department !== "undefined" && _tempContentData.department.length > 0){ _departments = _tempContentData.department; }
 }
-
+const url = baseUrl('hris/reports/get_employees_for_salary_range');
 const tblHrisAgeReport = $('#hris_age_reports')
     .DataTable({
         dom: "<'row mb-3'<'col-xl-3 col-lg-3 col-md-3 col-sm-12 exportDropdown'><'col-xl-9 col-lg-9 col-md-9 col-sm-12 p-0 exportSearch'f>>" +
             "<'row'<'col-12'rt>>" +
             "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'l><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    text: 'EXCEL',
+                    title: 'HRIS AGE REPORT',
+                    exportOptions: {
+                      columns: [1,2,3,4,5,6,7,8,9,10,11,12] ,
+                    },
+                  action: function (e, dt, button, config) {
+                    $.fn.dataTable.ext.buttons.excelHtml5.action.call(this, e, dt, button, config);
+                    export_log(filters, "Excel", "HRIS AGE REPORT", 1).then(() => {
+                        dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
+                    });
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: 'PDF',
+                    title: 'CRS REPORTS',
+                    className: 'btnPdfAction',
+                    orientation: 'landscape',
+                    pageSize: 'LEGAL',
+                    exportOptions: {
+                        columns: [1,2,3,4,5,6,7,8,13,] ,
+                        stripHtml: false
+                    },
+                    customize: function (doc) {
+                        doc.content[1].table.widths = Array(doc.content[1].table.body[0].length + 1).join('*').split('');
+                        export_log(filters, "Excel", "HRIS AGE REPORT", 1).then(() => {
+                            dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
+                        });
+                    },
+                    
+                },
+                {
+                    extend: 'print',
+                    text: 'PDF',
+                    title: 'CRS REPORTS',
+                    orientation: 'landscape',
+                    pageSize: 'LEGAL',
+                    exportOptions: {
+                        columns: [1,2,3,4,5,6,7,8,9,] ,
+                    },
+                    customize: function (doc) {
+                        doc.content[1].table.widths = Array(doc.content[1].table.body[0].length + 1).join('*').split('');
+                        export_log("CRS - REPORTS PDF");
+                    },
+                    
+                },
+            ],
         serverSide: true,
         ordering: true,
         searching: false,
@@ -93,6 +144,17 @@ const tblHrisAgeReport = $('#hris_age_reports')
                     return data ? data : "---";
                 }
             },
+            { data: 'phealth_no', title: 'Government IDs', visible: false, width: '15%',
+                render: function(data, type, row) {
+                    let govIds = [
+                        `<span>TIN: ${row.tin || "---"}</span>\n`,
+                        `<span>SSS: ${row.SSS || "---"}</span>\n`,
+                        `<span>PAG-IBIG: ${row.pagibig_no || "---"}</span>\n`,
+                        `<span>PhilHealth: ${row.phealth_no || "---"}</span>\n`
+                    ];
+                    return govIds.join("\n");
+                }
+            }
         ],
         initComplete: function () {
             const dropdown = '' +
@@ -241,9 +303,10 @@ const tblHrisAgeReport = $('#hris_age_reports')
     .on("select2:select", function(e) {
         const { id } = e.params?.data || {};
         company = id;
+        filters.company = company;
         tblHrisAgeReport.ajax.reload();
     }).on("select2:unselecting", function(e) {
-        company = 0; 
+        filters.company = company;
         tblHrisAgeReport.ajax.reload();
     });
 
@@ -255,9 +318,11 @@ const tblHrisAgeReport = $('#hris_age_reports')
     }).on("select2:select", function(e) {
         const { id } = e.params?.data || {};
         station = id;
+        filters.station_id = station;
         tblHrisAgeReport.ajax.reload();
     }).on("select2:unselecting", function(e) {
         station = 0;
+        filters.station_id = station;
         tblHrisAgeReport.ajax.reload();
     });
 
@@ -269,9 +334,11 @@ const tblHrisAgeReport = $('#hris_age_reports')
     }).on("select2:select", function(e) {
         const { id } = e.params?.data || {};
         department = id || 0;
+        filters.department = department;
         tblHrisAgeReport.ajax.reload();
     }).on("select2:unselecting", function(e) {
         department = 0;
+        filters.department = department;
         tblHrisAgeReport.ajax.reload();
     });
 
@@ -318,6 +385,32 @@ const tblHrisAgeReport = $('#hris_age_reports')
         ageRange = values[0] + '-' + values[1];
         clearTimeout(ageRangeTimeout);
         ageRangeTimeout = setTimeout(function() {
+            filters.age_range = ageRange;
             tblHrisAgeReport.ajax.reload();
         }, 2000); 
     });
+
+    async function export_log(filters, type, name, count) {
+        try {
+            const response = await $.ajax({
+                url: siteUrl("hris/reports/log_export") + '?t=' + new Date().getTime(),
+                type: "POST",
+                data: { 
+                    filters,
+                    type: type,
+                    name: name,
+                    count: count,
+                    csrf_token: _csrf_hash 
+                },
+                // dataType: 'json'
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                },
+            });
+            return response;
+        } catch (error) {
+            console.error('Error exporting log:', error);
+            throw error;
+        }
+    }
