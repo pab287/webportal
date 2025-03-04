@@ -683,17 +683,15 @@
                     $stmt->execute();
                     if($stmt->rowCount() > 0){
                         $siteData = $stmt->fetch(PDO::FETCH_ASSOC);
-                        $geofenceCoords = unserialize($siteData['geofence_polygon']);
-                        if($this->getInsideParam($geofenceCoords, $lat, $lon)){
-                            $results[] = true;
-                        } else {
-                            $results[] = false;
+                        $geofenceCoords = @unserialize($siteData['geofence_polygon']);
+                        if($geofenceCoords){
+                            if($this->getInsideParam($geofenceCoords, $lat, $lon)){ $results[] = true; }
+                            else { $results[] = false; }
                         }
                     }
                 }
                 return in_array(true, $results);
-            }
-            return false;
+            } else { return false; }
         }
 
         private function getInsideParam(array $arra_coords, $lat = null, $lon = null){
