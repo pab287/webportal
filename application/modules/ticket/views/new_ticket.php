@@ -96,6 +96,16 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
+                                    <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
+                                        Severity <span style="color:red;">*</span>
+                                    </label>
+                                    <div class="col-sm-12 col-xs-12 col-md-8">
+                                        <select id="severity" name="severity" class="form-control select2" data-validation="required">
+                                            <option></option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
                                         Department <span style="color:red;">*</span>
                                     </label>
