@@ -114,122 +114,125 @@
 
         public function verifyingV2(){
             $conn = $this->conn("gccmaster");
-            $array_response["data_array"] = array();
             $response = array();
 
-            $username = $_POST['username'];
-            $password = md5($_POST['password']);
-            $unique_id = $_POST['unique_id'];
-            $device_id  = $_POST['device_id'];
-            $device_name  = str_replace(" ", "_", $_POST['device_name']);
+            if(isset($_POST['username'], $_POST['password']) && $_POST['username'] != null && $_POST['password'] != null){
+                if(isset($_POST['unique_id'], $_POST['device_id'], $_POST['device_name']) && $_POST['unique_id'] != null && $_POST['device_id'] != null && $_POST['device_name'] != null){
+                    $username = $_POST['username'];
+                    $password = md5($_POST['password']);
+                    $unique_id = $_POST['unique_id'];
+                    $device_id  = $_POST['device_id'];
+                    $device_name  = str_replace(" ", "_", $_POST['device_name']);
 
-            $sth = $conn->prepare('SELECT a.biometricno, a.id, a.firstname, b.username, b.emp_id, a.biometricno,
-                                          a.idno, c.name as position_name, a.pic_filename, a.lastname,
-                                          IF(a.company_id IS NULL, "No Company", d.code) as company,
-                                          IF(a.department_id IS NULL, "No Department", e.code)  as department
-                                   FROM tblemployees AS a
-                                   LEFT JOIN tblusers AS b
-                                   ON a.id = b.emp_id
-                                   LEFT JOIN gcchris.tblposition AS c
-                                   ON c.id = a.position OR c.name = a.position
-                                   LEFT JOIN gcchris.tblcompanies AS d
-                                   ON d.id = a.company_id
-                                   LEFT JOIN gcchris.tbldepartments AS e
-                                   ON e.id = a.department_id OR e.description = a.department_id
-                                   WHERE a.biometricno = :usern OR b.username = :usern AND b.password = :passw');
-            $sth->bindParam(':usern', $username);
-            $sth->bindParam(':passw', $password);
-            $sth->execute();
-            $count = $sth->rowCount();
-            $emp_data = $sth->fetch(PDO::FETCH_ASSOC);
+                    $sth = $conn->prepare('SELECT a.biometricno, a.id, a.firstname, b.username, b.emp_id, a.biometricno,
+                        a.idno, c.name as position_name, a.pic_filename, a.lastname,
+                        IF(a.company_id IS NULL, "No Company", d.code) as company,
+                        IF(a.department_id IS NULL, "No Department", e.code)  as department
+                    FROM tblemployees AS a
+                    LEFT JOIN tblusers AS b
+                    ON a.id = b.emp_id
+                    LEFT JOIN gcchris.tblposition AS c
+                    ON c.id = a.position OR c.name = a.position
+                    LEFT JOIN gcchris.tblcompanies AS d
+                    ON d.id = a.company_id
+                    LEFT JOIN gcchris.tbldepartments AS e
+                    ON e.id = a.department_id OR e.description = a.department_id
+                    WHERE a.biometricno = :usern OR b.username = :usern AND b.password = :passw');
 
-            if ($count > 0) {
+                    $sth->bindParam(':usern', $username);
+                    $sth->bindParam(':passw', $password);
+                    $sth->execute();
+                    $count = $sth->rowCount();
+                    $emp_data = $sth->fetch(PDO::FETCH_ASSOC);
 
-                $app_user_id = md5($unique_id.$emp_data['id']);
-                $checkUser = $this->checkUserExist($emp_data['id'], $device_name, $device_id, $app_user_id, $unique_id, $emp_data['biometricno']);
+                    if ($count > 0) {
+                        $app_user_id = md5($unique_id.$emp_data['id']);
+                        $checkUser = $this->checkUserExist($emp_data['id'], $device_name, $device_id, $app_user_id, $unique_id, $emp_data['biometricno']);
+                        if ($checkUser === 'grant_access') {
+                            $this->saveLogs("success", "sign in", $emp_data['id'], "[Mobile] User sign in");
+                            $this->updateUserStatus($emp_data['id'], $app_user_id, $unique_id, $device_id, $device_name);
 
-                if ($checkUser === 'grant_access') {
+                            $location = $this->getLocation($emp_data['biometricno']);
+                            $last_log = $this->get_last_timelog($emp_data['biometricno']);
 
-                    $this->saveLogs("success", "sign in", $emp_data['id'], "[Mobile] User sign in");
-                    $this->updateUserStatus($emp_data['id'], $app_user_id, $unique_id, $device_id, $device_name);
-
-                    $location = $this->getLocation($emp_data['biometricno']);
-                    $last_log = $this->get_last_timelog($emp_data['biometricno']);
-
-                    $response["status"] = true;
-                    $response["attendance_data"] = $this->fetchUserAttendance($emp_data['biometricno'], $emp_data['id']);
-                    $response["user_data"] = array("emp_id" => $emp_data['id'],
-                                                   "app_user_id" => $app_user_id,
-                                                   "biometric_id" => $emp_data['biometricno'],
-                                                   "firstname" => $emp_data['firstname'],
-                                                   "idno" => $emp_data['idno'],
-                                                   "position_name" => $emp_data['position_name'],
-                                                   "pic_filename" => $emp_data['pic_filename'],
-                                                   "lastname" => $emp_data['lastname'],
-                                                   "device_name" => $device_name,
-                                                   "device_id" => $device_id,
-                                                   "unique_id" => $unique_id,
-                                                   'geolocation' => $location,
-                                                   'company' => $emp_data['company'],
-                                                   'department' => $emp_data['department'],
-                                                   'last_log' => $last_log
-                                                );
-                } else {
-                    $response["status"] = false;
-                    $response["msg"] = $checkUser;
-                }
-               
-            } else {
-                $response["status"] = false;
-                $response["msg"] = "Username and password is incorrect.";
-            }
-
-            array_push($array_response["data_array"], $response);
-
-            return json_encode($array_response);
-        }
-
-        function getLocation($bio){
-            $resultset = array();
-            $arrData = array();
-            $location = array();
-            // personnel
-            // 
-            if($bio){
-                $conn = $this->conn("gcctimeutility");
-                // SELECT c.geofence_polygon FROM personnel AS a LEFT JOIN personnel_locations AS b ON b.personnel_id = a.id LEFT JOIN app_location_sites AS c ON c.id = b.site_location_id WHERE a.biometric_id = 10838 OR a.biometricno = 10838;
-                $sql = "SELECT c.geofence_polygon FROM gcctimeutility.personnel AS a LEFT JOIN gcctimeutility.personnel_locations AS b ON b.personnel_id = a.id LEFT JOIN gcctimeutility.app_location_sites AS c ON c.id = b.site_location_id WHERE a.biometric_id = '$bio' OR a.biometricno = '$bio'";
-                $allData = $conn->prepare($sql);
-                // $allData->bindParam(':biometric_id', $bio);
-                // $allData->bindParam(':biono', $bio);
-                $allData->execute();
-                $count = $allData->rowCount();
-
-                if($count != 0){
-                    $row = $allData->fetchAll(PDO::FETCH_ASSOC);
-                    $geolocation = @unserialize($row['geofence_polygon']);
-
-                    foreach($row as $key => $rs){
-                        // $geolocation = @unserialize($rs['geofence_polygon']);
-
-                        $rs = $this->changeGeoKey($rs['geofence_polygon']);
-
-                        $arrData[$key] = $rs;
-
+                            $response["status"] = true;
+                            $response["attendance_data"] = $this->fetchUserAttendance($emp_data['biometricno'], $emp_data['id']);
+                            $response["user_data"] = array("emp_id" => $emp_data['id'],
+                                "app_user_id" => $app_user_id,
+                                "biometric_id" => $emp_data['biometricno'],
+                                "firstname" => $emp_data['firstname'],
+                                "idno" => $emp_data['idno'],
+                                "position_name" => $emp_data['position_name'],
+                                "pic_filename" => $emp_data['pic_filename'],
+                                "lastname" => $emp_data['lastname'],
+                                "device_name" => $device_name,
+                                "device_id" => $device_id,
+                                "unique_id" => $unique_id,
+                                'geolocation' => $location,
+                                'company' => $emp_data['company'],
+                                'department' => $emp_data['department'],
+                                'last_log' => $last_log
+                            );
+                        } else {
+                            $response["status"] = false;
+                            $response["msg"] = $checkUser;
+                        }
+                    
+                    } else {
+                        $response["status"] = false;
+                        $response["msg"] = "Username and password is incorrect.";
                     }
-
-                    foreach ($arrData as $k => $v) {
-                        $resultset[] = $v;
-                    }
-
-                    // $json = preg_replace('/"([^"]+)"\s*:\s*/', '$1:', $geolocation);
-                    return json_encode($resultset);
                 }else{
-                    return 'No assigned Location';
-                    // return json_encode(array("geolocation" => 'No assigned Location'));
+                    $response["status"] = false;
+                    $response["msg"] = "Unique id, device id and device name not found, device information not found.";
                 }
             }else{
-                return 'No biometric found.';
+                $response["status"] = false;
+                $response["msg"] = "Username or password is empty, please fill in the required fields.";
+            }
+
+            return json_encode($response);
+        }
+
+        function getLocation($bio) {
+            $resultset = array();
+            $conn = $this->conn("gcctimeutility");
+        
+            $sql = "SELECT c.id, c.site_name, c.geofence_polygon, c.latitude, c.longtitude 
+                    FROM gcctimeutility.personnel AS a 
+                    LEFT JOIN gcctimeutility.personnel_locations AS b ON b.personnel_id = a.id 
+                    LEFT JOIN gcctimeutility.app_location_sites AS c ON c.id = b.site_location_id 
+                    WHERE a.biometric_id = :bio OR a.biometricno = :bio";
+        
+            $allData = $conn->prepare($sql);
+            $allData->bindParam(':bio', $bio, PDO::PARAM_STR);
+            $allData->execute();
+        
+            if ($allData->rowCount() > 0) {
+                $rows = $allData->fetchAll(PDO::FETCH_ASSOC);
+        
+                if (!empty($rows[0]['geofence_polygon'])) {
+                    foreach ($rows as $row) {
+                        if (!empty($row['geofence_polygon'])) {
+                            $row['geofence_polygon'] = $this->changeGeoKey($row['geofence_polygon']);
+        
+                            $resultset[] = [
+                                "data" => [
+                                    "id" => $row["id"],
+                                    "site_name" => $row["site_name"],
+                                    "latitude" => $row["latitude"],
+                                    "longtitude" => $row["longtitude"],
+                                ],
+                                "geofence_polygon" => $row["geofence_polygon"]
+                            ];
+                        }
+                    }
+                    return json_encode(["message" => "Success", "sitelocation" => $resultset, "status" => true]);
+                } else {
+                    return json_encode(["message" => "No assigned location", "status" => false]);
+                }
+            } else {
+                return json_encode(["message" => "No assigned location", "status" => false]);
             }
         }
 

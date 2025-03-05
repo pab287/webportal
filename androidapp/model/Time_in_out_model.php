@@ -126,7 +126,7 @@
                 $emp_id = $_POST['emp_id'];
                 $bio_num = $_POST['biometric_id'];
                 $time_status = $_POST['time_status'];
-                $coords = $_POST['coords'];
+                $coords = isset($_POST['coords']) ? json_decode($_POST['coords'], true) : null;
 
                 if($time_status==='in'){ $logs_action = 'time in'; }
                 elseif($time_status==='out'){ $logs_action = 'time out'; }
@@ -219,7 +219,7 @@
                 return 0;
             }
         }
-
+        
         public function all_logs(){
             if(isset($_POST['biometric_id']) && $_POST['biometric_id'] != null){
                 $biometric_id = $_POST['biometric_id'];
@@ -830,42 +830,38 @@
             $resultset = array();
             $arrData = array();
             $location = array();
-
-            // personnel
-            // 
             if(isset($post['biometricno']) && $post['biometricno']){
                 $bio = $post['biometricno'];
                 $conn = $this->conn("gcctimeutility");
-                // SELECT c.geofence_polygon FROM personnel AS a LEFT JOIN personnel_locations AS b ON b.personnel_id = a.id LEFT JOIN app_location_sites AS c ON c.id = b.site_location_id WHERE a.biometric_id = 10838 OR a.biometricno = 10838;
-                $sql = "SELECT c.geofence_polygon FROM gcctimeutility.personnel AS a LEFT JOIN gcctimeutility.personnel_locations AS b ON b.personnel_id = a.id LEFT JOIN gcctimeutility.app_location_sites AS c ON c.id = b.site_location_id WHERE a.biometric_id = '$bio' OR a.biometricno = '$bio'";
+                $sql = "SELECT c.id, c.site_name, c.geofence_polygon, c.latitude,c.longtitude FROM gcctimeutility.personnel AS a LEFT JOIN gcctimeutility.personnel_locations AS b ON b.personnel_id = a.id LEFT JOIN gcctimeutility.app_location_sites AS c ON c.id = b.site_location_id WHERE a.biometric_id = '$bio' OR a.biometricno = '$bio'";
                 $allData = $conn->prepare($sql);
-                // $allData->bindParam(':biometric_id', $bio);
-                // $allData->bindParam(':biono', $bio);
                 $allData->execute();
                 $count = $allData->rowCount();
-
                 if($count != 0){
-                    $row = $allData->fetchAll(PDO::FETCH_ASSOC);
-                    $geolocation = @unserialize($row['geofence_polygon']);
-
-                    foreach($row as $key => $rs){
-                        // $geolocation = @unserialize($rs['geofence_polygon']);
-
-                        $rs = $this->changeGeoKey($rs['geofence_polygon']);
-
-                        $arrData[$key] = $rs;
-
+                    $rows = $allData->fetchAll(PDO::FETCH_ASSOC);
+                    if($rows[0]['geofence_polygon'] != ''){
+                        foreach ($rows as $row) {
+                            if (!empty($row['geofence_polygon'])) {
+                                $row['geofence_polygon'] = $this->changeGeoKey($row['geofence_polygon']);
+                                
+                                $resultset[] = [
+                                    "data"=> [
+                                    "id" => $row["id"],
+                                    "site_name" => $row["site_name"],
+                                    "latitude" => $row["latitude"],
+                                    "longtitude" => $row["longtitude"],
+                                ],
+                                    "geofence_polygon" => $row["geofence_polygon"]
+                                ];
+                            }
+                        }
+                        return json_encode(["message" => "Success", "sitelocation" => $resultset, "status" => true]);
+                    }else{
+                        return json_encode(["message" => "No assigned location", "status" => false]);
                     }
 
-                    foreach ($arrData as $k => $v) {
-                        $resultset[] = $v;
-                    }
-
-                    // $json = preg_replace('/"([^"]+)"\s*:\s*/', '$1:', $geolocation);
-                    return json_encode($resultset);
                 }else{
                     return 'No assigned Location';
-                    // return json_encode(array("geolocation" => 'No assigned Location'));
                 }
             }else{
                 return 'No biometric found.';
@@ -884,6 +880,43 @@
             }
 
             return $geolocation;
+        }
+
+        public function app_version() {
+            if (!isset($_POST['app_version']) || !isset($_POST['app_name'])) {
+                return json_encode(["error" => "Missing required parameters"]);
+            }
+        
+            $appversion = $_POST['app_version'];
+            $appname = $_POST['app_name'];
+        
+            try {
+                $conn = $this->conn("gcctimeutility");
+                
+                $sql = "SELECT * FROM gcctimeutility.app_version 
+                        WHERE app_name = :appname 
+                        ORDER BY released_dt DESC 
+                        LIMIT 1";
+                
+                $stmt = $conn->prepare($sql);
+                $stmt->bindParam(':appname', $appname, PDO::PARAM_STR);
+                $stmt->execute();
+                
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+                if ($row) {
+                    if ($row['app_version'] == $appversion) {
+                        return json_encode(["version" => "uptodate", "status" => true]);
+                    } else {
+                        return json_encode(["version" => "outdated", "latest_version" => $row['app_version'], "status" => false]);
+                    }
+                } else {
+                    return json_encode(["error" => "App version not found"]);
+                }
+        
+            } catch (PDOException $e) {
+                return json_encode(["error" => "Database error: " . $e->getMessage()]);
+            }
         }
     }
 ?>
