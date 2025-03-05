@@ -32,7 +32,7 @@ $("select#sub_category").select2({
     data: _tempContentData.subcategory,
     allowClear: true,
 });
-console.log(_tempContentData.department_id);
+
 $("select#department").select2({
     width: "100%",
     placeholder: "Select an option",
