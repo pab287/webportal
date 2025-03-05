@@ -120,18 +120,19 @@
         public function time_log(){
             $time = date("H:i:s");
             $date = date("Y-m-d");
-            if(isset($_POST['biometric_id']) && $_POST['biometric_id'] != null){
+            $logs_action = 'time log';
+
+            if(isset($_POST['biometric_id'], $_POST['emp_id']) && ($_POST['biometric_id'] != null && $_POST['emp_id'] != null)){
                 $emp_id = $_POST['emp_id'];
                 $bio_num = $_POST['biometric_id'];
                 $time_status = $_POST['time_status'];
                 $coords = $_POST['coords'];
 
-                $logs_action = '';
                 if($time_status==='in'){ $logs_action = 'time in'; }
                 elseif($time_status==='out'){ $logs_action = 'time out'; }
                 else { $logs_action = $time_status; }
                 
-                if($coords['latitude'] != null && $coords['longitude'] != null){
+                if(isset($coords['latitude'], $coords['longitude']) && ($coords['latitude'] != null && $coords['longitude'] != null)){
                     $latitude = $coords['latitude'];
                     $longitude = $coords['longitude'];
 
@@ -209,129 +210,13 @@
                             return json_encode($this->user_logs($bio_num, $date, $time, 4));
                         }
                     }
-                }
-            }
-        }
-
-        public function time_log_spam(){
-            $time = date("H:i:s");
-            $date = date("Y-m-d");
-
-            if(isset($_POST['biometric_id']) && $_POST['biometric_id'] != null){
-                $emp_id = $_POST['emp_id'];
-                $bio_num = $_POST['biometric_id'];
-                $time_status = $_POST['time_status'];
-                $coords = $_POST['coords'];
-
-                $logs_action = '';
-                if($time_status==='in'){ $logs_action = 'time in'; } 
-                elseif($time_status==='out'){ $logs_action = 'time out'; } 
-                else { $logs_action = $time_status; }
-
-                if($coords['latitude'] != null && $coords['longitude'] != null){
-                    $latitude = $coords['latitude'];
-                    $longitude = $coords['longitude'];
-                    $conn = $this->conn("gcctimeutility");
-                    $personnel_id = $this->personnel_id($bio_num);
-                    $sites_id = $this->sites_location_id($personnel_id);
-
-                    $stats = 1;
-                    $this->store_logs_spam($_POST, $personnel_id);
-                    $max_time = date('H:i:s', strtotime($this->setInterval_spam($bio_num). "+ 1 minute"));
-                    
-                    $location = $this->polygon_geofence($sites_id, $latitude, $longitude);
-                    $travel_order = $this->location_coordinates($bio_num, $latitude, $longitude);
-                    $address = $this->geoaddress($longitude,$latitude);
-
-                    if($this->setInterval_spam($bio_num) == null){
-                        if(count($sites_id) != 0){
-                            $insertedID = $this->addAppAttendanceRecordSpam(array(
-                                'biometric_id' => $bio_num,
-                                'time' => $time,
-                                'date' => $date,
-                                'address' => $address,
-                                'longitude' => $longitude,
-                                'latitude' => $latitude,
-                                'is_fingerprint' => $stats,
-                                'time_status' => $time_status
-                            ));
-                            
-                            if($insertedID){
-                                $resp = 0;
-                                if($location != 0){ $resp = $location; }
-                                elseif($travel_order != 0){ $resp = $travel_order; }
-                                else{ $resp = 2; }
-                                $arr = [
-                                    'in_range' => $_POST['in_range'],
-                                    'bio' => $bio_num,
-                                    'last_id' => $insertedID,
-                                ];
-
-                                $query = "UPDATE gcctimeutility.app_attendance_spam SET in_range = :in_range WHERE biometric_id = :bio AND id = :last_id";
-                                $_data = $conn->prepare($query);
-                                
-                                if($_data->execute($arr)){
-                                    $this->saveLogs("success", $logs_action, $emp_id, "[Mobile] Attendance - user ".$logs_action.".");
-                                    return json_encode($this->user_logs_spam($bio_num, $date, $time, $resp, $insertedID, $time));
-                                }
-
-                            }else{
-                                $this->saveLogs("error", $logs_action, $emp_id, "[Mobile] Attendance - user tried to ".$logs_action." with error in saving.");
-                                return 3;
-                            }
-                        }else{
-                            $this->saveLogs("error", $logs_action, $emp_id, "[Mobile] Attendance - user tried to ".$logs_action." with no site location.");
-                            return 0;
-                        }
-                    }else{
-                        if($max_time < $time){
-                            if(count($sites_id) != 0){
-                                $insertedID = $this->addAppAttendanceRecordSpam(array(
-                                    'biometric_id' => $bio_num,
-                                    'time' => $time,
-                                    'date' => $date,
-                                    'address' => $address,
-                                    'longitude' => $longitude,
-                                    'latitude' => $latitude,
-                                    'is_fingerprint' => $stats,
-                                    'time_status' => $time_status
-                                ));
-
-                                if($insertedID){
-                                    $this->log($bio_num, $longitude, $latitude);
-                                    $resp = 0;
-                                    if($location != 0){ $resp = $location; }
-                                    elseif($travel_order != 0){ $resp = $travel_order; }
-                                    else{ $resp = 2; }
-                                    $arr = [
-                                        'in_range' => $_POST['in_range'],
-                                        'bio' => $bio_num,
-                                        'last_id' => $insertedID,
-                                    ];
-
-                                    $query = "UPDATE gcctimeutility.app_attendance_spam SET in_range = :in_range WHERE biometric_id = :bio AND id = :last_id";
-                                    $_data = $conn->prepare($query);
-                                
-                                    if($_data->execute($arr)){
-                                        $this->saveLogs("success", $logs_action, $emp_id, "[Mobile] Attendance - user ".$logs_action.".");
-                                        return json_encode($this->user_logs_spam($bio_num, $date, $time, $resp, $insertedID, $time));
-                                    }
-                                }else{
-                                    $this->saveLogs("error", $logs_action, $emp_id, "[Mobile] Attendance - user tried to ".$logs_action." with error in saving.");
-                                    return 3;
-                                }
-                            }else{
-                                $this->saveLogs("error", $logs_action, $emp_id, "[Mobile] Attendance - user tried to ".$logs_action." with no site location.");
-                                return 0;
-                            }
-                        }else{
-                            $this->saveLogs("error", $logs_action, $emp_id, "[Mobile] Attendance - user tried to ".$logs_action." again while has 1 minute interval.");
-                            return json_encode($this->user_logs_spam($bio_num, $date, $time, 4));
-                        }
-                    }
                 }else{
-                    return 4;
+                    $this->saveLogs("error", $logs_action, $emp_id, "[Mobile] Attendance - user tried to ".$logs_action." with no coordinates.");
+                    return 0;
                 }
+            }else{
+                $this->saveLogs("error", $logs_action, 0, "[Mobile] Attendance - user tried to ".$logs_action." with no biometric id.");
+                return 0;
             }
         }
 
