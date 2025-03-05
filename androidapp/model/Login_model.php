@@ -643,16 +643,14 @@
         }
 
         public function changeGeoKey($location){
-
             $geolocation = @unserialize($location);
-            
-            foreach($geolocation as $key => $row){
-                $geolocation[$key]['latitude'] = $geolocation[$key]['lat'];
-                $geolocation[$key]['longitude'] = $geolocation[$key]['lng'];
-
-                unset($geolocation[$key]['lat'], $geolocation[$key]['lng']);
+            if($geolocation){
+                foreach($geolocation as $key => $row){
+                    $geolocation[$key]['latitude'] = $geolocation[$key]['lat'];
+                    $geolocation[$key]['longitude'] = $geolocation[$key]['lng'];
+                    unset($geolocation[$key]['lat'], $geolocation[$key]['lng']);
+                }
             }
-
             return $geolocation;
         }
 
