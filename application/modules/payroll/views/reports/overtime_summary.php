@@ -14,6 +14,7 @@
     .table th, .table td { padding: 0.25rem; }
     table.dataTable tfoot tr:first-child th{ border-top: 1px solid #000000; }
     table.dataTable tfoot tr:first-child th{ border-bottom: 4px double #000000; }
+    #portlet--signatories { page-break-inside: inherit; }
 }
 </style>
 <div class="m-content">
@@ -36,6 +37,18 @@
                             <i class="fa fa-download pr-1"></i>
                             <span>Export Excel</span>
                         </button>
+                    </li>
+                    <li id="actionSignatories" class="m-portlet__nav-item text-right m-animate-fade-in" v-if="show_signatories === true">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-accent btnEdit">Signatories</button>
+                            <button type="button" class="btn btn-accent btnEdit dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="sr-only">Toggle Dropdown</span>
+                            </button>
+                            <div class="dropdown-menu" x-placement="bottom-start">
+                            <a class="dropdown-item" href="javascript:void(0);" @click="editSignatories"><i class="la la-pencil"></i> Edit Signatories</a>
+                            <a class="dropdown-item" href="javascript:void(0);" @click="resetSignatories"><i class="la la-refresh"></i> Reset Signatories</a>
+                            </div>
+                        </div>
                     </li>
                     <li class="m-portlet__nav-item">
                         <span data-toggle="modal"
@@ -155,7 +168,7 @@
                     <div class="row">
                         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                             <div class="form-group">
-                                <label class="m--font-bolder">FILTER BY</label>
+                                <label for="" class="m--font-bolder">FILTER BY</label>
                                 <div class="m-checkbox-inline">
                                     <label class="m-checkbox">
                                         <input type="radio" id="date_range_period"

@@ -199,6 +199,18 @@ const vmReportHeaders = new Vue({
     data: { show_header: false, filters: {} }
 });
 
+const vmActionSignatories = new Vue({
+    el: "#actionSignatories",
+    data: { show_signatories: false, signatories: {} },
+    methods: {
+        editSignatories: function () {
+            return psSignatoryModal.modal("show");
+        }, resetSignatories: function () {
+            return psResetSignatoryModal.modal("show");
+        }
+    }
+});
+
 $("#payroll_group").select2({
     placeholder: 'Select an option',
     width: '100%',
@@ -773,12 +785,14 @@ $(document).ready(function(){
             },
             success: function (json) {
                 _tempFilter = {};
+                vmActionSignatories.show_signatories = false;
+                
                 if (json.response) {
                     _clearTable = false;
                     _tempIds = json.data;
                     _tempFilter = { ...json.filters };
                     vmReportHeaders.filters = { ...json.filters };
-
+                    vmActionSignatories.show_signatories = true;
                     toastr.success(json.toastr_msg, "Filtered Overtime Summary Report");
                 } else {
                     _clearTable = true;
@@ -797,6 +811,7 @@ $(document).ready(function(){
                             let ctr = json.count ? json.count : 0;
                             if (json.response) { tempRow = { ...json.data }; }
                             
+                            vmActionSignatories.signatories = { ...tempRow };
                             vmTempSignatory.row = { ...tempRow };
                             vmTempSignatory.count = ctr;
                             vmTempSignatory.$mount();
