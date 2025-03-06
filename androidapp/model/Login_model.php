@@ -177,7 +177,6 @@
                             $response["status"] = false;
                             $response["msg"] = $checkUser;
                         }
-                    
                     } else {
                         $response["status"] = false;
                         $response["msg"] = "Username and password is incorrect.";
@@ -190,7 +189,6 @@
                 $response["status"] = false;
                 $response["msg"] = "Username or password is empty, please fill in the required fields.";
             }
-
             return json_encode($response);
         }
 

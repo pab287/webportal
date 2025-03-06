@@ -825,13 +825,10 @@
             file_put_contents($storage.''.$biometric_id.'.log', $log, FILE_APPEND);
         }
 
-        function getLocation(){
-            $post = $_POST;
+        public function getLocation(){
             $resultset = array();
-            $arrData = array();
-            $location = array();
-            if(isset($post['biometricno']) && $post['biometricno']){
-                $bio = $post['biometricno'];
+            if(isset($_POST['biometricno']) && $_POST['biometricno']){
+                $bio = $_POST['biometricno'];
                 $conn = $this->conn("gcctimeutility");
                 $sql = "SELECT c.id, c.site_name, c.geofence_polygon, c.latitude,c.longtitude FROM gcctimeutility.personnel AS a LEFT JOIN gcctimeutility.personnel_locations AS b ON b.personnel_id = a.id LEFT JOIN gcctimeutility.app_location_sites AS c ON c.id = b.site_location_id WHERE a.biometric_id = '$bio' OR a.biometricno = '$bio'";
                 $allData = $conn->prepare($sql);
@@ -843,7 +840,6 @@
                         foreach ($rows as $row) {
                             if (!empty($row['geofence_polygon'])) {
                                 $row['geofence_polygon'] = $this->changeGeoKey($row['geofence_polygon']);
-                                
                                 $resultset[] = [
                                     "data"=> [
                                     "id" => $row["id"],
@@ -859,7 +855,6 @@
                     }else{
                         return json_encode(["message" => "No assigned location", "status" => false]);
                     }
-
                 }else{
                     return 'No assigned Location';
                 }
