@@ -385,6 +385,9 @@
                     $this->saveLogs("error", "sign out", $emp_id, "[Mobile] User sign out");
                     return false;
                 }
+            }else{
+                $this->saveLogs("error", "sign out", 0 , "[Mobile] User sign out, user not found");
+                return false;
             }
         }
 
