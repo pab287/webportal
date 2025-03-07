@@ -901,9 +901,9 @@
         
                 if ($row) {
                     if ($row['app_version'] == $appversion && $row['is_latest'] == 1) {
-                        return json_encode(["version" => "uptodate", "status" => true]);
+                        return json_encode(["version" => "uptodate", "status" => true, "app_url" => $row['app_url']]);
                     } else {
-                        return json_encode(["version" => "outdated", "latest_version" => $row['app_version'], "status" => false]);
+                        return json_encode(["version" => "outdated", "latest_version" => $row['app_version'], "status" => false, "app_url" => $row['app_url']]);
                     }
                 } else {
                     return json_encode(["error" => "App version not found"]);
