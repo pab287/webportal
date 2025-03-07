@@ -2560,7 +2560,7 @@ class Reports_model extends CI_Model{
             if($station == 'not_assigned'){
                 $this->db->where('dsl.station_description', null);
             }else{
-                $this->db->where('dsl.id', $station);
+                $this->db->where('dsl.station_id', $station);
             }
         }
         if ($ageRange) {
