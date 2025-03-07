@@ -900,7 +900,7 @@
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);
         
                 if ($row) {
-                    if ($row['app_version'] == $appversion) {
+                    if ($row['app_version'] == $appversion && $row['is_latest'] == 1) {
                         return json_encode(["version" => "uptodate", "status" => true]);
                     } else {
                         return json_encode(["version" => "outdated", "latest_version" => $row['app_version'], "status" => false]);
