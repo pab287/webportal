@@ -360,6 +360,7 @@ const tblHrisAgeReport = $('#hris_age_reports')
         filters.company = company;
         tblHrisAgeReport.ajax.reload();
     }).on("select2:unselecting", function(e) {
+        company = 0;
         filters.company = 0;
         tblHrisAgeReport.ajax.reload();
     });
