@@ -322,8 +322,8 @@
             $emp_id = $_POST["emp_id"];
             $conn = $this->conn("gcctimeutility");
             $sth = $conn->prepare("SELECT id 
-                                   FROM gcctimeutility.app_users 
-                                   WHERE emp_id='$emp_id' AND status='2'");
+                                FROM gcctimeutility.app_users 
+                                WHERE emp_id='$emp_id' AND status='2'");
             $sth->execute();
             return $sth->rowCount();
         }
