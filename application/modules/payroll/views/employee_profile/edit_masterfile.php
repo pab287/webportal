@@ -93,7 +93,7 @@
                                         </span>
                                     </div>
                                 </div>
-                                <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                <div class="mt-1 text-sm-center text-xl-left text-lg-left row" <?=($data->employee_status != 'Active' && ($data->date_end != null || $data->date_end != '0000-00-00')) ? '' : 'hidden' ?> >
                                     <div class="col-xl-6">
                                         <span>Date Ended:</span>
                                     </div>
@@ -104,6 +104,14 @@
                                             echo !empty($date_end) ? $date_end->format("M d, Y") : "N/A";
                                             ?>
                                         </span>
+                                    </div>
+                                </div>
+                                <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                    <div class="col-xl-6">
+                                        <span>Company:</span>
+                                    </div>
+                                    <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
+                                        <span class="m--font-bolder"><?=$data->company ?></span>
                                     </div>
                                 </div>
                             </div>

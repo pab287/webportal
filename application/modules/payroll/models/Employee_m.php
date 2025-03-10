@@ -57,15 +57,17 @@
 
                 $dtTemp->setWhereParameters($parameters);
 
-                $totalData = $dtTemp->dtAllPostsCount();
-                $totalFiltered = $totalData;
+                // commented out as it returns all employee even user searched
+                // $totalData = $dtTemp->dtAllPostsCount();
+                // $totalFiltered = $totalData;
 
                 if (empty($searchValue)) {
                     $posts = $dtTemp->dtAllPosts($limit, $start, $order, $dir);
                 } else {
-                    $dtTemp->setLike("CONCAT(firstname, ' ', lastname)", $searchValue, "both");
+                    // $dtTemp->setLike("CONCAT(firstname, ' ', lastname)", $searchValue, "both");
                     $posts = $dtTemp->dtSearch($limit, $start, $searchValue, $order, $dir);
-                    $totalFiltered = $dtTemp->dtPostSearchCount($searchValue);
+                    // $totalData = $dtTemp->dtPostSearchCount($searchValue, $employee_status);
+                    // $totalFiltered = $totalData;
                 }
 
                 $data = array();
@@ -121,10 +123,14 @@
                         $data[] = $nestedData;
                     }
                 }
+
+                // get total count of employee based on search and status
+                $totalData = $this->employeeCount($searchValue, $employee_status);
+
                 $json_data = array(
                     "draw" => intval($draw),
                     "recordsTotal" => intval($totalData),
-                    "recordsFiltered" => intval($totalFiltered),
+                    "recordsFiltered" => intval($totalData),
                     "data" => $data,
                     "a" => $posts
                 );
@@ -138,6 +144,22 @@
                     "data" => array(),
                 );
             }
+        }
+
+        function employeeCount($search = null, $status) {
+            $this->db->select("id, lastname, is_incomplete, work_status, idno, firstname, middlename, suffix, company_id, department_id, position");
+            $this->db->from($this->employeeTable);
+
+            if ($status != 'All') {
+                $this->db->where('employee_status', $status);
+            }
+
+            if ($search) {
+                $this->db->like('CONCAT(firstname, " ", lastname)', $search, 'both');
+            }
+
+            $query = $this->db->get();
+            return $query->num_rows();
         }
 
         function getEmployeeData($id = null) {
