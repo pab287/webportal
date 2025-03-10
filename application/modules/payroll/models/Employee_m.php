@@ -57,15 +57,17 @@
 
                 $dtTemp->setWhereParameters($parameters);
 
-                $totalData = $dtTemp->dtAllPostsCount();
-                $totalFiltered = $totalData;
+                // commented out as it returns all employee even user searched
+                // $totalData = $dtTemp->dtAllPostsCount();
+                // $totalFiltered = $totalData;
 
                 if (empty($searchValue)) {
                     $posts = $dtTemp->dtAllPosts($limit, $start, $order, $dir);
                 } else {
                     $dtTemp->setLike("CONCAT(firstname, ' ', lastname)", $searchValue, "both");
                     $posts = $dtTemp->dtSearch($limit, $start, $searchValue, $order, $dir);
-                    $totalFiltered = $dtTemp->dtPostSearchCount($searchValue);
+                    // $totalData = $dtTemp->dtPostSearchCount($searchValue, $employee_status);
+                    // $totalFiltered = $totalData;
                 }
 
                 $data = array();
@@ -121,10 +123,14 @@
                         $data[] = $nestedData;
                     }
                 }
+
+                // instead of new query for count of employee search or onload, the totalData is based on the queried employee that is inserted to an array
+                $totalData = count($data);
+
                 $json_data = array(
                     "draw" => intval($draw),
                     "recordsTotal" => intval($totalData),
-                    "recordsFiltered" => intval($totalFiltered),
+                    "recordsFiltered" => intval($totalData),
                     "data" => $data,
                     "a" => $posts
                 );
