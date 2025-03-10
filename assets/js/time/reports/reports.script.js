@@ -16,7 +16,25 @@ let dtAbsenteeReport;
 
 const dropdown = $("#tbl-absentee-report > i");
 
-getAbsenteeReportList();
+var reportType, isNull = true;
+if (typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0) {
+    if(typeof _tempContentData.type !== "undefined" && _tempContentData.type){ reportType = _tempContentData.type; }
+    if(typeof _tempContentData.isNull !== "undefined" && _tempContentData.isNull){ isNull = _tempContentData.isNull; }
+
+    isNull = _tempContentData.isNull;
+}
+
+// getAbsenteeReportList(); //original source code
+
+if (isNull) {
+    getAbsenteeReportList();
+} else {
+    if (reportType === "late") {
+        getLateReportList();
+    } else {
+        getAbsenteeReportList();
+    }
+}
 //init company collection
 
 $(".m-tabs__link")
