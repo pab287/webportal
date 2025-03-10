@@ -127,6 +127,7 @@ class Accountability extends MY_Controller {
     }
 
     function masterfile_list(){
+        $this->core_layout->setPrivilegeName("accountability_for_releasing");
         $data = $this->accountability->masterfileList();
 		$this->output
         ->set_content_type('json')
@@ -134,6 +135,7 @@ class Accountability extends MY_Controller {
     }
 
     function archive_list(){
+        $this->core_layout->setPrivilegeName("accountability_archive");
         $data = $this->accountability->archiveList();
 		$this->output
         ->set_content_type('json')
@@ -141,6 +143,7 @@ class Accountability extends MY_Controller {
     }
 
     function issued_to_lookup(){
+        $this->core_layout->setPrivilegeName("accountability_for_releasing");
         $data = $this->accountability->issuedToLookup();
 		$this->output
         ->set_content_type('json')
@@ -400,6 +403,7 @@ class Accountability extends MY_Controller {
     }
 
     function released_assets(){
+        $this->core_layout->setPrivilegeName("accountability_for_releasing");
         $data = $this->accountability->releasedAssets(0, true);
 		$this->output
         ->set_content_type('json')
@@ -407,6 +411,7 @@ class Accountability extends MY_Controller {
     }
 
     function returned_assets(){
+        $this->core_layout->setPrivilegeName("accountability_for_releasing");
         $data = $this->accountability->releasedAssets(1, false);
 		$this->output
         ->set_content_type('json')

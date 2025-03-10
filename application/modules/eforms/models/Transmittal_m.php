@@ -31,11 +31,17 @@
             $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
             $status = (isset($post['status']) && $post['status']) ? ucwords($post['status']) : null; //clicked in portal dashboard
 
-            
             $view_by_dept = (in_array("view_by_dept", $this->current_action)) ? true : false;
+
+            $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+            $companyDescription = null;
+
+            if ($view_by_company) {
+                $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+            }
             
-            $rowData = $this->get_all_transmittal_items($query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $advanceSearch, $advanceSearchData, $status, $view_by_dept);
-            $rowCount = $this->get_all_transmittal_items_count($query_builder, $search, $advanceSearch, $advanceSearchData, $status, $view_by_dept);
+            $rowData = $this->get_all_transmittal_items($query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $advanceSearch, $advanceSearchData, $status, $view_by_dept, $view_by_company, $companyDescription);
+            $rowCount = $this->get_all_transmittal_items_count($query_builder, $search, $advanceSearch, $advanceSearchData, $status, $view_by_dept, $view_by_company, $companyDescription);
             
             // if ($advanceSearch === "true") {
             //     $rowData = $this->advanceSearchTransmittal($limit, $offset, $sortBy, $sortOrder, $advanceSearchData, $status, $view_by_dept);
@@ -64,7 +70,7 @@
             return $resultset;
         }
 
-        public function get_all_transmittal_items($query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $isAdvanceSearch = false, $_data = null, $status = null, $view_dept) {
+        public function get_all_transmittal_items($query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $isAdvanceSearch = false, $_data = null, $status = null, $view_dept, $view_by_company = false, $companyDescription = null) {
             $check = date("Y-m-d", strtotime("-1 year", time()));
             $data = array();
             $createdName = "";
@@ -97,6 +103,16 @@
 
             $this->db->where('status != ', 'Cancelled');
             $this->db->where('DATE(a.ship_date) >= ', $check);
+
+            if ($view_by_company) {
+                $this->db->group_start();
+                $this->db->where('a.company_from', $this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('a.company_from', $companyDescription);
+                }
+                $this->db->group_end();
+            }
 
             if($query_builder){
                 $this->db->where($query_builder);
@@ -213,7 +229,7 @@
             return $data;
         }
 
-        public function get_all_transmittal_items_count($query_builder=null, $search = null, $isAdvanceSearch = false, $_data = null, $status = null, $view_dept) {
+        public function get_all_transmittal_items_count($query_builder=null, $search = null, $isAdvanceSearch = false, $_data = null, $status = null, $view_dept, $view_by_company = false, $companyDescription = null) {
             $check = date("Y-m-d", strtotime("-1 year", time()));
             $createdName = "";
 
@@ -247,6 +263,16 @@
 
             $this->db->where('status != ', 'Cancelled');
             $this->db->where('DATE(a.ship_date) >= ', $check);
+
+            if ($view_by_company) {
+                $this->db->group_start();
+                $this->db->where('a.company_from', $this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('a.company_from', $companyDescription);
+                }
+                $this->db->group_end();
+            }
 
             if($query_builder){
                 $this->db->where($query_builder);
@@ -786,8 +812,15 @@
             $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
             $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
 
-            $rowData = $this->get_all_archive_items($search, $limit, $offset, $sortBy, $sortOrder);
-            $rowCount = $this->get_all_archive_items_count($search);
+            $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+            $companyDescription = null;
+
+            if ($view_by_company) {
+                $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+            }
+
+            $rowData = $this->get_all_archive_items($search, $limit, $offset, $sortBy, $sortOrder, $view_by_company, $companyDescription);
+            $rowCount = $this->get_all_archive_items_count($search, $view_by_company, $companyDescription);
             // if (!$search) {
             //     $rowData = $this->get_all_archive($limit, $offset, $sortBy, $sortOrder);
             //     $rowCount = $this->get_all_archive_count();
@@ -805,7 +838,7 @@
             return $resultset;
         }
 
-        function get_all_archive_items($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder){
+        function get_all_archive_items($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $view_by_company = false, $companyDescription = null) {
             $data = array();
             $check = date("Y-m-d", strtotime("-1 year", time()));
 
@@ -823,6 +856,16 @@
                 $this->db->where('a.status', 'Cancelled');
                 $this->db->or_where('DATE(a.ship_date) <= ', $check);
             $this->db->group_end();
+
+            if ($view_by_company) {
+                $this->db->group_start();
+                $this->db->where('a.company_from', $this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('a.company_from', $companyDescription);
+                }
+                $this->db->group_end();
+            }
 
             if (isset($search) && $search) {
                 $this->db->group_start();
@@ -876,7 +919,7 @@
             return $data;
         }
 
-        function get_all_archive_items_count($search = null){
+        function get_all_archive_items_count($search = null, $view_by_company = false, $companyDescription = null) {
             $check = date("Y-m-d", strtotime("-1 year", time()));
 
             $filterFields = array("a.id", "a.status", "a.priority", "a.reference_no", "a.company_from", "a.ship_date", "c.description", "a.created_by", "a.created_dt", "a.ship_to", "a.company_to", "a.department_to", "a.ship_to_address", "e.firstname", "e.lastname");
@@ -893,6 +936,16 @@
                 $this->db->where('a.status', 'Cancelled');
                 $this->db->or_where('DATE(a.ship_date) <= ', $check);
             $this->db->group_end();
+
+            if ($view_by_company) {
+                $this->db->group_start();
+                $this->db->where('a.company_from', $this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('a.company_from', $companyDescription);
+                }
+                $this->db->group_end();
+            }
 
             if (isset($search) && $search) {
                 $this->db->group_start();
@@ -1103,6 +1156,7 @@
             return $rowCount;
         }
 
+        //here
         function getCompanyCollection() {
             $get = $this->input->get();
             $resultarray = array();
@@ -1115,6 +1169,12 @@
             $this->db->select('id, description');
             $this->db->from('gcchris.tblcompanies');
             
+            $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+
+            if ($view_by_company) {
+                $this->db->where('id', $this->user_data['company']);
+            }
+
             if (isset($get['q']) && $get['q']) {
                 $this->db->like('description', $get['q'], 'both');
             }
@@ -1198,11 +1258,17 @@
             $this->db->select('id, firstname, lastname, middlename, suffix');
             $this->db->from('gccmaster.tblemployees');
             $this->db->where('employee_status', 'Active');
-            
+
+            $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+
+            if ($view_by_company) {
+                $this->db->where('company_id', $this->user_data['company']);
+            }
+
             if (isset($get['q']) && $get['q']) {
                 $this->db->group_start();
-                $this->db->like('firstname', $get['q'], 'both');
-                $this->db->or_like('lastname', $get['q'], 'both');
+                    $this->db->like('firstname', $get['q'], 'both');
+                    $this->db->or_like('lastname', $get['q'], 'both');
                 $this->db->group_end();
             }
 
