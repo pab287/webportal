@@ -64,7 +64,7 @@
                 if (empty($searchValue)) {
                     $posts = $dtTemp->dtAllPosts($limit, $start, $order, $dir);
                 } else {
-                    $dtTemp->setLike("CONCAT(firstname, ' ', lastname)", $searchValue, "both");
+                    // $dtTemp->setLike("CONCAT(firstname, ' ', lastname)", $searchValue, "both");
                     $posts = $dtTemp->dtSearch($limit, $start, $searchValue, $order, $dir);
                     // $totalData = $dtTemp->dtPostSearchCount($searchValue, $employee_status);
                     // $totalFiltered = $totalData;
@@ -124,8 +124,8 @@
                     }
                 }
 
-                // instead of new query for count of employee search or onload, the totalData is based on the queried employee that is inserted to an array
-                $totalData = count($data);
+                // get total count of employee based on search and status
+                $totalData = $this->employeeCount($searchValue, $employee_status);
 
                 $json_data = array(
                     "draw" => intval($draw),
@@ -144,6 +144,22 @@
                     "data" => array(),
                 );
             }
+        }
+
+        function employeeCount($search = null, $status) {
+            $this->db->select("id, lastname, is_incomplete, work_status, idno, firstname, middlename, suffix, company_id, department_id, position");
+            $this->db->from($this->employeeTable);
+
+            if ($status != 'All') {
+                $this->db->where('employee_status', $status);
+            }
+
+            if ($search) {
+                $this->db->like('CONCAT(firstname, " ", lastname)', $search, 'both');
+            }
+
+            $query = $this->db->get();
+            return $query->num_rows();
         }
 
         function getEmployeeData($id = null) {
