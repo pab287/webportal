@@ -93,7 +93,7 @@
                                         </span>
                                     </div>
                                 </div>
-                                <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
+                                <div class="mt-1 text-sm-center text-xl-left text-lg-left row" <?=($data->employee_status != 'Active' && ($data->date_end != null || $data->date_end != '0000-00-00')) ? '' : 'hidden' ?> >
                                     <div class="col-xl-6">
                                         <span>Date Ended:</span>
                                     </div>
