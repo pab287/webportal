@@ -806,7 +806,7 @@ class Ticket_m extends CI_Model
             $sub_category = 0;
         }
 
-        switch($post['category']) {
+        switch(strtolower($post['category'])) {
             case 'webportal':
             case 'website':
                 $responsibility = "SOFTWARE DEVELOPMENT";
