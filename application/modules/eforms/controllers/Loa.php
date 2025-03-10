@@ -295,7 +295,12 @@
                     "Contact No: {$details['phone']}\n\n" .
                     "This is a computer-generated message. Please do not reply to this number.\n\nThank you!";
                     if($contact){
-                        $this->contacts->sendSMS($contact, $msg);
+                        $smsResponse = $this->contacts->sendSMS($contact, $msg);
+                        if(isset($smsResponse["data"]) && $smsResponse["data"] !== false){
+                            $this->core_layout->setEventLog("Sent SMS to head contact for leave of absence ".$referenceNumber.".","add", "success", "gcceforms", "user");
+                        }else{
+                            $this->core_layout->setEventLog("Failed in sending SMS to head contact for leave of absence ".$referenceNumber.".","add", "error", "gcceforms", "system");
+                        }
                     }
                     if($email){
                         $details['contact_person'] = $phone;
@@ -511,12 +516,18 @@
                 $contactPerson = $this->getContactPerson($details['supervisor_meta']);
                 if (!empty($details['mobile_no']) && preg_match('/^(\+63|0)[0-9]{10}$/', $details['mobile_no'])) {
                     $message = sprintf(
-                "Hi %s,\n\nYour leave for %s is approved. Contact %s if you have any questions or concerns.\n\nThis is a computer generated message please do not reply to this number.\n\nThank you!",
-                ucwords($details['fullname']),
+                        "Hi %s,\n\nYour leave for %s is approved. Contact %s if you have any questions or concerns.\n\n
+                        This is a computer generated message please do not reply to this number.\n\nThank you!",
+                        ucwords($details['fullname']),
                         $sms_date,
                         ucwords($contactPerson)
                     );
-                    $this->contacts->sendSMS($details['mobile_no'], $message);
+                    $smsResponse = $this->contacts->sendSMS($details['mobile_no'], $message);
+                    if(isset($smsResponse["data"]) && $smsResponse["data"] !== false){
+                        $this->core_layout->setEventLog("Sent SMS to head contact for leave of absence ".$reference_no.".","add", "success", "gcceforms", "user");
+                    }else{
+                        $this->core_layout->setEventLog("Failed in sending SMS to head contact for leave of absence ".$reference_no.".","add", "error", "gcceforms", "system");
+                    }
                 }
                 if (!empty($send_to) && preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', $send_to) && !in_array(strtolower($send_to), ['none', 'n/a'])) {
                     $details['contact_person'] = $contactPerson;
@@ -526,11 +537,12 @@
                     $this->core_layout->send_email('core', 'GC & C Conyx PH', 'Leave of Absence', $email_content, $mailer);
                 }
                 $this->core_layout->setEventLog("Approve ".$reference_no.".","update", "success", "gcceforms", "user");
-                $status = TRUE;
+                $status = true;
             }else{
                 $this->core_layout->setEventLog("Failed approve ".$reference_no.".","update", "error", "gcceforms", "system");
-                $status = FALSE;
+                $status = false;
             }
+            
             echo json_encode(array("status" => $status));
         }
 
