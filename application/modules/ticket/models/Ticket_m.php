@@ -697,7 +697,7 @@ class Ticket_m extends CI_Model
             $sub_category = 0;
         }
 
-        switch($post['category']) {
+        switch(strtolower($post['category'])) {
             case 'webportal':
             case 'website':
                 $responsibility = "SOFTWARE DEVELOPMENT";
@@ -765,7 +765,7 @@ class Ticket_m extends CI_Model
             'requestor' => $this->user_data['emp_id'],
             'requested_date' => $requested_date,
             'attachment' => implode(",",$img_arr),
-            'priority' => 'low',
+            'priority' => $post['severity'],
             'status' => 'open',
             'created_at' => $date,
             'responsibility' => $responsibility
@@ -1233,6 +1233,14 @@ class Ticket_m extends CI_Model
         }
         
         return $resultarray;
+    }
+
+    public function getDepartmentID(){
+        $this->db->select('department_id');
+        $this->db->from('gccmaster.tblemployees');
+        $this->db->where('id', $this->user_data['emp_id']);
+        $query = $this->db->get();
+        return $query->row()->department_id;
     }
 
 }
