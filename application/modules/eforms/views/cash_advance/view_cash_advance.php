@@ -1419,6 +1419,55 @@ label.col-6.px-0.colon--after:after {
     </div>
 </div>
 <!-- undo for final approval -->
+
+<!-- released modal -->
+<div class="modal fade" id="released" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: block;">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">
+                    Released
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">
+                        ×
+                    </span>
+                </button>
+            </div>
+            <form id="released-form">
+                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                <div class="col-12 modal-body">
+                    <div class="form-group row align-items-center">
+                        <label class="col-md-6 col-lg-6 col-sm-12 col-xs-12 form-control-label m-0">
+                            DN Number:
+                        </label>
+                        <div class="col-md-6 col-lg-6 col-sm-12 col-xs-12">
+                            <input class="form-control" name="dn_number" id="dn_number" data-validation="required">
+                        </div>
+                    </div>
+                    <div class="form-group row align-items-center">
+                        <label class="col-md-6 col-lg-6 col-sm-12 col-xs-12 form-control-label m-0">
+                            Voucher Reference No.:
+                        </label>
+                        <div class="col-md-6 col-lg-6 col-sm-12 col-xs-12">
+                            <input class="form-control" name="voucher_ref" id="voucher_ref" data-validation="required">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn text-white btn-submit btn-primary  btnSave">
+                        Released
+                    </button>
+                    <button type="button" class="btn text-white btn-metal btnClose" data-dismiss="modal">
+                        Close
+                    </button>       
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- released modal -->
+
 <style>
 .hideTable{
     display: none

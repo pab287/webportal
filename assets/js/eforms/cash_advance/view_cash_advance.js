@@ -136,7 +136,9 @@ $("#posted").hide();
 
 $("#final_approval_modal").hide();
 $("#undo_for_final_modal").hide();
-undo_for_final_modal
+
+$("#released").hide();
+
 $("#set_acctg_modal .test_charge").keypress( function() {
     console.log( "Handler for `keypress` called." );
   });
@@ -370,6 +372,11 @@ $.ajax({
                 $("#acctg_bal_dt").append("On <b>" + moment(data.acctg_bal_dt).format('LLL') + "</b>");
                 $("#acctg_bal_remarks").append("Remarks: <b>" + data.acctg_bal_remarks2 + "</b>");
                 $("#status_detail").addClass("alert alert-success");
+
+                if (jQuery.inArray("ca_released", _currentActions) !== -1) {
+                    $("#buttons").append("<button type='button' data-toggle='modal' data-target='#released' class='btn btn-success btnUndo_approval m-btn m-btn--custom m-btn--air m-btn--box'>Released</buttons>");
+                }
+
                 if (jQuery.inArray("undo_approval", _currentActions) !== -1) {
                     $("#buttons").append("<button type='button' data-toggle='modal' data-target='#undo_approval_modal' class='btn btn-danger btnUndo_approval m-btn m-btn--custom m-btn--air m-btn--box'>Undo Approval</button>");
                 }
@@ -1689,3 +1696,15 @@ function setCaInterestPercentage(){
         }
       });
 }
+
+$.validate({
+    form: '#released-form',
+    lang: 'en',
+    onSuccess: function(form) {
+        // const formData = new FormData($("#released-form")[0]);
+        // formData.append("csrf_token", _csrf_hash);
+        console.log(form);
+
+        return false;
+    }
+})
