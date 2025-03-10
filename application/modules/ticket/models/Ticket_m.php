@@ -797,6 +797,7 @@ class Ticket_m extends CI_Model
 
     function updateTicket($id){
         $post = $this->input->post();
+        $performed_by = (isset($post["performed_by"]) && $post["performed_by"]) ? $post["performed_by"] : 0;
         if(isset($post['category']) && $post['category'] == "webportal"){
             if(isset($post['sub_category'])){
                 $sub_category = $post['sub_category'];
@@ -846,7 +847,7 @@ class Ticket_m extends CI_Model
             'message' => $post['issue'],
             // 'attachment' => implode(",",$img_arr),
             'priority' => $post['severity'],
-            'performed_by' => $post['performed_by'],
+            'performed_by' => $performed_by,
             'status' => $post['status'],
             'responsibility' => $responsibility
         );

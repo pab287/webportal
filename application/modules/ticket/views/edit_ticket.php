@@ -163,10 +163,10 @@
                             <div class='col-lg-6 col-md-12 col-sm-12'>
                                 <div class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-6 col-sm-4">
-                                        Performed by: <span style="color:red;">*</span>
+                                        Performed by:
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-8">
-                                        <select id="performed_by" name="performed_by" class="form-control select2" data-validation="required">
+                                        <select id="performed_by" name="performed_by" class="form-control select2">
                                             <option></option>
                                         </select>
                                     </div>
