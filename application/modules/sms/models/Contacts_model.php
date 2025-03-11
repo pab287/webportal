@@ -388,6 +388,7 @@ class Contacts_model extends CI_Model{
     }
 
     public function sendSMS($phone, $message){
+        $phone = $this->normalizePhoneNumber($phone);
         $smsSettings = (object) $this->sms_settings();
         $response = array();
         if ($smsSettings && $phone) {
@@ -452,5 +453,15 @@ class Contacts_model extends CI_Model{
         } else {
             return false;
         }
+    }
+
+    protected function normalizePhoneNumber(string $phone = null): ?string {
+        if ($phone === null) { return null; }
+        if (strpos($phone, '+63') === 0) {
+            $phone = '0' . substr($phone, 3);
+        } elseif (strpos($phone, '0') !== 0) {
+            $phone = '0' . $phone;
+        }
+        return $phone;
     }
 }

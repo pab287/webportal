@@ -12,9 +12,7 @@ class Cash_advance_m extends CI_Model {
 	{
         parent::__construct();
         $this->core_layout->setPrivilegeName("ca_masterfile");
-        //$this->core_layout->setPrivilegeName("ca_archive");
-   
-        $this->user_data = $this->session->userdata("logged_in"); 
+        $this->user_data = $this->session->userdata("logged_in");
         $this->current_action = $this->core_layout->getCurrentActions();
         $this->load->model("core/upload_model", "file_upload");
         $this->load->model("sms/contacts_model","contacts");
@@ -1388,9 +1386,8 @@ class Cash_advance_m extends CI_Model {
         } 
     }
 
-    function approveUpdate($id){
+    public function approveUpdate($id){
         $this->input->post();
-
         $amt_approved =  str_replace('₱ ','',str_replace( ',', '', $this->input->post('amt_approved')));
         $date = date('Y-m-d H:i:s');
         $data = array(
@@ -1448,11 +1445,10 @@ class Cash_advance_m extends CI_Model {
             }
             if($query){
                 $this->sendTelegram($id);
-                $sendMsg = $this->sendSms($id,$phoneNo);
-                if($sendMsg!=false){
+                $sendMsgNotification = $this->sendSMSNotification($id, $phoneNo);
+                if($sendMsgNotification !== false){
                     $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$id."` with a remarks of ".$data['approved_remarks']."`. message sent","update", "success", "gcceforms", "user");
-                }
-                else{
+                } else {
                     $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$id."` with a remarks of ".$data['approved_remarks']."`. message not sent","update", "error", "gcceforms", "system");
                 }
                 $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$id."` with a remarks of ".$data['approved_remarks']."`.","update", "success", "gcceforms", "user");
@@ -2904,7 +2900,7 @@ class Cash_advance_m extends CI_Model {
         return $resultset;
     }
 
-    function sendTelegram($id){
+    protected function sendTelegram($id){
         $msg = "";
         if($id){
             $details = $this->db->get_where("gcceforms.cash_advance", array('id' => $id))->row();
@@ -3515,49 +3511,24 @@ class Cash_advance_m extends CI_Model {
             return $resultset;
         }
 
-        private function sendSMS($id,$phone,$debug=false){
-            $sms = $this->contacts->sms_settings();
+        protected function sendSMSNotification($id, $phone){
+            $this->db->select("reference_no, amt_approved, employee");
             $details = $this->db->get_where("gcceforms.cash_advance", array('id' => $id))->row();
             $amount = '₱' . number_format($details->amt_approved, 2);
-            $name = $this->getEmpName($details->employee);
-            if (strpos($phone, '+63') === 0) {
-                $phone = '0' . substr($phone, 3);
-            } elseif (strpos($phone, '0') !== 0) {
-                $phone = '0' . $phone;
-            }
+            $name = strtoupper($this->getEmpName($details->employee));
+            $referenceNumber = $details->reference_no;
+
             $date = date('F j, Y');
-            $msg= "Hi $name , your cash advance request of $amount has been approved on $date. \nThe amount will be released to your account within 4-7 working days upon approval. For any questions, please contact  your department's in-charge in cash advance processing. \nThis is a system-generated message please do not reply to this number. Thank you!\nGC&C CARES";
-            $response[] = array();
-            if($sms && $phone){
-                $user = $sms['sms_user'];
-                $password = $sms['sms_pass'];
-                $playsms_url = "https://" . $sms['sms_ip'] . ":" . $sms['sms_port'] . "/index.php?app=ws";
-                $url = '&u='.$user;
-                $url.= '&h='.$password;
-                $url.= '&op=pv';
-                $url.= '&smsc='.$sms['modem'];
-                $url.= '&to='.$phone;
-                $url.= '&msg='.urlencode($msg);
-                $urltouse =  $playsms_url.$url;
-                if ($debug) { echo "Request: <br>$urltouse<br><br>"; }
-                $arrContextOptions=array(
-                  "ssl"=>array(
-                       "verify_peer"=>false,
-                       "verify_peer_name"=>false,
-                  ),
-              );
-                $response['data']=file_get_contents($urltouse,false,stream_context_create($arrContextOptions));
-                $response['urls']= $urltouse;
-                if ($debug) {
-                    echo "Response: <br><pre>".
-                    str_replace(array("<",">"),array("&lt;","&gt;"),$response).
-                    "</pre><br>"; }
-        
+            $msg = "Hi $name, your cash advance request of {$amount} has been approved on {$date}.\nThe amount will be released to your account within 4-7 working days upon approval. For any questions, please contact your department in-charge in cash advance processing.\nThis is a system-generated message please do not reply to this number. Thank you!\nGC&C CARES";
+
+            $smsResponse = $this->contacts->sendSMS($phone, $msg);
+            $isSentResponse = isset($smsResponse["data"]) && $smsResponse["data"] !== false;
+            if($isSentResponse){
+                $this->core_layout->setEventLog("Sent SMS to `{$name}` notification for cash advance reference number `{$referenceNumber}`.","add", "success", "gcceforms", "user");
             }else{
-                return false;
+                $this->core_layout->setEventLog("Failed in sending SMS to `{$name}` notification for cash advance reference number `{$referenceNumber}`.","add", "error", "gcceforms", "system");
             }
-        
-            return($response);
+            return $isSentResponse;
         }
 
         public function undoForFinal($id){
