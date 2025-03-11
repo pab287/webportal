@@ -516,8 +516,7 @@
                 $contactPerson = $this->getContactPerson($details['supervisor_meta']);
                 if (!empty($details['mobile_no']) && preg_match('/^(\+63|0)[0-9]{10}$/', $details['mobile_no'])) {
                     $message = sprintf(
-                        "Hi %s,\n\nYour leave for %s is approved. Contact %s if you have any questions or concerns.\n\n
-                        This is a computer generated message please do not reply to this number.\n\nThank you!",
+                        "Hi %s,\n\nYour leave for %s is approved. Contact %s if you have any questions or concerns.\n\nThis is a computer generated message please do not reply to this number.\n\nThank you!",
                         ucwords($details['fullname']),
                         $sms_date,
                         ucwords($contactPerson)
