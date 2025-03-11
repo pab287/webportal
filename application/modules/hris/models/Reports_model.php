@@ -1063,6 +1063,7 @@ class Reports_model extends CI_Model{
         $this->db->select("companies.id, companies.`code` `text`");
         $this->db->join('gccmaster.tblemployees emp', 'emp.company_id = companies.id', "INNER");
         $this->db->where("emp.employee_status", "Active");
+        $this->db->where('companies.is_archived', 0);
         $this->db->group_by("companies.id");
         $this->db->order_by("`code`", "ASC");
         return $this->db->get("gcchris.tblcompanies companies")->result();
@@ -1072,6 +1073,7 @@ class Reports_model extends CI_Model{
         $this->db->select("departments.id, UPPER(IF(departments.`code` = departments.`description`, 
             departments.`description`, 
             CONCAT(departments.`code`,' | ', departments.`description`))) `text`, departments.*");
+        $this->db->where('departments.is_archived', 0);
         $this->db->order_by("`code`", "ASC");
         return $this->db->get("gcchris.tbldepartments departments")->result();
     }

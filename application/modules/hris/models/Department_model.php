@@ -293,6 +293,7 @@ class Department_model extends CI_Model{
 
 	public function select2DepartmentData(){
         $this->db->select("departments.id, UPPER(CONCAT(departments.`code`,' | ', departments.`description`)) `text`, departments.*");
+		$this->db->where('departments.is_archived', 0);
         $this->db->order_by("`code`", "ASC");
         $results = $this->db->get("gcchris.tbldepartments departments")->result();
         return $results;
