@@ -265,6 +265,20 @@ class Reports extends MY_Controller{
         $this->load->view("core/templates/footer");
     }
 
+    public function age(){
+        $this->core_layout->setPageTitle("HRIS - Age");
+        $tempData = array();
+        $tempData["company"] = $this->company->select2CompanyData();
+        $tempData['station'] = $this->employee->getSitePointStations();
+        $tempData["department"] = $this->department->select2DepartmentData();
+        $this->core_layout->addJs("js/buttons.print.min.js", true);
+        $this->core_layout->setPrivilegeName("hris_report_age");
+        $this->core_layout->addJs("js/hris/reports/age_report.js", true,$tempData);
+        $this->load->view("core/templates/header");
+        $this->load->view("masterfile/reports/age");
+        $this->load->view("core/templates/footer");
+    }
+
     public function get_expiring_employees($export=0)
     {
         $work_status = isset($_GET['work_status']) ? $_GET['work_status'] : null;
@@ -430,6 +444,11 @@ class Reports extends MY_Controller{
             ->set_content_type('json')
             ->set_output(json_encode($data));
         echo '</pre>';
+    }
+
+    public function get_age_report(){
+        $data = $this->report->getAgeReport();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function get_employee_select2_data(){
