@@ -5,6 +5,7 @@ class Return_work_m extends CI_Model {
     private $companyTable = "gcchris.tblcompanies";
     private $departmentTable = "gcchris.tbldepartments";
     private $positionTable = "gcchris.tblposition";
+	protected $current_action;
 
     public function __construct() {
 		parent::__construct();
@@ -12,11 +13,20 @@ class Return_work_m extends CI_Model {
         $this->user_data = $this->session->userdata("logged_in");
 		date_default_timezone_set("Asia/Manila");
 		$this->load->library("image_lib");
+
+		$this->current_action = $this->core_layout->getCurrentActions();
     }
 
     public function getRtwDatatableRequest(){
         $post = $this->input->post();
 		if($post){
+			$view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+			$companyDescription = null;
+	
+			if ($view_by_company) {
+				$companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+			}
+
             $orderx = (isset($post["order"]) && $post["order"])? $post["order"]: false;
             $columns = array("a.status", "a.reference_no", "b.firstname", "a.return_type", "a.reason", "a.created_at", "a.id", "b.lastname", "b.middlename", "b.suffix", "a.from_date", "a.to_date");
             $dir = "DESC";
@@ -59,6 +69,16 @@ class Return_work_m extends CI_Model {
 				
 				$tempTable->setWhereParameters($parameters);
 				$tempTable->setOrWhereParameters($parameters2);
+			}
+
+			if ($view_by_company) {
+				$_parameters = array();
+
+				if (isset($companyDescription) && $companyDescription) {
+					$_parameters['a.company'] = strtoupper($companyDescription);
+				}
+
+				$tempTable->setWhereParameters($_parameters);
 			}
 
 			if(is_array($searchValue)){
@@ -156,6 +176,11 @@ class Return_work_m extends CI_Model {
 		$this->db->select("id, lastname, firstname, middlename, suffix");
 		$this->db->from($this->employeeTable);
 		$this->db->where("employee_status", "Active");
+
+		if (in_array("view_by_company", $this->current_action)) {
+			$this->db->where("company_id", $this->user_data['company']);
+		}
+
 		if(isset($get["term"]) && $get["term"]){
 			$this->db->group_start();
 			$this->db->like("CONCAT(firstname, ' ', lastname)", $get["term"], "both");
@@ -773,6 +798,13 @@ class Return_work_m extends CI_Model {
             $arrIds = array();
             $filteredIds = array();
 
+			$view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+			$companyDescription = null;
+	
+			if ($view_by_company) {
+				$companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+			}
+
             if(isset($post["date_time"]) && $post["date_time"]){
                 $tempDates = explode("-", $post["date_time"]);
                 $this->db->from($this->returnToWorkTable);
@@ -810,6 +842,12 @@ class Return_work_m extends CI_Model {
                 $this->db->where_in("id", $filteredIds);
             }
             if(isset($post["date_time"]) && $post["date_time"] && count($filteredIds) == 0){ $tempHasError = true; }
+
+			if ($view_by_company) {
+				if (isset($companyDescription) && $companyDescription) {
+					$this->db->where("company", strtoupper($companyDescription));
+				}
+			}
 
 			$queryFilter = $this->db->get();
             if($queryFilter->num_rows() > 0){

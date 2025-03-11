@@ -326,11 +326,9 @@ $(document).ready(function () {
 	$(document).on("keypress","#reason",function(e){
 		var reason = $(this).val();
 		if (/(.)\1{3,}/.test(reason)) {
-		    console.log('Not possible');
 		    alert_function("Repeated characters are not allowed. Delete the repeated charachters to proceed.");
 		    return false;
 		} else {  
-			console.log('possible'); 
 			char_check();
 		}
 	})

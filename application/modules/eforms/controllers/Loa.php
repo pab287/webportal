@@ -13,6 +13,7 @@
             // $this->authenticate->doRedirect();
             $this->load->model("Loa_m", "loa");
             $this->load->model("Registry_m", "registry");
+            $this->load->model("sms/contacts_model","contacts");
         }
 
         public function index()
@@ -152,7 +153,7 @@
             }elseif($type == '3'){
                 $result = "WHOLE DAY";
             }else{
-                $result = "OTHERS";
+                $result = "CUSTOM";
             }
             return $result;
         }
@@ -253,47 +254,68 @@
 
             if ($isValidDate) {
                 $insert = $this->loa->save($data);
-                if($this->input->post('type') == '3'){
-                    $loa_date = '<b>DATE </b>: '.$from.chr(10);
-                }else{
-                    $loa_date = '<b>DATE </b>: '.date_format(date_create($from),"Y-m-d H:i").' - '.date_format(date_create($to),"Y-m-d H:i").chr(10);
-                }
-    
-                $head_id = $this->loa->getTelegramId($department);
-                $last_id = $this->db->insert_id();
-                $emp_id = $this->loa->getEmpTelegramId($this->input->post('employee'));
+                // $head_id = $this->loa->getTelegramId($department);
+                $last_id = $insert;
+                // $emp_id = $this->loa->getEmpTelegramId($this->input->post('employee'));
     
                 if($insert){
-                    $telegram_msg = '';
-                    $telegram_msg .= '<b>LOA #</b>: '.$referenceNumber.chr(10);
-                    $telegram_msg .= '<b>EMPLOYEE: </b>'.strtoupper($this->loa->employee_details($this->input->post('employee'))->display_name).chr(10);
-                    $telegram_msg .= '<b>COMPANY: </b>'.strtoupper($company).chr(10);
-                    $telegram_msg .= '<b>DEPARTMENT: </b>'.strtoupper($department).chr(10);
-                    $telegram_msg .= '<b>TYPE: </b>'.strtoupper($this->leave_type($this->input->post('type'))).chr(10);
-                    $telegram_msg .= $loa_date;
-                    $telegram_msg .= '<b>NATURE OF LEAVE: </b>'.strtoupper($this->input->post('nature')).chr(10);
-                    $telegram_msg .= '<b>REASON: </b>'.strtoupper($this->input->post('reason')).chr(10);
-                    $telegram_msg .= '<b>ADDRESS ON LEAVE: </b>'.strtoupper($this->input->post('address')).chr(10);
-                    $telegram_msg .= '<b>NUMBER ON LEAVE: </b>'.strtoupper($this->input->post('phone')).chr(10);
-                    if($this->loa->telegram_config_if_exist('loa', 'count') > 0){
-    
-                        if($emp_id){
-                            $this->loa->telegram($telegram_msg);
-                        }
-                        if($head_id){
-                            if($head_id != 2){
-                                $this->loa->telegram_dept_heads($telegram_msg,$head_id);
-                            }
+                    $loa_date = $this->get_loa_date_sms($this->input->post('type'), $from, $to);
+
+                    $head_contact = $this->getHeadContact($this->input->post('employee'));
+                    
+                    $smsContact = $this->getContactDetails($head_contact, 'no');
+                    $emailContact = $this->getContactDetails($head_contact, 'email');
+                    $contact = $smsContact['contact'] ?? null;
+                    $msgName = $smsContact['name'] ?? null;
+                    $email = $emailContact['contact'] ?? null;
+                    $emailName = $emailContact['name'] ?? null;
+
+                    $details = [
+                        'referenceNumber' => trim($referenceNumber),
+                        'loa_date' => trim($loa_date),
+                        'sms_date' => trim(strip_tags($loa_date)),
+                        'employeeDisplayName' => trim(strip_tags($this->loa->employee_details($this->input->post('employee'))->display_name)),
+                        'leaveType' => trim(strip_tags($this->leave_type($this->input->post('type')))),
+                        'nature' => trim(strip_tags($this->input->post('nature'))),
+                        'reason' => trim(strip_tags($this->input->post('reason'))),
+                        'address' => trim(strip_tags($this->input->post('address'))),
+                        'phone' => trim(strip_tags($this->input->post('phone'))),
+                        'supervisor' => $emailName,
+                        'head_contact' => $head_contact // Include head contact details in the array
+                    ];
+
+                    $msg = "Hi $msgName,\n\n" .
+                    "{$details['employeeDisplayName']} filed a leave of absence.\n\n" .
+                    "LOA #: {$details['referenceNumber']}\n" .
+                    "Type: {$details['leaveType']}\n" .
+                    "{$details['sms_date']}\n" .
+                    "Nature of Leave: {$details['nature']}\n" .
+                    "Reason: {$details['reason']}\n" .
+                    "Address: {$details['address']}\n" .
+                    "Contact No: {$details['phone']}\n\n" .
+                    "This is a computer-generated message. Please do not reply to this number.\n\nThank you!";
+                    if($contact){
+                        $smsResponse = $this->contacts->sendSMS($contact, $msg);
+                        if(isset($smsResponse["data"]) && $smsResponse["data"] !== false){
+                            $this->core_layout->setEventLog("Sent SMS to head contact for leave of absence ".$referenceNumber.".","add", "success", "gcceforms", "user");
                         }else{
-                            
+                            $this->core_layout->setEventLog("Failed in sending SMS to head contact for leave of absence ".$referenceNumber.".","add", "error", "gcceforms", "system");
                         }
+                    }
+                    if($email){
+                        $details['contact_person'] = $phone;
+                        $details['email'] = $email;
+                        $send_email[] = $email;
+                        $mailer['send_to'] = $send_email;
+                        $details['url'] = site_url('eforms/loa/view_loa?id=').$last_id;
+                        $email_content = $this->load->view("eforms/email_templates/email_loa_for_approval.php", array("data" => $details), true);
+                        $this->core_layout->send_email('core', 'GC & C Conyx PH', 'Leave of Absence', $email_content, $mailer);
                     }
                     $reference_no = $this->db->get_where("gcceforms.loa", array("id"=>$last_id))->row('reference_no');
                     $this->core_layout->setEventLog("Filed leave of absence ".$reference_no.".","add", "success", "gcceforms", "user");
                 }else{
                     $this->core_layout->setEventLog("Failed in adding leave of absence.","add", "error", "gcceforms", "system");
                 }
-                
                 echo json_encode(array("status" => TRUE, "test" => $to, "last_id" => $last_id));
             } else {
                 echo json_encode(array("status" => FALSE));
@@ -336,7 +358,7 @@
             }
 
             // $phone = str_pad($this->input->post('phone'), 11, '0', STR_PAD_LEFT);
-            $phone = preg_replace('/[^a-zA-Z0-9]+/', '', $this->input->post('phone')); //removes special characters caused by inputmask
+            $phone = preg_replace('/[^a-zA-Z0-9]+/', '', $this->input->post('phone'));
 
             $data = array(
                 'employee' => $this->input->post('employee'),
@@ -487,12 +509,40 @@
 
             $reference_no = $this->db->get_where("gcceforms.loa", array("id"=>$id))->row('reference_no');
             if($this->loa->update(array('id' => $id), $data)){
+                $details = $this->getLeaveDetails($id);
+                $send_to = $details['email'];
+                $loa_date = $this->get_loa_date_sms($details['type'], $details['date_from'], $details['date_to']);
+                $sms_date = trim(strip_tags($loa_date));
+                $contactPerson = $this->getContactPerson($details['supervisor_meta']);
+                if (!empty($details['mobile_no']) && preg_match('/^(\+63|0)[0-9]{10}$/', $details['mobile_no'])) {
+                    $message = sprintf(
+                        "Hi %s,\n\nYour leave for %s is approved. Contact %s if you have any questions or concerns.\n\nThis is a computer generated message please do not reply to this number.\n\nThank you!",
+                        ucwords($details['fullname']),
+                        $sms_date,
+                        ucwords($contactPerson)
+                    );
+                    $smsResponse = $this->contacts->sendSMS($details['mobile_no'], $message);
+                    if(isset($smsResponse["data"]) && $smsResponse["data"] !== false){
+                        $this->core_layout->setEventLog("Sent SMS to head contact for leave of absence ".$reference_no.".","add", "success", "gcceforms", "user");
+                    }else{
+                        $this->core_layout->setEventLog("Failed in sending SMS to head contact for leave of absence ".$reference_no.".","add", "error", "gcceforms", "system");
+                    }
+                }
+                if (!empty($send_to) && preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', $send_to) && !in_array(strtolower($send_to), ['none', 'n/a'])) {
+                    $details['contact_person'] = $contactPerson;
+                    $send_email[] = $send_to;
+                    $email_content = $this->load->view("eforms/email_templates/email_loa_approval.php", array("data" => $details), true);
+                    $mailer['send_to'] = $send_email;
+                    $this->core_layout->send_email('core', 'GC & C Conyx PH', 'Leave of Absence', $email_content, $mailer);
+                }
                 $this->core_layout->setEventLog("Approve ".$reference_no.".","update", "success", "gcceforms", "user");
+                $status = true;
             }else{
                 $this->core_layout->setEventLog("Failed approve ".$reference_no.".","update", "error", "gcceforms", "system");
+                $status = false;
             }
-
-            echo json_encode(array("status" => TRUE));
+            
+            echo json_encode(array("status" => $status));
         }
 
         public function undo_approve_loa($id)
@@ -789,5 +839,148 @@
             }
 
             echo json_encode(array("status" => $status, 'message' => $message));
+        }
+
+        private function formatName($firstname, $lastname) {
+            return ucfirst(strtolower($firstname)) . ' ' . ucfirst(strtolower($lastname));
+        }
+
+        private function getCorporateHR() {
+            $query = $this->db->select("firstname, lastname")
+                             ->get_where("gccmaster.tblemployees", [
+                                 "position" => 145,
+                                 "employee_status" => "Active"
+                             ]);
+            return $this->formatName($query->row()->firstname, $query->row()->lastname);
+        }
+
+        private function getLeaveDetails($id) {
+            $query = $this->db->query("
+                SELECT
+                    l.type,
+                    l.reference_no,
+                    l.nature,
+                    l.approved_remarks,
+                    l.reason,
+                    l.date_from,
+                    l.date_to,
+                    e.mobile_no,
+                    e.position,
+                    e.supervisor_meta,
+                    COALESCE(u.email, e.email) as email,
+                    CONCAT(e.firstname, ' ', e.lastname) AS fullname,
+                    CONCAT(a.firstname, ' ', a.lastname) AS approve_by
+                FROM gcceforms.loa l
+                JOIN gccmaster.tblemployees e ON l.employee = e.id
+                JOIN gccmaster.tblemployees a ON l.approved_by = a.id
+                LEFT JOIN gccmaster.tblusers u ON u.emp_id = e.id
+                WHERE l.id = ?
+            ", [$id]);
+            return $query->row_array();
+        }
+
+        private function getContactPerson($supervisor_meta) {
+            if (!$supervisor_meta || !($managerial = @unserialize($supervisor_meta))) {
+                return "HR - ".$this->getCorporateHR();
+            }
+            $query = $this->db->select("firstname, ' ', lastname")
+                             ->get_where("gccmaster.tblemployees", [
+                                 "id" => $managerial['supervisory'],
+                                 "employee_status" => "Active"
+                             ]);
+            return "Immediate Supervisor - ".$this->formatName($query->row()->firstname, $query->row()->lastname);
+        }
+
+        private function getHeadContact($id) {
+            $query = $this->db->select("e.supervisor_meta, e.tl_supervisory, d.head_id")
+                ->from("gccmaster.tblemployees e")
+                ->join("gcchris.tbldepartments d", "d.id = e.department_id", "left")
+                ->where("e.id", $id)
+                ->get();
+        
+            $result = $query->row_array();
+
+            if (empty($result['head_id']) && !empty($result['supervisor_meta'])) {
+                $supervisorMeta = unserialize($result['supervisor_meta']);
+        
+                // If tl_supervisory is 1, fetch details for supervisory and managerial IDs
+                if ($result['tl_supervisory'] == 1 && is_array($supervisorMeta)) {
+                    // Fetch supervisory details
+                    if (!empty($supervisorMeta['supervisory'])) {
+                        $supervisoryDetails = $this->getEmployeeDetails($supervisorMeta['supervisory']);
+                        if ($supervisoryDetails) {
+                            $result['supervisory_no'] = $supervisoryDetails['mobile_no'];
+                            $result['supervisory_email'] = $supervisoryDetails['email'];
+                            $result['supervisory_name'] = $supervisoryDetails['fullname'];
+                        }
+                    }
+        
+                    // Fetch managerial details
+                    if (!empty($supervisorMeta['managerial'])) {
+                        $managerialDetails = $this->getEmployeeDetails($supervisorMeta['managerial']);
+                        if ($managerialDetails) {
+                            $result['managerial_no'] = $managerialDetails['mobile_no'];
+                            $result['managerial_email'] = $managerialDetails['email'];
+                            $result['managerial_name'] = $managerialDetails['fullname'];
+                        }
+                    }
+                }
+            }
+            else{
+                $headDetails = $this->getEmployeeDetails($result['head_id']);
+                if ($headDetails) {
+                    $result['head_no'] = $headDetails['mobile_no'];
+                    $result['head_email'] = $headDetails['email'];
+                    $result['head_name'] = $headDetails['fullname'];
+                    $result['head_telegram_chat_id'] = $headDetails['telegram_chat_id'];
+                }
+            }
+            return $result;
+        }
+
+        private function getEmployeeDetails($id) {
+            $query = $this->db->select("e.mobile_no, u.email, u.telegram_chat_id, CONCAT(e.firstname, ' ', e.lastname) AS fullname")
+                ->from("gccmaster.tblemployees as e")
+                ->join("gccmaster.tblusers u", "u.emp_id = e.id", "left")
+                ->where("e.id", $id)
+                ->get();
+        
+            return $query->row_array();
+        }
+
+        private function get_loa_date_sms($type, $date_from, $date_to) {
+            switch ($type) {
+                case 1: // Undertime
+                case 2: // Half Day
+                    return '<strong>Date:</strong> ' . date('F j, Y', strtotime($date_from))."\n".'Time: ' . date('h:i A', strtotime($date_from)) . ' - ' . date('h:i A', strtotime($date_to)) . "\n";
+                    break;
+                
+                case 3: // Whole Day
+                    return '<strong>Date:</strong> ' . date('F j, Y', strtotime($date_from)) . "\n";
+                    break;
+                
+                default: // Custom
+                    return '<strong>Date From:</strong> ' . date('F j, Y', strtotime($date_from)) . "\n" .
+                           '<br/><strong>Date To:</strong> ' . date('F j, Y', strtotime($date_to)) . "\n";
+                    break;
+            }
+        }
+
+        private function getContactDetails($head_contact, $type) {
+            $fields = [
+                'head' => ['no' => 'head_no', 'email' => 'head_email', 'name' => 'head_name'],
+                'supervisory' => ['no' => 'supervisory_no', 'email' => 'supervisory_email', 'name' => 'supervisory_name'],
+                'managerial' => ['no' => 'managerial_no', 'email' => 'managerial_email', 'name' => 'managerial_name']
+            ];
+        
+            foreach ($fields as $key => $field) {
+                if (!empty($head_contact[$field[$type]])) {
+                    return [
+                        'contact' => $head_contact[$field[$type]],
+                        'name' => $head_contact[$field['name']]
+                    ];
+                }
+            }
+            return null;
         }
     }

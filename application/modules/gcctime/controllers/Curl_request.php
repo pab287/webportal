@@ -1,6 +1,9 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
+require_once APPPATH . 'libraries/codeigniter-predis/src/Redis.php';
+
 class Curl_request extends MY_Controller {
 	private $today;
+	private $redis;
 
 	public function __construct(){
 		parent::__construct();
@@ -15,6 +18,8 @@ class Curl_request extends MY_Controller {
 		$this->telegramBotToken = "5980215549:AAFzR0QvoupYMO45Q8HAMXwgRElhmnFc9lQ";
 		$this->telegramBotUrl = "https://api.telegram.org/bot{$this->telegramBotToken}/sendMessage";
 		/*** $this->authenticate->doRedirect(); ***/
+
+		$this->redis = new \CI_Predis\Redis(['serverName' => 'localhost']);
 	}
 	
 	function getScheduledEvent($dateTime=null){
@@ -1549,5 +1554,9 @@ class Curl_request extends MY_Controller {
 		}
 
 		echo json_encode($resultset);
+	}
+
+	function scheduled_cache_flush(){
+		$this->redis->flushall();
 	}
 } 

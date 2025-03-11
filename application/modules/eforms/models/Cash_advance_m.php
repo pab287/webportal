@@ -12,9 +12,7 @@ class Cash_advance_m extends CI_Model {
 	{
         parent::__construct();
         $this->core_layout->setPrivilegeName("ca_masterfile");
-        //$this->core_layout->setPrivilegeName("ca_archive");
-   
-        $this->user_data = $this->session->userdata("logged_in"); 
+        $this->user_data = $this->session->userdata("logged_in");
         $this->current_action = $this->core_layout->getCurrentActions();
         $this->load->model("core/upload_model", "file_upload");
         $this->load->model("sms/contacts_model","contacts");
@@ -39,14 +37,21 @@ class Cash_advance_m extends CI_Model {
         $rowData = array();
         $view_own_request = (in_array("view_own_request", $this->current_action)) ? true : false;
         $view_by_dept = (in_array("view_by_dept", $this->current_action)) ? true : false;
+        $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+        $companyDescription = null;
+
+        if ($view_by_company) {
+            $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+        }
+
         if(!$search){
-            $rowData = $this->get_all_post($view_own_request, $query_builder, $limit, $offset, $sortBy, $sortOrder, $status, $view_by_dept); //added status for dashboard notification
-            $rowCount = $this->get_all_post_count($view_own_request, $query_builder, $status, $view_by_dept);
+            $rowData = $this->get_all_post($view_own_request, $query_builder, $limit, $offset, $sortBy, $sortOrder, $status, $view_by_dept, $view_by_company, $companyDescription); //added status for dashboard notification
+            $rowCount = $this->get_all_post_count($view_own_request, $query_builder, $status, $view_by_dept, $view_by_company, $companyDescription);
         }
 
         if($search){
-            $rowData = $this->get_searched_item($view_own_request, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_by_dept);
-            $rowCount = $this->get_searched_item_count($view_own_request, $query_builder, $search, $status, $view_by_dept);
+            $rowData = $this->get_searched_item($view_own_request, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_by_dept, $view_by_company, $companyDescription);
+            $rowCount = $this->get_searched_item_count($view_own_request, $query_builder, $search, $status, $view_by_dept, $view_by_company, $companyDescription);
             
             if(!empty($search)){
                 $this->core_layout->setEventLog("Cash Advance Masterfile - Searched `".$search."`.","search", "success", "gcceforms", "user");
@@ -76,7 +81,7 @@ class Cash_advance_m extends CI_Model {
         return $query->result_array();
     }
 
-    private function get_all_post($view, $query_builder=null, $limit=10, $offset=0, $sortBy, $sortOrder, $status = null, $view_dept){
+    private function get_all_post($view, $query_builder=null, $limit=10, $offset=0, $sortBy, $sortOrder, $status = null, $view_dept, $view_by_company = false, $companyDescription = null){
         $date= date("Y-m-d", strtotime("-1 year", time()));
         $sql = "a.id, a.employee, a.status, a.reference_no, b.firstname, b.middlename, b.lastname, b.suffix, a.amt_applied, a.purpose, a.amt_approved, a.created_dt, a.approved_dt, b.position as empPosition";
 
@@ -96,6 +101,14 @@ class Cash_advance_m extends CI_Model {
 
         if($view_dept && ($this->user_data['emp_id']!=1)){
             $this->db->where('b.department_id', $this->user_data['department']);
+        }
+
+        if ($view_by_company) {
+            $this->db->where('b.company_id', (int)$this->user_data['company']);
+
+            if ($companyDescription) {
+                $this->db->where('a.company', $companyDescription);
+            }
         }
 
         if($query_builder){
@@ -142,7 +155,7 @@ class Cash_advance_m extends CI_Model {
         }
     }
 
-    private function get_all_post_count($view, $query_builder=null, $status = null, $view_dept){
+    private function get_all_post_count($view, $query_builder=null, $status = null, $view_dept, $view_by_company = false, $companyDescription = null){
         $date= date("Y-m-d", strtotime("-1 year", time()));
         $this->db->from("gcceforms.cash_advance a");
         $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
@@ -161,6 +174,14 @@ class Cash_advance_m extends CI_Model {
             $this->db->where('b.department_id', $this->user_data['department']);
         }
 
+        if ($view_by_company) {
+            $this->db->where('b.company_id', $this->user_data['company']);
+
+            if ($companyDescription) {
+                $this->db->where('a.company', $companyDescription);
+            }
+        }
+
         if($query_builder){
             $this->db->where($query_builder);
         }
@@ -173,7 +194,7 @@ class Cash_advance_m extends CI_Model {
         return $query->num_rows();
     }
 
-    private function get_searched_item($view, $query_builder=null, $search=null, $limit=10, $offset=0, $sortBy, $sortOrder, $status = null, $view_dept){
+    private function get_searched_item($view, $query_builder=null, $search=null, $limit=10, $offset=0, $sortBy, $sortOrder, $status = null, $view_dept, $view_by_company = false, $companyDescription = null){
         $date= date("Y-m-d", strtotime("-1 year", time()));
         if($search){
             $sql = "a.id, a.status, a.reference_no, b.firstname, b.middlename, b.lastname, b.suffix, a.amt_applied, a.purpose, a.amt_approved, a.created_dt, a.approved_dt, b.position as empPosition";
@@ -194,6 +215,14 @@ class Cash_advance_m extends CI_Model {
 
             if($view_dept && ($this->user_data['emp_id']!=1)){
                 $this->db->where('b.department_id', $this->user_data['department']);
+            }
+
+            if ($view_by_company) {
+                $this->db->where('b.company_id', (int)$this->user_data['company']);
+
+                if ($companyDescription) {
+                    $this->db->where('a.company', $companyDescription);
+                }
             }
 
             if($query_builder){
@@ -247,7 +276,7 @@ class Cash_advance_m extends CI_Model {
         }
     }
 
-    private function get_searched_item_count($view, $query_builder=null, $search=null, $status = null, $view_dept){
+    private function get_searched_item_count($view, $query_builder=null, $search=null, $status = null, $view_dept, $view_by_company = false, $companyDescription = null){
         $date= date("Y-m-d", strtotime("-1 year", time()));
         $rowCount = 0;
         if($search){
@@ -269,6 +298,14 @@ class Cash_advance_m extends CI_Model {
 
             if($view_dept && ($this->user_data['emp_id']!=1)){
                 $this->db->where('b.department_id', $this->user_data['department']);
+            }
+
+            if ($view_by_company) {
+                $this->db->where('b.company_id', $this->user_data['company']);
+
+                if ($companyDescription) {
+                    $this->db->where('a.company', $companyDescription);
+                }
             }
             
             if($query_builder){
@@ -294,11 +331,31 @@ class Cash_advance_m extends CI_Model {
     function getEmployee(){
         $get = $this->input->get();
         $resultarray = array();
-        if(isset($get['q'])){
-            $query = $this->db->query("SELECT id, firstname, lastname, middlename, suffix FROM gccmaster.tblemployees WHERE (employee_status='Active') AND (firstname LIKE '%{$get['q']}%' OR lastname LIKE '%{$get['q']}%') ORDER BY firstname ASC LIMIT 10");
-        }else{
-            $query = $this->db->query("SELECT id, firstname, lastname, middlename, suffix FROM gccmaster.tblemployees WHERE employee_status='Active' ORDER BY firstname ASC LIMIT 10");
+        // if(isset($get['q'])){
+        //     $query = $this->db->query("SELECT id, firstname, lastname, middlename, suffix FROM gccmaster.tblemployees WHERE (employee_status='Active') AND (firstname LIKE '%{$get['q']}%' OR lastname LIKE '%{$get['q']}%') ORDER BY firstname ASC LIMIT 10");
+        // }else{
+        //     $query = $this->db->query("SELECT id, firstname, lastname, middlename, suffix FROM gccmaster.tblemployees WHERE employee_status='Active' ORDER BY firstname ASC LIMIT 10");
+        // }
+        $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+
+        $this->db->select('id, firstname, lastname, middlename, suffix');
+        $this->db->from('gccmaster.tblemployees');
+        $this->db->where('employee_status', 'Active');
+
+        if (isset($get['q'])) {
+            $this->db->group_start();
+                $this->db->like('firstname', $get['q'], 'both');
+                $this->db->or_like('lastname', $get['q'], 'both');
+            $this->db->group_end();
         }
+
+        if ($view_by_company) {
+            $this->db->where('company_id', $this->user_data['company']);
+        }
+
+        $this->db->order_by('firstname', 'ASC');
+        $this->db->limit(10);
+        $query = $this->db->get();
 
         if($query->num_rows() > 0){
             foreach($query->result_array() as $_query){
@@ -1329,9 +1386,8 @@ class Cash_advance_m extends CI_Model {
         } 
     }
 
-    function approveUpdate($id){
+    public function approveUpdate($id){
         $this->input->post();
-
         $amt_approved =  str_replace('₱ ','',str_replace( ',', '', $this->input->post('amt_approved')));
         $date = date('Y-m-d H:i:s');
         $data = array(
@@ -1389,11 +1445,10 @@ class Cash_advance_m extends CI_Model {
             }
             if($query){
                 $this->sendTelegram($id);
-                $sendMsg = $this->sendSms($id,$phoneNo);
-                if($sendMsg!=false){
+                $sendMsgNotification = $this->sendSMSNotification($id, $phoneNo);
+                if($sendMsgNotification !== false){
                     $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$id."` with a remarks of ".$data['approved_remarks']."`. message sent","update", "success", "gcceforms", "user");
-                }
-                else{
+                } else {
                     $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$id."` with a remarks of ".$data['approved_remarks']."`. message not sent","update", "error", "gcceforms", "system");
                 }
                 $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$id."` with a remarks of ".$data['approved_remarks']."`.","update", "success", "gcceforms", "user");
@@ -1464,14 +1519,21 @@ class Cash_advance_m extends CI_Model {
         $rowCount = 0;
         $rowData = array();
         $view_own_request = (in_array("view_own_request", $this->current_action)) ? true : false;
+        $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+        $companyDescription = null;
+
+        if ($view_by_company) {
+            $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+        }
+
         if(!$search){
-            $rowData = $this->get_all_post_archive($view_own_request, $limit, $offset, $sortBy, $sortOrder);
-            $rowCount = $this->get_all_post_archive_count($view_own_request);
+            $rowData = $this->get_all_post_archive($view_own_request, $limit, $offset, $sortBy, $sortOrder, $view_by_company, $companyDescription);
+            $rowCount = $this->get_all_post_archive_count($view_own_request, $view_by_company, $companyDescription);
         }
 
         if($search){
-            $rowData = $this->get_searched_item_archive($view_own_request, $search, $limit, $offset, $sortBy, $sortOrder);
-            $rowCount = $this->get_searched_item_archive_count($view_own_request, $search);
+            $rowData = $this->get_searched_item_archive($view_own_request, $search, $limit, $offset, $sortBy, $sortOrder, $view_by_company, $companyDescription);
+            $rowCount = $this->get_searched_item_archive_count($view_own_request, $search, $view_by_company, $companyDescription);
 
             if(!empty($search)){
                 $this->core_layout->setEventLog("Cash Advance Masterfile - Searched `".$search."`.","search", "success", "gcceforms", "user");
@@ -1487,17 +1549,31 @@ class Cash_advance_m extends CI_Model {
         return $resultset;
     }
 
-    private function get_all_post_archive($view, $limit=10, $offset=0, $sortBy, $sortOrder){
+    private function get_all_post_archive($view, $limit=10, $offset=0, $sortBy, $sortOrder, $view_by_company = false, $companyDescription = null){
         $sql = "a.id, a.employee, a.status, a.reference_no, b.firstname, b.middlename, b.lastname, b.suffix, a.amt_applied, a.purpose, a.amt_approved, a.created_dt, a.approved_dt";
         $date= date("Y-m-d", strtotime("-1 year"));
         $this->db->select($sql);
         $this->db->from("gcceforms.cash_advance a");
         $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
+        
         if($view && ($this->user_data['emp_id']!=1)){
             $this->db->where('a.employee', $this->user_data['emp_id']);
         }
-        $this->db->where("a.created_dt <=", $date);
-        $this->db->or_where_in("a.status","Cancelled");      
+
+        if ($view_by_company) {
+            $this->db->group_start();
+                $this->db->where('b.company_id', (int)$this->user_data['company']);
+
+                if ($companyDescription) {
+                    $this->db->where('a.company', $companyDescription);
+                }
+            $this->db->group_end();
+        }
+
+        $this->db->group_start();
+            $this->db->where("a.created_dt <=", $date);
+            $this->db->or_where_in("a.status","Cancelled");
+        $this->db->group_end();  
            
         if($limit != -1){
             $this->db->limit($limit, $offset);
@@ -1507,6 +1583,7 @@ class Cash_advance_m extends CI_Model {
         $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
 
         $query = $this->db->get();
+
         if($query->num_rows() > 0){
             $arrData = array();
             foreach($query->result() as $key => $rs){
@@ -1528,20 +1605,35 @@ class Cash_advance_m extends CI_Model {
         }
     }
 
-    private function get_all_post_archive_count($view){
+    private function get_all_post_archive_count($view, $view_by_company = false, $companyDescription = null){
         $date= date("Y-m-d", strtotime("-1 year"));
         $this->db->from("gcceforms.cash_advance a");
         $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
+        
         if($view && ($this->user_data['emp_id']!=1)){
             $this->db->where('a.employee', $this->user_data['emp_id']);
         }
-        $this->db->where("a.created_dt <=", $date);
-        $this->db->or_where_in("a.status","Cancelled");
+
+        if ($view_by_company) {
+            $this->db->group_start();
+                $this->db->where('b.company_id', (int)$this->user_data['company']);
+
+                if ($companyDescription) {
+                    $this->db->where('a.company', $companyDescription);
+                }
+            $this->db->group_end();
+        }
+
+        $this->db->group_start();
+            $this->db->where("a.created_dt <=", $date);
+            $this->db->or_where_in("a.status","Cancelled");
+        $this->db->group_end();
+
         $query = $this->db->get();
         return $query->num_rows();
     }
 
-    private function get_searched_item_archive($view, $search=null, $limit=10, $offset=0, $sortBy, $sortOrder){
+    private function get_searched_item_archive($view, $search=null, $limit=10, $offset=0, $sortBy, $sortOrder, $view_by_company = false, $companyDescription = null){
         $date= date("Y-m-d", strtotime("-1 year"));
         if($search){
             $sql = "a.id, a.status, a.reference_no, b.firstname, b.middlename, b.lastname, b.suffix, a.amt_applied, a.purpose, a.amt_approved, a.created_dt, a.approved_dt";
@@ -1549,10 +1641,24 @@ class Cash_advance_m extends CI_Model {
             $this->db->select($sql);
             $this->db->from("gcceforms.cash_advance a");
             $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
+            
             if($view && ($this->user_data['emp_id']!=1)){
                 $this->db->where('a.employee', $this->user_data['emp_id']);
             }
-            $this->db->where("(a.created_dt <= '$date' OR a.status = 'Cancelled')");
+
+            if ($view_by_company) {
+                $this->db->group_start();
+                    $this->db->where('b.company_id', (int)$this->user_data['company']);
+    
+                    if ($companyDescription) {
+                        $this->db->where('a.company', $companyDescription);
+                    }
+                $this->db->group_end();
+            }
+
+            $this->db->group_start();
+                $this->db->where("(a.created_dt <= '$date' OR a.status = 'Cancelled')");
+            $this->db->group_end();
               
             if($limit != -1){
                 $this->db->limit($limit, $offset);
@@ -1593,7 +1699,7 @@ class Cash_advance_m extends CI_Model {
         }
     }
 
-    private function get_searched_item_archive_count($view, $search=null){
+    private function get_searched_item_archive_count($view, $search=null, $view_by_company = false, $companyDescription = null){
         $date= date("Y-m-d", strtotime("-1 year"));
         $rowCount = 0;
         if($search){
@@ -1602,9 +1708,21 @@ class Cash_advance_m extends CI_Model {
             $this->db->select($sql);
             $this->db->from("gcceforms.cash_advance a");
             $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
+            
             if($view && ($this->user_data['emp_id']!=1)){
                 $this->db->where('a.employee', $this->user_data['emp_id']);
             }
+
+            if ($view_by_company) {
+                $this->db->group_start();
+                    $this->db->where('b.company_id', (int)$this->user_data['company']);
+    
+                    if ($companyDescription) {
+                        $this->db->where('a.company', $companyDescription);
+                    }
+                $this->db->group_end();
+            }
+
             $this->db->where("(a.created_dt <= '$date' OR a.status = 'Cancelled')");
             $this->db->group_start();
             foreach($filterFields as $key => $field){
@@ -2782,7 +2900,7 @@ class Cash_advance_m extends CI_Model {
         return $resultset;
     }
 
-    function sendTelegram($id){
+    protected function sendTelegram($id){
         $msg = "";
         if($id){
             $details = $this->db->get_where("gcceforms.cash_advance", array('id' => $id))->row();
@@ -2891,8 +3009,10 @@ class Cash_advance_m extends CI_Model {
         $rowCount = 0;
         $rowData = array();
 
-        $rowData = $this->get_blacklisted_item($limit, $offset, $sortBy, $sortOrder, $search);
-        $rowCount = $this->get_blacklisted_item_count($search);
+        $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+
+        $rowData = $this->get_blacklisted_item($limit, $offset, $sortBy, $sortOrder, $search, $view_by_company);
+        $rowCount = $this->get_blacklisted_item_count($search, $view_by_company);
 
         $resultset["recordsTotal"] = $rowCount;
         $resultset["recordsFiltered"] = $rowCount;
@@ -2901,7 +3021,7 @@ class Cash_advance_m extends CI_Model {
         return $resultset;
     }
 
-    function get_blacklisted_item($limit, $offset, $sortBy, $sortOrder, $search){
+    function get_blacklisted_item($limit, $offset, $sortBy, $sortOrder, $search, $view_by_company = false){
         $filterFields = array('b.firstname', 'b.lastname', 'c.firstname', 'c.lastname');
         $resultset = array();
         $arrData = array();
@@ -2928,6 +3048,10 @@ class Cash_advance_m extends CI_Model {
         $this->db->join('gccmaster.tblemployees c', 'c.id = a.added_by', 'LEFT');
         $this->db->where('b.employee_status', 'Active');
         $this->db->where('a.is_removed', 0);
+
+        if ($view_by_company) {
+            $this->db->where('b.company_id', $this->user_data['company']);
+        }
 
         if($search){
             $this->db->group_start();
@@ -2963,7 +3087,7 @@ class Cash_advance_m extends CI_Model {
         return $resultset;
     }
 
-    function get_blacklisted_item_count($search){
+    function get_blacklisted_item_count($search, $view_by_company = false){
         $filterFields = array('b.firstname', 'b.lastname', 'c.firstname', 'c.lastname');
 
         $this->db->select("a.*, UPPER(CONCAT(b.lastname,
@@ -2988,6 +3112,10 @@ class Cash_advance_m extends CI_Model {
         $this->db->join('gccmaster.tblemployees c', 'c.id = a.added_by', 'LEFT');
         $this->db->where('b.employee_status', 'Active');
         $this->db->where('a.is_removed', 0);
+
+        if ($view_by_company) {
+            $this->db->where('b.company_id', $this->user_data['company']);
+        }
 
         if($search){
             $this->db->group_start();
@@ -3383,49 +3511,24 @@ class Cash_advance_m extends CI_Model {
             return $resultset;
         }
 
-        private function sendSMS($id,$phone,$debug=false){
-            $sms = $this->contacts->sms_settings();
+        protected function sendSMSNotification($id, $phone){
+            $this->db->select("reference_no, amt_approved, employee");
             $details = $this->db->get_where("gcceforms.cash_advance", array('id' => $id))->row();
             $amount = '₱' . number_format($details->amt_approved, 2);
-            $name = $this->getEmpName($details->employee);
-            if (strpos($phone, '+63') === 0) {
-                $phone = '0' . substr($phone, 3);
-            } elseif (strpos($phone, '0') !== 0) {
-                $phone = '0' . $phone;
-            }
+            $name = strtoupper($this->getEmpName($details->employee));
+            $referenceNumber = $details->reference_no;
+
             $date = date('F j, Y');
-            $msg= "Hi $name , your cash advance request of $amount has been approved on $date. \nThe amount will be released to your account within 4-7 working days upon approval. For any questions, please contact  your department's in-charge in cash advance processing. \nThis is a system-generated message please do not reply to this number. Thank you!\nGC&C CARES";
-            $response[] = array();
-            if($sms && $phone){
-                $user = $sms['sms_user'];
-                $password = $sms['sms_pass'];
-                $playsms_url = "https://" . $sms['sms_ip'] . ":" . $sms['sms_port'] . "/index.php?app=ws";
-                $url = '&u='.$user;
-                $url.= '&h='.$password;
-                $url.= '&op=pv';
-                $url.= '&smsc='.$sms['modem'];
-                $url.= '&to='.$phone;
-                $url.= '&msg='.urlencode($msg);
-                $urltouse =  $playsms_url.$url;
-                if ($debug) { echo "Request: <br>$urltouse<br><br>"; }
-                $arrContextOptions=array(
-                  "ssl"=>array(
-                       "verify_peer"=>false,
-                       "verify_peer_name"=>false,
-                  ),
-              );
-                $response['data']=file_get_contents($urltouse,false,stream_context_create($arrContextOptions));
-                $response['urls']= $urltouse;
-                if ($debug) {
-                    echo "Response: <br><pre>".
-                    str_replace(array("<",">"),array("&lt;","&gt;"),$response).
-                    "</pre><br>"; }
-        
+            $msg = "Hi $name, your cash advance request of {$amount} has been approved on {$date}.\nThe amount will be released to your account within 4-7 working days upon approval. For any questions, please contact your department in-charge in cash advance processing.\nThis is a system-generated message please do not reply to this number. Thank you!\nGC&C CARES";
+
+            $smsResponse = $this->contacts->sendSMS($phone, $msg);
+            $isSentResponse = isset($smsResponse["data"]) && $smsResponse["data"] !== false;
+            if($isSentResponse){
+                $this->core_layout->setEventLog("Sent SMS to `{$name}` notification for cash advance reference number `{$referenceNumber}`.","add", "success", "gcceforms", "user");
             }else{
-                return false;
+                $this->core_layout->setEventLog("Failed in sending SMS to `{$name}` notification for cash advance reference number `{$referenceNumber}`.","add", "error", "gcceforms", "system");
             }
-        
-            return($response);
+            return $isSentResponse;
         }
 
         public function undoForFinal($id){

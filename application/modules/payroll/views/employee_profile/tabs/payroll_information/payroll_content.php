@@ -94,35 +94,56 @@
             <div class="col-10 ml-auto"><h3 class="m-form__header m-form__section">Bank Information</h3></div>
         </div>
         <div class="row">
-            <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
-                <div class="form-group m-form__group row">
-                    <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Bank Name: </label>
-                    <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
-                        <input type="text" id="bank_name" name="bank_name" class="form-control m-input" autocomplete="off" data-validation="required" v-model="row.bank_name"/>
+            <?php if (in_array('edit_bankinfo', $this->core_layout->getCurrentActions())): ?>
+                <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+                    <div class="form-group m-form__group row">
+                        <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Bank Name: </label>
+                        <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
+                            <input type="text" id="bank_name" name="bank_name" class="form-control m-input" autocomplete="off" data-validation="required" v-model="row.bank_name"/>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
-                <div class="form-group m-form__group row">
-                    <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">ATM INFO: </label>
-                    <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
-                        <input type="text" id="atm_info" name="atm_info" class="form-control m-input" autocomplete="off" data-validation="required" v-model="row.atm_info"/>
+                <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+                    <div class="form-group m-form__group row">
+                        <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">ATM INFO: </label>
+                        <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
+                            <input type="text" id="atm_info" name="atm_info" class="form-control m-input" autocomplete="off" data-validation="required" v-model="row.atm_info"/>
+                        </div>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+                    <div class="form-group m-form__group row">
+                        <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Bank Name: </label>
+                        <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
+                            <p class="form-control m-0" disabled>{{ row.bank_name }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+                    <div class="form-group m-form__group row">
+                        <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">ATM Info: </label>
+                        <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
+                            <p class="form-control m-0" disabled>{{ row.atm_info }}</p>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php if(in_array("edit_bankinfo", $this->core_layout->getCurrentActions())): ?>
+        <div class="m-portlet__foot m-portlet__foot--fit m-portlet__no-border">
+            <div class="m-form__actions">
+                <div class="row">
+                    <div class="col-12 text-right" id="saveAndApproveAction">
+                        <button type="submit" class="btn btnSave btn-primary m-btn m-btn--air m-btn--custom btn-submit">
+                            <i class="la la-check mr-2"></i>Save
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="m-portlet__foot m-portlet__foot--fit m-portlet__no-border">
-        <div class="m-form__actions">
-            <div class="row">
-                <div class="col-12 text-right" id="saveAndApproveAction">
-                    <button type="submit" class="btn btnSave btn-primary m-btn m-btn--air m-btn--custom btn-submit">
-                        <i class="la la-check mr-2"></i>Save
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <?php endif; ?>
     <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x mt-0"></div>
 </form>
 

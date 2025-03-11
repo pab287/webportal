@@ -105,6 +105,7 @@ class Travel_order extends MY_Controller
 
     function get_travel_order_archive_list()
     {
+        $this->core_layout->setPrivilegeName("to_archive");
         $data = $this->travel_order->getArchiveLists();
         $this->output
             ->set_content_type('json')
@@ -246,6 +247,7 @@ class Travel_order extends MY_Controller
 
     function get_request_collection()
     {
+        $this->core_layout->setPrivilegeName("to_masterfile");
         $data = $this->travel_order->getEmployeeCollection();
         $this->output
             ->set_content_type('json')

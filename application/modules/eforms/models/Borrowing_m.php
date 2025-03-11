@@ -10,6 +10,7 @@ class Borrowing_m extends CI_Model
     public function __construct()
     {
         parent::__construct();
+        $this->user_data = $this->session->userdata("logged_in"); 
     }
 
     function getDatatableRequest() {
@@ -24,8 +25,17 @@ class Borrowing_m extends CI_Model
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
         $status = (isset($post['status']) && $post['status']) ? ucwords($post['status']) : null; //clicked in portal dashboard
 
-        $rowData = $this->get_all_items($query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status);
-        $rowCount = $this->get_all_items_count($query_builder, $search, $status);
+        $privilege = $this->core_layout->getCurrentActions();
+
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+        $companyDescription = null;
+
+        if ($view_by_company) {
+            $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+        }
+
+        $rowData = $this->get_all_items($query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_by_company, $companyDescription);
+        $rowCount = $this->get_all_items_count($query_builder, $search, $status, $view_by_company, $companyDescription);
         // if (!$search) {
         //     $rowData = $this->get_all_postv1($query_builder, $limit, $offset, $sortBy, $sortOrder, $status);
         //     $rowCount = $this->get_all_post_countv1($query_builder, $status);
@@ -54,7 +64,7 @@ class Borrowing_m extends CI_Model
         return $resultset;
     }
 
-    function get_all_items($query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null){
+    function get_all_items($query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_by_company = false, $companyDescription = null) {
         $check = date("Y-m-d", strtotime("-1 year", time()));
         $data = array();
 
@@ -65,9 +75,19 @@ class Borrowing_m extends CI_Model
         $this->db->from("gcceforms.borrowing a");
         $this->db->join("gccmaster.tblemployees b", "a.borrower = b.id", "LEFT");
         $this->db->join("gcceforms.borrowing_body c", "a.id = c.borrowing_id", "LEFT");
-        $this->db->join("gcchris.tblcompanies comp", "comp.id = a.company", "LEFT");
+        $this->db->join("gcchris.tblcompanies comp", "comp.id = a.company OR comp.code = a.company", "LEFT");
         $this->db->join("gcchris.tblposition pos", "pos.id = a.position", "LEFT");
         $this->db->where("DATE(a.date_trans) >= ", $check);
+
+        if ($view_by_company) {
+            $this->db->group_start();
+                $this->db->where('a.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('a.company', $companyDescription);
+                }
+            $this->db->group_end();
+        }
 
         if (isset($query_builder) && $query_builder) {
             $this->db->where($query_builder);
@@ -122,7 +142,7 @@ class Borrowing_m extends CI_Model
         return $data;
     }
 
-    function get_all_items_count($query_builder=null, $search = null, $status = null){
+    function get_all_items_count($query_builder=null, $search = null, $status = null, $view_by_company = false, $companyDescription = null) {
         $check = date("Y-m-d", strtotime("-1 year", time()));
 
         $filterFields = array("a.id", "a.status", "comp.code", "pos.name", "a.reference_no", "a.date_trans", "c.asset_name", "b.firstname", "b.middlename", "b.lastname", "CONCAT(b.firstname,' ',b.lastname)");
@@ -132,7 +152,7 @@ class Borrowing_m extends CI_Model
         $this->db->from("gcceforms.borrowing a");
         $this->db->join("gccmaster.tblemployees b", "a.borrower = b.id", "LEFT");
         $this->db->join("gcceforms.borrowing_body c", "a.id = c.borrowing_id", "LEFT");
-        $this->db->join("gcchris.tblcompanies comp", "comp.id = a.company", "LEFT");
+        $this->db->join("gcchris.tblcompanies comp", "comp.id = a.company OR comp.code = a.company", "LEFT");
         $this->db->join("gcchris.tblposition pos", "pos.id = a.position", "LEFT");
         $this->db->where("DATE(a.date_trans) >= ", $check);
 
@@ -140,6 +160,16 @@ class Borrowing_m extends CI_Model
             $this->db->where("a.status", $status);
         } else {
             $this->db->where('a.status != ', "Cancelled");
+        }
+
+        if ($view_by_company) {
+            $this->db->group_start();
+                $this->db->where('a.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('a.company', $companyDescription);
+                }
+            $this->db->group_end();
         }
 
         if (isset($query_builder) && $query_builder) {
@@ -412,8 +442,17 @@ class Borrowing_m extends CI_Model
         $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
 
-        $rowData = $this->get_all_archived_item($search, $limit, $offset, $sortBy, $sortOrder);
-        $rowCount = $this->get_all_archived_item_count($search);
+        $privilege = $this->core_layout->getCurrentActions();
+
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+        $companyDescription = null;
+
+        if ($view_by_company) {
+            $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+        }
+
+        $rowData = $this->get_all_archived_item($search, $limit, $offset, $sortBy, $sortOrder, $view_by_company, $companyDescription);
+        $rowCount = $this->get_all_archived_item_count($search, $view_by_company, $companyDescription);
         // if (!$search) {
         //     $rowData = $this->get_all_archive($limit, $offset, $sortBy, $sortOrder);
         //     $rowCount = $this->get_all_archive_count();
@@ -438,7 +477,7 @@ class Borrowing_m extends CI_Model
         return $resultset;
     }
 
-    function get_all_archived_item($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder){
+    function get_all_archived_item($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $view_by_company = false, $companyDescription = null) {
         $check = date("Y-m-d", strtotime("-1 year", time()));
         $data = array();
 
@@ -457,6 +496,14 @@ class Borrowing_m extends CI_Model
             $this->db->where('a.status', 'Cancelled');
             $this->db->or_where('DATE(a.date_trans) <=', $check);
         $this->db->group_end();
+
+        if ($view_by_company) {
+            $this->db->where('a.company', $view_by_company);
+
+            if ($companyDescription) {
+                $this->db->or_where('a.company', $companyDescription);
+            }
+        }
 
         if ($search) {
             $this->db->group_start();
@@ -501,7 +548,7 @@ class Borrowing_m extends CI_Model
         return $data;
     }
 
-    function get_all_archived_item_count($search = null){
+    function get_all_archived_item_count($search = null, $view_by_company = false, $companyDescription = null) {
         $check = date("Y-m-d", strtotime("-1 year", time()));
         
         $filterFields = array("a.id", "a.status", "comp.code", "pos.name", "a.reference_no", "a.date_trans", "c.asset_name", "b.firstname", "b.middlename", "b.lastname");
@@ -519,6 +566,14 @@ class Borrowing_m extends CI_Model
             $this->db->where('a.status', 'Cancelled');
             $this->db->or_where('DATE(a.date_trans) <=', $check);
         $this->db->group_end();
+
+        if ($view_by_company) {
+            $this->db->where('a.company', $view_by_company);
+
+            if ($companyDescription) {
+                $this->db->or_where('a.company', $companyDescription);
+            }
+        }
 
         if ($search) {
             $this->db->group_start();
@@ -735,8 +790,17 @@ class Borrowing_m extends CI_Model
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
 
-        $rowData = $this->get_all_borrowed_item($query_builder, $search, $limit, $offset, $sortBy, $sortOrder);
-        $rowCount = $this->get_all_borrowed_item_count($query_builder, $search);
+        $privilege = $this->core_layout->getCurrentActions();
+
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+        $companyDescription = null;
+
+        if ($view_by_company) {
+            $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+        }
+
+        $rowData = $this->get_all_borrowed_item($query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $view_by_company, $companyDescription);
+        $rowCount = $this->get_all_borrowed_item_count($query_builder, $search, $view_by_company, $companyDescription);
         // if (!$search) {
         //     $rowData = $this->get_all_borrowed($query_builder, $limit, $offset, $sortBy, $sortOrder);
         //     $rowCount = $this->get_all_borrowed_count($query_builder);
@@ -756,7 +820,7 @@ class Borrowing_m extends CI_Model
         return $resultset;
     }
 
-    function get_all_borrowed_item($query_builder, $search = null, $limit, $offset, $sortBy, $sortOrder) {
+    function get_all_borrowed_item($query_builder, $search = null, $limit, $offset, $sortBy, $sortOrder, $view_by_company = false, $companyDescription = null) {
         $data = array();
 
         $filterFields = array("a.id", "comp.code", "dept.code", "pos.name", "c.reference_no", "a.asset_name", "a.asset_code", "a.date_borrowed", "a.date_due", "b.firstname", "b.middlename", "b.lastname");
@@ -772,6 +836,16 @@ class Borrowing_m extends CI_Model
         $this->db->join("gcchris.tblposition pos", "pos.id = c.position", "LEFT");
         $this->db->where('a.is_returned', '0');
         $this->db->where('c.status !=', 'Pending');
+
+        if ($view_by_company) {
+            $this->db->group_start();
+                $this->db->where('c.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('c.company', $companyDescription);
+                }
+            $this->db->group_end();
+        }
 
         if (isset($query_builder) && $query_builder) {
             $this->db->where($query_builder);
@@ -821,7 +895,7 @@ class Borrowing_m extends CI_Model
         return $data;
     }
 
-    function get_all_borrowed_item_count($query_builder=null, $search = null) {
+    function get_all_borrowed_item_count($query_builder=null, $search = null, $view_by_company = false, $companyDescription = null) {
         $filterFields = array("a.id", "comp.code", "dept.code", "pos.name", "c.reference_no", "a.asset_name", "a.asset_code", "a.date_borrowed", "a.date_due", "b.firstname", "b.middlename", "b.lastname");
         
         $this->db->from("gcceforms.borrowing_body a");
@@ -832,6 +906,16 @@ class Borrowing_m extends CI_Model
         $this->db->join("gcchris.tblposition pos", "pos.id = c.position", "LEFT");
         $this->db->where('a.is_returned', '0');
         $this->db->where('c.status !=', 'Pending');
+
+        if ($view_by_company) {
+            $this->db->group_start();
+                $this->db->where('c.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('c.company', $companyDescription);
+                }
+            $this->db->group_end();
+        }
 
         if (isset($query_builder) && $query_builder) {
             $this->db->where($query_builder);
@@ -1100,8 +1184,17 @@ class Borrowing_m extends CI_Model
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
 
-        $rowData = $this->get_all_return_item($query_builder, $search, $limit, $offset, $sortBy, $sortOrder);
-        $rowCount = $this->get_all_return_item_count($query_builder, $search);
+        $privilege = $this->core_layout->getCurrentActions();
+
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+        $companyDescription = null;
+
+        if ($view_by_company) {
+            $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+        }
+
+        $rowData = $this->get_all_return_item($query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $view_by_company, $companyDescription);
+        $rowCount = $this->get_all_return_item_count($query_builder, $search, $view_by_company, $companyDescription);
         // if (!$search) {
         //     $rowData = $this->get_all_return($query_builder, $limit, $offset, $sortBy, $sortOrder);
         //     $rowCount = $this->get_all_return_count($query_builder);
@@ -1121,7 +1214,7 @@ class Borrowing_m extends CI_Model
         return $resultset;
     }
 
-    function get_all_return_item($query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder){
+    function get_all_return_item($query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $view_by_company = false, $companyDescription = null) {
         $data = array();
 
         $filterFields = array("a.id", "comp.code", "dept.code", "pos.name", "c.reference_no", "a.asset_name", "a.asset_code", "a.date_borrowed", "a.date_due", "b.firstname", "b.middlename", "b.lastname", "a.date_returned", "a.return_remarks");
@@ -1136,6 +1229,16 @@ class Borrowing_m extends CI_Model
         $this->db->join("gcchris.tbldepartments dept", "dept.id = c.department", "LEFT");
         $this->db->join("gcchris.tblposition pos", "pos.id = c.position", "LEFT");
         $this->db->where('a.is_returned', '1');
+
+        if ($view_by_company) {
+            $this->db->group_start();
+                $this->db->where('c.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('c.company', $companyDescription);
+                }
+            $this->db->group_end();
+        }
 
         if (isset($query_builder) && $query_builder) {
             $this->db->where($query_builder);
@@ -1166,8 +1269,8 @@ class Borrowing_m extends CI_Model
 
             foreach ($query->result() as $key => $rs) {
                 $rs->company = (is_numeric($rs->company)) ? $this->getCompany($rs->company) : $rs->company; 
-                $rs->company = (is_numeric($rs->department)) ? $this->getDepartment($rs->department) : $rs->department; 
-                $rs->company = (is_numeric($rs->position)) ? $this->getPosition($rs->position) : $rs->position; 
+                $rs->department = (is_numeric($rs->department)) ? $this->getDepartment($rs->department) : $rs->department; 
+                $rs->position = (is_numeric($rs->position)) ? $this->getPosition($rs->position) : $rs->position; 
 
                 $tempRs = (array)$rs;
                 $fullname = $this->core_layout->getDisplayName($tempRs);
@@ -1185,7 +1288,7 @@ class Borrowing_m extends CI_Model
         return $data;
     }
 
-    function get_all_return_item_count($query_builder=null, $search = null){
+    function get_all_return_item_count($query_builder=null, $search = null, $view_by_company = false, $companyDescription = null) {
         $filterFields = array("a.id", "comp.code", "dept.code", "pos.name", "c.reference_no", "a.asset_name", "a.asset_code", "a.date_borrowed", "a.date_due", "b.firstname", "b.middlename", "b.lastname", "a.date_returned", "a.return_remarks");
 
         $sql = "a.id, b.firstname, b.middlename, b.lastname, b.suffix, IF(comp.`code` IS NULL, c.company, comp.`code`) company, IF(dept.`code` IS NULL, c.department, dept.`code`) department, IF(pos.`name` IS NULL, c.position, pos.`name`) position, c.reference_no, CONCAT('<b>', a.asset_code, '</b><br>', a.asset_name) As asset, a.date_borrowed, a.date_due, a.date_returned, a.return_remarks";
@@ -1198,6 +1301,16 @@ class Borrowing_m extends CI_Model
         $this->db->join("gcchris.tbldepartments dept", "dept.id = c.department", "LEFT");
         $this->db->join("gcchris.tblposition pos", "pos.id = c.position", "LEFT");
         $this->db->where('a.is_returned', '1');
+
+        if ($view_by_company) {
+            $this->db->group_start();
+                $this->db->where('c.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('c.company', $companyDescription);
+                }
+            $this->db->group_end();
+        }
         
         if (isset($query_builder) && $query_builder) {
             $this->db->where($query_builder);
@@ -1476,8 +1589,17 @@ class Borrowing_m extends CI_Model
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
 
-        $rowData = $this->get_all_overdue_item($query_builder, $search, $limit, $offset, $sortBy, $sortOrder);
-        $rowCount = $this->get_all_overdue_item_count($query_builder, $search);
+        $privilege = $this->core_layout->getCurrentActions();
+
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+        $companyDescription = null;
+
+        if ($view_by_company) {
+            $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+        }
+
+        $rowData = $this->get_all_overdue_item($query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $view_by_company, $companyDescription);
+        $rowCount = $this->get_all_overdue_item_count($query_builder, $search, $view_by_company, $companyDescription);
         // if (!$search) {
         //     $rowData = $this->get_all_overdue($query_builder, $limit, $offset, $sortBy, $sortOrder);
         //     $rowCount = $this->get_all_overdue_count($query_builder);
@@ -1497,7 +1619,7 @@ class Borrowing_m extends CI_Model
         return $resultset;
     }
 
-    function get_all_overdue_item($query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder){
+    function get_all_overdue_item($query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $view_by_company = false, $companyDescription = null){
         date_default_timezone_set('Asia/Singapore');
         $check = date('Y-m-d H:i:s');
         $data = array();
@@ -1518,6 +1640,16 @@ class Borrowing_m extends CI_Model
             $this->db->where('a.is_returned', 0);
             $this->db->where('a.date_due <=', $check);
         $this->db->group_end();
+
+        if ($view_by_company) {
+            $this->db->group_start();
+                $this->db->where('c.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('c.company', $companyDescription);
+                }
+            $this->db->group_end();
+        }
 
         if (isset($query_builder) && $query_builder) {
             $this->db->group_start();
@@ -1565,7 +1697,7 @@ class Borrowing_m extends CI_Model
         return $data;
     }
 
-    function get_all_overdue_item_count($query_builder=null, $search = null){
+    function get_all_overdue_item_count($query_builder=null, $search = null, $view_by_company = false, $companyDescription = null){
         date_default_timezone_set('Asia/Singapore');
         $check = date('Y-m-d H:i:s');
 
@@ -1583,6 +1715,16 @@ class Borrowing_m extends CI_Model
             $this->db->where('a.is_returned', 0);
             $this->db->where('a.date_due <=', $check);
         $this->db->group_end();
+
+        if ($view_by_company) {
+            $this->db->group_start();
+                $this->db->where('c.company', (int)$this->user_data['company']);
+                
+                if ($companyDescription) {
+                    $this->db->or_where('c.company', $companyDescription);
+                }
+            $this->db->group_end();
+        }
 
         if (isset($query_builder) && $query_builder) {
             $this->db->group_start();
