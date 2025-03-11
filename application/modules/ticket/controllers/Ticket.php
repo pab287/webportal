@@ -58,7 +58,7 @@ class Ticket extends MY_Controller {
     }
 
     function index(){
-        $this->core_layout->setPrivilegeName("ticket");
+        $this->core_layout->setPrivilegeName("ticket_masterfile");
         $this->core_layout->setPageTitle("TICKET - Add Ticket");
         $tempData["department"] = $this->ticket->select2DepartmentData();
         $tempData["category"] = $this->ticket->select2CategoryData('category');
@@ -79,7 +79,7 @@ class Ticket extends MY_Controller {
     }
 
     function edit_ticket(){
-        $this->core_layout->setPrivilegeName("ticket_transaction");
+        $this->core_layout->setPrivilegeName("ticket_masterfile");
         $this->core_layout->setPageTitle("TICKET - Edit Ticket");
         $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
         $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
@@ -102,7 +102,7 @@ class Ticket extends MY_Controller {
     }
 
     function view_ticket(){
-        $this->core_layout->setPrivilegeName("ticket_transaction");
+        $this->core_layout->setPrivilegeName("ticket_masterfile");
         $this->core_layout->setPageTitle("TICKET - View Ticket");
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
