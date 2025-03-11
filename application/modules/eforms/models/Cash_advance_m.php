@@ -3380,17 +3380,14 @@ class Cash_advance_m extends CI_Model {
         }
 
         protected function sendSMSNotification($id, $phone){
-            $this->db->select("reference_number, amt_approved, employee");
+            $this->db->select("reference_no, amt_approved, employee");
             $details = $this->db->get_where("gcceforms.cash_advance", array('id' => $id))->row();
             $amount = '₱' . number_format($details->amt_approved, 2);
             $name = strtoupper($this->getEmpName($details->employee));
-            $referenceNumber = $details->reference_number;
+            $referenceNumber = $details->reference_no;
 
             $date = date('F j, Y');
-            $msg = "Hi $name, your cash advance request of $amount has been approved on $date.\n
-            The amount will be released to your account within 4-7 working days upon approval. For any questions, please contact  your department's in-charge in cash advance processing. \n
-            This is a system-generated message please do not reply to this number. Thank you!\n
-            GC&C CARES";
+            $msg = "Hi $name, your cash advance request of {$amount} has been approved on {$date}.\nThe amount will be released to your account within 4-7 working days upon approval. For any questions, please contact your department in-charge in cash advance processing.\nThis is a system-generated message please do not reply to this number. Thank you!\nGC&C CARES";
 
             $smsResponse = $this->contacts->sendSMS($phone, $msg);
             $isSentResponse = isset($smsResponse["data"]) && $smsResponse["data"] !== false;
