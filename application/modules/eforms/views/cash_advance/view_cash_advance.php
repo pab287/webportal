@@ -1452,7 +1452,6 @@ label.col-6.px-0.colon--after:after {
                         </table>
                         <table style="font-size:11pt;" width="100%" border="0">
                             <tr>
-                                <!-- <td width="20%" style="text-align: left;" class="text-left"><img width="75" src="http://152.69.208.158/web/assets/logo.png"></td> -->
                                 <td width="20%" style="text-align: left;" class="text-left"><img width="75" src="<?=base_url('assets/logo.png') ?>"></td>
                                 <td style="80%" class="text-center"></td>
                             </tr>
@@ -1637,7 +1636,6 @@ label.col-6.px-0.colon--after:after {
                         </table>
                         <table style="font-size:11pt;" width="100%" border="0">
                             <tr>
-                                <!-- <td width="20%" style="text-align: left;" class="text-left"><img width="75" src="http://152.69.208.158/web/assets/logo.png"></td> -->
                                 <td width="20%" style="text-align: left;" class="text-left"><img width="75" src="<?=base_url('assets/logo.png') ?>"></td>
                                 <td style="80%" class="text-center"></td>
                             </tr>
