@@ -1063,6 +1063,5 @@ class Billing extends MY_Controller {
       ->set_output(json_encode($data));
     }
     
-    
 }
 
