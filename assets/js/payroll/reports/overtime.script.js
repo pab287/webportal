@@ -1,6 +1,7 @@
 let globalPrintableSignatory = [];
 const psSignatoryModal = $("#modal-ps--signatory");
 const psResetSignatoryModal = $("#modal-ps--reset-signatory");
+const modalGenerateReport = $("#generate-report-modal");
 
 let _years = [];
 let _companies = [];
@@ -48,9 +49,9 @@ const vmGeneratejournal = new Vue({
         tempShowByDates: function (id) {
             const _this = this;
             let currentElement = _this.$el;
-            _this.show_by_date = (id == 1) ? true : false;
-            _this.month_picker = (id == 2) ? true : false;
-            _this.year_picker = (id == 3) ? true : false;
+            _this.show_by_date = (id == 1);
+            _this.month_picker = (id == 2);
+            _this.year_picker = (id == 3);
             _this.show_picker = false;
             if (id == 1) {
                 const filterDateRange = $(currentElement).find("#filter_date_range");
@@ -95,9 +96,9 @@ const vmGeneratejournal = new Vue({
 
             return _this;
         }, renderSelect2Picker: function () {
-            var _this = this;
-            var currentElement = _this.$el;
-            var tempModal = $(currentElement).closest(".modal");
+            const _this = this;
+            const currentElement = _this.$el;
+            const tempModal = $(currentElement).closest(".modal");
             setTimeout(function () {
                 $(currentElement).find("select[name='filter_month']")
                     .select2({
@@ -146,16 +147,16 @@ const vmGeneratejournal = new Vue({
                         placeholder: "SELECT AN OPTION",
                         dropdownParent: tempModal,
                     }).on("select2:select", function (e) {
-                        var _thisSelect2 = this;
-                        var selectedValues = $(_thisSelect2).select2("val");
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
                         _this.company_ids = selectedValues;
                         $(currentElement)
                             .find("select#employee")
                             .val([])
                             .trigger("change");
                     }).on("select2:unselect", function (e) {
-                        var _thisSelect2 = this;
-                        var selectedValues = $(_thisSelect2).select2("val");
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
                         _this.company_ids = selectedValues;
                         $(currentElement)
                             .find("select#employee")
@@ -164,8 +165,8 @@ const vmGeneratejournal = new Vue({
                     });
             }, 200);
         }, resetFields: function () {
-            var _this = this;
-            var currentForm = $(_this.$el).find("#frm-journal-report");
+            const _this = this;
+            const currentForm = $(_this.$el).find("#frm-journal-report");
             if (typeof currentForm !== "undefined") {
                 _this.company_ids = 0;
                 psEmployeeGroup = [];
@@ -248,7 +249,7 @@ $("#payroll_group").select2({
                         if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
                             tempEmployeeSelector.empty();
                             $.each(tempData, function (ii, vv) {
-                                var tempOption = new Option(vv.text, vv.id, true, true);
+                                const tempOption = new Option(vv.text, vv.id, true, true);
                                 tempEmployeeSelector.append(tempOption);
                             });
                             tempEmployeeSelector.prop("disabled", true);
@@ -257,17 +258,15 @@ $("#payroll_group").select2({
                 }
             }
         });
-    } else {
-        if (typeof employees == "object" && typeof employees !== "undefined") {
-            const tempEmployeeSelector = $("form#frm-journal-report select#employee");
-            if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
-                tempEmployeeSelector.empty();
-                $.each(employees, function (ii, vv) {
-                    var tempOption = new Option(vv.text, vv.id, true, true);
-                    tempEmployeeSelector.append(tempOption);
-                });
-                tempEmployeeSelector.prop("disabled", true);
-            }
+    } else if (typeof employees == "object" && typeof employees !== "undefined") {
+        const tempEmployeeSelector = $("form#frm-journal-report select#employee");
+        if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
+            tempEmployeeSelector.empty();
+            $.each(employees, function (ii, vv) {
+                const tempOption = new Option(vv.text, vv.id, true, true);
+                tempEmployeeSelector.append(tempOption);
+            });
+            tempEmployeeSelector.prop("disabled", true);
         }
     }
     if (typeof data.text !== "undefined" && data.text) {
@@ -301,7 +300,7 @@ $("#payroll_group").select2({
                         if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
                             tempEmployeeSelector.empty();
                             $.each(tempData, function (ii, vv) {
-                                var tempOption = new Option(vv.text, vv.id, true, true);
+                                const tempOption = new Option(vv.text, vv.id, true, true);
                                 tempEmployeeSelector.append(tempOption);
                             });
                             tempEmployeeSelector.prop("disabled", true);
@@ -323,209 +322,7 @@ $("#payroll_group").select2({
     }
 });
 
-var column_names;
-var column_rows;
-
 $(document).ready(function(){
-    // let dtJournal;
-    // $.ajax({
-    //     url: baseUrl("payroll/reports/get_overtime_report"),
-    //     dataType: "json",
-    //     success: function (json) {
-    //         dtJournal = $('#tbl-journal').DataTable({
-    //             serverSide: true,
-    //             processing: true,
-    //             destroy: true,
-    //             paging: false,
-    //             searching: false,
-    //             bInfo : false,
-    //             ordering: false,
-    //             ajax: {
-    //                 url: baseUrl('payroll/reports/get_overtime_report'),
-    //                 type: 'POST',
-    //                 dataType: 'JSON',
-    //                 data: function (d) {
-    //                     d.csrf_token = _csrf_hash;
-    //                     d.ids = _tempIds;
-    //                     d.clear_table = _clearTable;
-    //                 }, 
-    //             },
-    //             columns: [
-    //                 { data: 'employee_name', name: 'employee_name', width: '30%'},
-    //                 { data: 'date_start'},
-    //                 { data: 'date_end'},
-    //                 { data: 'pay_date'},
-    //                 { data: 'ot_hrs', className: 'text-center', render: function (data, meta, row) {
-    //                     return numberFormat(data);
-    //                 }},
-    //                 { data: 'ot_amount', className: 'text-right', render: function (data, meta, row) {
-    //                     return '₱ '+numberFormat(data);
-    //                 }},
-    //             ], footerCallback: function (row, data, start, end, display) {
-    //                 var api = this.api(), data;
-    //                 // Remove the formatting to get integer data for summation
-    //                 var intVal = function (i) {
-    //                     return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
-    //                 };
-            
-    //                 let totalHrs = api
-    //                     .column(4)
-    //                     .data()
-    //                     .reduce(function (a, b) {
-    //                         return intVal(a) + intVal(b);
-    //                     }, 0);
-                    
-    //                 let totalAmount = api
-    //                     .column(5)
-    //                     .data()
-    //                     .reduce(function (a, b) {
-    //                         return intVal(a) + intVal(b);
-    //                     }, 0);
-                
-    //                 $(api.column(4).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalHrs) + "</span>");
-    //                 $(api.column(5).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAmount) + "</span>");
-    //             }
-    //         });
-    //         dtJournal.ajax.reload();
-    //     }
-    // });  
-
-    /*** $.ajax({
-        url: baseUrl("payroll/reports/get_overtime_summary"),
-        dataType: "json",
-        success: function (json) {
-            dtOTSummary = $('#tbl-overtime-summary').DataTable({
-                serverSide: true,
-                processing: true,
-                destroy: true,
-                paging: false,
-                searching: false,
-                bInfo : false,
-                ordering: false,
-                ajax: {
-                    url: baseUrl('payroll/reports/get_overtime_summary'),
-                    type: 'POST',
-                    dataType: 'JSON',
-                    data: function (d) {
-                        d.csrf_token = _csrf_hash;
-                        d.ids = _tempIds;
-                        d.clear_table = _clearTable;
-                        d.filters = _tempFilter;
-                    }, 
-                },
-                columns: [
-                    { data: 'employee_name', name: 'employee_name' },
-                    { data: 'overtime_in', className: 'text-center', width: '10%'},
-                    { data: 'day', className: 'text-center', width: '5%'},
-                    { data: 'daily_rate', className: 'text-right', width: '5%', render: function(data, type, row){
-                        return '₱ '+data;
-                    }},
-                    { data: 'allowance', className: 'text-center', width: '5%'},
-                    { data: 'ot_hrs', className:'text-center', render: function (data, type, row) {
-                        if (data && parseFloat(data) > 0) {
-                            const ot_hrs = parseFloat(data);
-                            return ot_hrs.toFixed(2);
-                        }
-                        return data;
-                    }},
-                    { data: 'ot_pay', className: 'text-right', render: function (data, type, row) {
-                        if (data && parseFloat(data) > 0) {
-                            const ot_pay = parseFloat(data);
-                            return '₱ '+ot_pay.toFixed(2);
-                        }
-                        return data;
-                    }},
-                    { data: 'ot_ndiff_hrs', className: 'text-center', render: function (data, type, row) {
-                        if (data && parseFloat(data) > 0) {
-                            const ot_ndiff_hrs = parseFloat(data);
-                            return ot_ndiff_hrs.toFixed(2);
-                        }
-                        return data;
-                    }},
-                    { data: 'night_diff', className: 'text-right', render: function (data, type, row) {
-                        if (data && parseFloat(data) > 0) {
-                            const ot_ndiff_pay = parseFloat(data);
-                            return ot_ndiff_pay.toFixed(2);
-                        }
-                        return data;
-                    }},
-                    { data: 'ot_adj', name: 'ot_adj', className: 'text-center',render: function (data, type, row) {
-
-                        return dtOTSummary.cells(0).data();
-                    }},
-                    { data: 'amount', className: 'text-right', width: '10%', render: function (data, type, row) {
-                        if (data && parseFloat(data) > 0) {
-                            const amount = parseFloat(data);
-                            return '₱ '+amount.toFixed(2);
-                        }
-                        return data;
-                    }},
-                    { data: 'total_pay', className: 'text-right', width: '10%', render: function (data, type, row) {
-                        return "";
-                    }}
-                ],columnDefs: [ {
-                    targets: [ 0, 9, 11 ],
-                    visible: false,
-                } ],rowGroup: {
-                    startRender: function ( _rows, group ) {
-                        return $('<tr><td colspan="11" class="bg-secondary"><i>' + group + '</i></td></tr>');
-                    },
-                    endRender: function ( rows, _group ) {
-                        var OTadj = rows
-                                .data()
-                                .pluck('ot_adj')
-                                .reduce( function (a, b) {
-                                    return b ? numberFormat(b) : 0.00;
-                                }, 0);
-                        var totalAmount = rows
-                                .data()
-                                .pluck('amount')
-                                .reduce( function (a, b) {
-                                    var totalOTAmount = parseFloat(a) + parseFloat(b);
-                                    return numberFormat(totalOTAmount);
-                                }, 0);
-                            
-                        var total = parseFloat(totalAmount) + parseFloat(OTadj);
-                        const uiAdjustment = parseFloat(OTadj) > 0 ? `<i>OT ADJ - ₱ ${numberFormat(OTadj)}</i>`: ``;
-                        const uiTotal = `<i><strong>₱ ${numberFormat(total)}</strong></i>`;
-
-                        const tempContainer = `<tr class="bg-secondary">
-                            <td colspan="6" class="text-right"></td>
-                            <td class="text-right"></td>
-                            <td class="text-center">${uiAdjustment}</td>
-                            <td class="text-right">${uiTotal}</td>
-                            </tr>`;
-
-                            return $(tempContainer);
-                            
-                        
-                    },
-                    dataSrc: [ 'employee_name' ],
-                    
-                }
-                , footerCallback: function (row, data, start, end, display) {
-                    var api = this.api(), data;
-                    // Remove the formatting to get integer data for summation
-                    var intVal = function (i) {
-                        return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
-                    };
-            
-                    let totalAmount = api
-                        .column(10)
-                        .data()
-                        .reduce(function (a, b) {
-                            return intVal(a) + intVal(b);
-                        }, 0);
-                       
-                    $(api.column(10).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAmount) + "</span>");
-                // }
-                }
-            });
-            dtOTSummary.ajax.reload();
-        }
-    });  ***/
-
-
     dtOTSummary = $('#tbl-overtime-summary').DataTable({
         dom: "rt",
         serverSide: true,
@@ -554,7 +351,7 @@ $(document).ready(function(){
                 let numrows = $('row', sheet).length;
                 let mergeCells = $('mergeCells', sheet);
                 mergeCells[0].appendChild(_createNode(sheet, 'mergeCell', {
-                    attr: { ref: 'A' + numrows + ':' + 'K' + numrows },
+                    attr: { ref: 'A' + numrows + ':' + 'F' + numrows },
                 }));
 
                 function _createNode(doc, nodeName, opts) {
@@ -562,7 +359,7 @@ $(document).ready(function(){
                     if (opts) {
                         if (opts.attr) { $(tempNode).attr(opts.attr); }
                         if (opts.children) {
-                            $.each(opts.children, function (key, value) {
+                            $.each(opts.children, function (_key, value) {
                                 tempNode.appendChild(value);
                             });
                         }
@@ -603,10 +400,6 @@ $(document).ready(function(){
                 }
             }, { data: 'ot_pay_20', className: "text-right", width: '8%', 
                 render: function (data) {
-                    /*** if (row.ot_pay && parseFloat(row.ot_pay) > 0 && parseInt(row.has_shift) === 1) {
-                        const _25_ot_pay = parseFloat(row.ot_pay) * 0.25;
-                        return '₱ '+_25_ot_pay.toFixed(2);
-                    } else { return '-'; } ***/
                     if (data && parseFloat(data) > 0) {
                         let ot_pay_20 = parseFloat(data);
                         return '₱ '+ot_pay_20.toFixed(2);
@@ -614,10 +407,6 @@ $(document).ready(function(){
                 }
             }, { data: 'ot_pay_30', className: "text-right", width: '8%', 
                 render: function (data) {
-                    /*** if (row.ot_pay && parseFloat(row.ot_pay) > 0 && parseInt(row.has_shift) === 0) {
-                        const _30_ot_pay = parseFloat(row.ot_pay) * 0.30;
-                        return '₱ '+_30_ot_pay.toFixed(2);
-                    } else { return '-'; } ***/
                     if (data && parseFloat(data) > 0) {
                         let ot_pay_30 = parseFloat(data);
                         return '₱ '+ot_pay_30.toFixed(2);
@@ -672,7 +461,6 @@ $(document).ready(function(){
                 }, 0);
                     
                 let total = parseFloat(totalAmount) + parseFloat(OTadj);
-                /*** const uiAdjustment = parseFloat(OTadj) > 0 ? `<span class="m--font-boldest">OT ADJ</span>`: `&nbsp;`; ***/
                 const uiAdjustmentAmount = parseFloat(OTadj) > 0 ? `<span class="m--font-boldest">₱ ${numberFormat(OTadj)}</span>`: `-`;
                 const uiTotal = `<strong>₱ ${numberFormat(total)}</strong>`;
 
@@ -691,12 +479,10 @@ $(document).ready(function(){
             const tempData = api.data();
             const _dtActions = $("#table-actions");
             const hasRowData = tempData.length > 0;
-            if (hasRowData && typeof _dtActions !== "undefined" && _dtActions.length == 1) {
-                if (_dtActions.hasClass("m--hide") === true) { _dtActions.removeClass("m--hide"); }
-            } else {
-                if (_dtActions.hasClass("m--hide") === false) { _dtActions.addClass("m--hide"); }
+            if (_dtActions.hasClass("m--hide") === false) { _dtActions.addClass("m--hide"); }
+            if (hasRowData && typeof _dtActions !== "undefined" && _dtActions.length == 1 && _dtActions.hasClass("m--hide") === true) {
+                _dtActions.removeClass("m--hide");
             }
-
             vmReportHeaders.show_header = hasRowData;
 
         }, footerCallback: function () {
@@ -709,7 +495,7 @@ $(document).ready(function(){
                         if(jQuery.isEmptyObject(arrAdjustments[row.emp_id])) { arrAdjustments[row.emp_id] = []; }
                         if(jQuery.inArray(row.ot_adj, arrAdjustments[row.emp_id]) == -1) { arrAdjustments[row.emp_id].push(row.ot_adj); }
                     }
-                })
+                });
             }
 
             let totalAdjustmentAmount = 0;
@@ -763,7 +549,7 @@ $(document).ready(function(){
                 if(propDisabled){ tempEmployeeFilter.prop("disabled", false); }
             }
             
-            const formData = $(currentForm).serialize();
+            let formData = $(currentForm).serialize();
             if(propDisabled){ tempEmployeeFilter.prop("disabled", true); }
             
             getScriptRendering(formUrl, formData, currentForm);
@@ -794,17 +580,19 @@ $(document).ready(function(){
                     vmReportHeaders.filters = { ...json.filters };
                     vmActionSignatories.show_signatories = true;
                     toastr.success(json.toastr_msg, "Filtered Overtime Summary Report");
+
+                    setTimeout( function () { modalGenerateReport.modal("hide"); }, 750);
                 } else {
                     _clearTable = true;
                     toastr.error(json.toastr_msg, "Filtered Overtime Summary Report");
                 }
     
                 dtOTSummary.ajax.reload();
-
                 const currentSelectCompanyId = $(currentForm).find("#company").val();
                 if (typeof currentSelectCompanyId !== "undefined" && parseInt(currentSelectCompanyId) > 0) {
                     $.ajax({
                         url: siteUrl("payroll/reports/get_current_signatory_by_company_and_type/" + currentSelectCompanyId + "/2"),
+                        global: false,
                         dataType: "json",
                         success: function (json) {
                             let tempRow = {};
@@ -832,15 +620,7 @@ const exportExcel = function(){
 
 const vmPortletSignatories = new Vue({
     el: "#portlet--signatories",
-    data: { row: {}, count: 0 },
-    methods: {
-        openModalSignatory: function () {
-            return psSignatoryModal.modal("show");
-        },
-        resetModalSignatory: function () {
-            return psResetSignatoryModal.modal("show");
-        }
-    }
+    data: { row: {}, count: 0 }
 });
 
 const vmTempSignatory = new Vue({
