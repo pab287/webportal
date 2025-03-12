@@ -395,7 +395,7 @@ class Reports_model extends CI_Model{
                 'condition' => 'dep.id = emp.department_id',
                 'option' => 'LEFT'),
             array('table' => 'gcchris.tblsalaries salaries',
-                'condition' => 'emp.id = salaries.emp_id AND salaries.id = (SELECT id FROM gcchris.tblsalaries WHERE emp_id=emp.id ORDER BY id DESC, DATE(add_date) DESC LIMIT 1)',
+                'condition' => 'emp.id = salaries.emp_id AND salaries.id = (SELECT id FROM gcchris.tblsalaries WHERE emp_id=emp.id AND is_archived = 0 ORDER BY id DESC, DATE(add_date) DESC LIMIT 1)',
                 'option' => 'INNER'),
             array('table' => 'gcchris.tblposition pos',
                 'condition' => 'pos.id = emp.position',
@@ -2683,7 +2683,10 @@ class Reports_model extends CI_Model{
                 $this->db->where('YEAR(a.sal_date) <=', $date_to);
             $this->db->group_end();
 
+            $this->db->where('a.is_archived', 0);
+
             $this->db->order_by('a.sal_date', 'DESC');
+            $this->db->order_by('a.id', 'DESC');
             $query = $this->db->get();
 
             if ($query->num_rows() > 0) {
