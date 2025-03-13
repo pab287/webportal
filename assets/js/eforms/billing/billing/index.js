@@ -62,7 +62,7 @@ const tblBillings = $("#table-billing").DataTable({
         },
         {
           orderable: false,
-          targets: 9
+          targets: [8, 9]
         },
         {
             data: null,
