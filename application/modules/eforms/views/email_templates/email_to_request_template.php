@@ -228,8 +228,8 @@
                                     </tbody>
                                 </table>
                             </td>
-                            <?php $tempUrl = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl={$reference_no}&choe=UTF-8"; ?>
-                            <td id="content_qr"><img style="float:right;" src="<?php echo $tempUrl; ?>" /></td>
+                            <!-- <?php $tempUrl = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl={$reference_no}&choe=UTF-8"; ?>
+                            <td id="content_qr"><img style="float:right;" src="<?php echo $tempUrl; ?>" /></td> -->
                         </tr>
                     </tbody>
                 </table>
