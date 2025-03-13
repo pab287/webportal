@@ -848,7 +848,7 @@
         private function getCorporateHR() {
             $query = $this->db->select("firstname, lastname")
                              ->get_where("gccmaster.tblemployees", [
-                                 "position" => 145,
+                                 "position" => 547,
                                  "employee_status" => "Active"
                              ]);
             return $this->formatName($query->row()->firstname, $query->row()->lastname);
@@ -880,15 +880,57 @@
         }
 
         private function getContactPerson($supervisor_meta) {
-            if (!$supervisor_meta || !($managerial = @unserialize($supervisor_meta))) {
-                return "HR - ".$this->getCorporateHR();
+            $managerial = @unserialize($supervisor_meta);
+            $contactPerson = 0;
+            $name = '';
+
+            if (is_array($managerial)) {
+                if (isset($managerial['supervisory']) && $managerial['supervisory']) {
+                    $contactPerson = $managerial['supervisory'];
+                    $name = 'Immediate Supervisor - ';
+                } else {
+                    $contactPerson = 145;
+                    $name = 'HR - ';
+
+                    if (isset($managerial['managerial']) && $managerial['managerial']) {
+                        $contactPerson = $managerial['managerial'];
+                        $name = 'Department Manager - ';
+                    }
+                }
+
+            } else {
+
+                if ($managerial) {
+                    $contactPerson = $managerial;
+                    $name = 'Immediate Supervisor - ';
+                } else {
+                    $name = 'HR - ';
+                }
             }
-            $query = $this->db->select("firstname, ' ', lastname")
-                             ->get_where("gccmaster.tblemployees", [
-                                 "id" => $managerial['supervisory'],
-                                 "employee_status" => "Active"
-                             ]);
-            return "Immediate Supervisor - ".$this->formatName($query->row()->firstname, $query->row()->lastname);
+
+            $query = $this->db->select("LOWER(
+                           CONCAT(
+                               firstname, ' ',
+                               CASE
+                                   WHEN middlename IS NOT NULL AND middlename != '' THEN CONCAT(' ', substr(middlename,1,1),'.')
+                                   ELSE ''
+                               END,
+                               ' ', lastname,
+                               CASE
+                                   WHEN suffix IS NOT NULL AND suffix != '' AND suffix != 'N/A' AND suffix != 'NONE' THEN CONCAT(' ', suffix)
+                                   ELSE ''
+                               END
+                           )
+                       ) employee_name")->get_where('gccmaster.tblemployees', array('id' => $contactPerson, 'employee_status' => 'Active'));
+
+            if ($query->num_rows() > 0) {
+                $row = $query->row();
+                $name .= ucwords($row->employee_name);
+            } else {
+                $name .= 'No Employee Name';
+            }
+
+            return $name;
         }
 
         private function getHeadContact($id) {
