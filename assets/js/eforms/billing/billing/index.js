@@ -61,6 +61,10 @@ const tblBillings = $("#table-billing").DataTable({
             targets: 0
         },
         {
+          orderable: false,
+          targets: 9
+        },
+        {
             data: null,
             defaultContent: "",
             targets: -1,
