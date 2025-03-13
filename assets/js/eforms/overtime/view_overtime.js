@@ -15,6 +15,18 @@ const param_id = getUrlParameter('id');
 const vmTab1 = new Vue({
     el: "#form_overtime",
     data: { vm_tab1: {}, loading_content: true },
+    methods: {
+        removeActionDuration(startDate) {
+            if (startDate) {
+                const currentDate = moment();
+                const startTime = moment(startDate);
+                const timeDifference = Math.abs(currentDate - startTime);
+                const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+                return daysDifference <= 15;
+            }
+            return false;
+        }
+    }
 });
 
 $(".btnPending").hide();

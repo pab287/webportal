@@ -1086,10 +1086,13 @@ class Overtime_m extends CI_Model {
                     if (count($imageParts) === 2) {
                         $thumbnail = "{$imageParts[0]}/thumbnails/{$imageParts[1]}";
                         $filename = $imageParts[1];
+                        $realImagePath = realpath("uploads/files/images/overtime/{$imagePath}");
+                        $isFileExist = file_exists($realImagePath);
                         $images[] = array(
                             'filename' => $filename,
                             'image' => base_url("uploads/files/images/overtime/{$imagePath}"),
                             'thumbnail' => base_url("uploads/files/images/overtime/{$thumbnail}"),
+                            'file_exists' => $isFileExist
                         );
                     }
                 }

@@ -82,8 +82,12 @@
                                             <div class="row m-row--no-padding align-items-center">
                                                 <div class="col-md-1 col-sm-12" v-for="(item, index) in vm_tab1.images">
                                                     <div class="m-temp__pic text-center">
-                                                        <a :href="item.image" data-lightbox="upload_image" :data-title="item.filename">
-                                                            <img class="m-temp__img" :src="item.thumbnail" :alt="item.filename" width="60" height="60" style="border: 1px solid #233e6b;" />
+                                                        <a :href="item.file_exists === true ? item.image: baseUrl('assets/images/ams/images/no_image.jpg')"
+                                                            data-lightbox="upload_image"
+                                                            :data-title="item.filename">
+                                                            <img class="m-temp__img" style="border: 1px solid #233e6b;"
+                                                                :src="item.file_exists === true ? item.thumbnail: baseUrl('assets/images/ams/images/no_image.jpg')"
+                                                                :alt="item.filename" width="60" height="60" />
                                                         </a>
                                                     </div>
                                                 </div>
@@ -92,7 +96,7 @@
                                     </div>
                                 </div>
                                 <br><div class="m-separator m-separator--dashed d-xl-12"></div>
-                                <template v-if="vm_tab1.valid_ot_dates === false">
+                                <template v-if="vm_tab1.valid_ot_dates === false && vm_tab1.status === 'Pending'">
                                     <div class="row mb-5">
                                         <div class="col-md-6 col-sm-12">
                                             <div class="m-alert m-alert--icon m-alert--outline alert alert-danger" role="alert">
@@ -209,45 +213,50 @@
 
                     <div class="m-portlet__foot m--align-right" id="buttons" :class="loading_content === true ? 'm--hide':''">
                         <?php $current_action = $this->core_layout->getCurrentActions(); ?>
-                        <template v-if="vm_tab1.valid_ot_dates">
+                        <template v-if="vm_tab1.valid_ot_dates && vm_tab1.status === 'Pending'">
                         <?php if(in_array("approve_action", $current_action)): ?>
                             <a class="btn btn-success m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnApprove_action btnPending"
-                                href="#" data-toggle="modal" data-target="#approve_modal">
+                                href="javascript:void(0);" data-toggle="modal" data-target="#approve_modal">
                                 Approve
                             </a>
                         <?php endif; ?>
                         <?php if(in_array("disapprove_action", $current_action)): ?>
-                            <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnDisapprove_action btnPending" href="#" data-toggle="modal" data-target="#disapprove_modal">
+                            <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnDisapprove_action btnPending"
+                                href="javascript:void(0);" data-toggle="modal" data-target="#disapprove_modal">
                                 Disapprove
                             </a>
                         <?php endif; ?>
-                        </template>
                         <?php if(in_array("edit", $current_action)): ?>
                             <button type="button" class="btn btn-warning m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnEdit text-white btnPending" onclick="edit()">
                                 Edit
                             </button>
                         <?php endif; ?>
+                        </template>
                         <?php if(in_array("cancel", $current_action)): ?>
                             <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnCancel btnPending" href="#" data-toggle="modal" data-target="#cancel_modal">
                                 Cancel
                             </a>
                         <?php endif; ?>
-                        <?php if(in_array("undo_approval", $current_action)): ?>
-                            <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnUndo_approval btnApproved" href="#" data-toggle="modal" data-target="#undo_approval_modal">
-                                Undo Approval
-                            </a>
-                        <?php endif; ?>
-                        <?php if(in_array("undo_disapproval", $current_action)): ?>
-                            <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnUndo_disapproval btnDisapproved" href="#" data-toggle="modal" data-target="#undo_approval_modal">
-                                Undo Disapproval
-                            </a>
-                        <?php endif; ?>
+                        <template v-if="vm_tab1.valid_ot_dates === true && removeActionDuration(vm_tab1.approved_at) === true">
+                            <?php if(in_array("undo_approval", $current_action)): ?>
+                                <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnUndo_approval btnApproved" href="#" data-toggle="modal" data-target="#undo_approval_modal">
+                                    Undo Approval
+                                </a>
+                            <?php endif; ?>
+                        </template>
+                        <template v-if="vm_tab1.valid_ot_dates === true && removeActionDuration(vm_tab1.disapproved_at) === true">
+                            <?php if(in_array("undo_disapproval", $current_action)): ?>
+                                <a class="btn btn-danger m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnUndo_disapproval btnDisapproved" href="#" data-toggle="modal" data-target="#undo_approval_modal">
+                                    Undo Disapproval
+                                </a>
+                            <?php endif; ?>
+                        </template>
                         <?php if(in_array("print", $current_action)): ?>
-                            <a class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnPrint btnApproved text-white" onclick="prints()">
+                            <button type="button" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnPrint btnApproved text-white" onclick="prints()">
                                 Print
-                            </a>
+                            </button>
                         <?php endif; ?>
-                        <?php if((in_array("back", $current_action))): ?>
+                        <?php if(in_array("back", $current_action)): ?>
                             <a href="<?=(isset($_GET['page']) && $_GET['page']) ? $_GET['page'] : 'masterfile' ?>" class="btn btn-metal m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnBack text-white">
                                 Back
                             </a>
