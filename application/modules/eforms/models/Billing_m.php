@@ -4538,7 +4538,8 @@ class Billing_m extends CI_Model {
                 $data["subdivision_name"] = $_query['subdivision_name'];
                 $data["overPayment"] = $this->computeOverPayment($_query["id"]);
                 $data["total_penalty"] = number_format(($balance["total_penalty"]),2, '.', '');
-                $total_balance = $this->getTotalBalanceCustomer($_query["id"])['balance'];
+                $total_balance_data = $this->getTotalBalanceCustomer($_query["id"]);
+                $total_balance = isset($total_balance_data['balance']) ? $total_balance_data['balance'] : 0;
                 $data["total_balance"] = number_format($total_balance < 0 ? 0 : $total_balance, 2, '.', '');
                 $resultarray[] = $data;
             }
@@ -4619,7 +4620,8 @@ class Billing_m extends CI_Model {
     function getTotalBalanceEtc(){
         $post = $this->input->post();
         $data = array();
-        $total_balance = $this->getTotalBalanceCustomer($post["id"])['balance'];
+        $total_balance_data = $this->getTotalBalanceCustomer($post["id"]);
+        $total_balance = isset($total_balance_data['balance']) ? $total_balance_data['balance'] : 0;
         $balance = $this->computeBalanceLastBill($post["id"], null, null);
         $overpayment = $this->computeOverPayment($post["id"]);
         $data['lastbill'] = $balance; // Useless but as is
