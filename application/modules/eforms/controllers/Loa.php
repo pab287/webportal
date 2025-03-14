@@ -881,16 +881,14 @@
 
         private function getContactPerson($supervisor_meta) {
             $managerial = @unserialize($supervisor_meta);
-            $contactPerson = 0;
-            $name = '';
+            $contactPerson = 124;
+            $name = 'HR - ';
 
             if (is_array($managerial)) {
                 if (isset($managerial['supervisory']) && $managerial['supervisory']) {
                     $contactPerson = $managerial['supervisory'];
                     $name = 'Immediate Supervisor - ';
                 } else {
-                    $contactPerson = 145;
-                    $name = 'HR - ';
 
                     if (isset($managerial['managerial']) && $managerial['managerial']) {
                         $contactPerson = $managerial['managerial'];
