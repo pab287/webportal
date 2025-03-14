@@ -1742,6 +1742,15 @@ class Billing_m extends CI_Model {
             $this->db->where($query_builder);
         }
 
+        if (!empty($post['startDate']) && !empty($post['endDate']) && $post['startDate'] != 'Invalid date' && $post['endDate'] != 'Invalid date') {
+            $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
+            $end_date = date('Y-m-d 23:59:59', strtotime($post['endDate']));
+            $this->db->where("b.created_at >=", $start_date);
+            $this->db->where("b.created_at <=", $end_date);
+        } else {
+            $this->db->where("YEAR(b.created_at)", $current_year); // Defaults to the current year
+        }
+        
         if($search != ""){
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
@@ -1875,11 +1884,11 @@ class Billing_m extends CI_Model {
             }
         }
 
-        $total = $this->getBillingCount($search,$query_builder);
+        $total = $this->getBillingCount($search, $query_builder, $post);
         return array("data"=>$resultarray, "recordsTotal"=>$total, "recordsFiltered"=>$total);
     }
 
-    function getBillingCount($search,$query_builder){
+    function getBillingCount($search, $query_builder, $post){
         $current_year = date('Y');
         $filterFields = array("a.middlename"," a.accountno", "a.meterno", "a.firstname", "a.lastname", "b.ref_no", "b.billing_from", "b.billing_to", "b.total_charges", "b.status", "b.due_date", "r.ref_no");
         $this->db->select("a.middlename, b.is_paid, b.id, a.accountno, a.meterno, a.firstname, a.lastname, b.ref_no, b.billing_from, b.billing_to, b.total_charges, b.status, b.due_date, r.ref_no as reading_ref_no");
@@ -1890,6 +1899,16 @@ class Billing_m extends CI_Model {
         if($query_builder){
             $this->db->where($query_builder);
         }
+
+        if (!empty($post['startDate']) && !empty($post['endDate']) && $post['startDate'] != 'Invalid date' && $post['endDate'] != 'Invalid date') {
+            $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
+            $end_date = date('Y-m-d 23:59:59', strtotime($post['endDate']));
+            $this->db->where("b.created_at >=", $start_date);
+            $this->db->where("b.created_at <=", $end_date);
+        } else {
+            $this->db->where("YEAR(b.created_at)", $current_year); // Defaults to the current year
+        }
+
         if($search != ""){
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {

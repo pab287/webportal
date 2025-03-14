@@ -1,88 +1,209 @@
-var search_val = "";
-var query_builder = "";
-var tblBillings = $("#table-billing").DataTable({
-   dom: '<"toolbar">rtlip',
-   serverSide: true, 
-   processing: true,
-   aaSorting: [],
-   ajax: {
-        url: baseUrl("eforms/billing/get_billing_collection/"),
-        type: "post",
-        global: false,
-        dataType: "json",
-        data: function(d){
-           d.csrf_token = _csrf_hash,
-           d.search['value'] = search_val,
-           d.query_builder = query_builder
-       }
-   },
-   searching: true,
-   columns: [
-       { data: "checkbox"},
-       { data: "ref_no", render: function (data) {
-            return "<strong style='color: #525252;'>"+data+"</strong>";
-          }
-        },
-       { data: "reading_ref_no" },
-       { data: "accountno" },
-       { data: "name", orderable: false},
-       { data: "meterno" },
-       { data: "billing_period", orderable: false, className: "text-center" },
-       { data: "due_date", className: "text-center" },
-       { data: "total_charges", className: "text-right", render: function (data) {
-              return "<strong style='color: #525252;'>"+numberWithCommas(data)+"</strong>";
-            }
-        },
-       { data: "status", className: "text-center", render: function (data) {
-              return renderStatusDue(data)
-          }
-       },
-       { data: "print_count", width: "8%", className: "text-center", render: function (data) {
-              return renderStatusPrint(data)
-            }
-        },
-       { data: null, width: "5%", className: "text-center"},
+const initReadingStartDate = moment();
+const initReadingEndDate = moment();
+let selectedReadingStartDate = null;
+let selectedReadingEndDate = null;
 
-   ],
-   columnDefs: [
-        {
+let search_val = "";
+let query_builder = "";
+const tblBillings = $("#table-billing").DataTable({
+  dom: '<"toolbar">rtlip',
+  serverSide: true, 
+  processing: true,
+  aaSorting: [],
+  ajax: {
+      url: baseUrl("eforms/billing/get_billing_collection/"),
+      type: "post",
+      global: false,
+      dataType: "json",
+      data: function(d) {
+          d.csrf_token = _csrf_hash;
+          d.search['value'] = search_val;
+          d.query_builder = query_builder;
+
+          if (selectedReadingStartDate && selectedReadingEndDate) {
+              d.startDate = moment(selectedReadingStartDate).format("YYYY-MM-DD");
+              d.endDate = moment(selectedReadingEndDate).format("YYYY-MM-DD");
+          } else {
+              d.startDate = '';
+              d.endDate = '';
+          }
+      }
+  },
+  searching: true,
+  columns: [
+      { data: "checkbox"},
+      { data: "ref_no", render: function (data) { return "<span class='m--font-boldest'>"+data+"</span>";} },
+      { data: "reading_ref_no" },
+      { data: "accountno"},
+      { data: "name", orderable: false},
+      { data: "meterno"},
+      { data: "billing_period", orderable: false, className: "text-center"},
+      { data: "due_date", className: "text-center"},
+      { 
+        data: "total_charges", className: "text-right", render: function (data) {
+            return "<span class='m--font-boldest'>"+numberWithCommas(data)+"</span>";
+        }
+      },
+      { data: "status", className: "text-center", render: function (data) {
+            return renderStatusDue(data);
+        }
+      },
+      { data: "print_count", width: "8%", className: "text-center", render: function (data) {
+            return renderStatusPrint(data);
+        }
+      },
+      { data: null, width: "5%", className: "text-center"},
+  ],
+  columnDefs: [
+      {
           orderable: false,
           className: 'select-checkbox',
-          targets:   0
-        },
-        {
-            data: null,
-            defaultContent: "",
-            targets: -1,
-            orderable: false,
-          
-            render: function ( data, type, row, meta ) { return itemDatatableActions(row); },
-        }, {
+          targets: 0
+      },
+      {
+        orderable: false,
+        targets: [8, 9]
+      },
+      {
+          data: null,
+          defaultContent: "",
+          targets: -1,
+          orderable: false,
 
-        }
-   ],
-   select: {
-    style:    'os',
-    selector: 'td:first-child'
-   },
-   buttons: [
-       { 
-           extend: 'csv',
-           exportOptions: {
-               columns: "thead th:not(.notExport)"
-           }
-       }, { 
-           extend: 'excel',
-           exportOptions: {
-               columns: "thead th:not(.notExport)"
-           }
-       }, { 
-           extend: 'pdf',
-           exportOptions: {
-               columns: "thead th:not(.notExport)"
-           }
-       }
-   ]
+          render: function ( data, type, row, meta ) { return itemDatatableActions(row); },
+      }, 
+      {
+          targets: "_all",
+          className: "v-middle",
+      }
+  ],
+  select: {
+      style:    'multi',
+      selector: 'td:first-child'
+  },
+  buttons: [
+      { 
+          extend: 'csv',
+          exportOptions: {
+              columns: "thead th:not(.notExport)"
+          },
+          // fieldBoundary: '',
+          customize: function (csv) {
+              let data = csv.split("\n"); // Split CSV into rows
+              
+              let targetUppercase = [1, 6]; // Columns to make uppercase
+              let targetTotalCharges = 5;
+              // Loop through each row
+              data = data.map((row, rowIndex) => {
+                  // Split row into columns, considering quoted fields
+                  let columns = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+              
+                  columns = columns.map((col, columnIndex) => {
+                      col = col.trim(); // Remove extra spaces
+              
+                      if (rowIndex === 0) { 
+                          return col.replace(/\b\w/g, char => char.toUpperCase());
+                      }
+              
+                      if (targetUppercase.includes(columnIndex)) {
+                          col = col.toUpperCase(); // Convert to uppercase
+                      }
+              
+                      if (columnIndex === targetTotalCharges) {
+                          col = col.replace(/,/g, ''); // Remove commas
+                      }
+              
+                      return col;
+                  });
+              
+                  return columns.join(","); // Join modified columns
+              });
+
+              return data.join("\n"); // Reassemble CSV
+          }
+      }, 
+      { 
+          extend: 'excel',
+          exportOptions: {
+              columns: "thead th:not(.notExport)"
+          },
+          customize: function (xlsx) {
+              let sheet = xlsx.xl.worksheets['sheet1.xml'];
+
+              // Convert Column B to Uppercase
+              $('row:not(:nth-child(2)) c[r^="B"]', sheet).each(function () {
+                  let cell = $(this).find('is t, v'); // Find the text inside
+                  let text = cell.text().trim(); // Get the existing text
+
+                  if (text) {
+                      cell.text(text.toUpperCase()); // Convert to uppercase
+                  }
+              });
+          }
+      }, 
+      {
+          extend: 'pdf',
+          exportOptions: {
+              columns: "thead th:not(.notExport)"
+          },
+          orientation: 'landscape',
+          pageSize: 'LEGAL',
+          customize: function (doc) {
+              // Set dynamic widths for all columns
+              let columnWidths = new Array(doc.content[1].table.body[0].length).fill('*');
+
+              // Define custom widths for specific columns (adjust index as needed)
+              columnWidths[1] = '20%';
+
+              // Apply column widths
+              doc.content[1].table.widths = columnWidths;
+              
+              // Loop through table body and target specific column
+              doc.content[1].table.body.forEach(function (row, rowIndex) {
+                  if (rowIndex === 0) { return; } // Skip the header row
+
+                  let targetUppercase = [1, 6]; // Columns to make uppercase
+                  let targetCenter = [0, 2, 3, 4, 6]; // Columns to center align
+                  let targetRight = 5; // Column to right align
+
+                  row.forEach((cell, columnIndex) => {
+                    if (!cell.text) { return; }
+
+                    if (targetUppercase.includes(columnIndex)) {
+                        cell.text = cell.text.toUpperCase();
+                    }
+
+                    if (targetCenter.includes(columnIndex)) {
+                        cell.alignment = 'center';
+                    }
+
+                    if (columnIndex === targetRight) {
+                        cell.alignment = 'right';
+                    }
+                  });
+              });
+          }
+      },
+  ],
+  createdRow: function(row, data, dataIndex) {
+      $(row).find('td').addClass('v-middle');
+  }
+});
+
+$('#select_all_bills').on('change', function() {
+  if (this.checked) {
+    tblBillings.rows().select();
+  } else {
+    tblBillings.rows().deselect();
+  }
+});
+
+tblBillings.on('select deselect', function() {
+  if (tblBillings.rows({ selected: true }).count() !== tblBillings.rows().count()) {
+      $('#select_all_bills').prop('checked', false);  
+  } else {
+      $('#select_all_bills').prop('checked', true);
+  }
 });
 
 function numberWithCommas(x) {
@@ -116,6 +237,27 @@ function renderStatusPrint(data) {
     return '<div class="m-badge m-badge--default m-badge--wide" role="alert"><strong>Not Printed</strong></div>';
   }
 }
+
+// =============== Billing Date Range Picker ===============
+
+$('#billing-date-picker').daterangepicker({
+  buttonClasses: 'm-btn btn',
+  applyClass: 'btn-primary',
+  cancelClass: 'btn-secondary',
+  startDate: initReadingStartDate,
+  endDate: initReadingEndDate,
+  format: "MMM. DD, YYYY"
+}, function (start, end, label) {
+  selectedReadingStartDate = start;
+  selectedReadingEndDate = end;
+
+  let _label = "<strong>" + start.format("MMM. DD, YYYY") + "</strong> to <strong>" + end.format("MMM. DD, YYYY") + "</strong>";
+
+  $(".selected-filter", $('#billing-date-picker')).html(_label);
+  tblBillings.ajax.reload();
+});
+
+// =============== Billing Date Range Picker ===============
 
 function itemDatatableActions(row){
 	if(row){
