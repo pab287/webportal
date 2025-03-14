@@ -797,50 +797,65 @@ class Hydra_billing_readings_m extends Dbase{
 		return $sth->fetch()["print_count"];
 	}
 
+	public function test_computeOverPayment($account_id) {
+		return $this->computeOverPayment($account_id);
+	}
+
 	private function computeOverPayment($account_id){
 		try {
 			$conn = $this->conn();
 
 			$res = array();
-			$sth = $conn->prepare("SELECT 
-										(SELECT SUM(received_amount) 
-										 FROM hydra_billing.payments 
-										 WHERE account_id = :account_id AND is_archive = 0) AS total_received_amount, 
-										
-										 SUM(p.net_payment) AS total_net_payment, 
-										
-										(SELECT SUM(balance_covered) 
-										 FROM hydra_billing.payments 
-										 WHERE account_id = :account_id AND is_archive = 0) AS balance_covered
-										
-									FROM (
-										-- Select only the first occurrence of each bill_id
-										 SELECT 
-											bill_id,
-											MIN(id) AS min_id
-										 FROM hydra_billing.payments
-										 WHERE account_id = :account_id AND is_archive = 0
-										 GROUP BY bill_id
-									) AS first_payments
-									JOIN hydra_billing.payments p ON p.id = first_payments.min_id");
+			// SUM of received_amount
+			$received_amount_query = $conn->prepare("SELECT SUM(received_amount) AS received_amount
+													  FROM hydra_billing.payments
+													  WHERE account_id = :account_id
+													  AND is_archive = 0");
+			$received_amount_query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+			$received_amount_query->execute();
+			$received_amount = $received_amount_query->fetch(PDO::FETCH_ASSOC);
 
-			$sth->bindParam(':account_id', $account_id, PDO::PARAM_INT);
-			$sth->execute();
-			$result = $sth->fetch(PDO::FETCH_ASSOC);
+			// SUM of net_payment
+			$net_payment_query = $conn->prepare("SELECT SUM(p.net_payment) AS net_payment
+												FROM hydra_billing.payments p
+												JOIN (
+													SELECT bill_id, MIN(id) AS min_id
+													FROM hydra_billing.payments
+													WHERE account_id = :account_id
+													AND is_archive = 0
+													GROUP BY bill_id
+												) AS first_payments ON p.id = first_payments.min_id");
+			$net_payment_query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+			$net_payment_query->execute();
+			$net_payment = $net_payment_query->fetch(PDO::FETCH_ASSOC);
+
+			// SUM of balance_covered
+			$balance_covered_query = $conn->prepare("SELECT SUM(p.balance_covered) AS balance_covered
+													FROM hydra_billing.payments p
+													JOIN (
+														SELECT bill_id, MIN(id) AS min_id
+														FROM hydra_billing.payments
+														WHERE account_id = :account_id
+														AND is_archive = 0
+														GROUP BY bill_id
+													) AS first_payments ON p.id = first_payments.min_id");
+			$balance_covered_query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+			$balance_covered_query->execute();
+			$balance_covered = $balance_covered_query->fetch(PDO::FETCH_ASSOC);
 			
-			$total_received_amount = $result['total_received_amount'];
-			$net_payment = $result['total_net_payment'];
-			$balance_covered = $result['balance_covered'];
+			$received_amount = $received_amount['received_amount'];
+			$net_payment = $net_payment['net_payment'];
+			$balance_covered = $balance_covered['balance_covered'];
 
-			$received_net_payment = $total_received_amount - $net_payment;
+			$received_net_payment = $received_amount - $net_payment;
 			$total = $received_net_payment - $balance_covered;
 
-			$res['total_received_amount'] = $total_received_amount;
-			$res['net_payment'] = $net_payment;
-			$res['balance_covered'] = $balance_covered;
+			$res['total_received_amount'] = $received_amount;
+			$res['total_net_payment'] = $net_payment;
+			$res['total_balance_covered'] = $balance_covered;
 			$res['total'] = $total;
-
-			return number_format($total < 0 ? 0 : $total, 2,'.','');
+			
+			return number_format($total < 0 ? 0 : $total, 2, '.', '');
 			
 		} catch (PDOException $e) {
 			// Handle the exception
