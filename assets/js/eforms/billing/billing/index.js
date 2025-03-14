@@ -38,23 +38,8 @@ const tblBillings = $("#table-billing").DataTable({
               return "<span class='m--font-boldest'>"+numberWithCommas(data)+"</span>";
           }
         },
-<<<<<<< HEAD
-       { data: "reading_ref_no" },
-       { data: "accountno" },
-       { data: "name", orderable: false},
-       { data: "meterno" },
-       { data: "billing_period", orderable: false, className: "text-center" },
-       { data: "due_date", className: "text-center" },
-       { data: "total_charges", className: "text-right", render: function (data) {
-              return "<strong style='color: #525252;'>"+numberWithCommas(data)+"</strong>";
-            }
-        },
-       { data: "status", className: "text-center", render: function (data) {
-              return renderStatusDue(data)
-=======
         { data: "status", className: "text-center", render: function (data) {
               return renderStatusDue(data);
->>>>>>> 4b99810f (added custom checkbox in billing modules datatable)
           }
         },
         { data: "print_count", width: "8%", className: "text-center", render: function (data) {

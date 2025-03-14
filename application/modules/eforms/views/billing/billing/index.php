@@ -129,35 +129,20 @@
 						<table class="table table-striped table-bordered" id="table-billing" width="100%">
 							<thead>
 								<tr>
-<<<<<<< HEAD
-								<th></th>
-								<th>Reference No.</th>
-								<th>Reading Ref No.</th>
-								<th>Account No.</th>
-								<th>Account Name</th>
-								<th>Meter No.</th>
-								<th>Billing Date</th>
-								<th>Due Date</th>
-								<th>Total Charges</th>
-								<th>Status</th>
-								<th>Print</th>
-								<th class="notExport">Action</th>
-=======
-									<th class="toggle-all">
+									<th class="toggle-all notExport">
 										<input type="checkbox" id="select_all_bills"> <span></span>
 									</th>
 									<th>Reference No.</th>
-									<th>Reading Ref No.</th>
-									<th>Account No.</th>
+									<th class="notExport">Reading Ref No.</th>
+									<th class="notExport">Account No.</th>
 									<th>Account Name</th>
 									<th>Meter No.</th>
 									<th>Billing Date</th>
 									<th>Due Date</th>
 									<th>Total Charges</th>
 									<th>Status</th>
-									<th>Print</th>
+									<th class="notExport">Print</th>
 									<th class="notExport">Action</th>
->>>>>>> 4b99810f (added custom checkbox in billing modules datatable)
 								</tr>
 							</thead>
 							<tbody>	
