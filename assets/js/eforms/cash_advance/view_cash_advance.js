@@ -1458,12 +1458,14 @@ var vmCashAdvancePrint = new Vue({
 // }
 
 function printArea() {
-    win = window.open();
-    var divToPrint = document.getElementById("printableArea");
-    win.document.write(divToPrint.outerHTML);
-    win.focus();
-    win.print();
-    win.close();
+    setTimeout( function (){
+        win = window.open();
+        var divToPrint = document.getElementById("printableArea");
+        win.document.write(divToPrint.outerHTML);
+        win.focus();
+        win.print();
+        win.close();
+    },500);
 }
 
 $("#set_acctg_modal").on("show.bs.modal", function(){
