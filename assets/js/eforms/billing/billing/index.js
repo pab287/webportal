@@ -76,6 +76,40 @@ const tblBillings = $("#table-billing").DataTable({
             extend: 'csv',
             exportOptions: {
                 columns: "thead th:not(.notExport)"
+            },
+            // fieldBoundary: '',
+            customize: function (csv) {
+                let data = csv.split("\n"); // Split CSV into rows
+                
+                let targetUppercase = [1, 6]; // Columns to make uppercase
+                let targetTotalCharges = 5;
+                // Loop through each row
+                data = data.map((row, rowIndex) => {
+                    // Split row into columns, considering quoted fields
+                    let columns = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+                
+                    columns = columns.map((col, columnIndex) => {
+                        col = col.trim(); // Remove extra spaces
+                
+                        if (rowIndex === 0) { 
+                            return col.replace(/\b\w/g, char => char.toUpperCase());
+                        }
+                
+                        if (targetUppercase.includes(columnIndex)) {
+                            col = col.toUpperCase(); // Convert to uppercase
+                        }
+                
+                        if (columnIndex === targetTotalCharges) {
+                            col = col.replace(/,/g, ''); // Remove commas
+                        }
+                
+                        return col;
+                    });
+                
+                    return columns.join(","); // Join modified columns
+                });
+
+                return data.join("\n"); // Reassemble CSV
             }
         }, 
         { 
