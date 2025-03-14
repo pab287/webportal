@@ -76,17 +76,17 @@
 										</button>
 
 										<div class="dropdown-menu" aria-labelledby="btnGroupDrop1" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 40px, 0px); top: 0px; left: 0px; will-change: transform;">
-											<a href="" class="dropdown-item datatable-csv" id="ExportCSV">
+											<a href="javascript:void(0);" class="dropdown-item datatable-csv" id="ExportCSV">
 												<i class="m-nav__link-icon la la-file-o"></i>
 												<span class="m-nav__link-text">CSV</span>
 											</a>
 
-											<a href="" class="dropdown-item datatable-pdf" id="ExportPDF">
+											<a href="javascript:void(0);" class="dropdown-item datatable-pdf" id="ExportPDF">
 												<i class="m-nav__link-icon la la-file-pdf-o"></i>
 												<span class="m-nav__link-text">PDF</span>
 											</a>
 
-											<a href="" class="dropdown-item datatable-excel" id="ExportExcel">
+											<a href="javascript:void(0);" class="dropdown-item datatable-excel" id="ExportExcel">
 												<i class="m-nav__link-icon la la-file-excel-o"></i>
 												<span class="m-nav__link-text">EXCEL</span>
 											</a>
@@ -129,6 +129,7 @@
 						<table class="table table-striped table-bordered" id="table-billing" width="100%">
 							<thead>
 								<tr>
+<<<<<<< HEAD
 								<th></th>
 								<th>Reference No.</th>
 								<th>Reading Ref No.</th>
@@ -141,6 +142,22 @@
 								<th>Status</th>
 								<th>Print</th>
 								<th class="notExport">Action</th>
+=======
+									<th class="toggle-all">
+										<input type="checkbox" id="select_all_bills"> <span></span>
+									</th>
+									<th>Reference No.</th>
+									<th>Reading Ref No.</th>
+									<th>Account No.</th>
+									<th>Account Name</th>
+									<th>Meter No.</th>
+									<th>Billing Date</th>
+									<th>Due Date</th>
+									<th>Total Charges</th>
+									<th>Status</th>
+									<th>Print</th>
+									<th class="notExport">Action</th>
+>>>>>>> 4b99810f (added custom checkbox in billing modules datatable)
 								</tr>
 							</thead>
 							<tbody>	
@@ -374,3 +391,34 @@
 		</div>
 	</form>
 </div>
+
+<style>
+	.v-middle {
+		vertical-align: middle!important;
+	}
+
+	#table-billing tbody td.select-checkbox:before {
+		top: 0!important;
+		bottom: 0!important;
+		left: 0!important;
+		right: 0!important;
+		margin: auto!important;
+		border: 1px solid #767676;
+		border-radius: 2px!important;
+		height: 13px!important;
+		width: 13px!important;
+	}
+
+	#table-billing tbody td.select-checkbox:after {
+		position: absolute!important;
+		top: -8px!important;
+		bottom: 0!important;
+		left: 0!important;
+		right: 0!important;
+		margin: auto!important;
+	}
+
+	#table-billing tbody tr.selected td.select-checkbox:before {
+		border: 1px solid #ffffff !important;
+	}
+</style>

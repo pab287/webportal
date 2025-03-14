@@ -6,30 +6,39 @@ let selectedReadingEndDate = moment();
 let search_val = "";
 let query_builder = "";
 const tblBillings = $("#table-billing").DataTable({
-   dom: '<"toolbar">rtlip',
-   serverSide: true, 
-   processing: true,
-   aaSorting: [],
-   ajax: {
+    dom: '<"toolbar">rtlip',
+    serverSide: true, 
+    processing: true,
+    aaSorting: [],
+    ajax: {
         url: baseUrl("eforms/billing/get_billing_collection/"),
         type: "post",
         global: false,
         dataType: "json",
-        data: function(d){
-           d.csrf_token = _csrf_hash,
-           d.search['value'] = search_val,
-           d.query_builder = query_builder,
-           d.startDate = moment(selectedReadingStartDate).format("YYYY-MM-DD"),
-           d.endDate = moment(selectedReadingEndDate).format("YYYY-MM-DD")
-       }
-   },
-   searching: true,
-   columns: [
-       { data: "checkbox"},
-       { data: "ref_no", render: function (data) {
-            return "<strong style='color: #525252;'>"+data+"</strong>";
+        data: function(d) {
+            d.csrf_token = _csrf_hash,
+            d.search['value'] = search_val,
+            d.query_builder = query_builder,
+            d.startDate = moment(selectedReadingStartDate).format("YYYY-MM-DD"),
+            d.endDate = moment(selectedReadingEndDate).format("YYYY-MM-DD")
+        }
+    },
+    searching: true,
+    columns: [
+        { data: "checkbox"},
+        { data: "ref_no", render: function (data) { return "<span class='m--font-boldest'>"+data+"</span>";} },
+        { data: "reading_ref_no" },
+        { data: "accountno"},
+        { data: "name", orderable: false},
+        { data: "meterno"},
+        { data: "billing_period", orderable: false, className: "text-center"},
+        { data: "due_date", className: "text-center"},
+        { 
+          data: "total_charges", className: "text-right", render: function (data) {
+              return "<span class='m--font-boldest'>"+numberWithCommas(data)+"</span>";
           }
         },
+<<<<<<< HEAD
        { data: "reading_ref_no" },
        { data: "accountno" },
        { data: "name", orderable: false},
@@ -42,84 +51,110 @@ const tblBillings = $("#table-billing").DataTable({
         },
        { data: "status", className: "text-center", render: function (data) {
               return renderStatusDue(data)
+=======
+        { data: "status", className: "text-center", render: function (data) {
+              return renderStatusDue(data);
+>>>>>>> 4b99810f (added custom checkbox in billing modules datatable)
           }
-       },
-       { data: "print_count", width: "8%", className: "text-center", render: function (data) {
-              return renderStatusPrint(data)
-            }
         },
-       { data: null, width: "5%", className: "text-center"},
-
-   ],
-   columnDefs: [
+        { data: "print_count", width: "8%", className: "text-center", render: function (data) {
+              return renderStatusPrint(data);
+          }
+        },
+        { data: null, width: "5%", className: "text-center"},
+    ],
+    columnDefs: [
         {
-          orderable: false,
-          className: 'select-checkbox',
-          targets:   0
+            orderable: false,
+            className: 'select-checkbox',
+            targets: 0
         },
         {
             data: null,
             defaultContent: "",
             targets: -1,
             orderable: false,
-          
+
             render: function ( data, type, row, meta ) { return itemDatatableActions(row); },
-        }, {
-
+        }, 
+        {
+            targets: "_all",
+            className: "v-middle",
         }
-   ],
-   select: {
-    style:    'multi',
-    selector: 'td:first-child'
-   },
-   buttons: [
-       { 
-           extend: 'csv',
-           exportOptions: {
-               columns: "thead th:not(.notExport)"
-           }
-       }, { 
-           extend: 'excel',
-           exportOptions: {
-               columns: "thead th:not(.notExport)"
-           }
-       }, { 
-           extend: 'pdf',
-           exportOptions: {
-               columns: "thead th:not(.notExport)"
-           }
-       },
-       {
-        text: 'Export Selected to Excel',
-        action: function ( e, dt, button, config ) {
-            let selectedData = dt.rows({ selected: true }).data().toArray();
-            let exportData = dt.buttons.exportData({
-                columns: "thead th:not(.notExport)",
-                modifier: {
-                    selected: true
-                }
-            });
-
-            // Create a new DataTable instance for exporting
-            let exportTable = $('<table>').DataTable({
-                data: selectedData,
-                columns: dt.settings().init().columns,
-                dom: 'Bfrtip',
-                buttons: [
-                    {
-                        extend: 'excel',
-                        exportOptions: {
-                            columns: "thead th:not(.notExport)"
-                        }
+    ],
+    select: {
+        style:    'multi',
+        selector: 'td:first-child'
+    },
+    buttons: [
+        { 
+            extend: 'csv',
+            exportOptions: {
+                columns: "thead th:not(.notExport)"
+            }
+        }, 
+        { 
+            extend: 'excel',
+            exportOptions: {
+                columns: "thead th:not(.notExport)"
+            }
+        }, 
+        { 
+            extend: 'pdf',
+            exportOptions: {
+                columns: "thead th:not(.notExport)"
+            }
+        },
+        {
+            text: 'Export Selected to Excel',
+            action: function ( e, dt, button, config ) {
+                let selectedData = dt.rows({ selected: true }).data().toArray();
+                let exportData = dt.buttons.exportData({
+                    columns: "thead th:not(.notExport)",
+                    modifier: {
+                        selected: true
                     }
-                ]
-            });
+                });
 
-            // Trigger the export
-            exportTable.button('.buttons-excel').trigger();
+                // Create a new DataTable instance for exporting
+                let exportTable = $('<table>').DataTable({
+                    data: selectedData,
+                    columns: dt.settings().init().columns,
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                          extend: 'excel',
+                          exportOptions: {
+                              columns: "thead th:not(.notExport)"
+                          }
+                        }
+                    ] 
+                });
+
+                // Trigger the export
+                exportTable.button('.buttons-excel').trigger();
+            }
         }
+    ],
+    createdRow: function(row, data, dataIndex) {
+        $(row).find('td').addClass('v-middle');
     }
-   ]
+});
+
+$('#select_all_bills').on('change', function() {
+  if (this.checked) {
+    tblBillings.rows().select();
+  } else {
+    tblBillings.rows().deselect();
+  }
+});
+
+tblBillings.on('select deselect', function() {
+  if (tblBillings.rows({ selected: true }).count() !== tblBillings.rows().count()) {
+      $('#select_all_bills').prop('checked', false);  
+  } else {
+      $('#select_all_bills').prop('checked', true);
+  }
 });
 
 function numberWithCommas(x) {
