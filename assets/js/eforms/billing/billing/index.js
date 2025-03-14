@@ -1,7 +1,7 @@
 const initReadingStartDate = moment();
 const initReadingEndDate = moment();
-let selectedReadingStartDate = moment();
-let selectedReadingEndDate = moment();
+let selectedReadingStartDate = null;
+let selectedReadingEndDate = null;
 
 let search_val = "";
 let query_builder = "";
@@ -16,11 +16,17 @@ const tblBillings = $("#table-billing").DataTable({
         global: false,
         dataType: "json",
         data: function(d) {
-            d.csrf_token = _csrf_hash,
-            d.search['value'] = search_val,
-            d.query_builder = query_builder,
-            d.startDate = moment(selectedReadingStartDate).format("YYYY-MM-DD"),
-            d.endDate = moment(selectedReadingEndDate).format("YYYY-MM-DD")
+            d.csrf_token = _csrf_hash;
+            d.search['value'] = search_val;
+            d.query_builder = query_builder;
+
+            if (selectedReadingStartDate && selectedReadingEndDate) {
+                d.startDate = moment(selectedReadingStartDate).format("YYYY-MM-DD");
+                d.endDate = moment(selectedReadingEndDate).format("YYYY-MM-DD");
+            } else {
+                d.startDate = '';
+                d.endDate = '';
+            }
         }
     },
     searching: true,
