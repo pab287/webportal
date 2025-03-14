@@ -1,3 +1,8 @@
+const initReadingStartDate = moment();
+const initReadingEndDate = moment();
+let selectedReadingStartDate = moment();
+let selectedReadingEndDate = moment();
+
 var search_val = "";
 var query_builder = "";
 var tblBillings = $("#table-billing").DataTable({
@@ -13,7 +18,9 @@ var tblBillings = $("#table-billing").DataTable({
         data: function(d){
            d.csrf_token = _csrf_hash,
            d.search['value'] = search_val,
-           d.query_builder = query_builder
+           d.query_builder = query_builder,
+           d.startDate = moment(selectedReadingStartDate).format("YYYY-MM-DD"),
+           d.endDate = moment(selectedReadingEndDate).format("YYYY-MM-DD")
        }
    },
    searching: true,
@@ -85,6 +92,11 @@ var tblBillings = $("#table-billing").DataTable({
    ]
 });
 
+tblBillings.button('.buttons-csv').enable(false);
+setTimeout(() => {
+    tblBillings.button('.buttons-csv').enable(true);
+}, 1000);
+
 function numberWithCommas(x) {
   return parseFloat(x).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
@@ -116,6 +128,27 @@ function renderStatusPrint(data) {
     return '<div class="m-badge m-badge--default m-badge--wide" role="alert"><strong>Not Printed</strong></div>';
   }
 }
+
+// =============== Billing Date Range Picker ===============
+
+$('#billing-date-picker').daterangepicker({
+  buttonClasses: 'm-btn btn',
+  applyClass: 'btn-primary',
+  cancelClass: 'btn-secondary',
+  startDate: initReadingStartDate,
+  endDate: initReadingEndDate,
+  format: "MMM. DD, YYYY"
+}, function (start, end, label) {
+  selectedReadingStartDate = start;
+  selectedReadingEndDate = end;
+
+  let _label = "<strong>" + start.format("MMM. DD, YYYY") + "</strong> to <strong>" + end.format("MMM. DD, YYYY") + "</strong>";
+
+  $(".selected-filter", $('#billing-date-picker')).html(_label);
+  tblBillings.ajax.reload();
+});
+
+// =============== Billing Date Range Picker ===============
 
 function itemDatatableActions(row){
 	if(row){

@@ -45,9 +45,9 @@
 				<div class="m-portlet__body">
           <div class="m-form m-form--label-align-right m--margin-top-10 m--margin-bottom-10">
             <div class="row align-items-center">
-                <div class="col-xl-8 order-2 order-xl-1">
+                <div class="col-xl-7 order-2 order-xl-1">
                     <div class="form-group m-form__group row align-items-center">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
           <!-- <a href="<?php echo site_url('eforms/billing/create')?>" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill btnNew text-white">
             <span>
               <i class="la la-plus"></i>
@@ -56,10 +56,26 @@
               </span>
             </span>
                             </a> -->
-                      <button class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill massPrint text-white"><i class="la la-print"></i> Print</button>
-                                        <button class="btn btn-primary m-btn m-btn--icon m-btn--pill btnAdvance_search" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <span><i class="fa fa-search"></i><span>Filter</span><span class="dropdown-toggle"></span></span>
-                      </button>
+                      	<button class="btn btn-accent m-btn m-btn--icon m-btn--air m-btn--pill massPrint text-white">
+							<i class="la la-print"></i> Print
+						</button>
+
+						<button class="btn btn-primary m-btn m-btn--icon m-btn--pill btnAdvance_search" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+							<span>
+								<i class="fa fa-search"></i>
+								<span>Filter</span>
+								<span class="dropdown-toggle"></span>
+							</span>
+						</button>
+
+					  	<button class="btn btn-brand m-btn m-btn--icon m-btn--pill" id="billing-date-picker">
+							<span>
+								<em class="fa fa-calendar"></em>
+								<span class="selected-filter pl-3 pr-2">Date Filter</span>
+							</span>
+						</button>
+
+
                       <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 37px, 0px); top: 0px; left: 0px; will-change: transform;">
                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-query-builder">
                           Query Builder
@@ -71,7 +87,7 @@
                         </div>
                     </div>
                 </div>
-            <div class="col-xl-4 order-1 order-xl-2 m--align-right d-flex flex-row">
+            <div class="col-xl-5 order-1 order-xl-2 m--align-right d-flex flex-row">
                 <div class="m-input-icon m-input-icon--left" style="border: 1px solid #c3c3c3;">
                   <input type="text" class="form-control m-input m-input--solid" placeholder="Search..." id="generalSearch">
                   <span class="m-input-icon__icon m-input-icon__icon--left">
