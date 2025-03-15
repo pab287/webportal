@@ -521,7 +521,11 @@
                         $sms_date,
                         ucwords($contactPerson)
                     );
-                    $smsResponse = $this->contacts->sendSMS($details['mobile_no'], $message);
+
+                    if (isset($details['allow_sms_notification']) && $details['allow_sms_notification']) {
+                        $smsResponse = $this->contacts->sendSMS($details['mobile_no'], $message);
+                    }
+
                     if(isset($smsResponse["data"]) && $smsResponse["data"] !== false){
                         $this->core_layout->setEventLog("Sent SMS to head contact for leave of absence ".$reference_no.".","add", "success", "gcceforms", "user");
                     }else{
@@ -855,28 +859,35 @@
         }
 
         private function getLeaveDetails($id) {
-            $query = $this->db->query("
-                SELECT
-                    l.type,
-                    l.reference_no,
-                    l.nature,
-                    l.approved_remarks,
-                    l.reason,
-                    l.date_from,
-                    l.date_to,
-                    e.mobile_no,
-                    e.position,
-                    e.supervisor_meta,
-                    COALESCE(u.email, e.email) as email,
-                    CONCAT(e.firstname, ' ', e.lastname) AS fullname,
-                    CONCAT(a.firstname, ' ', a.lastname) AS approve_by
-                FROM gcceforms.loa l
-                JOIN gccmaster.tblemployees e ON l.employee = e.id
-                JOIN gccmaster.tblemployees a ON l.approved_by = a.id
-                LEFT JOIN gccmaster.tblusers u ON u.emp_id = e.id
-                WHERE l.id = ?
-            ", [$id]);
-            return $query->row_array();
+            // $query = $this->db->query("
+            //     SELECT
+            //         l.type,
+            //         l.reference_no,
+            //         l.nature,
+            //         l.approved_remarks,
+            //         l.reason,
+            //         l.date_from,
+            //         l.date_to,
+            //         e.mobile_no,
+            //         e.position,
+            //         e.supervisor_meta,
+            //         COALESCE(u.email, e.email) as email,
+            //         CONCAT(e.firstname, ' ', e.lastname) AS fullname,
+            //         CONCAT(a.firstname, ' ', a.lastname) AS approve_by
+            //     FROM gcceforms.loa l
+            //     JOIN gccmaster.tblemployees e ON l.employee = e.id
+            //     JOIN gccmaster.tblemployees a ON l.approved_by = a.id
+            //     LEFT JOIN gccmaster.tblusers u ON u.emp_id = e.id
+            //     WHERE l.id = ?
+            // ", [$id]);
+            $this->db->select("l.type, l.reference_no, l.nature, l.approved_remarks, l.reason, l.date_from, l.date_to, IFNULL(e.company_phone_no, e.mobile_no) as mobile_no, e.position, e.supervisor_meta, COALESCE(u.email, e.email) as email, CONCAT(e.firstname, ' ', e.lastname) AS fullname, e.allow_sms_notification, CONCAT(a.firstname, ' ', a.lastname) AS approve_by");
+            $this->db->join('gccmaster.tblemployees e', 'l.employee = e.id');
+            $this->db->join('gccmaster.tblemployees a', 'l.approved_by = a.id');
+            $this->db->join('gccmaster.tblusers u', 'u.emp_id = e.id', 'LEFT');
+            $this->db->from('gcceforms.loa l');
+            $this->db->where('l.id', $id);
+            $query = $this->db->get();
+            return $query->num_rows() > 0 ? $query->row_array() : 0;
         }
 
         private function getContactPerson($supervisor_meta) {
