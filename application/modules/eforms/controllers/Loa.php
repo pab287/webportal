@@ -887,7 +887,7 @@
             $this->db->from('gcceforms.loa l');
             $this->db->where('l.id', $id);
             $query = $this->db->get();
-            return $query->num_rows() > 0 ? $query->row_array() : 0;
+            return $query->num_rows() > 0 ? $query->row_array() : array();
         }
 
         private function getContactPerson($supervisor_meta) {
