@@ -253,7 +253,7 @@
             $referenceNumber = 'LOA'.$year.'-'.$month.'-'.$series;
 
             if ($isValidDate) {
-                $insert = 31984; //$this->loa->save($data);
+                $insert = $this->loa->save($data);
                 $last_id = $insert;
 
                 if($insert){
