@@ -235,7 +235,7 @@ let employeeDataSheet = new Vue({
               display_name_0: displayName1,
               display_name_1: displayName2
             };
-          },
+        },
         getPersonalInformation(){
             if (!hasValue(this.main)) {
                 this.main = { ...this.$data.main, ..._tempContentData.data.main };
@@ -282,7 +282,7 @@ let employeeDataSheet = new Vue({
               `${lastname.toUpperCase()}, ${firstname.toUpperCase()}${middleInitial}${formattedSuffix}`,
               `${firstname.toUpperCase()}${middleInitial} ${lastname.toUpperCase()}${formattedSuffix}`
             ];
-          },
+        },
         formatDate(empdate) {
             if (!empdate || empdate == '0000-00-00') {
                 return '---';
@@ -313,27 +313,24 @@ let employeeDataSheet = new Vue({
                 ? answerKey
                 : "N/A";
         },
-
         getExpirationClass(expirationDate) {
             const today = new Date();
             const expirationDateObj = new Date(expirationDate);
             return expirationDateObj > today ? 'm-badge--success' : 'm-badge--danger';
         },
-
         formatAmount(amount) {
             return new Intl.NumberFormat('en-PH', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             }).format(amount);
-          },
-    
-          isReturned(acct) {
+        },
+        isReturned(acct) {
             return parseInt(acct.is_returned) == 1;
-          },
-          hasRemarks(acct) {
+        },
+        hasRemarks(acct) {
             return !!acct.remarks_returned
-          },
-          formatSalaryRate(rate) {
+        },
+        formatSalaryRate(rate) {
             if (!rate || rate == '') return 'NONE';
 
             const formattedRate = new Intl.NumberFormat('en-PH', {
@@ -342,12 +339,12 @@ let employeeDataSheet = new Vue({
             }).format(parseFloat(rate.replace(',', '')));
             
             return formattedRate;
-          },
-          isCurrentSalary(salary, index) {
+        },
+        isCurrentSalary(salary, index) {
             const grandTotal = parseFloat(this.data.grandTotal);
             return salary.sal_rate == grandTotal && index == 0;
-          },
-          formattedJobDesc() {
+        },
+        formattedJobDesc() {
             if (!this.job_desc) return '';
             
             // Create a temporary div to parse HTML
@@ -362,8 +359,8 @@ let employeeDataSheet = new Vue({
             return hasListItems 
               ? this.job_desc 
               : this.job_desc.replace(/\n/g, '<br>');
-          },
-          formattedJobDescPrint(data) {
+        },
+        formattedJobDescPrint(data) {
             if (!data) return '';
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = data;
@@ -372,7 +369,27 @@ let employeeDataSheet = new Vue({
             return hasListItems 
               ? data 
               : data.replace(/\n/g, '<br>');
-          },
+        },
+        changeSMS(e) {
+            var val = $(e.target).is(':checked') ? 1 : 0;
+            
+            $.ajax({
+                url: baseUrl('core/profile/allow_sms/') + id,
+                data: { 
+                    csrf_token: _csrf_hash,
+                    allow: val
+                },
+                dataType: 'JSON',
+                type: 'POST',
+                success: function (response) {
+                    if (response.state){
+                        toastr.success(response.msg, 'SMS Notification', 5000);
+                    } else {
+                        toastr.error('Failed to Enable/Disable the SMS notification', 'SMS Notification', 5000);
+                    }
+                }
+            });
+        }
     }
 })
 

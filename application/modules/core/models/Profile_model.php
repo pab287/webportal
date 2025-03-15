@@ -27,6 +27,9 @@ class Profile_model extends CI_Model
 
     function __construct() {
         parent::__construct();
+
+        $this->loggedinData = $this->user_data = $this->session->userdata("logged_in");
+        $this->loggedInUsername = $this->loggedinData["username"];
     }
 
 
@@ -248,5 +251,30 @@ class Profile_model extends CI_Model
     public function getEmpJobDescription($id){
         $data = $this->db->select('job_desc')->get_where($this->positionTable, array("id" => $id))->row();
         return $data;
+    }
+
+    public function allow_sms($id) {
+        $result = array();
+        $post = $this->input->post();
+
+        $data = array(
+            'allow_sms_notification' => $post['allow']
+        );
+
+        $notif = $post['allow'] ? 'Enabled' : 'Disabled';
+
+        $this->db->where('id', $id);
+        $query = $this->db->update($this->employeeTable, $data);
+
+        if ($query) {
+            $result['state'] = true;
+            $result['msg'] = "Successfully {$notif} SMS Notification";
+            $this->core_layout->setEventLog("User ".$this->loggedInUsername . " {$notif} the SMS notification.", "update", "success", "gcchris", "user");
+        } else {
+            $result['state'] = false;
+            $this->core_layout->setEventLog("User `".$this->loggedInUsername . "` failed to 'Enable/Disable' the SMS notification.", "update", "error", "gcchris", "system");
+        }
+
+        return $result;
     }
 }

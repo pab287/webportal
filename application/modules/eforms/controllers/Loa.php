@@ -253,17 +253,14 @@
             $referenceNumber = 'LOA'.$year.'-'.$month.'-'.$series;
 
             if ($isValidDate) {
-                $insert = $this->loa->save($data);
-                // $head_id = $this->loa->getTelegramId($department);
+                $insert = 31984; //$this->loa->save($data);
                 $last_id = $insert;
-                // $emp_id = $this->loa->getEmpTelegramId($this->input->post('employee'));
-    
+
                 if($insert){
                     $loa_date = $this->get_loa_date_sms($this->input->post('type'), $from, $to);
-
                     $head_contact = $this->getHeadContact($this->input->post('employee'));
                     
-                    $smsContact = $this->getContactDetails($head_contact, 'no');
+                    $smsContact = $this->getContactDetails($head_contact, 'no', $head_contact['allow_sms']);
                     $emailContact = $this->getContactDetails($head_contact, 'email');
                     $contact = $smsContact['contact'] ?? null;
                     $msgName = $smsContact['name'] ?? null;
@@ -294,6 +291,7 @@
                     "Address: {$details['address']}\n" .
                     "Contact No: {$details['phone']}\n\n" .
                     "This is a computer-generated message. Please do not reply to this number.\n\nThank you!";
+
                     if($contact){
                         $smsResponse = $this->contacts->sendSMS($contact, $msg);
                         if(isset($smsResponse["data"]) && $smsResponse["data"] !== false){
@@ -316,6 +314,8 @@
                 }else{
                     $this->core_layout->setEventLog("Failed in adding leave of absence.","add", "error", "gcceforms", "system");
                 }
+
+                die;
                 echo json_encode(array("status" => TRUE, "test" => $to, "last_id" => $last_id));
             } else {
                 echo json_encode(array("status" => FALSE));
@@ -912,6 +912,7 @@
                             $result['supervisory_no'] = $supervisoryDetails['mobile_no'];
                             $result['supervisory_email'] = $supervisoryDetails['email'];
                             $result['supervisory_name'] = $supervisoryDetails['fullname'];
+                            $result['allow_sms'] = $supervisoryDetails['allow_sms_notification'];
                         }
                     }
         
@@ -919,9 +920,10 @@
                     if (!empty($supervisorMeta['managerial'])) {
                         $managerialDetails = $this->getEmployeeDetails($supervisorMeta['managerial']);
                         if ($managerialDetails) {
-                            $result['managerial_no'] = $managerialDetails['mobile_no'];
+                            $result['managerial_no'] = $managerialDetails['allow_sms_notification'] == 1 ? $managerialDetails['mobile_no'] : 0;
                             $result['managerial_email'] = $managerialDetails['email'];
                             $result['managerial_name'] = $managerialDetails['fullname'];
+                            $result['allow_sms'] = $managerialDetails['allow_sms_notification'];
                         }
                     }
                 }
@@ -929,17 +931,18 @@
             else{
                 $headDetails = $this->getEmployeeDetails($result['head_id']);
                 if ($headDetails) {
-                    $result['head_no'] = $headDetails['mobile_no'];
+                    $result['head_no'] = $headDetails['allow_sms_notification'] == 1 ? $headDetails['mobile_no'] : 0;
                     $result['head_email'] = $headDetails['email'];
                     $result['head_name'] = $headDetails['fullname'];
                     $result['head_telegram_chat_id'] = $headDetails['telegram_chat_id'];
+                    $result['allow_sms'] = $headDetails['allow_sms_notification'];
                 }
             }
             return $result;
         }
 
         private function getEmployeeDetails($id) {
-            $query = $this->db->select("e.mobile_no, u.email, u.telegram_chat_id, CONCAT(e.firstname, ' ', e.lastname) AS fullname")
+            $query = $this->db->select("IFNULL(e.company_phone_no, e.mobile_no) as mobile_no, u.email, u.telegram_chat_id, CONCAT(e.firstname, ' ', e.lastname) AS fullname, e.allow_sms_notification")
                 ->from("gccmaster.tblemployees as e")
                 ->join("gccmaster.tblusers u", "u.emp_id = e.id", "left")
                 ->where("e.id", $id)
@@ -951,6 +954,8 @@
         private function get_loa_date_sms($type, $date_from, $date_to) {
             switch ($type) {
                 case 1: // Undertime
+                    return '<strong> Date: </strong> ' . date('F j, Y', strtotime($date_from))."\n".'Time: ' . date('h:i A', strtotime($date_from)) . ' - ' . date('h:i A', strtotime($date_to)) . "\n";
+                    break;
                 case 2: // Half Day
                     return '<strong>Date:</strong> ' . date('F j, Y', strtotime($date_from))."\n".'Time: ' . date('h:i A', strtotime($date_from)) . ' - ' . date('h:i A', strtotime($date_to)) . "\n";
                     break;
@@ -966,7 +971,7 @@
             }
         }
 
-        private function getContactDetails($head_contact, $type) {
+        private function getContactDetails($head_contact, $type, $allow_sms = 2) {
             $fields = [
                 'head' => ['no' => 'head_no', 'email' => 'head_email', 'name' => 'head_name'],
                 'supervisory' => ['no' => 'supervisory_no', 'email' => 'supervisory_email', 'name' => 'supervisory_name'],
@@ -976,7 +981,7 @@
             foreach ($fields as $key => $field) {
                 if (!empty($head_contact[$field[$type]])) {
                     return [
-                        'contact' => $head_contact[$field[$type]],
+                        'contact' => $allow_sms == 1 || $allow_sms == 2 ? $head_contact[$field[$type]] : false,
                         'name' => $head_contact[$field['name']]
                     ];
                 }
