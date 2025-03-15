@@ -221,6 +221,9 @@ class Telegram_bot_config extends CI_Model{
         $this->db->from($this->telegramConfigTable.' as a');
         $this->db->where('a.id', $id);
         $query = $this->db->get();
+        if ($query->num_rows() < 0) {
+            return array('response'=>'');
+        }
         $results = $query->row();
         $results->modules = @unserialize( $results->modules);
         return array('response'=>$results);
