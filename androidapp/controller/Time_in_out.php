@@ -18,11 +18,6 @@ class Time_in_out extends Dbase{
         echo $data;
     }
 
-    public function timeLog_spam(){
-        $data = $this->TIO->time_log_spam();
-        echo $data;
-    }
-
     public function timeLogOffline(){
         $data = $this->TIO->time_log_offline();
         echo $data;
@@ -60,6 +55,11 @@ class Time_in_out extends Dbase{
 
     public function geofence(){
         $data = $this->TIO->getLocation();
+        echo $data;
+    }
+    
+    public function appVersion(){
+        $data = $this->TIO->app_version();
         echo $data;
     }
     
