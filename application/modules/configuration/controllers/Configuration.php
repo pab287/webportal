@@ -10,6 +10,7 @@ class Configuration extends MY_Controller {
         $this->load->model("Sms_Configuration","sms_config");
         $this->load->model("Database_backup","database_backup");
         $this->load->model("Logs_model","logs");
+        $this->load->model("Telegram_bot_config", "telegram");
 	}
     
     public function index(){
@@ -45,9 +46,30 @@ class Configuration extends MY_Controller {
         $this->load->view('core/templates/footer');
     }
 
+    public function telegram_protocol(){
+        $this->core_layout->setPrivilegeName("cfg_telegram_protocol");
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
+        $data['owner'] = $this->telegram->select2OwnerData();
+        $data['module'] = $this->telegram->select2ModuleData();
+        $this->core_layout->addJs("js/configuration/telegram/telegram_protocol.js", true,$data);
+		$this->load->view('core/templates/header');
+        $this->load->view('configuration/telegram/telegram_protocol');
+        $this->load->view('core/templates/footer');
+    }
+
+    public function telegram_protocol_archive(){
+        $this->core_layout->setPrivilegeName("cfg_telegram_protocol");
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
+        $this->core_layout->addJs("js/configuration/telegram/telegram_protocol.js", true);
+		$this->load->view('core/templates/header');
+        $this->load->view('configuration/telegram/telegram_bot_archive');
+        $this->load->view('core/templates/footer');
+    }
+
     public function manual(){
         $this->core_layout->addJs("js/configuration/database/manual.js", true);
-
 		$this->load->view('core/templates/header');
         $this->load->view('configuration/database/manual');
         $this->load->view('core/templates/footer');
@@ -256,6 +278,41 @@ class Configuration extends MY_Controller {
         $this->output
         ->set_content_type('json')
         ->set_output(json_encode($data));
+    }
+
+    public function telegram_protocol_datatable_request(){
+        $data = $this->telegram->getTelegramDatatableRequest();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function set_telegram_protocol_settings(){
+        $data = $this->telegram->setTelegramProtocolSettings();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function update_telegram_protocol_settings(){
+        $data = $this->telegram->updateTelegramProtocolSettings();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_telegram_bot_by_id($id=null){
+        $data = $this->telegram->getTelegramBotById($id);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function delete_telegram_bot($id){
+        $data = $this->telegram->archiveTelegramBot($id);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function toggle_telegram_bot_status($id){
+        $data = $this->telegram->toggleTelegramStatus($id);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function restore_telegram_bot($id){
+        $data = $this->telegram->restoreTelegramBot($id);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
 }
