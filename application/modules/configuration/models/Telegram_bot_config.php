@@ -125,6 +125,14 @@ class Telegram_bot_config extends CI_Model{
         $this->db->where('id', $id);
         $updated = $this->db->update($this->telegramConfigTable, array('is_archive' => 1,'status' => 0));
         $botdata = $this->getTelegramBotById($id);
+        if(!$botdata){
+            return $result = [
+                "response" => false,
+                "user" => "user",
+                "success" => "error",
+                "message" => "Failed to fetch telegram bot data",
+            ];
+        }
         if ($updated) {
             $message = "Archived Telegram bot: {$botdata['response']->bot_name}";
             $success = "success";
@@ -146,6 +154,14 @@ class Telegram_bot_config extends CI_Model{
         $this->db->where('id', $id);
         $updated = $this->db->update($this->telegramConfigTable, array('is_archive' => 0));
         $botdata = $this->getTelegramBotById($id);
+        if(!$botdata){
+            return $result = [
+                "response" => false,
+                "user" => "user",
+                "success" => "error",
+                "message" => "Failed to fetch telegram bot data",
+            ];
+        }
         if ($updated) {
             $message = "Restored Telegram bot: {$botdata['response']->bot_name}";
             $success = "success";
@@ -169,6 +185,14 @@ class Telegram_bot_config extends CI_Model{
         $this->db->where('id', $id);
         $updated = $this->db->update($this->telegramConfigTable, array('status' => $post['status']));
         $botdata = $this->getTelegramBotById($id);
+        if(!$botdata){
+            return $result = [
+                "response" => false,
+                "user" => "user",
+                "success" => "error",
+                "message" => "Failed to fetch telegram bot data",
+            ];
+        }
         if ($updated) {
             $message = "Updated status of Telegram bot: {$botdata['response']->bot_name}";
             $success = "success";
@@ -191,6 +215,14 @@ class Telegram_bot_config extends CI_Model{
         $result = array();
         unset($post['csrf_token']);
         $currentData = $this->getTelegramBotById($post['id']);
+        if(!$currentData){
+            return $result = [
+                "response" => false,
+                "user" => "user",
+                "success" => "error",
+                "message" => "Failed to fetch telegram bot data",
+            ];
+        }
         $post['modules'] = serialize($post['modules']);
         $post['updated_at'] = date("Y-m-d H:i:s");
         $post['updated_by'] = $this->user_data['emp_id'];
@@ -222,7 +254,7 @@ class Telegram_bot_config extends CI_Model{
         $this->db->where('a.id', $id);
         $query = $this->db->get();
         if ($query->num_rows() < 0) {
-            return array('response'=>'');
+            return false;
         }
         $results = $query->row();
         $results->modules = @unserialize( $results->modules);
