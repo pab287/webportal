@@ -6400,7 +6400,7 @@
             );
             $this->db->insert($this->employeeWorkExperienceTable, $work_experience_field);
             /* END SAVE WORK EXPERIENCE */
-
+            $currentData = $this->getEmployeeCurrentCompany($id);
             /* UPDATE COMPANY & OTHERS */
             $update_data = array(
                 "company_id" => $post->company_id,
@@ -6421,18 +6421,24 @@
             $this->db->insert($this->tblEmployeesCompanyHistory, $history_data);
             /* END UPDATE COMPANY & OTHERS */
 
+            $changes = $this->logChanges($currentData, $post);
             if ($this->db->trans_status() === FALSE) {
                 $this->db->trans_rollback();
                 $resultSet["success"] = false;
                 $resultSet["message"] = $this->db->error();
                 $resultSet["data"] = null;
+                $type = "error";
+                $use = "system";
             } else {
                 $this->db->trans_commit();
                 $resultSet["success"] = true;
                 $resultSet["message"] = "Employee was transferred successfully.";
                 $resultSet["data"] = $this->getEmployeeData($id);
+                $type = "success";
+                $use = "user";
             }
-
+            $fullname =  $this->getEmployeeName($id);
+            $this->core_layout->setEventLog("User updated company details for employee: <strong>$fullname</strong> $changes","update", $type, "gcchris", $use);
             return $resultSet;
         }
 
@@ -11252,10 +11258,13 @@
                 }
                 foreach ($changes as $field => $change) {
                     if (strtolower($field) == 'department_id'){
-                        $changesString.= " Field: $field, from: <strong>". $this->getDepartmentById($change['old']). "</strong>, to: ". $this->getDepartmentById($change['new']). "\n";
+                        $changesString.= " Field: $field, from: <strong>". $this->getDepartmentById($change['old']). "</strong>, to: <strong>". $this->getDepartmentById($change['new']). "</strong>\n";
                         }
                     else if (strtolower($field) == 'position'){
-                        $changesString.= " Field: $field, from: <strong>". $this->getPositionById($change['old']). "</strong>, to: ". $this->getPositionById($change['new']). "\n";
+                        $changesString.= " Field: $field, from: <strong>". $this->getPositionById($change['old']). "</strong>, to: <strong>". $this->getPositionById($change['new']). "</strong>\n";
+                    }
+                    else if (strtolower($field) == 'company_id'){
+                        $changesString.= " Field: $field, from: <strong>". $this->getCompanyById($change['old'])->description. "</strong>, to: <strong>". $this->getCompanyById($change['new'])->description. "</strong>\n";
                     }
                     else if (strtolower($field) == 'license_id'){
                         $changesString.= " Field: $field, from: <strong>". $this->getLicenseTypeById($change['old']). "</strong>, to: <strong>". $this->getLicenseTypeById($change['new']). "</strong>\n";
@@ -11818,4 +11827,24 @@
 
             return $resultset;
         }
+
+        public function getEmployeeCurrentCompany($id){
+            $this->db->select("company_id, position, department_id");
+            $this->db->from($this->employeeTable);
+            $this->db->where("id", $id);
+            $query = $this->db->get();
+            $result = $query->row();
+            return $result;
+        }
+
+        private function getCompanyById($id){
+            $this->db->select("description");
+            $this->db->from($this->companyTable);
+            $this->db->where('id', $id);
+            $query = $this->db->get(); 
+            $result = $query->row();
+            $this->db->reset_query();
+            return $result;
+        }
+
     }
