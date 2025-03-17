@@ -11256,24 +11256,26 @@
                         );
                     }
                 }
-                foreach ($changes as $field => $change) {
-                    if (strtolower($field) == 'department_id'){
-                        $changesString.= " Field: $field, from: <strong>". $this->getDepartmentById($change['old']). "</strong>, to: <strong>". $this->getDepartmentById($change['new']). "</strong>\n";
+                if(!empty($changes)){
+                    foreach ($changes as $field => $change) {
+                        if (strtolower($field) == 'department_id'){
+                            $changesString.= " Field: $field, from: <strong>". $this->getDepartmentById($change['old']). "</strong>, to: <strong>". $this->getDepartmentById($change['new']). "</strong>\n";
+                            }
+                        else if (strtolower($field) == 'position'){
+                            $changesString.= " Field: $field, from: <strong>". $this->getPositionById($change['old']). "</strong>, to: <strong>". $this->getPositionById($change['new']). "</strong>\n";
                         }
-                    else if (strtolower($field) == 'position'){
-                        $changesString.= " Field: $field, from: <strong>". $this->getPositionById($change['old']). "</strong>, to: <strong>". $this->getPositionById($change['new']). "</strong>\n";
-                    }
-                    else if (strtolower($field) == 'company_id'){
-                        $changesString.= " Field: $field, from: <strong>". $this->getCompanyById($change['old'])->description. "</strong>, to: <strong>". $this->getCompanyById($change['new'])->description. "</strong>\n";
-                    }
-                    else if (strtolower($field) == 'license_id'){
-                        $changesString.= " Field: $field, from: <strong>". $this->getLicenseTypeById($change['old']). "</strong>, to: <strong>". $this->getLicenseTypeById($change['new']). "</strong>\n";
-                    }
-                    else if (strtolower($field) == 'tl_supervisory') {
-                        $changesString .= " Field: TWO LEVEL SUPERVISORY from: <strong>" . ($change['old'] == 1 ? 'YES' : 'NO') . "</strong>, to: <strong>" . ($change['new'] == 1 ? 'YES' : 'NO') . "</strong>\n";
-                    }
-                    else if ($field != 'work_station' && $field != 'supervisor_meta'){
-                        $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
+                        else if (strtolower($field) == 'company_id'){
+                            $changesString.= " Field: $field, from: <strong>". $this->getCompanyById($change['old'])->description. "</strong>, to: <strong>". $this->getCompanyById($change['new'])->description. "</strong>\n";
+                        }
+                        else if (strtolower($field) == 'license_id'){
+                            $changesString.= " Field: $field, from: <strong>". $this->getLicenseTypeById($change['old']). "</strong>, to: <strong>". $this->getLicenseTypeById($change['new']). "</strong>\n";
+                        }
+                        else if (strtolower($field) == 'tl_supervisory') {
+                            $changesString .= " Field: TWO LEVEL SUPERVISORY from: <strong>" . ($change['old'] == 1 ? 'YES' : 'NO') . "</strong>, to: <strong>" . ($change['new'] == 1 ? 'YES' : 'NO') . "</strong>\n";
+                        }
+                        else if ($field != 'work_station' && $field != 'supervisor_meta'){
+                            $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
+                        }
                     }
                 }
 
