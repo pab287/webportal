@@ -272,7 +272,8 @@
         }
 
         function update_employee_loan($id) {
-            echo json_encode($this->employee->updateEmployeeLoan($id));
+            $data = $this->employee->updateEmployeeLoan($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
         function get_employee_loan_payment_history($id) {

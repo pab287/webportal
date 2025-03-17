@@ -2185,7 +2185,7 @@
             const url = $(form).attr("action");
             const formData = new FormData(form[0]);
             formData.append("csrf_token", _csrf_hash);
-
+            formData.append("emp_id", <?php echo $data->id; ?>);
             $.ajax({
                 url,
                 type: "POST",
