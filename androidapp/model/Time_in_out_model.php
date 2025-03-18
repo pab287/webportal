@@ -126,7 +126,7 @@
                 $emp_id = $_POST['emp_id'];
                 $bio_num = $_POST['biometric_id'];
                 $time_status = $_POST['time_status'];
-                $coords = isset($_POST['coords']) ? json_decode($_POST['coords'], true) : null;
+                $coords = isset($_POST['coords']) && $_POST['coords'] ? json_decode($_POST['coords'], true) : null;
 
                 if($time_status==='in'){ $logs_action = 'time in'; }
                 elseif($time_status==='out'){ $logs_action = 'time out'; }
