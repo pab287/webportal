@@ -149,14 +149,13 @@ class Hydra_billing_readings_m extends Dbase{
 
 	private function getPreviousReadingEdit($account_id, $reading_date, $meterno_raw){
 		$conn = $this->conn();
-		$sth = $conn->prepare("SELECT reading 
-							   FROM hydra_billing.readings 
-							   WHERE account_id='$account_id' AND reading_date<'$reading_date' AND meterno='$meterno_raw' AND is_archived='0'
-							   ORDER BY `reading_date` DESC 
-							   LIMIT 1");
+		$sth = $conn->prepare("SELECT reading
+			FROM hydra_billing.readings 
+			WHERE account_id='$account_id' AND reading_date<'$reading_date' AND meterno='$meterno_raw' AND is_archived='0'
+			ORDER BY `reading_date` DESC LIMIT 1");
 		$sth->execute();
 		$result = $sth->fetch();
-		return isset($result["reading"]) && $result["reading"] ? $result["reading"] : '0';
+		return isset($result["reading"]) && floatval($result["reading"]) > 0 ? $result["reading"] : '0';
 	}
 
 	public function fetch_history(){
