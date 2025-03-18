@@ -513,8 +513,8 @@
             </div>
         </div>
         <div class="m-portlet__body">
-            <div class="tab-content">
-                <div class="tab-pane active" id="m_portlet_tab_1_1">
+            <div class="tab-content" style="height: 600px; overflow-y: auto;">
+                <div class="tab-pane active overflow-auto" id="m_portlet_tab_1_1">
                     <div class="demographics-avatar-container">
                     <?php foreach ($newly_hired as $row) {
                         $image_path = "uploads/files/images/employee_files/empcode_" . $row->id . "/" . $row->pic_filename;
