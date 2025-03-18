@@ -773,7 +773,7 @@
             $to_data->execute();
 
             $data = $to_data->fetch(PDO::FETCH_ASSOC);
-            return $data['travel_order_id'];
+            return isset($data['travel_order_id']) && $data['travel_order_id'] ? $data['travel_order_id']: null;
         }
 
         public function saveLogs($type, $user_action, $user_id, $log_message){
