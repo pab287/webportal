@@ -156,7 +156,7 @@ class Hydra_billing_readings_m extends Dbase{
 							   LIMIT 1");
 		$sth->execute();
 		$result = $sth->fetch();
-		return $result["reading"] ? $result["reading"] : '0';
+		return isset($result["reading"]) && $result["reading"] ? $result["reading"] : '0';
 	}
 
 	public function fetch_history(){
