@@ -1353,25 +1353,37 @@
         form: '#frm-newAllowance',
         lang: 'en',
         onSuccess: function (form) {
-            $.ajax({
-                url: form[0].action,
-                type: "POST",
-                data: $("#frm-newAllowance").find("input,select").serialize(),
-                beforeSend: function () {
-                    $(form).find(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                },
-                success: function (data) {
-                    if (data.status) {
-                        toastr.success(data.response, "Notice", 5000);
-                    } else {
-                        toastr.error(data.response, "Notice", 5000);
+
+            var basic = $("input[name=basic_rate]").val();
+
+            if (floatval(basic) > 0.00) {
+                $.ajax({
+                    url: form[0].action,
+                    type: "POST",
+                    data: $("#frm-newAllowance").find("input,select").serialize(),
+                    beforeSend: function () {
+                        $(form).find(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    },
+                    success: function (data) {
+                        if (data.status) {
+                            toastr.success(data.response, "Notice", 5000);
+                        } else {
+                            toastr.error(data.response, "Notice", 5000);
+                        }
+                        $("#mdl-newAllowance").modal("hide");
+                        dtAllowance.ajax.reload();
+                        $(form).find(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                        dtHistoryPayrollInfo.ajax.reload();
                     }
-                    $("#mdl-newAllowance").modal("hide");
-                    dtAllowance.ajax.reload();
-                    $(form).find(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                    dtHistoryPayrollInfo.ajax.reload();
-                }
-            });
+                });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Basic Rate.',
+                    html: 'Current value is <b>invalid</b>. Please add the basic rate first before adding allowance.',
+                });
+            }
+
             return false;
         },
     });
