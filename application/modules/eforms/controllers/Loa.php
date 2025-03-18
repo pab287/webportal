@@ -520,7 +520,11 @@
                         $sms_date,
                         ucwords($contactPerson)
                     );
-                    $smsResponse = $this->contacts->sendSMS($details['mobile_no'], $message);
+
+                    if (isset($details['allow_sms_notification']) && $details['allow_sms_notification']) {
+                        $smsResponse = $this->contacts->sendSMS($details['mobile_no'], $message);
+                    }
+
                     if(isset($smsResponse["data"]) && $smsResponse["data"] !== false){
                         $this->core_layout->setEventLog("Sent SMS to head contact for leave of absence ".$reference_no.".","add", "success", "gcceforms", "user");
                     }else{
@@ -847,47 +851,94 @@
         private function getCorporateHR() {
             $query = $this->db->select("firstname, lastname")
                              ->get_where("gccmaster.tblemployees", [
-                                 "position" => 145,
+                                 "position" => 547,
                                  "employee_status" => "Active"
                              ]);
             return $this->formatName($query->row()->firstname, $query->row()->lastname);
         }
 
         private function getLeaveDetails($id) {
-            $query = $this->db->query("
-                SELECT
-                    l.type,
-                    l.reference_no,
-                    l.nature,
-                    l.approved_remarks,
-                    l.reason,
-                    l.date_from,
-                    l.date_to,
-                    e.mobile_no,
-                    e.position,
-                    e.supervisor_meta,
-                    COALESCE(u.email, e.email) as email,
-                    CONCAT(e.firstname, ' ', e.lastname) AS fullname,
-                    CONCAT(a.firstname, ' ', a.lastname) AS approve_by
-                FROM gcceforms.loa l
-                JOIN gccmaster.tblemployees e ON l.employee = e.id
-                JOIN gccmaster.tblemployees a ON l.approved_by = a.id
-                LEFT JOIN gccmaster.tblusers u ON u.emp_id = e.id
-                WHERE l.id = ?
-            ", [$id]);
-            return $query->row_array();
+            // $query = $this->db->query("
+            //     SELECT
+            //         l.type,
+            //         l.reference_no,
+            //         l.nature,
+            //         l.approved_remarks,
+            //         l.reason,
+            //         l.date_from,
+            //         l.date_to,
+            //         e.mobile_no,
+            //         e.position,
+            //         e.supervisor_meta,
+            //         COALESCE(u.email, e.email) as email,
+            //         CONCAT(e.firstname, ' ', e.lastname) AS fullname,
+            //         CONCAT(a.firstname, ' ', a.lastname) AS approve_by
+            //     FROM gcceforms.loa l
+            //     JOIN gccmaster.tblemployees e ON l.employee = e.id
+            //     JOIN gccmaster.tblemployees a ON l.approved_by = a.id
+            //     LEFT JOIN gccmaster.tblusers u ON u.emp_id = e.id
+            //     WHERE l.id = ?
+            // ", [$id]);
+            $this->db->select("l.type, l.reference_no, l.nature, l.approved_remarks, l.reason, l.date_from, l.date_to, IFNULL(e.company_phone_no, e.mobile_no) as mobile_no, e.position, e.supervisor_meta, COALESCE(u.email, e.email) as email, CONCAT(e.firstname, ' ', e.lastname) AS fullname, e.allow_sms_notification, CONCAT(a.firstname, ' ', a.lastname) AS approve_by");
+            $this->db->join('gccmaster.tblemployees e', 'l.employee = e.id');
+            $this->db->join('gccmaster.tblemployees a', 'l.approved_by = a.id');
+            $this->db->join('gccmaster.tblusers u', 'u.emp_id = e.id', 'LEFT');
+            $this->db->from('gcceforms.loa l');
+            $this->db->where('l.id', $id);
+            $query = $this->db->get();
+            return $query->num_rows() > 0 ? $query->row_array() : array();
         }
 
         private function getContactPerson($supervisor_meta) {
-            if (!$supervisor_meta || !($managerial = @unserialize($supervisor_meta))) {
-                return "HR - ".$this->getCorporateHR();
+            $managerial = @unserialize($supervisor_meta);
+            $contactPerson = 124;
+            $name = 'HR - ';
+
+            if (is_array($managerial)) {
+                if (isset($managerial['supervisory']) && $managerial['supervisory']) {
+                    $contactPerson = $managerial['supervisory'];
+                    $name = 'Immediate Supervisor - ';
+                } else {
+
+                    if (isset($managerial['managerial']) && $managerial['managerial']) {
+                        $contactPerson = $managerial['managerial'];
+                        $name = 'Department Manager - ';
+                    }
+                }
+
+            } else {
+
+                if ($managerial) {
+                    $contactPerson = $managerial;
+                    $name = 'Immediate Supervisor - ';
+                } else {
+                    $name = 'HR - ';
+                }
             }
-            $query = $this->db->select("firstname, ' ', lastname")
-                             ->get_where("gccmaster.tblemployees", [
-                                 "id" => $managerial['supervisory'],
-                                 "employee_status" => "Active"
-                             ]);
-            return "Immediate Supervisor - ".$this->formatName($query->row()->firstname, $query->row()->lastname);
+
+            $query = $this->db->select("LOWER(
+                           CONCAT(
+                               firstname, ' ',
+                               CASE
+                                   WHEN middlename IS NOT NULL AND middlename != '' THEN CONCAT(' ', substr(middlename,1,1),'.')
+                                   ELSE ''
+                               END,
+                               ' ', lastname,
+                               CASE
+                                   WHEN suffix IS NOT NULL AND suffix != '' AND suffix != 'N/A' AND suffix != 'NONE' THEN CONCAT(' ', suffix)
+                                   ELSE ''
+                               END
+                           )
+                       ) employee_name")->get_where('gccmaster.tblemployees', array('id' => $contactPerson, 'employee_status' => 'Active'));
+
+            if ($query->num_rows() > 0) {
+                $row = $query->row();
+                $name .= ucwords($row->employee_name);
+            } else {
+                $name .= 'No Employee Name';
+            }
+
+            return $name;
         }
 
         private function getHeadContact($id) {
