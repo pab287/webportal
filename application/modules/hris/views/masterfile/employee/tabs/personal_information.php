@@ -61,7 +61,7 @@
                             <span class="input-group-addon">
                                 <i class="la la-chain"></i>
                             </span>
-                            <input id="mobile_no" type="text" name="mobile_no" class="form-control m-input" placeholder="( Optional )" maxlength="11" size="11" autocomplete="off" v-model="vm_tab1.mobile_no" />
+                            <input id="mobile_no" type="text" name="mobile_no" class="form-control m-input" placeholder="( Optional )" autocomplete="off" v-model="vm_tab1.mobile_no" />
                         </div>
                     </div>
                 </div>
@@ -74,6 +74,19 @@
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
                         <input id="email" type="text" name="email" class="form-control m-input" placeholder="( Optional )" maxlength="100" size="100" autocomplete="off" v-model="vm_tab1.email" />
                         <span class="m-form__help">We'll never share your email with anyone else</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+                <div class="form-group m-form__group row">
+                    <label for="company_no" class="col-sm-6 col-md-6 col-lg-5 col-xl-5 col-form-label">Company Phone No</label>
+                    <div class="col-sm-6 col-md-6 col-lg-7 col-xl-7">
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                <i class="la la-chain"></i>
+                            </span>
+                            <input id="company_no" type="text" name="company_phone_no" class="form-control m-input" placeholder="( Optional )" autocomplete="off" v-model="vm_tab1.company_phone_no" />
+                        </div>
                     </div>
                 </div>
             </div>

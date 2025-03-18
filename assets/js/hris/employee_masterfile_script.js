@@ -6524,3 +6524,13 @@ $('#offense-tabs .nav-link').on('click', function(e) {
     $('#offense-content .tab-pane').removeClass('active show');
     $('#collapseOffenses .nav-tabs .nav-link:first').tab('show');
 });
+
+$("#mobile_no").inputmask({
+	mask: "(0\\9) 9999-99999",
+	alias: 'phonenumber'
+});
+
+$("#company_no").inputmask({
+	mask: "(0\\9) 9999-99999",
+	alias: 'phonenumber'
+});
