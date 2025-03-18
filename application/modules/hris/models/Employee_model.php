@@ -10881,7 +10881,7 @@
 
                     if ($hasSameDayHistory->num_rows() > 0) {
                         $row = $hasSameDayHistory->row();
-                        
+
                         $data = array (
                             'sal_rate' => number_format($basic_total, 2, '.', ''),
                             'sal_remarks' => $remarks,
@@ -10966,6 +10966,7 @@
             $remarks = $arr['basic_rate'].' '.$payroll.' '.$rate_remark;
             $basic = floatval($arr['basic_rate']) + floatval($rate);
 
+            // checks if has a same day history log
             $hasSameDayHistory = $this->db->select('id')->limit(1)
                 ->order_by('sal_date', 'DESC')
                 ->get_where($this->employeeSalaryTable, array('emp_id' => $arr['id'], 'DATE(sal_date)' => date('Y-m-d'), 'is_archived' => 0));
@@ -11039,6 +11040,7 @@
             $remarks = $basic.' '.$payroll.' '.$rate_remark;
             $basic_total = $isActiveState ? floatval($basic) + floatval($arr['rate']) : floatval($basic);
 
+            // checks if has a same day history log
             $hasSameDayHistory = $this->db->select('id')->limit(1)
                 ->order_by('sal_date', 'DESC')
                 ->get_where($this->employeeSalaryTable, array('emp_id' => $arr['emp_id'], 'DATE(sal_date)' => $date, 'is_archived' => 0));
