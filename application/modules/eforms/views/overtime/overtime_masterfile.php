@@ -285,7 +285,7 @@
                                     <label for="approved_by">
                                         Approved By
                                     </label>
-                                    <select class="form-control m-input m-input--air" id="approved_by" name="approved_by"></select>
+                                    <select class="form-control m-input m-input--air" id="approved_by" name="approved_by" data-validation="required"></select>
                                 </div>
                             </div>
                         </div>
