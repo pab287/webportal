@@ -6439,7 +6439,7 @@
             }
             $formatted_date = date("F j, Y", strtotime($start_date));
             $fullname =  $this->getEmployeeName($id);
-            $this->core_layout->setEventLog("User updated company details for employee: <strong>$fullname</strong> $changes. Effective date: $formatted_date","update", $type, "gcchris", $use);
+            $this->core_layout->setEventLog("User updated company details for employee: <strong>$fullname</strong> $changes. Effective date: <strong>$formatted_date</strong>","update", $type, "gcchris", $use);
             return $resultSet;
         }
 
