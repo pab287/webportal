@@ -100,7 +100,6 @@ function edit() {
 $.formUtils.addValidator({
     name: 'checkbox_group_min1',
     validatorFunction: function (value, $el, config, language, $form) {
-        console.log(value);
         return parseInt(value) > 0;
     },
     errorMessage: 'Select at least 1 image option!',
@@ -112,27 +111,33 @@ $.validate({
     lang: 'en',
     validateHiddenInputs: true,
     onSuccess: function (form) {
-        $.ajax({
-            url: baseUrl("eforms/overtime/approve_overtime/") + param_id,
-            type: "POST",
-            dataType: "json",
-            data: $("#approve_form").find("input").serialize(),
-            beforeSend: function () {
-                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-            },
-            success: function (data) {
-                if (data.state) {
-                    $('#approve_modal').modal('hide');
-                    toastr.success(data.message, "Updated successfully!", 5000);
-                    setTimeout(function () {
-                        location.reload();
-                    }, 1000);
-                } else {
-                    toastr.error(data.message, "Error!", 5000);
+
+        if (vmTempImages.count > 0) {
+            $.ajax({
+                url: baseUrl("eforms/overtime/approve_overtime/") + param_id,
+                type: "POST",
+                dataType: "json",
+                data: $("#approve_form").find("input").serialize(),
+                beforeSend: function () {
+                    $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                },
+                success: function (data) {
+                    if (data.state) {
+                        $('#approve_modal').modal('hide');
+                        toastr.success(data.message, "Updated successfully!", 5000);
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        toastr.error(data.message, "Error!", 5000);
+                    }
+                    $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
                 }
-                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-            }
-        });
+            });
+        } else {
+            toastr.error('Please upload atleast 1 attachment.', 'Approve Overtime');
+        }
+
         return false;
     },
 });
