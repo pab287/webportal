@@ -1356,7 +1356,7 @@
 
             var basic = $("input[name=basic_rate]").val();
 
-            if (floatval(basic) > 0.00) {
+            if (parseFloat(basic) > 0.00) {
                 $.ajax({
                     url: form[0].action,
                     type: "POST",
