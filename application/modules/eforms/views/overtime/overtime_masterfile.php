@@ -501,7 +501,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" id="advanced_search" class="btn btn-primary btnEdit btn-submit">Approve</button>
+                    <button type="submit" id="advanced_search" class="btn btn-primary btnEdit btn-submit">Disapprove</button>
                     <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Close</button>
                 </div>
             </div>
