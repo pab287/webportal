@@ -8166,6 +8166,13 @@
             $post = $this->input->post();
             $user = $this->core_layout->getUserLoggedIn();
             $fullname = $this->getEmployeeName($post['emp_id']);
+            $amount = $post["amount"];
+            $cleanAmount = str_replace(',', '', $amount);
+            if (!is_numeric($cleanAmount)) {
+                $resultarray["status"] = FALSE;
+                $resultarray["response"] = "Invalid amount format. Please enter a valid number.";
+                return $resultarray;
+            }
             $data["created_by"] = $user["employee_id"];
             $data['created_at'] = $date;
             $data["emp_id"] = $post["emp_id"];
@@ -8191,7 +8198,7 @@
             if ($query) {
                 $resultarray["status"] = TRUE;
                 $resultarray["response"] = "New loan information was successfully saved!";
-                $this->core_layout->setEventLog("User added new loan with amount: <strong>".$post["amount"]."</strong> for employee: $fullname","insert", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User added new loan Type: <strong>".$this->getLoanTypeById($post["loan_id"]) ."</strong> with amount: <strong>".$post["amount"]."</strong> for employee: <strong>$fullname</strong>","insert", "success", "gcchris", "user");
             } else {
                 $resultarray["status"] = FALSE;
                 $resultarray["response"] = $this->db->error();
@@ -11818,4 +11825,16 @@
 
             return $resultset;
         }
+
+        private function getLoanTypeById($id){
+            $this->db->select("loan_name");
+            $this->db->from("payroll.loans");
+            $this->db->where("is_archive", 0);
+            $this->db->where("id", $id);
+            $query = $this->db->get();
+            $result = $query->row();
+            $this->db->reset_query();
+            return $result->loan_name;
+        }
+
     }

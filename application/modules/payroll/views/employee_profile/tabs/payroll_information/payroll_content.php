@@ -619,7 +619,7 @@
 
                         <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 form-group">
                             <label for="required" class="required">Amount</label>
-                            <input type="text" name="amount" autocomplete="off" class="form-control text-right"
+                            <input type="text" id="loan_amount" name="amount" autocomplete="off" class="form-control text-right"
                                    data-validation="required">
                         </div>
                     </div>
@@ -2268,6 +2268,16 @@
         vmNewLoanRefs.reference = null;
 
         $("#frm-newLoan", addEmployeeLoan)[0].reset();
+
+        $("#loan_amount")
+        .maskMoney({
+            prefix: '',
+            allowNegative: true,
+            thousands: ',',
+            decimal: '.',
+            affixesStay: false
+        });
+
     });
 
     const vmNewLoanRefs = new Vue({

@@ -846,6 +846,18 @@
             $fullname =  $this->getEmployeeName($post2['emp_id']);
             $raw_amount = $post2['amount'];
             $formatted_amount = number_format(floatval(str_replace(',', '', $raw_amount)), 2, '.', '');
+
+            $amount = $post2['amount'];
+            $cleanAmount = str_replace(',', '', $amount);
+            if (!is_numeric($cleanAmount)) {
+                $resultSet["status"] = FALSE;
+                $resultSet["response"] = "Invalid amount format. Please enter a valid number.";
+                $resultSet["message"] = "Invalid amount format. Please enter a valid number.";
+                $resultSet["title"] = "Error Occurred.";
+                $resultSet["toast"] = "error";
+                return $resultSet;
+            }
+
             $post2['amount'] = $formatted_amount;
             $post = $this->arrayToStdClass($this->input->post());
             $post->amount = str_replace(",", "", $post->amount);
