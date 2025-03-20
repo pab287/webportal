@@ -1831,23 +1831,24 @@
                 }
             }
             foreach ($changes as $field => $change) {
-                if($field == 'loan_id'){
-                    $changesString.= " Field: $field, from: <strong>".$this->getLoanTypeById($change['old']) ."</strong>, to: <strong>".$this->getLoanTypeById($change['new'])."</strong>\n";
+                if($change){
+                    if($field == 'loan_id'){
+                        $changesString.= " Field: $field, from: <strong>".$this->getLoanTypeById($change['old']) ."</strong>, to: <strong>".$this->getLoanTypeById($change['new'])."</strong>\n";
+                    }
+                    else if($field == 'deduction_type'){
+                        $oldStatus = $change['old'] == 1 ? 'fix amount' : 'percentage';
+                        $newStatus = $change['new'] == 1 ? 'fix amount' : 'percentage';
+                        $changesString .= " Field: $field, from: <strong>$oldStatus</strong>, to: <strong>$newStatus</strong>\n";
+                    }
+                    else if($field == 'active'){
+                        $oldStatus = $change['old'] == 1 ? 'active' : 'suspended';
+                        $newStatus = $change['new'] == 1 ? 'active' : 'suspended';
+                        $changesString .= " Field: $field, from: <strong>$oldStatus</strong>, to: <strong>$newStatus</strong>\n";
+                    }
+                    else{
+                        $changesString.= " Field: $field, from: <strong>$change[old]</strong>, to: <strong>$change[new]</strong>\n";
+                    }
                 }
-                else if($field == 'deduction_type'){
-                    $oldStatus = $change['old'] == 1 ? 'fix amount' : 'percentage';
-                    $newStatus = $change['new'] == 1 ? 'fix amount' : 'percentage';
-                    $changesString .= " Field: $field, from: <strong>$oldStatus</strong>, to: <strong>$newStatus</strong>\n";
-                }
-                else if($field == 'active'){
-                    $oldStatus = $change['old'] == 1 ? 'active' : 'suspended';
-                    $newStatus = $change['new'] == 1 ? 'active' : 'suspended';
-                    $changesString .= " Field: $field, from: <strong>$oldStatus</strong>, to: <strong>$newStatus</strong>\n";
-                }
-                else{
-                    $changesString.= " Field: $field, from: <strong>$change[old]</strong>, to: <strong>$change[new]</strong>\n";
-                }
-
             }
             return $changesString;
         }
