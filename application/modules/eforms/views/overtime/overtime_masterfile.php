@@ -282,7 +282,7 @@
                         <div class="row m--margin-top-10">
                             <div class="col-md-6">
                                 <div class="form-group m-form__group">
-                                    <label for="approved_by">
+                                    <label for="approved_by" class="required">
                                         Approved By
                                     </label>
                                     <select class="form-control m-input m-input--air" id="approved_by" name="approved_by" data-validation="required"></select>
@@ -296,7 +296,7 @@
                                         <div class="m-portlet__head-caption">
                                             <div class="m-portlet__head-title">
                                                 <h3 class="m-portlet__head-text">
-                                                    Attachment Image
+                                                    Attachment Image <small style="color: red;">( Required )</small>
                                                 </h3>
                                             </div>
                                         </div>
