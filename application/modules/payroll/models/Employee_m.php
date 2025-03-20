@@ -853,9 +853,13 @@
             if (intval($post->deduction_type) === 1) {
                 $post->fixed_deduction_amt = str_replace(",", "", $post->deduct_type_value);
                 $post->percentage = 0;
+                $post2['fixed_deduction_amt'] = $post->fixed_deduction_amt;
+                $post2['percentage'] = 0;
             } else {
                 $post->fixed_deduction_amt = 0;
                 $post->percentage = str_replace(",", "", $post->deduct_type_value);
+                $post2['fixed_deduction_amt'] = 0;
+                $post2['percentage'] = $post->percentage;
             }
 
             $lastInterestChargeLog = null;
@@ -911,8 +915,8 @@
                 $use = "user";
                 $q = $this->getLoanRemark($id);
 
-                $msg = "User updated the loan with the remarks of ".$q->remarks." to ".$post->remarks;
-                $this->core_layout->setEventLog($msg, "update", "success", "payroll");
+                // $msg = "User updated the loan with the remarks of ".$q->remarks." to ".$post->remarks;
+                // $this->core_layout->setEventLog($msg, "update", "success", "payroll");
 
                 if($lastInterestChargeLog){ $this->core_layout->setEventLog($lastInterestChargeLog, "update", "success", "payroll"); }
             } else {
@@ -921,6 +925,7 @@
                 $resultSet["toast"] = "error";
                 $use = "system";
             }
+            $resultSet["changes"] = $changes;
             $this->core_layout->setEventLog("User updated loans for:  <strong>".$fullname."</strong> ".$changes, "update", $resultSet["toast"], "gcchris",$use);
             return $resultSet;
         }
@@ -1829,7 +1834,12 @@
                 if($field == 'loan_id'){
                     $changesString.= " Field: $field, from: <strong>".$this->getLoanTypeById($change['old']) ."</strong>, to: <strong>".$this->getLoanTypeById($change['new'])."</strong>\n";
                 }
-                if($field == 'deduction_type'){
+                else if($field == 'deduction_type'){
+                    $oldStatus = $change['old'] == 1 ? 'fix amount' : 'percentage';
+                    $newStatus = $change['new'] == 1 ? 'fix amount' : 'percentage';
+                    $changesString .= " Field: $field, from: <strong>$oldStatus</strong>, to: <strong>$newStatus</strong>\n";
+                }
+                else if($field == 'active'){
                     $oldStatus = $change['old'] == 1 ? 'active' : 'suspended';
                     $newStatus = $change['new'] == 1 ? 'active' : 'suspended';
                     $changesString .= " Field: $field, from: <strong>$oldStatus</strong>, to: <strong>$newStatus</strong>\n";
