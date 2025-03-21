@@ -4064,8 +4064,9 @@ class Reports_m extends CI_Model{
                     $item->has_shift = $item->ampm_shift === "0" ? "0": $item->has_shift;
                     
                     $item->allowance = intval($item->has_shift) === 0 && $item->ot_hrs >= 4 ? $this->getOvertimeAllowance($item->emp_id): '';
-                    $item->ot_hrs = ($item->ot_hrs == 0) ? '-' : $item->ot_hrs;
                     $totalOtHrs = $item->ot_hrs + $item->ot_ndiff_hrs;
+                    $item->ot_hrs = $totalOtHrs;
+                    $item->ot_hrs = ($item->ot_hrs == 0) ? '-' : $item->ot_hrs;
                     $totalOtPay = ($item->daily_rate / 8) * floatval($totalOtHrs);
                     $item->ot_pay = $totalOtPay;
                     $item->ot_pay_20 = intval($item->has_shift) === 1 ? $totalOtPay * 0.25 : '';
