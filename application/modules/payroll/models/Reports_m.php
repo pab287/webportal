@@ -2181,32 +2181,27 @@ class Reports_m extends CI_Model{
 
                 if(is_array($isWeeklyEmployees) && count($isWeeklyEmployees) > 0){
                     $responseWeeklyRange = $this->generateWeeklyMonthRange($tempStartDate, $tempEndDate);
-                    if($responseWeeklyRange){
+                    $_tempStartDate = $post["group"] === "2" && $responseWeeklyRange ? $responseWeeklyRange["date_start"]: $tempStartDate;
+                    $_tempEndDate = $post["group"] === "2" && $responseWeeklyRange ? $responseWeeklyRange["date_end"]: $tempEndDate;
 
-                        $_tempStartDate = $responseWeeklyRange["date_start"];
-                        $_tempEndDate = $responseWeeklyRange["date_end"];
-                        $_tempPayDateStart = $responseWeeklyRange["paydate_start"];
-                        $_tempPayDateEnd = $responseWeeklyRange["paydate_end"];
-
-                        $this->db->select("id");
-                        $this->db->from("payroll.payroll_sheet");
-                        $this->db->where("posted", 1);
-                        if($includedBonus === false){ $this->db->where("is_bonus", 0); }
-                        $this->db->group_start();
-                        $this->db->where("DATE(date_start) >=", $_tempStartDate);
-                        $this->db->where("DATE(date_end) <=", $_tempEndDate);
-                        $this->db->group_end();
-                        $this->db->where_in("emp_id", $isWeeklyEmployees);
-                        if(isset($post["company"]) && $post["company"]){
-                            $this->db->where("company_id", $post["company"]);
-                        }
-                        $this->db->order_by("emp_id", "ASC");
-                        $queryWeekly = $this->db->get();
-                        if($queryWeekly->num_rows() > 0){
-                            foreach ($queryWeekly->result() as $key => $value) {
-                                if(!in_array($value->id, $weeklyPsIds)){
-                                    $weeklyPsIds[] = $value->id;
-                                }
+                    $this->db->select("id");
+                    $this->db->from("payroll.payroll_sheet");
+                    $this->db->where("posted", 1);
+                    if($includedBonus === false){ $this->db->where("is_bonus", 0); }
+                    $this->db->group_start();
+                    $this->db->where("DATE(date_start) >=", $_tempStartDate);
+                    $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                    $this->db->group_end();
+                    $this->db->where_in("emp_id", $isWeeklyEmployees);
+                    if(isset($post["company"]) && $post["company"]){
+                        $this->db->where("company_id", $post["company"]);
+                    }
+                    $this->db->order_by("emp_id", "ASC");
+                    $queryWeekly = $this->db->get();
+                    if($queryWeekly->num_rows() > 0){
+                        foreach ($queryWeekly->result() as $key => $value) {
+                            if(!in_array($value->id, $weeklyPsIds)){
+                                $weeklyPsIds[] = $value->id;
                             }
                         }
                     }
