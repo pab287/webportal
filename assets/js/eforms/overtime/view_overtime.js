@@ -39,7 +39,7 @@ $.ajax({
     dataType: "JSON",
     global: false,
     success: function (data) {
-        const { valid_ot_dates } = data;
+        const { valid_ot_dates, status } = data;
         vmTab1.vm_tab1 = { ...data };
         vmTab1.loading_content = false;
 
@@ -68,7 +68,7 @@ $.ajax({
                 break;
         }
         
-        if (valid_ot_dates === false) {
+        if (valid_ot_dates === false && status === "Pending") {
             setTimeout(() => {
                 Swal.fire({
                     title: 'Invalid Overtime Request!',
