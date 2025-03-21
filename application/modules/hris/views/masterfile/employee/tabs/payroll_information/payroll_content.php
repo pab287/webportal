@@ -1379,7 +1379,7 @@
             } else {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Invalid Basic Rate.',
+                    title: 'Enter basic salary first.',
                     html: 'Current value is <b>invalid</b>. Please add the basic rate first before adding allowance.',
                 });
             }
