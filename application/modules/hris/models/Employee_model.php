@@ -8166,20 +8166,13 @@
             $post = $this->input->post();
             $user = $this->core_layout->getUserLoggedIn();
             $fullname = $this->getEmployeeName($post['emp_id']);
-            $amount = $post["amount"];
-            $cleanAmount = str_replace(',', '', $amount);
-            if (!is_numeric($cleanAmount)) {
-                $resultarray["status"] = FALSE;
-                $resultarray["response"] = "Invalid amount format. Please enter a valid number.";
-                return $resultarray;
-            }
             $data["created_by"] = $user["employee_id"];
             $data['created_at'] = $date;
             $data["emp_id"] = $post["emp_id"];
             $data["loan_id"] = $post["loan_id"];
             $data['reference_id'] = (isset($post['reference_id'])) ? $post['reference_id'] : 0;
             $data['reference'] = (isset($post['reference'])) ? trim($post['reference']) : "";
-            $data["amount"] = $post["amount"];
+            $data["amount"] = str_replace(',', '', $post['amount']);
             $data["deduction_type"] = $post["deduction_type"];
             $data["percentage"] = 0;
             $data["fixed_deduction_amt"] = 0;
