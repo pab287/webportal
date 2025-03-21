@@ -310,6 +310,19 @@ function openAttendanceLog() {
     $("#attendance-log").modal("show");
 }
 
+function passwordChangeReminder() {
+    $(".password-change-reminder").modal("show");
+    console.log("Pass CHANGE")
+}
+
+function changePasswordLater(){
+
+}
+   
+function changePasswordNow(){
+    $(".password-change-reminder").modal("hide");
+}
+
 function sendPin(form) {
     const formEl = $(form);
     const formData = new FormData(form);

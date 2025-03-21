@@ -1645,9 +1645,8 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
 <?php $this->load->view("users/modal/change_password_dialog") ?>
 <?php $this->load->view("users/modal/change_pin_dialog") ?>
 <?php $this->load->view("users/modal/forget_pin_dialog") ?>
-<?php $this->load->view("users/modal/two_factor_dialog") ?>
 <?php $this->load->view("gcctime/attendance/modals/attendance_log") ?>
-
+<?php $this->load->view("users/modal/password_reminder_dialog") ?>
 <!-- end::Body -->
 <script src="<?php echo base_url('assets/js/portal/portal_script.js'); ?>"></script>
 

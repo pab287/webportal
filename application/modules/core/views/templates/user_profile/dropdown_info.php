@@ -80,6 +80,14 @@
                              </span>
                         </a>
                     </li>
+                    <li class="m-nav__item">
+                        <a href="" class="m-nav__link" onclick="passwordChangeReminder(); return false;">
+                            <i class="m-nav__link-icon flaticon-clock-1"></i>
+                            <span class="m-nav__link-text">
+                                TEst
+                             </span>
+                        </a>
+                    </li>
                     <?php
                     $twoFactorAuth = isset($this->session->userdata("logged_in")['TwoFactorAuth']) ? $this->session->userdata("logged_in")['TwoFactorAuth'] : 0;
                     ?>
