@@ -10,7 +10,7 @@ class User_model extends CI_Model
         $this->load->model("access_control_model", "acl_model");
         $this->load->model("datatable_model", "dt_model");
         $this->load->model("ams/Utilities_model", "utilities");
-
+        $this->load->model("sms/services/gateway_model","gateway");
         $this->timestamp = new DateTime(null, new DateTimeZone('Asia/Manila'));
     }
 
@@ -382,4 +382,240 @@ class User_model extends CI_Model
 
         return $resultset;
     }
+
+    public function activate2FA(){
+        try {
+            $this->db->trans_start();
+            $post = $this->input->post();
+            $user = $this->core_layout->getUserLoggedIn();
+            $status =  $post['status'];
+            $url = site_url('login/logout');
+            $response = [
+                'success' => false,
+                'message' => '',
+                'redirect' => $url,
+            ];
+    
+            if ($status == 1) {
+                $this->deactivate2FA($user['id']);
+                $response['message'] = '2FA Deactivated';
+            } else {
+                $this->activate2FAWithValidation($user);
+                $response['message'] = '2FA Activated';
+            }
+    
+            $this->db->trans_complete();
+    
+            if ($this->db->trans_status() == FALSE) {
+                throw new Exception('Database transaction failed');
+            }
+    
+            $response['success'] = true;
+            return $response;
+    
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    private function deactivate2FA($userId){
+        $data = ['auth' => 0];
+        $this->db->where('id', $userId);
+        $this->db->update('gccmaster.tblusers', $data);
+        $this->db->reset_query();
+        $this->db->where('emp_id', $userId);
+        $this->db->delete('trusted_devices');
+        $this->db->reset_query();
+        $this->core_layout->deleteCookie('device_trust_token');
+    }
+
+    private function activate2FAWithValidation($user){
+        // Get required user details
+        $this->db->select('u.email, u.telegram_chat_id, e.mobile_no');
+        $this->db->from('gccmaster.tblusers u');
+        $this->db->join('gccmaster.tblemployees e', 'u.emp_id = e.id', 'left'); 
+        $this->db->where('u.id', $user['id']);
+        
+        $query = $this->db->get();
+        $userDetails = $query->row_array();
+        $this->db->reset_query();
+        // Validate communication methods
+        if (!$this->validateCommunicationMethods($userDetails)) {
+            throw new Exception('You must have at least one communication method (email, mobile, or Telegram) to activate 2FA.');
+        }
+
+        // Activate 2FA
+        $data = ['auth' => 1];
+        $this->db->where('id', $user['id']);
+        $this->db->update('gccmaster.tblusers', $data);
+        $this->db->reset_query();
+    }
+
+    private function validateCommunicationMethods($userDetails){
+        return !(
+            empty($userDetails['email']) &&
+            empty($userDetails['mobile_no']) &&
+            empty($userDetails['telegram_chat_id'])
+        );
+    }
+
+    public function getLockedAccounts(){
+        $resultset = array();
+        $post = $this->input->post();
+        $order_val = array(array("column"=>"9", "dir"=>"desc"));
+        $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
+        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
+        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+        $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
+        $rowData = $this->getDatatableRequest($search, $limit, $offset, $sortBy, $sortOrder);
+        $rowCount = $this->getDatatableRequestCount($search);
+        $resultset["recordsTotal"] = $rowCount;
+        $resultset["recordsFiltered"] = $rowCount;
+        $resultset["data"] = $rowData;
+        return $resultset;
+    }
+
+    private function getDatatableRequest($search, $limit, $offset, $sortBy, $sortOrder){
+        $filterFields = array('employees.firstname', 'employees.lastname', 'employees.middlename', 'users.email', 'users.username');
+        $this->db->select("
+            users.id, 
+            users.email, 
+            employees.firstname, 
+            employees.lastname,
+            employees.middlename, 
+            users.username, 
+            DATE_FORMAT(users.lockout_dt, '%b %d, %Y %h:%i %p') as lockout_dt
+        ")
+        ->from('gccmaster.tblusers as users')
+        ->join('gccmaster.tblemployees as employees','users.emp_id = employees.id')
+        ->where('users.lockout', 1);
+
+        if ($search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                ($key == 0) ? $this->db->like($field, $search, "both") : $this->db->or_like($field, $search, "both");
+            }
+            $this->db->group_end();
+        }
+
+        if($limit != -1){
+            $this->db->limit($limit, $offset);
+        }
+
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        $query = $this->db->get();
+        $results = $query->result();
+        return $results;
+    }
+    private function getDatatableRequestCount($search){
+        $filterFields = array('employees.firstname', 'employees.lastname', 'employees.middlename', 'users.email', 'users.username');
+        $this->db->select("users.id, users.email, employees.firstname, employees.lastname,employees.middlename, users.username, users.lockout_dt")
+        ->from('gccmaster.tblusers as users')
+        ->join('gccmaster.tblemployees as employees','users.emp_id = employees.id')
+        ->where('users.lockout', 1);
+        if ($search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                ($key == 0) ? $this->db->like($field, $search, "both") : $this->db->or_like($field, $search, "both");
+            }
+            $this->db->group_end();
+        }
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
+    public function unlockAccount() {
+        $resultset = [
+            'status'  => false,
+            'message' => '',
+            'success' => 'error',
+            'action'  => 'system',
+        ];
+        $post = $this->input->post();
+        $id = $post['id'];
+        $this->db->trans_start();
+        $sendOtp = $this->sendOTP($id);
+        if (!$sendOtp['sent_sms'] && !$sendOtp['sent_email']) {
+            $resultset['message'] = $sendOtp['message'];
+            $this->db->trans_rollback();
+            $this->logEvent($resultset, $id);
+            return $resultset;
+        }
+        $update = $this->updatePassword($id, $sendOtp['otp']);
+        if (!$update) {
+            $resultset['message'] = "Failed to update password.";
+            $this->db->trans_rollback();
+            $this->logEvent($resultset, $id);
+            return $resultset;
+        }
+        $resultset['status'] = true;
+        $resultset['message'] = "Account unlocked successfully.";
+        $resultset['success'] = "success";
+        $resultset['action'] = 'user';
+        $this->db->trans_commit();
+        $this->logEvent($resultset, $id);
+    
+        return $resultset;
+    }
+    
+    private function logEvent($resultset, $userId) {
+        $this->core_layout->setEventLog(
+            "{$resultset['message']} User Id: $userId",
+            "unlock",
+            $resultset['success'],
+            "gccmaster",
+            $resultset['action']
+        );
+    }
+
+    private function updatePassword($id,$otp){
+        $this->db->where('id', $id);
+        $this->db->set('lockout', 0);
+        $this->db->set('auth', 0);
+        $this->db->set('lockout_dt', NULL);
+        $this->db->set('force_update',1);
+        $this->db->set('login_attempts', 0);
+        $this->db->set('reset_attempts', 0);
+        $this->db->set('password', md5($otp));
+        $update = $this->db->update('gccmaster.tblusers');
+        return $update;
+    }
+
+    private function sendOTP($id)
+    {
+        $response = ['sent' => false,'otp' => null,'message' => ''];
+        $this->db->select('emp.mobile_no, users.email, emp.firstname')
+            ->from('gccmaster.tblusers as users')
+            ->join('gccmaster.tblemployees as emp', 'users.emp_id = emp.id')
+            ->where('users.id', $id);
+    
+        $result = $this->db->get()->row();
+        $this->db->reset_query();
+        if (!$result->mobile_no && !$result->email) {
+            $response['message'] = "No communication method found. Update mobile number or email address.";
+            return $response;
+        }
+        $OTP = strtoupper(bin2hex(random_bytes(3)));
+        $OTP = strtoupper(bin2hex(random_bytes(3)));
+        $response['otp'] = $OTP;
+        $send_email[] = $result->email;
+        $mailer['send_to'] = $send_email;
+        $data = ['first_name' => $result->firstname,'key_code' => $OTP];
+        $email_content = $this->load->view("recovery_password_email.php",["data" => $data],true);
+        if ($result->mobile_no) {
+            $message = "[GC&C] Your Conyxph account recovery code is: $OTP. For security reasons, do not share this code with anyone. " .
+                       "If you did not request this, please ignore this message.";
+            $response['sent_sms'] = $this->gateway->sendPlaySMS($result->mobile_no, $message);
+        }
+        
+        $response['sent_email'] = $this->core_layout->send_email('core','GC & C Conyx PH','Account Recovery',$email_content,$mailer);
+        return $response;
+    }
+
 }

@@ -11,39 +11,87 @@ class Verifylogin extends MY_Controller{
         $this->directAccess = md5("direct_access");
     }
 
-    public function index()
-    {
+    public function index(){
         if ($this->input->post()) {
             $post = $this->input->post();
-            // Check for force_update before validation
-            $query = $this->db->select('force_update, password')->from('gccmaster.tblusers')->where('username', $post['username'],)->get()->row_array();
-    
-            if (isset($query['force_update']) && $query['force_update'] == 1 && $query['password'] == md5($post['password'])) {
-                $data = array(
-                    'modal' => "show",
-                    'post' => $post,
-                );
-                $this->session->set_userdata($data);
-                redirect('login/change_password', 'refresh');
-            }
-    
-            // Proceed with form validation if no force_update is required
             $this->form_validation->set_error_delimiters(
                 '<div class="m-alert m-alert--outline alert alert-danger alert-dismissible" role="alert">',
-                '<button type="button" class="close" data-dismiss="alert" aria-label="Close"></button><span></span></div>'
+                '<span></span></div>'
             );
     
             $this->form_validation->set_rules('username', 'Username', 'trim|required|prep_for_form');
             $this->form_validation->set_rules('password', 'Password', 'trim|required|callback_check_database|prep_for_form');
-    
-            if ($this->form_validation->run() === FALSE) {
-                // Field validation failed. User redirected to login page
+
+            if ($this->form_validation->run() === FALSE) {                
                 $this->load->view('login_v');
-            } else {
-                // Go to private area
-                redirect('portal/index', 'refresh');
+                return;
             }
-        } else {
+            else {
+                $this->db->where('username', $post['username']);
+                $this->db->set('login_attempts', '0', false);
+                $this->db->set('lockout_dt', 'NULL', false);
+                $this->db->update('gccmaster.tblusers');
+
+                $query = $this->db->select('force_update, password, auth, emp_id,resend_attempts')
+                ->from('gccmaster.tblusers')
+                ->where('username', $post['username'])
+                ->get()->row_array();
+                $this->db->reset_query();
+                if (isset($query['force_update']) && $query['force_update'] == 1) {
+                    $this->session->unset_userdata('logged_in');
+                    $data = array(
+                        'modal' => "show",
+                        'post' => $post,
+                    );
+                    $this->session->set_userdata($data);
+                    redirect('login/change_password', );
+                    return;
+                }
+                if (isset($query['auth']) && $query['auth'] == 1) {
+
+                    $userDetails = $this->db->select('u.email, u.telegram_chat_id, e.mobile_no')
+                    ->from('gccmaster.tblusers u')
+                    ->join('gccmaster.tblemployees e', 'u.emp_id = e.id', 'left')
+                    ->where('u.emp_id', $query['emp_id'])->get()->row_array();
+                    $userDetails = array_map(function($value) {
+                        return is_null($value) ? '' : $value;
+                    }, $userDetails);
+                    $sessionData = [
+                        'auth' => "show",
+                        'emp_id' => $query['emp_id'],
+                        'password' => $post['password'],
+                        'username' => $post['username'],
+                        'contacts' => $userDetails,
+                    ];
+                
+                    $trust_token_cookie = $this->input->cookie('device_trust_token', TRUE);
+                    $isTrustedDevice = false;
+                
+                    if ($trust_token_cookie) {
+                        $this->db->select('id');
+                        $this->db->from('gccmaster.trusted_devices');
+                        $this->db->where('trust_token', $trust_token_cookie);
+                        $this->db->where('expiry >', date('Y-m-d H:i:s'));
+                        $this->db->where('emp_id', $query['emp_id']);
+                        $trusted_device_query = $this->db->get();
+                
+                        $isTrustedDevice = ($trusted_device_query->num_rows() == 1);
+                        $this->session->userdata['logged_in']['TwoFactorAuth'] = 1;
+                    }
+                
+                    if (!$isTrustedDevice) {
+                        $this->session->unset_userdata('logged_in');
+                        $this->session->set_userdata($sessionData);
+                        redirect('login/authentication');
+                        return;
+                    }
+                
+                }
+                redirect('portal/index', 'refresh');
+                return;
+            }
+        }
+        else {
             // Display login view for GET requests
             $this->load->view('login_v');
         }
@@ -73,7 +121,12 @@ class Verifylogin extends MY_Controller{
                     $this->form_validation->set_message('check_database', 'This user account is suspended.');
                     $this->core_layout->setEventLog("User account logged in is currently suspended.","login", "error", "gccmaster", "user", $row->emp_id);
                     return false;
-                } else {
+                }elseif ($row->lockout == 1){
+                    $this->form_validation->set_message('check_database', 'This user account is locked. Please contact IT Support');
+                    $this->core_layout->setEventLog("User account logged in is currently locked out.","login", "error", "gccmaster", "user", $row->emp_id);
+                    return false;
+                }
+                else {
                     $sess_array = array(
                         'id' => $row->id,//tbluser_id
                         'emp_id' => $row->emp_id,
@@ -86,7 +139,8 @@ class Verifylogin extends MY_Controller{
                         'group_id' => $row->group_id,
                         'email' => $row->email,
                         'company' => $row->company_id,
-                        'department' => $row->department_id
+                        'department' => $row->department_id,
+                        'TwoFactorAuth' => $row->auth,
                     );
                     $this->session->set_userdata('logged_in', $sess_array);
                     $this->core_layout->setEventLog("User has successfully loggedin in the webportal.","login", "success", "gccmaster", "user", $row->emp_id);
@@ -95,7 +149,26 @@ class Verifylogin extends MY_Controller{
             }
         } else {
             $this->core_layout->setEventLog("User ".$username." logged in with Invalid credentials for username or password.","login", "error", "gccmaster", "user");
-            $this->form_validation->set_message('check_database', 'Invalid username or password');
+            $attempts = $this->Login_m->getAttempts($username);
+            if(isset($attempts->login_attempts) && isset($attempts->lockout) && $attempts->lockout == 0){
+                $resend_attempts = 4 - $attempts->login_attempts;
+                $this->db->trans_start();
+                $this->db->where('username', $username);
+                if($resend_attempts <= 0){
+                    $this->db->set('lockout', '1', false);
+                    $this->db->set('lockout_dt', 'NOW()', false);
+                    $this->form_validation->set_message('check_database', 'This user account is locked. Please contact IT Support');
+                }else{
+                    $this->db->set('login_attempts', 'login_attempts + 1', false);
+                    $this->form_validation->set_message('check_database', 'Invalid username or password! You have (' . ($resend_attempts) . ') remaining tries left before your account is locked.');
+                }
+                $this->db->update('gccmaster.tblusers');
+                $this->db->trans_complete();
+            }else if(isset($attempts->lockout) && $attempts->lockout == 1){
+                $this->form_validation->set_message('check_database', 'This user account is locked. Please contact IT Support');
+            }else{
+                $this->form_validation->set_message('check_database', 'Invalid username or password');
+            }
             return false;
         }
     }
@@ -125,7 +198,8 @@ class Verifylogin extends MY_Controller{
                         'group_id' => $row->group_id,
                         'email' => $row->email,
                         'company' => $row->company_id,
-                        'department' => $row->department_id
+                        'department' => $row->department_id,
+                        'TwoFactorAuth' => $row->auth,
                     );
 
                     $this->session->set_userdata('logged_in', $sess_array);
@@ -181,14 +255,14 @@ class Verifylogin extends MY_Controller{
 					if($response){
 						redirect($redirectLink, "refresh");
 					}else{
-						redirect($loginUrl, "refresh");					
+						redirect($loginUrl, "refresh");
 					}
 				}else{
 					redirect($loginUrl, "refresh");
 				}
 			}else{
 				redirect($loginUrl, "refresh");
-			}			
+			}
 		}
 	}
 	
