@@ -13,14 +13,21 @@
             $this->load->model('biometric_model', 'adm_biometric');
             $this->load->model('Late_model', 'late_model');
             $this->load->model('Shift_management_model', 'shift_mgmt_model');
+            $this->load->model('Reports_model', 'reports');
         }
 
         public function index() {
+            $data = array();
+
+            $type = isset($_GET['type']) ? $_GET['type'] : null;
+            $data['type'] = $type;
+            $data['isNull'] = ($type == '' && $type == null) ? true : false;
+
             $this->core_layout->setPrivilegeName("gcctime_reports");
-            $this->core_layout->addJs("js/time/reports/reports.script.js", TRUE);
+            $this->core_layout->addJs("js/time/reports/reports.script.js", TRUE, $data);
 
             $this->load->view('core/templates/header');
-            $this->load->view('reports/index');
+            $this->load->view('reports/index', $data);
             $this->load->view('core/templates/footer');
         }
 
@@ -554,6 +561,26 @@
 
         function get_dept_collection(){
             $data = $this->attendance->getDepartmentCollection();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        function attendance_logs() {
+            $arrData = array();
+
+            $arrData['devices'] = $this->reports->getActiveDevices();
+
+            $this->core_layout->setPrivilegeName("gcctime_logs");
+            $this->core_layout->addJs("js/time/reports/attendance.script.js", TRUE, $arrData);
+
+            $this->load->view('core/templates/header');
+            $this->load->view('reports/attendance_logs');
+            $this->load->view('core/templates/footer');
+        } 
+
+        function get_attendance_logs_datatable_request() {
+            $data = $this->reports->get_attendance_logs_datatable_request();
             $this->output
                 ->set_content_type('json')
                 ->set_output(json_encode($data));

@@ -15,54 +15,67 @@
 							</h3>
 						</div>
 					</div>
-					<div class="m-portlet__head-tools">
-
-					</div>
+					<div class="m-portlet__head-tools"></div>
 				</div>
                 <form id="form_overtime">
                 <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 				    <div class="m-portlet__body">
-					    <div class="row">
+                        <div class="form-group m-form__group row" :class="loading_content === true ? '':'m--hide'">
+                            <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
+                                <h3 class="m--font-brand">Loading Content Please Wait . . . </h3>
+                            </div>
+                            <div class="col-1 col-md-1 col-lg-1 col-sm-1 col-xs-12">
+                                <div class="m-loader m-loader--lg" style="width: 30px; display: inline-block;"></div>
+                            </div>
+                        </div>
+					    <div class="row" :class="loading_content === true ? 'm--hide':''">
                             <div class="col-md-6 col-sm-12">
-                                <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12">
-                                        Employee*
-                                    </label>
+                                <div class="row">
+                                    <label for="" class="col-md-2 col-lg-2 col-sm-2 col-xs-12 required">EMPLOYEE</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                        <select id="employee" name="employee"  data-validation="required">
-
-                                        </select>
+                                        <div class="form-group m-form__group row">
+                                            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                                                <select id="employee" name="employee"  data-validation="required"></select>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12">
-                                        Company*
-                                    </label>
+                                <div class="row">
+                                    <label for="" class="col-md-2 col-lg-2 col-sm-2 col-xs-12 required">COMPANY</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                        <textarea class="form-control m-input" id="details" rows="5" data-validation="required" v-model="vm_tab1.company+'\n'+vm_tab1.department+'\n'+vm_tab1.position" disabled></textarea>
-                                        <input type="hidden" name="company" id="company" v-model="vm_tab1.company"/>
-                                        <input type="hidden" name="department" id="department" v-model="vm_tab1.department"/>
-                                        <input type="hidden" name="position" id="position" v-model="vm_tab1.position"/>
+                                        <div class="form-group m-form__group row">
+                                            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                                                <textarea class="form-control m-input" id="details" rows="5" data-validation="required" v-text="displayEmployeeCompany()" disabled></textarea>
+                                                <input type="hidden" name="company" id="company" v-model="vm_tab1.company"/>
+                                                <input type="hidden" name="department" id="department" v-model="vm_tab1.department"/>
+                                                <input type="hidden" name="position" id="position" v-model="vm_tab1.position"/>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12">Date & Time*</label>
-                                    <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12 input-group date" id="date_time">
-                                        <input class="form-control m-input" type="text" id="date" v-model="moment(vm_tab1.date_from).format('MM/D/Y hh:mm a')+' - '+moment(vm_tab1.date_to).format('MM/D/Y hh:mm a')" data-validation="required"/>
-                                        <input type="hidden" name="date_from" v-model="vm_tab1.date_from" id="date_from"/>
-                                        <input type="hidden" name="date_to" v-model="vm_tab1.date_to" id="date_to"/>
-                                        <span class="input-group-addon">
-                                                <i class="la la-calendar glyphicon-th"></i>
-                                        </span>
+                                <div class="row">
+                                    <label for="" class="col-md-2 col-lg-2 col-sm-2 col-xs-12 required">DATE & TIME</label>
+                                    <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
+                                        <div class="form-group m-form__group row">
+                                            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12 input-group date" id="date_time">
+                                                <input class="form-control m-input" type="text" id="date" :value="moment(vm_tab1.date_from).format('MM/D/Y hh:mm a')+' - '+moment(vm_tab1.date_to).format('MM/D/Y hh:mm a')" data-validation="required" />
+                                                <input type="hidden" name="date_from" v-model="vm_tab1.date_from" id="date_from"/>
+                                                <input type="hidden" name="date_to" v-model="vm_tab1.date_to" id="date_to"/>
+                                                <span class="input-group-addon"><i class="la la-calendar glyphicon-th"></i></span>
+                                            </div>
+                                        </div>
+                                        
                                     </div>
                                 </div>
-                                <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12">
-                                        Purpose*
-                                    </label>
+                                <div class="row">
+                                    <label for="" class="col-md-2 col-lg-2 col-sm-2 col-xs-12 required">PURPOSE</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                        <textarea class="form-control m-input" id="purpose" name="purpose" rows="6" data-validation="required"></textarea>
-                                        <input type="hidden" id="prevLen" value="0"/>
+                                        <div class="form-group m-form__group row">
+                                            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                                                <textarea class="form-control m-input" id="purpose" name="purpose" rows="6" data-validation="required"></textarea>
+                                                <input type="hidden" id="prevLen" value="0"/>
+                                            </div>
+                                        </div>
                                         <span class="m-form__help" style="text-transform: none; font-width: 600;">
                                             <i>Note: Auto bullets when pressing "Enter".</i>
                                         </span>
@@ -70,43 +83,39 @@
                                 </div>
                             </div>
                             <div class="col-md-6 col-sm-12">
-                                <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12">
-                                        Requested by*
-                                    </label>
+                                <div class="row">
+                                    <label for="" class="col-md-2 col-lg-2 col-sm-2 col-xs-12 required">REQUESTED BY</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                        <select id="requested_by" name="requested_by"  data-validation="required">
-
-                                        </select>
+                                        <div class="form-group m-form__group row">
+                                            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                                                <select id="requested_by" name="requested_by"  data-validation="required"></select>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="form-group m-form__group row">
-                                    <label class="col-md-2 col-lg-2 col-sm-2 col-xs-12">
-                                        Remarks
-                                    </label>
+                                <div class="row">
+                                    <label for="" class="col-md-2 col-lg-2 col-sm-2 col-xs-12">REMARKS</label>
                                     <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                        <textarea class="form-control m-input" id="remarks" name="remarks" rows="5" v-model="vm_tab1.requested_remarks"></textarea>
+                                        <div class="form-group m-form__group row">
+                                            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                                                <textarea class="form-control m-input" id="remarks" name="remarks" rows="5" v-model="vm_tab1.requested_remarks"></textarea>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <br><br><br><br><br>
-                        <div class="m-separator m-separator--solid d-xl-12"></div>
-                        <div class="col-xl-12 order-1 order-xl-2 m--align-right">
-                            <button type="submit" class="btn btn-info m-btn m-btn--custom m-btn--icon m-btn--air m-btn--box btn-submit btnSave" onclick="save()">
-                                <span>
-                                <i class="la la-save"></i>
-                                    <span>
-                                    Save
-                                    </span>
-                                </span>
-                            </button>
-                            <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon m-btn--air m-btn--box btnCancel" onclick="back()">
-                                <span>
-                                    Cancel
-                                </span>
-                            </button>
-                        </div>
+                    </div>
+                    <div class="m-portlet__foot m--align-right" :class="loading_content === true ? 'm--hide':''">
+                        <?php $current_action = $this->core_layout->getCurrentActions(); ?>
+                        <?php if(in_array("save", $current_action)): ?>
+                        <button type="submit" class="btn btn-info m-btn m-btn--custom m-btn--icon m-btn--air m-btn--box btn-submit btnSave" onclick="save()">
+                            <span><i class="la la-save"></i><span>Save</span></span>
+                        </button>
+                        <?php endif; ?>
+                        <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon m-btn--air m-btn--box btnCancel" onclick="back()">
+                            <span>Cancel</span>
+                        </button>
                     </div>
                 </form>
 			</div>

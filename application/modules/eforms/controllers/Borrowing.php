@@ -92,6 +92,7 @@ class Borrowing extends MY_Controller
 
     function get_datatable_request()
     {
+        $this->core_layout->setPrivilegeName("borr_masterlist");
         $data = $this->borrowing->getDatatableRequest();
         $this->output
             ->set_content_type('json')
@@ -108,6 +109,7 @@ class Borrowing extends MY_Controller
 
     function get_borrowed_request()
     {
+        $this->core_layout->setPrivilegeName("borr_borrowed");
         $data = $this->borrowing->getBorrowedRequest();
         $this->output
             ->set_content_type('json')
@@ -116,6 +118,7 @@ class Borrowing extends MY_Controller
 
     function get_return_request()
     {
+        $this->core_layout->setPrivilegeName("borr_return");
         $data = $this->borrowing->getReturnedRequest();
         $this->output
             ->set_content_type('json')
@@ -124,6 +127,7 @@ class Borrowing extends MY_Controller
 
     function get_overdue_request()
     {
+        $this->core_layout->setPrivilegeName("borr_overdue");
         $data = $this->borrowing->getOverdueRequest();
         $this->output
             ->set_content_type('json')

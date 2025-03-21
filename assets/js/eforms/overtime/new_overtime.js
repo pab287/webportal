@@ -26,7 +26,28 @@ $("#requested_by").select2({
         return data;
       }
     }
+}).on("select2:select", function(e) {
+    $(e.target).validate();
 });
+
+const dateTimeRangePicker = function (minDate) {
+    $("#date_from, #date_to, #date").val("");
+    const nMinDate = minDate ? new Date(minDate) : moment().subtract(2, 'years');
+    $("#date_time").daterangepicker({
+        timePicker: true,
+        minDate: nMinDate,
+        startDate: moment().startOf('hour'),
+        endDate: moment().startOf('hour').add(32, 'hour'),
+        locale: {
+          format: 'M/DD hh:mm A'
+        }
+    }).on('apply.daterangepicker', function (ev, picker) {
+        $("#date_from").val(picker.startDate.format('YYYY-MM-DD HH:mm:ss'));
+        $("#date_to").val(picker.endDate.format('YYYY-MM-DD HH:mm:ss'));
+        $("#date").val(picker.startDate.format('MM/DD/YYYY hh:mm a') + ' - ' + picker.endDate.format('MM/DD/YYYY hh:mm a')).validate();
+    });
+}
+dateTimeRangePicker();
 
 $("#employee").on("select2:select", function() {
     $.ajax({
@@ -40,25 +61,16 @@ $("#employee").on("select2:select", function() {
                 $("#company").val(data.company);
                 $("#department").val(data.department);
                 $("#position").val(data.position);
+
+                if(data.max_date){ 
+                    const tempMinDate = moment(new Date(data.max_date), "YYYY-MM-DD").add(1, 'days').format("YYYY-MM-DD");
+                    dateTimeRangePicker(tempMinDate);
+                }
             }
         }
     });
-});
-
-$("#date_time").daterangepicker({
-    timePicker: true,
-    minDate: moment().subtract(2, 'years'),
-    startDate: moment().startOf('hour'),
-    endDate: moment().startOf('hour').add(32, 'hour'),
-    locale: {
-      format: 'M/DD hh:mm A'
-    }
-});
-
-$('#date_time').on('apply.daterangepicker', function (ev, picker) {
-    $("#date_from").val(picker.startDate.format('YYYY-MM-DD HH:mm:ss'));
-    $("#date_to").val(picker.endDate.format('YYYY-MM-DD HH:mm:ss'));
-    $("#date").val(picker.startDate.format('MM/DD/YYYY hh:mm a') + ' - ' + picker.endDate.format('MM/DD/YYYY hh:mm a'));
+}).on("select2:select", function(e) {
+    $(e.target).validate();
 });
 
 function save(){

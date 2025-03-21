@@ -32,9 +32,16 @@
             $status = (isset($post['status']) && $post['status']) ? ucwords($post['status']) : null; //clicked in portal dashboard
             
             $privilege = $this->core_layout->getCurrentActions();
+
+            $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+            $companyDescription = null;
+
+            if ($view_by_company) {
+                $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+            }
             
-            $rowData = $this->get_all_item($privilege, $start, $end, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status);;
-            $rowCount = $this->get_all_item_count($privilege, $start, $end, $query_builder, $search, $status);
+            $rowData = $this->get_all_item($privilege, $start, $end, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_by_company, $companyDescription);
+            $rowCount = $this->get_all_item_count($privilege, $start, $end, $query_builder, $search, $status, $view_by_company, $companyDescription);
             // if (!$search) {
             //     $rowData = $this->get_all_post($privilege, $start, $end, $query_builder, $limit, $offset, $sortBy, $sortOrder, $status);
             //     $rowCount = $this->get_all_post_count($privilege, $start, $end, $query_builder, $status);
@@ -56,7 +63,7 @@
             return $resultset;
         }
 
-        public function get_all_item($privilege, $start, $end, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null){
+        public function get_all_item($privilege, $start, $end, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_by_company = false, $companyDescription = null) {
             $filterFields1 = array("a.id", "a.status", "a.reference_no", "a.company", "a.driver", "a.others_remarks","te.lastname","te.firstname","td.des_to", 'tod.destination', 'toe.firstname', 'toe.lastname');
             $date = date("Y-m-d", strtotime("-1 year", time()));
             $check = date("Y-m-d", strtotime("-1 year", time()));
@@ -109,6 +116,12 @@
             if($guard){
                 $this->db->where("a.status =", "Approved");
                 $this->db->where("DATE(a.approved_dt)", $current_date);
+            }
+
+            if ($view_by_company) {
+                if ($companyDescription) {
+                    $this->db->where('a.company', $companyDescription);
+                }
             }
 
             if (isset($search) && $search) {
@@ -251,7 +264,7 @@
             return $arrData;
         }
 
-        public function get_all_item_count($privilege, $start, $end, $query_builder=null, $search = null, $status = null){
+        public function get_all_item_count($privilege, $start, $end, $query_builder=null, $search = null, $status = null, $view_by_company = false, $companyDescription = null){
             $role_id = $this->authenticate->getRoleId();
             $current_date = date("Y-m-d");
 
@@ -304,6 +317,12 @@
             if($guard){
                 $this->db->where("a.status =", "Approved");
                 $this->db->where("DATE(a.approved_dt)", $current_date);
+            }
+
+            if ($view_by_company) {
+                if ($companyDescription) {
+                    $this->db->where('a.company', $companyDescription);
+                }
             }
             
             $this->db->group_by("a.id");
@@ -911,7 +930,6 @@
         }
 
         function getArchiveLists() {
-
             $resultset = array();
             $post = $this->input->post();
             $order_val = array(array("column" => "6", "dir" => "desc"));
@@ -923,8 +941,17 @@
             $begin = (isset($post["start_date"]) && $post["start_date"]) ? $post["start_date"] : false;
             $end = (isset($post["end_date"]) && $post["end_date"]) ? $post["end_date"] : false;
 
-            $rowData = $this->get_all_archive($search, $limit, $offset, $sortBy, $sortOrder, $begin, $end);
-            $rowCount = $this->get_all_archive_count($search, $begin, $end);
+            $privilege = $this->core_layout->getCurrentActions();
+
+            $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+            $companyDescription = null;
+
+            if ($view_by_company) {
+                $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+            }
+
+            $rowData = $this->get_all_archive($search, $limit, $offset, $sortBy, $sortOrder, $begin, $end, $view_by_company, $companyDescription);
+            $rowCount = $this->get_all_archive_count($search, $begin, $end, $view_by_company, $companyDescription);
             // if (!$search) {
             //     $rowData = $this->get_all_archive($limit, $offset, $sortBy, $sortOrder);
             //     $rowCount = $this->get_all_archive_count();
@@ -942,7 +969,7 @@
             return $resultset;
         }
 
-        public function get_all_archive($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $begin = null, $end = null){
+        public function get_all_archive($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $begin = null, $end = null, $view_by_company = false, $companyDescription = null) {
             $filterFields = array("a.id", "a.status", "a.reference_no", "a.company", "a.driver");
             $date = date("Y-m-d", strtotime("-1 year", time()));
             $check = date("Y-m-d", strtotime("-1 year", time()));
@@ -957,6 +984,12 @@
             $this->db->where('a.status', 'Cancelled');
             $this->db->or_where('DATE(a.created_dt) <=', $check);
             $this->db->group_end();
+
+            if ($view_by_company) {
+                if ($companyDescription) {
+                    $this->db->where('a.company', $companyDescription);
+                }
+            }
 
             if($begin && $end) {
                 $this->db->select("td.destination, td.date_from, td.date_to");
@@ -1087,7 +1120,7 @@
             return $arrData;
         }
 
-        public function get_all_archive_count($search = null, $begin = null, $end = null){
+        public function get_all_archive_count($search = null, $begin = null, $end = null, $view_by_company = false, $companyDescription = null) {
             $filterFields = array("a.id", "a.status", "a.reference_no", "a.company", "a.driver");
             $date = date("Y-m-d", strtotime("-1 year", time()));
             $check = date("Y-m-d", strtotime("-1 year", time()));
@@ -1101,6 +1134,12 @@
             $this->db->where('a.status', 'Cancelled');
             $this->db->or_where('DATE(a.created_dt) <=', $check);
             $this->db->group_end();
+
+            if ($view_by_company) {
+                if ($companyDescription) {
+                    $this->db->where('a.company', $companyDescription);
+                }
+            }
 
             if($begin && $end) {
                 $this->db->select("td.destination, td.date_from, td.date_to");
@@ -2160,6 +2199,7 @@
         }
 
         function getCompanyCollection() {
+            $this->core_layout->setPrivilegeName("to_masterfile");
             $get = $this->input->get();
             $resultarray = array();
             // if (isset($get['q'])) {
@@ -2167,9 +2207,16 @@
             // } else {
             //     $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tblcompanies ORDER BY `description` ASC");
             // }
+            $privilege = $this->core_layout->getCurrentActions();
+
+            $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
 
             $sql = "id, description";
             $this->db->select($sql);
+
+            if ($view_by_company) {
+                $this->db->where('id', $this->user_data['company']);
+            }
 
             if (isset($get['q']) && $get['q']){
                 $this->db->like('description', $get['q'], 'both');
@@ -2289,16 +2336,26 @@
             //     $query = $this->db->query("SELECT  id, firstname, middlename, lastname, suffix FROM gccmaster.tblemployees WHERE employee_status='Active' ORDER BY firstname ASC LIMIT 10");
             // }
 
+            $privilege = $this->core_layout->getCurrentActions();
+            $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+
             $sql = "id, firstname, middlename, lastname, suffix ";
             $this->db->select($sql);
             $this->db->from("gccmaster.tblemployees");
             
             if (isset($get['q']) && $get['q']) {
-                $this->db->like('firstname', $get['q'], 'both');
-                $this->db->or_like('lastname', $get['q'], 'both');
+                $this->db->group_start();
+                    $this->db->like('firstname', $get['q'], 'both');
+                    $this->db->or_like('lastname', $get['q'], 'both');
+                $this->db->group_end();
             }
 
             $this->db->where('employee_status', 'Active');
+
+            // if ($view_by_company) {
+            //     $this->db->where('company_id', $this->user_data['company']);
+            // }
+
             $this->db->limit(10);
             $this->db->order_by('firstname', 'ASC');
             $query = $this->db->get();
@@ -3633,6 +3690,9 @@
                 'status' => 'Pending',
             );
 
+            // commented for rollback
+            // $checkPersonnel = $this->checkPersonnelTO($this->user_data['id']);
+
             $query = $this->db->insert('gcceforms.travel_order', $data);
             if($query){
 
@@ -3679,6 +3739,12 @@
                 $resultarray['status'] = false;
                 $resultarray['msg'] = 'Failed to create new travel order entry!';
             }
+            // if (empty($checkPersonnel)) {
+            // } else {
+            //     $resultarray['data'] = $checkPersonnel;
+            //     $resultarray['status'] = false;
+            //     $resultarray['msg'] = 'Failed to Create new Travel Order Entries.';
+            // }
 
             return $resultarray;
         }
@@ -3720,6 +3786,9 @@
                 'driver' => $driver_name,
             );
 
+            // commented for rollback
+            // $checkPersonnel = $this->checkPersonnelEditTO($to_id);
+
             $reference_no = $this->db->get_where("gcceforms.travel_order", array("id"=>$to_id))->row('reference_no');
             if($this->update_travel_order(array('id' => $to_id), $data)){
                 $resultarray['status'] = true;
@@ -3730,6 +3799,12 @@
                 $resultarray['msg'] = 'Failed to update';
                 $this->core_layout->setEventLog("Failed updating ".$reference_no.".","update", "error", "gcceforms", "system");
             }
+            // if (empty($checkPersonnel)) {
+            // } else {
+            //     $resultarray['data'] = $checkPersonnel;
+            //     $resultarray['status'] = false;
+            //     $resultarray['msg'] = 'Failed to Create new Travel Order Entries.';
+            // }
 
             return $resultarray;
         }
@@ -5000,5 +5075,208 @@
             }
         }
 
+        function checkPersonnelTO($userId) {
+            $_personnelIds = array();
+            $_destinationLocation = array();
+            $arrData = array();
+            
+            $temp_personnel = $this->get_temp_personnel($this->user_data['id']);
+            $temp_destination = $this->get_temp_destination($this->user_data['id']);
 
+            foreach($temp_personnel as $row) {
+                $_personnelIds[] = $row->employee_id;
+            }
+
+            foreach($temp_destination as $row) {
+                $data = array(
+                    'date_from' => $row->date_from,
+                    'date_to' => $row->date_to
+                );
+
+                $_destinationLocation[] = $data;
+            }
+
+            $travelDates = $this->getFirstAndLastArrValue($temp_destination);
+
+            $this->db->select('a.reference_no, c.date_from, c.date_to, c.destination, UPPER(CONCAT(d.firstname, " ", d.lastname)) as name, a.status, b.employee_id');
+            $this->db->join($this->travelPersonnelTable.' as b', 'b.travel_order_id = a.id', 'LEFT');
+            $this->db->join($this->travelDestinationTable.' as c', 'c.travel_order_id = a.id', 'LEFT');
+            $this->db->join($this->employeeTable.' as d', 'd.id = b.employee_id', 'LEFT');
+            $this->db->from($this->travelOrderTable.' as a');
+            $this->db->where_in('b.employee_id', $_personnelIds);
+
+            $this->db->where('a.status !=', 'Cancelled');
+            $this->db->where('a.status !=', 'Disapproved');
+
+            $this->db->group_start();
+            $this->db->where('a.status !=', 'Approved');
+            $this->db->where('a.accomplished', 0);
+            $this->db->group_end();
+            
+            $this->db->or_group_start();
+            $this->db->where('a.status', 'Approved');
+            $this->db->where('a.accomplished', 0);
+            $this->db->group_end();
+
+            $this->db->group_start();
+                $this->db->where('DATE(c.date_from) >= ', date('Y-m-d', strtotime($travelDates['date_from'])));
+                $this->db->where('DATE(c.date_from) <= ', date('Y-m-d', strtotime($travelDates['date_from'])));
+                $this->db->or_where('DATE(c.date_to) >=', date('Y-m-d', strtotime($travelDates['date_to'])));
+                $this->db->where('DATE(c.date_to) <=', date('Y-m-d', strtotime($travelDates['date_to'])));
+            $this->db->group_end();
+
+            $query = $this->db->get();
+            
+            if ($query->num_rows() > 0){
+                foreach($query->result() as $key => $rs) {
+                    if (in_array($rs->employee_id, $_personnelIds)) {
+                        foreach ($_destinationLocation as $k => $row) {
+                            $savedFromDes = date('Y-m-d H:i', strtotime($rs->date_from));
+                            $savedToDes = date('Y-m-d H:i', strtotime($rs->date_to));
+    
+                            $toSavedFromDes = date('Y-m-d H:i', strtotime($row['date_from']));
+                            $toSavedToDes = date('Y-m-d H:i', strtotime($row['date_to']));
+    
+                            if (($savedFromDes >= $toSavedFromDes && $savedFromDes <= $toSavedToDes) || ($savedToDes >= $toSavedFromDes && $savedToDes <= $toSavedToDes) || ($savedFromDes <= $toSavedFromDes && $savedToDes >= $toSavedToDes)) {
+                               $arrData[$key]['reference_no'] = $rs->reference_no;
+                               $arrData[$key]['name'] = $rs->name;
+                               $arrData[$key]['status'] = $rs->status;
+                               $arrData[$key]['to'][] = ['destination' => $rs->destination, 'date_from' => $rs->date_from, 'date_to' => $rs->date_to];
+                            }
+                        }
+                    }
+
+                }
+            }
+
+            $restructuredArray = [];
+
+            foreach ($arrData as $entry) {
+                $name = $entry['name'];
+                $referenceNo = $entry['reference_no'];
+                $status = $entry['status'];
+
+                if (!isset($restructuredArray[$name])) {
+                    $restructuredArray[$name] = [
+                        'reference_no' => $referenceNo,
+                        'name' => $name,
+                        'status' => $status,
+                        'to' => []
+                    ];
+                }
+
+                $restructuredArray[$name]['to'] = array_merge($restructuredArray[$name]['to'], $entry['to']);
+            }
+
+            // Convert associative array to indexed array
+            $restructuredArray = array_values($restructuredArray);
+
+            return $restructuredArray;
+        }
+
+        function getFirstAndLastArrValue($arr){
+            $first = reset($arr);
+            $last = end($arr);
+
+            return ['date_from' => $first->date_from, 'date_to' => $last->date_to];
+        }
+
+        function checkPersonnelEditTO($id) {
+            $_personnelIds = array();
+            $_destinationLocation = array();
+            $arrData = array();
+
+            $personnels = $this->db->select('employee_id')->get_where($this->travelPersonnelTable, array('travel_order_id' => $id))->result();
+            $destinations = $this->db->select('date_from, date_to')->get_where($this->travelDestinationTable, array('travel_order_id' => $id))->result();
+
+            foreach($personnels as $row) {
+                $_personnelIds[] = $row->employee_id;
+            }
+
+            foreach($destinations as $row) {
+                $data = array(
+                    'date_from' => $row->date_from,
+                    'date_to' => $row->date_to
+                );
+
+                $_destinationLocation[] = $data;
+            }
+
+            $travelDates = $this->getFirstAndLastArrValue($destinations);
+
+            $this->db->select('a.reference_no, c.date_from, c.date_to, c.destination, UPPER(CONCAT(d.firstname, " ", d.lastname)) as name, a.status, b.employee_id');
+            $this->db->join($this->travelPersonnelTable.' as b', 'b.travel_order_id = a.id', 'LEFT');
+            $this->db->join($this->travelDestinationTable.' as c', 'c.travel_order_id = a.id', 'LEFT');
+            $this->db->join($this->employeeTable.' as d', 'd.id = b.employee_id', 'LEFT');
+            $this->db->from($this->travelOrderTable.' as a');
+            $this->db->where('a.id !=', $id);
+            $this->db->where_in('b.employee_id', $_personnelIds);
+
+            $this->db->where('a.status !=', 'Cancelled');
+            $this->db->where('a.status !=', 'Disapproved');
+
+            $this->db->group_start();
+            $this->db->where('a.status !=', 'Approved');
+            $this->db->where('a.accomplished', 0);
+            $this->db->group_end();
+            
+            $this->db->or_group_start();
+            $this->db->where('a.status', 'Approved');
+            $this->db->where('a.accomplished', 0);
+            $this->db->group_end();
+
+            $this->db->group_start();
+                $this->db->where('DATE(c.date_from) >= ', date('Y-m-d', strtotime($travelDates['date_from'])));
+                $this->db->where('DATE(c.date_from) <= ', date('Y-m-d', strtotime($travelDates['date_from'])));
+                $this->db->or_where('DATE(c.date_to) >=', date('Y-m-d', strtotime($travelDates['date_to'])));
+                $this->db->where('DATE(c.date_to) <=', date('Y-m-d', strtotime($travelDates['date_to'])));
+            $this->db->group_end();
+
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0){
+                foreach($query->result() as $key => $rs) {
+                    if (in_array($rs->employee_id, $_personnelIds)) {
+                        foreach ($_destinationLocation as $k => $row) {
+                            $savedFromDes = date('Y-m-d H:i', strtotime($rs->date_from));
+                            $savedToDes = date('Y-m-d H:i', strtotime($rs->date_to));
+    
+                            $toSavedFromDes = date('Y-m-d H:i', strtotime($row['date_from']));
+                            $toSavedToDes = date('Y-m-d H:i', strtotime($row['date_to']));
+    
+                            if (($savedFromDes >= $toSavedFromDes && $savedFromDes <= $toSavedToDes) || ($savedToDes >= $toSavedFromDes && $savedToDes <= $toSavedToDes) || ($savedFromDes <= $toSavedFromDes && $savedToDes >= $toSavedToDes)) {
+                               $arrData[$key]['reference_no'] = $rs->reference_no;
+                               $arrData[$key]['name'] = $rs->name;
+                               $arrData[$key]['status'] = $rs->status;
+                               $arrData[$key]['to'][] = ['destination' => $rs->destination, 'date_from' => $rs->date_from, 'date_to' => $rs->date_to];
+                            }
+                        }
+                    }
+                }
+            }
+
+            $restructuredArray = [];
+
+            foreach ($arrData as $entry) {
+                $name = $entry['name'];
+                $referenceNo = $entry['reference_no'];
+                $status = $entry['status'];
+
+                if (!isset($restructuredArray[$name])) {
+                    $restructuredArray[$name] = [
+                        'reference_no' => $referenceNo,
+                        'name' => $name,
+                        'status' => $status,
+                        'to' => []
+                    ];
+                }
+
+                $restructuredArray[$name]['to'] = array_merge($restructuredArray[$name]['to'], $entry['to']);
+            }
+
+            // Convert associative array to indexed array
+            $restructuredArray = array_values($restructuredArray);
+
+            return $restructuredArray;
+        }
     }

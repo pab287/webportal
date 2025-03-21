@@ -8,6 +8,7 @@
         protected $payrollTypeTable = "payroll.payroll_type";
         protected $personnelTable = "gcctimeutility.personnel";
         protected $payrollGroupTable = "payroll.payroll_group";
+        protected $employeeSalaryTable = "gcchris.tblsalaries";
 
         protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
 
@@ -56,15 +57,17 @@
 
                 $dtTemp->setWhereParameters($parameters);
 
-                $totalData = $dtTemp->dtAllPostsCount();
-                $totalFiltered = $totalData;
+                // commented out as it returns all employee even user searched
+                // $totalData = $dtTemp->dtAllPostsCount();
+                // $totalFiltered = $totalData;
 
                 if (empty($searchValue)) {
                     $posts = $dtTemp->dtAllPosts($limit, $start, $order, $dir);
                 } else {
-                    $dtTemp->setLike("CONCAT(firstname, ' ', lastname)", $searchValue, "both");
+                    // $dtTemp->setLike("CONCAT(firstname, ' ', lastname)", $searchValue, "both");
                     $posts = $dtTemp->dtSearch($limit, $start, $searchValue, $order, $dir);
-                    $totalFiltered = $dtTemp->dtPostSearchCount($searchValue);
+                    // $totalData = $dtTemp->dtPostSearchCount($searchValue, $employee_status);
+                    // $totalFiltered = $totalData;
                 }
 
                 $data = array();
@@ -120,10 +123,14 @@
                         $data[] = $nestedData;
                     }
                 }
+
+                // get total count of employee based on search and status
+                $totalData = $this->employeeCount($searchValue, $employee_status);
+
                 $json_data = array(
                     "draw" => intval($draw),
                     "recordsTotal" => intval($totalData),
-                    "recordsFiltered" => intval($totalFiltered),
+                    "recordsFiltered" => intval($totalData),
                     "data" => $data,
                     "a" => $posts
                 );
@@ -137,6 +144,22 @@
                     "data" => array(),
                 );
             }
+        }
+
+        function employeeCount($search = null, $status) {
+            $this->db->select("id, lastname, is_incomplete, work_status, idno, firstname, middlename, suffix, company_id, department_id, position");
+            $this->db->from($this->employeeTable);
+
+            if ($status != 'All') {
+                $this->db->where('employee_status', $status);
+            }
+
+            if ($search) {
+                $this->db->like('CONCAT(firstname, " ", lastname)', $search, 'both');
+            }
+
+            $query = $this->db->get();
+            return $query->num_rows();
         }
 
         function getEmployeeData($id = null) {
@@ -522,13 +545,38 @@
 
         public function updateEmployeeAllowance() {
             $post = $this->input->post();
+            $postStdClass = json_decode(json_encode($post), false);
+
             $id = $post["id"];
-            $hasApprovingAuthority = json_decode($post["approving_authority"]);
+            $hasApprovingAuthority = isset($post["approving_authority"]) ? json_decode($post["approving_authority"]): false;
             unset($post["id"], $post["approving_authority"]);
             $postRate = isset($post['rate']) && $post['rate'] ? floatval($post['rate']): 0;
             $postIsActive = isset($post["is_active"]) && $post['is_active'] ? 1 : 0;
             $resultSet = array();
 
+            $this->db->select("id, is_active");
+            $this->db->where("emp_id", $post["emp_id"]);
+            $qAllw = $this->db->get("gcchris.allowances");
+            if($qAllw->num_rows() > 0){
+                $multipleAllowances = false;
+                $recordCount = $qAllw->num_rows();
+                $checkColumn = array_column($qAllw->result_array(), "is_active");
+                $isActiveColumn = array_count_values($checkColumn);
+                if(($recordCount > 1 && isset($isActiveColumn[1]) && $isActiveColumn[1] == $recordCount) ||
+                 ($recordCount > 1 && $postStdClass->is_active && (isset($isActiveColumn[0]) && $isActiveColumn[0] > 0) && (isset($isActiveColumn[1]) && $isActiveColumn[1] > 0))){
+                    $multipleAllowances = true;
+                }
+
+                if($multipleAllowances){
+                    $resultSet["success"] = false;
+                    $resultSet["message"] = "Multiple active allowances is not allowed!";
+                    $resultSet["title"] = "Update Allowance Data";
+                    $resultSet["toast"] = "error";
+                    return $resultSet;
+                }
+            }
+
+            $this->db->reset_query();
             /*** edited contents logging ***/
             $editedContent = array();
             $fromContent = array();
@@ -620,11 +668,20 @@
             $coreHistoryLog->setHistoryLogTableFieldId($id);
             $coreHistoryLog->setHistoryLogEmployeeId($employeeId);
 
-            if($updated && $this->db->trans_status() === TRUE){
-                $resultSet["success"] = TRUE;
+            if($updated && $this->db->trans_status() === true){
+                $resultSet["success"] = true;
                 $resultSet["message"] = "Allowance data has been updated successfully.";
                 $resultSet["title"] = "Update Allowance Data";
                 $resultSet["toast"] = "success";
+
+                if($hasApprovingAuthority){
+                    $historyStatus = $this->set_approved_allowance($post);
+                    if($historyStatus){
+                        $resultSet['salary_history'] = 'Salary History Generated.';
+                    }else{
+                        $resultSet['salary_history'] = 'Failed to generate Salary History.';
+                    }
+                }
 
                 if(is_array($tempData) && count($tempData) > 0){
                     foreach ($tempData as $key => $value) {
@@ -959,9 +1016,32 @@
                         }
                     }
                     $vv->employees = $employees;
+
+                    // get assigned employees when have a privilege of view by company
+                    $allowed = array();
+                    $tempAssigned = @unserialize($vv->assigned_employee_id);
+
+                    if (!empty($tempAssigned)) {
+                        $this->db->select('id, firstname, lastname, middlename, suffix');
+                        $this->db->from($this->employeeTable);
+                        $this->db->where_in("id", $tempAssigned);
+                        $_qTempEmp = $this->db->get();
+                        if($_qTempEmp->num_rows() > 0){
+                            foreach($_qTempEmp->result() as $rs){
+                                $tempRs = (array) $rs;
+                                $_tempName = $this->core_layout->getDisplayName($tempRs);
+                                $_tempName = isset($_tempName["display_name_1"]) && $_tempName["display_name_1"] ? $_tempName["display_name_1"]: "No assigned name";
+                                $allowed[] = $_tempName;
+                            }
+                        }
+                    }
+                    $vv->assigned_employees = $allowed;
+                    // get assigned employees when have a privilege of view by company
+
+
                     $vv->edit_url = site_url("payroll/employee/get_employee_group_data/edit/{$vv->id}");
                     $vv->archive_url = site_url("payroll/employee/get_employee_group_data/archive/{$vv->id}");
-                    unset($vv->employee_id);
+                    unset($vv->employee_id, $vv->assigned_employee_id, $vv->is_allow_view);
                     $arrData[$kk] = $vv;
                 }
             }
@@ -1037,6 +1117,33 @@
                         }
                     }
                     $tempRow->employees = $employees;
+
+                    $this->db->reset_query();
+
+                    // get assigned employees when have a privilege of view by company
+                    $allowed = array();
+                    $tempRow->assigned_employee_id = @unserialize($tempRow->assigned_employee_id);
+
+                    if (!empty($tempRow->assigned_employee_id)) {
+                        $this->db->select('id, firstname, lastname, middlename, suffix');
+                        $this->db->from($this->employeeTable);
+                        $this->db->where_in("id", $tempRow->assigned_employee_id);
+                        $_qTempEmp = $this->db->get();
+                        if($_qTempEmp->num_rows() > 0){
+                            foreach($_qTempEmp->result() as $rs){
+                                $tempRs = (array) $rs;
+                                $tempName = $this->core_layout->getDisplayName($tempRs);
+                                $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                                $allowed[] = array(
+                                    "id"=>$rs->id,
+                                    "text"=>$tempName,
+                                );
+                            }
+                        }
+                    }
+                    $tempRow->allowed = $allowed;
+                    // get assigned employees when have a privilege of view by company
+
                     $arrData = array("data" => $tempRow);
                     $html = "";
                     switch($type){
@@ -1230,6 +1337,9 @@
                 $post["employee_id"] = serialize($post["employee_id"]);
                 $post["created_by"] = $this->core_layout->getCurrentEmployeeId();
                 $post["created_at"] = date("Y-m-d H:i:s");
+                $post['is_allow_view'] = isset($post['is_allow_view']) && $post['is_allow_view'] ? 1: 0;
+                $post['assigned_employee_id'] = isset($post['is_allow_view']) && $post['is_allow_view'] == 1 ? serialize($post['assigned_employee_id']) : serialize(array());
+
                 $added = $this->db->insert($this->payrollGroupTable, $post);
                 if($added){
                     $resultset["response"] = true;
@@ -1253,6 +1363,8 @@
                 $post["employee_id"] = serialize($post["employee_id"]);
                 $post["updated_by"] = $this->core_layout->getCurrentEmployeeId();
                 $post["updated_at"] = date("Y-m-d H:i:s");
+                $post['is_allow_view'] = isset($post['is_allow_view']) && $post['is_allow_view'] ? 1: 0;
+                $post['assigned_employee_id'] = isset($post['is_allow_view']) && $post['is_allow_view'] == 1 ? serialize($post['assigned_employee_id']) : serialize(array());
 
                 $updated = $this->db->update($this->payrollGroupTable, $post, $tempWhere);
                 if($updated && $this->db->affected_rows() > 0){
@@ -1600,5 +1712,89 @@
             $result = $qTemp->result();
 
             return $result;
+        }
+
+        function set_approved_allowance($arr){
+            $user = $this->core_layout->getUserLoggedIn();
+            $user_emp_id = $user["employee_id"];
+            $data = array();
+            $rate = '';
+            $rate_fr = '';
+            $historyStatus = false;
+            $basic = 0;
+
+            if(!isset($arr["is_active"])){ $arr["is_active"] = 0; }
+            $isActiveState = intval($arr["is_active"]) == 1;
+
+            $this->db->select('b.name, a.basic_rate, a.payroll_type');
+            $this->db->from($this->employeeTable.' as a');
+            $this->db->join($this->positionTable.' as b', 'b.id = a.position OR b.name = a.position', 'LEFT');
+            $this->db->where('a.id', $arr['emp_id']);
+            $query = $this->db->get()->row();
+            $this->db->reset_query();
+            $basic = $query->basic_rate;
+
+            if($query->payroll_type == 'daily'){ $payroll = 'Basic Daily Rate'; }
+            else if($query->payroll_type == 'monthly'){ $payroll = 'Monthly Rate'; }
+            else{ $payroll = 'Hourly Rate'; }
+
+            if(isset($arr['frequency']) && $arr['frequency']){
+                $rate_fr = $arr['frequency'] == 'day' ? 'Daily Allowance' : 'Monthly Allowance';
+            }
+
+            $rate_remark = $isActiveState && $arr['rate'] && $rate_fr ? ' + '.$arr['rate'].' '.$rate_fr : '';
+            $remarks = $basic.' '.$payroll.' '.$rate_remark;
+            $basic_total = $isActiveState ? floatval($basic) + floatval($arr['rate']) : floatval($basic);
+
+            $data = array(
+                'emp_id' => $arr['emp_id'],
+                'sal_date' => date('Y-m-d'),
+                'sal_rate' => number_format($basic_total, 2, '.', ''),
+                'sal_position' => $query->name,
+                'sal_remarks' => $remarks,
+                'add_date' => date("Y-m-d H:i:s"),
+                'add_by' => $user_emp_id
+            );
+
+            $historyStatus = $this->db->insert($this->employeeSalaryTable, $data);
+            return $historyStatus;
+        }
+      
+        public function getEmployeeList(){
+            $result = array();
+            $get = $this->input->get();
+
+            $this->db->select("id, UPPER(CONCAT(firstname, ' ',
+            CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND
+                    TRIM(middlename) !='' AND middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(middlename, 1, 1), '.') ELSE ''
+            END,' ', lastname,
+            CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND
+                UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND
+                suffix IS NOT NULL THEN CONCAT(' ', suffix) ELSE ''
+            END)) as text");
+            $this->db->from($this->employeeTable);
+            $this->db->where("employee_status", "active");
+
+            if (isset($get['company_id']) && $get['company_id']) {
+                $this->db->where('company_id', $get['company_id']);
+            }
+
+            if (isset($get['q']) && $get['q']) {
+                $this->db->group_start();
+                    $this->db->like('firstname', $get['q'], 'both');
+                    $this->db->or_like('lastname', $get['q'], 'both');
+                $this->db->group_end();
+            }
+
+            $this->db->order_by("firstname", "ASC");
+            $this->db->limit(10);
+            $qTemp = $this->db->get();
+
+            if($qTemp->num_rows() > 0){
+                $result = $qTemp->result();
+            }
+
+            return array('results' => $result);
         }
     }

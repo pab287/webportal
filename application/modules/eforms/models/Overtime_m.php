@@ -166,8 +166,17 @@ class Overtime_m extends CI_Model {
             $this->core_layout->setEventLog("Overtime Masterfile - Search {$post["search"]['value']} in datatable.", "search", "success", "gcceforms", "user");
         }
 
-        $rowData = $this->masterfile_list($filtered,$filter,$search, $limit, $offset, $sortBy, $sortOrder, $qBuilder, $status);
-        $rowCount = $this->masterfile_count($filtered,$filter,$search, $qBuilder, $status);
+        $privilege = $this->core_layout->getCurrentActions();
+
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+        $companyDescription = null;
+
+        if ($view_by_company) {
+            $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+        }
+
+        $rowData = $this->masterfile_list($filtered,$filter,$search, $limit, $offset, $sortBy, $sortOrder, $qBuilder, $status, $view_by_company, $companyDescription);
+        $rowCount = $this->masterfile_count($filtered,$filter,$search, $qBuilder, $status, $view_by_company, $companyDescription);
 
         $totalNotFiltered = $rowCount;
 
@@ -178,7 +187,7 @@ class Overtime_m extends CI_Model {
         return $resultset;
     }
 
-    private function masterfile_list($filtered,$filter,$search=null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $qBuilder=null, $status = null) {
+    private function masterfile_list($filtered,$filter,$search=null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $qBuilder=null, $status = null, $view_by_company = false, $companyDescription = null) {
         // $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.reference_no", "a.position", "a.created_at", "b.firstname", "b.lastname", "b.middlename", "b.suffix");
         $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.reference_no", "a.position", "a.created_at", "b.firstname", "b.lastname");
         $this->db->select("a.id, a.reference_no, a.status, a.purpose, a.date_from, a.date_to, a.company, a.employee, a.department, a.created_at, a.position");
@@ -198,6 +207,15 @@ class Overtime_m extends CI_Model {
             $this->db->where('a.status', $status);
         }
         $this->db->where_not_in('a.status', "Cancelled");
+
+        if ($view_by_company) {
+            $this->db->where('b.company_id', (int)$this->user_data['company']);
+
+            if ($companyDescription) {
+                $this->db->where('a.company', $companyDescription);
+            }
+        }
+
         if($qBuilder){ $this->db->where($qBuilder); }
         if ($search) {
             $this->db->group_start();
@@ -269,7 +287,7 @@ class Overtime_m extends CI_Model {
         }
     }
     
-    private function masterfile_count($filtered,$filter,$search=null, $qBuilder=null, $status = null) {
+    private function masterfile_count($filtered,$filter,$search=null, $qBuilder=null, $status = null, $view_by_company = false, $companyDescription = null) {
         $filterFields = array("a.id", "a.status", "a.purpose","a.company", "a.department", "a.position", "b.firstname", "b.lastname");
         $this->db->select("a.id, a.reference_no, a.status, a.purpose, a.date_from, a.date_to, a.company, a.employee, a.department, a.created_at, a.position");
         $this->db->from('gcceforms.overtime a');
@@ -289,6 +307,15 @@ class Overtime_m extends CI_Model {
         }
         
         $this->db->where_not_in('a.status', "Cancelled");
+
+        if ($view_by_company) {
+            $this->db->where('b.company_id', (int)$this->user_data['company']);
+
+            if ($companyDescription) {
+                $this->db->where('a.company', $companyDescription);
+            }
+        }
+
         if($qBuilder){ $this->db->where($qBuilder); }
         if ($search) {
           $this->db->group_start();
@@ -414,8 +441,17 @@ class Overtime_m extends CI_Model {
         $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : "";
 
-        $rowData = $this->archive_list($search, $limit, $offset, $sortBy, $sortOrder);
-        $rowCount = $this->archive_count($search);
+        $privilege = $this->core_layout->getCurrentActions();
+
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+        $companyDescription = null;
+
+        if ($view_by_company) {
+            $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+        }
+
+        $rowData = $this->archive_list($search, $limit, $offset, $sortBy, $sortOrder, $view_by_company, $companyDescription);
+        $rowCount = $this->archive_count($search, $view_by_company, $companyDescription);
         if($search){
             $this->core_layout->setEventLog("Archived Overtime - Search {$search} in datatable.", "search", "success", "gcceforms", "user");
         }
@@ -428,12 +464,20 @@ class Overtime_m extends CI_Model {
         return $resultset;
     }
 
-    private function archive_list($search=null, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
+    private function archive_list($search=null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $view_by_company = false, $companyDescription = null) {
         $filterFields = array("a.id", "status", "a.purpose","a.company", "a.department", "a.position", "b.firstname", "b.lastname", "b.middlename", "b.suffix", "a.reference_no");
         $this->db->select("a.id, a.reference_no, a.status, a.purpose, a.date_from, a.date_to, a.company, a.employee, a.department, a.created_at, a.position");
         $this->db->from('gcceforms.overtime a');
         $this->db->join('gccmaster.tblemployees b', 'a.employee = b.id', 'LEFT');
         $this->db->where('status', "Cancelled");
+
+        if ($view_by_company) {
+            $this->db->where('b.company_id', $view_by_company);
+
+            if ($companyDescription) {
+                $this->db->where('a.company', $companyDescription);
+            }
+        }
 
         if(isset($search)){
             $this->db->group_start();
@@ -476,12 +520,20 @@ class Overtime_m extends CI_Model {
         }
     }
 
-    private function archive_count($search=null) {
+    private function archive_count($search=null, $view_by_company = false, $companyDescription = null) {
         $filterFields = array("a.id", "status", "a.purpose","a.company", "a.department", "a.position", "b.firstname", "b.lastname", "b.middlename", "b.suffix");
         $this->db->select("a.id, a.reference_no, a.status, a.purpose, a.date_from, a.date_to, a.company, a.employee, a.department, a.created_at, a.position");
         $this->db->from('gcceforms.overtime a');
         $this->db->join('gccmaster.tblemployees b', 'a.employee = b.id', 'LEFT');
         $this->db->where('status', "Cancelled");
+
+        if ($view_by_company) {
+            $this->db->where('b.company_id', $view_by_company);
+
+            if ($companyDescription) {
+                $this->db->where('a.company', $companyDescription);
+            }
+        }
 
         if(isset($search)){
             $this->db->group_start();
@@ -504,16 +556,29 @@ class Overtime_m extends CI_Model {
     function getEmployee(){
       $post = $this->input->get();
       $resultarray = array();
+      $privilege = $this->core_layout->getCurrentActions();
+
+      $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+
       $this->db->select('id, firstname, lastname, middlename, suffix');
       $this->db->from('gccmaster.tblemployees');
       $this->db->where('employee_status', 'Active');
+
       if(isset($post['q'])){
-          $this->db->like('firstname', $post['q']);
-          $this->db->or_like('lastname', $post['q']);
+        $this->db->group_start();
+        $this->db->like('firstname', $post['q']);
+        $this->db->or_like('lastname', $post['q']);
+        $this->db->group_end();
       }
+
+      if ($view_by_company) {
+        $this->db->where('company_id', $this->user_data['company']);
+     }
+
       if(isset($post['company']) && !empty($post['company'])){
           $this->db->where('company_id', $post['company']);
       }
+
       $this->db->order_by('firstname', 'ASC');
       $this->db->limit(10);
       $query = $this->db->get();
@@ -541,9 +606,17 @@ class Overtime_m extends CI_Model {
         //     $query = $this->db->query("SELECT id, description FROM gcchris.tblcompanies WHERE is_archived = 0 LIMIT 10");
         //   }
 
+        $privilege = $this->core_layout->getCurrentActions();
+
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+
         $this->db->select("id, description");
         $this->db->from("gcchris.tblcompanies");
         $this->db->where("is_archived", 0);
+
+        if ($view_by_company) {
+            $this->db->where('id', $this->user_data['company']);
+        }
 
         if (isset($get['q'])) {
             $this->db->like("description", $get['q'], "both");
@@ -596,49 +669,25 @@ class Overtime_m extends CI_Model {
         return array("results"=>$resultarray);
     }
 
-    function getEmployeeDetail(){
-        // $id = implode($this->input->get());
+    public function getEmployeeDetail(){
         $get = $this->input->get();
         $id = $get['data'];
         $resultarray = array();
-
-        $this->db->select('id, company_id, department_id, position');
-        $this->db->from('gccmaster.tblemployees');
-        $this->db->where('id', $id);
-        $query = $this->db->get();
-
-        // $query = $this->db->query("SELECT id, company_id, department_id, position FROM gccmaster.tblemployees WHERE id=$id");
-        if ($query->num_rows() > 0) {
-            $row = $query->row_array();
-
-            $company = (is_numeric($row["company_id"])) ? $this->getCompany($row["company_id"]) : $row["company_id"];
-            $department = (is_numeric($row["department_id"])) ? $this->getDepartment($row["department_id"]) : $row["department_id"];
-            $position = (is_numeric($row["position"])) ? $this->getPosition($row["position"]) : $row["position"];
-
-            // if(is_numeric($row["company_id"])){
-            //     $company = $this->getCompany($row["company_id"]);
-            // }else{
-            //     $company = $row["company_id"];
-            // }
-
-            // if(is_numeric($row["department_id"])){
-            //     $department = $this->getDepartment($row["department_id"]);
-            // }else{
-            //     $department = $row["department_id"];
-            // }
-
-            // if(is_numeric($row["position"])){
-            //     $position = $this->getPosition($row["position"]);
-            // }else{
-            //     $position = $row["position"];
-            // }
-
-            $resultarray["company"] = $company;
-            $resultarray["department"] = $department;
-            $resultarray["position"] = $position;
-
-            $resultarray["details"] = $company."\n".$department."\n".$position;
-        }
+        $this->db->select("emp.id, IF(comp.id IS NULL, emp.company_id, comp.description) as company,
+        IF(dept.id IS NULL, emp.department_id, dept.description) as department,
+        IF(pos.id IS NULL, emp.position, pos.name) as position,
+        UPPER(CONCAT(IF(comp.id IS NULL, emp.company_id, comp.description), '\n',
+        IF(dept.id IS NULL, emp.department_id, dept.description), '\n',
+        IF(pos.id IS NULL, emp.position, pos.name))) as details, MAX(ps.date_end) as max_date");
+        $this->db->from("gccmaster.tblemployees emp");
+        $this->db->join("gcchris.tblcompanies comp", "comp.id = emp.company_id", "LEFT");
+        $this->db->join("gcchris.tbldepartments dept", "dept.id = emp.department_id", "LEFT");
+        $this->db->join("gcchris.tblposition pos", "pos.id = emp.position", "LEFT");
+        $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+        $this->db->where("emp.id", $id);
+        $this->db->limit(1);
+        $queryDetails = $this->db->get();
+        if($queryDetails->num_rows() == 1){ $resultarray = $queryDetails->row_array(); }
         return $resultarray;
     }
 
@@ -948,81 +997,107 @@ class Overtime_m extends CI_Model {
         return $query->num_rows();
     }
 
-    function getOvertimeRequestDetails($id){
-        $this->db->select("a.*");
-        $this->db->from('gcceforms.overtime a');
-        $this->db->where('a.id',$id);
-        $query = $this->db->get();
+    public function getOvertimeRequestDetails($id){
+        $resultarray = array();
+        $this->db->select("ot.id, ot.employee, ot.reference_no, ot.purpose, ot.attachment_image, ot.status, ot.date_from, ot.date_to,
+            ot.actual_time_start, ot.actual_time_end, ot.actual_time_work, ot.is_imported,
+            ot.created_at, ot.updated_at, ot.requested_at, ot.approved_at, ot.disapproved_at, ot.cancelled_at, ot.requested_remarks, ot.requested_by,
+            IF(comp.id IS NULL, emp.company_id, comp.description) as company,
+            IF(dept.id IS NULL, emp.department_id, dept.description) as department,
+            IF(pos.id IS NULL, emp.position, pos.name) as position,
+            UPPER(CONCAT(IF(comp.id IS NULL, emp.company_id, comp.description), '\n',
+            IF(dept.id IS NULL, emp.department_id, dept.description), '\n',
+            IF(pos.id IS NULL, emp.position, pos.name))) as details, MAX(ps.date_end) as max_date,
+            UPPER(TRIM(CONCAT(emp.firstname, ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+            END,' ', emp.lastname,
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
+            END))) as display_name,
+            UPPER(TRIM(CONCAT(req.firstname, ' ',
+            CASE WHEN UPPER(TRIM(req.middlename)) != 'N/A' AND UPPER(TRIM(req.middlename)) != 'NONE' AND
+                    TRIM(req.middlename) !='' AND req.middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(req.middlename, 1, 1), '.') ELSE ''
+            END,' ', req.lastname,
+            CASE WHEN UPPER(TRIM(req.suffix)) != 'N/A' AND
+                UPPER(TRIM(req.suffix !='NONE')) AND req.suffix !='' AND
+                req.suffix IS NOT NULL THEN CONCAT(' ', req.suffix) ELSE ''
+            END))) as display_requested_by,
+            UPPER(TRIM(CONCAT(crt.firstname, ' ', CASE WHEN UPPER(TRIM(crt.middlename)) != 'N/A' AND UPPER(TRIM(crt.middlename)) != 'NONE' AND
+            TRIM(crt.middlename) !='' AND crt.middlename IS NOT NULL THEN CONCAT(SUBSTR(crt.middlename, 1, 1), '.') ELSE '' END,' ', crt.lastname,
+            CASE WHEN UPPER(TRIM(crt.suffix)) != 'N/A' AND UPPER(TRIM(crt.suffix !='NONE')) AND crt.suffix !='' AND crt.suffix IS NOT NULL THEN
+            CONCAT(' ', crt.suffix) ELSE '' END))) as created_by,
+            UPPER(TRIM(CONCAT(upd.firstname, ' ', CASE WHEN UPPER(TRIM(upd.middlename)) != 'N/A' AND UPPER(TRIM(upd.middlename)) != 'NONE' AND
+            TRIM(upd.middlename) !='' AND upd.middlename IS NOT NULL THEN CONCAT(SUBSTR(upd.middlename, 1, 1), '.') ELSE '' END,' ', upd.lastname,
+            CASE WHEN UPPER(TRIM(upd.suffix)) != 'N/A' AND UPPER(TRIM(upd.suffix !='NONE')) AND upd.suffix !='' AND upd.suffix IS NOT NULL THEN
+            CONCAT(' ', upd.suffix) ELSE '' END))) as updated_by,
+            IF(ot.approved_by > 0, UPPER(TRIM(CONCAT(appr.firstname, ' ', CASE WHEN UPPER(TRIM(appr.middlename)) != 'N/A' AND UPPER(TRIM(appr.middlename)) != 'NONE' AND
+            TRIM(appr.middlename) !='' AND appr.middlename IS NOT NULL THEN CONCAT(SUBSTR(appr.middlename, 1, 1), '.') ELSE '' END,' ', appr.lastname,
+            CASE WHEN UPPER(TRIM(appr.suffix)) != 'N/A' AND UPPER(TRIM(appr.suffix !='NONE')) AND appr.suffix !='' AND appr.suffix IS NOT NULL THEN
+            CONCAT(' ', appr.suffix) ELSE '' END))), 'N/A') as approved_by,
+            IF(ot.disapproved_by > 0, UPPER(TRIM(CONCAT(dis.firstname, ' ', CASE WHEN UPPER(TRIM(dis.middlename)) != 'N/A' AND UPPER(TRIM(dis.middlename)) != 'NONE' AND
+            TRIM(dis.middlename) !='' AND dis.middlename IS NOT NULL THEN CONCAT(SUBSTR(dis.middlename, 1, 1), '.') ELSE '' END,' ', dis.lastname,
+            CASE WHEN UPPER(TRIM(dis.suffix)) != 'N/A' AND UPPER(TRIM(dis.suffix !='NONE')) AND dis.suffix !='' AND dis.suffix IS NOT NULL THEN
+            CONCAT(' ', dis.suffix) ELSE '' END))), 'N/A') as disapproved_by,
+            IF(ot.cancelled_by > 0, UPPER(TRIM(CONCAT(canc.firstname, ' ', CASE WHEN UPPER(TRIM(canc.middlename)) != 'N/A' AND UPPER(TRIM(canc.middlename)) != 'NONE' AND
+            TRIM(canc.middlename) !='' AND canc.middlename IS NOT NULL THEN CONCAT(SUBSTR(canc.middlename, 1, 1), '.') ELSE '' END,' ', canc.lastname,
+            CASE WHEN UPPER(TRIM(canc.suffix)) != 'N/A' AND UPPER(TRIM(canc.suffix !='NONE')) AND canc.suffix !='' AND canc.suffix IS NOT NULL THEN
+            CONCAT(' ', canc.suffix) ELSE '' END))), 'N/A') as cancelled_by");
+        $this->db->from("gcceforms.overtime ot");
+        $this->db->join("gccmaster.tblemployees emp", "emp.id = ot.employee", "INNER");
+        $this->db->join("gcchris.tblcompanies comp", "comp.id = emp.company_id", "LEFT");
+        $this->db->join("gcchris.tbldepartments dept", "dept.id = emp.department_id", "LEFT");
+        $this->db->join("gcchris.tblposition pos", "pos.id = emp.position", "LEFT");
+        $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+        $this->db->join("gccmaster.tblemployees req", "req.id = ot.requested_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees crt", "crt.id = ot.created_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees upd", "upd.id = ot.updated_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees appr", "appr.id = ot.approved_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees dis", "dis.id = ot.disapproved_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees canc", "canc.id = ot.cancelled_by", "LEFT");
+        $this->db->where("ot.id", $id);
+        $this->db->limit(1);
+        $queryDetails = $this->db->get();
+        if($queryDetails->num_rows() == 1){
+            $rawData = $queryDetails->row();
+            $tempMaxDate = strtotime(trim($rawData->max_date));
+            $tempDateFrom = strtotime(trim($rawData->date_from));
+            $validOTDates = $tempDateFrom > $tempMaxDate;
 
-        if($query->num_rows() > 0){
-            $arrData = array();
-            foreach($query->result() as $key => $rs){
-                $rs->company = (is_numeric($rs->company))? $this->getCompany($rs->company): strtoupper($rs->company);
-                $rs->department = (is_numeric($rs->department))? $this->getDepartment($rs->department): $rs->department;
-                $rs->position = (is_numeric($rs->position))? $this->getPosition($rs->position): $rs->position;
+            $resultarray = $queryDetails->row_array();
+            $resultarray["valid_ot_dates"] = $validOTDates;
+            $resultarray["images"] = array();
+            $resultarray["has_attachment"] = false;
 
-                // if(is_numeric($rs->company)){
-                //     $rs->company =  $this->getCompany($rs->company);
-                // }else{
-                //     $rs->company = strtoupper($rs->company);
-                // }
+            $resultarray["print_purpose"] = nl2br($resultarray["purpose"]);
+            $resultarray["purpose"] = str_replace("\n",", ",str_replace("-","", $resultarray["purpose"]));
 
-                // if(is_numeric($rs->department)){
-                //     $rs->department = $this->getDepartment($rs->department);
-                // }else{
-                //     $rs->department = $rs->department;
-                // }
+            $stdResult = (object) $resultarray;
+            $tempImage = isset($stdResult->attachment_image) ? unserialize($stdResult->attachment_image) : array();
 
-                // if(is_numeric($rs->position)){
-                //     $rs->position = $this->getPosition($rs->position);
-                // }else{
-                //     $rs->position = $rs->position;
-                // }
-
-                $rs->display_name = $this->format_name($rs->employee);
-                $rs->display_details = "<span><b>".$rs->company."</b><br>".$rs->department."</span>";
-                $rs->created_by = $this->format_name($rs->created_by);
-                $rs->display_requested_by = $this->format_name($rs->requested_by);
-                $rs->updated_by = $rs->updated_by ? $this->format_name($rs->updated_by) : "N/A";
-                $rs->approved_by =  $rs->approved_by ? $this->format_name($rs->approved_by) : "N/A";
-                $rs->disapproved_by =  $rs->disapproved_by ? $this->format_name($rs->disapproved_by) : "N/A";
-                $rs->cancelled_by =  $rs->cancelled_by ? $this->format_name($rs->cancelled_by) : "N/A";
-                $rs->print_purpose = nl2br($rs->purpose);
-                $rs->purpose = str_replace("\n",", ",str_replace("-","",$rs->purpose));
-
-                $tempImage = ($rs->attachment_image) ? unserialize($rs->attachment_image) : array();
-                if(is_array($tempImage) && count($tempImage) > 0){
-                    $rs->has_attachment = true;
-                    $_tempImages = array();
-                    foreach ($tempImage as $key => $value) {
-                        $tempRow = array();
-                        $tempValue = explode("/", $value);
-                        $thumbnail = "";
-                        $filename = "";
-                        if(count($tempValue) == 2){
-                            $thumbnail = "{$tempValue[0]}/thumbnails/{$tempValue[1]}";
-                            $filename = "{$tempValue[1]}";
-                        }
-                        $tempRow["filename"] = $filename;
-                        $tempRow["image"] = base_url("uploads/files/images/overtime/{$value}");
-                        $tempRow["thumbnail"] = base_url("uploads/files/images/overtime/{$thumbnail}");
-                        $_tempImages[] = $tempRow;
+            if (is_array($tempImage) && count($tempImage) > 0) {
+                $resultarray['has_attachment'] = true;
+                $images = array();
+                foreach ($tempImage as $imagePath) {
+                    $imageParts = explode('/', $imagePath);
+                    if (count($imageParts) === 2) {
+                        $thumbnail = "{$imageParts[0]}/thumbnails/{$imageParts[1]}";
+                        $filename = $imageParts[1];
+                        $images[] = array(
+                            'filename' => $filename,
+                            'image' => base_url("uploads/files/images/overtime/{$imagePath}"),
+                            'thumbnail' => base_url("uploads/files/images/overtime/{$thumbnail}"),
+                        );
                     }
-                    $rs->images = $_tempImages;
-                }else{
-                    $rs->has_attachment = false;
                 }
-
-                $arrData[$key] = $rs;
+                $resultarray['images'] = $images;
             }
-            $data = array();
-            foreach($arrData as $k=>$v){
-                $data[] = $v;
-            }
-            return $data[0];
-        }else{
-            return array();
         }
+
+        return $resultarray;
     }
 
     function updateOvertime($id){
@@ -1529,7 +1604,7 @@ class Overtime_m extends CI_Model {
                 $createFilePath = true;
             }
 
-            if ($createFilePath == false) {
+            if ($createFilePath === false) {
                 $resultset["response"] = false;
                 $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
                 $resultset["toastr_state"] = "warning";
@@ -1540,9 +1615,11 @@ class Overtime_m extends CI_Model {
                 $config['max_size'] = 1000000;
                 $config['create_thumbnail'] = false;
 
+                $invalidCtr = 0;
+                $validCtr = 0;
                 if(isset($tempInputName) && count($tempInputName) == 1){ $config["input_field"] = $tempInputName[0]; }
                 $data = $this->file_upload->uploadFile($config);
-                if ($data["response"] == true) {
+                if ($data["response"] === true) {
                     $files = $data["files"][0];
                     $filename = $files["file_name"];
                     if(file_exists($files["full_path"])){
@@ -1551,64 +1628,84 @@ class Overtime_m extends CI_Model {
                         $arrData = array();
                         $bioNotFound = array();
 
-                        if (($handle = fopen($currentFile, "r")) !== FALSE) {
-                            while (($data = fgetcsv($handle, 100000, ",")) !== FALSE) {
+                        if (($handle = fopen($currentFile, "r")) !== false) {
+                            while (($data = fgetcsv($handle, 100000, ",")) !== false) {
                                 if($tempIndex !== 0){
                                     $tempDatax = array();
                                     $filteredData = array_filter($data);
-                                    if(is_array($filteredData) && count($filteredData) > 0 && count($filteredData) == 5){
+                                    if(is_array($filteredData) && !empty($filteredData) && count($filteredData) == 5){
+                                        $biometricNo = trim($filteredData[0]);
+                                        $dateFrom = trim($filteredData[1]);
+                                        $dateTo = trim($filteredData[2]);
+                                        $approvedDate = trim($filteredData[3]);
+                                        $purpose = trim(utf8_encode($filteredData[4]));
+
                                         $isRecorded = false;
                                         $displayName = "No assigned name";
-                                        $qTempEmployee = $this->db->get_where("gccmaster.tblemployees", 
-                                            array("biometricno"=>trim($filteredData[0]), 
-                                            "employee_status"=>"Active")
-                                        );
-                                        if($qTempEmployee->num_rows() == 1){
-                                            $row = $qTempEmployee->row();
-                                            $empRs = $this->core_layout->getDisplayName($qTempEmployee->row_array());
-                                            $empRs = (object) $empRs;
-                                            $displayName = isset($empRs->display_name_1) && $empRs->display_name_1? $empRs->display_name_1: $displayName;
+                                        $isValid = true;
 
-                                            $qSearchOt = $this->db->get_where("gcceforms.overtime", 
+                                        $this->db->select("emp.id, UPPER(TRIM(CONCAT(emp.firstname, ' ',
+                                            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                                                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                                                THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+                                            END,' ', emp.lastname,
+                                            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                                                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                                                emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
+                                            END))) as employee_name, emp.biometricno, MAX(ps.date_end) as max_date");
+                                        $this->db->from("gccmaster.tblemployees emp");
+                                        $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+                                        $this->db->where(array("emp.biometricno"=>$biometricNo, "emp.employee_status"=>"Active"));
+                                        $this->db->limit(1);
+                                        $qTempEmployee = $this->db->get();
+                                        $empRecordCount = $qTempEmployee->num_rows();
+
+                                        if($empRecordCount == 1){
+                                            $row = $qTempEmployee->row();
+                                            $displayName = $row->employee_name ? $row->employee_name : "No assigned name";
+                                            $isValid = strtotime(trim($filteredData[1])) > strtotime(trim($row->max_date));
+
+                                            $qSearchOt = $this->db->get_where("gcceforms.overtime",
                                                 array(
-                                                    "employee"=>$row->id, 
-                                                    "date_from"=>date("Y-m-d H:i:s", strtotime(trim($filteredData[1]))),
-                                                    "date_to"=>date("Y-m-d H:i:s", strtotime(trim($filteredData[2]))),
+                                                    "employee"=>$row->id,
+                                                    "date_from"=>date("Y-m-d H:i:s", strtotime($dateFrom)),
+                                                    "date_to"=>date("Y-m-d H:i:s", strtotime($dateTo)),
                                                     "status"=>"Approved",
                                                 )
                                             );
-
                                             if($qSearchOt->num_rows() > 0){
                                                 $reference_no = array();
-                                                foreach ($qSearchOt->result() as $key => $value) {
-                                                    $reference_no[] = $value->reference_no;
-                                                }
+                                                foreach ($qSearchOt->result() as $value) { $reference_no[] = $value->reference_no; }
                                                 $isRecorded = true;
                                                 $_isRecorded[] = array(
                                                     "emp_id"=>$row->id, 
                                                     "reference_no"=>$reference_no, 
                                                     "display_name"=>$displayName, 
-                                                    "date_from"=>date("Y-m-d H:i:s", strtotime(trim($filteredData[1]))), 
-                                                    "date_to"=>date("Y-m-d H:i:s", strtotime(trim($filteredData[2]))), 
+                                                    "date_from"=>date("Y-m-d H:i:s", strtotime($dateFrom)), 
+                                                    "date_to"=>date("Y-m-d H:i:s", strtotime($dateTo)), 
                                                 );
                                             }
                                         }else{
-                                            if($filteredData[0]){ $bioNotFound[] = trim($filteredData[0]); }
+                                            if($filteredData[0]){ $bioNotFound[] = $biometricNo; }
                                         }
 
-                                        $employeeExist = $qTempEmployee->num_rows() == 1;
+                                        $employeeExist = $empRecordCount == 1;
 
-                                        $tempDatax["emp_id"] = ($qTempEmployee->num_rows() == 1)? $qTempEmployee->row()->id: 0;
+                                        $tempDatax["emp_id"] = ($empRecordCount == 1)? $qTempEmployee->row()->id: 0;
                                         $tempDatax["display_name"] = $displayName;
-                                        $tempDatax["biometricno"] = trim($filteredData[0]);
-                                        $tempDatax["date_from"] = $filteredData[1];
-                                        $tempDatax["date_to"] = $filteredData[2];
-                                        $tempDatax["approved_date"] = $filteredData[3];
-                                        $tempDatax["purpose"] = trim(utf8_encode($filteredData[4]));
-                                        $tempDatax["is_existing"] = $qTempEmployee->num_rows();
-                                        if($isRecorded == false && $employeeExist){
+                                        $tempDatax["biometricno"] = $biometricNo;
+                                        $tempDatax["date_from"] = $dateFrom;
+                                        $tempDatax["date_to"] = $dateTo;
+                                        $tempDatax["approved_date"] = $approvedDate;
+                                        $tempDatax["purpose"] = $purpose;
+                                        $tempDatax["is_existing"] = $empRecordCount;
+                                        $tempDatax["is_valid"] = $isValid;
+                                        if($isRecorded === false && $employeeExist){
                                             $arrData[] = $tempDatax;
                                         }
+
+                                        if($isValid === false && $empRecordCount == 1 && $isRecorded === false){ $invalidCtr++; }
+                                        elseif($isValid === true && $empRecordCount == 1 && $isRecorded === false){ $validCtr++; }
                                     }
                                 }
                                 $tempIndex++;
@@ -1616,7 +1713,7 @@ class Overtime_m extends CI_Model {
                             fclose($handle);
                         }
 
-                        if(is_array($arrData) && count($arrData) > 0){
+                        if(is_array($arrData) && !empty($arrData)){
                             $tempJson = json_encode(array("data" => $arrData));
                             $dateToday = Date("Ymd");
                             $jsonFileName = "temp_{$session["emp_id"]}_{$dateToday}.json";
@@ -1628,9 +1725,7 @@ class Overtime_m extends CI_Model {
                     }
                     if ($filename) {
                         if($jsonFileName){
-                            $dirpath = $filePath;
                             $resultset["response"] = true;
-    
                             $resultset["added_file"] = base_url("uploads/files/csv/overtime/temp_{$session["emp_id"]}/{$filename}");
                             $resultset["added_json_file"] = base_url("uploads/files/csv/overtime/temp_{$session["emp_id"]}/{$jsonFileName}");
                             $resultset["json_file"] = "{$jsonFileName}";
@@ -1638,13 +1733,15 @@ class Overtime_m extends CI_Model {
     
                             $resultset["toastr_msg"] = "Upload file successful.";
                             $resultset["toastr_state"] = "success";
-                            $resultset["biometric_not_found"] = is_array($bioNotFound) && count($bioNotFound) > 0 ? implode(", ", $bioNotFound): null;
+                            $resultset["biometric_not_found"] = is_array($bioNotFound) && !empty($bioNotFound) ? implode(", ", $bioNotFound): null;
+                            $resultset["invalid_ctr"] = $invalidCtr;
+                            $resultset["valid_ctr"] = $validCtr;
                         }else{
                             $resultset["response"] = false;
                             $resultset["toastr_msg"] = "No data found!";
                             $resultset["toastr_state"] = "error";
 
-                            if(count($_isRecorded) > 0){
+                            if(!empty($_isRecorded)){
                                 $resultset["toastr_msg"] = "Employee(s) overtime is already recorded on the module!";
                                 $resultset["employee_record"] = $_isRecorded;
                                 $resultset["toastr_state"] = "warning";
@@ -1733,7 +1830,7 @@ class Overtime_m extends CI_Model {
         $this->image_lib->clear();
     }
 
-    function importApprovedOvertime(){
+    public function importApprovedOvertime(){
         $resultset = array();
         $post = $this->input->post();
         if(isset($post) && $post){
@@ -1750,16 +1847,17 @@ class Overtime_m extends CI_Model {
                     $arrData = json_decode($fileContent, true);
                     if(isset($arrData["data"]) && $arrData["data"] && is_array($arrData["data"]) && count($arrData["data"]) > 0){
                         $ctrUploaded = 0;
-                        foreach ($arrData["data"] as $key => $value) {
+                        foreach ($arrData["data"] as $value) {
                             $rs = (object) $value;
-                            if(intval($rs->is_existing) == 1){
-                                $sqlSelect = "a.id as employee, UPPER(IFNULL(b.description, a.company_id)) as company, 
-                                UPPER(IFNULL(c.description, a.department_id)) as department, 
-                                UPPER(IFNULL(d.name, a.position)) as position";
+                            if(intval($rs->is_existing) == 1 && $rs->is_valid === true){
+                                $sqlSelect = "a.id as employee, UPPER(IFNULL(b.description, a.company_id)) as company,
+                                UPPER(IFNULL(c.description, a.department_id)) as department,
+                                UPPER(IFNULL(d.name, a.position)) as position, MAX(ps.date_end) as max_date";
                                 $this->db->select($sqlSelect);
                                 $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id OR b.description = a.company_id OR b.code = a.company_id", "LEFT");
                                 $this->db->join("gcchris.tbldepartments c", "c.id = a.department_id OR c.description = a.department_id OR c.code = a.department_id", "LEFT");
                                 $this->db->join("gcchris.tblposition d", "d.id = a.position OR d.name = a.position", "LEFT");
+                                $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = a.id AND ps.posted = 1", "LEFT");
                                 $this->db->group_by("a.id");
                                 $qTemp = $this->db->get_where("gccmaster.tblemployees a", array("a.id"=>$rs->emp_id, "a.employee_status"=>"Active"));
                                 if($qTemp->num_rows() == 1){
@@ -1768,10 +1866,9 @@ class Overtime_m extends CI_Model {
                                     if (sizeof($list) > 0) {
                                         foreach ($list as $arr) { $x = $arr->ref_series; }
                                         $series = intval($x) + 1;
-                                        if (strlen($series) == 1) { $series = '000' . $series; } 
-                                        else if (strlen($series) == 2) { $series = '00' . $series; } 
-                                        else if (strlen($series) == 3) { $series = '0' . $series; } 
-                                        else { $series = $series; }
+                                        if (strlen($series) == 1) { $series = '000' . $series; }
+                                        elseif (strlen($series) == 2) { $series = '00' . $series; }
+                                        elseif (strlen($series) == 3) { $series = '0' . $series; }
                                     } else { $series = '0001'; }
                                     $referenceNo = "OT{$year}-{$month}-{$series}";
 
@@ -1793,19 +1890,23 @@ class Overtime_m extends CI_Model {
                                     $currentRow->attachment_image = isset($post["attachment_image"]) ? serialize($post["attachment_image"]) : "";
                                     $currentRow->is_imported = 1;
 
+                                    $isValidDate = strtotime(trim($rs->date_from)) > strtotime(trim($currentRow->max_date));
+                                    unset($currentRow->max_date);
+
                                     $tempWhere = array();
                                     $tempWhere["employee"] = $rs->emp_id;
                                     $tempWhere["date_from"] = date("Y-m-d H:i:s", strtotime($rs->date_from));
                                     $tempWhere["date_to"] = date("Y-m-d H:i:s", strtotime($rs->date_to));
                                     $tempWhere["status"] = "Approved";
                                     $checkExisting = $this->db->get_where("gcceforms.overtime", $tempWhere);
-                                    if($checkExisting->num_rows() == 0){
+                                    if($isValidDate && $checkExisting->num_rows() == 0){
                                         $added = $this->db->insert("gcceforms.overtime", $currentRow);
                                         if($added){ $ctrUploaded++; }
                                     }
                                 }
                             }
                         }
+
                         if($ctrUploaded > 0){
                             $resultset["response"] = true;
                             $resultset["toastr_msg"] = "Overtime record(s) has been imported and was added.";

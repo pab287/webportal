@@ -4,6 +4,28 @@ let employeeData = _tempContentData.data.main;
 let user_name = _tempContentData.data.user.display_name;
 let id = employeeData.id;
 let today = _tempContentData.data.timestamp;
+const OFFENSE_TYPES = [
+    'OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE',
+    '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE', 'DISMISSAL',
+    'WRITTEN WARNING', '3-DAYS SUSPENSION', '6-DAYS SUSPENSION', '1-2-DAYS SUSPENSION'
+  ];
+  
+  const COMMENDATION_TYPES = ['COMMENDATION'];
+  const NOTICE_TYPES = [
+    'LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 
+    'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 'NOD', 
+    'NOTICE OF ADMINISTRATIVE', 'NOTICES', 'SUSPENSION'
+  ];
+  
+  const OTHER_TYPES = [
+    'OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE',
+    '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE', 'COMMENDATION', 
+    'LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 
+    'WRITTEN WARNING', 'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 
+    'NOD', 'DISMISSAL', 'NOTICE OF ADMINISTRATIVE HEARING', 'NOTICES',
+    '3-DAYS SUSPENSION', '6-DAYS SUSPENSION', '1-2-DAYS SUSPENSION'
+  ];
+  
 $(document).ready(function(){
     $('#column-options').on('click', function (e) {
         e.stopPropagation();
@@ -13,6 +35,8 @@ $(document).ready(function(){
 let employeeDataSheet = new Vue({
     el:"#m-content",
     data:{ 
+            activeTab: 'offenses',
+            filteredOffenses: false,
             activeSection:"",
             main:[],
             supervisor:"",
@@ -52,6 +76,7 @@ let employeeDataSheet = new Vue({
             default_station:[],
             printData:{
                 main : {},
+                job_desc:"",
                 dependents:{},
                 licensesAndCerts:{
                     licenses:"",
@@ -143,8 +168,32 @@ let employeeDataSheet = new Vue({
              }
         }
     },
-
     methods:{
+        filterOffenses(type) {
+            this.activeTab = type;
+            const offensesArray = Object.values(this.offenses);
+            
+            if (type === 'offenses') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    OFFENSE_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            } else if (type === 'commendations') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    COMMENDATION_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            } else if (type === 'notices') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    NOTICE_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            } else if (type === 'others') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    !OTHER_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            }
+            if (this.filteredOffenses.length === 0) {
+                this.filteredOffenses = false;
+            }
+        },
         getSidebarData(){
             this.main = { ...this.$data.main, ..._tempContentData.data.main };
             this.path = _tempContentData.data.path;
@@ -236,7 +285,7 @@ let employeeDataSheet = new Vue({
           },
         formatDate(empdate) {
             if (!empdate || empdate == '0000-00-00') {
-                return '---';
+                return 'N/A';
               }
             const date = new Date(empdate);
             return date.toLocaleDateString('en-US', { 
@@ -300,19 +349,23 @@ let employeeDataSheet = new Vue({
           },
           formattedJobDesc() {
             if (!this.job_desc) return '';
-            
-            // Create a temporary div to parse HTML
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = this.job_desc;
-            
-            // Check if there are any li elements
             const hasListItems = tempDiv.getElementsByTagName('li').length > 0;
-            
-            // If it has list items, return the HTML as is
-            // If not, convert newlines to <br>
+
             return hasListItems 
               ? this.job_desc 
               : this.job_desc.replace(/\n/g, '<br>');
+          },
+          formattedJobDescPrint(data) {
+            if (!data) return '';
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data;
+            const hasListItems = tempDiv.getElementsByTagName('li').length > 0;
+
+            return hasListItems 
+              ? data 
+              : data.replace(/\n/g, '<br>');
           },
     }
 })
@@ -719,6 +772,8 @@ function getEmploymentInformation(){
                 employeeDataSheet.$data.offenses = false;
             } else {
                 employeeDataSheet.$data.offenses = { ...employeeDataSheet.$data.offenses, ...response.offenses };
+                employeeDataSheet.$data.filteredOffenses = employeeDataSheet.$data.offenses;
+                employeeDataSheet.filterOffenses('offenses');
             }
 
             if (!response || Object.keys(response.stations).length == 0) {
@@ -976,5 +1031,18 @@ function printEmployeeDataSheet(avatar, info, user, timestamp) {
     }, 1500);
 }
 
+$('#offense-tabs .nav-link').on('click', function(e) {
+    e.preventDefault();
+    $('#offense-tabs .nav-link').removeClass('active');
+    $('#offense-content .tab-pane').removeClass('active show');
+    $(this).addClass('active');
+    var targetId = $(this).attr('href');
+    $(targetId).addClass('active show');
+ });
 
-
+//  $('#empEmploymentInfo-body').on('shown.bs.collapse', function() {
+//     console.log('Hello WOlrd');
+//     $('#offense-tabs .nav-link').addClass('active');
+//     $("#offenses-tab").show();
+    
+// });

@@ -1,15 +1,15 @@
-var search_val = "";
-var query_builder = "";
-var filteredIds = [];
-var enabledFilter = false;
-var param_status = "";
-var isMass = false;
+let search_val = "";
+let query_builder = "";
+let filteredIds = [];
+let enabledFilter = false;
+let param_status = "";
+let isMass = false;
 
-var getUrlParameter = function getUrlParameter(sParam) {
-    var sPageURL = decodeURIComponent(window.location.search.substring(1)),
-        sURLVariables = sPageURL.split('&'),
-        sParameterName,
-        i;
+const getUrlParameter = function getUrlParameter(sParam) {
+    const sPageURL = decodeURIComponent(window.location.search.substring(1));
+    const sURLVariables = sPageURL.split('&');
+    let sParameterName, i;
+
     for (i = 0; i < sURLVariables.length; i++) {
         sParameterName = sURLVariables[i].split('=');
         if (sParameterName[0] === sParam) {
@@ -22,9 +22,9 @@ if(typeof getUrlParameter('status') !== 'undefined'){
     param_status = getUrlParameter('status');
 }
 
-var hasPrev = (jQuery.inArray("mass_update", _currentActions) !== -1 || jQuery.inArray("mass_approve", _currentActions) !== -1);
+const hasPrev = (jQuery.inArray("mass_update", _currentActions) !== -1 || jQuery.inArray("mass_approve", _currentActions) !== -1);
 
-var tblOvertime = $("#table-overtime").DataTable({
+const tblOvertime = $("#table-overtime").DataTable({
     dom: '<"toolbar">frtlip',
     serverSide: true,
     processing: true,
@@ -47,8 +47,7 @@ var tblOvertime = $("#table-overtime").DataTable({
     columns: [
         { data: "id", width: "3%", orderable: false, visible: hasPrev,
             render: function(data, type, row, meta){
-                var html = "";
-
+                let html = "";
                 if(row.status == 'Pending'){
                     html =  `<label class="m-checkbox m-checkbox--air m-checkbox--state-success"> ` +
                                 `<input type="checkbox" class="selectedOvertime" id="selectedOvertime" value="${data}" name="selectedItem[]" reference_no="${row.reference_no}"><span></span>` + 
@@ -62,7 +61,6 @@ var tblOvertime = $("#table-overtime").DataTable({
                                 `<input type="checkbox" checked disabled readonly><span></span>` + 
                             `</label>`;
                 }
-
                 return html;
             }
         },
@@ -70,7 +68,7 @@ var tblOvertime = $("#table-overtime").DataTable({
         { data: "reference_no", width: "10%" },
         {
             data: "firstname", width: "20%", render: function (data, type, row, meta) {
-                var tempHtml = "<p class='m--marginless'>" + row.display_employee + "</p>";
+                let tempHtml = "<p class='m--marginless'>" + row.display_employee + "</p>";
                 tempHtml += row.display_details;
                 return tempHtml;
             }
@@ -107,12 +105,6 @@ var tblOvertime = $("#table-overtime").DataTable({
             }
         }
     ],
-    drawCallback: function(setting){
-        // if(jQuery.inArray("mass_update", _currentActions) === -1 || jQuery.inArray("mass_approve", _currentActions) === -1){
-        //     $("#table-overtime thead th:first-child").remove();
-        //     $("#table-overtime tbody td:first-child").remove();
-        // }
-    }
 });
 
 $("#ExportExcel").on("click", function (e) {
@@ -164,20 +156,22 @@ $("#ExportPDF").on("click", function (e) {
 });
 
 function statusBg(status) {
+    let tempState = "";
     switch (status) {
         case "Pending":
-            return '<div class="m-badge m-badge--warning text-white m-badge--wide" role="alert"><strong>Pending</strong></div>';
+            tempState = '<div class="m-badge m-badge--warning text-white m-badge--wide" role="alert"><strong>Pending</strong></div>';
             break;
         case "Approved":
-            return '<div class="m-badge m-badge--success text-white m-badge--wide" role="alert"><strong>Approved</strong></div>';
+            tempState = '<div class="m-badge m-badge--success text-white m-badge--wide" role="alert"><strong>Approved</strong></div>';
             break;
         case "Disapproved":
-            return '<div class="m-badge m-badge--danger text-white m-badge--wide" role="alert"><strong>Disapproved</strong></div>';
+            tempState = '<div class="m-badge m-badge--danger text-white m-badge--wide" role="alert"><strong>Disapproved</strong></div>';
             break;
         default:
-            return '<div class="m-badge m-badge--metal text-white m-badge--wide" role="alert"><strong>Cancelled</strong></div>';
+            tempState = '<div class="m-badge m-badge--metal text-white m-badge--wide" role="alert"><strong>Cancelled</strong></div>';
             break;
     }
+    return tempState;
 }
 
 function formatTime(time) {
@@ -186,7 +180,7 @@ function formatTime(time) {
 
 function itemDatatableActions($id) {
     if ($id) {
-        var _actionButton = "";
+        let _actionButton = "";
         _actionButton += "<a href='view_overtime?id=" + $id + "' target='__blank'><button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit' data-toggle='m-tooltip' data-original-title='View Details' data-placement='bottom' data-delay='{\"show\": 300}'><i class='la la-pencil-square'></i></button>";
         return _actionButton;
     } else { return false; }
@@ -457,23 +451,23 @@ $(document).on('shown.bs.modal', '#modal-import-overtime', function (e) {
 
 });
 
-var uploadOvertimeCsvFile = function () {
-    var url = baseUrl("eforms/overtime/temp_upload_csv_file");
+const uploadOvertimeCsvFile = function () {
+    const url = baseUrl("eforms/overtime/temp_upload_csv_file");
     $("#import_csv")
         .fileupload({
             url: url,
             dataType: "json",
             formData: { csrf_token: _csrf_hash },
             done: function (e, data) {
-                var result = data.result;
+                const result = data.result;
                 vmTempUploadedContent.employee_records = [];
                 if (result.response) {
-                    var avatarImage = result.added_file;
-                    var tempImage = result.temp_file;
                     vmTempUploadedContent.has_uploaded_file = true;
                     vmTempUploadedContent.json = result.added_json_file;
                     vmTempUploadedContent.json_file = result.json_file;
-
+                    vmTempUploadedContent.invalid_ctr = result.invalid_ctr;
+                    vmTempUploadedContent.valid_ctr = result.valid_ctr;
+                    
                     toastr.success(result.toastr_msg, "Upload File", 5000);
                     setTimeout(function () {
                         vmTempUploadedContent.generateDataTable();
@@ -501,10 +495,10 @@ var uploadOvertimeCsvFile = function () {
                 $("#progress_uploaded_csv")
                     .addClass("m--margin-top-10")
                     .show();
-                var progress = parseInt((data.loaded / data.total) * 100, 10);
-                var progressTotal = 0;
+                let progress = parseInt((data.loaded / data.total) * 100, 10);
+                let progressTotal = 0;
 
-                var steps = setInterval(function () {
+                let steps = setInterval(function () {
                     progressTotal += 10;
                     $("#progress_uploaded_csv .progress-bar").css("width", progressTotal + "%");
                     if (progressTotal == 100) {
@@ -521,7 +515,6 @@ var uploadOvertimeCsvFile = function () {
                         $("#progress_uploaded_csv")
                             .removeClass("m--margin-top-10")
                             .hide();
-                        //getCurrentUploadFiles();
                     }, 1000);
                 }
             }
@@ -531,22 +524,16 @@ var uploadOvertimeCsvFile = function () {
         .addClass($.support.fileInput ? undefined : "disabled");
 };
 
-var approveModalFileUpload = function () {
-    var url = baseUrl("eforms/overtime/temp_upload_file");
+const approveModalFileUpload = function () {
+    const url = baseUrl("eforms/overtime/temp_upload_file");
     $("#temp_fileupload")
         .fileupload({
             url: url,
             dataType: "json",
             formData: { csrf_token: _csrf_hash },
             done: function (e, data) {
-                var result = data.result;
+                const result = data.result;
                 if (result.response) {
-                    var avatarImage = result.added_image;
-                    var tempImage = result.temp_image;
-
-                    /*** uploadVM.left_pane = Object.assign({}, { display_avatar: avatarImage });
-                    vmTab1.vm_tab1 = Object.assign({}, { pic_filename: tempImage }); ***/
-
                     toastr.success(result.toastr_msg, "Upload File", 5000);
                 } else {
                     toastr.error(result.toastr_msg, "Upload File", 5000);
@@ -554,10 +541,9 @@ var approveModalFileUpload = function () {
             },
             progressall: function (e, data) {
                 $("#progress_approve").show();
-                var progress = parseInt((data.loaded / data.total) * 100, 10);
-                var progressTotal = 0;
-
-                var steps = setInterval(function () {
+                const progress = parseInt((data.loaded / data.total) * 100, 10);
+                let progressTotal = 0;
+                let steps = setInterval(function () {
                     progressTotal += 10;
                     $("#progress_approve .progress-bar").css("width", progressTotal + "%");
                     if (progressTotal == 100) {
@@ -597,10 +583,10 @@ $.validate({
     lang: "en",
     validateHiddenInputs: true,
     onSuccess: function (form) {
-        var currentForm = form[0];
-        var formUrl = currentForm.action;
-        var formData = $(currentForm).serialize();
-        var currentModal = $(currentForm).closest(".modal");
+        const currentForm = form[0];
+        const formUrl = currentForm.action;
+        const formData = $(currentForm).serialize();
+        const currentModal = $(currentForm).closest(".modal");
 
         if(vmTempUploadedContent.count > 0){
             $.ajax({
@@ -629,7 +615,7 @@ $.validate({
     }
 });
 
-var vmTempUploadedContent = new Vue({
+const vmTempUploadedContent = new Vue({
     el: "#temp-uploaded_content",
     data: {
         has_uploaded_file: false,
@@ -639,14 +625,16 @@ var vmTempUploadedContent = new Vue({
         rows: {},
         count: 0,
         employee_records: [],
+        invalid_ctr: 0,
+        valid_ctr: 0,
     },
     methods: {
         generateDataTable: function () {
-            var _this = this;
-            var currentElement = _this.$el;
-            var currentModal = $(currentElement).closest(".modal");
-            var currentTable = $(currentElement).find("#uploaded_csv_table");
-            var currentSelect2 = $(currentElement).find("#approved_by");
+            const _this = this;
+            const currentElement = _this.$el;
+            const currentModal = $(currentElement).closest(".modal");
+            const currentTable = $(currentElement).find("#uploaded_csv_table");
+            const currentSelect2 = $(currentElement).find("#approved_by");
             if (typeof currentTable !== "undefined") {
                 _this.current_table = currentTable.DataTable({
                     dom: "lftp",
@@ -656,9 +644,17 @@ var vmTempUploadedContent = new Vue({
                     scrollY: 450,
                     scrollCollapse: true,
                     paging: false,
+                    ordering: false,
                     columns: [
-                        { data: "biometricno", title: "Biometric #", width: "12%" },
-                        { data: "display_name", title: "Employee Name", width: "25%" },
+                        { data: "is_valid", title: "", width: "3%", render: function (data) {
+                            return data === true ? `<i class="fa fa-check text-success"></i>` : `<i class="fa fa-times text-danger"></i>`;
+                        }},
+                        { data: "display_name", title: "Employee Name", width: "25%", render: function (data, _type, row, _meta) {
+                            const labelClass = row.is_valid === true ? "text-success" : "text-danger";
+                            const tempState = row.is_valid === true ? "" : `<span class="ml-3 m-badge m-badge--warning m-badge--wide">Invalid</span>`;
+                            const tempHtml = `<div class='${labelClass} m--font-boldest'><p class='mb-0 m--font-bolder'>${data}</p><p>${row.biometricno}${tempState}</p></div>`;
+                            return tempHtml;
+                        }},
                         {
                             data: "date_from", title: "Date From", width: "12%", render: function (data) {
                                 return moment(data).format("YYYY-MM-DD HH:mm");
@@ -670,15 +666,14 @@ var vmTempUploadedContent = new Vue({
                             }
                         },
                         {
-                            data: "approved_date", title: "Approved Date", className: "text-center", width: "12%", render: function (data) {
+                            data: "approved_date", title: "Approved Date", className: "text-center", width: "14%", render: function (data) {
                                 return moment(data).format("YYYY-MM-DD");
                             }
                         },
                         { data: "purpose", title: "Purpose", width: "*" },
                     ], drawCallback: function (settings) {
-                        var tableWrapper = $(settings.nTableWrapper);
+                        const tableWrapper = $(settings.nTableWrapper);
                         tableWrapper.find("#uploaded_csv_table_filter input").removeClass("form-control-sm");
-                        //tableWrapper.find("#uploaded_csv_table_filter > input").removeClass("form-control-sm");
                     }
                 });
             }
@@ -702,74 +697,27 @@ var vmTempUploadedContent = new Vue({
             approveModalFileUpload();
         },
         renderImageLabel: function (index) {
-            var tempIndex = parseInt(index) + 1;
+            const tempIndex = parseInt(index) + 1;
             return "Image " + tempIndex;
         },
         getCheckedCount: function () {
-            var currentElement = this.$el;
-            var checked = $(currentElement).find(".temp-attachment_image:checked");
-            var checkedCounter = $(currentElement).find("#checked_count");
+            const currentElement = this.$el;
+            const checked = $(currentElement).find(".temp-attachment_image:checked");
+            const checkedCounter = $(currentElement).find("#checked_count");
             checkedCounter.val(checked.length).validate();
         }
     },
     mounted: function () { }
 });
 
-var approveModalFileUpload = function () {
-    var url = baseUrl("eforms/overtime/temp_upload_file");
-    $("#temp_fileupload")
-        .fileupload({
-            url: url,
-            dataType: "json",
-            formData: { csrf_token: _csrf_hash },
-            done: function (e, data) {
-                var result = data.result;
-                if (result.response) {
-                    var avatarImage = result.added_image;
-                    var tempImage = result.temp_image;
-                    toastr.success(result.toastr_msg, "Upload File", 5000);
-                } else {
-                    toastr.error(result.toastr_msg, "Upload File", 5000);
-                }
-            },
-            progressall: function (e, data) {
-                $("#progress_approve").show();
-                var progress = parseInt((data.loaded / data.total) * 100, 10);
-                var progressTotal = 0;
-
-                var steps = setInterval(function () {
-                    progressTotal += 10;
-                    $("#progress_approve .progress-bar").css("width", progressTotal + "%");
-                    if (progressTotal == 100) {
-                        clearInterval(steps);
-                        progressTotal = 0;
-                        setTimeout(function () {
-                            $("#progress_approve .progress-bar").css("width", progressTotal + "%");
-                        }, 1500);
-                    }
-                }, 10);
-
-                if (progress == 100) {
-                    setTimeout(function () {
-                        $("#progress_approve").hide();
-                        getCurrentUploadFiles();
-                    }, 1000);
-                }
-            }
-        })
-        .prop("disabled", !$.support.fileInput)
-        .parent()
-        .addClass($.support.fileInput ? undefined : "disabled");
-};
-
-var getCurrentUploadFiles = function () {
+const getCurrentUploadFiles = function () {
     $.ajax({
         url: baseUrl("eforms/overtime/get_current_uploaded_file"),
         dataType: "json",
         success: function (json) {
             if (json.response) {
-                var tempRows = Object.assign({}, json.rows);
-                var tempCount = json.count;
+                const tempRows = Object.assign({}, json.rows);
+                const tempCount = json.count;
 
                 vmTempUploadedContent.rows = tempRows;
                 vmTempUploadedContent.count = tempCount;
@@ -782,7 +730,7 @@ var getCurrentUploadFiles = function () {
     });
 }
 
-var generateReference = function () {
+const generateReference = function () {
     $.ajax({
         url: baseUrl("eforms/overtime/generateReferenceNo"),
         dataType: "json",
@@ -792,10 +740,10 @@ var generateReference = function () {
                 tblOvertime.ajax.reload();
             }
         }
-    })
+    });
 }
 
-var generateReferenceDetails = function () {
+const generateReferenceDetails = function () {
     $.ajax({
         url: baseUrl("eforms/overtime/generateReferenceDetails"),
         dataType: "json",
@@ -828,16 +776,13 @@ $.validate({
     lang: "en",
     validateHiddenInputs: true,
     onSuccess: function (form) {
-        var currentForm = form[0];
-        var formUrl = currentForm.action;
-        var formData = $(currentForm).serializeArray();
-        var currentModal = $(currentForm).closest(".modal");
-        var selected = $(".selectedOvertime:checkbox:checked").val();
+        const currentForm = form[0];
+        const formUrl = currentForm.action;
+        const formData = $(currentForm).serializeArray();
         let arr = [];
 
         $(".selectedOvertime:checked").each( function(){
-            var value = $(this).val();
-
+            const value = $(this).val();
             arr.push(value);
         });
 
@@ -897,16 +842,13 @@ $.validate({
     lang: "en",
     validateHiddenInputs: true,
     onSuccess: function (form) {
-        var currentForm = form[0];
-        var formUrl = currentForm.action;
-        var formData = $(currentForm).serializeArray();
-        var currentModal = $(currentForm).closest(".modal");
-        var selected = $(".selectedOvertime:checkbox:checked").val();
+        const currentForm = form[0];
+        const formUrl = currentForm.action;
+        const formData = $(currentForm).serializeArray();
         let arr = [];
 
         $(".selectedOvertime:checked").each( function(){
-            var value = $(this).val();
-
+            const value = $(this).val();
             arr.push(value);
         });
 
@@ -965,16 +907,13 @@ $.validate({
     lang: "en",
     validateHiddenInputs: true,
     onSuccess: function (form) {
-        var currentForm = form[0];
-        var formUrl = currentForm.action;
-        var formData = $(currentForm).serializeArray();
-        var currentModal = $(currentForm).closest(".modal");
-        var selected = $(".selectedOvertime:checkbox:checked").val();
+        const currentForm = form[0];
+        const formUrl = currentForm.action;
+        const formData = $(currentForm).serializeArray();
         let arr = [];
 
         $(".selectedOvertime:checked").each( function(){
-            var value = $(this).val();
-
+            const value = $(this).val();
             arr.push(value);
         });
 
@@ -1008,7 +947,6 @@ $.validate({
             toastr.error('Please select atleast 1 overtime to disapprove.', "Mass Disapprove Overtime", 5000);
         }
 
-        
         return false;
     }
 });

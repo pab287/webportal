@@ -21,6 +21,7 @@
                 <option value="sub-category">Sub-category</option>
                 <option value="status">Status</option>
                 <option value="severity">Severity</option>
+                <option value="responsibility">Responsibility</option>
             </select>
         </div>
         <div class="form-group mt-4">

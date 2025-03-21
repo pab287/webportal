@@ -1,8 +1,8 @@
-var getUrlParameter = function getUrlParameter(sParam) {
-    var sPageURL = decodeURIComponent(window.location.search.substring(1)),
-        sURLVariables = sPageURL.split('&'),
-        sParameterName,
-        i;
+const getUrlParameter = function getUrlParameter(sParam) {
+    const sPageURL = decodeURIComponent(window.location.search.substring(1));
+    const sURLVariables = sPageURL.split('&');
+    let sParameterName;
+    let i;
     for (i = 0; i < sURLVariables.length; i++) {
         sParameterName = sURLVariables[i].split('=');
         if (sParameterName[0] === sParam) {
@@ -11,7 +11,11 @@ var getUrlParameter = function getUrlParameter(sParam) {
     }
 };
 
-param_id = getUrlParameter('id');
+const param_id = getUrlParameter('id');
+const vmTab1 = new Vue({
+    el: "#form_overtime",
+    data: { vm_tab1: {}, loading_content: true },
+});
 
 $(".btnPending").hide();
 $(".btnApproved").hide();
@@ -21,10 +25,12 @@ $.ajax({
     url: baseUrl("eforms/overtime/get_overtime_request_details/") + param_id,
     type: "GET",
     dataType: "JSON",
+    global: false,
     success: function (data) {
-        vmTab1.vm_tab1 = Object.assign({}, data);
+        const { valid_ot_dates } = data;
+        vmTab1.vm_tab1 = { ...data };
+        vmTab1.loading_content = false;
 
-        (data.updated_by != "N/A") ? $("#updated_at").text(" ON " + moment(data.updated_at).format('LLL')) : "";
         (data.requested_remarks == "") ? $("#requested_remarks").hide() : $("#requested_remarks").show();
         (data.cancelled_remarks == "") ? $("#cancelled_remarks").hide() : $("#cancelled_remarks").show();
         (data.status != "Approved") ? $("#approved_by").hide() : $("#approved_by").show();
@@ -49,12 +55,42 @@ $.ajax({
                 $("#status_state").addClass("alert alert-metal text-white");
                 break;
         }
-    }
-});
+        
+        if (valid_ot_dates === false) {
+            setTimeout(() => {
+                Swal.fire({
+                    title: 'Invalid Overtime Request!',
+                    text: 'The overtime request is invalid. Please check the dates and times.',
+                    icon: 'warning',
+                });
+            }, 750);
+        }
 
-var vmTab1 = new Vue({
-    el: "#form_overtime",
-    data: { vm_tab1: {} },
+        /*** Swal.fire({
+            title: 'Invalid Overtime Request?',
+            html: "Testing",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, '+tempTitle+' it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: siteUrl("hris/masterfile/approval_updated_payroll_data/"+nType),
+                    type: "post",
+                    data: { csrf_token: _csrf_hash, id: id },
+                    dataType: "json",
+                    success: function(json){
+                        if(json.response){ 
+                            toastr.success(json.toastr_msg, "For Approval");
+                            dtForApproval.clear().rows.add(json.data).draw();
+                        }else{ toastr.error(json.toastr_msg, "For Approval"); }
+                    }
+                });
+            }
+        }); ***/
+    }
 });
 
 function edit() {
@@ -224,22 +260,16 @@ function prints() {
     
 }
 
-var approveModalFileUpload = function () {
-    var url = baseUrl("eforms/overtime/temp_upload_file");
+const approveModalFileUpload = function () {
+    const url = baseUrl("eforms/overtime/temp_upload_file");
     $("#temp_fileupload")
         .fileupload({
             url: url,
             dataType: "json",
             formData: { csrf_token: _csrf_hash },
             done: function (e, data) {
-                var result = data.result;
+                const result = data.result;
                 if (result.response) {
-                    var avatarImage = result.added_image;
-                    var tempImage = result.temp_image;
-
-                    /*** uploadVM.left_pane = Object.assign({}, { display_avatar: avatarImage });
-                    vmTab1.vm_tab1 = Object.assign({}, { pic_filename: tempImage }); ***/
-
                     toastr.success(result.toastr_msg, "Upload File", 5000);
                 } else {
                     toastr.error(result.toastr_msg, "Upload File", 5000);
@@ -247,10 +277,10 @@ var approveModalFileUpload = function () {
             },
             progressall: function (e, data) {
                 $("#progress_approve").show();
-                var progress = parseInt((data.loaded / data.total) * 100, 10);
-                var progressTotal = 0;
+                let progress = parseInt((data.loaded / data.total) * 100, 10);
+                let progressTotal = 0;
 
-                var steps = setInterval(function () {
+                const steps = setInterval(function () {
                     progressTotal += 10;
                     $("#progress_approve .progress-bar").css("width", progressTotal + "%");
                     if (progressTotal == 100) {
@@ -275,17 +305,16 @@ var approveModalFileUpload = function () {
         .addClass($.support.fileInput ? undefined : "disabled");
 };
 
-var getCurrentUploadFiles = function () {
+const getCurrentUploadFiles = function () {
     $.ajax({
         url: baseUrl("eforms/overtime/get_current_uploaded_file"),
         dataType: "json",
+        global: false,
         success: function (json) {
             if (json.response) {
-                var tempRows = Object.assign({}, json.rows.sort(SortByDate));
-                var tempCount = json.count;
-
-                vmTempImages.rows = tempRows;
-                vmTempImages.count = tempCount;
+                const tempRows = json.rows.sort(SortByDate);
+                vmTempImages.rows = { ...tempRows };
+                vmTempImages.count = json.count;
             }
         }
     });

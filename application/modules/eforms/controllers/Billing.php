@@ -74,6 +74,8 @@ class Billing extends MY_Controller {
         $this->core_layout->setPageTitle("Hydra - Billing");
         $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', TRUE);
         $this->core_layout->addJs('js/querybuilder/query-builder.standalone.min.js', TRUE);
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
         $this->core_layout->setPrivilegeName("billing_billing");
         $this->core_layout->addJs("js/eforms/billing/billing/index.js", true);
         $this->load->view('core/templates/header');
@@ -1028,6 +1030,13 @@ class Billing extends MY_Controller {
       ->set_output(json_encode($data));
     }
 
+    // function restore_billing(){
+    //     $data = $this->billing->restoreBilling();
+	// 	$this->output
+    //     ->set_content_type('json')
+    //     ->set_output(json_encode($data));
+    // }
+
     function disconnect_selected(){
       $data = $this->billing->disconnectSelected();
       $this->output
@@ -1055,7 +1064,6 @@ class Billing extends MY_Controller {
       ->set_content_type('json')
       ->set_output(json_encode($data));
     }
-    
     
 }
 

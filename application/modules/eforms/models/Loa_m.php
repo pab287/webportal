@@ -28,9 +28,15 @@
 
             $view_own_request = (in_array("view_own_request", $this->current_action)) ? true : false;
             $view_own_dept = (in_array("view_by_dept", $this->current_action)) ? true : false;
+            $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+            $companyDescription = null;
+
+            if ($view_by_company) {
+                $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+            }
             
-            $rowData = $this->get_all_items($view_own_request,  $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_own_dept);
-            $rowCount = $this->get_all_items_count($view_own_request,  $query_builder, $search, $status, $view_own_dept);
+            $rowData = $this->get_all_items($view_own_request,  $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_own_dept, $view_by_company, $companyDescription);
+            $rowCount = $this->get_all_items_count($view_own_request,  $query_builder, $search, $status, $view_own_dept, $view_by_company, $companyDescription);
             
             // if (!$search) {
             //     $rowData = $this->get_all_post($view_own_request,  $query_builder, $limit, $offset, $sortBy, $sortOrder, $status, $view_own_dept);
@@ -54,7 +60,7 @@
             return $resultset;
         }
 
-        function get_all_items($view, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_dept){
+        function get_all_items($view, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_dept, $view_by_company = false, $companyDescription = null) {
             $data = array();
             $check = date("Y-m-d", strtotime("-1 year", time()));
 
@@ -74,6 +80,14 @@
 
             if ($view_dept && ($this->user_data['emp_id']!=1)) {
                 $this->db->where('b.department_id', $this->user_data['department']);
+            }
+
+            if ($view_by_company) {
+                $this->db->where('b.company_id', (int)$this->user_data['company']);
+
+                if ($companyDescription) {
+                    $this->db->where('a.company', $companyDescription);
+                }
             }
 
             if ($query_builder) {
@@ -129,7 +143,7 @@
             return $data;
         }
 
-        function get_all_items_count($view, $query_builder=null, $search = null, $status = null, $view_dept){
+        function get_all_items_count($view, $query_builder=null, $search = null, $status = null, $view_dept, $view_by_company = false, $companyDescription = null) {
             $check = date("Y-m-d", strtotime("-1 year", time()));
 
             $filterFields = array("a.id", "a.status", "a.company", "a.department", "a.reference_no", "a.date_from", "a.date_to", "a.nature", "a.reason", "a.position", "b.firstname", "b.middlename", "b.lastname", "a.type");
@@ -148,6 +162,14 @@
 
             if ($view_dept && ($this->user_data['emp_id']!=1)) {
                 $this->db->where('b.department_id', $this->user_data['department']);
+            }
+
+            if ($view_by_company) {
+                $this->db->where('b.company_id', (int)$this->user_data['company']);
+
+                if ($companyDescription) {
+                    $this->db->where('a.company', $companyDescription);
+                }
             }
 
             if ($query_builder) {
@@ -447,9 +469,16 @@
             $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
             $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
             $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
+
+            $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+            $companyDescription = null;
+
+            if ($view_by_company) {
+                $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
+            }
             
-            $rowData = $this->get_all_archive_items($search, $limit, $offset, $sortBy, $sortOrder);
-            $rowCount = $this->get_all_archive_items_count($search);
+            $rowData = $this->get_all_archive_items($search, $limit, $offset, $sortBy, $sortOrder, $view_by_company, $companyDescription);
+            $rowCount = $this->get_all_archive_items_count($search, $view_by_company, $companyDescription);
             // if (!$search) {
             //     $rowData = $this->get_all_archive($limit, $offset, $sortBy, $sortOrder);
             //     $rowCount = $this->get_all_archive_count();
@@ -469,7 +498,7 @@
             return $resultset;
         }
 
-        function get_all_archive_items($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder){
+        function get_all_archive_items($search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $view_by_company = false, $companyDescription = null) {
             $check = date("Y-m-d", strtotime("-1 year", time()));
             $data = array();
 
@@ -478,6 +507,14 @@
             $this->db->select($sql);
             $this->db->from("gcceforms.loa a");
             $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
+
+            if ($view_by_company) {
+                $this->db->where('b.company_id', $this->user_data['company']);
+
+                if ($companyDescription) {
+                    $this->db->where('a.company', $companyDescription);
+                }
+            }
             
             $this->db->group_start();
                 $this->db->where('a.status', 'Cancelled');
@@ -527,7 +564,7 @@
             return $data;
         }
 
-        function get_all_archive_items_count($search = null){
+        function get_all_archive_items_count($search = null, $view_by_company = false, $companyDescription = null) {
             $check = date("Y-m-d", strtotime("-1 year", time()));
             $data = array();
 
@@ -536,6 +573,14 @@
             $this->db->select($sql);
             $this->db->from("gcceforms.loa a");
             $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
+
+            if ($view_by_company) {
+                $this->db->where('b.company_id', $this->user_data['company']);
+
+                if ($companyDescription) {
+                    $this->db->where('a.company', $companyDescription);
+                }
+            }
             
             $this->db->group_start();
                 $this->db->where('a.status', 'Cancelled');
@@ -704,15 +749,23 @@
             $get = $this->input->get();
             $resultarray = array();
 
+            $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+
             $this->db->select('id, firstname, lastname, middlename, suffix');
             $this->db->from('gccmaster.tblemployees');
             $this->db->where('gccmaster.tblemployees.employee_status', 'Active');
             $this->db->order_by('firstname', 'asc');
 
+            if ($view_by_company) {
+                $this->db->where('company_id', $this->user_data['company']);
+            }
+
             if (isset($get['q']) && $get['q']) {
-                $this->db->like('firstname', $get['q'], 'both');
-                $this->db->or_like('middlename', $get['q'], 'both');
-                $this->db->or_like('lastname', $get['q'], 'both');
+                $this->db->group_start();
+                    $this->db->like('firstname', $get['q'], 'both');
+                    $this->db->or_like('middlename', $get['q'], 'both');
+                    $this->db->or_like('lastname', $get['q'], 'both');
+                $this->db->group_end();
             }
 
             $query = $this->db->get();

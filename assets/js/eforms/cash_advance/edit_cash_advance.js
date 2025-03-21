@@ -95,6 +95,7 @@ jQuery(document).ready(function(){
     ajax: {
       url: baseUrl("eforms/cash_advance/get_employee"),
       global: false,
+      delay: 500,
       processResults: function (data) {
         return data;
       }

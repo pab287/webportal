@@ -36,8 +36,10 @@ class Hydra_billing_readings extends Dbase{
         echo $this->hydra_billing_readings_m->update_print();
     }
 
-    public function test(){
-        echo $this->hydra_billing_readings_m->test_function();
+    public function test_computeOverPayment(){
+        $account_id = $_POST['account_id'];
+        $res = $this->hydra_billing_readings_m->test_computeOverPayment($account_id);
+        var_dump($res);
     }
 }
 

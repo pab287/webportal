@@ -78,8 +78,8 @@
                                     <option value="Linkedin">LINKEDIN</option>
                                     <option value="Walk In">WALK IN</option>
                                     <option value="REFERRAL">REFERRAL</option>
-                                    <option value=">JOB FAIR">JOB FAIR</option>
-                                    <option value=">Indeed">INDEED</option>
+                                    <option value="JOB FAIR">JOB FAIR</option>
+                                    <option value="Indeed">INDEED</option>
                                 </select>
                             </div>
                         </div>

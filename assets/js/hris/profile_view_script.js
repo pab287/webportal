@@ -4,6 +4,28 @@ let employeeData = _tempContentData.data.main;
 let user_name = _tempContentData.data.user.display_name;
 let id = employeeData.id;
 let today = _tempContentData.data.timestamp;
+const OFFENSE_TYPES = [
+    'OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE',
+    '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE', 'DISMISSAL',
+    'WRITTEN WARNING', '3-DAYS SUSPENSION', '6-DAYS SUSPENSION', '1-2-DAYS SUSPENSION'
+  ];
+  
+  const COMMENDATION_TYPES = ['COMMENDATION'];
+  const NOTICE_TYPES = [
+    'LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 
+    'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 'NOD', 
+    'NOTICE OF ADMINISTRATIVE', 'NOTICES', 'SUSPENSION'
+  ];
+  
+  const OTHER_TYPES = [
+    'OFFENSE', '1ST OFFENSE', '2ND OFFENSE', '3RD OFFENSE', '4TH OFFENSE',
+    '5TH OFFENSE', '6TH OFFENSE', '7TH OFFENSE', 'COMMENDATION', 
+    'LAST WARNING', 'FINAL WRITTEN WARNING', 'VERBAL WARNING', 
+    'WRITTEN WARNING', 'RETURN TO WORK NOTICE', 'NTE', 'REMINDER NOTICE', 
+    'NOD', 'DISMISSAL', 'NOTICE OF ADMINISTRATIVE HEARING', 'NOTICES',
+    '3-DAYS SUSPENSION', '6-DAYS SUSPENSION', '1-2-DAYS SUSPENSION'
+  ];
+  
 $(document).ready(function(){
     $('#column-options').on('click', function (e) {
         e.stopPropagation();
@@ -13,6 +35,8 @@ $(document).ready(function(){
 let employeeDataSheet = new Vue({
     el:"#m-content",
     data:{ 
+            activeTab: 'offenses',
+            filteredOffenses: false,
             activeSection:"",
             main:[],
             supervisor:"",
@@ -145,6 +169,31 @@ let employeeDataSheet = new Vue({
     },
 
     methods:{
+        filterOffenses(type) {
+            this.activeTab = type;
+            const offensesArray = Object.values(this.offenses);
+
+            if (type === 'offenses') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    OFFENSE_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            } else if (type === 'commendations') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    COMMENDATION_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            } else if (type === 'notices') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    NOTICE_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            } else if (type === 'others') {
+                this.filteredOffenses = offensesArray.filter(offense =>
+                    !OTHER_TYPES.includes(offense.offcom_type.toUpperCase())
+                );
+            }
+            if (this.filteredOffenses.length === 0) {
+                this.filteredOffenses = false;
+            }
+        },
         getSidebarData(){
             this.main = { ...this.$data.main, ..._tempContentData.data.main };
             this.path = _tempContentData.data.path;
@@ -186,7 +235,7 @@ let employeeDataSheet = new Vue({
               display_name_0: displayName1,
               display_name_1: displayName2
             };
-          },
+        },
         getPersonalInformation(){
             if (!hasValue(this.main)) {
                 this.main = { ...this.$data.main, ..._tempContentData.data.main };
@@ -233,7 +282,7 @@ let employeeDataSheet = new Vue({
               `${lastname.toUpperCase()}, ${firstname.toUpperCase()}${middleInitial}${formattedSuffix}`,
               `${firstname.toUpperCase()}${middleInitial} ${lastname.toUpperCase()}${formattedSuffix}`
             ];
-          },
+        },
         formatDate(empdate) {
             if (!empdate || empdate == '0000-00-00') {
                 return '---';
@@ -264,27 +313,24 @@ let employeeDataSheet = new Vue({
                 ? answerKey
                 : "N/A";
         },
-
         getExpirationClass(expirationDate) {
             const today = new Date();
             const expirationDateObj = new Date(expirationDate);
             return expirationDateObj > today ? 'm-badge--success' : 'm-badge--danger';
         },
-
         formatAmount(amount) {
             return new Intl.NumberFormat('en-PH', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             }).format(amount);
-          },
-    
-          isReturned(acct) {
+        },
+        isReturned(acct) {
             return parseInt(acct.is_returned) == 1;
-          },
-          hasRemarks(acct) {
+        },
+        hasRemarks(acct) {
             return !!acct.remarks_returned
-          },
-          formatSalaryRate(rate) {
+        },
+        formatSalaryRate(rate) {
             if (!rate || rate == '') return 'NONE';
 
             const formattedRate = new Intl.NumberFormat('en-PH', {
@@ -293,12 +339,12 @@ let employeeDataSheet = new Vue({
             }).format(parseFloat(rate.replace(',', '')));
             
             return formattedRate;
-          },
-          isCurrentSalary(salary, index) {
+        },
+        isCurrentSalary(salary, index) {
             const grandTotal = parseFloat(this.data.grandTotal);
             return salary.sal_rate == grandTotal && index == 0;
-          },
-          formattedJobDesc() {
+        },
+        formattedJobDesc() {
             if (!this.job_desc) return '';
             
             // Create a temporary div to parse HTML
@@ -313,7 +359,37 @@ let employeeDataSheet = new Vue({
             return hasListItems 
               ? this.job_desc 
               : this.job_desc.replace(/\n/g, '<br>');
-          },
+        },
+        formattedJobDescPrint(data) {
+            if (!data) return '';
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data;
+            const hasListItems = tempDiv.getElementsByTagName('li').length > 0;
+
+            return hasListItems 
+              ? data 
+              : data.replace(/\n/g, '<br>');
+        },
+        changeSMS(e) {
+            var val = $(e.target).is(':checked') ? 1 : 0;
+            
+            $.ajax({
+                url: baseUrl('core/profile/allow_sms/') + id,
+                data: { 
+                    csrf_token: _csrf_hash,
+                    allow: val
+                },
+                dataType: 'JSON',
+                type: 'POST',
+                success: function (response) {
+                    if (response.state){
+                        toastr.success(response.msg, 'SMS Notification', 5000);
+                    } else {
+                        toastr.error('Failed to Enable/Disable the SMS notification', 'SMS Notification', 5000);
+                    }
+                }
+            });
+        }
     }
 })
 
@@ -975,3 +1051,12 @@ function printEmployeeDataSheet(avatar, info, user, timestamp) {
         newWin.close();
     }, 1500);
 }
+
+$('#offense-tabs .nav-link').on('click', function(e) {
+    e.preventDefault();
+    $('#offense-tabs .nav-link').removeClass('active');
+    $('#offense-content .tab-pane').removeClass('active show');
+    $(this).addClass('active');
+    var targetId = $(this).attr('href');
+    $(targetId).addClass('active show');
+ });

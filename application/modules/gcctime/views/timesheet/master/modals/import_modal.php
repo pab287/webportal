@@ -32,7 +32,7 @@
                     </div>
 
                     <div class="form-group m-form__group">
-                        <label class="required">IMPORT INCLUSIVE DATES</label>
+                        <label for="" class="required">IMPORT INCLUSIVE DATES</label>
                         <div class="m-input-icon" id="import-inclusive-dates">
                             <input type="text" class="form-control m-input" data-validation="required"
                                    name="inclusive_dates" autocomplete="off">
@@ -45,7 +45,7 @@
                     </div>
 
                     <div class="form-group m-form__group">
-                        <label>REMARKS</label>
+                        <label for="">REMARKS</label>
                         <textarea name="remarks" id="" class="form-control"></textarea>
                     </div>
 
@@ -73,4 +73,43 @@
             </div>
         </div>
     </form>
+</div>
+
+
+<div class="modal fade" tabindex="-1" id="timesheet-import-invalid-modal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="invalid-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Invalid Import <small>Records</small></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <div class="m-alert m-alert--outline alert-accent alert alert-danger" role="alert">
+                        <strong>Notice!</strong> A total of <strong>`{{count}}`</strong> invalid import data found, employee uploaded data is not valid or records are behind of posted payroll dates.
+                    </div>
+                </div>
+                <div class="m-widget4">
+                    <div class="m-widget4__item" v-for="row in rows">
+                        <div class="m-widget4__ext">
+                            <span class="m-widget4__icon m--font-brand">
+                                <i class="flaticon-calendar"></i>
+                            </span>
+                        </div>
+                        <div class="m-widget4__info">
+                            <p class="mb-0">
+                                <span class="m-widget4__title" v-text="row.employee_name">&nbsp;</span>
+                            </p>
+                            <span class="m-widget4__text" v-for="date in row.dates">
+                                <span class="m-1 m-badge m-badge--danger m-badge--wide m-badge--rounded">{{date}}</span>
+                            </span>
+                        </div>
+                        <div class="m-widget4__ext">&nbsp;</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

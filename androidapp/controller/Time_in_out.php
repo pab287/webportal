@@ -19,7 +19,7 @@ class Time_in_out extends Dbase{
     }
 
     public function timeLog_spam(){
-        $data = $this->TIO->time_log_spam();
+        $data = json_encode(array("status" => 1));
         echo $data;
     }
 
@@ -60,6 +60,11 @@ class Time_in_out extends Dbase{
 
     public function geofence(){
         $data = $this->TIO->getLocation();
+        echo $data;
+    }
+    
+    public function appVersion(){
+        $data = $this->TIO->app_version();
         echo $data;
     }
     

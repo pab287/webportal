@@ -162,6 +162,7 @@
                         <table class="table table-striped table-bordered table-sm" id="table-tickets" width="100%">
                             <thead>
                             <tr>
+                                <th class="notExport"></th>
                                 <th>Reference #</th>
                                 <th>Category</th>
                                 <th>Sub Category</th>

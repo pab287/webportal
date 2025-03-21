@@ -193,6 +193,28 @@
                     </div>
                 </div>
             </div>
+
+            <?php if (isset($page) && $page == 'profile'): ?>
+                <div class="m-portlet">
+                    <div class="m-portlet__body p-3">
+                        <div class="m-form__group form-group row align-items-center m-0 justify-content-center">
+                            <label class="col-sm-4 col-md-4 col-lg-8 col-xl-8 col-form-label">
+                                Allow <span style="font-weight: 700">SMS</span> Notification? 
+                                <i class="flaticon-questions-circular-button" style="font-size: 14px" data-toggle="m-tooltip" 
+                                data-skin='dark' title='Toggle switch to enable/disable SMS notifications.'></i>
+                            </label>
+                            <div class="col-3">
+                                <span class="m-switch m-switch--sm">
+                                    <label class="m-0">
+                                        <input type="checkbox" checked="checked" :checked="main.allow_sms_notification == 1 ? 'checked' : false" @change="changeSMS($event)">
+                                        <span></span>
+                                    </label>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
         <div class="col-xl-9 offset-xl-0 col-lg-10 offset-lg-1">
 
@@ -376,29 +398,6 @@
                                         <?php endif; ?>
                                     </tbody>
                                 </table>
-                                <?php $this->load->view("core/profile/modals/payroll_payslip"); ?>
-                                <script>
-                                    const viewPayrollPayslipModal = $("#view-payroll-payslip-modal");
-
-                                    var vmPayslipContent = new Vue({
-                                        el: "#temp-payslip_content",
-                                        data: { row: {} },
-                                    });
-
-                                    $("#table-payroll_sheet-payslip").DataTable({ ordering: false });
-                                    $("#table-payroll_sheet-payslip_filter input[type='search']").removeClass("form-control-sm");
-                                    const getPayrollSheetData = function(id){
-                                        if(id){
-                                            $.get(siteUrl('core/profile/get_payroll_sheet_data'), { id: id }, "json")
-                                            .done(function(data){
-                                                const json = JSON.parse(data);
-                                                let tempRow = json.response ? Object.assign({}, json.data) : {};
-                                                vmPayslipContent.row = Object.assign({}, tempRow);
-                                                if(json.response){ viewPayrollPayslipModal.modal("show"); }
-                                            });
-                                        }
-                                    }
-                                </script>
                             </div>
                         </div>
                     </div>
@@ -408,3 +407,30 @@
         </div>
     </div>
 </div>
+
+<?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0)): ?>
+<div id="temp-payslip_content--container">
+<?php $this->load->view("core/profile/modals/payroll_payslip"); ?>
+<script>
+    const viewPayrollPayslipModal = $("#view-payroll-payslip-modal");
+    var vmPayslipContent = new Vue({
+        el: "#temp-payslip_content",
+        data: { row: {} },
+    });
+
+    $("#table-payroll_sheet-payslip").DataTable({ ordering: false });
+    $("#table-payroll_sheet-payslip_filter input[type='search']").removeClass("form-control-sm");
+    const getPayrollSheetData = function(id){
+        if(id){
+            $.get(siteUrl('core/profile/get_payroll_sheet_data'), { id: id }, "json")
+            .done(function(data){
+                const json = JSON.parse(data);
+                let tempRow = json.response ? Object.assign({}, json.data) : {};
+                vmPayslipContent.row = Object.assign({}, tempRow);
+                if(json.response){ viewPayrollPayslipModal.modal("show"); }
+            });
+        }
+    }
+</script>
+</div>
+<?php endif; ?>

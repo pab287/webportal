@@ -4148,8 +4148,13 @@ class Payroll_m extends CI_Model
             $allowance->undertime_deduction = $undertime_deduction;
             $allowance->undertime_deduction_decimal = $undertime_deduction_decimal;
 
-            $allowance->allowance_net = $allowance_total - $undertime_deduction;
-            $allowance->allowance_net_decimal = floatval($allowance_total) - floatval($undertime_deduction_decimal);
+            $allowanceNet = $allowance_total - $undertime_deduction;
+            $totalAllowanceNet = $allowanceNet >= 0 && $target_minutes_worked > $total_unrendered_minutes ? $allowanceNet : 0;
+            $allowance->allowance_net = $totalAllowanceNet;
+
+            $decimalAllowanceNet = floatval($allowance_total) - floatval($undertime_deduction_decimal);
+            $totalDecimalAllowanceNet = $decimalAllowanceNet >= 0 && $target_minutes_worked > $total_unrendered_minutes ? $decimalAllowanceNet : 0;
+            $allowance->allowance_net_decimal = $totalDecimalAllowanceNet;
 
             $allowance->wdam = $working_days_in_a_month;
             $allowance->apd = $allowance_per_day;
@@ -5198,6 +5203,9 @@ class Payroll_m extends CI_Model
     function generatePayrollPayslip(){
         $resultset = array();
         $post = $this->input->post();
+        $privilege = $this->core_layout->getCurrentActions();
+        $hasViewByCompany = (in_array('view_by_company', $privilege)) ? true : false;
+
         if(isset($post) && $post){
             $tempPayDate = date("Y-m-d", strtotime($post["pay_date"]));
             $post["pay_date"] = date("Y/m/d", strtotime($post["pay_date"]));
@@ -5222,6 +5230,11 @@ class Payroll_m extends CI_Model
                     }
                 }
                 $employee_ids = array_unique($employee_ids);
+            } else {
+                // added to get all employees by payroll group assigned if no employees are selected
+                if ($hasViewByCompany && empty($employee_ids)) {
+                    $employee_ids = $this->getEmployeesByPrivilege($this->user_data['emp_id'], $post["company"], $privilege);
+                }
             }
 
             $company = $this->db->where("id", $post["company"])->get("gcchris.tblcompanies")->row();
@@ -5239,7 +5252,14 @@ class Payroll_m extends CI_Model
 
             $this->db->where("ps.posted", 1);
             $this->db->where("ps.is_bonus", $isBonus);
-            if (!empty($employee_ids)) { $this->db->where_in("emp.id", $employee_ids); }
+            
+            if (!empty($employee_ids)) { 
+                $this->db->where_in("emp.id", $employee_ids); 
+            } else { 
+                // added to prevent generating all employees if view by company privilege is enabled
+                if ($hasViewByCompany) { $this->db->where("emp.id", 0); }
+            }
+
             if (!empty($company)) {
                 $this->db->where("ps.company_id", $company->id);
             }
@@ -7833,5 +7853,189 @@ class Payroll_m extends CI_Model
         }
 
         return $resultset;
+    }
+
+    function selectPayrollGroupPayslip($privilege = array()){
+        $get = $this->input->get();
+        $arrData = array();
+        $resultset = array();
+        $companyId = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: 0;
+        $getAllAssignedPayrollGroup = array();
+        $hasViewByCompany = (in_array('view_by_company', $privilege)) ? true : false;
+
+        if ($hasViewByCompany) {
+            $getAllAssignedPayrollGroup = $this->getAssignedPayrollGroup($this->user_data['emp_id'], $companyId);
+            $this->db->reset_query();
+        }
+
+        if($companyId || $companyId == 0){
+            $this->db->select("id, description as text, employee_id, assigned_employee_id");
+            $this->db->from($this->tbl_payroll_group);
+            $this->db->where("company_id", $companyId);
+            $this->db->where("status", 1);
+            $this->db->where("is_archived", 0);
+
+            if (isset($get['term']) && $get['term']) {
+                $this->db->like("description", $get['term'], "both");
+            }
+
+            if ($hasViewByCompany) {
+                if (!empty($getAllAssignedPayrollGroup)) {
+                    $this->db->where_in("id", $getAllAssignedPayrollGroup);
+                } else {
+                    $this->db->where("id", 0);
+                }
+            }
+
+            $this->db->limit(10);
+            $this->db->order_by("description", "ASC");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() > 0){
+                foreach($qTemp->result() as $kk => $vv){
+                    $employees = array();
+                    $tempIds = @unserialize($vv->employee_id);
+                    unset($vv->employee_id);
+                    $this->db->from($this->tbl_employees);
+                    $this->db->where_in("id", $tempIds);
+                    $this->db->order_by("lastname","ASC");
+                    $qTempEmp = $this->db->get();
+                    if($qTempEmp->num_rows() > 0){
+                        foreach($qTempEmp->result() as $rs){
+                            $tempRs = (array) $rs;
+                            $tempName = $this->core_layout->getDisplayName($tempRs);
+                            $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                            $employees[] = array(
+                                "id"=>$rs->id,
+                                "text"=>$tempName,
+                            );
+                        }
+                    }
+                    $vv->employees = $employees;
+                    $arrData[$kk] = $vv;
+
+                }
+            }
+        }
+
+        $resultset["results"] = $arrData;
+        $resultSet['results']['term'] = isset($get['term']) ? $get['term'] : '';
+        return $resultset;
+    }
+
+    public function getAssignedPayrollGroup($id, $companyId){
+        $result = array();
+
+        $this->db->select('id, assigned_employee_id');
+        $this->db->from($this->tbl_payroll_group);
+        $this->db->where("company_id", $companyId);
+        $this->db->where("status", 1);
+        $this->db->where("is_archived", 0);
+        $this->db->order_by("description", "ASC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result() as $row) {
+                $tempIds = @unserialize($row->assigned_employee_id);
+
+                if (is_array($tempIds)) {
+                    if (in_array($id, $tempIds)) {
+                        $result[] = $row->id;
+                    }
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    public function selectEmployeeByPrivileges($privilege = array())
+    {
+        $get = $this->input->get();
+        $resultarray = array();
+        $empsInPrivilege = array();
+        $companyId = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: 0;
+        $hasViewByCompany = (in_array('view_by_company', $privilege)) ? true : false;
+
+        if ($hasViewByCompany) {
+            $empsInPrivilege = $this->getEmployeesByPrivilege($this->user_data['emp_id'], $companyId, $privilege);
+        }
+
+        $this->db->select("a.id, trim(a.firstname) as firstname, a.lastname, a.middlename, a.suffix");
+        $this->db->from("gccmaster.tblemployees a");
+        $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
+        $this->db->where("a.employee_status", "Active"); 
+        if(isset($get["company_ids"]) && !is_array($get["company_ids"]) && $get["company_ids"]){
+            $this->db->where("b.id", $get["company_ids"]);
+        }
+
+        if (isset($get['company_id']) && $get['company_id']) {
+            $this->db->where("b.id", $get['company_id']);
+        }
+
+        if (isset($get['q']) && $get['q']) {
+            $this->db->group_start();
+            $this->db->like("a.firstname", $get['q'], "both");
+            $this->db->or_like("a.lastname", $get['q'], "both");
+            $this->db->group_end();
+        }
+
+        if ($hasViewByCompany) {
+            if (!empty($empsInPrivilege)) {
+                $this->db->where_in('a.id', $empsInPrivilege);
+            } else {
+                $this->db->where('a.id', 0);
+            }
+        }
+
+        $this->db->limit(10);
+        $this->db->order_by("trim(a.firstname)", "ASC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $display_employee = $this->format_name($_query);
+
+                $data["id"] = $_query["id"];
+                $data["text"] = $display_employee;
+                $resultarray[] = $data;
+            }
+        }
+        return array("results" => $resultarray);
+    }
+
+    public function getEmployeesByPrivilege($id = 0, $companyId = 0, $privilege = array()){
+        $result = array();
+        $hasViewByCompany = (in_array('view_by_company', $privilege)) ? true : false;
+        $getAllAssignedPayrollGroup = $this->getAssignedPayrollGroup($this->user_data['emp_id'], $companyId);
+        $this->db->reset_query();
+
+        $this->db->select("employee_id");
+        $this->db->from($this->tbl_payroll_group);
+        $this->db->where("company_id", $companyId);
+        $this->db->where("status", 1);
+        $this->db->where("is_archived", 0);
+
+        if ($hasViewByCompany) {
+            if (!empty($getAllAssignedPayrollGroup)) { 
+                $this->db->where_in("id", $getAllAssignedPayrollGroup);
+            } else {
+                $this->db->where("id", 0);
+            }
+        }
+
+        $this->db->order_by("description", "ASC");
+        $qTemp = $this->db->get();
+
+        if($qTemp->num_rows() > 0){
+            foreach($qTemp->result() as $kk => $vv){
+                $tempIds = @unserialize($vv->employee_id);
+                $result[] = $tempIds;
+            }
+        }
+
+        $flatArray = array_merge(...$result); //merge arrays into one 1 array
+
+        return $flatArray;
     }
 }

@@ -237,7 +237,7 @@
 
                 $this->core_layout->addJs("plugins/star-rating/js/jquery.star-rating-svg.min.js", TRUE);
                 $this->core_layout->addCss("plugins/star-rating/css/star-rating-svg.css");
-
+                $this->core_layout->addJs("plugins/pdf/pdf.min.js", true);
                 $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
                 $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
                 $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
@@ -247,13 +247,14 @@
                 $this->core_layout->addJs("js/buttons.print.min.js", true);
 
                 $this->core_layout->addJs("js/ams/jquery.maskMoney.min.js", true);
-
+                $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+                $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
                 $this->core_layout->addJs("js/hris/employee_masterfile_script.js", true, $arrData);
                 $this->core_layout->addJs("js/hris/employee_documents_script.js", true);
                 $this->core_layout->addJs("js/hris/employee_edit_and_archive_script.js", true);
 
-                $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
-                $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
+                $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+                $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
                 
                 $this->load->view("core/templates/header");
                 $this->load->view("hris/masterfile/employee/edit_masterfile", $arrData);
@@ -600,8 +601,8 @@
                 ->set_output(json_encode($data));
         }
 
-        function get_employee_offenses() {
-            $data = $this->employee_model->getEmployeeOffenses();
+        function get_employee_offenses($type = null) {
+            $data = $this->employee_model->getEmployeeOffenses($type);
             $this->output
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
@@ -1434,7 +1435,7 @@
 
         function change_employee_company() {
             $data = $this->employee_model->changeEmployeeCompany();
-            echo json_encode($data);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
         function remove_profile_picture($employee_id) {
@@ -1943,6 +1944,16 @@
 
         public function get_job_description($id){
             $data = $this->employee_model->getEmpJobDescription($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        function get_modal_commendation($id = null) {
+            $data = $this->employee_model->getModalContainerContent($id, "commendation");
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_employee_allowance_count($id=null){
+            $data = $this->employee_model->getEmployeeAllowanceCount($id);
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 

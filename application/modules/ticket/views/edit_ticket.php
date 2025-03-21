@@ -45,14 +45,14 @@
 						</div>
 					</div>
 				</div>
-                <form id="frm_status_new">
+                <form id="frm_status_new" method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 				    <div class="m-portlet__body">
 					    <div class="row">
                             <div class="col-lg-6 col-md-12 col-sm-12">
                                 <div class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-6 col-sm-12 col-xs-12">
-                                        Reference:
+                                        Reference: <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-12 col-xs-12">
                                         <b v-text="vm_tab1.reference_no"></b>
@@ -60,7 +60,7 @@
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-6 col-sm-12 col-xs-12">
-                                        Requested by:
+                                        Requested by: <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-12 col-xs-12">
                                         <b v-text="vm_tab1.requested_by"></b>
@@ -68,7 +68,7 @@
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-6 col-sm-12 col-xs-12">
-                                        Date Needed:
+                                        Date Needed: <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-6 input-group date" id="need_dt_group">
                                         <input class="form-control m-input" type="text" name="date_required" id="date_required" data-validation="required"/>
@@ -79,10 +79,11 @@
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Severity
+                                        Severity <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
-                                        <select id="severity" name="severity" data-validation="required">
+                                        <select id="severity" name="severity" class="form-control select2" data-validation="required">
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
@@ -94,8 +95,8 @@
                                     <input type="hidden" class="form-control" name="pic[]" id="pic">
                                         <span class="btn btn-success fileinput-button">
                                             <em class="fa fa-upload"></em>
-                                            <span>SELECT FILE</span>
-                                            <input type="file" id="fileupload" name="files" multiple>
+                                            <span>SELECT FILE </span>
+                                            <input type="file" id="fileupload" name="files" multiple accept=".jpg,.jpeg,.png,.pdf" >
                                         </span>
                                         <div id="progress" class="progress" style="height: 7px;">
                                             <div class="progress-bar progress-bar-small progress-bar-success"></div>
@@ -112,34 +113,47 @@
                             <div class='col-lg-6 col-md-12 col-sm-12'>
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Department
+                                        Department <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
-                                        <select id="department" name="department" data-validation="required">
+                                        <select id="department" name="department" class="form-control select2" data-validation="required">
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Category
+                                        Category <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
-                                        <select id="category" name="category" data-validation="required">
+                                        <select id="category" name="category" class="form-control select2" data-validation="required">
+                                            <option></option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group m-form__group row" id="dept-res">
+                                    <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
+                                    Department Responsible: <span style="color:red;">*</span>
+                                    </label>
+                                    <div class="col-sm-12 col-xs-12 col-md-8">
+                                        <select id="responsibility" name="responsibility" class="form-control select2" data-validation="required">
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="webportal">
                                     <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Sub-Category
+                                        Sub-Category <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
-                                        <select id="sub_category" name="sub_category" data-validation="required">
+                                        <select id="sub_category" name="sub_category" class="form-control select2" data-validation="required">
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-4 col-sm-12 col-form-label">
-                                        Issue:
+                                        Issue: <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <textarea class="form-control m-input" id="issue" name="issue" rows="4" data-validation="required"></textarea>
@@ -149,25 +163,27 @@
                             <div class='col-lg-6 col-md-12 col-sm-12'>
                                 <div class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-6 col-sm-4">
-                                        Performed by:
+                                        Performed by: <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-8">
-                                        <select id="performed_by" name="performed_by" data-validation="required">
+                                        <select id="performed_by" name="performed_by" class="form-control select2" data-validation="required">
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
                                     <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Status
+                                        Status: <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
-                                        <select id="status" name="status" data-validation="required">
+                                        <select id="status" name="status" class="form-control select2" data-validation="required">
+                                            <option></option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="m-separator m-separator--solid d-xl-12"></div>  
+                        <div class="m-separator m-separator--solid d-xl-12"></div>
                         <div class="col-xl-12 order-1 order-xl-2 m--align-right">
                             <button type="submit" class="btn m-btn btn-success text-white m-btn--custom m-btn--icon m-btn--air m-btn--box btnSave">
                                 <span>
@@ -201,40 +217,41 @@
                 <div class="m-portlet__body">
                 <form id="frm_comments">
                     <div class="form-group m-form__group row">
-                    <div class="m-scrollable mCustomScrollbar _mCS_3 mCS-autoHide" data-scrollable="true" data-max-height="400" style="height: 400px; width: 100%; overflow: visible; max-height: 400px; position: relative;"><div id="mCSB_3" class="mCustomScrollBox mCS-minimal-dark mCSB_vertical mCSB_outside" tabindex="0" style="max-height: none;"><div id="mCSB_3_container" class="mCSB_container" style="position:relative; top:0; left:0;" dir="ltr">
-
-                        <div class="m-widget3" v-if="vm_tab2">
-                            <div class="m-widget3__item" v-for="data in vm_tab2">
-                                <div class="m-widget3__header">
-                                    <!-- <div class="m-widget3__user-img">
-                                    </div> -->
-                                    <div class="m-widget3__info">
-                                        <span class="m-widget3__username">
-                                            {{ data.created_by }}
-                                        </span>
-                                        <br>
-                                        <span class="m-widget3__time">
-                                        {{ data.created_at }}
-                                        </span>
+                        <div class="m-scrollable mCustomScrollbar _mCS_3 mCS-autoHide" data-scrollable="true" data-max-height="400" style="height: 400px; width: 100%; overflow: visible; max-height: 400px; position: relative;">
+                            <div id="mCSB_3" class="mCustomScrollBox mCS-minimal-dark mCSB_vertical mCSB_outside" tabindex="0" style="max-height: none;">
+                                <div id="mCSB_3_container" class="mCSB_container" style="position:relative; top:0; left:0;" dir="ltr">
+                                    <div class="m-widget3" v-if="vm_tab2">
+                                        <div class="m-widget3__item" v-for="data in vm_tab2">
+                                            <div class="m-widget3__header">
+                                                <!-- <div class="m-widget3__user-img">
+                                                </div> -->
+                                                <div class="m-widget3__info">
+                                                    <span class="m-widget3__username">
+                                                        {{ data.created_by }}
+                                                    </span>
+                                                    <br>
+                                                    <span class="m-widget3__time">
+                                                    {{ data.created_at }}
+                                                    </span>
+                                                </div>
+                                                <!-- <span class="m-widget3__status mb-4">
+                                                    <a href="#" @click="delete_comment(data.id)" class="btn btn-danger m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill m-btn--air">
+                                                        <i class="la la-trash"></i>
+                                                    </a>
+                                                </span> -->
+                                            </div>
+                                            <div class="m-widget3__body">     
+                                                <div class="m-widget3__info"><i>
+                                                    {{ data.comment }}</i>
+                                                </div>
+                                                <!-- <p class="m-widget3__text">  
+                                                </p> -->
+                                            </div>
+                                        </div>
                                     </div>
-                                    <span class="m-widget3__status mb-4">
-                                        <a href="#" onclick="delete_comment(data.ticket_id)" class="btn btn-danger m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill m-btn--air">
-                                            <i class="la la-trash"></i>
-                                        </a>
-                                    </span>
-                                </div>
-                                <div class="m-widget3__body">
-                                        
-                                <div class="m-widget3__info"><i>
-                                    {{ data.comment }}</i>
-                                </div>
-                                    <!-- <p class="m-widget3__text">
-                                        
-                                    </p> -->
                                 </div>
                             </div>
                         </div>
-                        </div></div></div>
                         <div class="m-widget3" v-else>
                             <div class="m-widget3__item">
                                 <div class="m-widget3__header">
@@ -257,7 +274,7 @@
                             <div class="m-widget3__body">
                             <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
                                 <input name="ticket_id" id="ticket_id" type="hidden">
-                                <textarea name="comment" class="form-control" placeholder="Write here" row="3"></textarea>
+                                <textarea name="comment" id="comment" class="form-control" placeholder="Write here" row="3"></textarea>
                             </div>
                         </div>
                         <button class="btn btn-success btn-sm" type="submit">Add</button>
@@ -283,41 +300,6 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Close</button>
             </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="remove-file-confirmation-modal"
-     tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
-    <div class="modal-dialog modal-md" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h6 class="modal-title" id="exampleModalLabel">
-                    REMOVE CONFIRMATION
-                </h6>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">
-                        ×
-                    </span>
-                </button>
-            </div>
-            <form id="frm-remove-file">
-                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-                <div class="col-12 modal-body">
-                    <p class="mb-0 m--regular-font-size-lg1">
-                        <input type="hidden" id="file_to_be_deleted" name="filename">
-                        Do you want to remove this attachment?
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-submit btn-primary btnNew">
-                        Yes
-                    </button>
-                    <button type="button" class="btn btn-danger btnNew" data-dismiss="modal">
-                        No
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 </div>

@@ -1121,7 +1121,48 @@ function update_travel_order(recommend=false) {
                 }, 600);
               }else{ window.location.replace(defaultRedirect); }
             } else {
-              toastr.error(data.messages, "Error get data from ajax!", 5000);
+              if (typeof data.data !== 'undefined' && data.data) {
+                var html = '';
+                var action = 'warning';
+
+                html += '<p class="mb-0 text-left">The Added Employee(s) has an Overlapping Travel Order.</p>';
+
+                html += '<ul style="text-align: left; margin-top: 10px;list-style: square; padding-left: 3px;">';
+                  $.each(data.data, function(index, value){
+                    action = getStatus(value.status);
+
+                    html += '<li class="mb-2">';
+                      html += `<p class="m-0">REF NO: <strong>${ value.reference_no }</strong> ${action}</p>`;
+                      html += `<p class="m-0">NAME: <strong>${ value.name }</strong></p>`;
+                      html += '<div>';
+                        html += `<p style="margin-bottom: 2px !important; margin-top: 5px !important;">DESTINATIONS</p>`;
+                        html += '<ul style="list-style: square; padding-left: 18px;">';
+                          $.each(value.to, function (i, v) {
+                            html += `<li>`;
+                              html += `<small><p class="m-0">${ v.destination }</p></small>`;
+                              html += `<small><p class="mb-0">${ moment(v.date_from).format('YYYY-MM-DD hh:mm A') } - ${ moment(v.date_to).format('YYYY-MM-DD hh:mm A') }</p></small>`;
+                            html += `</li>`;
+                          });
+                        html += '</ul>';
+                      html += '</div>';
+                    html += '</li>';
+                  })
+                html += '</ul>';
+
+                html += '<p class="mb-0 mt-2 text-left"><small><strong class="text-danger">NOTE:</strong> The <strong>APPROVED</strong> TO must be <strong>ACCOMPLISHED</strong> to add the listed employee to a new TO.</small></p>';
+
+                swal.fire({
+                  title: 'EDIT TRAVEL ORDER',
+                  html: html,
+                  icon: 'warning',
+                  showConfirmButton: false,
+                  showCancelButton: true,
+                  cancelButtonColor: "#d33",
+                  cancelButtonText: 'Close',
+                });
+              } else {
+                toastr.error(data.messages, "Error get data from ajax!", 5000);
+              }
             }
             
           }
@@ -1737,4 +1778,33 @@ function validateRecommendation(recommendationModal){
       return false;
     }
   });
+}
+
+function getStatus(status){
+  var action= '';
+    switch (status) {
+        case "Pending":
+            action = '<span class="m-badge m-badge--warning text-white m-badge--wide " role="alert"><small><strong>For Recommendation</strong></small></span>';
+            break;
+        case "Recommend_Approved":
+            action = '<span class="m-badge m-badge--info text-white m-badge--wide " role="alert"><small><strong>Pending Approval</strong></small></span>';
+            break;
+        case "Approved":
+            action = '<span class="m-badge m-badge--accent m-badge--wide" role="alert"><small><strong>Approved</strong></small></span>';
+            break;
+        case "Disapproved":
+            action = '<span class="m-badge m-badge--danger m-badge--wide" role="alert"><small><strong>Disapproved</strong></small></span>';
+            break;
+        case "HR Noted":
+            action = '<span class="m-badge m-badge--accent m-badge--wide" role="alert"><small><strong>HR Noted</strong></small></span>';
+            break;
+        case "Received":
+            action = '<span class="m-badge m-badge--accent m-badge--wide" role="alert"><small><strong>Received</strong></small></span>';
+            break;
+        default:
+            action = '<span class="m-badge m-badge--metal text-white m-badge--wide" role="alert"><small><strong>Cancelled</strong></small></span>';
+            break;
+    }
+
+    return action;
 }

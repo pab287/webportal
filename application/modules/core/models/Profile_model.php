@@ -27,6 +27,9 @@ class Profile_model extends CI_Model
 
     function __construct() {
         parent::__construct();
+
+        $this->loggedinData = $this->user_data = $this->session->userdata("logged_in");
+        $this->loggedInUsername = $this->loggedinData["username"];
     }
 
 
@@ -204,9 +207,10 @@ class Profile_model extends CI_Model
         $data['offenses'] =  $this->db->order_by('offcom_date', 'DESC')->get_where($this->employeeOffensesTable, array("emp_id" => $id,"is_archived" => 0))->result();
         $this->db->reset_query();
         $data['salaries'] = $this->db
-            ->select("sal.id,sal.add_date, sal.sal_date, sal.sal_rate, sal.sal_remarks, IF(pos.id IS NULL, sal.sal_position, pos.name) sal_position")
+            ->select("sal.id, sal.add_date, sal.sal_date, sal.sal_rate, sal.sal_remarks, IF(pos.id IS NULL, sal.sal_position, pos.name) sal_position")
             ->join("gcchris.tblposition pos", "pos.id = sal.sal_position", "LEFT")
-            ->order_by("sal.add_date", "desc")
+            ->order_by("CASE WHEN sal.add_date = '0000-00-00 00:00:00' THEN 1 ELSE 0 END", "asc")
+            ->order_by("sal.sal_date", "desc")
             ->get_where($this->employeeSalaryTable . " sal", array("sal.emp_id" => $id, "sal.is_archived" => 0))
             ->result();
         $this->db->reset_query();
@@ -247,5 +251,30 @@ class Profile_model extends CI_Model
     public function getEmpJobDescription($id){
         $data = $this->db->select('job_desc')->get_where($this->positionTable, array("id" => $id))->row();
         return $data;
+    }
+
+    public function allow_sms($id) {
+        $result = array();
+        $post = $this->input->post();
+
+        $data = array(
+            'allow_sms_notification' => $post['allow']
+        );
+
+        $notif = $post['allow'] ? 'Enabled' : 'Disabled';
+
+        $this->db->where('id', $id);
+        $query = $this->db->update($this->employeeTable, $data);
+
+        if ($query) {
+            $result['state'] = true;
+            $result['msg'] = "Successfully {$notif} SMS Notification";
+            $this->core_layout->setEventLog("User ".$this->loggedInUsername . " {$notif} the SMS notification.", "update", "success", "gcchris", "user");
+        } else {
+            $result['state'] = false;
+            $this->core_layout->setEventLog("User `".$this->loggedInUsername . "` failed to 'Enable/Disable' the SMS notification.", "update", "error", "gcchris", "system");
+        }
+
+        return $result;
     }
 }

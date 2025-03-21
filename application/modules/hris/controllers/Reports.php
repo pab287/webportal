@@ -24,7 +24,8 @@ class Reports extends MY_Controller{
         $this->core_layout->setPrivilegeName("hris_report_creator");
         $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', true);
         $this->core_layout->addJs('js/querybuilder/query-builder.standalone.min.js', true);
-
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
         /* DATATABLE PRINT CONFIG */
         $this->core_layout->addJs("js/dataTables.buttons.min.js", true);
         $this->core_layout->addJs("js/buttons.flash.min.js", true);
@@ -168,7 +169,17 @@ class Reports extends MY_Controller{
         $this->core_layout->addJs("js/vfs_fonts.js", true);
         $this->core_layout->addJs("js/buttons.html5.min.js", true);
         $this->core_layout->addJs("js/buttons.print.min.js", true);
-        $arrData["dropdown_data"] = $this->report->getDropdownSelectData();
+        
+        $dropdown = array(
+            'dropdown_company' => $this->report->getSelect2Companies(),
+            'dropdown_department' => $this->report->getSelect2Departments(),
+            'dropdown_position' => $this->report->getSelect2Positions(),
+        );
+
+        // $arrData["dropdown_data"] = $this->report->getDropdownSelectData();
+        $arrData['dropdown_data'] = $dropdown;
+        $arrData['years'] = $this->report->getSelect2Year();
+
         $this->core_layout->addCss("css/buttons.dataTables.min.css", true);
         /* END DATATABLE PRINT CONFIG */
 
@@ -254,11 +265,25 @@ class Reports extends MY_Controller{
         $this->load->view("core/templates/footer");
     }
 
+    public function age(){
+        $this->core_layout->setPageTitle("HRIS - Age");
+        $tempData = array();
+        $tempData["company"] = $this->company->select2CompanyData();
+        $tempData['station'] = $this->employee->getSitePointStations();
+        $tempData["department"] = $this->department->select2DepartmentData();
+        $this->core_layout->addJs("js/buttons.print.min.js", true);
+        $this->core_layout->setPrivilegeName("hris_report_age");
+        $this->core_layout->addJs("js/hris/reports/age_report.js", true,$tempData);
+        $this->load->view("core/templates/header");
+        $this->load->view("masterfile/reports/age");
+        $this->load->view("core/templates/footer");
+    }
+
     public function get_expiring_employees($export=0)
     {
         $work_status = isset($_GET['work_status']) ? $_GET['work_status'] : null;
         $data = $this->report->getExpiringEmployees($export, $work_status);
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function get_company_collection()
@@ -275,8 +300,9 @@ class Reports extends MY_Controller{
 
     public function get_employees_for_salary_range($export=0)
     {
+        $post = $this->input->post();
         $data = $this->report->getEmployeesForSalaryRange($export);
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function get_employee_leaves()
@@ -292,32 +318,32 @@ class Reports extends MY_Controller{
 
     public function generate_comprehensive_report(){
         $data = $this->report->generateComprehensiveReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_manpower_report(){
         $data = $this->report->generateManpowerReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_manpower_by_company_report(){
         $data = $this->report->generateManpowerByCompanyReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_training_seminars_report(){
         $data = $this->report->generateTrainingSeminarsReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_drivers_license_report(){
         $data = $this->report->generateDriversLicenseReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function generate_licenses_certificate_report(){
         $data = $this->report->generateCertificateReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function get_salary_payinfo_datatable_request(){
@@ -337,7 +363,7 @@ class Reports extends MY_Controller{
 
     public function generate_late_absentee_report(){
         $data = $this->report->generateLateAbsenteeReport();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function select_payroll_group(){
@@ -400,6 +426,40 @@ class Reports extends MY_Controller{
 
     public function set_employees_without_stations(){
         $data = $this->report->setEmployeesWithoutStations();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function log_export(){
+        $data = $this->report->logExport();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function mass_trigger_station_action($id = null){
+        $data = $this->report->setlastEmployeeStation($id);
+
+        echo '<pre>';
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+        echo '</pre>';
+    }
+
+    public function get_age_report(){
+        $data = $this->report->getAgeReport();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_employee_select2_data(){
+        $data = $this->report->getSelect2Employee();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function get_employees_history(){
+        $data = $this->report->getEmployeeSalaryHistory();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));

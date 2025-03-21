@@ -63,6 +63,8 @@ $.ajax({
             var avatarImage = baseUrl("uploads/files/images/employee_files/empcode_"+ created_by +"/ticketing/" + filename);
             var renderImage = vmData.picture;
             images.push(filename);
+            const filename1 = filename;
+            const shortenedName = filename1.length <= 20 ? filename1 : `${filename1.slice(0, 20)}...`;
             $("#picture").attr("src", renderImage);
             $("#pic").val(images);
             let icon = '';
@@ -104,7 +106,7 @@ $.ajax({
                         ''+
                         '</span><br>'+
                         '<span class="m-widget2__user-name">'+
-                        filename +
+                        shortenedName +
                         '</span>'+
                         '<span class="m-widget2__user-name">'+
                         '</span><br><br>'+
@@ -166,9 +168,7 @@ $.ajax({
         }else{
             vmData.status = "<span class='m-badge m-badge--metal m-badge--wide text-white'>"+vmData.status+"</span>";
         }
-
-        console.log(vmData.status_id);
-
+        console.log(data);
         vmTab1.vm_tab1 = Object.assign({}, data);
     }
 });
@@ -190,26 +190,52 @@ function getComments(){
 }
 
 function delete_comment(id){
-    console.log('asdasd');
+    Swal.fire({
+        title: "Comments",
+        text:'Are you sure you want to remove this comment?!',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, Remove it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl("ticket/ticket/remove_actionstkn"),
+                type: 'POST',
+                dataType: "json",
+                data: {
+                    csrf_token : _csrf_hash,
+                    id : id
+                },
+                success: function (response) {
+                    getComments();
+                    toastr.success("Success", "Deleted.", 5000);
+                }
+            })
+        }
+      });
 }
+
 $.validate({
     form: '#frm-add-comment',
     lang: 'en',
     onSuccess: function (form) {
+        var comment = $('#comment').val().trim();
+        if (!comment) {
+            toastr.error("Comment cannot be empty or contain only spaces.", "Validation Error!", 5000);
+            return false; 
+        }
         $.ajax({
             url: baseUrl("ticket/ticket/add_comment"),
             type: "POST",
             dataType: "json",
             data: $("#frm-add-comment").find("input,textarea").serialize(),
-            // beforeSend: function () {
-            //     $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-            // },
             success: function (data) {
                 if (data) {
-                    toastr.success("Comment successfully saved.", "Saved.", 5000)
-                    setTimeout(() => {
-                        getComments();
-                    }, 700);
+                    $('#comment').val('');
+                    toastr.success("Comment successfully saved.", "Saved.", 5000);
+                    getComments();
                 } else {
                     toastr.error(data.toastr_msg, "Notice: Error!", 5000);
                 }

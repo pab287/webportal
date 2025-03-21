@@ -58,13 +58,13 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-12 m--hide interview_dt">
+                        <div class="col-xl-2 col-lg-3 col-md-3 col-sm-12 m--hide interview_dt">
                             <div class="form-group">
                                 <label class="control-label">Interview Date</label>
-                                <input type="text" name="interview_dt" id="interview_dt" placeholder="SELECT DATE" class="form-control date" autocomplete="off">
+                                <input type="text" name="interview_dt" id="interview_dt" placeholder="SELECT DATE" class="form-control date" autocomplete="off" readonly>
                             </div>
                         </div>
-                        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-12 m--hide hired_dt">
+                        <div class="col-xl-2 col-lg-3 col-md-3 col-sm-12 m--hide hired_dt">
                             <div class="form-group">
                                 <label class="control-label">Hired Date</label>
                                 <input type="text" name="hired_dt" id="hired_dt" placeholder="SELECT DATE" class="form-control date" autocomplete="off" readonly>
@@ -79,6 +79,12 @@
                                     <option value="Internal">Internal Encoding</option>
                                     <option value="Online">Online Application</option>
                                 </select>
+                            </div>
+                        </div>
+                        <div class="col-xl-2 col-lg-3 col-md-3 col-sm-12 application_dt">
+                            <div class="form-group">
+                                <label class="control-label">Application Date</label>
+                                <input type="text" name="application_dt" id="application_dt" placeholder="SELECT DATE" class="form-control date" autocomplete="off" readonly>
                             </div>
                         </div>
 
@@ -118,7 +124,7 @@
                         <th>School</th>
                         <th>Course</th>
                         <th>Position</th>
-                        <th>Tag</th>
+                        <th>Eligible Position/Tag</th>
                         <th>Recruitment</th>
                         <th>Application Date</th>
                     </tr>

@@ -112,7 +112,15 @@
                                         <b v-text="vm_tab1.category"></b>
                                     </div>
                                 </div>
-                                <div class="form-group m-form__group row">
+                                <div v-if="vm_tab1.responsibility" class="form-group m-form__group row">
+                                    <label class="col-lg-4 col-md-6 col-sm-4">
+                                        Department Responsible:
+                                    </label>
+                                    <div class="col-lg-8 col-md-6 col-sm-8">
+                                        <b v-text="vm_tab1.responsibility"></b>
+                                    </div>
+                                </div>
+                                <div v-if="vm_tab1.sub_category != 'Not set'" class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-6 col-sm-4">
                                         Module:
                                     </label>
@@ -194,11 +202,11 @@
                                         {{ data.created_at }}
                                         </span>
                                     </div>
-                                    <span class="m-widget3__status mb-4">
-                                        <a href="#" onclick="delete_comment(data.ticket_id)" class="btn btn-danger m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill m-btn--air">
+                                    <!-- <span class="m-widget3__status mb-4">
+                                        <a href="#" @click="delete_comment(data.id)" class="btn btn-danger m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill m-btn--air">
                                             <i class="la la-trash"></i>
                                         </a>
-                                    </span>
+                                    </span> -->
                                 </div>
                                 <div class="m-widget3__body">
                                         
@@ -234,7 +242,7 @@
                             <div class="m-widget3__body">
                             <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
                                 <input name="ticket_id" id="ticket_id" type="hidden">
-                                <textarea name="comment" class="form-control" placeholder="Write here" row="3"></textarea>
+                                <textarea name="comment" id="comment" class="form-control" placeholder="Write here" row="3"></textarea>
                             </div>
                         </div>
                         <button class="btn btn-success btn-sm" type="submit">Add</button>

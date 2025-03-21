@@ -119,14 +119,18 @@ function select_employee() {
 
     public function view_overtime() {
         $this->core_layout->setPageTitle("Overtime - Overtime Request Details");
+        $this->core_layout->setPrivilegeName("overtime_masterfile");
+
         $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
         $this->core_layout->addCss("plugins/lightbox/js/lightbox.css");
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+
         $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
         $this->core_layout->addJs("plugins/lightbox/js/lightbox.js");
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
         $this->core_layout->addJs("js/eforms/overtime/view_overtime.js", true);
-        $this->core_layout->setPrivilegeName("overtime_masterfile");
 
         $this->load->view('core/templates/header');
         $this->load->view('eforms/overtime/view_overtime');
@@ -172,6 +176,7 @@ function select_employee() {
     }
 
     function overtime_masterfile(){
+        $this->core_layout->setPrivilegeName("overtime_masterfile");
         $data = $this->overtime->overtimeMasterfile();
 		$this->output
         ->set_content_type('json')
@@ -179,6 +184,7 @@ function select_employee() {
     }
 
     function overtime_archive(){
+        $this->core_layout->setPrivilegeName("overtime_archive");
         $data = $this->overtime->overtimeArchive();
 		$this->output
         ->set_content_type('json')
@@ -186,16 +192,18 @@ function select_employee() {
     }
 
     function get_employee(){
+        $this->core_layout->setPrivilegeName("overtime_masterfile");
         $data = $this->overtime->getEmployee();
 		$this->output
         ->set_content_type('json')
         ->set_output(json_encode($data));
     }
     function get_company(){
-      $data = $this->overtime->getCompanyList();
-  $this->output
-      ->set_content_type('json')
-      ->set_output(json_encode($data));
+        $this->core_layout->setPrivilegeName("overtime_masterfile");
+        $data = $this->overtime->getCompanyList();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
   }
 
     function get_employee_department_head(){
@@ -277,7 +285,7 @@ function select_employee() {
     
     function print_overtime($id){
         $data = array();
-        $query = $this->overtime->getOvertimeRequestDetails($id);
+        $query = (object) $this->overtime->getOvertimeRequestDetails($id); //changed to object as this function returns an array and it is used to other function.
         
         $data["query"] = $query;
         $this->load->view('eforms/overtime/print_overtime', $data);
