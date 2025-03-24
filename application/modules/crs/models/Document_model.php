@@ -1054,13 +1054,12 @@ class Document_model extends CI_Model{
     {
         $resultset = array();
         $post = $this->input->post();
-        $search = (isset($post["search"]) && $post["search"]) ? $post["search"] : false;
+        $search = (isset($post["search"]['value']) && $post["search"]['value'])? str_replace(' ', '', strval($post["search"]['value'])): false;
         $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
         $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
         $sorByColumnIndex = (isset($post["order"]) && $post["order"]) ? $post["order"][0]["column"] : null; // get column index
         $sortBy = (isset($post["order"]) && $post["order"]) ? $post["columns"][$sorByColumnIndex]["data"] : null; // get column name;
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"][0]["dir"] : "desc";
-
         $rowCount = 0;
         $rowData = array();
         if (!$search) {
@@ -1148,13 +1147,13 @@ class Document_model extends CI_Model{
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
                 if ($key == 0) {
-                    $this->db->like($field, $search["value"], "both");
+                    $this->db->like($field, $search, "both");
                 } else {
-                    $this->db->or_like($field, $search["value"], "both");
+                    $this->db->or_like($field, $search, "both");
                 }
             }
-            $this->db->or_like("CONCAT(a.firstname,' ', a.lastname)", $search["value"], "both");
-            $this->db->or_like("CONCAT(a.firstname, a.lastname)", $search["value"], "both");
+            $this->db->or_like("CONCAT(a.firstname,' ', a.lastname)", $search, "both");
+            $this->db->or_like("CONCAT(a.firstname, a.lastname)", $search, "both");
             $this->db->group_end();
 
             if ((int)$limit >= 0) {
@@ -1206,9 +1205,9 @@ class Document_model extends CI_Model{
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
                 if ($key == 0) {
-                    $this->db->like($field, $search["value"], "both");
+                    $this->db->like($field, $search, "both");
                 } else {
-                    $this->db->or_like($field, $search["value"], "both");
+                    $this->db->or_like($field, $search, "both");
                 }
             }
             $this->db->group_end();
