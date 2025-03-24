@@ -360,28 +360,44 @@
                             <?php foreach ($item->loans as $kk => $vv): ?>
                                 <div class="row text-right">
                                     <?php if($vv->amount_due > 0){ ?>
-                                        <div class="col-md-5 printable-width-5">
-                                            <h5 class="m--font-bolder m--marginless"><?php echo $vv->loan_name; ?></h5>
-                                        </div>
-                                        <div class="col-md-7 printable-width-7 text-left">
-                                            <h5 class="m--font-bolder m--marginless"><?php echo $vv->amount_due; ?></h5>
-                                        </div>
+
+                                        <?php
+                                            if (strtolower($vv->loan_name) == 'charges') {
+
+                                                $_data = array(
+                                                    'label' => $vv->loan_name,
+                                                    'display_value' => $vv->amount_due
+                                                );
+
+                                                $item->adjustment_deductions[] = (object) $_data;
+                                                $item->adjustment_d_count++;
+                                            }
+                                        ?>
+
+                                        <?php if (strtolower($vv->loan_name) != 'charges'): ?>
+                                            <div class="col-md-5 printable-width-5">
+                                                <h5 class="m--font-bolder m--marginless"><?php echo $vv->loan_name; ?></h5>
+                                            </div>
+                                            <div class="col-md-7 printable-width-7 text-left">
+                                                <h5 class="m--font-bolder m--marginless"><?php echo $vv->amount_due; ?></h5>
+                                            </div>
+                                        <?php endif; ?>
                                     <?php } ?>
                                 </div>
                             <?php endforeach; ?>
-                            <div class="row m--margin-top-5 m--margin-bottom-5">
+                            <!-- <div class="row m--margin-top-5 m--margin-bottom-5">
                                 <div class="col-md-8 printable-width-8">
                                     <h5 class="m--font-bolder m--marginless">TOTAL LOANS</h5>
                                 </div>
                                 <div class="col-md-4 printable-width-4 text-right">
                                     <h5 class="m--font-boldest m--marginless">( <?php echo $item->totalLoan; ?> )</h5>
                                 </div>
-                            </div>
+                            </div> -->
                         <?php endif; ?>
                     <?php endif; ?>
                     
                     <?php if(is_numeric($item->adjustment_d_count) && intval($item->adjustment_d_count) > 0): ?>
-                        <h5 class="m--marginless mt-3"><span class="m--margin-left-15">OTHERS</span></h5>
+                        <h5 class="m--marginless mt-3"><span class="m--margin-left-15">OTHER DEDUCTIONS</span></h5>
                         <?php foreach ($item->adjustment_deductions as $kk => $vv): ?>
                             <div class="row text-right">
                                 <div class="col-md-5 printable-width-5">
@@ -392,6 +408,17 @@
                                 </div>
                             </div>
                         <?php endforeach; ?>
+                    <?php endif; ?>
+
+                    <?php if($item->total_loans && (floatval($item->total_loans) > 0 || (is_array($item->loans) && count($item->loans) > 0))): ?>
+                        <div class="row m--margin-top-5 m--margin-bottom-5">
+                            <div class="col-md-8 printable-width-8">
+                                <h5 class="m--font-bolder m--marginless">TOTAL LOANS / DEDUCTIONS</h5>
+                            </div>
+                            <div class="col-md-4 printable-width-4 text-right">
+                                <h5 class="m--font-boldest m--marginless">( <?php echo $item->totalLoan; ?> )</h5>
+                            </div>
+                        </div>
                     <?php endif; ?>
 
                     <!-- commented out for seperated total deduction and loans -->

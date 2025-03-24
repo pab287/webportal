@@ -8038,4 +8038,36 @@ class Payroll_m extends CI_Model
 
         return $flatArray;
     }
+
+    public function setPrintablePayslipOthers($ids=array()){
+        $resultset = array();
+        $post = $this->input->post();
+        if(isset($ids) && $ids){ $post["ids"] = $ids; }
+        if(isset($post) && $post){
+            if(isset($post["ids"]) && is_array($post["ids"]) && count($post["ids"]) > 0){
+                $arrData = array();
+                $forPrint = $this->getEmpId($post["ids"]);
+                foreach ($forPrint as $key => $id) {
+                    $result = (object) $this->getCurrentPayrollPayslip($id);
+                    if($result->response == true){
+                        $arrData[] = $result->data;
+                    }
+                }
+                if(is_array($arrData) && count($arrData) > 0){
+                    $html = $this->load->view("core/templates/printable/header", null, true);
+                    $html .= $this->load->view("payroll/payroll/printable/print_content_others", array("data"=>$arrData), true);
+                    $html .= $this->load->view("core/templates/printable/footer", null, true);
+                    $resultset["response"] = true;
+                    $resultset["html"] = $html;
+                }else{
+                    $resultset["response"] = false;
+                }
+            }else{
+                $resultset["response"] = false;
+            }
+        }else{
+            $resultset["response"] = false;
+        }
+        return $resultset;
+    }
 }

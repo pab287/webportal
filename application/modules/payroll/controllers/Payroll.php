@@ -796,5 +796,12 @@
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
         }
+
+        function set_printable_payslip_option() {
+            $data = $this->payroll->setPrintablePayslipOthers();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
         
     }
