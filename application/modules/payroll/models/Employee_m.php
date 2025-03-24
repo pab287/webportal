@@ -1857,6 +1857,9 @@
                         $newStatus = $change['new'] == 1 ? 'active' : 'suspended';
                         $changesString .= " Field: $field, from: <strong>$oldStatus</strong>, to: <strong>$newStatus</strong>\n";
                     }
+                    else if (strtolower($field) == 'percentage'){
+                        $changesString.= " Field: $field, from: <strong>" . round($change['old']) . "%</strong>, to: " . round($change['new']) . "%\n";
+                    }
                     else{
                         $changesString.= " Field: $field, from: <strong>$change[old]</strong>, to: <strong>$change[new]</strong>\n";
                     }
