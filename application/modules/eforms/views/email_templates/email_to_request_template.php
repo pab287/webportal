@@ -246,7 +246,7 @@
                 <table border="0" align="center" width="980" cellpadding="0" cellspacing="0" class="container980">
                     <thead>
                         <tr>
-                            <th colspan="4"><p style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: center; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 10px;"></p></th>
+                            <th colspan="5"><p style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: center; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 10px;"></p></th>
                         </tr>
                         <tr>
                             <th align="left" style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: left;">PERSONNEL</th>
