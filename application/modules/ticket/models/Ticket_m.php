@@ -57,7 +57,7 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '0');
-        $this->db->where('lower(a.status) !=', "cancelled");
+        $this->db->where("LOWER(a.status) != 'cancelled'", NULL, FALSE);
         $current_user_id = $this->user_data['emp_id'];
         if($payroll) {
             $this->db->where('cat.name', 'payroll');
