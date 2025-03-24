@@ -57,7 +57,7 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '0');
-        $this->db->where('a.status !=', "cancelled");
+        $this->db->where('lower(a.status) !=', "cancelled");
         $current_user_id = $this->user_data['emp_id'];
         if($payroll) {
             $this->db->where('cat.name', 'payroll');
@@ -231,6 +231,7 @@ class Ticket_m extends CI_Model
         if ($limit != -1) {
             $this->db->limit($limit, $offset);
         }
+        $this->db->group_by("a.id");
         $query = $this->db->get();
         if ($query->num_rows() > 0) {
             $resultset = $query->result();
@@ -275,6 +276,7 @@ class Ticket_m extends CI_Model
         if($query_builder){
             $this->db->where($query_builder);
         }
+        $this->db->group_by("a.id");
         $query = $this->db->get();
         return $query->num_rows();
     }

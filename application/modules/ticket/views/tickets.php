@@ -12,34 +12,12 @@
                         </div>
                     </div>
                     <div class="m-portlet__head-tools">
-                        <ul class="m-portlet__nav">
-                            <li class="m-portlet__nav-item m-dropdown m-dropdown--inline m-dropdown--arrow m-dropdown--align-right m-dropdown--align-push"
-                                data-dropdown-toggle="hover" aria-expanded="true">
-                                <a href="#" class="m-portlet__nav-link m-portlet__nav-link--icon m-portlet__nav-link--icon-xl">
-                                    <i class="la la-ellipsis-h m--font-brand"></i>
-                                </a>
-                                <div class="m-dropdown__wrapper">
-                                    <span class="m-dropdown__arrow m-dropdown__arrow--right m-dropdown__arrow--adjust"
-                                          style="left: auto; right: 22.5px;"></span>
-                                    <div class="m-dropdown__inner">
-                                        <div class="m-dropdown__body">
-                                            <div class="m-dropdown__content">
-                                                <ul class="m-nav">
-                                                    <li class="m-nav__item">
-                                                        <a href="<?php echo base_url("ticket/archive"); ?>" class="m-nav__link btnArchive">
-                                                            <i class="m-nav__link-icon flaticon-open-box"></i>
-                                                            <span class="m-nav__link-text">
-																Archives
-															</span>
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
+                        <a href="<?php echo base_url("ticket/archive"); ?>" class="m-nav__link btnArchive">
+                            <i class="m-nav__link-icon flaticon-open-box"></i>
+                            <span class="m-nav__link-text">
+                                Archive
+                            </span>
+                        </a>
                     </div>
                 </div>
                 <div class="m-portlet__body">
