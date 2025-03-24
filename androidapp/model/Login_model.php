@@ -40,7 +40,7 @@
                 $count = $allData->rowCount();
                 if($count != 0){
                     $status = $allData->fetch(PDO::FETCH_ASSOC);
-                    if($this->count_user_app($imei, $status['biometric_id'])){
+                    if($this->countUserApp($imei, $status['biometric_id'])){
                         return json_encode(array("num" => 1, "data" => $status));
                     }else{
                         return json_encode(array("num" => 0));
@@ -84,8 +84,8 @@
                     if($this->ver_user_account($imei, $emp_data['biometricno']) != true){
                         if($this->ver_unique_id($imei, $emp_data['biometricno']) != true){
                             $this->add_unique_id($imei, $emp_data['biometricno']);
-                            if($this->count_appUsers($imei, $emp_data['biometricno'])){
-                                if($this->count_user_app($imei, $emp_data['id'])){
+                            if($this->getCountAppUsers($imei, $emp_data['biometricno'])){
+                                if($this->countUserApp($imei, $emp_data['id'])){
                                     return $this->updateAppUsers($device_id, $device_name, $imei, $emp_data);
                                 }else{
                                     return $this->insertAppUsers($device_id, $device_name, $imei, $emp_data);
@@ -255,16 +255,14 @@
             return $array;
         }
 
-        function checkUserExist($emp_id, $device_name, $device_id, $app_user_id, $unique_id, $biometricno){
+        public function checkUserExist($emp_id, $device_name, $device_id, $app_user_id, $unique_id, $biometricno){
             $conn = $this->conn("gcctimeutility");
-            $sth = $conn->prepare("SELECT id 
-                                   FROM gcctimeutility.app_users 
-                                   WHERE emp_id='$emp_id'");
+            $sth = $conn->prepare("SELECT id FROM gcctimeutility.app_users WHERE emp_id='$emp_id'");
             $sth->execute();
 
             if ($sth->rowCount() === 0) {
-                $userApp = $conn->prepare("INSERT INTO gcctimeutility.app_users(`emp_id`, `device_name`, `device_id`, `app_user_id`, `user_imei`, `biometric_no`, `status`) 
-                                           VALUES ('$emp_id', '$device_name', '$device_id', '$app_user_id', '$unique_id', '$biometricno', 1)");
+                $userApp = $conn->prepare("INSERT INTO gcctimeutility.app_users(`emp_id`, `device_name`, `device_id`, `app_user_id`, `user_imei`, `biometric_no`, `status`)
+                    VALUES ('$emp_id', '$device_name', '$device_id', '$app_user_id', '$unique_id', '$biometricno', 1)");
                 $userApp->execute();
                 if($userApp){
                     return 'grant_access';
@@ -282,38 +280,32 @@
                     $row = $check->fetch(PDO::FETCH_ASSOC);
                     if ($check->rowCount() > 0) {
                         $msg = 'Account is currently sign in at '.$row['device_name'].' device id of '.$row['device_id'].', you need to sign out before sign in to other devices.';
-                        $msg_logs = '[Mobile] Account is currently sign in at '.$row['device_name'].' device id of '.$row['device_id'].', User tried to sign-in in this device '.$device_name.'.';
+                        $msg_logs = '[Mobile] Account is currently sign in at '.$row['device_name'].' device id of '.$row['device_id'].', User tried to sign-in in this device '.$device_name.' with device IMEI '.$unique_id.'.';
                         $this->saveLogs("error", "sign in", $emp_id, $msg_logs);
                         return $msg;
-                    } else {
-                        return 'grant_access';
-                    }
+                    } else { return 'grant_access'; }
                 }
             }
         }
 
         public function updateUserStatus($emp_id, $app_user_id, $unique_id, $device_id, $device_name){
             $conn = $this->conn("gcctimeutility");
-            $log = $conn->prepare("UPDATE gcctimeutility.app_users 
-                                   SET status = 2, app_user_id = '$app_user_id', user_imei = '$unique_id', device_id = '$device_id', device_name = '$device_name'
-                                   WHERE emp_id = '$emp_id'");
+            $log = $conn->prepare("UPDATE gcctimeutility.app_users
+                SET status = 2, app_user_id = '$app_user_id', user_imei = '$unique_id', device_id = '$device_id', device_name = '$device_name'
+                WHERE emp_id = '$emp_id'");
             $log->execute();
         }
 
-        function checkUserLoginToTheirDevice($unique_id, $emp_id){
+        protected function checkUserLoginToTheirDevice($unique_id, $emp_id){
             $conn = $this->conn("gcctimeutility");
-            $sth = $conn->prepare("SELECT id 
-                                   FROM gcctimeutility.app_users 
-                                   WHERE user_imei='$unique_id' AND emp_id='$emp_id'");
+            $sth = $conn->prepare("SELECT id FROM gcctimeutility.app_users WHERE user_imei='$unique_id' AND emp_id='$emp_id'");
             $sth->execute();
             return $sth->rowCount();
         }
 
-        function checkUserLoginToOtherDevice($unique_id, $emp_id){
+        protected function checkUserLoginToOtherDevice($unique_id, $emp_id){
             $conn = $this->conn("gcctimeutility");
-            $sth = $conn->prepare("SELECT device_id, device_name
-                                   FROM gcctimeutility.app_users 
-                                   WHERE user_imei!='$unique_id' AND emp_id='$emp_id' AND status='2'");
+            $sth = $conn->prepare("SELECT device_id, device_name FROM gcctimeutility.app_users WHERE user_imei!='$unique_id' AND emp_id='$emp_id' AND status='2'");
             $sth->execute();
             return $sth;
         }
@@ -321,9 +313,7 @@
         public function check_login_status(){
             $emp_id = $_POST["emp_id"];
             $conn = $this->conn("gcctimeutility");
-            $sth = $conn->prepare("SELECT id 
-                                FROM gcctimeutility.app_users 
-                                WHERE emp_id='$emp_id' AND status='2'");
+            $sth = $conn->prepare("SELECT id FROM gcctimeutility.app_users WHERE emp_id='$emp_id' AND status='2'");
             $sth->execute();
             return $sth->rowCount();
         }
@@ -337,7 +327,7 @@
                 $unique_id = md5($_POST['unique_id']);
                 $this->log($_POST['unique_id'], $unique_id, $emp_id);
                 $conn = $this->conn("gcctimeutility");
-                if($this->count_user_app($imei, $emp_id) != true){
+                if($this->countUserApp($imei, $emp_id) !== true){
                     $sql = "INSERT INTO gcctimeutility.app_users(`emp_id`, `device_name`, `device_id`, `app_user_id`, `user_imei`, `status`) VALUES (:emp_id, :device_name, :device_id, :unique_id, :user_imei, 1)";
                     $userApp = $conn->prepare($sql);
                     $userApp->bindParam(':emp_id', $emp_id);
@@ -505,11 +495,8 @@
             $ver->bindParam(":biometric_no", $biometric_id);
             $ver->bindParam(":unique_id", $unique_id);
             $ver->execute();
-            if($ver->rowCount() > 0){
-                return true;
-            }else{
-                return false;
-            }
+            if($ver->rowCount() > 0){ return true; }
+            else{ return false; }
         }
 
         private function update_device_personnel($device_id, $device_name, $imei){
@@ -520,11 +507,8 @@
             $bio->bindParam(":device_name", $device_name);
             $bio->bindParam(":user_imei", $imei);
             $bio->execute();
-            if($bio){
-                return true;
-            }else{
-                return false;
-            }
+            if($bio){ return true; }
+            else{ return false; }
         }
 
         private function add_unique_id($unique_id, $biometric_id){
@@ -562,8 +546,8 @@
             $stats->execute();
             if($stats){
                 return json_encode(array("emp_id" => $emp_data['id'], "imei" => $imei, "biometric_id" => $emp_data['biometricno'], "firstname" => $emp_data['firstname'], 
-                                         "idno" => $emp_data['idno'], "position_name" => $emp_data['position_name'], "pic_filename" => $emp_data['pic_filename'], 
-                                         "lastname" => $emp_data['lastname']));
+                    "idno" => $emp_data['idno'], "position_name" => $emp_data['position_name'], "pic_filename" => $emp_data['pic_filename'], 
+                    "lastname" => $emp_data['lastname']));
             }else{
                 return 0;
             }
@@ -571,7 +555,8 @@
 
         private function insertAppUsers($device_id, $device_name, $imei, $emp_data){
             $connect = $this->conn("gcctimeutility");
-            $update = "INSERT INTO gcctimeutility.app_users(device_id, device_name, emp_id, biometric_no, user_imei, status ) VALUES ( :device_id, :device_name, :emp_id, :biometric, :imei, 1 )";
+            $update = "INSERT INTO gcctimeutility.app_users(device_id, device_name, emp_id, biometric_no, user_imei, status )
+                VALUES ( :device_id, :device_name, :emp_id, :biometric, :imei, 1 )";
             $stats = $connect->prepare($update);
             $stats->bindParam(':device_id', $device_id);
             $stats->bindParam(':device_name', $device_name);
@@ -581,39 +566,31 @@
             $stats->execute();
             if($stats){
                 return json_encode(array("emp_id" => $emp_data['id'], "imei" => $imei, "biometric_id" => $emp_data['biometricno'], "firstname" => $emp_data['firstname'], 
-                                         "idno" => $emp_data['idno'], "position_name" => $emp_data['position_name'], "pic_filename" => $emp_data['pic_filename'], 
-                                         "lastname" => $emp_data['lastname']));
+                    "idno" => $emp_data['idno'], "position_name" => $emp_data['position_name'], "pic_filename" => $emp_data['pic_filename'], 
+                    "lastname" => $emp_data['lastname']));
             }else{
                 return 0;
             }
         }
 
-        private function count_user_app($unique_id, $emp_id){
+        private function countUserApp($unique_id, $emp_id){
             $conn = $this->conn("gcctimeutility");
             $sql = "SELECT * FROM gcctimeutility.app_users WHERE user_imei = :unique_id AND emp_id = :emp_id";
             $data = $conn->prepare($sql);
             $data->bindParam(':emp_id', $emp_id);
             $data->bindParam(':unique_id', $unique_id);
             $data->execute();
-            if($data->rowCount() != 0){
-                return true;
-            }else{
-                return false;
-            }
+            return $data->rowCount() != 0;
         }
 
-        private function count_appUsers($imei,$bionum){
+        private function getCountAppUsers($imei,$bionum){
             $conn = $this->conn("gcctimeutility");
             $sql = "SELECT * FROM gcctimeutility.personnel WHERE user_imei = :imei AND biometric_id = :bio_num";
             $data = $conn->prepare($sql);
             $data->bindParam(':bio_num', $bionum);
             $data->bindParam(':imei', $imei);
             $data->execute();
-            if($data->rowCount() != 0){
-                return true;
-            }else{
-                return false;
-            }
+            return $data->rowCount() != 0;
         }
 
         private function getDeviceId($dev_id, $emp_id){
@@ -624,11 +601,7 @@
             $data->bindParam(':device_id', $device_id);
             $data->bindParam(':emp_id', $emp_id);
             $data->execute();
-            if($data->rowCount() != 0){
-                return true;
-            }else{
-                return false;
-            }
+            return $data->rowCount() != 0;
         }
 
         public function saveLogs($type, $user_action, $user_id, $log_message){
@@ -636,14 +609,10 @@
             $current_date = date("Y-m-d H:i:s");
             $ip_address = '';
 
-            $sth = $conn->prepare("INSERT INTO gcctimeutility.app_logs_event(`type`, `user_action`, `user_id`, `log_message`, `ip_address`, `created_at`) VALUES ('$type','$user_action','$user_id','$log_message','$ip_address','$current_date')");
+            $sth = $conn->prepare("INSERT INTO gcctimeutility.app_logs_event(`type`, `user_action`, `user_id`, `log_message`, `ip_address`, `created_at`)
+                VALUES ('$type','$user_action','$user_id','$log_message','$ip_address','$current_date')");
             $sth->execute();
-
-            if ($sth) {
-                return true;
-            } else {
-                return false;
-            }
+            return $sth->rowCount() > 0;
         }
 
         public function changeGeoKey($location){
