@@ -10923,7 +10923,7 @@
             $historyStatus = false;
             $now = date('Y-m-d');
 
-            $this->db->select('b.name, a.basic_rate, a.payroll_type, a.date_start');
+            $this->db->select('b.name, a.basic_rate, a.payroll_type, DATE(a.date_start) as date_start');
             $this->db->from($this->employeeTable.' as a');
             $this->db->join($this->positionTable.' as b', 'b.id = a.position OR b.name = a.position', 'LEFT');
             $this->db->where('a.id', $arr['id']);
