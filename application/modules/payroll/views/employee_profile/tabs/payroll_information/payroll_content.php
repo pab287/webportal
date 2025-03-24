@@ -653,7 +653,7 @@
 
                         <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 form-group">
                             <label for="required" class="required" id="deduct_type_value_label">Value</label>
-                            <input type="text" name="deduct_type_value" value="20" data-validation="required"
+                            <input type="text" name="deduct_type_value" id="deduct_type_value" value="20" data-validation="required"
                                    autocomplete="off" class="form-control text-right">
                         </div>
                     </div>
@@ -2704,6 +2704,13 @@
                 field.val(20);
             } else {
                 // $("#deduct_type_value_label").html("Amount");
+                $("#deduct_type_value").maskMoney({
+                    prefix: '',
+                    allowNegative: true,
+                    thousands: ',',
+                    decimal: '.',
+                    affixesStay: false
+                });
                 field.val('');
             }
         });

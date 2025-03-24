@@ -8181,9 +8181,11 @@
             $data["remarks"] = isset($post["remarks"]) && $post["remarks"] ? trim($post["remarks"]): NULL;
 
             if (intval($data["deduction_type"]) === 0) {
-                $data["percentage"] = 20;
+                $data["percentage"] = $post["deduct_type_value"];
+                $log = "With percentage deduction of: <strong>".$post["deduct_type_value"]."%</strong>";
             } else {
                 $data["fixed_deduction_amt"] = $post["deduct_type_value"];
+                $log = "With fixed deduction amount of: <strong>".$post["deduct_type_value"]."</strong>";
             }
 
             $query = $this->db->insert("gcchris.loans", $data);
@@ -8191,7 +8193,7 @@
             if ($query) {
                 $resultarray["status"] = TRUE;
                 $resultarray["response"] = "New loan information was successfully saved!";
-                $this->core_layout->setEventLog("User added new loan Type: <strong>".$this->getLoanTypeById($post["loan_id"]) ."</strong> with amount: <strong>".$post["amount"]."</strong> for employee: <strong>$fullname</strong>","insert", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User added new loan Type: <strong>".$this->getLoanTypeById($post["loan_id"]) ."</strong> with amount: <strong>".$post["amount"]."</strong>, $log for employee: <strong>$fullname</strong>","insert", "success", "gcchris", "user");
             } else {
                 $resultarray["status"] = FALSE;
                 $resultarray["response"] = $this->db->error();
