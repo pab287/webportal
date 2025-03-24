@@ -10921,14 +10921,21 @@
             $rate = '';
             $rate_fr = '';
             $historyStatus = false;
+            $now = date('Y-m-d');
 
-            $this->db->select('b.name, a.basic_rate, a.payroll_type');
+            $this->db->select('b.name, a.basic_rate, a.payroll_type, a.date_start');
             $this->db->from($this->employeeTable.' as a');
             $this->db->join($this->positionTable.' as b', 'b.id = a.position OR b.name = a.position', 'LEFT');
             $this->db->where('a.id', $arr['id']);
             $query = $this->db->get()->row();
             $this->db->reset_query();
             $basic = $query->basic_rate;
+
+            $date = $now;
+            if (isset($query->date_start) && $query->date_start) {
+                $date_hired = date('Y-m-d', strtotime($query->date_start . ' +7 days')); //tags the employee as newly hired
+                $date = ($now >= $query->date_start && $now <= $date_hired) ? $query->date_start : $now;
+            }
 
             if($arr['payroll_type'] == 'hourly'){
                 $payroll = 'Hourly Rate';
@@ -10969,7 +10976,7 @@
             // checks if has a same day history log
             $hasSameDayHistory = $this->db->select('id')->limit(1)
                 ->order_by('sal_date', 'DESC')
-                ->get_where($this->employeeSalaryTable, array('emp_id' => $arr['id'], 'DATE(sal_date)' => date('Y-m-d'), 'is_archived' => 0));
+                ->get_where($this->employeeSalaryTable, array('emp_id' => $arr['id'], 'DATE(sal_date)' => $date, 'is_archived' => 0));
             
             if ($hasSameDayHistory->num_rows() > 0) {
                 $row = $hasSameDayHistory->row();

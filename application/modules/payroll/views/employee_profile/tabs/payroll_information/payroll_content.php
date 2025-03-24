@@ -956,26 +956,36 @@
         scrollToTopOnError: false,
         onSuccess: function (form) {
             let formData = $(form).serialize();
-            const approvingAuthority = typeof _tempContentData.approving_authority !== "undefined" && _tempContentData.approving_authority ? 
-                _tempContentData.approving_authority: false;
 
-            formData += "&approving_authority="+approvingAuthority;
-            $.ajax({
-                url: $(form).attr("action"),
-                type: "POST",
-                data: formData,
-                dataType: "json",
-                beforeSend: function () {
-                    $(".btn-submit", form).addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                },
-                success: function (json) {
-                    if (json.status) { toastr.success(json.response, "Notice", 5000); } 
-                    else { toastr.error(json.response, "Notice", 5000); }
-                    $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                    if(json.for_approval){  toastr.info(json.approval_notification, "For Approval", 5000); }
-                    dtHistoryPayrollInfo.ajax.reload();
-                }
-            });
+            const basic = $("input[name=basic_rate]").val();
+
+            if (parsefloat(basic) > 0.00) {
+                const approvingAuthority = typeof _tempContentData.approving_authority !== "undefined" && _tempContentData.approving_authority ? 
+                    _tempContentData.approving_authority: false;
+    
+                formData += "&approving_authority="+approvingAuthority;
+                $.ajax({
+                    url: $(form).attr("action"),
+                    type: "POST",
+                    data: formData,
+                    dataType: "json",
+                    beforeSend: function () {
+                        $(".btn-submit", form).addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    },
+                    success: function (json) {
+                        if (json.status) { toastr.success(json.response, "Notice", 5000); } 
+                        else { toastr.error(json.response, "Notice", 5000); }
+                        $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                        if(json.for_approval){  toastr.info(json.approval_notification, "For Approval", 5000); }
+                        dtHistoryPayrollInfo.ajax.reload();
+                    }
+                });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'The basic rate is invalid.'
+                })
+            }
 
             return false;
         },

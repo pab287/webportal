@@ -699,38 +699,51 @@
         lang: 'en',
         onSuccess: function (form) {
             let formData = $(form).serialize();
-            const approvingAuthority = typeof _tempContentData.approving_authority !== "undefined" && _tempContentData.approving_authority ? 
-                _tempContentData.approving_authority: false;
 
-            formData += "&approving_authority="+approvingAuthority;
+            const basic = $("input[name=basic_rate]").val();
 
-            $.ajax({
-                /*** url: form[0].action, ***/
-                url: $(form).attr("action"),
-                type: "POST",
-                data: formData,
-                /*** data: $("#frmEditPayrollData").find("input,select").serialize(), ***/
-                beforeSend: function () {
-                    $(form).find(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                },
-                success: function (data) {
-                    if (data.status) {
-                        toastr.success(data.response, "Notice", 5000);
-                        $("#change_payroll_info").val(0);
-                        $("#payroll_information i").remove();
-                    } else {
-                        toastr.error(data.response, "Notice", 5000);
+            console.log(parseFloat(basic));
+            console.log(parseFloat(basic) > 0.00);
+
+            if (parseFloat(basic) > 0.00) {
+                const approvingAuthority = typeof _tempContentData.approving_authority !== "undefined" && _tempContentData.approving_authority ? 
+                    _tempContentData.approving_authority: false;
+    
+                formData += "&approving_authority="+approvingAuthority;
+    
+                $.ajax({
+                    /*** url: form[0].action, ***/
+                    url: $(form).attr("action"),
+                    type: "POST",
+                    data: formData,
+                    /*** data: $("#frmEditPayrollData").find("input,select").serialize(), ***/
+                    beforeSend: function () {
+                        $(form).find(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    },
+                    success: function (data) {
+                        if (data.status) {
+                            toastr.success(data.response, "Notice", 5000);
+                            $("#change_payroll_info").val(0);
+                            $("#payroll_information i").remove();
+                        } else {
+                            toastr.error(data.response, "Notice", 5000);
+                        }
+                        $(form).find(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                        if(data.for_approval){  
+                            toastr.info(data.approval_notification, "For Approval", 5000); 
+                            $("#change_payroll_info").val(0);
+                            $("#payroll_information i").remove();
+                        }
+    
+                        dtHistoryPayrollInfo.ajax.reload();
                     }
-                    $(form).find(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                    if(data.for_approval){  
-                        toastr.info(data.approval_notification, "For Approval", 5000); 
-                        $("#change_payroll_info").val(0);
-                        $("#payroll_information i").remove();
-                    }
-
-                    dtHistoryPayrollInfo.ajax.reload();
-                }
-            });
+                });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'The basic rate is invalid.'
+                });
+            }
             return false;
         },
     });
