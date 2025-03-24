@@ -56,8 +56,6 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as sub" , "sub.name = a.sub_category", 'LEFT');
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
-        $this->db->where('a.is_archived', '0');
-        $this->db->where("LOWER(a.status) != 'cancelled'", NULL, FALSE);
         $current_user_id = $this->user_data['emp_id'];
         if($payroll) {
             $this->db->where('cat.name', 'payroll');
@@ -69,6 +67,8 @@ class Ticket_m extends CI_Model
                 $this->db->where('a.requestor', $current_user_id);
             }
         }
+        $this->db->where('a.is_archived', '0');
+        $this->db->where("LOWER(a.status) != 'Cancelled'");
         if ($query_builder) {
             $lower_query = strtolower($query_builder);
             if (
@@ -136,7 +136,7 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '0');
-        $this->db->where('a.status !=', "cancelled");
+        $this->db->where("LOWER(a.status) != 'Cancelled'", NULL, FALSE);
         $current_user_id = $this->user_data['emp_id']; 
         if($payroll) {
             $this->db->where('cat.name', 'payroll');
