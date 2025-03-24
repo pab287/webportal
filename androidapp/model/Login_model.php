@@ -2,11 +2,7 @@
     class Login_model extends Dbase{
 
         public function __construct(){
-            // $this->load->model("Hris_model", 'hris');
             $this->hrisModel = new Hris_model();
-
-            // var_dump($this->hris->getEmployee(1762));
-            // die();
         }
 
         public function change_time(){
@@ -629,19 +625,13 @@
 
         public function get_last_timelog($bio_id){
             $result = array();
-
             $conn = $this->conn("gcctimeutility");
             $sql = "SELECT time, date, time_status FROM gcctimeutility.app_attendance WHERE biometric_id = :bio_id ORDER BY updated_at DESC LIMIT 1";
-            $all_logs = array();
             $data = $conn->prepare($sql);
             $data->bindParam(":bio_id", $bio_id);
             $data->execute();
             $count = $data->rowCount();
-
-            if($count > 0){
-                $result = $data->fetch(PDO::FETCH_ASSOC);
-            }
-
+            if($count > 0){ $result = $data->fetch(PDO::FETCH_ASSOC); }
             return $result;
         }
 
@@ -649,9 +639,7 @@
             $result = array();
             $post = $_POST;
             $image = './assets/images/profile/no_image.jpg';
-
             $conn = $this->conn('gccmaster');
-
             $sql = 'SELECT a.*, b.id as emp_id, b.firstname, b.lastname, b.middlename, b.suffix, b.company_id, b.department_id, c.code as company, d.code as department, b.pic_filename, a.is_suspended
                 FROM tblusers as a
                 LEFT JOIN tblemployees as b ON b.id = a.emp_id
@@ -665,12 +653,9 @@
             $query->bindParam(':pass', MD5($post['password']));
             $query->execute();
 
-
             if($query->rowCount() > 0){
                 $row = $query->fetch(PDO::FETCH_ASSOC);
-
                 $tempFile = "../uploads/files/images/employee_files/empcode_{$row[emp_id]}/thumbnails/{$row[pic_filename]}";
-
                 if(file_exists(realpath(dirname($tempFile)))){
                     $image = "/uploads/files/images/employee_files/empcode_{$row[emp_id]}/thumbnails/{$row[pic_filename]}";
                 }
@@ -678,10 +663,10 @@
                 $row['pic_filename'] = $image;
                 $row['employee_data'] = $this->hrisModel->getEmployee($row['emp_id']);
 
-                $result['response'] = TRUE;
+                $result['response'] = true;
                 $result['data'] = $row;
             }else{
-                $result['response'] = FALSE;
+                $result['response'] = false;
                 $result['data'] = array();
             }
 
