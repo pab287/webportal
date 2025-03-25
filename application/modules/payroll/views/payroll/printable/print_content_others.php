@@ -126,7 +126,7 @@
                                         <h5 class="m--font-bolder m--marginless"><?=intval($item->is_bonus) == 1 && $item->bonus_code ? "BONUS / {$item->bonus_code}":"BASIC PAY"; ?> </h5>
                                     </div>
                                     <div class="col-md-4 printable-width-6 text-right">
-                                        <h5 class="m--font-boldest m--marginless"><?=$item->target_payrate; ?></h5>
+                                        <h5 class="m--font-boldest m--marginless"><?=$item->gross_pay; ?></h5>
                                     </div>
                                 </div>
 
@@ -255,28 +255,71 @@
                                     <?php endif; ?>
 
                                     <?php if($item->total_loans && (floatval($item->total_loans) > 0 || (is_array($item->loans) && count($item->loans) > 0))): ?>
+                                        <?php $created_adjustment = $item->created_adjustments; ?>
                                         <?php foreach ($item->loans as $kk => $vv): ?>
                                             <div class="row text-right">
-                                                <?php if($vv->amount_due > 0){ ?>
-                                                    <div class="col-md-5 printable-width-5">
-                                                        <h5 class="m--font-bolder m--marginless"><?=$vv->loan_name; ?></h5>
-                                                    </div>
-                                                    <div class="col-md-7 printable-width-7 text-right">
-                                                        <h5 class="m--font-bolder m--marginless"><?=$vv->amount_due; ?></h5>
-                                                    </div>
-                                                <?php } ?>
+                                                <?php if($vv->amount_due > 0): ?>
+                                                    <?php
+                                                        if (strtolower($vv->loan_name) == 'charges') {
+
+                                                            $_data = array(
+                                                                'label' => $vv->loan_name,
+                                                                'display_value' => $vv->amount_due
+                                                            );
+
+                                                            $item->adjustment_deductions[] = (object) $_data;
+                                                            $item->adjustment_d_count++;
+                                                        }
+                                                    ?>
+
+                                                    <?php if (strtolower($vv->loan_name) != 'charges'): ?>
+                                                        <?php 
+                                                            $temp_amountDue = $vv->amount_due;
+
+                                                            if (isset($vv->loan_name) && strtolower($vv->loan_name) == 'cash advance') {
+                                                                $temp_amountDue = floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due));
+
+                                                                if (isset($created_adjustment) && $created_adjustment) {
+                                                                    $_tempCreated = explode(",", $created_adjustment);
+                                                                    $tempAdj = 0;
+
+
+                                                                    foreach ($_tempCreated as $_key => $_value) {
+                                                                        $temp_adjustment = explode("||", $_value);
+                                                                        $adj_type = isset($temp_adjustment[2]) ? intval($temp_adjustment[2]) : 0;
+                                                                        $temp_status = isset($temp_adjustment[3]) ? intval($temp_adjustment[3]) : 0;
+
+                                                                        $_temp = floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due));
+
+                                                                        $_temp = $adj_type == 1 ? floatval($temp_amountDue) + floatval($temp_adjustment[1]) : floatval($temp_amountDue) - floatval($temp_adjustment[1]);
+                                                                        $tempAdj = $_temp;
+
+                                                                        $temp_amountDue = ($temp_adjustment[0] == "LOAN" && $temp_status === 1) ? $_temp : $temp_amountDue;
+                                                                    }
+                                                                }
+                                                            }
+                                                        ?>
+
+                                                        <div class="col-md-5 printable-width-5">
+                                                            <h5 class="m--font-bolder m--marginless"><?=$vv->loan_name; ?></h5>
+                                                        </div>
+                                                        <div class="col-md-7 printable-width-7 text-right">
+                                                            <h5 class="m--font-bolder m--marginless"><?=number_format($temp_amountDue, 2); ?></h5>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                <?php endif; ?>
                                             </div>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
 
                                     <?php if(is_numeric($item->adjustment_d_count) && intval($item->adjustment_d_count) > 0): ?>
-                                        <h5 class="m--marginless mt-3"><span class="m--margin-left-15">OTHERS</span></h5>
+                                        <h5 class="m--marginless mt-3"><span class="mt-3"><strong>OTHERS</strong></span></h5>
                                         <?php foreach ($item->adjustment_deductions as $kk => $vv): ?>
                                             <div class="row text-right">
                                                 <div class="col-md-5 printable-width-5">
                                                     <h5 class="m--font-bolder m--marginless"><?php echo strtoupper($vv->label); ?></h5>
                                                 </div>
-                                                <div class="col-md-7 printable-width-7 text-left">
+                                                <div class="col-md-7 printable-width-7 text-right">
                                                     <h5 class="m--font-bolder m--marginless"><?php echo $vv->display_value; ?></h5>
                                                 </div>
                                             </div>
