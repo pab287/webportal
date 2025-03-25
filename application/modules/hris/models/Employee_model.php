@@ -8189,7 +8189,7 @@
             $data["loan_id"] = $post["loan_id"];
             $data['reference_id'] = (isset($post['reference_id'])) ? $post['reference_id'] : 0;
             $data['reference'] = (isset($post['reference'])) ? trim($post['reference']) : "";
-            $data["amount"] = $post["amount"];
+            $data["amount"] = str_replace(',', '', $post['amount']);
             $data["deduction_type"] = $post["deduction_type"];
             $data["percentage"] = 0;
             $data["fixed_deduction_amt"] = 0;
@@ -8198,9 +8198,11 @@
             $data["remarks"] = isset($post["remarks"]) && $post["remarks"] ? trim($post["remarks"]): NULL;
 
             if (intval($data["deduction_type"]) === 0) {
-                $data["percentage"] = 20;
+                $data["percentage"] = $post["deduct_type_value"];
+                $log = "With percentage deduction of: <strong>".$post["deduct_type_value"]."%</strong>";
             } else {
                 $data["fixed_deduction_amt"] = $post["deduct_type_value"];
+                $log = "With fixed deduction amount of: <strong>".$post["deduct_type_value"]."</strong>";
             }
 
             $query = $this->db->insert("gcchris.loans", $data);
@@ -8208,7 +8210,7 @@
             if ($query) {
                 $resultarray["status"] = TRUE;
                 $resultarray["response"] = "New loan information was successfully saved!";
-                $this->core_layout->setEventLog("User added new loan with amount: <strong>".$post["amount"]."</strong> for employee: $fullname","insert", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User added new loan Type: <strong>".$this->getLoanTypeById($post["loan_id"]) ."</strong> with amount: <strong>".$post["amount"]."</strong>, $log for employee: <strong>$fullname</strong>","insert", "success", "gcchris", "user");
             } else {
                 $resultarray["status"] = FALSE;
                 $resultarray["response"] = $this->db->error();
@@ -11841,6 +11843,18 @@
             return $resultset;
         }
 
+
+        private function getLoanTypeById($id){
+            $this->db->select("loan_name");
+            $this->db->from("payroll.loans");
+            $this->db->where("is_archive", 0);
+            $this->db->where("id", $id);
+            $query = $this->db->get();
+            $result = $query->row();
+            $this->db->reset_query();
+            return $result->loan_name;
+        }
+      
         public function getEmployeeCurrentCompany($id){
             $this->db->select("company_id, position, department_id");
             $this->db->from($this->employeeTable);
@@ -11858,6 +11872,7 @@
             $result = $query->row();
             $this->db->reset_query();
             return $result;
+
         }
 
     }
