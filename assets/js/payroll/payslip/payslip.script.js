@@ -1099,7 +1099,7 @@ function viewPayslip(rowId) {
                             var temp_amount = parseFloat(item.amount_due);
 
                             // for adding cash advance with loan adjustments
-                            if (typeof item.loan_name.toLowerCase() !== "undefined" && item.loan_name.toLowerCase() == 'cash advance') {
+                            if (typeof item.loan_name !== "undefined" && item.loan_name.toLowerCase() == 'cash advance') {
                                 temp_amount = parseFloat(item.amount_due.replace(/,/g, ''));
 
                                 if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
