@@ -2290,7 +2290,7 @@ class Reports_m extends CI_Model{
                 $this->db->where_in("ps.id", $psIds);
                 $this->db->group_by("ps.id");
                 $qx = $this->db->get();
-                foreach ($qx->result() as $kkk => $vvv) {
+                foreach ($qx->result() as $vvv) {
                     if($vvv->loan_code){
                         $arrD = explode(",", $vvv->loan_code);
                         $arx = array_count_values($arrD);
@@ -2317,11 +2317,11 @@ class Reports_m extends CI_Model{
                 $this->db->where_in("ps.id", $psIds);
                 $q = $this->db->get();
                 if($q->num_rows() > 0){
-                    $codes = explode(",", $q->row()->loan_code);
-                    $adj_codes = explode(",", $q->row()->adj_code);
-                    $adj_created_code = explode(",", $q->row()->adj_created_code);
+                    $codes = $q->row()->loan_code ?explode(",", $q->row()->loan_code) : array();
+                    $adj_codes = $q->row()->adj_code ? explode(",", $q->row()->adj_code): array();
+                    $adj_created_code = $q->row()->adj_created_code ? explode(",", $q->row()->adj_created_code): array();
 
-                    if(is_array($adj_codes) && count($adj_codes) > 0){
+                    if(is_array($adj_codes) && !empty($adj_codes)){
                         foreach ($adj_codes as $key => $value) {
                             if($value){
                                 $value = str_replace(" ", "_", $value);
@@ -2334,7 +2334,7 @@ class Reports_m extends CI_Model{
                         }
                     }
 
-                    if(is_array($adj_created_code) && count($adj_created_code) > 0){
+                    if(is_array($adj_created_code) && !empty($adj_created_code)){
                         foreach ($adj_created_code as $key => $value) {
                             if($value){
                                 $tempAdj = explode("||", $value);
@@ -2345,11 +2345,10 @@ class Reports_m extends CI_Model{
                         }
                     }
 
+                    
                     $tempArrData = array();
                     $tempArrData = array_merge($codes, $adj_codes);
-                    if(is_array($tempArrData) && count($tempArrData) > 0){
-                        $contributionCode = $tempArrData;
-                    }
+                    if(is_array($tempArrData) && !empty($tempArrData)){ $contributionCode = $tempArrData; }
                 }
 
                 $adjustmentsTotal = 0;
@@ -2404,11 +2403,11 @@ class Reports_m extends CI_Model{
                         }
                         if($value->sss_hdmf_loan_deduction){
                             $tempDeductions = explode(",", $value->sss_hdmf_loan_deduction);
-                            if(is_array($tempDeductions) && count($tempDeductions) > 0){
+                            if(is_array($tempDeductions) && !empty($tempDeductions)){
                                 $arrTempKeyxx = array();
-                                foreach ($tempDeductions as $xx => $rowx) {
+                                foreach ($tempDeductions as $rowx) {
                                     $tempData = explode("||", $rowx);
-                                    if(is_array($tempData) && count($tempData) > 0){
+                                    if(is_array($tempData) && !empty($tempData)){
                                         $tempKey00 = trim(strtolower($tempData[0]));
                                         $tempValue00 = trim($tempData[1]);
                                         if(isset($arrMaxCount[$tempKey00]) && $arrMaxCount[$tempKey00] > 1){
@@ -2419,7 +2418,7 @@ class Reports_m extends CI_Model{
                                     }
                                 }
                                 foreach ($arrTempKeyxx as $kzz => $vzz) {
-                                    if(is_array($vzz) && count($vzz) > 0){
+                                    if(is_array($vzz) && !empty($vzz)){
                                         if(isset($arrMaxCount[$kzz]) && $arrMaxCount[$kzz] > 0){
                                             for ($i=0; $i < intval($arrMaxCount[$kzz]) ; $i++) {
                                                 $tempIndex = $i + 1;
@@ -2437,9 +2436,9 @@ class Reports_m extends CI_Model{
                         if($value->custom_adjustments){
                             $tempCustomAdjustment = explode(",", $value->custom_adjustments);
                             if(is_array($tempCustomAdjustment) && count($tempCustomAdjustment) > 0){
-                                foreach ($tempCustomAdjustment as $xx => $rowx) {
+                                foreach ($tempCustomAdjustment as $rowx) {
                                     $_tempData = explode("||", $rowx);
-                                    if(is_array($_tempData) && count($_tempData) > 0){
+                                    if(is_array($_tempData) && !empty($_tempData)){
                                         $entryType = $_tempData[2];
                                         if(intval($entryType) === 1){
                                             $adjustmentsTotal = floatval($adjustmentsTotal) + floatval($_tempData[1]);
@@ -2456,7 +2455,7 @@ class Reports_m extends CI_Model{
                             if(is_array($tempCustomAdjustment) && count($tempCustomAdjustment) > 0){
                                 foreach ($tempCustomAdjustment as $xx => $rowx) {
                                     $_tempData = explode("||", $rowx);
-                                    if(is_array($_tempData) && count($_tempData) > 0 && count($_tempData) === 4){
+                                    if(is_array($_tempData) && !empty($_tempData) && count($_tempData) === 4){
                                         $tempKey00 = trim(strtolower($_tempData[0]));
                                         $tempKey00 = str_replace(" ", "_", $tempKey00);
                                         $tempKey01 = trim(strtolower($_tempData[3]));
@@ -2509,30 +2508,30 @@ class Reports_m extends CI_Model{
             }
 
             $grandTotal = array(
-                "basic_rate"=>round($basicRateTotal, 2), 
-                "allowances"=>round($allowancesTotal, 2), 
-                "ot_amount"=>round($otAmountTotal, 2), 
-                "ot_ndiff_amount"=>round($otNdiffAmountTotal, 2), 
-                "holiday_amount"=>round($holidayAmountTotal, 2), 
-                "adjustments"=>round($adjustmentsTotal, 2), 
-                "gross_pay"=>round($grossPayTotal, 2), 
-                "net_pay"=>round($netPayTotal, 2), 
+                "basic_rate"=>round($basicRateTotal, 2),
+                "allowances"=>round($allowancesTotal, 2),
+                "ot_amount"=>round($otAmountTotal, 2),
+                "ot_ndiff_amount"=>round($otNdiffAmountTotal, 2),
+                "holiday_amount"=>round($holidayAmountTotal, 2),
+                "adjustments"=>round($adjustmentsTotal, 2),
+                "gross_pay"=>round($grossPayTotal, 2),
+                "net_pay"=>round($netPayTotal, 2),
             );
 
             $tempColumns = array();
             $tempHeaderColumns = array();
             $grandTotalFooter = array();
-            if(is_array($arrPsData) && count($arrPsData) > 0){
-                foreach ($arrPsData as $key => $value) {
+            if(is_array($arrPsData) && !empty($arrPsData)){
+                foreach ($arrPsData as $key => $value) {;
                     $tempKeys = array_keys($value);
                     $employee = (object) $this->core_layout->getEmployeeData($value["emp_id"]);
                     $tempName = isset($employee->display_name_1) && $employee->display_name_1 ? strtoupper($employee->display_name_0): strtoupper("No Assigned Name");
                     $tempColumns = array();
-                    foreach ($tempKeys as $kkxx => $vx) {
-                        if(!in_array($vx, $defaultFields)){ 
-                            $tempColumns[$vx] = $value[$vx]; 
+                    foreach ($tempKeys as $vx) {
+                        if(!in_array($vx, $defaultFields)){
+                            $tempColumns[$vx] = $value[$vx];
                         }
-                        if(!in_array($vx, $tempHeaderColumns) && !in_array($vx, $defaultFields)){ 
+                        if(!in_array($vx, $tempHeaderColumns) && !in_array($vx, $defaultFields)){
                             $tempHeaderColumns[] = $vx;
                         }
                     }
@@ -2546,15 +2545,15 @@ class Reports_m extends CI_Model{
                     $tempKeys = array_keys($value);
                     foreach ($tempKeys as $vvx) {
                         $insertFlag = false;
-                        if(in_array($vvx, $arrFields)){ $insertFlag = true; }
-                        else if(in_array($vvx, $tempHeaderColumns)){ $insertFlag = true; }
-                        if($insertFlag){
+                        if (in_array($vvx, $arrFields)){ $insertFlag = true; }
+                        elseif (in_array($vvx, $tempHeaderColumns)){ $insertFlag = true; }
+                        if ($insertFlag){
                             $tempValueData = $value[$vvx];
-                            if(isset($grandTotalFooter[$vvx]) && $grandTotalFooter[$vvx]){ 
-                                $nTotalValue = floatval($grandTotalFooter[$vvx]) + $tempValueData; 
+                            if (isset($grandTotalFooter[$vvx]) && $grandTotalFooter[$vvx]){ 
+                                $nTotalValue = floatval($grandTotalFooter[$vvx]) + $tempValueData;
                                 $grandTotalFooter[$vvx] = round($nTotalValue, 2);
                             }
-                            else{ $grandTotalFooter[$vvx] = round(floatval($tempValueData), 2); }
+                            else { $grandTotalFooter[$vvx] = round(floatval($tempValueData), 2); }
                         }
                     }
 
