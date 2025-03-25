@@ -1,6 +1,8 @@
 @page { 
-    margin: 10mm 0 10mm 0;
+    margin: 10mm 2.5mm 10mm 2.5mm;
+    size: auto;
 }
+
 @media print{
     .printable-row_content{
         page-break-inside: avoid
@@ -92,7 +94,7 @@ body {
 .custom_header-title--center{
     text-align: center;
     position: relative;
-    top: 30px;
+    top: 7.5px;
 }
 .custom_footer-signature{
     border-top: 1px solid #000000;

@@ -2114,7 +2114,7 @@ class Reports_m extends CI_Model{
         return $resultset;
     } 
 
-    function generateContributionDeduction(){
+    public function generateContributionDeduction(){
         $resultset = array();
 
         $employeeIds = array();
@@ -2149,25 +2149,25 @@ class Reports_m extends CI_Model{
             $this->db->join("gcchris.tblcompanies b", "b.id = ps.company_id", "LEFT");
             $this->db->join("payroll.payout_schedule c", "c.id = a.payout_sched", "INNER");
             $this->db->where("b.id", $post["company"]);
-            if(isset($post["employee"]) && $post["employee"]){
+            if (isset($post["employee"]) && $post["employee"]){
                 $this->db->where_in("a.id", $post["employee"]);
-            }else if(isset($post["serialized_employees"]) && $post["serialized_employees"]){
+            } elseif (isset($post["serialized_employees"]) && $post["serialized_employees"]){
                 $this->db->where_in("a.id", explode(",",$post["serialized_employees"]));
             }
 
             $this->db->group_by("a.id");
             $queryTemp = $this->db->get();
             if($queryTemp->num_rows() > 0){
-                foreach ($queryTemp->result() as $key => $value) {
+                foreach ($queryTemp->result() as $value) {
                     /*** altered code section start ***/
                     $tempPayoutSchedule = strtolower($value->payout_schedule_name);
                     if($value->payout_schedule_name !== $tempPayoutSchedule){ $value->payout_schedule_name = $tempPayoutSchedule; }
                     /*** altered code section end ***/
 
-                    if(strtolower($value->payout_schedule_name) !== "weekly" 
+                    if (strtolower($value->payout_schedule_name) !== "weekly"
                         && !in_array($value->id, $employeeIds)){
                         $employeeIds[] = $value->id;
-                    }else if(strtolower($value->payout_schedule_name) === "weekly" 
+                    }elseif (strtolower($value->payout_schedule_name) === "weekly"
                         && !in_array($value->id, $isWeeklyEmployees)){
                         $isWeeklyEmployees[] = $value->id;
                     }
@@ -2179,40 +2179,35 @@ class Reports_m extends CI_Model{
                 $weeklyPsIds = array();
                 $employeePsIds = array();
 
-                if(is_array($isWeeklyEmployees) && count($isWeeklyEmployees) > 0){
+                if(is_array($isWeeklyEmployees) && !empty($isWeeklyEmployees)){
                     $responseWeeklyRange = $this->generateWeeklyMonthRange($tempStartDate, $tempEndDate);
-                    if($responseWeeklyRange){
+                    $_tempStartDate = $post["group"] === "2" && $responseWeeklyRange ? $responseWeeklyRange["date_start"]: $tempStartDate;
+                    $_tempEndDate = $post["group"] === "2" && $responseWeeklyRange ? $responseWeeklyRange["date_end"]: $tempEndDate;
 
-                        $_tempStartDate = $responseWeeklyRange["date_start"];
-                        $_tempEndDate = $responseWeeklyRange["date_end"];
-                        $_tempPayDateStart = $responseWeeklyRange["paydate_start"];
-                        $_tempPayDateEnd = $responseWeeklyRange["paydate_end"];
-
-                        $this->db->select("id");
-                        $this->db->from("payroll.payroll_sheet");
-                        $this->db->where("posted", 1);
-                        if($includedBonus === false){ $this->db->where("is_bonus", 0); }
-                        $this->db->group_start();
-                        $this->db->where("DATE(date_start) >=", $_tempStartDate);
-                        $this->db->where("DATE(date_end) <=", $_tempEndDate);
-                        $this->db->group_end();
-                        $this->db->where_in("emp_id", $isWeeklyEmployees);
-                        if(isset($post["company"]) && $post["company"]){
-                            $this->db->where("company_id", $post["company"]);
-                        }
-                        $this->db->order_by("emp_id", "ASC");
-                        $queryWeekly = $this->db->get();
-                        if($queryWeekly->num_rows() > 0){
-                            foreach ($queryWeekly->result() as $key => $value) {
-                                if(!in_array($value->id, $weeklyPsIds)){
-                                    $weeklyPsIds[] = $value->id;
-                                }
+                    $this->db->select("id");
+                    $this->db->from("payroll.payroll_sheet");
+                    $this->db->where("posted", 1);
+                    if($includedBonus === false){ $this->db->where("is_bonus", 0); }
+                    $this->db->group_start();
+                    $this->db->where("DATE(date_start) >=", $_tempStartDate);
+                    $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                    $this->db->group_end();
+                    $this->db->where_in("emp_id", $isWeeklyEmployees);
+                    if(isset($post["company"]) && $post["company"]){
+                        $this->db->where("company_id", $post["company"]);
+                    }
+                    $this->db->order_by("emp_id", "ASC");
+                    $queryWeekly = $this->db->get();
+                    if($queryWeekly->num_rows() > 0){
+                        foreach ($queryWeekly->result() as $value) {
+                            if(!in_array($value->id, $weeklyPsIds)){
+                                $weeklyPsIds[] = $value->id;
                             }
                         }
                     }
                 }
 
-                if(is_array($employeeIds) && count($employeeIds) > 0){
+                if(is_array($employeeIds) && !empty($employeeIds)){
                     $this->db->select("id");
                     $this->db->from("payroll.payroll_sheet");
                     $this->db->where("posted", 1);
@@ -2228,9 +2223,8 @@ class Reports_m extends CI_Model{
                     }
     
                     $query = $this->db->get();
-                    $tempSql = $this->db->last_query();
                     if($query->num_rows() > 0){
-                        foreach ($query->result() as $key => $value) {
+                        foreach ($query->result() as $value) {
                             if(!in_array($value->id, $employeePsIds)){
                                 $employeePsIds[] = $value->id;
                             }
@@ -2238,10 +2232,10 @@ class Reports_m extends CI_Model{
                     }
                 }
 
-                if((is_array($employeePsIds) && count($employeePsIds) > 0) || (is_array($weeklyPsIds) && count($weeklyPsIds) > 0)){
+                if((is_array($employeePsIds) && !empty($employeePsIds)) || (is_array($weeklyPsIds) && !empty($weeklyPsIds))){
                     $employeePsIds = array_unique(array_merge($employeePsIds, $weeklyPsIds));
                     $tempSequenceMax = max($tempSequenceMax);
-                    if(is_array($employeePsIds) && count($employeePsIds) > 0){
+                    if(is_array($employeePsIds) && !empty($employeePsIds)){
                         $employeePsIds = array_map("intval", $employeePsIds);
 
                         $tempData = $this->generatePayrollSheetContribution($employeePsIds);
@@ -2258,7 +2252,7 @@ class Reports_m extends CI_Model{
                                 "pay_sequence"=>$filterDatex.$tempSequenceMax,
                                 "company_description"=> $tempCompRow['description'] ? strtoupper($tempCompRow['description'] ): "GC&C, INC",
                                 "company_address"=> $tempCompRow['company_address']  ? strtoupper($tempCompRow['company_address'] ): "",
-                                "has_comp_desc"=>$tempCompRow['description'] ? true: false, 
+                                "has_comp_desc"=>$tempCompRow['description'] ? true: false,
                                 "payroll_group"=>$payrollGroup
                             );
                                 
@@ -2296,7 +2290,7 @@ class Reports_m extends CI_Model{
                 $this->db->where_in("ps.id", $psIds);
                 $this->db->group_by("ps.id");
                 $qx = $this->db->get();
-                foreach ($qx->result() as $kkk => $vvv) {
+                foreach ($qx->result() as $vvv) {
                     if($vvv->loan_code){
                         $arrD = explode(",", $vvv->loan_code);
                         $arx = array_count_values($arrD);
@@ -2323,11 +2317,11 @@ class Reports_m extends CI_Model{
                 $this->db->where_in("ps.id", $psIds);
                 $q = $this->db->get();
                 if($q->num_rows() > 0){
-                    $codes = explode(",", $q->row()->loan_code);
-                    $adj_codes = explode(",", $q->row()->adj_code);
-                    $adj_created_code = explode(",", $q->row()->adj_created_code);
+                    $codes = $q->row()->loan_code ?explode(",", $q->row()->loan_code) : array();
+                    $adj_codes = $q->row()->adj_code ? explode(",", $q->row()->adj_code): array();
+                    $adj_created_code = $q->row()->adj_created_code ? explode(",", $q->row()->adj_created_code): array();
 
-                    if(is_array($adj_codes) && count($adj_codes) > 0){
+                    if(is_array($adj_codes) && !empty($adj_codes)){
                         foreach ($adj_codes as $key => $value) {
                             if($value){
                                 $value = str_replace(" ", "_", $value);
@@ -2340,7 +2334,7 @@ class Reports_m extends CI_Model{
                         }
                     }
 
-                    if(is_array($adj_created_code) && count($adj_created_code) > 0){
+                    if(is_array($adj_created_code) && !empty($adj_created_code)){
                         foreach ($adj_created_code as $key => $value) {
                             if($value){
                                 $tempAdj = explode("||", $value);
@@ -2351,11 +2345,10 @@ class Reports_m extends CI_Model{
                         }
                     }
 
+                    
                     $tempArrData = array();
                     $tempArrData = array_merge($codes, $adj_codes);
-                    if(is_array($tempArrData) && count($tempArrData) > 0){
-                        $contributionCode = $tempArrData;
-                    }
+                    if(is_array($tempArrData) && !empty($tempArrData)){ $contributionCode = $tempArrData; }
                 }
 
                 $adjustmentsTotal = 0;
@@ -2410,11 +2403,11 @@ class Reports_m extends CI_Model{
                         }
                         if($value->sss_hdmf_loan_deduction){
                             $tempDeductions = explode(",", $value->sss_hdmf_loan_deduction);
-                            if(is_array($tempDeductions) && count($tempDeductions) > 0){
+                            if(is_array($tempDeductions) && !empty($tempDeductions)){
                                 $arrTempKeyxx = array();
-                                foreach ($tempDeductions as $xx => $rowx) {
+                                foreach ($tempDeductions as $rowx) {
                                     $tempData = explode("||", $rowx);
-                                    if(is_array($tempData) && count($tempData) > 0){
+                                    if(is_array($tempData) && !empty($tempData)){
                                         $tempKey00 = trim(strtolower($tempData[0]));
                                         $tempValue00 = trim($tempData[1]);
                                         if(isset($arrMaxCount[$tempKey00]) && $arrMaxCount[$tempKey00] > 1){
@@ -2425,7 +2418,7 @@ class Reports_m extends CI_Model{
                                     }
                                 }
                                 foreach ($arrTempKeyxx as $kzz => $vzz) {
-                                    if(is_array($vzz) && count($vzz) > 0){
+                                    if(is_array($vzz) && !empty($vzz)){
                                         if(isset($arrMaxCount[$kzz]) && $arrMaxCount[$kzz] > 0){
                                             for ($i=0; $i < intval($arrMaxCount[$kzz]) ; $i++) {
                                                 $tempIndex = $i + 1;
@@ -2443,9 +2436,9 @@ class Reports_m extends CI_Model{
                         if($value->custom_adjustments){
                             $tempCustomAdjustment = explode(",", $value->custom_adjustments);
                             if(is_array($tempCustomAdjustment) && count($tempCustomAdjustment) > 0){
-                                foreach ($tempCustomAdjustment as $xx => $rowx) {
+                                foreach ($tempCustomAdjustment as $rowx) {
                                     $_tempData = explode("||", $rowx);
-                                    if(is_array($_tempData) && count($_tempData) > 0){
+                                    if(is_array($_tempData) && !empty($_tempData)){
                                         $entryType = $_tempData[2];
                                         if(intval($entryType) === 1){
                                             $adjustmentsTotal = floatval($adjustmentsTotal) + floatval($_tempData[1]);
@@ -2462,7 +2455,7 @@ class Reports_m extends CI_Model{
                             if(is_array($tempCustomAdjustment) && count($tempCustomAdjustment) > 0){
                                 foreach ($tempCustomAdjustment as $xx => $rowx) {
                                     $_tempData = explode("||", $rowx);
-                                    if(is_array($_tempData) && count($_tempData) > 0 && count($_tempData) === 4){
+                                    if(is_array($_tempData) && !empty($_tempData) && count($_tempData) === 4){
                                         $tempKey00 = trim(strtolower($_tempData[0]));
                                         $tempKey00 = str_replace(" ", "_", $tempKey00);
                                         $tempKey01 = trim(strtolower($_tempData[3]));
@@ -2515,30 +2508,30 @@ class Reports_m extends CI_Model{
             }
 
             $grandTotal = array(
-                "basic_rate"=>round($basicRateTotal, 2), 
-                "allowances"=>round($allowancesTotal, 2), 
-                "ot_amount"=>round($otAmountTotal, 2), 
-                "ot_ndiff_amount"=>round($otNdiffAmountTotal, 2), 
-                "holiday_amount"=>round($holidayAmountTotal, 2), 
-                "adjustments"=>round($adjustmentsTotal, 2), 
-                "gross_pay"=>round($grossPayTotal, 2), 
-                "net_pay"=>round($netPayTotal, 2), 
+                "basic_rate"=>round($basicRateTotal, 2),
+                "allowances"=>round($allowancesTotal, 2),
+                "ot_amount"=>round($otAmountTotal, 2),
+                "ot_ndiff_amount"=>round($otNdiffAmountTotal, 2),
+                "holiday_amount"=>round($holidayAmountTotal, 2),
+                "adjustments"=>round($adjustmentsTotal, 2),
+                "gross_pay"=>round($grossPayTotal, 2),
+                "net_pay"=>round($netPayTotal, 2),
             );
 
             $tempColumns = array();
             $tempHeaderColumns = array();
             $grandTotalFooter = array();
-            if(is_array($arrPsData) && count($arrPsData) > 0){
-                foreach ($arrPsData as $key => $value) {
+            if(is_array($arrPsData) && !empty($arrPsData)){
+                foreach ($arrPsData as $key => $value) {;
                     $tempKeys = array_keys($value);
                     $employee = (object) $this->core_layout->getEmployeeData($value["emp_id"]);
                     $tempName = isset($employee->display_name_1) && $employee->display_name_1 ? strtoupper($employee->display_name_0): strtoupper("No Assigned Name");
                     $tempColumns = array();
-                    foreach ($tempKeys as $kkxx => $vx) {
-                        if(!in_array($vx, $defaultFields)){ 
-                            $tempColumns[$vx] = $value[$vx]; 
+                    foreach ($tempKeys as $vx) {
+                        if(!in_array($vx, $defaultFields)){
+                            $tempColumns[$vx] = $value[$vx];
                         }
-                        if(!in_array($vx, $tempHeaderColumns) && !in_array($vx, $defaultFields)){ 
+                        if(!in_array($vx, $tempHeaderColumns) && !in_array($vx, $defaultFields)){
                             $tempHeaderColumns[] = $vx;
                         }
                     }
@@ -2552,15 +2545,15 @@ class Reports_m extends CI_Model{
                     $tempKeys = array_keys($value);
                     foreach ($tempKeys as $vvx) {
                         $insertFlag = false;
-                        if(in_array($vvx, $arrFields)){ $insertFlag = true; }
-                        else if(in_array($vvx, $tempHeaderColumns)){ $insertFlag = true; }
-                        if($insertFlag){
+                        if (in_array($vvx, $arrFields)){ $insertFlag = true; }
+                        elseif (in_array($vvx, $tempHeaderColumns)){ $insertFlag = true; }
+                        if ($insertFlag){
                             $tempValueData = $value[$vvx];
-                            if(isset($grandTotalFooter[$vvx]) && $grandTotalFooter[$vvx]){ 
-                                $nTotalValue = floatval($grandTotalFooter[$vvx]) + $tempValueData; 
+                            if (isset($grandTotalFooter[$vvx]) && $grandTotalFooter[$vvx]){ 
+                                $nTotalValue = floatval($grandTotalFooter[$vvx]) + $tempValueData;
                                 $grandTotalFooter[$vvx] = round($nTotalValue, 2);
                             }
-                            else{ $grandTotalFooter[$vvx] = round(floatval($tempValueData), 2); }
+                            else { $grandTotalFooter[$vvx] = round(floatval($tempValueData), 2); }
                         }
                     }
 
