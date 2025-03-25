@@ -2114,7 +2114,7 @@ class Reports_m extends CI_Model{
         return $resultset;
     } 
 
-    function generateContributionDeduction(){
+    public function generateContributionDeduction(){
         $resultset = array();
 
         $employeeIds = array();
@@ -2149,25 +2149,25 @@ class Reports_m extends CI_Model{
             $this->db->join("gcchris.tblcompanies b", "b.id = ps.company_id", "LEFT");
             $this->db->join("payroll.payout_schedule c", "c.id = a.payout_sched", "INNER");
             $this->db->where("b.id", $post["company"]);
-            if(isset($post["employee"]) && $post["employee"]){
+            if (isset($post["employee"]) && $post["employee"]){
                 $this->db->where_in("a.id", $post["employee"]);
-            }else if(isset($post["serialized_employees"]) && $post["serialized_employees"]){
+            } elseif (isset($post["serialized_employees"]) && $post["serialized_employees"]){
                 $this->db->where_in("a.id", explode(",",$post["serialized_employees"]));
             }
 
             $this->db->group_by("a.id");
             $queryTemp = $this->db->get();
             if($queryTemp->num_rows() > 0){
-                foreach ($queryTemp->result() as $key => $value) {
+                foreach ($queryTemp->result() as $value) {
                     /*** altered code section start ***/
                     $tempPayoutSchedule = strtolower($value->payout_schedule_name);
                     if($value->payout_schedule_name !== $tempPayoutSchedule){ $value->payout_schedule_name = $tempPayoutSchedule; }
                     /*** altered code section end ***/
 
-                    if(strtolower($value->payout_schedule_name) !== "weekly" 
+                    if (strtolower($value->payout_schedule_name) !== "weekly"
                         && !in_array($value->id, $employeeIds)){
                         $employeeIds[] = $value->id;
-                    }else if(strtolower($value->payout_schedule_name) === "weekly" 
+                    }elseif (strtolower($value->payout_schedule_name) === "weekly"
                         && !in_array($value->id, $isWeeklyEmployees)){
                         $isWeeklyEmployees[] = $value->id;
                     }
@@ -2179,7 +2179,7 @@ class Reports_m extends CI_Model{
                 $weeklyPsIds = array();
                 $employeePsIds = array();
 
-                if(is_array($isWeeklyEmployees) && count($isWeeklyEmployees) > 0){
+                if(is_array($isWeeklyEmployees) && !empty($isWeeklyEmployees)){
                     $responseWeeklyRange = $this->generateWeeklyMonthRange($tempStartDate, $tempEndDate);
                     $_tempStartDate = $post["group"] === "2" && $responseWeeklyRange ? $responseWeeklyRange["date_start"]: $tempStartDate;
                     $_tempEndDate = $post["group"] === "2" && $responseWeeklyRange ? $responseWeeklyRange["date_end"]: $tempEndDate;
@@ -2199,7 +2199,7 @@ class Reports_m extends CI_Model{
                     $this->db->order_by("emp_id", "ASC");
                     $queryWeekly = $this->db->get();
                     if($queryWeekly->num_rows() > 0){
-                        foreach ($queryWeekly->result() as $key => $value) {
+                        foreach ($queryWeekly->result() as $value) {
                             if(!in_array($value->id, $weeklyPsIds)){
                                 $weeklyPsIds[] = $value->id;
                             }
@@ -2207,7 +2207,7 @@ class Reports_m extends CI_Model{
                     }
                 }
 
-                if(is_array($employeeIds) && count($employeeIds) > 0){
+                if(is_array($employeeIds) && !empty($employeeIds)){
                     $this->db->select("id");
                     $this->db->from("payroll.payroll_sheet");
                     $this->db->where("posted", 1);
@@ -2223,9 +2223,8 @@ class Reports_m extends CI_Model{
                     }
     
                     $query = $this->db->get();
-                    $tempSql = $this->db->last_query();
                     if($query->num_rows() > 0){
-                        foreach ($query->result() as $key => $value) {
+                        foreach ($query->result() as $value) {
                             if(!in_array($value->id, $employeePsIds)){
                                 $employeePsIds[] = $value->id;
                             }
@@ -2233,10 +2232,10 @@ class Reports_m extends CI_Model{
                     }
                 }
 
-                if((is_array($employeePsIds) && count($employeePsIds) > 0) || (is_array($weeklyPsIds) && count($weeklyPsIds) > 0)){
+                if((is_array($employeePsIds) && !empty($employeePsIds)) || (is_array($weeklyPsIds) && !empty($weeklyPsIds))){
                     $employeePsIds = array_unique(array_merge($employeePsIds, $weeklyPsIds));
                     $tempSequenceMax = max($tempSequenceMax);
-                    if(is_array($employeePsIds) && count($employeePsIds) > 0){
+                    if(is_array($employeePsIds) && !empty($employeePsIds)){
                         $employeePsIds = array_map("intval", $employeePsIds);
 
                         $tempData = $this->generatePayrollSheetContribution($employeePsIds);
@@ -2253,7 +2252,7 @@ class Reports_m extends CI_Model{
                                 "pay_sequence"=>$filterDatex.$tempSequenceMax,
                                 "company_description"=> $tempCompRow['description'] ? strtoupper($tempCompRow['description'] ): "GC&C, INC",
                                 "company_address"=> $tempCompRow['company_address']  ? strtoupper($tempCompRow['company_address'] ): "",
-                                "has_comp_desc"=>$tempCompRow['description'] ? true: false, 
+                                "has_comp_desc"=>$tempCompRow['description'] ? true: false,
                                 "payroll_group"=>$payrollGroup
                             );
                                 

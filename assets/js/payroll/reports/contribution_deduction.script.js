@@ -354,8 +354,8 @@ function printdiv(printdivname) {
                 printWindow.document.getElementById('header--company_title--center').classList.remove('m--hide');
                 printWindow.document.getElementById('printAction').classList.add('m--hide');
                 setTimeout(function () {
-                    printWindow.print();
-                    printWindow.close();
+                    /*** printWindow.print();
+                    printWindow.close(); ***/
                 }, 200);
             } else {
                 toastr.info("Print detail(s) is still in progress!", "Contribution / Deduction");
@@ -379,8 +379,8 @@ function printDivMonthly(printdivname) {
                 printWindow.document.getElementById('header--company_title--center').classList.remove('m--hide');
                 printWindow.document.getElementById('printAction').classList.add('m--hide');
                 setTimeout(function () {
-                    printWindow.print();
-                    printWindow.close();
+                    /*** printWindow.print();
+                    printWindow.close(); ***/
                 }, 200);
             } else {
                 toastr.info("Print detail(s) is still in progress!", "Contribution / Deduction");

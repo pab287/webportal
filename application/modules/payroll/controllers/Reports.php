@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 class Reports extends MY_Controller {
-    function __construct() {
+    public function __construct() {
         parent::__construct();
         $this->authenticate->setModuleAccess("payroll");
         $this->authenticate->doRedirect();
@@ -12,7 +12,7 @@ class Reports extends MY_Controller {
 
     function netpay(){
         $this->load->model("payroll/payroll_m", "payroll");
-        $tempData = array(); 
+        $tempData = array();
         $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
         $tempData["company"] = $this->payroll->select2CompanyData();
         $tempData["payout_schedule"] = $this->payroll->select2PayoutScheduleData();
@@ -94,7 +94,7 @@ class Reports extends MY_Controller {
 
     function phic_contribution(){
         $this->load->model("payroll/payroll_m", "payroll");
-        $tempData = array(); 
+        $tempData = array();
         $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
         $tempData["company"] = $this->payroll->select2CompanyData();
 
@@ -110,7 +110,7 @@ class Reports extends MY_Controller {
 
     function hdmf_contribution(){
         $this->load->model("payroll/payroll_m", "payroll");
-        $tempData = array(); 
+        $tempData = array();
         $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
         $tempData["company"] = $this->payroll->select2CompanyData();
 
@@ -140,7 +140,7 @@ class Reports extends MY_Controller {
         $this->core_layout->setPageTitle("Payroll - Overtime Summary Report");
         $this->core_layout->setPrivilegeName("payroll_overtime_summary");
 
-        $tempData = array(); 
+        $tempData = array();
         $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
         $tempData["company"] = $this->payroll->select2CompanyData();
 
