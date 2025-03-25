@@ -198,8 +198,8 @@
                         <tr>
                             <td id="content">
                                 <table border="0" align="center" width="980" cellpadding="0" cellspacing="0" class="container980">
-                                    <col width="245" />
-                                    <col width="735" />
+                                    <col width="500" />
+                                    <col width="500" />
                                     <tbody>
                                         <tr>
                                             <td align="right" valign="top" style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; padding-right: 20px;">Reference No. : </td>
@@ -249,8 +249,8 @@
                             <th colspan="4"><p style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: center; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 10px;"></p></th>
                         </tr>
                         <tr>
-                            <th align="left" style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: left;">PERSONNEL</th>
-                            <th align="left" style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: left;">DESTINATION</th>
+                            <th align="left" width="40%" style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: left;">PERSONNEL</th>
+                            <th align="left" width="70%" style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: left;">DESTINATION</th>
                         </tr>
                    </thead>
                    <tbody>
