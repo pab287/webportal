@@ -370,8 +370,6 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
 }
 
 if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
-    dtPayrollIds = [122089]; //to remove later
-
     dtPayslipTable = dtPayrollPayslip.DataTable({
         dom: 'Brtlp',
         serverSide: false,
