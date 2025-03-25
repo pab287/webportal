@@ -12,6 +12,12 @@
                         </div>
                     </div>
                     <div class="m-portlet__head-tools">
+                        <a href="<?php echo base_url("ticket/tickets"); ?>" class="m-nav__link btnArchive">
+                            <i class="m-nav__link-icon flaticon-open-box"></i>
+                            <span class="m-nav__link-text">
+                                Masterfile
+                            </span>
+                        </a>
                     </div>
                 </div>
                 <div class="m-portlet__body">

@@ -58,12 +58,14 @@ class Ticket extends MY_Controller {
     }
 
     function index(){
-        $this->core_layout->setPrivilegeName("ticket");
+        $this->core_layout->setPrivilegeName("ticket_masterfile");
         $this->core_layout->setPageTitle("TICKET - Add Ticket");
         $tempData["department"] = $this->ticket->select2DepartmentData();
         $tempData["category"] = $this->ticket->select2CategoryData('category');
         $tempData["subcategory"] = $this->ticket->select2CategoryData('sub-category');
         $tempData["responsibility"] = $this->ticket->select2CategoryData('responsibility');
+        $tempData["severity"] = $this->ticket->select2CategoryData('severity');
+        $tempData["department_id"] = $this->ticket->getDepartmentID();
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
         $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
@@ -77,7 +79,7 @@ class Ticket extends MY_Controller {
     }
 
     function edit_ticket(){
-        $this->core_layout->setPrivilegeName("ticket_transaction");
+        $this->core_layout->setPrivilegeName("ticket_masterfile");
         $this->core_layout->setPageTitle("TICKET - Edit Ticket");
         $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
         $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
@@ -92,6 +94,7 @@ class Ticket extends MY_Controller {
         $tempData["severity"] = $this->ticket->select2CategoryData('severity');
         $tempData["responsibility"] = $this->ticket->select2CategoryData('responsibility');
         $tempData["performed_by"] = $this->ticket->select2PerformedByData();
+        $tempData["performed_by_payroll"] = $this->ticket->select2PerformedByPayrollData();
         $this->core_layout->addJs("js/ticket/edit_ticket.js", true,$tempData);
 		$this->load->view('core/templates/header');
         $this->load->view('ticket/edit_ticket');
@@ -99,7 +102,7 @@ class Ticket extends MY_Controller {
     }
 
     function view_ticket(){
-        $this->core_layout->setPrivilegeName("ticket_transaction");
+        $this->core_layout->setPrivilegeName("ticket_masterfile");
         $this->core_layout->setPageTitle("TICKET - View Ticket");
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
