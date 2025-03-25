@@ -5820,6 +5820,8 @@ class Payroll_m extends CI_Model
     }
     
     private function createMessage($arrData){
+        $_temp_total_others = 0; $_tempDeductions = 0; $temp_totalLoans = 0;
+
         $msg = "";
         $msg .="PAY PERIOD: ".$arrData[0]->date_start." - ".$arrData[0]->date_end."\n";
         $msg .= "EMPLOYEE NAME: " . strtoupper($arrData[0]->employee_name) . "\n";
@@ -5895,37 +5897,109 @@ class Payroll_m extends CI_Model
                 }
     
                 if($arrData[0]->deductions && floatval($arrData[0]->deductions) > 0){
-                    $msg .= "TOTAL DEDUCTIONS: ". $arrData[0]->deductions . "\n";
+                    if($arrData[0]->sss && floatval($arrData[0]->sss) > 0) {
+                        $_tempDeductions += floatval($arrData[0]->sss);
+                    }
+                    if($arrData[0]->sss_prov && floatval($arrData[0]->sss_prov) > 0) {
+                        $_tempDeductions += floatval($arrData[0]->sss_prov);
+                    }
+                    if($arrData[0]->ph && floatval($arrData[0]->ph) > 0) {
+                        $_tempDeductions += floatval($arrData[0]->ph);
+                    }
+                    if($arrData[0]->hdmf && floatval($arrData[0]->hdmf) > 0) {
+                        $_tempDeductions += floatval($arrData[0]->hdmf);
+                    }
+                    if($arrData[0]->tax && floatval($arrData[0]->tax) > 0) {
+                        $_tempDeductions += floatval($arrData[0]->tax);
+                    }
+                    
+
+                    $msg .= "TOTAL DEDUCTIONS: ". number_format($_tempDeductions, 2) . "\n";
                 }
             }
 
             if($arrData[0]->total_loans && (floatval($arrData[0]->total_loans) > 0 || (is_array($arrData[0]->loans) && count($arrData[0]->loans) > 0))){
+                $created_adjustment = $arrData[0]->created_adjustments;
+
                 $msg .= "----------------------------------------------\n";
 
                 $msg .= "LOANS:\n\n";
 
                 foreach ($arrData[0]->loans as $kk => $vv) {
                     if($vv->amount_due > 0){
-                        $msg .= $vv->loan_name . ": " . $vv->amount_due . "\n";
+                        if (strtolower($vv->loan_name) == 'charges') {
+
+                            $_data = array(
+                                'label' => $vv->loan_name,
+                                'display_value' => $vv->amount_due
+                            );
+
+                            $arrData[0]->adjustment_deductions[] = (object) $_data;
+                            $arrData[0]->adjustment_d_count++;
+                        }
+
+                        if (strtolower($vv->loan_name) != 'charges') {
+                            $temp_amountDue = $vv->amount_due;
+
+                            if (strtolower($vv->loan_name) == 'cash advance') {
+                                $temp_amountDue = floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due));
+                                
+                                if (isset($created_adjustment) && $created_adjustment) {
+                                    $_tempCreated = explode(",", $created_adjustment);
+                                    $tempAdj = 0;
+
+                                    foreach ($_tempCreated as $_key => $_value) {
+                                        $temp_adjustment = explode("||", $_value);
+                                        $adj_type = isset($temp_adjustment[2]) ? intval($temp_adjustment[2]) : 0;
+                                        $temp_status = isset($temp_adjustment[3]) ? intval($temp_adjustment[3]) : 0;
+
+                                        $_temp = floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due));
+
+                                        $_temp = $adj_type == 1 ? floatval($temp_amountDue) + floatval($temp_adjustment[1]) : floatval($temp_amountDue) - floatval($temp_adjustment[1]);
+                                        $tempAdj = $_temp;
+                                        $_temp = $_temp;
+
+                                        $temp_amountDue = ($temp_adjustment[0] == "LOAN" && $temp_status === 1) ? $_temp : $temp_amountDue;
+                                    }
+                                }
+                            }
+
+
+                            $msg .= $vv->loan_name . ": " . number_format($temp_amountDue, 2) . "\n";
+                            $temp_totalLoans += floatval(preg_replace('/[^\d\.\-]/', '', $temp_amountDue));
+                        }
+
                     }
                 }
 
-                $msg .= "TOTAL LOANS: ". $arrData[0]->totalLoan . "\n";
-            }
-
-            if(is_numeric($arrData[0]->adjustment_d_count) && intval($arrData[0]->adjustment_d_count) > 0){
-                $msg .= "----------------------------------------------\n";
-
-                if($arrData[0]->adjustment_d_count && count($arrData[0]->adjustment_d_count) > 0) {
-                    foreach ($arrData[0]->adjustment_deductions as $kk => $vv) {
-                    $msg .= strtoupper($vv->label) . ": " . $vv->display_value . "\n";
-                    }
-                }
+                $msg .= "TOTAL LOANS: ". number_format($temp_totalLoans, 2) . "\n";
             }
 
             if($arrData[0]->total_loans_interest && floatval($arrData[0]->total_loans_interest) > 0){
                 $msg .= "----------------------------------------------\n";
                 $msg .= "TOTAL LOANS INTEREST: ".$arrData[0]->total_loans_interest;
+            }
+
+            if(is_numeric($arrData[0]->adjustment_d_count) && intval($arrData[0]->adjustment_d_count) > 0){
+
+                $msg .= "----------------------------------------------\n";
+
+                $msg .= "OTHERS:\n\n";
+
+                foreach ($arrData[0]->adjustment_deductions as $kk => $vv) {
+                    $msg .= strtoupper($vv->label) . ": " . $vv->display_value . "\n";
+
+                    $_temp_total_others += floatval(preg_replace('/[^\d\.\-]/', '', $vv->display_value));
+                }
+
+                $msg .= "TOTAL OTHER DEDUCTIONS: ". number_format($_temp_total_others, 2) . "\n";
+            }
+
+            if($arrData[0]->total_loans && (floatval($arrData[0]->total_loans) > 0 || (is_array($arrData[0]->loans) && count($arrData[0]->loans) > 0))) {
+                $msg .= "----------------------------------------------\n";
+                $overall_total_loans = floatval($_tempDeductions) + floatval($arrData[0]->total_loans_interest) + floatval($temp_totalLoans) + floatval($_temp_total_others);
+
+                $msg .= "TOTAL LOANS & DEDUCTIONS: " . number_format($overall_total_loans, 2) . "\n";
             }
             
             $msg .= "----------------------------------------------\n";

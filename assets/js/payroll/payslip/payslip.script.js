@@ -1530,8 +1530,8 @@ function triggerPrintableOption(ids = []) {
                             w.document.write(json.html);
                             w.document.close();
                             setTimeout(function () {
-                                // w.print();
-                                // w.close();
+                                w.print();
+                                w.close();
                             }, 150);
                         }
 
