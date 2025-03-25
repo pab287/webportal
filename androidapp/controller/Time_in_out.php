@@ -18,6 +18,11 @@ class Time_in_out extends Dbase{
         echo $data;
     }
 
+    public function timeLog_spam(){
+        $data = json_encode(array("status" => 1));
+        echo $data;
+    }
+
     public function timeLogOffline(){
         $data = $this->TIO->time_log_offline();
         echo $data;

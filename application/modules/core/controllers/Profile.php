@@ -47,6 +47,7 @@ class Profile extends MY_Controller {
 	   "payroll_sheet_max_id"=>$this->get_max_employee_payroll_data($employee_id),
 	   "show_payroll_payslip"=>$showPayrollPayslip));
 	   	$data->tab ='personalInfo';
+		$data->page = 'profile'; //added to display the sms notification to profile only because the 201 and profile shares the same view file
 
 		$this->core_layout->addJs("js/hris/profile_view_script.js",true, $data);
 
@@ -161,5 +162,8 @@ class Profile extends MY_Controller {
 		$this->output->set_content_type('json')->set_output(json_encode($data));
 	}
 
-
+	public function allow_sms($id) {
+		$data = $this->profile->allow_sms($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
 }

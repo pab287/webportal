@@ -693,7 +693,7 @@ if (typeof _tempContentData !== "undefined") {
                     $("#salary_employee_id").val($(".employee_id").val());
                     $("#salary_employee_position").val(dis[0].id);
                     $("#salary_current_position").val($(".current_position").val());
-                    $("#update_salary_history").modal();
+                    // $("#update_salary_history").modal();
                     getLatestSalaryRate();
                 });
                 //--------add update salary in updating employee position---//
@@ -6523,4 +6523,14 @@ $('#offense-tabs .nav-link').on('click', function(e) {
     $('#offense-tabs .nav-link').removeClass('active');
     $('#offense-content .tab-pane').removeClass('active show');
     $('#collapseOffenses .nav-tabs .nav-link:first').tab('show');
+});
+
+$("#mobile_no").inputmask({
+	mask: "(0\\9) 9999-99999",
+	alias: 'phonenumber'
+});
+
+$("#company_no").inputmask({
+	mask: "(0\\9) 9999-99999",
+	alias: 'phonenumber'
 });

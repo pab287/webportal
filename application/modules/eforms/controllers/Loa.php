@@ -254,16 +254,13 @@
 
             if ($isValidDate) {
                 $insert = $this->loa->save($data);
-                // $head_id = $this->loa->getTelegramId($department);
                 $last_id = $insert;
-                // $emp_id = $this->loa->getEmpTelegramId($this->input->post('employee'));
-    
+
                 if($insert){
                     $loa_date = $this->get_loa_date_sms($this->input->post('type'), $from, $to);
-
                     $head_contact = $this->getHeadContact($this->input->post('employee'));
                     
-                    $smsContact = $this->getContactDetails($head_contact, 'no');
+                    $smsContact = $this->getContactDetails($head_contact, 'no', $head_contact['allow_sms']);
                     $emailContact = $this->getContactDetails($head_contact, 'email');
                     $contact = $smsContact['contact'] ?? null;
                     $msgName = $smsContact['name'] ?? null;
@@ -294,6 +291,7 @@
                     "Address: {$details['address']}\n" .
                     "Contact No: {$details['phone']}\n\n" .
                     "This is a computer-generated message. Please do not reply to this number.\n\nThank you!";
+
                     if($contact){
                         $smsResponse = $this->contacts->sendSMS($contact, $msg);
                         if(isset($smsResponse["data"]) && $smsResponse["data"] !== false){
@@ -316,6 +314,7 @@
                 }else{
                     $this->core_layout->setEventLog("Failed in adding leave of absence.","add", "error", "gcceforms", "system");
                 }
+
                 echo json_encode(array("status" => TRUE, "test" => $to, "last_id" => $last_id));
             } else {
                 echo json_encode(array("status" => FALSE));
@@ -521,7 +520,11 @@
                         $sms_date,
                         ucwords($contactPerson)
                     );
-                    $smsResponse = $this->contacts->sendSMS($details['mobile_no'], $message);
+
+                    if (isset($details['allow_sms_notification']) && $details['allow_sms_notification']) {
+                        $smsResponse = $this->contacts->sendSMS($details['mobile_no'], $message);
+                    }
+
                     if(isset($smsResponse["data"]) && $smsResponse["data"] !== false){
                         $this->core_layout->setEventLog("Sent SMS to head contact for leave of absence ".$reference_no.".","add", "success", "gcceforms", "user");
                     }else{
@@ -848,47 +851,94 @@
         private function getCorporateHR() {
             $query = $this->db->select("firstname, lastname")
                              ->get_where("gccmaster.tblemployees", [
-                                 "position" => 145,
+                                 "position" => 547,
                                  "employee_status" => "Active"
                              ]);
             return $this->formatName($query->row()->firstname, $query->row()->lastname);
         }
 
         private function getLeaveDetails($id) {
-            $query = $this->db->query("
-                SELECT
-                    l.type,
-                    l.reference_no,
-                    l.nature,
-                    l.approved_remarks,
-                    l.reason,
-                    l.date_from,
-                    l.date_to,
-                    e.mobile_no,
-                    e.position,
-                    e.supervisor_meta,
-                    COALESCE(u.email, e.email) as email,
-                    CONCAT(e.firstname, ' ', e.lastname) AS fullname,
-                    CONCAT(a.firstname, ' ', a.lastname) AS approve_by
-                FROM gcceforms.loa l
-                JOIN gccmaster.tblemployees e ON l.employee = e.id
-                JOIN gccmaster.tblemployees a ON l.approved_by = a.id
-                LEFT JOIN gccmaster.tblusers u ON u.emp_id = e.id
-                WHERE l.id = ?
-            ", [$id]);
-            return $query->row_array();
+            // $query = $this->db->query("
+            //     SELECT
+            //         l.type,
+            //         l.reference_no,
+            //         l.nature,
+            //         l.approved_remarks,
+            //         l.reason,
+            //         l.date_from,
+            //         l.date_to,
+            //         e.mobile_no,
+            //         e.position,
+            //         e.supervisor_meta,
+            //         COALESCE(u.email, e.email) as email,
+            //         CONCAT(e.firstname, ' ', e.lastname) AS fullname,
+            //         CONCAT(a.firstname, ' ', a.lastname) AS approve_by
+            //     FROM gcceforms.loa l
+            //     JOIN gccmaster.tblemployees e ON l.employee = e.id
+            //     JOIN gccmaster.tblemployees a ON l.approved_by = a.id
+            //     LEFT JOIN gccmaster.tblusers u ON u.emp_id = e.id
+            //     WHERE l.id = ?
+            // ", [$id]);
+            $this->db->select("l.type, l.reference_no, l.nature, l.approved_remarks, l.reason, l.date_from, l.date_to, IFNULL(e.company_phone_no, e.mobile_no) as mobile_no, e.position, e.supervisor_meta, COALESCE(u.email, e.email) as email, CONCAT(e.firstname, ' ', e.lastname) AS fullname, e.allow_sms_notification, CONCAT(a.firstname, ' ', a.lastname) AS approve_by");
+            $this->db->join('gccmaster.tblemployees e', 'l.employee = e.id');
+            $this->db->join('gccmaster.tblemployees a', 'l.approved_by = a.id');
+            $this->db->join('gccmaster.tblusers u', 'u.emp_id = e.id', 'LEFT');
+            $this->db->from('gcceforms.loa l');
+            $this->db->where('l.id', $id);
+            $query = $this->db->get();
+            return $query->num_rows() > 0 ? $query->row_array() : array();
         }
 
         private function getContactPerson($supervisor_meta) {
-            if (!$supervisor_meta || !($managerial = @unserialize($supervisor_meta))) {
-                return "HR - ".$this->getCorporateHR();
+            $managerial = @unserialize($supervisor_meta);
+            $contactPerson = 124;
+            $name = 'HR - ';
+
+            if (is_array($managerial)) {
+                if (isset($managerial['supervisory']) && $managerial['supervisory']) {
+                    $contactPerson = $managerial['supervisory'];
+                    $name = 'Immediate Supervisor - ';
+                } else {
+
+                    if (isset($managerial['managerial']) && $managerial['managerial']) {
+                        $contactPerson = $managerial['managerial'];
+                        $name = 'Department Manager - ';
+                    }
+                }
+
+            } else {
+
+                if ($managerial) {
+                    $contactPerson = $managerial;
+                    $name = 'Immediate Supervisor - ';
+                } else {
+                    $name = 'HR - ';
+                }
             }
-            $query = $this->db->select("firstname, ' ', lastname")
-                             ->get_where("gccmaster.tblemployees", [
-                                 "id" => $managerial['supervisory'],
-                                 "employee_status" => "Active"
-                             ]);
-            return "Immediate Supervisor - ".$this->formatName($query->row()->firstname, $query->row()->lastname);
+
+            $query = $this->db->select("LOWER(
+                           CONCAT(
+                               firstname, ' ',
+                               CASE
+                                   WHEN middlename IS NOT NULL AND middlename != '' THEN CONCAT(' ', substr(middlename,1,1),'.')
+                                   ELSE ''
+                               END,
+                               ' ', lastname,
+                               CASE
+                                   WHEN suffix IS NOT NULL AND suffix != '' AND suffix != 'N/A' AND suffix != 'NONE' THEN CONCAT(' ', suffix)
+                                   ELSE ''
+                               END
+                           )
+                       ) employee_name")->get_where('gccmaster.tblemployees', array('id' => $contactPerson, 'employee_status' => 'Active'));
+
+            if ($query->num_rows() > 0) {
+                $row = $query->row();
+                $name .= ucwords($row->employee_name);
+            } else {
+                $name .= 'No Employee Name';
+            }
+
+            return $name;
         }
 
         private function getHeadContact($id) {
@@ -912,6 +962,7 @@
                             $result['supervisory_no'] = $supervisoryDetails['mobile_no'];
                             $result['supervisory_email'] = $supervisoryDetails['email'];
                             $result['supervisory_name'] = $supervisoryDetails['fullname'];
+                            $result['allow_sms'] = $supervisoryDetails['allow_sms_notification'];
                         }
                     }
         
@@ -919,9 +970,10 @@
                     if (!empty($supervisorMeta['managerial'])) {
                         $managerialDetails = $this->getEmployeeDetails($supervisorMeta['managerial']);
                         if ($managerialDetails) {
-                            $result['managerial_no'] = $managerialDetails['mobile_no'];
+                            $result['managerial_no'] = $managerialDetails['allow_sms_notification'] == 1 ? $managerialDetails['mobile_no'] : 0;
                             $result['managerial_email'] = $managerialDetails['email'];
                             $result['managerial_name'] = $managerialDetails['fullname'];
+                            $result['allow_sms'] = $managerialDetails['allow_sms_notification'];
                         }
                     }
                 }
@@ -929,17 +981,18 @@
             else{
                 $headDetails = $this->getEmployeeDetails($result['head_id']);
                 if ($headDetails) {
-                    $result['head_no'] = $headDetails['mobile_no'];
+                    $result['head_no'] = $headDetails['allow_sms_notification'] == 1 ? $headDetails['mobile_no'] : 0;
                     $result['head_email'] = $headDetails['email'];
                     $result['head_name'] = $headDetails['fullname'];
                     $result['head_telegram_chat_id'] = $headDetails['telegram_chat_id'];
+                    $result['allow_sms'] = $headDetails['allow_sms_notification'];
                 }
             }
             return $result;
         }
 
         private function getEmployeeDetails($id) {
-            $query = $this->db->select("e.mobile_no, u.email, u.telegram_chat_id, CONCAT(e.firstname, ' ', e.lastname) AS fullname")
+            $query = $this->db->select("IFNULL(e.company_phone_no, e.mobile_no) as mobile_no, u.email, u.telegram_chat_id, CONCAT(e.firstname, ' ', e.lastname) AS fullname, e.allow_sms_notification")
                 ->from("gccmaster.tblemployees as e")
                 ->join("gccmaster.tblusers u", "u.emp_id = e.id", "left")
                 ->where("e.id", $id)
@@ -951,6 +1004,8 @@
         private function get_loa_date_sms($type, $date_from, $date_to) {
             switch ($type) {
                 case 1: // Undertime
+                    return '<strong> Date: </strong> ' . date('F j, Y', strtotime($date_from))."\n".'Time: ' . date('h:i A', strtotime($date_from)) . ' - ' . date('h:i A', strtotime($date_to)) . "\n";
+                    break;
                 case 2: // Half Day
                     return '<strong>Date:</strong> ' . date('F j, Y', strtotime($date_from))."\n".'Time: ' . date('h:i A', strtotime($date_from)) . ' - ' . date('h:i A', strtotime($date_to)) . "\n";
                     break;
@@ -966,7 +1021,7 @@
             }
         }
 
-        private function getContactDetails($head_contact, $type) {
+        private function getContactDetails($head_contact, $type, $allow_sms = 2) {
             $fields = [
                 'head' => ['no' => 'head_no', 'email' => 'head_email', 'name' => 'head_name'],
                 'supervisory' => ['no' => 'supervisory_no', 'email' => 'supervisory_email', 'name' => 'supervisory_name'],
@@ -976,7 +1031,7 @@
             foreach ($fields as $key => $field) {
                 if (!empty($head_contact[$field[$type]])) {
                     return [
-                        'contact' => $head_contact[$field[$type]],
+                        'contact' => $allow_sms == 1 || $allow_sms == 2 ? $head_contact[$field[$type]] : false,
                         'name' => $head_contact[$field['name']]
                     ];
                 }

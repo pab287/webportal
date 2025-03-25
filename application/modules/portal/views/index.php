@@ -1645,6 +1645,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
 <?php $this->load->view("users/modal/change_password_dialog") ?>
 <?php $this->load->view("users/modal/change_pin_dialog") ?>
 <?php $this->load->view("users/modal/forget_pin_dialog") ?>
+<?php $this->load->view("users/modal/two_factor_dialog") ?>
 <?php $this->load->view("gcctime/attendance/modals/attendance_log") ?>
 
 <!-- end::Body -->

@@ -14,6 +14,7 @@ class Sms extends MY_Controller {
         $this->load->model("services/bulk_model","bulk");
         $this->load->model("services/corporate_model","corporate");
         $this->load->model("services/client_model","client");
+        $this->load->model("services/gateway_model","gateway");
 	}
     
     public function index(){
@@ -35,6 +36,14 @@ class Sms extends MY_Controller {
 
 		$this->load->view('core/templates/header');
         $this->load->view('sms/services/bulk');
+        $this->load->view('core/templates/footer');
+    }
+
+    public function sms_test(){
+        $this->core_layout->setPrivilegeName("sms_testing");
+        $this->core_layout->addJs("js/sms/test.js", true);
+		$this->load->view('core/templates/header');
+        $this->load->view('sms/sms_test');
         $this->load->view('core/templates/footer');
     }
 
@@ -502,4 +511,10 @@ class Sms extends MY_Controller {
         ->set_content_type('json')
         ->set_output(json_encode($data));
     }
+
+    public function send_sms(){
+        $data = $this->gateway->sendTwoFactorSms();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }

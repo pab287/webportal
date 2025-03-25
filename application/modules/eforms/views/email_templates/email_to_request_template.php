@@ -213,14 +213,17 @@
                                             <td align="right" valign="top" style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; padding-right: 20px;">Official Station :</td>
                                             <td align="left" style="color: #343434; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 24px; text-transform: uppercase;"><?php echo $station; ?></td>
                                         </tr>
-                                        <tr>
-                                            <td align="right" valign="top" style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; padding-right: 20px;">Plate No. :</td>
-                                            <td align="left" style="color: #343434; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 24px; text-transform: uppercase;"><?php echo $plateno; ?></td>
-                                        </tr>
-                                        <tr>
-                                            <td align="right" valign="top" style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; padding-right: 20px;">Driver :</td>
-                                            <td align="left" style="color: #343434; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 24px; text-transform: uppercase;"><?php echo $driver; ?></td>
-                                        </tr>
+                                        <?php
+                                            if ($is_service == 1 || $is_hitch == 1) { ?>
+                                                <tr>
+                                                    <td align="right" valign="top" style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; padding-right: 20px;">Plate No. :</td>
+                                                    <td align="left" style="color: #343434; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 24px; text-transform: uppercase;"><?php echo htmlspecialchars($plateno); ?></td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="right" valign="top" style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; padding-right: 20px;">Driver :</td>
+                                                    <td align="left" style="color: #343434; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 24px; text-transform: uppercase;"><?php echo htmlspecialchars($driver); ?></td>
+                                                </tr>
+                                            <?php } ?>
                                         <tr>
                                             <td align="right" valign="top" style="color: #333333; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; padding-right: 20px;">Status :</td>
                                             <td align="left" style="color: #343434; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 24px; text-transform: uppercase;"><?php echo $status; ?></td>
@@ -228,8 +231,8 @@
                                     </tbody>
                                 </table>
                             </td>
-                            <?php $tempUrl = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl={$reference_no}&choe=UTF-8"; ?>
-                            <td id="content_qr"><img style="float:right;" src="<?php echo $tempUrl; ?>" /></td>
+                            <!-- <?php $tempUrl = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl={$reference_no}&choe=UTF-8"; ?>
+                            <td id="content_qr"><img style="float:right;" src="<?php echo $tempUrl; ?>" /></td> -->
                         </tr>
                     </tbody>
                 </table>
@@ -291,8 +294,8 @@
                                     ?>
                                         <li style="color: #343434; font-size: 14px; font-family: Quicksand, Calibri, sans-serif; font-weight:700;letter-spacing: 0px; line-height: 14px; margin-bottom: 15px;">
                                             <p style="margin: 5px 0px;"><?php echo strtoupper($temp->destination); ?></p>
-                                            <p style="margin: 5px 0px;"><small><strong><?php echo strtoupper($temp->purpose); ?></strong></small></p>
-                                            <p style="margin: 15px 0px 0px 0px;"><small><strong>REQUESTED BY: <?php echo strtoupper($user->row('employee_name')); ?></strong></small></p>
+                                            <p style="margin: 5px 0px;"><small><strong>PURPOSE: <?php echo strtoupper($temp->purpose); ?></strong></small></p>
+                                            <p style="margin: 15px 0px 0px 0px;"><small><strong>REQUESTED BY: <?php echo strtoupper($temp->requested_by); ?></strong></small></p>
                                             <?php if($temp->remarks): ?>
                                             <p style="margin: 5px 0px;"><small><strong>REMARKS: <?php echo strtoupper($temp->remarks); ?></strong></small></p>
                                             <?php endif; ?>

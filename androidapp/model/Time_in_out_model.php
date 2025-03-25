@@ -126,7 +126,7 @@
                 $emp_id = $_POST['emp_id'];
                 $bio_num = $_POST['biometric_id'];
                 $time_status = $_POST['time_status'];
-                $coords = isset($_POST['coords']) ? json_decode($_POST['coords'], true) : null;
+                $coords = isset($_POST['coords']) && $_POST['coords'] ? json_decode($_POST['coords'], true) : null;
 
                 if($time_status==='in'){ $logs_action = 'time in'; }
                 elseif($time_status==='out'){ $logs_action = 'time out'; }
@@ -143,8 +143,8 @@
                     $this->store_logs($_POST, $personnel_id);
                     $max_time = date('H:i:s', strtotime($this->setInterval($bio_num). "+ 1 minute"));
 
-                    $location = $this->polygon_geofence($sites_id, $latitude, $longitude);
-                    $travel_order = $this->location_coordinates($bio_num, $latitude, $longitude);
+                    /*** $location = $this->polygon_geofence($sites_id, $latitude, $longitude);
+                    $travel_order = $this->location_coordinates($bio_num, $latitude, $longitude); ***/
                     $address = $this->geoaddress($longitude,$latitude);
                     
                     if($this->setInterval($bio_num) == null){
@@ -161,10 +161,11 @@
                             ));
                             
                             if($insertedID != 0){
-                                $resp = 0;
+                                /*** $resp = 0;
                                 if($location != 0){ $resp = $location; }
                                 elseif($travel_order != 0){ $resp = $travel_order; }
-                                else{ $resp = 2; }
+                                else{ $resp = 2; } ***/
+                                $resp = 2;
                                 $this->saveLogs("success", $logs_action, $emp_id, "[Mobile] Attendance - user ".$logs_action.".");
                                 return json_encode($this->user_logs($bio_num, $date, $time, $resp, $insertedID));
                             }else{
@@ -191,10 +192,11 @@
 
                                 if($insertedID){
                                     $this->log($bio_num, $longitude, $latitude);
-                                    $resp = 0;
+                                    /*** $resp = 0;
                                     if($location != 0){ $resp = $location; }
                                     elseif($travel_order != 0){ $resp = $travel_order; }
-                                    else{ $resp = 2; }
+                                    else{ $resp = 2; } ***/
+                                    $resp = 2;
                                     $this->saveLogs("success", $logs_action, $emp_id, "[Mobile] Attendance - user ".$logs_action.".");
                                     return json_encode($this->user_logs($bio_num, $date, $time, $resp, $insertedID, $time));
                                 }else{
@@ -773,7 +775,7 @@
             $to_data->execute();
 
             $data = $to_data->fetch(PDO::FETCH_ASSOC);
-            return $data['travel_order_id'];
+            return isset($data['travel_order_id']) && $data['travel_order_id'] ? $data['travel_order_id']: null;
         }
 
         public function saveLogs($type, $user_action, $user_id, $log_message){
