@@ -4037,7 +4037,10 @@ class Reports_m extends CI_Model{
         if (is_array($filteredIds) && count($filteredIds) > 0) {
             $select = "a.id, a.emp_id, b.firstname, b.lastname, b.middlename, b.suffix, b.company_id, b.idno,
             a.total_accredited_ot_hrs as ot_hrs, a.total_accredited_ndiff_ot_hrs as ot_ndiff_hrs,
-            DATE(a.overtime_in) as overtime_in, b.basic_rate, a.has_overtime, a.has_shift, IF((a.shift_am_start && a.shift_am_end) || (a.shift_pm_start && a.shift_pm_end), '1', '0') as ampm_shift";
+            DATE(a.overtime_in) as overtime_in,
+            ROUND(IF(LOWER(b.payroll_type) = 'monthly', ROUND( IFNULL(b.basic_rate, 0), 2) * 12 / ROUND( IFNULL(comp.work_days_in_year, 314), 2),
+            IFNULL(b.basic_rate, 0)), 2) as basic_rate,
+            a.has_overtime, a.has_shift, IF((a.shift_am_start && a.shift_am_end) || (a.shift_pm_start && a.shift_pm_end), '1', '0') as ampm_shift";
 
             $this->db->select($select);
             $this->db->from('gcctimeutility.timesheet a');
@@ -4155,7 +4158,7 @@ class Reports_m extends CI_Model{
     }
     //
     // function to display number of entries of requested data of payroll journal
-    function overtimeSummaryListCount($filteredId, $search){
+    protected function overtimeSummaryListCount($filteredId, $search){
         $count = 0;
         if(is_array($filteredId) && count($filteredId) > 0){
             $sqlSelect = "a.id, a.emp_id, b.firstname, b.lastname, b.middlename, b.suffix, b.company_id, b.idno,
