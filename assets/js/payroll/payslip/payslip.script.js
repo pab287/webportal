@@ -1002,7 +1002,6 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
             var checkBoxes = $(settings.nTBody).find("input[type='checkbox']");
             if (typeof checkBoxes !== "undefined" && checkBoxes.length > 0) {
                 checkBoxes.on("click", function (e) {
-                    console.log(e);
                     redrawPayslipTable();
                 });
             }
@@ -1156,6 +1155,7 @@ function viewPayslip(rowId) {
                     vmPayslipContent.row.deductions = numberFormat(totalDeduction);
                     vmPayslipContent.row.total_others_deductions = numberFormat(totalOthersDeductions);
                     vmPayslipContent.row.overall_total_deductions = numberFormat(overAllTotal);
+                    vmPayslipContent.row.adjustment_d_count = vmPayslipContent.row.adjustment_deductions.length;
 
                     viewPayrollPayslipModal.modal("show");
                 }
@@ -1445,7 +1445,6 @@ function triggerPrintable(ids = []) {
                             data: { csrf_token: _csrf_hash, printed_id: setPrintIds },
                             success: function (json) {
                               if (json.response) {
-                                  console.log(json);
                                   Swal.fire({
                                       title: 'Send Payslip via Telegram/Email?',
                                       text: 'Do you want to send the payslip via Telegram/Email?',
@@ -1473,8 +1472,6 @@ function triggerPrintable(ids = []) {
                                               }
                                           })
                                       ).done(function(responseTelegram, responseEmail) {
-                                          console.log("Telegram Response:", responseTelegram);
-                                          console.log("Email Response:", responseEmail);
                                   
                                           Swal.fire(
                                               'Sent!',
@@ -1544,7 +1541,6 @@ function triggerPrintableOption(ids = []) {
                                 data: { csrf_token: _csrf_hash, printed_id: setPrintIds },
                                 success: function (json) {
                                   if (json.response) {
-                                      console.log(json);
                                       Swal.fire({
                                           title: 'Send Payslip via Telegram/Email?',
                                           text: 'Do you want to send the payslip via Telegram/Email?',
@@ -1572,9 +1568,6 @@ function triggerPrintableOption(ids = []) {
                                                   }
                                               })
                                           ).done(function(responseTelegram, responseEmail) {
-                                              console.log("Telegram Response:", responseTelegram);
-                                              console.log("Email Response:", responseEmail);
-                                      
                                               Swal.fire(
                                                   'Sent!',
                                                   'Payslip has been sent via Telegram and Email.',
