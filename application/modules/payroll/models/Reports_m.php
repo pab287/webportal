@@ -3906,7 +3906,7 @@ class Reports_m extends CI_Model{
             
             $this->db->group_by("a.id");
             $queryTemp = $this->db->get();
-            if($queryTemp->num_rows() > 0 && $hasDataFilter == true){
+            if($queryTemp->num_rows() > 0 && $hasDataFilter === true){
                 foreach ($queryTemp->result() as $key => $value) {
                     if(!in_array($value->id, $employeeIds)){ $employeeIds[] = $value->id; }
                 }
@@ -3933,7 +3933,7 @@ class Reports_m extends CI_Model{
                 $date = new DateTime($tempStartDate);
                 $date->modify('last day of this month');
                 $tempEndDate = $date->format('Y-m-d');
-            }else if(isset($post["filter_year"]) && $post["filter_year"]){
+            }elseif (isset($post["filter_year"]) && $post["filter_year"]){
                 $tempStartDate = date("Y-01-01", strtotime("{$post["filter_year"]}-01-01"));
                 $tempEndDate = date("Y-12-31", strtotime("{$post["filter_year"]}-12-31"));
             }
@@ -3953,8 +3953,9 @@ class Reports_m extends CI_Model{
                 $this->db->join("gcchris.tblcompanies comp", "comp.id=emp.company_id", "LEFT");
                 $this->db->where("ts.has_overtime", 1);
                 $this->db->group_start();
-                $this->db->where('DATE(ts.overtime_in) BETWEEN "' . $tempStartDate . '" AND "' . $tempEndDate . '"', NULL, FALSE);
-                $this->db->where('DATE(ts.overtime_out) BETWEEN "' . $tempStartDate . '" AND "' . $tempEndDate . '"', NULL, FALSE);
+                $this->db->where('DATE(ts.overtime_in) BETWEEN "' . $tempStartDate . '" AND "' . $tempEndDate . '"', null, false);
+                $this->db->where('DATE(ts.overtime_out) BETWEEN "' . $tempStartDate . '" AND "' . $tempEndDate . '"', null, false);
+                $this->db->or_where('DATE(ts.date) BETWEEN "' . $tempStartDate . '" AND "' . $tempEndDate . '"', null, false);
                 $this->db->group_end();
                 if($hasDataFilter && !empty($employeeIds)){
                     $this->db->where_in("emp_id", $employeeIds);
