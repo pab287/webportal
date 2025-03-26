@@ -469,14 +469,12 @@
                         totalDeduction = totalDeduction + parseFloat(data.tax);
                     }
 
-                    $.each(json.data.loans, function (index, item) {
-                        if (item.loan_name.toLowerCase() != 'charges') {
-                            var temp_amount = parseFloat(item.amount_due);
-
-                            // for adding cash advance with loan adjustments
-                            if (typeof item.loan_name !== "undefined" && item.loan_name.toLowerCase() == 'cash advance') {
-                                temp_amount = parseFloat(item.amount_due.replace(/,/g, ''));
-
+                    if (json.data.loans.length > 0) {
+                        $.each(json.data.loans, function (index, item) {
+                            if (item.loan_name.toLowerCase() != 'charges' && item.loan_name.toLowerCase() != 'under deduction' && item.loan_name.toLowerCase() != 'medical loan') {
+                                var temp_amount = parseFloat(item.amount_due.replace(/,/g, ''));
+    
+                                // for adding cash advance with loan adjustments
                                 if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
                                     const created_adjustments = tempCreatedAdjustments.split(",");
                                     var tempAdj = 0;
@@ -492,34 +490,69 @@
                                         }
 
                                         tempAdj = _temp;
-                                        _temp = formatNumber(_temp);
+                                        _temp = _temp;
 
-                                        if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
-                                            temp_amount = _temp;
+                                        if (typeof item.loan_name !== "undefined" && item.loan_name.toLowerCase() == 'cash advance') {
+                                            if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
+                                                temp_amount = _temp;
+                                            }
+                                        } else {
+                                            // includes loan adjustments when employee has no cash advance
+                                            if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
+                                                if (!tempLoan.some(el => el.loan_name === 'CASH ADVANCE')) {
+                                                    tempLoan.push({
+                                                        'loan_name' : 'CASH ADVANCE',
+                                                        'amount_due' : temp_adjustment[1],
+                                                        'loan_type' : adj_type
+                                                    });
+                                                }
+                                            }
                                         }
                                     });
                                 }
+    
+                                tempLoan.push({
+                                    'loan_name' : item.loan_name,
+                                    'amount_due' : numberFormat(temp_amount),
+                                    'loan_type' : item.loan_type
+                                });
                             }
-
-                            tempLoan.push({
-                                'loan_name' : item.loan_name,
-                                'amount_due' : temp_amount,
-                                'loan_type' : item.loan_type
+    
+                            // for adding the charges to Other Deductions
+                            if (item.loan_name.toLowerCase() == 'charges' || item.loan_name.toLowerCase() == 'under deduction' || item.loan_name.toLowerCase() == 'medical loan') {
+                                vmPayslipContent.row.adjustment_deductions.push({
+                                    'label' : item.loan_name,
+                                    'display_value' : item.amount_due,
+                                    'value' : item.amount_due,
+                                    'adj_type' : 0
+                                });
+    
+                                totalLoan = totalLoan - parseFloat(item.amount_due.replace(/,/g, ''));
+                            }
+                        });
+                    } else {
+                        if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
+                            const created_adjustments = tempCreatedAdjustments.split(",");
+                            var tempAdj = 0;
+                            created_adjustments.forEach((row, i) => {
+                                const temp_adjustment = row.split("||");
+                                const adj_type = parseInt(temp_adjustment[2]);
+                                const temp_status = parseInt(temp_adjustment[3]);
+                                let _temp = parseFloat(temp_adjustment[1]);
+    
+                                tempAdj = _temp;
+                                _temp = formatNumber(_temp);
+    
+                                if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
+                                    tempLoan.push({
+                                        'loan_name' : 'cash advance',
+                                        'amount_due' : _temp,
+                                        'loan_type' : adj_type
+                                    });
+                                }
                             });
                         }
-
-                        // for adding the charges to Other Deductions
-                        if (item.loan_name.toLowerCase() == 'charges') {
-                            vmPayslipContent.row.adjustment_deductions.push({
-                                'label' : item.loan_name,
-                                'display_value' : item.amount_due,
-                                'value' : item.amount_due,
-                                'adj_type' : 0
-                            });
-
-                            totalLoan = totalLoan - parseFloat(item.amount_due.replace(/,/g, ''));
-                        }
-                    });
+                    }
 
                     $.each(vmPayslipContent.row.adjustment_deductions, function (index, item) {
                         totalOthersDeductions = totalOthersDeductions + parseFloat(item.display_value.replace(/,/g, ''));

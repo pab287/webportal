@@ -256,58 +256,74 @@
 
                                     <?php if($item->total_loans && (floatval($item->total_loans) > 0 || (is_array($item->loans) && count($item->loans) > 0))): ?>
                                         <?php $created_adjustment = $item->created_adjustments; ?>
+
                                         <?php foreach ($item->loans as $kk => $vv): ?>
-                                            <div class="row text-right">
-                                                <?php if($vv->amount_due > 0): ?>
-                                                    <?php
-                                                        if (strtolower($vv->loan_name) == 'charges') {
+                                            <?php if($vv->amount_due > 0): ?>
+                                                <?php 
+                                                    if (strtolower($vv->loan_name) == 'charges' || strtolower($vv->loan_name) == 'under deduction' || strtolower($vv->loan_name) == 'medical loan') {
 
-                                                            $_data = array(
-                                                                'label' => $vv->loan_name,
-                                                                'display_value' => $vv->amount_due
-                                                            );
+                                                        $_data = array(
+                                                            'label' => $vv->loan_name,
+                                                            'display_value' => $vv->amount_due
+                                                        );
 
-                                                            $item->adjustment_deductions[] = (object) $_data;
-                                                            $item->adjustment_d_count++;
-                                                        }
-                                                    ?>
+                                                        $item->adjustment_deductions[] = (object) $_data;
+                                                        $item->adjustment_d_count++;
 
-                                                    <?php if (strtolower($vv->loan_name) != 'charges'): ?>
-                                                        <?php 
-                                                            $temp_amountDue = $vv->amount_due;
+                                                        unset($item->loans[$kk]);
+                                                    }
 
-                                                            if (isset($vv->loan_name) && strtolower($vv->loan_name) == 'cash advance') {
-                                                                $temp_amountDue = floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due));
+                                                    if (strtolower($vv->loan_name) != 'charges' && strtolower($vv->loan_name) != 'under deduction' && strtolower($vv->loan_name) != 'medical loan') {
+                                                        $temp_amountDue = floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due));
 
-                                                                if (isset($created_adjustment) && $created_adjustment) {
-                                                                    $_tempCreated = explode(",", $created_adjustment);
-                                                                    $tempAdj = 0;
+                                                        if (isset($created_adjustment) && $created_adjustment) {
+                                                            $_tempCreated = explode(",", $created_adjustment);
+                                                            $tempAdj = 0;
 
+                                                            foreach ($_tempCreated as $_key => $_value) {
+                                                                $temp_adjustment = explode("||", $_value);
+                                                                $adj_type = isset($temp_adjustment[2]) ? intval($temp_adjustment[2]) : 0;
+                                                                $temp_status = isset($temp_adjustment[3]) ? intval($temp_adjustment[3]) : 0;
 
-                                                                    foreach ($_tempCreated as $_key => $_value) {
-                                                                        $temp_adjustment = explode("||", $_value);
-                                                                        $adj_type = isset($temp_adjustment[2]) ? intval($temp_adjustment[2]) : 0;
-                                                                        $temp_status = isset($temp_adjustment[3]) ? intval($temp_adjustment[3]) : 0;
+                                                                $_temp = floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due));
 
-                                                                        $_temp = floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due));
+                                                                $_temp = $adj_type == 1 ? floatval($temp_amountDue) + floatval($temp_adjustment[1]) : floatval($temp_amountDue) - floatval($temp_adjustment[1]);
+                                                                $tempAdj = $_temp;
 
-                                                                        $_temp = $adj_type == 1 ? floatval($temp_amountDue) + floatval($temp_adjustment[1]) : floatval($temp_amountDue) - floatval($temp_adjustment[1]);
-                                                                        $tempAdj = $_temp;
+                                                                $temp_amountDue = ($temp_adjustment[0] == "LOAN" && $temp_status === 1) ? $_temp : $temp_amountDue;
 
-                                                                        $temp_amountDue = ($temp_adjustment[0] == "LOAN" && $temp_status === 1) ? $_temp : $temp_amountDue;
+                                                                if (isset($vv->loan_name) && strtolower($vv->loan_name) == 'cash advance') {
+                                                                    if ($temp_adjustment[0] == "LOAN" && $temp_status === 1) {
+                                                                        $item->loans[$kk]->amount_due = number_format($temp_amountDue, 2);
+                                                                    }
+                                                                } else {
+                                                                    if ($temp_adjustment[0] == "LOAN" && $temp_status === 1) {
+                                                                        $loan = array_column($item->loans, 'loan_name');
+                                                                        
+                                                                        if (!in_array('CASH ADVANCE', $loan)) {
+                                                                            $item->loans[] = (object) array(
+                                                                                'loan_name' => 'CASH ADVANCE',
+                                                                                'amount_due' => number_format($temp_adjustment[1], 2),
+                                                                                'loan_type' => $adj_type
+                                                                            );
+                                                                        }
                                                                     }
                                                                 }
                                                             }
-                                                        ?>
+                                                        }
+                                                    }
+                                                ?>
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
 
-                                                        <div class="col-md-5 printable-width-5">
-                                                            <h5 class="m--font-bolder m--marginless"><?=$vv->loan_name; ?></h5>
-                                                        </div>
-                                                        <div class="col-md-7 printable-width-7 text-right">
-                                                            <h5 class="m--font-bolder m--marginless"><?=number_format($temp_amountDue, 2); ?></h5>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                <?php endif; ?>
+                                        <?php foreach ($item->loans as $kk => $vv): ?>
+                                            <div class="row text-right">
+                                                <div class="col-md-5 printable-width-5">
+                                                    <h5 class="m--font-bolder m--marginless"><?=$vv->loan_name; ?></h5>
+                                                </div>
+                                                <div class="col-md-7 printable-width-7 text-right">
+                                                    <h5 class="m--font-bolder m--marginless"><?=$vv->amount_due; ?></h5>
+                                                </div>
                                             </div>
                                         <?php endforeach; ?>
                                     <?php endif; ?>

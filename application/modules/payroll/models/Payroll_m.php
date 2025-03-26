@@ -5848,7 +5848,7 @@ class Payroll_m extends CI_Model
             $msg .= "----------------------------------------------\n";
         }
 
-        $msg .= "ALLOWANCES: " . $arrData[0]->total_allowances . "\n";
+        $msg .= "ALLOWANCES: " . number_format($arrData[0]->total_allowances, 2) . "\n";
         
         if($arrData[0]->ot_amount > 0) {
             $msg .= "OVERTIME: ";
@@ -5927,7 +5927,7 @@ class Payroll_m extends CI_Model
 
                 foreach ($arrData[0]->loans as $kk => $vv) {
                     if($vv->amount_due > 0){
-                        if (strtolower($vv->loan_name) == 'charges') {
+                        if (strtolower($vv->loan_name) == 'charges' || strtolower($vv->loan_name) == 'under deduction' || strtolower($vv->loan_name) == 'medical loan') {
 
                             $_data = array(
                                 'label' => $vv->loan_name,
@@ -5936,39 +5936,58 @@ class Payroll_m extends CI_Model
 
                             $arrData[0]->adjustment_deductions[] = (object) $_data;
                             $arrData[0]->adjustment_d_count++;
+
+                            unset($arrData[0]->loans[$kk]);
                         }
 
-                        if (strtolower($vv->loan_name) != 'charges') {
-                            $temp_amountDue = $vv->amount_due;
+                        if (strtolower($vv->loan_name) != 'charges' && strtolower($vv->loan_name) != 'under deduction' && strtolower($vv->loan_name) != 'medical loan') {
+                            $temp_amountDue = floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due));
 
-                            if (strtolower($vv->loan_name) == 'cash advance') {
-                                $temp_amountDue = floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due));
-                                
-                                if (isset($created_adjustment) && $created_adjustment) {
-                                    $_tempCreated = explode(",", $created_adjustment);
-                                    $tempAdj = 0;
+                            if (isset($created_adjustment) && $created_adjustment) {
+                                $_tempCreated = explode(",", $created_adjustment);
+                                $tempAdj = 0;
 
-                                    foreach ($_tempCreated as $_key => $_value) {
-                                        $temp_adjustment = explode("||", $_value);
-                                        $adj_type = isset($temp_adjustment[2]) ? intval($temp_adjustment[2]) : 0;
-                                        $temp_status = isset($temp_adjustment[3]) ? intval($temp_adjustment[3]) : 0;
+                                foreach ($_tempCreated as $_key => $_value) {
+                                    $temp_adjustment = explode("||", $_value);
+                                    $adj_type = isset($temp_adjustment[2]) ? intval($temp_adjustment[2]) : 0;
+                                    $temp_status = isset($temp_adjustment[3]) ? intval($temp_adjustment[3]) : 0;
 
-                                        $_temp = floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due));
+                                    $_temp = floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due));
 
-                                        $_temp = $adj_type == 1 ? floatval($temp_amountDue) + floatval($temp_adjustment[1]) : floatval($temp_amountDue) - floatval($temp_adjustment[1]);
-                                        $tempAdj = $_temp;
-                                        $_temp = $_temp;
+                                    $_temp = $adj_type == 1 ? floatval($temp_amountDue) + floatval($temp_adjustment[1]) : floatval($temp_amountDue) - floatval($temp_adjustment[1]);
+                                    $tempAdj = $_temp;
 
-                                        $temp_amountDue = ($temp_adjustment[0] == "LOAN" && $temp_status === 1) ? $_temp : $temp_amountDue;
+                                    $temp_amountDue = ($temp_adjustment[0] == "LOAN" && $temp_status === 1) ? $_temp : $temp_amountDue;
+
+                                    if (isset($vv->loan_name) && strtolower($vv->loan_name) == 'cash advance') {
+                                        if ($temp_adjustment[0] == "LOAN" && $temp_status === 1) {
+                                            $arrData[0]->loans[$kk]->amount_due = $temp_amountDue;
+                                        }
+                                    } else {
+                                        if ($temp_adjustment[0] == "LOAN" && $temp_status === 1) {
+                                            $loan = array_column($arrData[0]->loans, 'loan_name');
+                                            
+                                            if (!in_array('CASH ADVANCE', $loan)) {
+                                                $arrData[0]->loans[] = (object) array(
+                                                    'loan_name' => 'CASH ADVANCE',
+                                                    'amount_due' => $temp_adjustment[1],
+                                                    'loan_type' => $adj_type
+                                                );
+                                            }
+                                        }
                                     }
                                 }
                             }
 
-
-                            $msg .= $vv->loan_name . ": " . number_format($temp_amountDue, 2) . "\n";
-                            $temp_totalLoans += floatval(preg_replace('/[^\d\.\-]/', '', $temp_amountDue));
+                            $arrData[0]->loans[$kk]->amount_due = floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due));
                         }
+                    }
+                }
 
+                foreach ($arrData[0]->loans as $kk => $vv) {
+                    if($vv->amount_due > 0){
+                        $msg .= $vv->loan_name . ": " . number_format($vv->amount_due, 2) . "\n";
+                        $temp_totalLoans += floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due));
                     }
                 }
 
