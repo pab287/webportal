@@ -4033,12 +4033,15 @@ class Reports_m extends CI_Model{
             DATE(a.overtime_in) as overtime_in,
             ROUND(IF(LOWER(b.payroll_type) = 'monthly', ROUND( IFNULL(b.basic_rate, 0), 2) * 12 / ROUND( IFNULL(comp.work_days_in_year, 314), 2),
             IFNULL(b.basic_rate, 0)), 2) as basic_rate,
+            ROUND(IF(LOWER(allw.frequency) = 'month', ROUND( IFNULL(allw.rate, 0), 2) * 12 / ROUND( IFNULL(comp.work_days_in_year, 314), 2),
+            IFNULL(allw.rate, 0)), 2) as allowance_rate,
             a.has_overtime, a.has_shift, IF((a.shift_am_start && a.shift_am_end) || (a.shift_pm_start && a.shift_pm_end), '1', '0') as ampm_shift";
 
             $this->db->select($select);
             $this->db->from('gcctimeutility.timesheet a');
             $this->db->join('gccmaster.tblemployees b', 'a.emp_id = b.id');
             $this->db->join('gcchris.tblcompanies comp', 'comp.id = b.company_id', 'LEFT');
+            $this->db->join($this->tbl_hris_allawances." allw", "allw.emp_id = b.id AND allw.is_active = 1 AND allw.is_archived = 0", "LEFT");
             $this->db->where_in('a.id', $filteredIds);
             $this->db->where('a.has_overtime', 1);
             $this->db->group_start();
@@ -4060,7 +4063,7 @@ class Reports_m extends CI_Model{
                     $item->daily_rate = $item->basic_rate;
                     $item->has_shift = $item->ampm_shift === "0" ? "0": $item->has_shift;
                     
-                    $item->allowance = intval($item->has_shift) === 0 && $item->ot_hrs >= 4 ? $this->getOvertimeAllowance($item->emp_id): '';
+                    $item->allowance = intval($item->has_shift) === 0 && $item->ot_hrs >= 1 ? $item->allowance_rate: '';
                     $totalOtHrs = $item->ot_hrs + $item->ot_ndiff_hrs;
                     $item->ot_hrs = $totalOtHrs;
                     $item->ot_hrs = ($item->ot_hrs == 0) ? '-' : $item->ot_hrs;
