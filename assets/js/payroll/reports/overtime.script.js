@@ -380,7 +380,7 @@ $(document).ready(function(){
                 render: function (data) {
                     if (data && parseFloat(data) > 0) {
                         const allw = parseFloat(data);
-                        return allw.toFixed(2);
+                        return '₱ '+ allw.toFixed(2);
                     } else { return '-'; }
                 }
             }, { data: 'ot_hrs', width: '5%', className: "text-right",
