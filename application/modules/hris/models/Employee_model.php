@@ -10954,6 +10954,7 @@
             if (isset($query->date_start) && $query->date_start) {
                 $date_hired = date('Y-m-d', strtotime($query->date_start . ' +7 days')); //tags the employee as newly hired
                 $date = ($now >= $query->date_start && $now <= $date_hired) ? $query->date_start : $now;
+                $date = $query->date_start > $now ? $query->date_start : $date;
             }
 
             if($arr['payroll_type'] == 'hourly'){
@@ -11052,6 +11053,7 @@
             if (isset($query->date_start) && $query->date_start) {
                 $date_hired = date('Y-m-d', strtotime($query->date_start . ' +7 days')); //tags the employee as newly hired
                 $date = ($now >= $query->date_start && $now <= $date_hired) ? $query->date_start : $now;
+                $date = $query->date_start > $now ? $query->date_start : $date;
             }
 
             if($query->payroll_type == 'daily'){ $payroll = 'Basic Daily Rate'; }
