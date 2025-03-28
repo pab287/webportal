@@ -203,13 +203,21 @@
             <div class="m-portlet">
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
-                        <div class="m-portlet__head-title">
-                            <span class="m-portlet__head-icon">
-                                <i class="flaticon-graph"></i>
-                            </span>
-                            <h3 class="m-portlet__head-text">
-                                EMPLOYEE STATUS
-                            </h3>
+                        <div class="m-portlet__head-title w-100" style="display: flex; justify-content: space-between;">
+                            <div class="d-flex justify-content-between align-items-center w-100">
+                                <div class="colmn-1 col-9 p-0">
+                                    <span class="m-portlet__head-icon"><i class="flaticon-graph"></i></span>
+                                    <h3 class="m-portlet__head-text">EMPLOYEE STATUS</h3>
+                                </div>
+
+                                <div class="colmn-2 col-3 p-0">
+                                    <div class="m-select2 m-select2--pill">
+                                        <form>
+                                            <select id="select2_company" name="select2_company" data-validation="false" class="form-control select2"></select>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="m-portlet__head-tools">

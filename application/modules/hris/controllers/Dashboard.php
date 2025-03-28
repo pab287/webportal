@@ -11,6 +11,8 @@
             $this->load->model("Employee_model", "employee");
             $this->load->model("ams/Utilities_model", "utilities");
             $this->load->model("Dashboard_model", "dashboard");
+            $this->load->model("Company_model", "company_model");
+            
             date_default_timezone_set('Asia/Manila');
         }
 
@@ -65,5 +67,10 @@
         public function get_personnel_request_summary() {
             $data = $this->dashboard->getPersonnelRequestSummary();
             echo json_encode($data);
+        }
+
+        public function get_company_select2_data() {
+            $data = $this->company_model->getCompanySelect2Data();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
         }
     }

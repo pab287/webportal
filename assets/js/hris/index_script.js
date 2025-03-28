@@ -921,3 +921,22 @@ const loadTurnoverRateByYear = function (year=null){
     }
 }
 
+// Employee Status Company Filter Start
+$(document).ready(function () {
+    // let select2_company;
+
+    $('#select2_company').select2({
+        placeholder: 'Select a company',
+        width: '100%',
+        ajax: {
+            url: baseUrl("hris/dashboard/get_company_select2_data"),
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return data;
+            },
+        }
+    });
+});
+
+// Employee Status Company Filter End
