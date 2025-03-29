@@ -426,6 +426,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
             }
         }, {
             text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT OPTION</span>',
+            titleAttr: 'Print Option for Retiree, Local Hires and Pavers',
             className: "pull-right printPayslipOptionAction btnPrint",
             action: function (e, dt, node, conf) {
                 var tempCheckbox = $(dt.body()).find("input[type='checkbox']:checked");
