@@ -365,9 +365,9 @@
                                     </div>
                                 </div>
 
-                                <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-top-25"></div>
-
-                                <div class="row m--margin-top-15 m--font-boldest">
+                                
+                                <div class="row m--margin-top-15 m--font-boldest" hidden>
+                                    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-top-25"></div>
                                     <div class="col-md-12 printable-width-12 text-center mb-1">
                                         <h5 class="m--marginless">RECEIPT FOR PAY</h5>
                                     </div>
@@ -380,7 +380,7 @@
                                         <?php endif; ?>
                                     </div>
                                 </div>
-                                <div class="row m--margin-top-15 m--margin-bottom-5">
+                                <div class="row m--margin-top-15 m--margin-bottom-5" hidden>
                                     <div class="col-md-12 printable-width-12">
                                         <h5 class="m--marginless">
                                         <p class="m--marginless text-justify">
