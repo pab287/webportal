@@ -1109,24 +1109,27 @@ class Ticket_m extends CI_Model
             $telegram_msg .= '<b>Date Needed</b>: '.strtoupper($data['requested_date']).chr(10);
         }
 
-		if($this->telegram_config_if_exist('new_ticket', 'count') > 0){
-
+        if ($data['responsibility'] == "PAYROLL") {
+            $config_key = 'new_ticket_payroll';
+        } else {
+            $config_key = 'new_ticket';
+        }
+        
+        if ($this->telegram_config_if_exist($config_key, 'count') > 0) {
             $inline_keyboard = [
                 [
                     [
                         "text" => "View Ticket",
-                        // "url" => 'http://152.69.208.158/web/ticket/ticket/edit_ticket?id=427' //doesnt send message when in development or in local
-                        "url" => base_url('ticket/ticket/edit_ticket?id=').$id
+                        // "url" => 'http://58.69.100.66/portaldev/ticket/ticket/edit_ticket?id='.$id //doesnt send message when in development or in local
+                        "url" => base_url('ticket/ticket/edit_ticket?id=') . $id
                     ]
                 ]
             ];
-
             $reply_markup = [
                 "inline_keyboard" => $inline_keyboard
             ];
-
-			$this->telegram($telegram_msg, $reply_markup);
-		}
+           $this->telegram($telegram_msg, $reply_markup, $config_key);
+        }
 
 		return $telegram_msg;
 	}
@@ -1143,9 +1146,9 @@ class Ticket_m extends CI_Model
 		}
 	}
 
-    public function telegram($msg, $reply_markup){
+    public function telegram($msg, $reply_markup,$config_key){
 		try {
-			$data = $this->telegram_config_if_exist('new_ticket', 'data');
+			$data = $this->telegram_config_if_exist($config_key, 'data');
 			if($data){
 
 				$telegrambot=$data->telegram_bot_token;
