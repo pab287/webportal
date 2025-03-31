@@ -439,4 +439,11 @@
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
         }
+
+        public function get_employee_select2_data(){
+            $data = $this->employee->getSelect2Employee();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
     }

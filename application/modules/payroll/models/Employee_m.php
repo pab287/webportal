@@ -1797,4 +1797,38 @@
 
             return array('results' => $result);
         }
+
+        public function getSelect2Employee(){
+            $result = array();
+            $get = $this->input->get();
+
+            $this->db->select("id, UPPER(CONCAT(firstname, ' ',
+            CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND
+                    TRIM(middlename) !='' AND middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(middlename, 1, 1), '.') ELSE ''
+            END,' ', lastname,
+            CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND
+                UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND
+                suffix IS NOT NULL THEN CONCAT(' ', suffix) ELSE ''
+            END)) as text");
+            $this->db->from($this->employeeTable);
+            $this->db->where("employee_status", "active");
+
+            if (isset($get['q']) && $get['q']) {
+                $this->db->group_start();
+                    $this->db->like('firstname', $get['q'], 'both');
+                    $this->db->or_like('lastname', $get['q'], 'both');
+                $this->db->group_end();
+            }
+
+            $this->db->order_by("firstname", "ASC");
+            $this->db->limit(10);
+            $qTemp = $this->db->get();
+
+            if($qTemp->num_rows() > 0){
+                $result = $qTemp->result();
+            }
+
+            return array("results" => $result);
+        }
     }
