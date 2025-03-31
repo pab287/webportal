@@ -1121,7 +1121,7 @@ class Ticket_m extends CI_Model
                     [
                         "text" => "View Ticket",
                         // "url" => 'http://58.69.100.66/portaldev/ticket/ticket/edit_ticket?id='.$id //doesnt send message when in development or in local
-                        "url" => base_url('ticket/ticket/edit_ticket?id=') . $id
+                        "url" => site_url('ticket/ticket/edit_ticket?id=') . $id
                     ]
                 ]
             ];
