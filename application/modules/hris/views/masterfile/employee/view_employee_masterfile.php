@@ -573,5 +573,9 @@
                 });
             }
         }
+
+        function formatNumber(value, decimals = 2) {
+            return parseFloat(value).toLocaleString("en-US", { maximumFractionDigits: decimals });
+        }
     </script>
 <?php endif; ?>

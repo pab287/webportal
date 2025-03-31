@@ -89,22 +89,22 @@
                     <div class="m-portlet m--padding-10 m--marginless" style="height: 100%;">
                         <div class="m-portlet__body m-portlet__body--no-padding">
                             <div class="m-form m-form--fit m-form--label-align-right">
-                                <div class="row">
+                                <div class="row" hidden>
                                     <div class="col-md-12 text-center">
                                         <h3><?=strtoupper($item->company_description); ?></h3>
                                     </div>
                                 </div>
 
-                                <div class="m-form__seperator m-form__seperator--line-thickness-2x m-form__seperator--space-1x m--marginless"></div>
+                                <div class="m-form__seperator m-form__seperator--line-thickness-2x m-form__seperator--space-1x m--marginless" hidden></div>
 
                                 <div class="row mt-3">
                                     <div class="col-md-6 printable-width-6 text-left">
-                                        <h5 class="m--font-boldest">RECEIPT FOR PAY</h5>
+                                        <h4 class="m--font-boldest">RECEIPT FOR PAY</h4>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6 printable-width-6 text-left">
-                                        <h5 class="m--font-boldest">Name of Employee:</h5>
+                                        <h5 class="m--font-boldest">NAME OF EMPLOYEE:</h5>
                                     </div>
                                     <div class="col-md-6 printable-width-6 text-right">
                                         <h5 class="m--font-boldest"><?=strtoupper($item->employee_name); ?></h5>
@@ -126,7 +126,7 @@
                                         <h5 class="m--font-bolder m--marginless"><?=intval($item->is_bonus) == 1 && $item->bonus_code ? "BONUS / {$item->bonus_code}":"BASIC PAY"; ?> </h5>
                                     </div>
                                     <div class="col-md-4 printable-width-6 text-right">
-                                        <h5 class="m--font-boldest m--marginless"><?=$item->gross_pay; ?></h5>
+                                        <h5 class="m--font-boldest m--marginless"><?=$item->target_payrate; ?></h5>
                                     </div>
                                 </div>
 
@@ -141,7 +141,7 @@
                                 </div>
 
                                 <?php if(floatval($item->holiday_hours) > 0): ?>
-                                    <div class="row">
+                                    <div class="row mb-2">
                                         <div class="col-md-8 printable-width-8">
                                             <h5 class="m--font-bolder m--marginless">HOLIDAY PAY</h5>
                                         </div>
