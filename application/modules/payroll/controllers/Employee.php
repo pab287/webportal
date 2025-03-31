@@ -63,6 +63,16 @@
             }
         }
 
+        public function fixed_taxable_deduction(){
+            $this->core_layout->setPageTitle("Payroll - Fixed Taxable Deduction");
+            $this->core_layout->setPrivilegeName("payroll_fixed_taxable_deduction");
+            $this->core_layout->addJs("js/payroll/employee/fixed_taxable_deduction.js", true);
+
+            $this->load->view('core/templates/header');
+            $this->load->view('payroll/payroll/fixed_taxable_deduction');
+            $this->load->view('core/templates/footer');
+        }
+
         function employee_masterfile($employee_status = "Active") {
             $employee_status = str_replace("%20", " ", $employee_status);
             $data = $this->employee->employeeMasterfile($employee_status);
