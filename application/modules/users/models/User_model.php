@@ -618,4 +618,13 @@ class User_model extends CI_Model
         return $response;
     }
 
+    public function changePasswordLater(){
+        // $post = $this->input->post();
+        // $id = $post['id'];
+        // $this->db->where('id', $id);
+        // $this->db->set('force_update',1);
+        // $update = $this->db->update('gccmaster.tblusers');
+        // return $update;
+    }
+
 }

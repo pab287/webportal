@@ -315,12 +315,30 @@ function passwordChangeReminder() {
     console.log("Pass CHANGE")
 }
 
-function changePasswordLater(){
+function changePasswordLater(id){
+    console.log(id)
+    $.ajax({
+        url: baseUrl("users/change_password_later"),
+        type: "POST",
+        dataType: "JSON",
+        data: {
+            id:id,
+            csrf_token : _csrf_hash
+        },
+        global: false,
+        success: function (response) {
+            
+        }
+    });
 
 }
    
 function changePasswordNow(){
     $(".password-change-reminder").modal("hide");
+    $("#force_change_modal").modal("show", {
+        backdrop: 'static',
+        keyboard: false
+    });
 }
 
 function sendPin(form) {
@@ -668,4 +686,3 @@ function delay(callback, ms) {
         });
     });
 }
-

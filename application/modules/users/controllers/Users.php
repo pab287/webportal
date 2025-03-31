@@ -263,4 +263,9 @@ class Users extends MY_Controller{
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
+    public function change_password_later(){
+        $data = $this->user->changePasswordLater();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }

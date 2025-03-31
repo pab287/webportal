@@ -78,13 +78,12 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
     <!--begin::Base Scripts -->
     <script src="<?php echo base_url("assets/vendors/base/vendors.bundle.js"); ?>" type="text/javascript"></script>
     <script src="<?php echo base_url("assets/demo/demo3/base/scripts.bundle.js"); ?>" type="text/javascript"></script>
-    <script src="<?php echo base_url('assets/js/form-validator/jquery.form-validator.min.js'); ?>"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
 
     <!--end::Base Scripts -->
     <script src="<?php echo base_url('assets/plugins/bootstrap/bootstrap.min.js'); ?>"></script>
     <script src="<?php echo base_url('assets/js/jquery.dataTables.min.js'); ?>"></script>
     <script src="<?php echo base_url('assets/js/dataTables.bootstrap4.min.js'); ?>"></script>
-
     <script src="<?php echo base_url('assets/js/custom.js'); ?>"></script>
     <?php echo $this->core_layout->getStoredJs(); ?>
 
@@ -98,7 +97,6 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
     <link href="<?php echo base_url("assets/demo/demo3/base/style.bundle.css"); ?>" rel="stylesheet" type="text/css"/>
     <link href="<?php echo base_url("assets/css/custom.css"); ?>" rel="stylesheet" type="text/css"/>
     <?php echo $this->core_layout->getStoredCss(); ?>
-    
     
     <link rel="shortcut icon" type="image/png" sizes="32x32" href="<?php echo base_url("assets/favicon.ico"); ?>">
     <script>
@@ -1647,6 +1645,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
 <?php $this->load->view("users/modal/forget_pin_dialog") ?>
 <?php $this->load->view("gcctime/attendance/modals/attendance_log") ?>
 <?php $this->load->view("users/modal/password_reminder_dialog") ?>
+<?php $this->load->view("users/modal/force_change_pass") ?>
 <!-- end::Body -->
 <script src="<?php echo base_url('assets/js/portal/portal_script.js'); ?>"></script>
 
