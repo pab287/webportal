@@ -31,10 +31,10 @@
             echo json_encode($data);
         }
 
-        public function get_each_employee_status_demographics()
+        public function get_each_employee_status_demographics($company_id)
         {
-            $data = $this->dashboard->getEachEmployeeStatusDemographics();
-            echo json_encode($data);
+            $data = $this->dashboard->getEachEmployeeStatusDemographics($company_id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
         public function get_active_employees_on_each_company($sort="DESC")
