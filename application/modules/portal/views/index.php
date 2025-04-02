@@ -78,7 +78,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
     <!--begin::Base Scripts -->
     <script src="<?php echo base_url("assets/vendors/base/vendors.bundle.js"); ?>" type="text/javascript"></script>
     <script src="<?php echo base_url("assets/demo/demo3/base/scripts.bundle.js"); ?>" type="text/javascript"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
+    <script src="<?php echo base_url('assets/js/form-validator/jquery.form-validator.min.js'); ?>"></script>
 
     <!--end::Base Scripts -->
     <script src="<?php echo base_url('assets/plugins/bootstrap/bootstrap.min.js'); ?>"></script>

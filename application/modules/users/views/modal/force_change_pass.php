@@ -26,12 +26,15 @@
                 <form class="m-form" id="changepasswordform">
                     <div class="m-portlet__body">
                         <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-                        <input type="hidden" name="username">
+                        <input type="hidden" name="username" value="<?php echo $this->session->userdata('logged_in')['username'] ?>">
                         <div class="form-group m-form__group">
                         <label>New Password <span style="color: red;">*</span></label>
                             <div class="password-container">
-                                <input id="newPasswordInput" type="password" class="form-control m-input" name="password_confirmation" data-validation="required length strength symbol" data-validation-length="min8" data-validation-strength="3" autocomplete="off" style="text-transform: none;">
+                                <input id="newPasswordInput" type="password" class="form-control m-input" name="password_confirmation" autocomplete="off" style="text-transform: none;">
                                 <span id="newPasswordToggle" class="password-toggle"><i class="fa fa-eye"></i></span>
+                            </div>
+                            <div class="invalid-feedback" id="pass-invalid">
+                                Please enter a valid password!
                             </div>
                         </div>
                         <span class="m-form__help">
@@ -47,6 +50,9 @@
                             <div class="password-container">
                                 <input id="confirmPasswordInput" type="password" class="form-control m-input" name="password" data-validation="confirmation" style="text-transform: none;">
                                 <span id="confirmPasswordToggle" class="password-toggle"><i class="fa fa-eye"></i></span>
+                            </div>
+                            <div class="invalid-feedback" id="confirm-invalid">
+                                Passwords do not match!
                             </div>
                         </div>
                     </div>
@@ -68,7 +74,6 @@
 <script>
     <?php $session = $this->session;?>
     let session = <?php echo json_encode($session->userdata("logged_in")) ?>;
-	$('input[name="username"]').val(session.username || '');
     $('.password-toggle').on('click', function(e) {
         e.preventDefault();
         var $pwd = $(this).siblings('.m-input');
@@ -76,22 +81,22 @@
         $(this).find('i').toggleClass('fa-eye fa-eye-slash');
     });	
 
-$(document).ready(function() {
-
     if (session.last_update == null) {
         $(".password-change-reminder").modal("show");
-    } else {
+    }
+    else{
         let lastUpdateDate = new Date(session.last_update);
         let sixtyDaysAgo = new Date();
         sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
         
         if (lastUpdateDate <= sixtyDaysAgo) {
             $(".password-change-reminder").modal("show");
-            if(sesh.waive_update > 3){
+            if(sesh.waive_count >= 3){
                 $("#changePasswordLater").hide();
             }
         }
     }
+
 
     const $passwordInput = $('#newPasswordInput');
     const $helpSection = $('.m-form__help');
@@ -126,6 +131,7 @@ $(document).ready(function() {
     ];
 
     $passwordInput.on('input', function() {
+        $(".invalid-feedback").hide();
         const value = $(this).val();
         
         validationRules.forEach(rule => {
@@ -136,23 +142,22 @@ $(document).ready(function() {
         $helpSection.toggle(!Object.values(conditions).every(Boolean));
     });
 
-    $.formUtils.addValidator({
-        name: 'symbol', // Name of the validator
-        validatorFunction: function(value, $el, config, language, $form) {
-            return /[^\w\s]/.test(value);
-        },
-        errorMessage: 'The input must contain at least one symbol (e.g., !, @, #, $, etc.).',
-        errorMessageKey: 'missingSymbol'
-    });
+    $("#confirmPasswordInput").on('input', function() {
+        $(".invalid-feedback").hide();
+    })
 
-
-    $.validate({
-        form : '#changepasswordform',
-        modules: 'security'
-    });
 
 	$('#changepasswordform').on('submit', function(e) {
         e.preventDefault();
+        const allConditionsMet = Object.values(conditions).every(Boolean);
+        if (!allConditionsMet) {
+            $("#pass-invalid").show();
+            return;
+        }
+        if ($passwordInput.val() !== $('#confirmPasswordInput').val()) {
+            $("#confirm-invalid").show();
+            return;
+        }
 		var formData = $(this).serialize();
 		$.ajax({
             url: '<?php echo base_url('login/update_password'); ?>',
@@ -162,6 +167,7 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.status) {
                     // window.location.replace(response.redirect);
+                    $('#force_change_modal.modal').modal('hide');
                 } else {
                     alert('Error updating password. Please try again.');
                 }
@@ -175,6 +181,6 @@ $(document).ready(function() {
 	})
 
 
-});
+
 
 </script>

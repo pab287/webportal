@@ -618,13 +618,18 @@ class User_model extends CI_Model
         return $response;
     }
 
-    public function changePasswordLater(){
-        // $post = $this->input->post();
-        // $id = $post['id'];
-        // $this->db->where('id', $id);
-        // $this->db->set('force_update',1);
-        // $update = $this->db->update('gccmaster.tblusers');
-        // return $update;
+    public function changePasswordLater() {
+        $id = $this->input->post('id');
+        $user = $this->db->where('emp_id', $id)->get('gccmaster.tblusers')->row();
+        $new_last_update = ($user->waive_password_update == 0) ? date('Y-m-d H:i:s', strtotime('+30 days')) : date('Y-m-d H:i:s');
+        $this->db->set('waive_password_update', $user->waive_password_update + 1);
+        $this->db->set('last_update', $new_last_update);
+        $update = $this->db->where('emp_id', $id)->update('gccmaster.tblusers');
+        $this->session->set_userdata('logged_in', array_merge(
+            $this->session->userdata('logged_in'),
+            ['last_update' => $new_last_update]
+        ));
+        return $update;
     }
 
 }

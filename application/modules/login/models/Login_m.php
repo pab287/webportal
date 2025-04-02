@@ -341,6 +341,8 @@ Class Login_m extends CI_Model
                 'company' => $res[0]->company_id,
                 'department' => $res[0]->department_id,
                 'TwoFactorAuth' => $res[0]->auth,
+                'last_update' => $res[0]->last_update,
+                'waive_count' => $res[0]->waive_password_update,
             );
             $this->db->where('emp_id', $emp_id);
             $this->db->set('resend_attempts',0, false);
