@@ -691,6 +691,8 @@ const vmTempUploadedContent = new Vue({
                             return data;
                         }
                     }
+                }).on('select2:select', function(e) {
+                    $(e.target).validate();
                 });
             }
             getCurrentUploadFiles();
