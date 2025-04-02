@@ -4031,14 +4031,14 @@ class Payroll_m extends CI_Model
         return $sss;
     }
 
-    private function calculateTax($taxable_income, $payroll_schedule, $switch = 1, $gross_pay = 0, $hasTinNo = true)
-    {
+
+    public function calculateTax($taxable_income, $payroll_schedule, $switch = 1, $gross_pay = 0, $hasTinNo = true){
         $tax = new StdClass();
         $tax->ee = 0;
         $tax->er = 0;
         $tax->total = 0;
 
-        if (intval($gross_pay) <= 0 || $hasTinNo == false) {
+        if (intval($gross_pay) <= 0 || $hasTinNo === false) {
             return $tax;
         }
 

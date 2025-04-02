@@ -1810,7 +1810,7 @@
             CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND
                 UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND
                 suffix IS NOT NULL THEN CONCAT(' ', suffix) ELSE ''
-            END)) as text");
+            END)) as text, basic_rate, payroll_type");
             $this->db->from($this->employeeTable);
             $this->db->where("employee_status", "active");
 
@@ -1830,5 +1830,18 @@
             }
 
             return array("results" => $result);
+        }
+
+        protected function getPayrollSettings(){
+            $taxDeduction = $this->db->get_where("payroll.settings", array("setting_name"=>"fixed_tax_monthly_income_deduction"));
+        }
+
+        public function getTemporaryTaxComputation($rate=null, $payroll_type=null){
+            $this->load->model("payroll/payroll_m", "payroll");
+            $tempRate = new stdClass();
+            if($rate != null && $payroll_type != null){
+                $tempRate = $this->payroll->calculateTax($rate, $payroll_type, 1, $rate);
+            }
+            return $tempRate;
         }
     }

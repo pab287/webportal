@@ -92,6 +92,28 @@
 							<select id="employee_id" class="form-control" name="employee_id" data-validation="required"></select>
                         </div>
                     </div>
+					<div id="tempEmployeeData">
+						<input type="hidden" name="basic_rate" v-model="basic_rate">
+						<input type="hidden" name="payroll_type" v-model="payroll_type">
+						<div class="form-group row">
+							<div class="col-md-5">
+							<label for="" class="form-control-label">Basic Rate</label>
+								<div class="row">
+									<div class="col-md-12">
+										<p class="form-control m-0" disabled v-text="basic_rate ? numberFormat(basic_rate) : '0.00'">0.00</p>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-7">
+							<label for="" class="form-control-label">Payroll Type</label>
+								<div class="row">
+									<div class="col-md-12">
+										<p class="form-control text-uppercase m-0" disabled v-text="payroll_type ? payroll_type : '---'">---</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
 					<div class="form-group">
                         <label for="" class="form-control-label required">Fixed Amount</label>
                         <div class="row">

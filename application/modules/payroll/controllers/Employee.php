@@ -446,4 +446,11 @@
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
         }
+
+        public function get_employee_temporary_tax($rate=0, $payroll_type=null){
+            $data = $this->employee->getTemporaryTaxComputation($rate, $payroll_type);
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
     }
