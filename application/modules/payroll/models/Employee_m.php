@@ -1,7 +1,7 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
 
     class Employee_m extends CI_Model {
-        protected $employeeTable = "tblemployees";
+        protected $employeeTable = "gccmaster.tblemployees";
         protected $companyTable = "gcchris.tblcompanies";
         protected $departmentTable = "gcchris.tbldepartments";
         protected $positionTable = "gcchris.tblposition";
@@ -11,6 +11,7 @@
         protected $employeeSalaryTable = "gcchris.tblsalaries";
 
         protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
+        protected $tbl_payroll_fixed_taxable = "payroll.fixed_taxable_deduction";
 
         private $db_debug;
 
@@ -1802,6 +1803,7 @@
             $result = array();
             $get = $this->input->get();
 
+            $payrollSettingsValue = $this->getPayrollSettings();
             $this->db->select("id, UPPER(CONCAT(firstname, ' ',
             CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND
                     TRIM(middlename) !='' AND middlename IS NOT NULL
@@ -1813,6 +1815,10 @@
             END)) as text, basic_rate, payroll_type");
             $this->db->from($this->employeeTable);
             $this->db->where("employee_status", "active");
+
+            if($payrollSettingsValue && $payrollSettingsValue !== 0){
+                $this->db->where("basic_rate >", $payrollSettingsValue);
+            }
 
             if (isset($get['q']) && $get['q']) {
                 $this->db->group_start();
@@ -1833,15 +1839,112 @@
         }
 
         protected function getPayrollSettings(){
+            $this->db->select("setting_value");
             $taxDeduction = $this->db->get_where("payroll.settings", array("setting_name"=>"fixed_tax_monthly_income_deduction"));
+            if($taxDeduction->num_rows() == 1){
+                $row = $taxDeduction->row();
+                return $row->setting_value;
+            }else{ return 0; }
         }
 
-        public function getTemporaryTaxComputation($rate=null, $payroll_type=null){
-            $this->load->model("payroll/payroll_m", "payroll");
-            $tempRate = new stdClass();
-            if($rate != null && $payroll_type != null){
-                $tempRate = $this->payroll->calculateTax($rate, $payroll_type, 1, $rate);
+        public function addTaxableDeduction(){
+            $post = $this->input->post();
+            $resultset = array();
+            if(isset($post["employee_id"], $post["taxable_amount"]) && $post["employee_id"] && $post["taxable_amount"]){
+                $post['created_at'] = date("Y-m-d H:i:s");
+                $post['created_by'] = $this->core_layout->getCurrentEmployeeId();
+    
+                $getEmpTaxable = $this->db->get_where($this->tbl_payroll_fixed_taxable, array("employee_id"=>$post['employee_id']));
+                if($getEmpTaxable->num_rows() == 0){
+                    $added = $this->db->insert($this->tbl_payroll_fixed_taxable, $post);
+                    if($added && $this->db->affected_rows() > 0){
+                        $resultset["response"] = true;
+                    }else{
+                        $resultset["response"] = false;
+                    }
+                }else{
+                    $resultset["response"] = false;
+                }
+            }else{
+                $resultset["response"] = false;
             }
-            return $tempRate;
+            
+            return $resultset;
+        }
+
+        public function getFixedTaxableDeduction(){
+            $resultset = array();
+            $post = $this->input->post();
+
+            $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+            $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
+            $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+            $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+            $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
+
+            $filterFields = array("emp.lastname", "emp.firstname", "emp.middlename", "emp.suffix",
+            "cemp.lastname", "cemp.firstname", "cemp.middlename", "cemp.suffix",
+            "uemp.lastname", "uemp.firstname", "uemp.middlename", "uemp.suffix",
+            "psfx.basic_rate", "psfx.payroll_type", "psfx.taxable_amount");
+
+            $query =$this->getFixedTaxableDeductionQuery($search, $limit, $offset, $sortBy, $sortOrder, $filterFields);
+
+            $resultset["recordsTotal"] = $query->num_rows();
+            $resultset["recordsFiltered"] = $query->num_rows();
+            $resultset["data"] = $query->result();
+
+            return $resultset;
+        }
+
+        protected function getFixedTaxableDeductionQuery($search, $limit, $offset, $sortBy, $sortOrder, $filterFields){
+            $this->db->select("CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+            END,' ', UPPER(TRIM(emp.lastname)),
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
+            END) as employee_name, psfx.basic_rate, psfx.payroll_type, psfx.taxable_amount,
+            IF(psfx.last_updated_by = 0,
+                CONCAT(UPPER(TRIM(cemp.firstname)), ' ',
+                CASE WHEN UPPER(TRIM(cemp.middlename)) != 'N/A' AND UPPER(TRIM(cemp.middlename)) != 'NONE' AND
+                        TRIM(cemp.middlename) !='' AND cemp.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(cemp.middlename, 1, 1), '.') ELSE ''
+                END,' ', UPPER(TRIM(cemp.lastname)),
+                CASE WHEN UPPER(TRIM(cemp.suffix)) != 'N/A' AND
+                    UPPER(TRIM(cemp.suffix !='NONE')) AND cemp.suffix !='' AND
+                    cemp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(cemp.suffix))) ELSE ''
+                END),
+                CONCAT(UPPER(TRIM(uemp.firstname)), ' ',
+                CASE WHEN UPPER(TRIM(uemp.middlename)) != 'N/A' AND UPPER(TRIM(uemp.middlename)) != 'NONE' AND
+                        TRIM(uemp.middlename) !='' AND uemp.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(uemp.middlename, 1, 1), '.') ELSE ''
+                END,' ', UPPER(TRIM(uemp.lastname)),
+                CASE WHEN UPPER(TRIM(uemp.suffix)) != 'N/A' AND
+                    UPPER(TRIM(uemp.suffix !='NONE')) AND uemp.suffix !='' AND
+                    uemp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(uemp.suffix))) ELSE ''
+                END)
+            ) as updated_by,
+            IF(psfx.last_updated_at IS NULL, psfx.created_at, psfx.last_updated_at) as updated_at");
+            $this->db->from($this->tbl_payroll_fixed_taxable." as psfx");
+            $this->db->join($this->employeeTable." as emp", "emp.id = psfx.employee_id", "inner");
+            $this->db->join($this->employeeTable." as cemp", "cemp.id = psfx.created_by", "left");
+            $this->db->join($this->employeeTable." as uemp", "uemp.id = psfx.last_updated_by", "left");
+
+            if (isset($search)) {
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    ($key == 0) ? $this->db->like($field, $search, "both") : $this->db->or_like($field, $search, "both");
+                }
+                $this->db->group_end();
+            }
+
+            if ($limit != -1) { $this->db->limit($limit, $offset); }
+            if (isset($sortOrder)) {
+                $i = $sortOrder[0]['column'];
+                $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            } else { $this->db->order_by('emp.firstname', 'asc'); }
+            return $this->db->get();
         }
     }

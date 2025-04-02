@@ -57,9 +57,10 @@
 								<thead>
 									<tr>
 										<th>Employee Name</th>
-                                        <th>Basic Rate</th>
                                         <th>Fixed Taxable Deduction</th>
-                                        <th>Created By</th>
+                                        <th>Basic Rate</th>
+                                        <th>Payroll Type</th>
+                                        <th>Last Updated By</th>
                                         <th>Action</th>
 									</tr>
 								</thead>
@@ -74,60 +75,60 @@
 </div>
 
 
-<div class="modal fade" tabindex="-1" role="dialog" id="modal-add-taxable-deduction">
-	<form id="frm-add--taxable-deduction">
-    <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-		<div class="modal-dialog modal-md" role="document">
-			<div class="modal-content">
-				<div class="modal-header">
-					<h5 class="modal-title">New Fixed Taxable Deduction</h5>
-					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-						<span aria-hidden="true">&times;</span>
-					</button>
+<div class="modal fade" tabindex="-1" id="modal-add-taxable-deduction">
+	<div class="modal-dialog modal-md">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">New Fixed Taxable Deduction</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<form id="frm-add--taxable-deduction">
+			<input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+			<div class="modal-body">
+				<div class="form-group">
+					<label for="" class="form-control-label required">Employee Name</label>
+					<div>
+						<select id="employee_id" class="form-control" name="employee_id" data-validation="required"></select>
+					</div>
 				</div>
-				<div class="modal-body">
-					<div class="form-group">
-                        <label for="" class="form-control-label required">Employee Name</label>
-                        <div>
-							<select id="employee_id" class="form-control" name="employee_id" data-validation="required"></select>
-                        </div>
-                    </div>
-					<div id="tempEmployeeData">
-						<input type="hidden" name="basic_rate" v-model="basic_rate">
-						<input type="hidden" name="payroll_type" v-model="payroll_type">
-						<div class="form-group row">
-							<div class="col-md-5">
-							<label for="" class="form-control-label">Basic Rate</label>
-								<div class="row">
-									<div class="col-md-12">
-										<p class="form-control m-0" disabled v-text="basic_rate ? numberFormat(basic_rate) : '0.00'">0.00</p>
-									</div>
+				<div id="tempEmployeeData">
+					<input type="hidden" name="basic_rate" v-model="basic_rate">
+					<input type="hidden" name="payroll_type" v-model="payroll_type">
+					<div class="form-group row">
+						<div class="col-md-5">
+						<label for="" class="form-control-label">Basic Rate</label>
+							<div class="row">
+								<div class="col-md-12">
+									<p class="form-control m-0" disabled v-text="basic_rate ? numberFormat(basic_rate) : '0.00'">0.00</p>
 								</div>
 							</div>
-							<div class="col-md-7">
-							<label for="" class="form-control-label">Payroll Type</label>
-								<div class="row">
-									<div class="col-md-12">
-										<p class="form-control text-uppercase m-0" disabled v-text="payroll_type ? payroll_type : '---'">---</p>
-									</div>
+						</div>
+						<div class="col-md-7">
+						<label for="" class="form-control-label">Payroll Type</label>
+							<div class="row">
+								<div class="col-md-12">
+									<p class="form-control text-uppercase m-0" disabled v-text="payroll_type ? payroll_type : '---'">---</p>
 								</div>
 							</div>
 						</div>
 					</div>
-					<div class="form-group">
-                        <label for="" class="form-control-label required">Fixed Amount</label>
-                        <div class="row">
-							<div class="col-md-6">
-								<input type="number" name="fixed_amount" class="form-control" data-validation="required" autocomplete="off" />
-							</div>
-                        </div>
-                    </div>
 				</div>
-				<div class="modal-footer">
-					<button type="submit" onclick="Save()" class="btn btn-primary btn-submit btnSave">Save</button>
-                    <button type="button" class="btn btn-metal text-white btnCancel" data-dismiss="modal">Cancel</button>
+				<div class="form-group">
+					<label for="" class="form-control-label required">Fixed Taxable Amount</label>
+					<div class="row">
+						<div class="col-md-6">
+							<input type="number" name="taxable_amount" class="form-control" data-validation="required" autocomplete="off" />
+						</div>
+					</div>
 				</div>
 			</div>
+			<div class="modal-footer">
+				<button type="submit" class="btn btn-primary btn-submit btnSave">Save</button>
+				<button type="button" class="btn btn-metal text-white btnCancel" data-dismiss="modal">Cancel</button>
+			</div>
+			</form>
 		</div>
-	</form>
+	</div>
 </div>

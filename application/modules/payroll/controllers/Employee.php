@@ -447,8 +447,15 @@
                 ->set_output(json_encode($data));
         }
 
-        public function get_employee_temporary_tax($rate=0, $payroll_type=null){
-            $data = $this->employee->getTemporaryTaxComputation($rate, $payroll_type);
+        public function add_taxable_deduction(){
+            $data = $this->employee->addTaxableDeduction();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function get_fixed_taxable_deduction(){
+            $data = $this->employee->getFixedTaxableDeduction();
             $this->output
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
