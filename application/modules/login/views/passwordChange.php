@@ -216,7 +216,7 @@ $(document).ready(function() {
                 if (response.status) {
                     window.location.replace(response.redirect);
                 } else {
-                    alert('Error updating password. Please try again.');
+                    toastr.error("",response.message, 20000);
                 }
             },
             error: function(xhr, status, error) {

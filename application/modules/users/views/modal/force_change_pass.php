@@ -79,7 +79,7 @@
         var $pwd = $(this).siblings('.m-input');
         $pwd.attr('type', $pwd.attr('type') === 'password' ? 'text' : 'password');
         $(this).find('i').toggleClass('fa-eye fa-eye-slash');
-    });	
+    });
 
     if (session.last_update == null) {
         $(".password-change-reminder").modal("show");
@@ -97,7 +97,6 @@
         }
     }
 
-
     const $passwordInput = $('#newPasswordInput');
     const $helpSection = $('.m-form__help');
     const conditions = {
@@ -108,22 +107,22 @@
     };
 
     const validationRules = [
-        { 
+        {
             condition: (val) => val.length >= 8, 
             key: 'length',
             element: $helpSection.find('li:nth-child(4)')
         },
-        { 
+        {
             condition: (val) => /\d/.test(val), 
             key: 'numbers',
             element: $helpSection.find('li:nth-child(1)')
         },
-        { 
+        {
             condition: (val) => /[A-Z]/.test(val), 
             key: 'uppercase',
             element: $helpSection.find('li:nth-child(2)')
         },
-        { 
+        {
             condition: (val) => /[^\w\s]/.test(val),
             key: 'symbols',
             element: $helpSection.find('li:nth-child(3)')
@@ -133,19 +132,16 @@
     $passwordInput.on('input', function() {
         $(".invalid-feedback").hide();
         const value = $(this).val();
-        
         validationRules.forEach(rule => {
             conditions[rule.key] = rule.condition(value);
             rule.element.css('text-decoration', conditions[rule.key] ? 'line-through' : 'none');
         });
-
         $helpSection.toggle(!Object.values(conditions).every(Boolean));
     });
 
     $("#confirmPasswordInput").on('input', function() {
         $(".invalid-feedback").hide();
     })
-
 
 	$('#changepasswordform').on('submit', function(e) {
         e.preventDefault();
@@ -166,21 +162,16 @@
 			dataType: 'json',
             success: function(response) {
                 if (response.status) {
-                    // window.location.replace(response.redirect);
                     $('#force_change_modal.modal').modal('hide');
+                    toastr.success("",response.message, 20000);
                 } else {
-                    alert('Error updating password. Please try again.');
+                    toastr.error("",response.message, 20000);
                 }
             },
             error: function(xhr, status, error) {
-                // Handle AJAX error
-                console.error("AJAX Error:", error);
-                alert('An error occurred while updating password.');
+                toastr.error("Password Update Failed.", 20000);
             }
         });
 	})
-
-
-
 
 </script>

@@ -619,17 +619,31 @@ class User_model extends CI_Model
     }
 
     public function changePasswordLater() {
-        $id = $this->input->post('id');
-        $user = $this->db->where('emp_id', $id)->get('gccmaster.tblusers')->row();
-        $new_last_update = ($user->waive_password_update == 0) ? date('Y-m-d H:i:s', strtotime('+30 days')) : date('Y-m-d H:i:s');
-        $this->db->set('waive_password_update', $user->waive_password_update + 1);
-        $this->db->set('last_update', $new_last_update);
-        $update = $this->db->where('emp_id', $id)->update('gccmaster.tblusers');
-        $this->session->set_userdata('logged_in', array_merge(
-            $this->session->userdata('logged_in'),
-            ['last_update' => $new_last_update]
-        ));
-        return $update;
+        $this->db->trans_begin();
+        try {
+            $id = $this->input->post('id');
+            $user = $this->db->where('emp_id', $id)->get('gccmaster.tblusers')->row();
+            $new_last_update = ($user->waive_password_update == 0) ? date('Y-m-d H:i:s', strtotime('+30 days')) : date('Y-m-d H:i:s');
+            
+            $this->db->set('waive_password_update', $user->waive_password_update + 1);
+            $this->db->set('last_update', $new_last_update);
+            $update = $this->db->where('emp_id', $id)->update('gccmaster.tblusers');
+            
+            if ($update) {
+                $this->db->trans_commit();
+                $this->session->set_userdata('logged_in', array_merge(
+                    $this->session->userdata('logged_in'),
+                    ['last_update' => $new_last_update]
+                ));
+                return $update;
+            } else {
+                $this->db->trans_rollback();
+                return false;
+            }
+        } catch (Exception $e) {
+            $this->db->trans_rollback();
+            return false;
+        }
     }
 
 }

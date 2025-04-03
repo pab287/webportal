@@ -180,13 +180,22 @@ Class Login_m extends CI_Model
                 'waive_password_update' => 0,
                 'last_update' => date('Y-m-d H:i:s')
             );
+            $this->db->where('username', $username);
+            $current = $this->db->get('gccmaster.tblusers')->row();
+            if ($current->password == md5($post['password'])) {
+                $response = array(
+                    'status' => false,
+                    'message' => 'New password cannot be the same as the old password'
+                );
+                return $response;
+            }
     
             $result = $this->db->where('username', $username)->update('gccmaster.tblusers', $data);
     
             if (!$result) {
                 $this->session->sess_destroy();
                 $this->db->trans_rollback();
-                $response = array('status' => 'false', 'message' => 'Failed to update password');
+                $response = array('status' => false, 'message' => 'Failed to update password');
             }else{
                 $res = $this->Login_m->login($username, $new_password);
                 $id = $res[0]->id;
@@ -212,10 +221,10 @@ Class Login_m extends CI_Model
                 $this->db->trans_commit();
                 $url = site_url('portal/index');
                 $loggedIn = $this->session->userdata("logged_in");
-                $response = array('status' => 'success', 'message' => 'Password successfully updated', 'redirect' => $url, "loggedIn" => $loggedIn);
-            } 
-        } else {    
-            $response = array('status' => 'failure', 'message' => 'No POST data received');
+                $response = array('status' => true, 'message' => 'Password successfully updated', 'redirect' => $url, "loggedIn" => $loggedIn);
+            }
+        } else {
+            $response = array('status' => false, 'message' => 'No POST data received');
         }
         return $response;
     }

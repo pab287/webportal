@@ -310,13 +310,8 @@ function openAttendanceLog() {
     $("#attendance-log").modal("show");
 }
 
-function passwordChangeReminder() {
-    $(".password-change-reminder").modal("show");
-    console.log("Pass CHANGE")
-}
 
 function changePasswordLater(id){
-    console.log(id)
     $.ajax({
         url: baseUrl("users/change_password_later"),
         type: "POST",
@@ -327,10 +322,14 @@ function changePasswordLater(id){
         },
         global: false,
         success: function (response) {
-            
+            if(response){
+                $(".password-change-reminder").modal("hide");
+                toastr.success("","Password cahnge waived successfully", 20000);
+            }else{
+                toastr.error("","Error", 20000);
+            }
         }
     });
-
 }
    
 function changePasswordNow(){
@@ -675,7 +674,6 @@ function delay(callback, ms) {
             },
             dataType: "JSON",
             success: function (response) {
-                console.log("Response: ", response);    
                 if (response.success) {
                     window.location.replace(response.redirect);
                 } else {
