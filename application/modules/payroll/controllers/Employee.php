@@ -66,6 +66,9 @@
         public function fixed_taxable_deduction(){
             $this->core_layout->setPageTitle("Payroll - Fixed Taxable Deduction");
             $this->core_layout->setPrivilegeName("payroll_fixed_taxable_deduction");
+
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
             $this->core_layout->addJs("js/payroll/employee/fixed_taxable_deduction.js", true);
 
             $this->load->view('core/templates/header');

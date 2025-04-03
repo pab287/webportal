@@ -57,10 +57,11 @@
 								<thead>
 									<tr>
 										<th>Employee Name</th>
-                                        <th>Fixed Taxable Deduction</th>
+                                        <th>Fixed Deduction</th>
                                         <th>Basic Rate</th>
                                         <th>Payroll Type</th>
                                         <th>Last Updated By</th>
+                                        <th>Active</th>
                                         <th>Action</th>
 									</tr>
 								</thead>
@@ -94,8 +95,8 @@
 					</div>
 				</div>
 				<div id="tempEmployeeData">
-					<input type="hidden" name="basic_rate" v-model="basic_rate">
-					<input type="hidden" name="payroll_type" v-model="payroll_type">
+					<input type="hidden" name="basic_rate" v-model="basic_rate" />
+					<input type="hidden" name="payroll_type" v-model="payroll_type" />
 					<div class="form-group row">
 						<div class="col-md-5">
 						<label for="" class="form-control-label">Basic Rate</label>
@@ -120,6 +121,61 @@
 					<div class="row">
 						<div class="col-md-6">
 							<input type="number" name="taxable_amount" class="form-control" data-validation="required" autocomplete="off" />
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="submit" class="btn btn-primary btn-submit btnSave">Save</button>
+				<button type="button" class="btn btn-metal text-white btnCancel" data-dismiss="modal">Cancel</button>
+			</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" tabindex="-1" id="modal-edit-taxable-deduction">
+	<div class="modal-dialog modal-md">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Edit Fixed Taxable Deduction</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<form id="frm-edit--taxable-deduction">
+			<input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+			<div id="editEmployeeData" class="modal-body">
+				<input type="hidden" name="id" v-model="row.id" />
+				<div class="form-group">
+					<label for="" class="form-control-label required">Employee Name</label>
+					<div>
+					<p class="form-control m-0" disabled v-text="row.employee_name">&nbsp;</p>
+					</div>
+				</div>
+				<div class="form-group row">
+					<div class="col-md-5">
+					<label for="" class="form-control-label">Basic Rate</label>
+						<div class="row">
+							<div class="col-md-12">
+								<p class="form-control m-0" disabled v-text="row.basic_rate ? numberFormat(row.basic_rate) : '0.00'">0.00</p>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-7">
+					<label for="" class="form-control-label">Payroll Type</label>
+						<div class="row">
+							<div class="col-md-12">
+								<p class="form-control text-uppercase m-0" disabled v-text="row.payroll_type ? row.payroll_type : '---'">---</p>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="" class="form-control-label required">Fixed Taxable Amount</label>
+					<div class="row">
+						<div class="col-md-6">
+							<input type="number" name="taxable_amount" class="form-control" data-validation="required" autocomplete="off" v-model="row.taxable_amount" />
 						</div>
 					</div>
 				</div>

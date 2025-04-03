@@ -1803,6 +1803,7 @@
             $result = array();
             $get = $this->input->get();
 
+            $taxableEmployeeIds = $this->getFixedTaxableEmployeeId();
             $payrollSettingsValue = $this->getPayrollSettings();
             $this->db->select("id, UPPER(CONCAT(firstname, ' ',
             CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND
@@ -1815,7 +1816,7 @@
             END)) as text, basic_rate, payroll_type");
             $this->db->from($this->employeeTable);
             $this->db->where("employee_status", "active");
-
+            if($taxableEmployeeIds){ $this->db->where_not_in("id", explode(',', $taxableEmployeeIds)); }
             if($payrollSettingsValue && $payrollSettingsValue !== 0){
                 $this->db->where("basic_rate >", $payrollSettingsValue);
             }
@@ -1850,23 +1851,42 @@
         public function addTaxableDeduction(){
             $post = $this->input->post();
             $resultset = array();
+            $logInfo = null;
             if(isset($post["employee_id"], $post["taxable_amount"]) && $post["employee_id"] && $post["taxable_amount"]){
                 $post['created_at'] = date("Y-m-d H:i:s");
                 $post['created_by'] = $this->core_layout->getCurrentEmployeeId();
-    
+                $currentRecord = $this->getCurrentEmployeeData($post["employee_id"]);
                 $getEmpTaxable = $this->db->get_where($this->tbl_payroll_fixed_taxable, array("employee_id"=>$post['employee_id']));
                 if($getEmpTaxable->num_rows() == 0){
+                    $taxableAmount = number_format($post["taxable_amount"], 2, ".", ",");
                     $added = $this->db->insert($this->tbl_payroll_fixed_taxable, $post);
                     if($added && $this->db->affected_rows() > 0){
                         $resultset["response"] = true;
+                        if(isset($currentRecord->employee_name) && $currentRecord->employee_name){
+                            $logInfo = "Fixed Taxable Deduction of employee named <strong>`{$currentRecord->employee_name}`</strong> has been added with taxable amount of <strong>`{$taxableAmount}`</strong>.";
+                        }
                     }else{
                         $resultset["response"] = false;
+                        if(isset($currentRecord->employee_name) && $currentRecord->employee_name){
+                            $logInfo = "Failed to add new Fixed Taxable Deduction of employee named <strong>`{$currentRecord->employee_name}`</strong> with taxable amount of <strong>`{$taxableAmount}`</strong>.";
+                        }
                     }
                 }else{
                     $resultset["response"] = false;
+                    if(isset($currentRecord->employee_name) && $currentRecord->employee_name){
+                        $logInfo = "Failed to add new Fixed Taxable Deduction of employee named <strong>`{$currentRecord->employee_name}`</strong>, employee already has a fixed taxable deduction.";
+                    }
                 }
             }else{
                 $resultset["response"] = false;
+                $resultset["toastr_msg"] = "No post data found!";
+            }
+
+            if($logInfo){
+                $type = $resultset["response"] ? "success" : "failed";
+                $logType = $resultset["response"] ? "user": "system";
+                $resultset["toastr_msg"] = $logInfo;
+                $this->core_layout->setEventLog($logInfo, "insert", $type, "payroll", $logType);
             }
             
             return $resultset;
@@ -1926,7 +1946,7 @@
                     uemp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(uemp.suffix))) ELSE ''
                 END)
             ) as updated_by,
-            IF(psfx.last_updated_at IS NULL, psfx.created_at, psfx.last_updated_at) as updated_at");
+            IF(psfx.last_updated_at IS NULL, psfx.created_at, psfx.last_updated_at) as updated_at, psfx.is_active");
             $this->db->from($this->tbl_payroll_fixed_taxable." as psfx");
             $this->db->join($this->employeeTable." as emp", "emp.id = psfx.employee_id", "inner");
             $this->db->join($this->employeeTable." as cemp", "cemp.id = psfx.created_by", "left");
@@ -1946,5 +1966,33 @@
                 $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
             } else { $this->db->order_by('emp.firstname', 'asc'); }
             return $this->db->get();
+        }
+
+        protected function getFixedTaxableEmployeeId(){
+            $this->db->select("GROUP_CONCAT(DISTINCT employee_id) AS employee_id");
+            $this->db->from($this->tbl_payroll_fixed_taxable);
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() > 0){
+                return $qTemp->row()->employee_id;
+            }else{
+                return false;
+            }
+        }
+
+        protected function getCurrentEmployeeData($empId=null){
+            $this->db->select("CONCAT(UPPER(TRIM(firstname)), '',
+            CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND
+                    TRIM(middlename) !='' AND middlename IS NOT NULL
+                THEN CONCAT(' ', SUBSTR(middlename, 1, 1), '. ') ELSE ' '
+            END,'', UPPER(TRIM(lastname)),
+            CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND
+                UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND
+                suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(suffix))) ELSE ''
+            END) as employee_name, basic_rate, UPPER(payroll_type) as payroll_type");
+            $this->db->from($this->employeeTable);
+            $this->db->where("id", $empId);
+            $qTemp = $this->db->get();
+            if ($qTemp->num_rows() > 0){ return $qTemp->row(); }
+            else { return false; }
         }
     }
