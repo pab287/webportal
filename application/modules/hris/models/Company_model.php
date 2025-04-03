@@ -344,7 +344,7 @@ class Company_model extends CI_Model{
 		$this->db->select("id, description as text");
 		$this->db->from($this->companyTable);
 		$this->db->where("is_archived", 0);
-		if(isset($get["term"]) && $get["term"]){ $this->db->like("description", $get["term"], "both"); }
+		if(isset($get["term"]) && $get["term"]){ $this->db->like("description", trim($get["term"]), "both"); }
 		$query = $this->db->get();
 
 		if($query->num_rows() > 0){
