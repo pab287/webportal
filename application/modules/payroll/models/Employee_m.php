@@ -1848,6 +1848,44 @@
             }else{ return 0; }
         }
 
+        public function updateTaxableDeduction(){
+            $post = $this->input->post();
+            $resultset = array();
+            $logInfo = null;
+            if(isset($post["id"], $post["taxable_amount"]) && $post["id"] && $post["taxable_amount"]){
+                $post['updated_at'] = date("Y-m-d H:i:s");
+                $post['updated_by'] = $this->core_layout->getCurrentEmployeeId();
+                $currentRecord = $this->getCurrentEmployeeData($post["employee_id"]);
+                $getEmpTaxable = $this->db->get_where($this->tbl_payroll_fixed_taxable, array("id"=>$post['id']));
+                if($getEmpTaxable->num_rows() == 1){
+                    $currentTaxableAmount = number_format($getEmpTaxable->row()->taxable_amount, 2, ".", ",");
+                    $taxableAmount = number_format($post["taxable_amount"], 2, ".", ",");
+                    $updated = $this->db->update($this->tbl_payroll_fixed_taxable, $post, array("id"=>$post['id']));
+                    if($updated && $this->db->affected_rows() > 0){
+                        $resultset["response"] = true;
+                        $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "User updated taxable deduction for employee <strong>`{$currentRecord->employee_name}`</strong> with taxable amount from <strong>`{$currentTaxableAmount}`</strong> to <strong>`{$taxableAmount}`</strong>.": null;
+                    }else{
+                        $resultset["response"] = false;
+                        $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Failed updating taxable deduction for employee <strong>`{$currentRecord->employee_name}`</strong> with taxable amount from <strong>`{$currentTaxableAmount}`</strong> to <strong>`{$taxableAmount}`</strong>.": null;
+                    }
+                }else{
+                    $resultset["response"] = false;
+                    $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Failed updating taxable deduction for employee <strong>`{$currentRecord->employee_name}`</strong>, record not found.": null;
+                }
+            }else{
+                $resultset["response"] = false;
+                $logInfo = "Failed updating taxable deduction, required parameters missing.";
+            }
+
+            if($logInfo){
+                $resultset["toastr_msg"] = $logInfo;
+                $type = $resultset["response"] ? "success" : "failed";
+                $logType = $resultset["response"] ? "user": "system";
+                $this->core_layout->setEventLog($logInfo, "update", $type, "payroll", $logType);
+            }
+            return $resultset;
+        }
+
         public function addTaxableDeduction(){
             $post = $this->input->post();
             $resultset = array();
@@ -1862,33 +1900,27 @@
                     $added = $this->db->insert($this->tbl_payroll_fixed_taxable, $post);
                     if($added && $this->db->affected_rows() > 0){
                         $resultset["response"] = true;
-                        if(isset($currentRecord->employee_name) && $currentRecord->employee_name){
-                            $logInfo = "Fixed Taxable Deduction of employee named <strong>`{$currentRecord->employee_name}`</strong> has been added with taxable amount of <strong>`{$taxableAmount}`</strong>.";
-                        }
+                        $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Fixed Taxable Deduction of employee named <strong>`{$currentRecord->employee_name}`</strong> has been added with taxable amount of <strong>`{$taxableAmount}`</strong>.": null;
                     }else{
                         $resultset["response"] = false;
-                        if(isset($currentRecord->employee_name) && $currentRecord->employee_name){
-                            $logInfo = "Failed to add new Fixed Taxable Deduction of employee named <strong>`{$currentRecord->employee_name}`</strong> with taxable amount of <strong>`{$taxableAmount}`</strong>.";
-                        }
+                        $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Failed to add new Fixed Taxable Deduction of employee named <strong>`{$currentRecord->employee_name}`</strong> with taxable amount of <strong>`{$taxableAmount}`</strong>.": null;
                     }
                 }else{
                     $resultset["response"] = false;
-                    if(isset($currentRecord->employee_name) && $currentRecord->employee_name){
-                        $logInfo = "Failed to add new Fixed Taxable Deduction of employee named <strong>`{$currentRecord->employee_name}`</strong>, employee already has a fixed taxable deduction.";
-                    }
+                    $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Failed to add new Fixed Taxable Deduction of employee named <strong>`{$currentRecord->employee_name}`</strong>, employee already has a fixed taxable deduction.": null;
                 }
             }else{
                 $resultset["response"] = false;
-                $resultset["toastr_msg"] = "No post data found!";
+                $logInfo = "Failed updating taxable deduction, required parameters missing.";
             }
 
             if($logInfo){
+                $resultset["toastr_msg"] = $logInfo;
                 $type = $resultset["response"] ? "success" : "failed";
                 $logType = $resultset["response"] ? "user": "system";
-                $resultset["toastr_msg"] = $logInfo;
                 $this->core_layout->setEventLog($logInfo, "insert", $type, "payroll", $logType);
             }
-            
+
             return $resultset;
         }
 
@@ -1964,7 +1996,7 @@
             if (isset($sortOrder)) {
                 $i = $sortOrder[0]['column'];
                 $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
-            } else { $this->db->order_by('emp.firstname', 'asc'); }
+            } else { $this->db->order_by('psfx.id', 'desc'); }
             return $this->db->get();
         }
 

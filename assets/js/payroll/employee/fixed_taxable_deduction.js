@@ -202,6 +202,8 @@ $.validate({
                             vmEditEmployeeTax.resetContent();
                             modalEditTaxable.modal("hide");
                             dtTableTaxable.ajax.reload();
+                        }else{
+                            toastr.error(json.toastr_msg, "Taxable Deduction", 5000);
                         }
                         $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
                     }

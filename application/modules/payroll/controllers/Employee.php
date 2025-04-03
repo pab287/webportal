@@ -457,6 +457,13 @@
                 ->set_output(json_encode($data));
         }
 
+        public function update_taxable_deduction(){
+            $data = $this->employee->updateTaxableDeduction();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
         public function get_fixed_taxable_deduction(){
             $data = $this->employee->getFixedTaxableDeduction();
             $this->output
