@@ -91,7 +91,7 @@
         
         if (lastUpdateDate <= sixtyDaysAgo) {
             $(".password-change-reminder").modal("show");
-            if(sesh.waive_count >= 3){
+            if(session.waive_count >= 3){
                 $("#changePasswordLater").hide();
             }
         }

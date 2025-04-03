@@ -324,7 +324,7 @@ function changePasswordLater(id){
         success: function (response) {
             if(response){
                 $(".password-change-reminder").modal("hide");
-                toastr.success("","Password cahnge waived successfully", 20000);
+                toastr.success("","Password change waived successfully", 20000);
             }else{
                 toastr.error("","Error", 20000);
             }
