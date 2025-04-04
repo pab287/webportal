@@ -61,6 +61,43 @@ $(document).on("click", ".btnEditEmployeeFixedTaxable", function () {
     modalEditTaxable.modal("show");
 });
 
+$(document).on("click", ".btnUpdateEmployeeFixedTaxable", function () {
+    const rowData = $(this).data("row");
+    const { id, is_active, employee_name, taxable_amount, employee_id } = rowData;
+    const state = parseInt(is_active) === 1 ? 'Deactivate' : 'Activate';
+    const tempState = parseInt(is_active) === 1 ? 'danger' : 'success';
+    Swal.fire({
+        title: state + ' Fixed Amount Request?',
+        html: "Are you sure you want to <strong class='text-"+ tempState +"'>`"+ state.toUpperCase() +"`</strong> this fixed amount taxable deduction of <strong class='text-primary'>`"+ employee_name.toUpperCase() +"`</strong> with taxable amount of <strong>`"+ taxable_amount +"`</strong>?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes '+ state + ' it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: siteUrl("payroll/employee/update_status_taxable_deduction"),
+                type: "post",
+                dataType: "json",
+                data: {
+                    csrf_token: _csrf_hash,
+                    id: id,
+                    is_active: is_active,
+                    taxable_amount: taxable_amount,
+                    employee_id: employee_id
+                },
+                success: function (json) {
+                    if (json.response) {
+                        toastr.success(json.toastr_msg, "Fixed Taxable Deduction", 5000);
+                        dtTableTaxable.ajax.reload();
+                    }
+                }
+            });
+        }
+    });
+});
+
 const dtTableTaxable = tableTaxable.DataTable({
     dom: '<"toolbar">rtlip',
     processing: true,
@@ -100,13 +137,23 @@ const dtTableTaxable = tableTaxable.DataTable({
             render: function (_data, _type, row) {
                 let actionCtr = 0;
                 let _actionButton = "";
+                const tempIcon = parseInt(row.is_active) === 1 ? "fa-toggle-on" : "fa-toggle-off";
+                const tempTooltip = parseInt(row.is_active) === 1 ? "Deactivate Taxable Deduction" : "Activate Taxable Deduction";
+                const tempState = parseInt(row.is_active) === 1 ? "danger" : "success";
+
                 const rawData = JSON.stringify(row);
                 if (typeof _currentActions != "undefined" && _currentActions.length > 0 && jQuery.inArray("edit", _currentActions) !== -1) {
                     _actionButton += `<button type='button' 
                     class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit btnEditEmployeeFixedTaxable' 
                     data-placement='bottom' data-toggle='m-tooltip' title='' 
-                    data-original-title='Edit Employee Record' data-row='${rawData}'>
+                    data-original-title='Edit Taxable Deduction' data-row='${rawData}'>
                         <i class='la la-edit'></i>
+                    </button>`;
+                    _actionButton += `<button type='button' 
+                    class='btn btn-default m-btn m-btn--hover-${tempState} m-btn--icon m-btn--icon-only m-btn--pill btnEdit btnUpdateEmployeeFixedTaxable' 
+                    data-placement='bottom' data-toggle='m-tooltip' title='' 
+                    data-original-title='${tempTooltip}' data-row='${rawData}'>
+                        <i class='fa ${tempIcon}'></i>
                     </button>`;
                     actionCtr++;
                 }

@@ -470,4 +470,11 @@
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
         }
+
+        public function update_status_taxable_deduction(){
+            $data = $this->employee->updateStatusTaxableDeduction();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
     }

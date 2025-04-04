@@ -1848,6 +1848,48 @@
             }else{ return 0; }
         }
 
+        public function updateStatusTaxableDeduction(){
+            $post = $this->input->post();
+            $resultset = array();
+            $logInfo = null;
+            if(isset($post["id"], $post["is_active"]) && $post["id"]){
+                $reverseStatus = $post["is_active"] == 1 ? 0 : 1;
+                $tempState = $reverseStatus == 1 ? "Activated" : "Deactivated";
+                $failedState = $reverseStatus == 1 ? "Failed activating" : "Failed deactivating";
+
+                $arrData["is_active"] = $reverseStatus;
+                $arrData['last_updated_at'] = date("Y-m-d H:i:s");
+                $arrData['last_updated_by'] = $this->core_layout->getCurrentEmployeeId();
+                $currentRecord = $this->getCurrentEmployeeData($post["employee_id"]);
+                $getEmpTaxable = $this->db->get_where($this->tbl_payroll_fixed_taxable, array("id"=>$post['id']));
+                if($getEmpTaxable->num_rows() == 1){
+                    $taxableAmount = number_format($post["taxable_amount"], 2, ".", ",");
+                    $updated = $this->db->update($this->tbl_payroll_fixed_taxable, $arrData, array("id"=>$post['id']));
+                    if($updated && $this->db->affected_rows() > 0){
+                        $resultset["response"] = true;
+                        $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Fixed taxable deduction has been <strong>`{$tempState}`</strong> for employee <strong>`{$currentRecord->employee_name}`</strong> with taxable amount of <strong>`{$taxableAmount}`</strong>.": null;
+                    }else{
+                        $resultset["response"] = false;
+                        $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "{$failedState} fixed taxable deduction for employee <strong>`{$currentRecord->employee_name}`</strong> with taxable amount of <strong>`{$taxableAmount}`</strong>.": null;
+                    }
+                }else{
+                    $resultset["response"] = false;
+                    $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "{$failedState} fixed taxable deduction for employee <strong>`{$currentRecord->employee_name}`</strong>, record not found.": null;
+                }
+            }else{
+                $resultset["response"] = false;
+                $logInfo = "Failed updating fixed taxable deduction, required parameters missing.";
+            }
+
+            if($logInfo){
+                $resultset["toastr_msg"] = $logInfo;
+                $type = $resultset["response"] ? "success" : "failed";
+                $logType = $resultset["response"] ? "user": "system";
+                $this->core_layout->setEventLog($logInfo, "update", $type, "payroll", $logType);
+            }
+            return $resultset;
+        }
+
         public function updateTaxableDeduction(){
             $post = $this->input->post();
             $resultset = array();
@@ -1863,18 +1905,18 @@
                     $updated = $this->db->update($this->tbl_payroll_fixed_taxable, $post, array("id"=>$post['id']));
                     if($updated && $this->db->affected_rows() > 0){
                         $resultset["response"] = true;
-                        $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "User updated taxable deduction for employee <strong>`{$currentRecord->employee_name}`</strong> with taxable amount from <strong>`{$currentTaxableAmount}`</strong> to <strong>`{$taxableAmount}`</strong>.": null;
+                        $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Fxied taxable deduction has been <strong>`Updated`</strong> for employee <strong>`{$currentRecord->employee_name}`</strong> with taxable amount from <strong>`{$currentTaxableAmount}`</strong> to <strong>`{$taxableAmount}`</strong>.": null;
                     }else{
                         $resultset["response"] = false;
-                        $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Failed updating taxable deduction for employee <strong>`{$currentRecord->employee_name}`</strong> with taxable amount from <strong>`{$currentTaxableAmount}`</strong> to <strong>`{$taxableAmount}`</strong>.": null;
+                        $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Failed updating fixed taxable deduction for employee <strong>`{$currentRecord->employee_name}`</strong> with taxable amount from <strong>`{$currentTaxableAmount}`</strong> to <strong>`{$taxableAmount}`</strong>.": null;
                     }
                 }else{
                     $resultset["response"] = false;
-                    $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Failed updating taxable deduction for employee <strong>`{$currentRecord->employee_name}`</strong>, record not found.": null;
+                    $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Failed updating fixed taxable deduction for employee <strong>`{$currentRecord->employee_name}`</strong>, record not found.": null;
                 }
             }else{
                 $resultset["response"] = false;
-                $logInfo = "Failed updating taxable deduction, required parameters missing.";
+                $logInfo = "Failed updating fixed taxable deduction, required parameters missing.";
             }
 
             if($logInfo){
@@ -1900,14 +1942,14 @@
                     $added = $this->db->insert($this->tbl_payroll_fixed_taxable, $post);
                     if($added && $this->db->affected_rows() > 0){
                         $resultset["response"] = true;
-                        $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Fixed Taxable Deduction of employee named <strong>`{$currentRecord->employee_name}`</strong> has been added with taxable amount of <strong>`{$taxableAmount}`</strong>.": null;
+                        $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Fixed taxable deduction of employee named <strong>`{$currentRecord->employee_name}`</strong> has been added with taxable amount of <strong>`{$taxableAmount}`</strong>.": null;
                     }else{
                         $resultset["response"] = false;
-                        $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Failed to add new Fixed Taxable Deduction of employee named <strong>`{$currentRecord->employee_name}`</strong> with taxable amount of <strong>`{$taxableAmount}`</strong>.": null;
+                        $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Failed to add new fixed taxable deduction of employee named <strong>`{$currentRecord->employee_name}`</strong> with taxable amount of <strong>`{$taxableAmount}`</strong>.": null;
                     }
                 }else{
                     $resultset["response"] = false;
-                    $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Failed to add new Fixed Taxable Deduction of employee named <strong>`{$currentRecord->employee_name}`</strong>, employee already has a fixed taxable deduction.": null;
+                    $logInfo = isset($currentRecord->employee_name) && $currentRecord->employee_name ? "Failed to add new fixed taxable deduction of employee named <strong>`{$currentRecord->employee_name}`</strong>, employee already has a fixed taxable deduction.": null;
                 }
             }else{
                 $resultset["response"] = false;
@@ -2027,4 +2069,5 @@
             if ($qTemp->num_rows() > 0){ return $qTemp->row(); }
             else { return false; }
         }
+
     }
