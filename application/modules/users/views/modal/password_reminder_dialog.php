@@ -8,7 +8,7 @@
                 <p>For your account security, we require you to update your password as it has been over 60 days since your last change. Please take a moment to set a new password now.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" id="changePasswordLater" class="btn btn-warning btnClose" data-bs-dismiss="modal" onclick="changePasswordLater(<?php echo $this->session->userdata('logged_in')['id']; ?>)">
+                <button type="button" id="changePasswordLater" class="btn btn-warning btnClose" data-bs-dismiss="modal" onclick="changePasswordLater(<?php echo $this->session->userdata('logged_in')['emp_id']; ?>)">
                     Remind Me Later (30 Days)
                 </button>
                 <button type="button" id="changePasswordNow" class="btn btn-primary btnSave" data-bs-dismiss="modal" onclick="changePasswordNow()">
