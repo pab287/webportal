@@ -2902,6 +2902,21 @@ class Payroll_m extends CI_Model
                 $hasPreviousDeduction->tax = floatval($prev_deduction->row()->tax_total);
             }
 
+            $adj_prev_deduction = $this->db
+                    ->select("SUM(psa.amount) as tax_total")
+                    ->join("payroll.payroll_sheet_created_adjustments as psa", "psa.payroll_sheet_id = ps.id AND psa.particulars = 'TAX' AND psa.adj_type = 1", "INNER")
+                    ->where("ps.month_name", $parameters->month_name)
+                    ->where("ps.year", $parameters->year)
+                    ->where("ps.payroll_sched", $parameters->payout_sched)
+                    ->where("ps.emp_id", $parameters->emp_id)
+                    ->where("ps.posted", 1)
+                    ->where("ps.is_bonus", 0)
+                    ->group_by("ps.emp_id")
+                    ->get("payroll.payroll_sheet as ps");
+            if($adj_prev_deduction->num_rows() > 0){
+                $hasPreviousDeduction->tax += floatval($adj_prev_deduction->row()->tax_total);
+            }
+
             $tempHdmf = $this->getHdmf($parameters->remittance_sched_ctr, 1, $temp_taxable_income, $has_pagibig_no);
             $tempPhic = $this->calculatePhilHealth($parameters->remittance_sched_ctr, $temp_taxable_income, 1, $parameters->gross_pay, $has_phealth_no);
             $tempSss = $this->calculateSss(array(
@@ -2916,14 +2931,23 @@ class Payroll_m extends CI_Model
             $tempTax->taxable_income = $tempTaxableIncome;
             $tempTax->temp_taxable_income = $temp_taxable_income;
             $tempTax->previous_deduction = $hasPreviousDeduction;
+            $tempTax->temp_deduction = $tempDeduction;
+            $tempTax->arr_deductions = array("hdmf"=>$tempHdmf->ee, "phic"=>$tempPhic->ee, "sss"=>$tempSss->ee);
 
-            if(($hasPreviousDeduction->tax == 0 && $parameters->is_last_remittance_schedule == false) ||
-            ($hasPreviousDeduction->tax > 0 && $parameters->is_last_remittance_schedule == true)){
+            if(($hasPreviousDeduction->tax == 0 && $parameters->is_last_remittance_schedule === false) ||
+            ($hasPreviousDeduction->tax > 0 && $parameters->is_last_remittance_schedule === true)){
                 $tempTax->ee = floatval($tempTax->ee);
                 $tempTax->er = floatval($tempTax->er);
                 $tempTax->total = floatval($tempTax->total);
                 
-                if($tempTax->ee > 0){ $tempTax->ee = $tempTax->ee / 2; }
+                if($tempTax->ee > 0){
+                    $tempTaxEE = $tempTax->ee / 2;
+                    if($hasPreviousDeduction->tax > 0 && $hasPreviousDeduction->tax <= $tempTax->ee && $tempTaxEE != $hasPreviousDeduction->tax){
+                        $tempTax->ee = $tempTax->ee - $hasPreviousDeduction->tax;
+                    }else{
+                        $tempTax->ee = $tempTax->ee / 2; 
+                    }
+                }
                 if($tempTax->er > 0){ $tempTax->er = $tempTax->er / 2; }
 
                 $tempTax->ee = round($tempTax->ee, 2);
