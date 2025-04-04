@@ -90,7 +90,7 @@ $(document).on("click", ".btnUpdateEmployeeFixedTaxable", function () {
                 success: function (json) {
                     if (json.response) {
                         toastr.success(json.toastr_msg, "Fixed Taxable Deduction", 5000);
-                        dtTableTaxable.ajax.reload();
+                        dtTableTaxable.ajax.reload(null, false);
                     }
                 }
             });
