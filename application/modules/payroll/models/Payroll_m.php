@@ -2867,7 +2867,7 @@ class Payroll_m extends CI_Model
         return $employees;
     }
 
-    function generateIncomeTaxCalculator($temp_taxable_income, $parameters = array()){
+    protected function generateIncomeTaxCalculator($temp_taxable_income, $parameters = array()){
         $tempTax = new stdClass();
         $tempTax->ee = 0;
         $tempTax->er = 0;
@@ -2882,6 +2882,8 @@ class Payroll_m extends CI_Model
         $has_tin_no = (isset($_contAcctNumber->tin_no) && $_contAcctNumber->tin_no)? true: false;
 
         if($temp_taxable_income > 0){
+            $alteredTaxableDeduction = $this->getFixedTaxableDeduction($parameters->emp_id);
+            
             $hasPreviousDeduction = new stdClass();
             $hasPreviousDeduction->sss = 0;
             $hasPreviousDeduction->sss_er = 0;
@@ -2901,6 +2903,7 @@ class Payroll_m extends CI_Model
                 $hasPreviousDeduction->sss_er = floatval($prev_deduction->row()->total_sss_er);
                 $hasPreviousDeduction->tax = floatval($prev_deduction->row()->tax_total);
             }
+            $this->db->reset_query();
 
             $adj_prev_deduction = $this->db
                     ->select("SUM(psa.amount) as tax_total")
@@ -2916,6 +2919,7 @@ class Payroll_m extends CI_Model
             if($adj_prev_deduction->num_rows() > 0){
                 $hasPreviousDeduction->tax += floatval($adj_prev_deduction->row()->tax_total);
             }
+            $this->db->reset_query();
 
             $tempHdmf = $this->getHdmf($parameters->remittance_sched_ctr, 1, $temp_taxable_income, $has_pagibig_no);
             $tempPhic = $this->calculatePhilHealth($parameters->remittance_sched_ctr, $temp_taxable_income, 1, $parameters->gross_pay, $has_phealth_no);
@@ -2933,6 +2937,9 @@ class Payroll_m extends CI_Model
             $tempTax->previous_deduction = $hasPreviousDeduction;
             $tempTax->temp_deduction = $tempDeduction;
             $tempTax->arr_deductions = array("hdmf"=>$tempHdmf->ee, "phic"=>$tempPhic->ee, "sss"=>$tempSss->ee);
+            $tempTax->original_tax = array("ee"=>$tempTax->ee, "er"=>$tempTax->er, "total"=>$tempTax->total);
+            $tempTax->alter_taxable_deduction = $alteredTaxableDeduction > 0;
+            if($alteredTaxableDeduction > 0){ $tempTax->ee = $alteredTaxableDeduction; }
 
             if(($hasPreviousDeduction->tax == 0 && $parameters->is_last_remittance_schedule === false) ||
             ($hasPreviousDeduction->tax > 0 && $parameters->is_last_remittance_schedule === true)){
@@ -2940,15 +2947,15 @@ class Payroll_m extends CI_Model
                 $tempTax->er = floatval($tempTax->er);
                 $tempTax->total = floatval($tempTax->total);
                 
-                if($tempTax->ee > 0){
-                    $tempTaxEE = $tempTax->ee / 2;
-                    if($hasPreviousDeduction->tax > 0 && $hasPreviousDeduction->tax <= $tempTax->ee && $tempTaxEE != $hasPreviousDeduction->tax){
+                if ($tempTax->ee > 0) {
+                    $halfEe = $tempTax->ee / 2;
+                    if ($hasPreviousDeduction->tax > 0 && $hasPreviousDeduction->tax <= $tempTax->ee && $halfEe != $hasPreviousDeduction->tax) {
                         $tempTax->ee = $tempTax->ee - $hasPreviousDeduction->tax;
-                    }else{
-                        $tempTax->ee = $tempTax->ee / 2; 
+                    } else {
+                        $tempTax->ee = $halfEe;
                     }
                 }
-                if($tempTax->er > 0){ $tempTax->er = $tempTax->er / 2; }
+                if ($tempTax->er > 0){ $tempTax->er = $tempTax->er / 2; }
 
                 $tempTax->ee = round($tempTax->ee, 2);
                 $tempTax->er = round($tempTax->er, 2);
@@ -8061,5 +8068,18 @@ class Payroll_m extends CI_Model
         $flatArray = array_merge(...$result); //merge arrays into one 1 array
 
         return $flatArray;
+    }
+
+    protected function getFixedTaxableDeduction($id = 0){
+        if($id){
+            $this->db->select("taxable_amount");
+            $this->db->from("payroll.fixed_taxable_deduction");
+            $this->db->where("employee_id", $id);
+            $this->db->where("is_active", 1);
+            $taxable = $this->db->get();
+            if ($taxable->num_rows() == 1){
+                return floatval($taxable->row()->taxable_amount);
+            } else { return 0; }
+        } else { return 0; }
     }
 }
