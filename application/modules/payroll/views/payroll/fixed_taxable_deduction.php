@@ -147,6 +147,7 @@
 			<input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 			<div id="editEmployeeData" class="modal-body">
 				<input type="hidden" name="id" v-model="row.id" />
+				<input type="hidden" name="employee_id" v-model="row.employee_id" />
 				<div class="form-group">
 					<label for="" class="form-control-label required">Employee Name</label>
 					<div>

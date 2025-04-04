@@ -1853,8 +1853,8 @@
             $resultset = array();
             $logInfo = null;
             if(isset($post["id"], $post["taxable_amount"]) && $post["id"] && $post["taxable_amount"]){
-                $post['updated_at'] = date("Y-m-d H:i:s");
-                $post['updated_by'] = $this->core_layout->getCurrentEmployeeId();
+                $post['last_updated_at'] = date("Y-m-d H:i:s");
+                $post['last_updated_by'] = $this->core_layout->getCurrentEmployeeId();
                 $currentRecord = $this->getCurrentEmployeeData($post["employee_id"]);
                 $getEmpTaxable = $this->db->get_where($this->tbl_payroll_fixed_taxable, array("id"=>$post['id']));
                 if($getEmpTaxable->num_rows() == 1){
@@ -1949,7 +1949,7 @@
         }
 
         protected function getFixedTaxableDeductionQuery($search, $limit, $offset, $sortBy, $sortOrder, $filterFields){
-            $this->db->select("CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+            $this->db->select("psfx.id, psfx.employee_id, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
             CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
                     TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
                 THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
