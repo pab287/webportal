@@ -192,7 +192,7 @@ function getEmployeeStatusChart(company_id){
     getEachEmployeeStatusDemographics(company_id).then((data) => {
         $("#employee-status-graph-total span").html(data.total);
         chartEmployeeStatus.data = data.data;
-    
+
         // Set inner radius
         var categoryAxis_empStatus = chartEmployeeStatus.yAxes.push(new am4charts.CategoryAxis());
         categoryAxis_empStatus.dataFields.category = "employee_status";
@@ -201,7 +201,21 @@ function getEmployeeStatusChart(company_id){
         var valueAxis_empStatus = chartEmployeeStatus.xAxes.push(new am4charts.ValueAxis());
         valueAxis_empStatus.dataFields.category = "cnt";
         valueAxis_empStatus.renderer.minGridDistance = 100;
-        
+
+        valueAxis_empStatus.strictMinMax = true;
+        valueAxis_empStatus.min = 0;
+        valueAxis_empStatus.numberFormatter = new am4core.NumberFormatter();
+        valueAxis_empStatus.numberFormatter.numberFormat = "#";
+
+        // Ensure only whole numbers are displayed on the x-axis
+        valueAxis_empStatus.renderer.labels.template.adapter.add("text", function(text) {
+            return Number.isInteger(parseFloat(text)) ? text : "";
+        });
+
+        // Keep grid lines only at whole numbers
+        valueAxis_empStatus.renderer.grid.template.location = 0;
+        valueAxis_empStatus.renderer.ticks.template.disabled = true;
+
         // Add and chartEmployeeStatus Series
         var series = chartEmployeeStatus.series.push(new am4charts.ColumnSeries3D());
         series.dataFields.categoryY = "employee_status";
