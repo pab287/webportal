@@ -1981,13 +1981,31 @@
             "uemp.lastname", "uemp.firstname", "uemp.middlename", "uemp.suffix",
             "psfx.basic_rate", "psfx.payroll_type", "psfx.taxable_amount");
 
-            $query =$this->getFixedTaxableDeductionQuery($search, $limit, $offset, $sortBy, $sortOrder, $filterFields);
-
-            $resultset["recordsTotal"] = $query->num_rows();
-            $resultset["recordsFiltered"] = $query->num_rows();
+            $query = $this->getFixedTaxableDeductionQuery($search, $limit, $offset, $sortBy, $sortOrder, $filterFields);
+            $ctrFilter = $this->getFixedTaxableDeductionCount($search, $filterFields);
+            $resultset["recordsTotal"] = $ctrFilter;
+            $resultset["recordsFiltered"] = $ctrFilter;
             $resultset["data"] = $query->result();
 
             return $resultset;
+        }
+
+        protected function getFixedTaxableDeductionCount($search, $filterFields){
+            $this->db->select("psfx.id, psfx.employee_id, psfx.is_active");
+            $this->db->from($this->tbl_payroll_fixed_taxable." as psfx");
+            $this->db->join($this->employeeTable." as emp", "emp.id = psfx.employee_id", "inner");
+            $this->db->join($this->employeeTable." as cemp", "cemp.id = psfx.created_by", "left");
+            $this->db->join($this->employeeTable." as uemp", "uemp.id = psfx.last_updated_by", "left");
+
+            if (isset($search)) {
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    ($key == 0) ? $this->db->like($field, $search, "both") : $this->db->or_like($field, $search, "both");
+                }
+                $this->db->group_end();
+            }
+            $query = $this->db->get();
+            return $query->num_rows();
         }
 
         protected function getFixedTaxableDeductionQuery($search, $limit, $offset, $sortBy, $sortOrder, $filterFields){
