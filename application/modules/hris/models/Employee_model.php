@@ -1901,7 +1901,7 @@
                 IFNULL(a.position, 'No assigned position')) as pos_description, 
                 IFNULL(ds.station_id, 0) as default_station,
                 ISNULL(ds.id) as has_default_station,
-                IFNULL(UPPER(als.site_name), 'NO DEFAULT STATION') as default_station_description";
+                IFNULL(UPPER(als.site_name), 'NO DEFAULT STATION') as default_station_description, b.is_flexi as work_schedule";
                 /** jp01 updated query ends here **/
                 $this->db->select($sqlSelect);
                 $this->db->from("{$this->employeeTable} as a");
@@ -3217,6 +3217,7 @@
                 unset($post["csrf_token"], $post["current_status"], $post["current_company_id"], $post["current_department_id"], $post["current_position_id"], $post["work_station"],$post["current_supervisor"], $post["default_station"], $post["work_schedule"]);
                 $employeeId = $post["id"];
                 $currentEmployeeData = $this->getEmployeeData($employeeId);
+                $_tempData = $this->core_layout->getEmployeeData($employeeId);
                 if ($employeeId) {
                     unset($post["id"]);
                     $where = array("id" => $employeeId);
@@ -3394,18 +3395,58 @@
                             $this->core_layout->setEventLog("Error Updating employment data.","update", "success", "gcchris", "user");
                         }
                     }
-
+                    
+                    $tempStatus = "Regular - 2 IN and 2 OUT";
+                    switch ($workSchedule) {
+                        case '1': $tempStatus = "Flexi - 1 IN and 1 OUT"; break;
+                        case '2': $tempStatus = "Drivers - 1 IN AND 1 OUT"; break;
+                        case '3': $tempStatus = "Super Flexi - 1 IN OR 1 OUT"; break;
+                        case '4': $tempStatus = "Default - NO TIME IN OR OUT"; break;
+                        default: $tempStatus = "Regular - 2 IN and 2 OUT"; break;
+                    }
+                    $isHourly = $post["payroll_type"] == "hourly" ? 1 : 0;
+                    $this->db->order_by("id", "desc");
+                    $this->db->limit(1);
                     $existingPersonnel = $this->db->get_where("gcctimeutility.personnel", array("biometricno" => $post["biometricno"]));
-                    if($existingPersonnel->num_rows() == 0){
-                        $isHourly = $post["payroll_type"] == "hourly" ? 1 : 0;
-                        $addedPersonnel = $this->db->insert("gcctimeutility.personnel", array("biometricno" => $post["biometricno"], "biometric_id"=>$post["biometricno"], "name" => strtoupper($post["display_name_1"]), "is_active" => 1m "role" => 0, is_perhour => $isHourly));
-                        if($addedPersonnel && $this->db->affected_rows() > 0){
-                            $this->core_layout->setEventLog("Employee personnel data for employee name <strong>`".strtoupper($post["display_name_1"])."`</strong> has been added succefully.","insert", "success", "gcchris", "user");
-                        }else{
-                            $this->core_layout->setEventLog("Error adding employee personnel data for employee name <strong>`".strtoupper($post["display_name_1"])."`</strong>","insert", "failed", "gcchris", "user");
+                    if ($existingPersonnel->num_rows() == 0){
+                        $_tempData = (object) $_tempData;
+                        $addedPersonnel = $this->db->insert("gcctimeutility.personnel", array("biometricno" => $post["biometricno"], 
+                            "biometric_id"=>$post["biometricno"],
+                            "name" => strtoupper($_tempData->display_name_1),
+                            "is_flexi"=>$workSchedule,
+                            "is_perhour" => $isHourly,
+                            "role" => 0, "is_active" => 1));
+                        if ($addedPersonnel && $this->db->affected_rows() > 0){
+                            $tempMessage = "";
+                            if($isHourly == 1){ $tempMessage = " and was tagged as <strong>`Hourly`</strong> paid"; }
+                            $this->core_layout->setEventLog("Personnel data of employee <strong>`".strtoupper($_tempData->display_name_1)."`</strong> with work schedule <strong>`$tempStatus`</strong> has been added succefully{$tempMessage}.","insert", "success", "gcchris", "user");
+                        } else {
+                            $this->core_layout->setEventLog("Error adding personnel data of employee <strong>`".strtoupper($_tempData->display_name_1)."` with work schedule <strong>`$tempStatus`</strong>","insert", "failed", "gcchris", "user");
                         }
-                    }else{
-                        
+                    } else {
+                        $_tempData = (object) $_tempData;
+                        $row = $existingPersonnel->row();
+                        if($row->is_flexi != $workSchedule){
+                            $_tempStatus = "Regular - 2 IN and 2 OUT";
+                            switch ($row->is_flexi) {
+                                case '1': $_tempStatus = "Flexi - 1 IN and 1 OUT"; break;
+                                case '2': $_tempStatus = "Drivers - 1 IN AND 1 OUT"; break;
+                                case '3': $_tempStatus = "Super Flexi - 1 IN OR 1 OUT"; break;
+                                case '4': $_tempStatus = "Default - NO TIME IN OR OUT"; break;
+                                default: $_tempStatus = "Regular - 2 IN and 2 OUT"; break;
+                            }
+                            $arrToUpdate = array("is_flexi"=>$workSchedule);
+                            if ($isHourly != $row->is_perhour){ $arrToUpdate["is_perhour"] = $isHourly; }
+                            $tempMessage = "";
+                            if(isset($arrToUpdate["is_perhour"])){ $tempMessage = " and was tagged as <strong>`Hourly`</strong> paid"; }
+
+                            $updatedPersonnel = $this->db->update("gcctimeutility.personnel", array("is_perhour" => $isHourly, "is_flexi"=>$workSchedule), array("id"=>$row->id));
+                            if ($updatedPersonnel && $this->db->affected_rows() > 0){
+                                $this->core_layout->setEventLog("Personnel data of employee <strong>`".strtoupper($_tempData->display_name_1)."`</strong> with work schedule from <strong>`$_tempStatus`</strong> to <strong>`$tempStatus`</strong> has been updated succefully{$tempMessage}.","update", "success", "gcchris", "user");
+                            } else {
+                                $this->core_layout->setEventLog("Error updating personnel data of employee <strong>`".strtoupper($_tempData->display_name_1)."` with work schedule from <strong>`$_tempStatus`</strong> to <strong>`$tempStatus`</strong>","update", "failed", "gcchris", "user");
+                            }
+                        }
                     }
                 } else {
                     $resultset["response"] = false;
