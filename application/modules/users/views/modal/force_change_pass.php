@@ -81,7 +81,7 @@
         $(this).find('i').toggleClass('fa-eye fa-eye-slash');
     });
 
-    if (session.last_update == null) {
+    if (session.last_update == null || session.last_update == "0000-00-00 00:00:00") {
         $(".password-change-reminder").modal("show");
     }
     else{
