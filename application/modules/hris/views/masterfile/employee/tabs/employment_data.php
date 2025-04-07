@@ -206,7 +206,7 @@
         <div class="row m--margin-bottom-10">
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
                 <div class="form-group m-form__group row">
-                    <label for="work_mode" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Work Mode:</label>
+                    <label for="work_mode" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label required">Work Mode:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
                         <select class="form-control m-input select2" id="m--input-work_mode" name="work_mode" placeholder="Select an option" data-validation="required"
                                 v-model="vm_tab3.work_mode">
@@ -221,22 +221,37 @@
                 <div class="form-group m-form__group row">
                     <label for="payroll_type" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Payroll Type:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
-                        <select class="form-control m-input select2" name="payroll_type" id="m--input-payroll_type_id" placeholder="Select an option"  data-validation="required"
-                                v-model="vm_tab3.payroll_type">
-                            <!--<option value="Weekly">Weekly</option>
-                            <option value="Semi-monthly">Semi-monthly</option>
-                            <option value="Monthly">Monthly</option>
-                            <option value="Project Based">Project Based</option>-->
+                        <select class="form-control m-input select2" name="payroll_type" id="m--input-payroll_type_id"
+                            placeholder="Select an option" data-validation="required" v-model="vm_tab3.payroll_type">
                         </select>
                     </div>
                 </div>
             </div>
         </div>
         <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x"></div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-8 col-lg-8 col-xl-8">
+                <div class="form-group m-form__group row">
+                    <label for="payroll_type" class="col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label required">Work Schedule:</label>
+                    <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                        <select class="form-control m-input select2" name="work_schedule"
+                            placeholder="Select an option" data-validation="required" v-model="vm_tab3.work_schedule">
+                            <option value="4">Default - NO TIME IN OR OUT</option>
+                            <option value="3">Super Flexi - 1 IN OR 1 OUT</option>
+                            <option value="2">Drivers - 1 IN AND 1 OUT</option>
+                            <option value="1">Flexi - 1 IN AND 1 OUT</option>
+                            <option value="0">Regular - 2 IN AND 2 OUT</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x"></div>
         <div class="row m--margin-bottom-10">
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
                 <div class="form-group m-form__group row">
-                    <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Date Hired:</label>
+                    <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label required">Date Hired:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
                         <div class="input-group">
                             <span class="input-group-addon">
@@ -257,10 +272,6 @@
                             <span class="input-group-addon">
                                 <i class="la la-calendar"></i>
                             </span>
-                            <!-- <input type="text" id="m_datepicker-date_end_prob" name="date_end_prob" class="form-control m-input" maxlength="12"
-                                   size="12" autocomplete="off" v-if="vm_tab3.work_status == 'REGULAR'" v-model="vm_tab3.date_end_prob"/>
-                            <input type="text" id="m_datepicker-date_end_prob" name="date_end_prob" class="form-control m-input" maxlength="12"
-                                   size="12" autocomplete="off" v-else value='0000-00-00'/>        -->
                             <input type="text" id="m_datepicker-date_end_prob" name="date_end_prob" class="form-control m-input" maxlength="12"
                                    size="12" autocomplete="off" v-model="vm_tab3.date_end_prob"/>
                                    
@@ -324,7 +335,7 @@
             </div>
             <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12" id="resignation_remarks" :style="vm_tab3.resignation_effective_date != '0000-00-00' && vm_tab3.resignation_effective_date ? 'display: block' : 'display: none'">
                 <div class="form-group m-form__group row">
-                    <label class="col-sm-6 col-md-3 col-lg-3 col-xl-3 col-form-label">Performance Rating Remarks:</label>
+                    <label for="" class="col-sm-6 col-md-3 col-lg-3 col-xl-3 col-form-label">Performance Rating Remarks:</label>
                     <div class="col-sm-6 col-md-3 col-lg-3 col-xl-3">
                         <p id="resign_remarks" class="col-form-label"></p>
                     </div>
@@ -336,7 +347,7 @@
             <div class="row m--margin-bottom-10">
                 <div class="col-12 col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-10">
                     <div class="form-group m-form__group row">
-                        <label for="reason_of_separation" class="col-xs-6 col-sm-6 col-md-4 col-lg-4 col-xl-4 col-form-label">Reason for Separation:</label>
+                        <label for="reason_of_separation" class="col-xs-6 col-sm-6 col-md-4 col-lg-4 col-xl-4 col-form-label required">Reason for Separation:</label>
                         <div class="col-xs-6 col-sm-6 col-md-8 col-lg-8 col-xl-8">
                             <div class="input-group">
                                 <textarea class="form-control m-input" 
