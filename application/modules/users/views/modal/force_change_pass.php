@@ -88,7 +88,7 @@
         let lastUpdateDate = new Date(session.last_update);
         let sixtyDaysAgo = new Date();
         sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-        
+        console.log("Last update: ",lastUpdateDate, "60 days ago: ",sixtyDaysAgo);
         if (lastUpdateDate <= sixtyDaysAgo) {
             $(".password-change-reminder").modal("show");
             if(session.waive_count >= 3){
