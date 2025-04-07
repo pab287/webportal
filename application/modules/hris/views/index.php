@@ -203,22 +203,32 @@
             <div class="m-portlet">
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
-                        <div class="m-portlet__head-title">
-                            <span class="m-portlet__head-icon">
-                                <i class="flaticon-graph"></i>
-                            </span>
-                            <h3 class="m-portlet__head-text">
-                                EMPLOYEE STATUS
-                            </h3>
+                        <div class="m-portlet__head-title w-100" style="display: flex; justify-content: space-between;">
+                            <div class="d-flex justify-content-between align-items-center w-100">
+                                <div class="colmn-1 col-9 p-0">
+                                    <span class="m-portlet__head-icon"><i class="flaticon-graph"></i></span>
+                                    <h3 class="m-portlet__head-text">EMPLOYEE STATUS</h3>
+                                </div>
+
+                                <div class="colmn-2 col-3 p-0">
+                                    <div class="m-select2 m-select2--pill">
+                                        <form>
+                                            <select id="select2_company" name="select2_company" data-validation="false" class="form-control"></select>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="m-portlet__head-tools">
                     </div>
                 </div>
                 <div class="m-portlet__body" style='overflow-x: auto;'>
+                    <div class="d-flex justify-content-center align-items-center m--font-boldest2 mt-3" id="employee-status-graph-company" style="color: #656565;">
+                        <p style="font-size: 16px;"><span style="text-transform: uppercase;"></span></p>
+                    </div>
                     <div class="employee-status-chart-container _container" style="min-width: 1000px; "></div>
-                    <div class="d-flex justify-content-center align-items-center m--font-boldest2 mt-3"
-                         id="employee-status-graph-total" style="color: #656565;">
+                    <div class="d-flex justify-content-center align-items-center m--font-boldest2 mt-3" id="employee-status-graph-total" style="color: #656565;">
                         TOTAL: <span class="ml-2" style="font-size: 16px;">0</span>
                     </div>
                 </div>

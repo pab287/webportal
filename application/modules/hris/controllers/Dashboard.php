@@ -11,6 +11,8 @@
             $this->load->model("Employee_model", "employee");
             $this->load->model("ams/Utilities_model", "utilities");
             $this->load->model("Dashboard_model", "dashboard");
+            $this->load->model("Company_model", "company_model");
+            
             date_default_timezone_set('Asia/Manila');
         }
 
@@ -29,10 +31,10 @@
             echo json_encode($data);
         }
 
-        public function get_each_employee_status_demographics()
+        public function get_each_employee_status_demographics($company_id)
         {
-            $data = $this->dashboard->getEachEmployeeStatusDemographics();
-            echo json_encode($data);
+            $data = $this->dashboard->getEachEmployeeStatusDemographics($company_id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
         public function get_active_employees_on_each_company($sort="DESC")
@@ -65,5 +67,10 @@
         public function get_personnel_request_summary() {
             $data = $this->dashboard->getPersonnelRequestSummary();
             echo json_encode($data);
+        }
+
+        public function get_company_select2_data() {
+            $data = $this->company_model->getCompanySelect2Data();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
         }
     }
