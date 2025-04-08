@@ -450,23 +450,23 @@
                     const tempCreatedAdjustments = data.created_adjustments;
 
                     if (data.sss && parseFloat(data.sss) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.sss);
+                        totalDeduction = totalDeduction + parseFloat(data.sss.replace(/,/g, ''));
                     }
 
                     if (data.sss_prov && parseFloat(data.sss_prov) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.sss_prov);
+                        totalDeduction = totalDeduction + parseFloat(data.sss_prov.replace(/,/g, ''));
                     }
                     
                     if (data.ph && parseFloat(data.ph) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.ph);
+                        totalDeduction = totalDeduction + parseFloat(data.ph.replace(/,/g, ''));
                     }
                     
                     if (data.hdmf && parseFloat(data.hdmf) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.hdmf);
+                        totalDeduction = totalDeduction + parseFloat(data.hdmf.replace(/,/g, ''));
                     }
                     
                     if (data.tax && parseFloat(data.tax) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.tax);
+                        totalDeduction = totalDeduction + parseFloat(data.tax.replace(/,/g, ''));
                     }
 
                     if (json.data.loans.length > 0) {
