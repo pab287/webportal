@@ -333,19 +333,19 @@
                                         <!-- ( <?php //echo $item->deductions; ?> ) -->
                                             <?php 
                                                 if ($item->sss && floatval($item->sss) > 0) {
-                                                    $_tempDeductions += floatval($item->sss);
+                                                    $_tempDeductions += floatval(preg_replace('/[^\d\.\-]/', '', $item->sss));
                                                 }
                                                 if ($item->sss_prov && floatval($item->sss_prov) > 0) {
-                                                    $_tempDeductions += floatval($item->sss_prov);
+                                                    $_tempDeductions += floatval(preg_replace('/[^\d\.\-]/', '', $item->sss_prov));
                                                 }
                                                 if ($item->ph && floatval($item->ph) > 0) {
-                                                    $_tempDeductions += floatval($item->ph);
+                                                    $_tempDeductions += floatval(preg_replace('/[^\d\.\-]/', '', $item->ph));
                                                 }
                                                 if ($item->hdmf && floatval($item->hdmf) > 0) {
-                                                    $_tempDeductions += floatval($item->hdmf);
+                                                    $_tempDeductions += floatval(preg_replace('/[^\d\.\-]/', '', $item->hdmf));
                                                 }
                                                 if ($item->tax && floatval($item->tax) > 0) {
-                                                    $_tempDeductions += floatval($item->tax);
+                                                    $_tempDeductions += floatval(preg_replace('/[^\d\.\-]/', '', $item->tax));
                                                 }
                                             ?>
                                             ( <?=number_format($_tempDeductions, 2) ?> )
