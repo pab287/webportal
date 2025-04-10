@@ -317,5 +317,10 @@ class Timesheet extends MY_Controller {
     public function timesheet_no_overtime_break(){
         echo json_encode($this->ts_model->timesheetNoOvertimeBreak());
     }
+
+    public function generate_default_timesheet(){
+        ini_set('max_execution_time', 7200);
+        echo json_encode($this->ts_model->generateDefaultTimesheet());
+    }
 }
 /* End of file Timesheet.php */
