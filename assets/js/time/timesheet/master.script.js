@@ -669,7 +669,7 @@ $(document)
                                            data-placement="left" style="cursor: pointer;"></i>`;
                             }
 
-                            if (widthAdjustment === 1 && pendingAdjustment == true && verified === 0 && isPosted == false) {
+                            if (widthAdjustment === 1 && pendingAdjustment === true && verified === 0 && isPosted === false) {
                                 return `<i class="fa fa-exclamation-circle"
                                            data-toggle="m-tooltip"
                                            data-original-title="Has Time Adjustments."
@@ -678,13 +678,13 @@ $(document)
                                            data-id="${row.id}"
                                            style="font-size: 20px; cursor: pointer"
                                            onclick="openTimeAdjustmentListModal(this, ${row._emp_id})"></i>`;
-                            } else if (id && (hasShift || hasOvertimeRequest) && isPosted == false) {
+                            } else if (id && (hasShift || hasOvertimeRequest) && isPosted === false ) {
                                 let tempHtml = `<label class="m-checkbox m-checkbox--bold m-checkbox--state-brand table-cb">
                                     <input type="checkbox" name="selected[]" value="${row.id}"
                                         id="cb${row.id}" class="cb-emp-${row._emp_id}"><span></span>
                                 </label>`;
 
-                                if (regenerateRow == true || ctrAttendanceEntries == 1) {
+                                if (regenerateRow === true || ctrAttendanceEntries == 1) {
                                     tempHtml = `<i class="fa fa-refresh m--font-warning m--regular-font-size-lg3"
                                         data-toggle="m-tooltip" data-original-title="Re-generate Row"
                                         data-skin="dark"

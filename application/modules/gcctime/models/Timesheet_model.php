@@ -3243,7 +3243,7 @@ class Timesheet_model extends CI_Model{
             }
         }
 
-        $this->db->select("resource.shift_resource, emp.*, UCASE(CONCAT(emp.lastname,
+        $this->db->select("emp.id, personnel.is_flexi, resource.shift_resource, UCASE(CONCAT(emp.lastname,
                                CASE WHEN emp.suffix != 'N/A' AND emp.suffix !='NONE' AND emp.suffix !='' AND emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''  END, ', ',
 			                   emp.firstname, ' ', CASE WHEN emp.middlename != 'N/A' AND emp.middlename != 'NONE'
 			                   AND emp.middlename !='' AND emp.middlename IS NOT NULL THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE '' END)) `employee_name`, personnel.biometric_id,
@@ -3345,6 +3345,7 @@ class Timesheet_model extends CI_Model{
 
             foreach ($employees->result() as $employee) {
                 $schedule_resource = unserialize($employee->shift_resource);
+                $isNoInOut = intval($employee->is_flexi) === 4;
                 $id = $employee->id;
                 $employee_name = $employee->employee_name;
                 $biometricno = $employee->biometric_id;
@@ -3412,16 +3413,16 @@ class Timesheet_model extends CI_Model{
                 $ARRAY_SORTBY = array();
                 $NEW_ARRAY_SORTBY = array();
                 foreach ($employeeTimesheet as $timesheet) {
+                    $automateTimesheetRecord = $isMonthlyPaidEmployee || $isNoInOut;
                     $timesheet->has_TO = 0;
                     $timesheet->has_LOA = 0;
                     $timesheet->has_whole_day_LOA = 0;
                     $timesheet->has_pending_adjustment = false;
                     $timesheet->allow_paid_holiday = false;
                     $timesheet->has_loa_records = array();
-                    $_has_altered_shift_schedule = false;
                     $timesheet->complete_attendance_count = false;
-                    
                     $timesheet->is_monthly_paid = $isMonthlyPaidEmployee;
+                    $timesheet->is_default = $isNoInOut;
 
                     $timesheet->dtr_count = sizeof($dtr_count);
                     $timesheet->dtr_count_verified = sizeof($dtr_count_verified);
@@ -3438,12 +3439,14 @@ class Timesheet_model extends CI_Model{
                         $timesheet->has_shift = ($schedule_list->am_start === null && $schedule_list->am_end === null
                             && $schedule_list->pm_start === null && $schedule_list->pm_end === null) ? 0 : 1;
                         
-                        if($isMonthlyPaidEmployee && intval($timesheet->has_shift) === 1){
+                        if($automateTimesheetRecord && intval($timesheet->has_shift) === 1){
                             $tempArrSchedule = array("am_start"=>"am_in", "am_end"=>"am_out", "pm_start"=>"pm_in", "pm_end"=>"pm_out");
                             $tempArrShiftSchedule = array("am_start"=>"shift_am_start", "am_end"=>"shift_am_end", "pm_start"=>"shift_pm_start", "pm_end"=>"shift_pm_end");
                             foreach ($tempArrSchedule as $key => $value) {
-                                if(isset($schedule_list->{$key}) && $schedule_list->{$key}){ $timesheet->{$value} = $schedule_list->{$key}; }
-                                if(isset($schedule_list->{$key}) && $schedule_list->{$key}){
+                                if(isset($schedule_list->{$key}) && $schedule_list->{$key} && $schedule_list->{$key} != "00:00:00"){
+                                    $timesheet->{$value} = $schedule_list->{$key};
+                                } 
+                                if(isset($schedule_list->{$key}) && $schedule_list->{$key} && $schedule_list->{$key} != "00:00:00"){
                                     if(isset($tempArrShiftSchedule[$key]) && $tempArrShiftSchedule[$key]){
                                         $tempShiftValue = $tempArrShiftSchedule[$key];
                                         $timesheet->{$tempShiftValue} = $schedule_list->{$key};
@@ -3478,7 +3481,7 @@ class Timesheet_model extends CI_Model{
                     if(is_array($hasToRecords) && count($hasToRecords) > 0){
                         $xTo = 0;
                         $hasCurrentTO = false;
-                        foreach ($hasToRecords as $keyzz => $valuezzz) {
+                        foreach ($hasToRecords as $valuezzz) {
                             $xxxz123 = explode("::", $valuezzz);
                             if(is_array($xxxz123) && count($xxxz123) == 2){
                                 $tempDTxx = explode("__", $xxxz123[1]);
@@ -3502,7 +3505,7 @@ class Timesheet_model extends CI_Model{
                         if(is_array($hasLoaRecords) && count($hasLoaRecords) > 0){
                             $xLoa = 0;
                             $hasCurrentLoa = false;
-                            foreach ($hasLoaRecords as $keyxx => $valuexxx) {
+                            foreach ($hasLoaRecords as $valuexxx) {
                                 $xx123 = explode("::", $valuexxx);
                                 if(is_array($xx123) && count($xx123) == 3){
                                     $tempDTx = explode("__", $xx123[1]);
@@ -3537,23 +3540,21 @@ class Timesheet_model extends CI_Model{
                         $timesheet->complete_attendance_count = $ctrSchedx == $ctrAttx;
                     }
 
+                    $allowPaidEmployee = $timesheet->payroll_type == "monthly" || $timesheet->payroll_type == "daily" || $timesheet->payroll_type == "project based";
                     $tempResponse = (object) $this->getCurrentDateIsHoliday($timesheet->_date);
-                    $timesheet->is_holiday = (isset($tempResponse->is_holiday) && $tempResponse->is_holiday == true)? 1: 0;
-                    $timesheet->payrate_id = (isset($tempResponse->is_holiday, $tempResponse->payrate_id) && ($tempResponse->is_holiday == true && $tempResponse->payrate_id))? $tempResponse->payrate_id: 0;
+                    $timesheet->is_holiday = (isset($tempResponse->is_holiday) && $tempResponse->is_holiday === true)? 1: 0;
+                    $timesheet->payrate_id = (isset($tempResponse->is_holiday, $tempResponse->payrate_id) && ($tempResponse->is_holiday === true && $tempResponse->payrate_id))? $tempResponse->payrate_id: 0;
                     $timesheet->paid_holiday = (isset($timesheet->paid_holiday) && $timesheet->paid_holiday == null)? 0: intval($timesheet->paid_holiday);
-                    if(isset($tempResponse->classification) && strtolower($tempResponse->classification) == "special non-working holiday"){
-                        if($timesheet->payroll_type == "monthly"){ $timesheet->allow_paid_holiday = true; }
-                    }
-                    if(isset($tempResponse->classification) && strtolower($tempResponse->classification) == "regular holiday"){
-                        if($timesheet->payroll_type == "monthly" || $timesheet->payroll_type == "daily" || $timesheet->payroll_type == "project based"){
-                            $timesheet->allow_paid_holiday = true;
-                        }
+                    if (isset($tempResponse->classification) && strtolower($tempResponse->classification) == "special non-working holiday" && $timesheet->payroll_type == "monthly"){
+                        $timesheet->allow_paid_holiday = true;
+                    } elseif (isset($tempResponse->classification) && strtolower($tempResponse->classification) == "regular holiday" && $allowPaidEmployee){
+                        $timesheet->allow_paid_holiday = true;
                     }
 
                     if(is_array($hasOvertimeRecords) && count($hasOvertimeRecords) > 0){
                         $xOvertime = 0;
                         $hasCurrentOvertime = false;
-                        foreach ($hasOvertimeRecords as $keyzz1 => $valuezzz1) {
+                        foreach ($hasOvertimeRecords as $valuezzz1) {
                             $xxxxz1233 = explode("::", $valuezzz1);
                             if(is_array($xxxxz1233) && count($xxxxz1233) == 2){
                                 $tempDTxxx = explode("__", $xxxxz1233[1]);
@@ -3568,7 +3569,7 @@ class Timesheet_model extends CI_Model{
                                         $tempOtDate = date("m/d/Y", strtotime($timesheet->_date));
 
                                         $tempOvertimeData = array("tsID"=>$timesheet->tsID,"date"=>$tempOtDate, 
-                                            "employee_name"=>$timesheet->employee_name, "reference_no"=>$xxxxz1233[0], 
+                                            "employee_name"=>$timesheet->employee_name, "reference_no"=>$xxxxz1233[0],
                                             "overtime_in"=>$overtimeIn, "overtime_out"=>$overtimeOut,
                                             "accredited_ot_hrs"=>$timesheet->total_accredited_ot_hrs,
                                             "accredited_ndiff_ot_hrs"=>$timesheet->total_accredited_ndiff_ot_hrs,
@@ -3614,7 +3615,7 @@ class Timesheet_model extends CI_Model{
 
                     $timesheet->datelist = $ARRAY_SORTBY;
 
-                    if($isMonthlyPaidEmployee && intval($timesheet->has_shift) === 1){
+                    if($automateTimesheetRecord && intval($timesheet->has_shift) === 1){
                         $updatedMonthlyPaidTimesheet = (array) $this->updateTimesheetShiftComputation($timesheet);
                         $newTimesheetRecords = array_merge((array) $timesheet, $updatedMonthlyPaidTimesheet);
                         $timesheet = (object) $newTimesheetRecords;
@@ -3630,12 +3631,12 @@ class Timesheet_model extends CI_Model{
                     switch ($status_filter) {
                         case "completed":
                             $timesheets = array_filter($timesheets, function ($timesheet) {
-                                return $timesheet->all_verified === TRUE;
+                                return $timesheet->all_verified === true;
                             });
                             break;
                         case "incomplete":
                             $timesheets = array_filter($timesheets, function ($timesheet) {
-                                return $timesheet->all_verified === FALSE;
+                                return $timesheet->all_verified === true;
                             });
                             break;
                     }
@@ -3644,11 +3645,11 @@ class Timesheet_model extends CI_Model{
         }
 
         return array(
-            "data" => $timesheets, 
-            "sql" => null, 
-            "shift_resource"=>$alteredShiftRecords, 
-            "to_record"=>$tempToRecord, 
-            "loa_record"=>$tempLoaRecord, 
+            "data" => $timesheets,
+            "sql" => null,
+            "shift_resource"=>$alteredShiftRecords,
+            "to_record"=>$tempToRecord,
+            "loa_record"=>$tempLoaRecord,
             "overtime_record"=>$tempOvertimeRecord,
             "has_existing_overtime"=>$hasExistingOvertime,
             "to_last_query"=>$temp_lastQ
