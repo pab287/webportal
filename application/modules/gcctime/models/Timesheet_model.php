@@ -1610,7 +1610,7 @@ class Timesheet_model extends CI_Model{
 
                         if (($am_end && $am_end !== null) && strtotime($first_record) <= strtotime($date . " " . $am_end)) {
                             $employee_time_sheet->am_in = $first_record;
-                        } else if (strtotime($first_record) >= strtotime($am_start)) {
+                        } elseif (strtotime($first_record) >= strtotime($am_start)) {
                             $employee_time_sheet->pm_in = $first_record;
                         }
 
@@ -1629,13 +1629,13 @@ class Timesheet_model extends CI_Model{
                         if($am_shift_only && (($startMeridian == "AM" && $endMeridian == "AM") || ($startMeridian == "AM" && $endMeridian == "PM"))){
                             $employee_time_sheet->am_in = $first_record;
                             $employee_time_sheet->am_out = $end_record;
-                            $employee_time_sheet->pm_in = NULL;
-                            $employee_time_sheet->pm_out = NULL;
+                            $employee_time_sheet->pm_in = null;
+                            $employee_time_sheet->pm_out = null;
                         }
 
                         if($pm_shift_only && (($startMeridian == "AM" && $endMeridian == "PM") || ($startMeridian == "PM" && $endMeridian == "PM"))){
-                            $employee_time_sheet->am_in = NULL;
-                            $employee_time_sheet->am_out = NULL;
+                            $employee_time_sheet->am_in = null;
+                            $employee_time_sheet->am_out = null;
                             $employee_time_sheet->pm_in = $first_record;
                             $employee_time_sheet->pm_out = $end_record;
                         }
@@ -1644,14 +1644,14 @@ class Timesheet_model extends CI_Model{
                             if($startMeridian == "AM" && $endMeridian == "AM"){
                                 $employee_time_sheet->am_in = $first_record;
                                 $employee_time_sheet->am_out = $end_record;
-                                $employee_time_sheet->pm_in = NULL;
-                                $employee_time_sheet->pm_out = NULL;
-                            }else if($startMeridian == "PM" && $endMeridian == "PM"){
-                                $employee_time_sheet->am_in = NULL;
-                                $employee_time_sheet->am_out = NULL;
+                                $employee_time_sheet->pm_in = null;
+                                $employee_time_sheet->pm_out = null;
+                            }elseif($startMeridian == "PM" && $endMeridian == "PM"){
+                                $employee_time_sheet->am_in = null;
+                                $employee_time_sheet->am_out = null;
                                 $employee_time_sheet->pm_in = $first_record;
                                 $employee_time_sheet->pm_out = $end_record;
-                            }else if($startMeridian == "AM" && $endMeridian == "PM"){
+                            }elseif($startMeridian == "AM" && $endMeridian == "PM"){
                                 $employee_time_sheet->am_in = $first_record;
                                 $employee_time_sheet->pm_out = $end_record;
 
@@ -1664,8 +1664,8 @@ class Timesheet_model extends CI_Model{
                                         $employee_time_sheet->pm_in = date("Y-m-d H:i", strtotime($date . " " . $pm_start));
                                     }
                                 }else{
-                                    $employee_time_sheet->pm_in = NULL;
-                                    $employee_time_sheet->pm_out = NULL;
+                                    $employee_time_sheet->pm_in = null;
+                                    $employee_time_sheet->pm_out = null;
                                 }
                             }
                         }
@@ -2346,7 +2346,10 @@ class Timesheet_model extends CI_Model{
         $this->db->from($this->tbl_employees." emp");
         $this->db->join($this->tbl_personnel." per", "per.biometric_id = emp.biometricno OR per.biometricno = emp.biometricno");
         $this->db->where("emp.id", $employee_time_sheet->emp_id);
+        $this->db->group_start();
         $this->db->where("per.is_flexi", 3);
+        $this->db->or_where("per.is_flexi", 4);
+        $this->db->group_end();
         $this->db->order_by("emp.id", "DESC");
         $this->db->limit(1);
         $qTempEmployee = $this->db->get();
@@ -2357,24 +2360,21 @@ class Timesheet_model extends CI_Model{
 
         /*** altered section allowedPaidHoliday ***/
         
+        $tempPayrollType = null;
+        $allowedPaidHoliday = false;
+        
         $tempEmployeeData = $this->db->get_where($this->tbl_employees, array("id" => $employee_time_sheet->emp_id));
         if($tempEmployeeData->num_rows() == 1){
             $tempPayrollType = $tempEmployeeData->row()->payroll_type;
         }
         $this->db->reset_query();
-        
-        $tempPayrollType = null;
-        $allowedPaidHoliday = false;
-        
+
         $tempResponse = (object) $this->getCurrentDateIsHoliday($employee_time_sheet->date);
-        if(isset($tempResponse->classification) && strtolower($tempResponse->classification) == "special non-working holiday"){
-            if($tempPayrollType == "monthly"){ $allowedPaidHoliday = true; }
-        }
-        if(isset($tempResponse->classification) && strtolower($tempResponse->classification) == "regular holiday"){
-            if($tempPayrollType == "monthly" || $tempPayrollType == "daily" || $tempPayrollType == "project based"){
-                $allowedPaidHoliday = true;
-            }
-        }
+        $isSpecialNonWorkingHoliday = isset($tempResponse->classification) && strtolower($tempResponse->classification) === 'special non-working holiday';
+        $isRegularHoliday = isset($tempResponse->classification) && strtolower($tempResponse->classification) === 'regular holiday';
+
+        if ($isSpecialNonWorkingHoliday && $tempPayrollType === 'monthly') { $allowedPaidHoliday = true; }
+        if ($isRegularHoliday && in_array($tempPayrollType, ['monthly', 'daily', 'project based'])) { $allowedPaidHoliday = true; }
         /*** altered section allowedPaidHoliday ***/
 
         $isHourlySlashPartimer = false;
@@ -2520,7 +2520,7 @@ class Timesheet_model extends CI_Model{
                 $has2hrsDeduction = true;
             }
 
-            if($flexibleEmployee && $has2hrsDeduction == false && $allow_late_adjustment == false){
+            if($flexibleEmployee && $has2hrsDeduction === false && $allow_late_adjustment === false){
                 $employee_time_sheet->am_late = 0;
             }
 
@@ -5372,7 +5372,7 @@ class Timesheet_model extends CI_Model{
         $post = $this->arrayToStdClass($this->input->post());
         $id = explode(",", $post->id);
         $status = isset($post->status) && $post->status ? intval($post->status): 0;
-        $remarks = !empty($post->confirmation_remarks) ? $post->confirmation_remarks : NULL;
+        $remarks = !empty($post->confirmation_remarks) ? $post->confirmation_remarks : null;
         $logged_in_user_emp_id = $this->logged_in_user["emp_id"];
         $resultSet = array();
         $this->db->trans_begin();
@@ -6346,7 +6346,7 @@ class Timesheet_model extends CI_Model{
 
             if (intval($post->$meta_field->modified) === 1) {
                 $meta_exist = $this->db->get_where($this->tbl_time_adjustments_meta, array("time_adjustments_id" => $time_adjustment_id, "field" => $col))->row();
-                $tempValue = ($post->$meta_field->value)? date("H:i", strtotime($post->$meta_field->value)): NULL;
+                $tempValue = ($post->$meta_field->value)? date("H:i", strtotime($post->$meta_field->value)): null;
                 if (!empty($meta_exist)) {
                     $meta_id = $meta_exist->id;
                     $this->db->where("id", $meta_id);
@@ -7805,7 +7805,7 @@ class Timesheet_model extends CI_Model{
 
         $tempProps = array("am_in", "am_out", "pm_in", "pm_out", "shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end");
         foreach ($tempProps as $value) {
-            if(!$changes->$value){ $changes->$value = NULL; }
+            if(!$changes->$value){ $changes->$value = null; }
         }
 
         $this->db->where("id", $timesheet_id);
