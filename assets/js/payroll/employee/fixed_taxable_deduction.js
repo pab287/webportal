@@ -165,6 +165,16 @@ const dtTableTaxable = tableTaxable.DataTable({
     columnDefs: [{ targets: "_all", defaultContent: "" }]
 });
 
+$.formUtils.addValidator({
+    name: 'check_taxable_amount',
+    validatorFunction: function (value, $el, config, language, $form) {
+        console.log(value);
+        return parseFloat(value) > 0;
+    },
+    errorMessage: 'Taxable amount must be greater than 0!',
+    errorMessageKey: 'invalidTaxableAmount'
+});
+
 $.validate({
     form: "#frm-add--taxable-deduction",
     lang: "en",

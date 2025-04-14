@@ -120,7 +120,7 @@
 					<label for="" class="form-control-label required">Fixed Taxable Amount</label>
 					<div class="row">
 						<div class="col-md-6">
-							<input type="number" name="taxable_amount" class="form-control" data-validation="required" autocomplete="off" />
+							<input type="number" name="taxable_amount" class="form-control" data-validation="required, check_taxable_amount" autocomplete="off" step="0.01" />
 						</div>
 					</div>
 				</div>
@@ -176,7 +176,7 @@
 					<label for="" class="form-control-label required">Fixed Taxable Amount</label>
 					<div class="row">
 						<div class="col-md-6">
-							<input type="number" name="taxable_amount" class="form-control" data-validation="required" autocomplete="off" v-model="row.taxable_amount" />
+							<input type="number" name="taxable_amount" class="form-control" data-validation="required, check_taxable_amount" autocomplete="off" step="0.01" v-model="row.taxable_amount" />
 						</div>
 					</div>
 				</div>
