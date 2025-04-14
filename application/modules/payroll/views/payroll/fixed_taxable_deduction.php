@@ -159,7 +159,7 @@
 					<label for="" class="form-control-label">Basic Rate</label>
 						<div class="row">
 							<div class="col-md-12">
-								<p class="form-control m-0" disabled v-text="row.basic_rate ? numberFormat(row.basic_rate) : '0.00'">0.00</p>
+								<p class="form-control m-0" disabled v-text="updatedBasicRate()">0.00</p>
 							</div>
 						</div>
 					</div>
@@ -167,7 +167,7 @@
 					<label for="" class="form-control-label">Payroll Type</label>
 						<div class="row">
 							<div class="col-md-12">
-								<p class="form-control text-uppercase m-0" disabled v-text="row.payroll_type ? row.payroll_type : '---'">---</p>
+								<p class="form-control text-uppercase m-0" disabled v-text="updatedPayrollType()">---</p>
 							</div>
 						</div>
 					</div>

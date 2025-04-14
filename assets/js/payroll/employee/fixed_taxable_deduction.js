@@ -28,6 +28,14 @@ const vmEditEmployeeTax = new Vue({
             row.basic_rate = 0.00;
             row.payroll_type = null;
             return this;
+        }, updatedBasicRate: function () {
+            let { row } = this;
+            row.basic_rate = parseFloat(row.basic_rate) != parseFloat(row.tmp_rate) ? row.tmp_rate : row.basic_rate;
+            return row.basic_rate ? numberFormat(row.basic_rate) : 0.00;
+        }, updatedPayrollType: function () {
+            let { row } = this;
+            row.payroll_type = row.payroll_type != row.tmp_payroll_type ? row.tmp_payroll_type : row.payroll_type;
+            return row.payroll_type ? row.payroll_type : "---";
         }
     }
 });
@@ -119,10 +127,15 @@ const dtTableTaxable = tableTaxable.DataTable({
             return numberFormat(data);
         }},
         { data: "basic_rate", width: "12%", 
-            render: function (data) {
-            return numberFormat(data);
+            render: function (data, _type, row) {
+                const { tmp_rate } = row;
+            return parseFloat(data) != parseFloat(tmp_rate) ? numberFormat(tmp_rate) : numberFormat(data);
         }},
-        { data: "payroll_type", width: "12%" },
+        { data: "payroll_type", width: "12%", 
+            render: function (data, _type, row) {
+            const { tmp_payroll_type } = row;
+        return data != tmp_payroll_type ? tmp_payroll_type : data;
+    } },
         { data: "updated_by", width: "15%", 
             render: function (data, _type, row) {
                 const recordDate = moment(row.updated_at).format("LLL");

@@ -2012,7 +2012,7 @@
             $this->db->select("psfx.id, psfx.employee_id, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
             CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
                     TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
-                THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+                THEN CONCAT(UPPER(SUBSTR(emp.middlename, 1, 1)), '.') ELSE ''
             END,' ', UPPER(TRIM(emp.lastname)),
             CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
                 UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
@@ -2022,7 +2022,7 @@
                 CONCAT(UPPER(TRIM(cemp.firstname)), ' ',
                 CASE WHEN UPPER(TRIM(cemp.middlename)) != 'N/A' AND UPPER(TRIM(cemp.middlename)) != 'NONE' AND
                         TRIM(cemp.middlename) !='' AND cemp.middlename IS NOT NULL
-                    THEN CONCAT(SUBSTR(cemp.middlename, 1, 1), '.') ELSE ''
+                    THEN CONCAT(UPPER(SUBSTR(cemp.middlename, 1, 1)), '.') ELSE ''
                 END,' ', UPPER(TRIM(cemp.lastname)),
                 CASE WHEN UPPER(TRIM(cemp.suffix)) != 'N/A' AND
                     UPPER(TRIM(cemp.suffix !='NONE')) AND cemp.suffix !='' AND
@@ -2031,14 +2031,16 @@
                 CONCAT(UPPER(TRIM(uemp.firstname)), ' ',
                 CASE WHEN UPPER(TRIM(uemp.middlename)) != 'N/A' AND UPPER(TRIM(uemp.middlename)) != 'NONE' AND
                         TRIM(uemp.middlename) !='' AND uemp.middlename IS NOT NULL
-                    THEN CONCAT(SUBSTR(uemp.middlename, 1, 1), '.') ELSE ''
+                    THEN CONCAT(UPPER(SUBSTR(uemp.middlename, 1, 1)), '.') ELSE ''
                 END,' ', UPPER(TRIM(uemp.lastname)),
                 CASE WHEN UPPER(TRIM(uemp.suffix)) != 'N/A' AND
                     UPPER(TRIM(uemp.suffix !='NONE')) AND uemp.suffix !='' AND
                     uemp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(uemp.suffix))) ELSE ''
                 END)
             ) as updated_by,
-            IF(psfx.last_updated_at IS NULL, psfx.created_at, psfx.last_updated_at) as updated_at, psfx.is_active");
+            IF(psfx.last_updated_at IS NULL, psfx.created_at, psfx.last_updated_at) as updated_at, psfx.is_active,
+            IF(emp.basic_rate != psfx.basic_rate, ROUND(emp.basic_rate, 2), ROUND(psfx.basic_rate,2)) as tmp_rate,
+            IF(emp.payroll_type != psfx.payroll_type, emp.payroll_type, psfx.payroll_type) as tmp_payroll_type");
             $this->db->from($this->tbl_payroll_fixed_taxable." as psfx");
             $this->db->join($this->employeeTable." as emp", "emp.id = psfx.employee_id", "inner");
             $this->db->join($this->employeeTable." as cemp", "cemp.id = psfx.created_by", "left");
