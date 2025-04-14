@@ -819,13 +819,15 @@ class Ticket_m extends CI_Model
             case 'outlook':
                 $responsibility = "IT SUPPORT";
                 break;
-
             case 'payroll':
                 $responsibility = "PAYROLL";
                 break;
                 
             case 'software':
                 $responsibility = $post['responsibility'];
+                break;
+            default:
+                $responsibility = "IT SUPPORT";
                 break;
         }
 
