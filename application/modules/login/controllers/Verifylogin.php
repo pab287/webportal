@@ -143,6 +143,7 @@ class Verifylogin extends MY_Controller{
                         'TwoFactorAuth' => $row->auth,
                         'last_update' => $row->last_update,
                         'waive_count' => $row->waive_password_update,
+                        'level' => $row->level
                     );
                     $this->session->set_userdata('logged_in', $sess_array);
                     $this->core_layout->setEventLog("User has successfully loggedin in the webportal.","login", "success", "gccmaster", "user", $row->emp_id);
@@ -204,6 +205,7 @@ class Verifylogin extends MY_Controller{
                         'TwoFactorAuth' => $row->auth,
                         'last_update' => $row->last_update,
                         'waive_count' => $row->waive_password_update,
+                        'level' => $row->level
                     );
 
                     $this->session->set_userdata('logged_in', $sess_array);

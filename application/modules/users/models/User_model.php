@@ -622,9 +622,17 @@ class User_model extends CI_Model
         $this->db->trans_begin();
         try {
             $id = $this->input->post('id');
-            $user = $this->db->where('emp_id', $id)->get('gccmaster.tblusers')->row();
-            $new_last_update = ($user->waive_password_update == 0) ? date('Y-m-d H:i:s', strtotime('+30 days')) : date('Y-m-d H:i:s');
-            
+            $user = $this->db->select('b.level,a.waive_password_update')
+            ->where('a.emp_id', $id)
+            ->from('gccmaster.tblusers as a')
+            ->join('gccmaster.tblemployees as b', 'a.emp_id = b.id')
+            ->get()->row();
+            if(strtolower($user->level) == "supervisory" || strtolower($user->level) == "managerial" || strtolower($user->level) == "executive"){
+                $new_last_update = ($user->waive_password_update == 0) ? date('Y-m-d H:i:s', strtotime('+60 days')) : date('Y-m-d H:i:s');
+            }
+            else{
+                $new_last_update = ($user->waive_password_update == 0) ? date('Y-m-d H:i:s', strtotime('+90 days')) : date('Y-m-d H:i:s');
+            }
             $this->db->set('waive_password_update', $user->waive_password_update + 1);
             $this->db->set('last_update', $new_last_update);
             $update = $this->db->where('emp_id', $id)->update('gccmaster.tblusers');

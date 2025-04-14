@@ -131,6 +131,7 @@
                         'TwoFactorAuth' => $row->auth,
                         'last_update' => $row->last_update,
                         'waive_count' => $row->waive_password_update,
+                        'level' => $row->level
                     );
                     $this->session->set_userdata('logged_in', $sess_array);
                     redirect('portal/index', 'refresh');

@@ -84,14 +84,20 @@
     if (session.last_update == null || session.last_update == "0000-00-00 00:00:00") {
         $(".password-change-reminder").modal("show");
     }
-    else{
-        let lastUpdateDate = new Date(session.last_update);
-        let sixtyDaysAgo = new Date();
-        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-        console.log("Last update: ",lastUpdateDate, "60 days ago: ",sixtyDaysAgo);
-        if (lastUpdateDate <= sixtyDaysAgo) {
+    else {
+        const lastUpdateDate = new Date(session.last_update);
+        const currentDate = new Date();
+        const isSupervisory = session.level.toLowerCase() == 'supervisory' || session.level.toLowerCase() == 'managerial' || session.level.toLowerCase() == 'executive';
+        
+        const dayThreshold = isSupervisory ? 60 : 90;
+        const thresholdDate = new Date();
+        thresholdDate.setDate(currentDate.getDate() - dayThreshold);
+        
+        // Check if password update is required
+        if (lastUpdateDate <= thresholdDate) {
             $(".password-change-reminder").modal("show");
-            if(session.waive_count >= 3){
+            
+            if (session.waive_count >= 3) {
                 $("#changePasswordLater").hide();
             }
         }
@@ -162,7 +168,7 @@
 			dataType: 'json',
             success: function(response) {
                 if (response.status) {
-                    $('#force_change_modal.modal').modal('hide');
+                    $('#force_change_modal').modal('hide');
                     toastr.success("",response.message, 20000);
                 } else {
                     toastr.error("",response.message, 20000);
