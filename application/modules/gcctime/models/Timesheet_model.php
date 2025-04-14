@@ -198,7 +198,7 @@ class Timesheet_model extends CI_Model{
                 
                 $am_shift_only = (($am_start !== null && $am_end !== null) && (($pm_start === null || $pm_start == "00:00:00") && ($pm_end === null || $pm_end == "00:00:00")) && $no_shift_schedule == false);
                 $pm_shift_only = ((($am_start === null || $am_start == "00:00:00") && ($am_end === null || $am_end == "00:00:00")) && ($pm_start !== null && $pm_end !== null) && $no_shift_schedule == false);
-                $isWholeDay = ($am_shift_only == false && $pm_shift_only == false && $no_shift_schedule == false);
+                $isWholeDay = ($am_shift_only === false && $pm_shift_only === false && $no_shift_schedule === false);
 
                 $tempHoliday = (object) $this->getCurrentDateIsHoliday($date);
                 $isHoliday = ($tempHoliday->is_holiday == true)? 1: 0;
@@ -1472,6 +1472,8 @@ class Timesheet_model extends CI_Model{
         return $arrData;
     }
 
+
+
     public function generateTimesheetComputation($timesheet_exist, $employee_time_sheet, $updatedTimesheets, $attendance, $date,
         $no_shift_schedule, $am_start, $am_end, $pm_start, $pm_end, $am_shift_only, $pm_shift_only, $props, $flexibleEmployee, $payrollType){
         $arrData = array();
@@ -1482,12 +1484,11 @@ class Timesheet_model extends CI_Model{
         $flexibleEmployee = $flexibleEmployee && $flexible ? true: false;
 
         $timesheet_id = null;
-
         $hasNextDayDate = false;
-
-        if(strtotime($am_start) > strtotime($am_end) && $hasNextDayDate == false){ $hasNextDayDate = true; }
-        if(strtotime($am_start) > strtotime($pm_start) && $hasNextDayDate == false){ $hasNextDayDate = true; }
-        if(strtotime($am_start) > strtotime($pm_end) && $hasNextDayDate == false){ $hasNextDayDate = true; }
+        
+        if(strtotime($am_start) > strtotime($am_end) && $hasNextDayDate === false){ $hasNextDayDate = true; }
+        if($pm_shift_only && strtotime($am_start) > strtotime($pm_start) && $hasNextDayDate === false){ $hasNextDayDate = true; }
+        if($pm_shift_only && strtotime($am_start) > strtotime($pm_end) && $hasNextDayDate === false){ $hasNextDayDate = true; }
 
         /*** super flexible employee ***/
         $superFlexibleEmployee = false;
@@ -1495,14 +1496,17 @@ class Timesheet_model extends CI_Model{
         $this->db->from($this->tbl_employees." emp");
         $this->db->join($this->tbl_personnel." per", "per.biometric_id = emp.biometricno OR per.biometricno = emp.biometricno");
         $this->db->where("emp.id", $employee_time_sheet->emp_id);
+        $this->db->group_start();
         $this->db->where("per.is_flexi", 3);
+        $this->db->or_where("per.is_flexi", 4);
+        $this->db->group_end();
         $this->db->order_by("emp.id", "DESC");
         $this->db->limit(1);
         $qTempEmployee = $this->db->get();
         if($qTempEmployee->num_rows() == 1){ $superFlexibleEmployee = true; }
         $this->db->reset_query();
         /*** super flexible employee ***/
-
+        
         foreach ($attendance as $key => $value) {
             $tempDate = date("Y-m-d", strtotime($value));
             if($tempDate !== $date && $hasNextDayDate == false){ unset($attendance[$key]); }
@@ -1552,7 +1556,7 @@ class Timesheet_model extends CI_Model{
 
         $hasOT = $employee_time_sheet->has_overtime;
         $isHoliday = (isset($employee_time_sheet->is_holiday) && intval($employee_time_sheet->is_holiday) == 1)? true: false;
-        $isWholeDay = ($am_shift_only == false && $pm_shift_only == false && $no_shift_schedule == false);
+        $isWholeDay = ($am_shift_only === false && $pm_shift_only === false && $no_shift_schedule === false);
 
         if($attendance_log_ctr > 0){
             for($ii = 0; $ii < 4; $ii++){
@@ -1852,7 +1856,7 @@ class Timesheet_model extends CI_Model{
                         $employee_time_sheet->pm_out = null;
                         $pm_out = null;
                         $pm_in = $tempAttendance;
-                    }else if($pm_in && $tempAttendance > $pm_in && 
+                    } elseif ($pm_in && $tempAttendance > $pm_in && 
                     ($tempAttendance > $am2hrsDeduction && $tempAttendance > $pmHalfDayAbsent)){
                         $employee_time_sheet->pm_out = date("Y-m-d H:i", $tempAttendance);
                         $employee_time_sheet->pm_in = null;
