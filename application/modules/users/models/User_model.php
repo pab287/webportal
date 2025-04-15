@@ -622,12 +622,11 @@ class User_model extends CI_Model
         $this->db->trans_begin();
         try {
             $id = $this->input->post('id');
-            $user = $this->db->select('b.level,a.waive_password_update')
-            ->where('a.emp_id', $id)
-            ->from('gccmaster.tblusers as a')
-            ->join('gccmaster.tblemployees as b', 'a.emp_id = b.id')
+            $user = $this->db->select('is_important,waive_password_update')
+            ->where('emp_id', $id)
+            ->from('gccmaster.tblusers')
             ->get()->row();
-            if(strtolower($user->level) == "supervisory" || strtolower($user->level) == "managerial" || strtolower($user->level) == "executive"){
+            if($user->is_important == 1){
                 $new_last_update = ($user->waive_password_update == 0) ? date('Y-m-d H:i:s', strtotime('+60 days')) : date('Y-m-d H:i:s');
             }
             else{
