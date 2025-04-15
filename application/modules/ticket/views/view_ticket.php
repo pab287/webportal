@@ -37,7 +37,7 @@
 </style>
 <div class="m-content">
     <div class="row">
-		<div class="col-lg-9 col-md-9 col-sm-12">
+		<div class="col-lg-12 col-md-12 col-sm-12">
 			<div class="m-portlet m-portlet--mobile">
 				<div class="m-portlet__head">
 					<div class="m-portlet__head-caption">
@@ -171,8 +171,42 @@
 			</div>
   	    <!--end::Portlet-->  
 		</div>
-
-        <div class="col-lg-3 col-md-3 col-sm-12">
+        <div class="col-lg-8 col-md-8 col-sm-12">
+            <div class="m-portlet m-portlet--mobile">
+                <div class="m-portlet__head">
+					<div class="m-portlet__head-caption">
+						<div class="m-portlet__head-title">
+							<h3 class="m-portlet__head-text">
+								Status Logs
+							</h3>
+						</div>
+					</div>
+				</div>
+                <div class="m-portlet__body" id="status-log">
+                    <div class="m-list-timeline">
+                        <div class="m-list-timeline__items">
+                            <template v-for="(item, index) in trail" :key="index">
+                                <div class="m-list-timeline__item">
+                                <span 
+                                    class="m-list-timeline__badge"
+                                    :class="{
+                                    'm-list-timeline__badge--success': item.type === 'open' || item.type === 'new',
+                                    'm-list-timeline__badge--warning': item.type === 'in progress',
+                                    'm-list-timeline__badge--info': item.type === 'completed',
+                                    'm-list-timeline__badge--danger': item.type === 'Cancelled'
+                                    }"
+                                ></span>
+                                <span class="m-list-timeline__text" v-text="item.log_message"></span><br>
+                                <span class="m-list-timeline__text" v-text="item.name"></span>
+                                <span class="m-list-timeline__text text-right" v-text="item.created_at"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12">
 			<div class="m-portlet m-portlet--mobile">
                 <div class="m-portlet__head">
 					<div class="m-portlet__head-caption">

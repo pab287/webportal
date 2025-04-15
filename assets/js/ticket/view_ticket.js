@@ -346,4 +346,23 @@ function removeDocument(el){
     $("#pic").val(images);
     toastr.success(_name,"Removed File", 5000);
 }
-  
+
+let statuslog = new Vue({
+    el: "#status-log",
+    data: {trail: null},
+    mounted: function () {
+        $.ajax({
+            url: baseUrl("ticket/ticket/get_trail_log/") + param_id,
+            type: "GET",
+            dataType: "JSON",
+            success: function (response) {
+                console.log(response.data);
+                if (response) {
+                    statuslog.trail =  response.data;
+                } else {
+                    statuslog.trail = null;
+                }
+            }
+        })
+    }
+});

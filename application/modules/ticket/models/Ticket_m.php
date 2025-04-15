@@ -5,6 +5,8 @@ class Ticket_m extends CI_Model
     private $user_data = array();
     protected $tickets = "gccticket";
     private $current_actions =  array();
+
+    private $departmentTable = "gcchris.tbldepartments";
     private $category = "gccticket.category";
 
     public function __construct(){
@@ -716,11 +718,6 @@ class Ticket_m extends CI_Model
             case 'software':
                 $responsibility = $post['responsibility'];
                 break;
-
-            case 'inventory system':
-                $responsibility = "SOFTWARE DEVELOPMENT";
-                break;
-
             default:
                 $responsibility = "IT SUPPORT";
                 break;
@@ -786,6 +783,7 @@ class Ticket_m extends CI_Model
 
         if($result){
             $this->core_layout->setEventLog("User added ticket with Ref. No. `".$reference_no."` on category datatable.","insert", "success", "gccticket", "user");
+            $this->addTrailLog($last_id,"new");
         }else{
             $this->core_layout->setEventLog("User failed to add ticket with Ref. No. `".$reference_no."` on category datatable.","insert", "failed", "gccticket", "system");
         }
@@ -804,6 +802,9 @@ class Ticket_m extends CI_Model
 
     function updateTicket($id){
         $post = $this->input->post();
+
+        $currentTicketData = $this->getTicketByid($id);
+
         $performed_by = (isset($post["performed_by"]) && $post["performed_by"]) ? $post["performed_by"] : 0;
         if(isset($post['category']) && $post['category'] == "webportal"){
             if(isset($post['sub_category'])){
@@ -824,6 +825,7 @@ class Ticket_m extends CI_Model
             case 'outlook':
                 $responsibility = "IT SUPPORT";
                 break;
+
             case 'payroll':
                 $responsibility = "PAYROLL";
                 break;
@@ -831,19 +833,9 @@ class Ticket_m extends CI_Model
             case 'software':
                 $responsibility = $post['responsibility'];
                 break;
-
-            case 'inventory system':
-                $responsibility = "SOFTWARE DEVELOPMENT";
-                break;
-                
-            default:
-                $responsibility = "IT SUPPORT";
-                break;
         }
 
-        $requested_date = date('Y-m-d H:i', strtotime($post['date_required']));
-        $employeeId = $this->user_data['emp_id'];
-        $date = date('Y-m-d H:i:s');
+        $requested_date = date('Y-m-d H:i:s', strtotime($post['date_required']));
 
         $str_pic = implode(",",$this->input->post('pic'));
         $arr_pic = explode(",",$str_pic);
@@ -873,7 +865,8 @@ class Ticket_m extends CI_Model
             $this->db->where('id', $id);
             $update = $this->db->update('gccticket.ticket', $data);
             if($update){
-                $this->core_layout->setEventLog("User updated ticket with db id of `".$id."` on ticket datatable.","update", "success", "gccticket", "user");
+                $changes = $this->logChanges($currentTicketData, $data);
+                $this->core_layout->setEventLog("User updated ticket $changes","update", "success", "gccticket", "user");
             }else{
                 $this->core_layout->setEventLog("User failed to update ticket with db id of `".$id."` on ticket datatable.","update", "error", "gccticket", "system");
             }
@@ -984,80 +977,51 @@ class Ticket_m extends CI_Model
         return $query;
     }
 
-    function allTickets(){
-        $this->db->select("count(id) as count, priority");
-        $this->db->from("gccticket.ticket");
-        $this->db->where("status !=", "completed");
-        $this->db->group_by("priority");
+    function allTickets() {
+        $this->db->select("
+            COUNT(*) as total, 
+            COUNT(CASE WHEN status = 'open' THEN 1 END) as 'open', 
+            COUNT(CASE WHEN priority = 'high' AND status = 'open' THEN 1 END) as high
+        ");
+        $this->db->from("gccticket.ticket as a");
+        $this->db->join("gccticket.trail_logs_event as b", "a.id = b.ticket_id", "LEFT");
+        $this->db->where('is_archived', 0);
         $query = $this->db->get();
-        $result = array();
-        foreach($query->result() as $data){
-            $result[] = $data;
-            
-        }
-
-        $this->db->select("*");
-        $this->db->from("gccticket.ticket");
-        $this->db->where("status !=", "completed");
-        $count = $this->db->get();
-        $result['count'] = $count->num_rows();
+        $result = $query->row_array();
         
-        if($query->num_rows() > 0){
-            return $result;
-        }else{
-            return "Not set";
-        }
-    }
-
-    function allStatus(){
-        $this->db->select("count(id) as count, status");
-        $this->db->from("gccticket.ticket");
-        $this->db->group_by("status");
-        $query = $this->db->get();
-        $result = array();
-        foreach($query->result() as $data){
-            $result[] = $data;
-            $result['count'] = count($query->result());
-        }
-        if($query->num_rows() > 0){
-            return $result;
-        }else{
-            return "Not set";
-        }
-    }
-
-    function allCategory(){
-        $this->db->select("count(id) as count, category");
-        $this->db->from("gccticket.ticket");
-        $this->db->group_by("category");
-        $query = $this->db->get();
-        $result = array();
-        foreach($query->result() as $data){
-            $result[] = $data;
-            $result['count'] = count($query->result());
-        }
-        if($query->num_rows() > 0){
-            return $result;
-        }else{
-            return "Not set";
-        }
-    }
-
-    function allSubcategory(){
-        $this->db->select("count(id) as count, sub_category");
-        $this->db->from("gccticket.ticket");
-        $this->db->group_by("sub_category");
-        $query = $this->db->get();
-        $result = array();
-        foreach($query->result() as $data){
-            $result[] = $data;
-            $result['count'] = count($query->result());
-        }
-        if($query->num_rows() > 0){
-            return $result;
-        }else{
-            return false;
-        }
+        $avg_completion_query = $this->db->query("
+            SELECT AVG(TIMESTAMPDIFF(SECOND, new_logs.created_at, completed_logs.created_at)) as avg_seconds
+            FROM gccticket.ticket t
+            JOIN (
+                SELECT ticket_id, created_at
+                FROM gccticket.trail_logs_event
+                WHERE type = 'new'
+            ) new_logs ON t.id = new_logs.ticket_id
+            JOIN (
+                SELECT ticket_id, created_at
+                FROM gccticket.trail_logs_event
+                WHERE type = 'completed'
+            ) completed_logs ON t.id = completed_logs.ticket_id
+            WHERE t.status = 'completed' AND t.is_archived = 0
+        ");
+        
+        $avg_result = $avg_completion_query->row_array();
+        $avg_seconds = isset($avg_result['avg_seconds']) ? $avg_result['avg_seconds'] : 0;
+        
+        $hours = floor($avg_seconds / 3600);
+        $minutes = round(($avg_seconds % 3600) / 60);
+        $formatted_avg_time = $hours . "hrs " . $minutes . "mins";
+        
+        $data = [
+            "widget" => [
+                "total" => $result['total'],
+                "open" => $result['open'],
+                "urgent" => $result['high'],
+                "ave" => $formatted_avg_time
+            ],
+        ];
+        
+        return $data;
     }
 
     function email_send($id, $type, $issue, $need_dt, $module = null, $req, $date, $status, $remarks, $onhold, $reference_no)
@@ -1260,5 +1224,334 @@ class Ticket_m extends CI_Model
         $query = $this->db->get();
         return $query->row()->department_id;
     }
+
+    public function addTrailLog($id,$type){
+        if($type == "new"){
+            $message = "Ticket created";
+        }elseif($type == "in progress"){
+            $message = "Ticket set to in progress";
+        }elseif($type == "completed"){
+            $message = "Ticket set to Completed";
+        }elseif($type == "Cancelled"){
+            $message = "Ticket cancelled";
+        }elseif($type == "open"){
+            $message = "Ticket set to open";
+        }
+        $post = array(
+            'log_message' => $message,
+            'user_id' => $this->user_data['emp_id'],
+            'ticket_id' => $id,
+            'type' => $type,
+        );
+        return $this->db->insert('gccticket.trail_logs_event', $post);
+    }
+
+    public function getTrailLog($id){
+        $this->db->select("UPPER(a.log_message) as log_message, a.ticket_id as id, a.type,  UPPER(DATE_FORMAT(a.created_at, '%M %d, %Y %I:%i%p')) as created_at, UPPER(CONCAT(b.firstname,' ', b.lastname)) as name");
+        $this->db->from('gccticket.trail_logs_event as a');
+        $this->db->join('gccmaster.tblemployees as b', 'a.user_id = b.id', 'left');
+        $this->db->where('a.ticket_id', $id);
+        $this->db->order_by('a.id', 'desc');
+        $query = $this->db->get();
+        $data['data'] = $query->result();
+        return $data;
+    }
+
+    private function getTicketByid($id){
+        $this->db->select('a.id,a.requested_date,a.priority,a.category,a.sub_category,a.department_id,a.category,a.status,a.message,a.attachment,a.performed_by');
+        $this->db->from('gccticket.ticket as a');
+        $this->db->where('a.id', $id);
+        $query = $this->db->get();
+        return $query->row();
+    }
+
+    private function getDepartmentById($id){
+        $this->db->select("description");
+        $this->db->from($this->departmentTable);
+        $this->db->where('id', $id);
+        $query = $this->db->get(); 
+        $result = $query->row();
+        $this->db->reset_query();
+        return $result->description;
+    }
+
+    private function getEmployeeName($id){
+        $this->db->select("id, firstname, middlename, lastname, suffix");
+        $this->db->from("gccmaster.tblemployees");
+        $this->db->where("id", $id);
+        $query = $this->db->get();
+        $rs = $query->row();
+        $tempRs = (array)$rs;
+        $fullname = $this->core_layout->getDisplayName($tempRs);
+        return ($fullname['display_name_1']) ? $fullname['display_name_1'] : "No Assigned Name";
+    }
+
+    private function logChanges($currentData, $newData) {
+        $changes = array();
+        $changesString = '';
+        if (is_object($currentData)) {
+            $currentData = get_object_vars($currentData);
+        }
+        if (is_object($newData)) {
+            $newData = get_object_vars($newData);
+        }
+
+        foreach ($currentData as $field => $value) {
+            if (isset($newData[$field]) && $newData[$field]!= $value) {
+                $changes[$field] = array(
+                    'old' => $value,
+                    'new' => $newData[$field]
+                );
+            }
+        }
+        foreach ($changes as $field => $change) {
+            if($field == 'status'){
+                $this->addTrailLog($currentData['id'],$change['new']);
+            }
+            if (strtolower($field) == 'department_id'){
+                $changesString.= " Field: $field, from: <strong>". $this->getDepartmentById($change['old']). "</strong>, to: <strong>". $this->getDepartmentById($change['new']). "</strong>\n";
+            }
+            elseif (strtolower($field) == 'performed_by'){
+                $changesString.= " Field: $field, from: <strong>". $this->getEmployeeName($change['old']). "</strong>, to: <strong>". $this->getEmployeeName($change['new']). "</strong>\n";
+            }
+            else{
+                $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
+            }
+
+        }
+        return $changesString;
+    }
+
+      public function getOpenTickets() {
+        $post = $this->input->post();
+        $start_date = isset($post['start']) ? $post['start'] : date('Y-m-d');
+        $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
+        $start_time = $start_date . ' 00:00:00';
+        $end_time = $end_date . ' 23:59:59';
+        $this->db->from("gccticket.ticket");
+        $this->db->where("status", "open");
+        $this->db->where("is_archived", 0);
+        if(isset($post['all']) && $post['all'] == 'true'){
+            return $this->db->count_all_results();
+        }
+        $this->db->where("created_at >= ", $start_time);
+        $this->db->where("created_at <= ", $end_time);
+        return $this->db->count_all_results();
+    }
+
+    public function getTotalTickets(){
+        $post = $this->input->post();
+        $start_date = isset($post['start']) ? $post['start'] : date('Y-m-d');
+        $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
+        $start_time = $start_date . ' 00:00:00';
+        $end_time = $end_date . ' 23:59:59';
+        $this->db->from("gccticket.ticket");
+        $this->db->where("is_archived", 0);
+        if(isset($post['all']) && $post['all'] == 'true'){
+            return $this->db->count_all_results();
+        }
+        $this->db->where("created_at >= ", $start_time);
+        $this->db->where("created_at <= ", $end_time);
+        return $this->db->count_all_results();
+    }
+
+    public function getUrgentTickets(){
+        $post = $this->input->post();
+        $start_date = isset($post['start']) ? $post['start'] : date('Y-m-d');
+        $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
+        $start_time = $start_date . ' 00:00:00';
+        $end_time = $end_date . ' 23:59:59';
+        $this->db->from("gccticket.ticket");
+        $this->db->where("priority", "high");
+        $this->db->where("status !=", "completed");
+        $this->db->where("status !=", "resolved");
+        $this->db->where("is_archived", 0);
+        if(isset($post['all']) && $post['all'] == 'true'){
+            return $this->db->count_all_results();
+        }
+        $this->db->where("created_at >= ", $start_time);
+        $this->db->where("created_at <= ", $end_time);
+        return $this->db->count_all_results();
+    }
+
+    public function getTotalPerStatus(){
+        $post = $this->input->post();
+        $start_date = isset($post['start']) ? $post['start'] : date('Y-m-d');
+        $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
+        $start_time = $start_date . ' 00:00:00';
+        $end_time = $end_date . ' 23:59:59';
+        $this->db->select("
+            COUNT(*) as total, 
+            COUNT(CASE WHEN status = 'open' THEN 1 END) as 'open', 
+            COUNT(CASE WHEN status = 'in progress' THEN 1 END) as 'in progress', 
+            COUNT(CASE WHEN status = 'resolved' THEN 1 END) as 'resolved', 
+            COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed, 
+            COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as 'cancelled', 
+         ");
+        $this->db->from("gccticket.ticket");
+        $this->db->where("is_archived", 0);
+        if(isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']){
+            $this->db->where("created_at >= ", $start_time);
+            $this->db->where("created_at <= ", $end_time);
+        }
+
+        $query = $this->db->get();
+        $result = $query->row_array();
+        $data =  ["status" => [
+            "Open" => $result['open'],
+            "In progress" => $result['in progress'],
+            "Resolved" => $result['resolved'],
+            "Completed" => $result['completed'],
+            "Cancelled" => $result['cancelled']
+        ],];
+        return $data;
+    }
+
+    public function getTotalPerCategory() {
+        $post = $this->input->post();
+        $start_date = isset($post['start']) ? $post['start'] : date('Y-m-d');
+        $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
+        $start_time = $start_date . ' 00:00:00';
+        $end_time = $end_date . ' 23:59:59';
+        
+        $this->db->select('name');
+        $this->db->where('type', 'category');
+        $this->db->where('status', 0);
+        $query = $this->db->get('gccticket.category');
+        $categories = $query->result_array();
+        $this->db->reset_query();
+        
+        $categoryCounts = array();
+        
+        foreach ($categories as $category) {
+            $this->db->where('category', $category['name']);
+            $this->db->where("is_archived", 0);
+            if(isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']) {
+                $this->db->where("created_at >= ", $start_time);
+                $this->db->where("created_at <= ", $end_time);
+            }
+            $count = $this->db->count_all_results('gccticket.ticket');
+            $categoryCounts[$category['name']] = (string)$count;
+            
+            $this->db->reset_query();
+        }
+        return array('categories' => $categoryCounts);
+    }
+
+    public function getTotalPerPriority() {
+        $post = $this->input->post();
+        $start_date = isset($post['start']) ? $post['start'] : date('Y-m-d');
+        $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
+        $start_time = $start_date . ' 00:00:00';
+        $end_time = $end_date . ' 23:59:59';
+
+        $this->db->select("
+            COUNT(*) as total, 
+            COUNT(CASE WHEN priority = 'low' THEN 1 END) as 'low', 
+            COUNT(CASE WHEN priority = 'medium' THEN 1 END) as 'medium', 
+            COUNT(CASE WHEN priority = 'high' THEN 1 END) as high, 
+         ");
+        $this->db->from("gccticket.ticket");
+        $this->db->where("is_archived", 0);
+        $this->db->where("status", "open");
+        if(isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']){
+            $this->db->where("created_at >= ", $start_time);
+            $this->db->where("created_at <= ", $end_time);
+        }
+    
+        $query = $this->db->get();
+        $result = $query->row_array();
+        return ["priorities" => [
+            "Low" => $result['low'],
+            "Medium" => $result['medium'],
+            "High" => $result['high'],
+        ]];
+    }
+
+    public function getTotalByAssignee() {
+        $post = $this->input->post();
+        $start_date = isset($post['start']) ? $post['start'] : date('Y-m-d');
+        $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
+        $start_time = $start_date . ' 00:00:00';
+        $end_time = $end_date . ' 23:59:59';
+    
+        $this->db->select("a.performed_by, 
+        COUNT(*) as ticket_count, 
+        CONCAT(
+            b.firstname, ' ', b.lastname, 
+            IF(
+                (b.suffix IS NOT NULL AND 
+                 LOWER(b.suffix) NOT IN ('n/a', 'none') AND 
+                 b.suffix != ''), 
+                CONCAT(' ', b.suffix), 
+                ''
+            )
+        ) as name,
+        SUM(CASE WHEN a.status = 'completed' THEN 1 ELSE 0 END) as completed,
+        SUM(CASE WHEN a.status = 'open' THEN 1 ELSE 0 END) as open,
+        SUM(CASE WHEN a.status = 'in progress' THEN 1 ELSE 0 END) as in_progress,
+        SUM(CASE WHEN a.status = 'resolved' THEN 1 ELSE 0 END) as resolved");
+        $this->db->from("gccticket.ticket as a");
+        $this->db->join("gccmaster.tblemployees as b", "b.id = a.performed_by", "LEFT");
+        $this->db->where("a.is_archived", 0);
+        // $this->db->where("a.status !=", "completed");
+        $this->db->where("a.status !=", "cancelled");
+        // $this->db->where("a.status !=", "resolved");
+        $this->db->where("b.employee_status", "Active");
+    
+        if (isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']) {
+            $this->db->where("a.created_at >= ", $start_time);
+            $this->db->where("a.created_at <= ", $end_time);
+        }
+    
+        $this->db->group_by("a.performed_by");
+        $query = $this->db->get();
+        $result = $query->result_array();
+    
+        $employee_tickets = [];
+        foreach ($result as $row) {
+            $employee_tickets[ucwords(strtolower($row['name']))] = ["total" => $row['ticket_count'], "completed" => $row['completed'], "open" => $row['open'], "in_progress" => $row['in_progress'], "resolved" => $row['resolved']];
+        }
+        return ["assigned" => $employee_tickets];
+    }
+
+    public function getCompletionRate() {
+        $post = $this->input->post();
+        $start_date = isset($post['start']) ? $post['start'] : date('Y-m-d');
+        $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
+        $start_time = $start_date . ' 00:00:00';
+        $end_time = $end_date . ' 23:59:59';
+
+        $this->db->select("COUNT(*) as total, SUM(CASE WHEN status = 'completed' OR status = 'resolved' THEN 1 ELSE 0 END) as completed");
+        $this->db->from("gccticket.ticket");
+        $this->db->where("is_archived", 0);
+
+        if (isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']) {
+            $this->db->where("created_at >= ", $start_time);
+            $this->db->where("created_at <= ", $end_time);
+        }
+
+        $result = $this->db->get()->row();
+        
+        return ($result->total > 0) 
+            ? round(($result->completed / $result->total) * 100, 2)
+            : 0.00;
+    }
+
+    public function getAverageResponseTime(){
+        $post = $this->input->post();
+        $start_date = isset($post['start']) ? $post['start'] : date('Y-m-d');
+        $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
+        $start_time = $start_date . ' 00:00:00';
+        $end_time = $end_date . ' 23:59:59';
+        $this->db->select();
+        $this->db->from("gccticket.ticket as a");
+        $this->db->where("a.is_archived", 0);
+        $this->db->join("gccticket.trail_logs_event as b", "a.id = b.ticket_id", "LEFT");
+        $result = $this->db->get()->row();
+        var_dump( $result );
+        die();
+    }
+
 
 }

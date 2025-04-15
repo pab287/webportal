@@ -404,13 +404,11 @@ let fileUploadPhoto = function () {
             formData: {csrf_token: _csrf_hash, ticket_id: param_id},
             done: function (e, data) {
                 var result = data.result;
-                console.log(result.response);
                 if (result.response) {
                     var avatarImage = result.added_image;
                     var renderImage = result.render_image;
                     images.push(result.display_filename);
                     const filename = result.display_filename;
-                    console.log(filename.length);
                     const shortenedName = filename.length <= 20 ? filename : `${filename.slice(0, 20)}...`;
                     $("#picture").attr("src", renderImage);
                     $("#pic").val(images);
@@ -616,3 +614,23 @@ function delete_comment(id){
         }
       });
 }
+
+let statuslog = new Vue({
+    el: "#status-log",
+    data: {trail: null},
+    mounted: function () {
+        $.ajax({
+            url: baseUrl("ticket/ticket/get_trail_log/") + param_id,
+            type: "GET",
+            dataType: "JSON",
+            success: function (response) {
+                console.log(response.data);
+                if (response) {
+                    statuslog.trail =  response.data;
+                } else {
+                    statuslog.trail = null;
+                }
+            }
+        })
+    }
+});
