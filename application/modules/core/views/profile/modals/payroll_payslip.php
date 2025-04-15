@@ -136,18 +136,18 @@
                                 <span class="m--font-bolder">OVERTIME </span>
                             </div>
                             <div class="col-md-3 text-left">
-                                <span class="m--font-bold">{{ row.ot_hrs }}</span>
+                                <span class="m--font-bold">{{ ot_hrs }}</span>
                             </div>
                             <div class="col-md-4 text-right">
-                                <span class="m--font-boldest">{{ row.ot_computation }}</span>
+                                <span class="m--font-boldest">{{ ot_computation }}</span>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 text-right">
-                                <small class="m--font-bold">OT HRS:</small>&nbsp;<span class="m--font-bolder">{{ row.ot_hrs }}</span>
+                                <small class="m--font-bold">OT HRS:</small>&nbsp;<span class="m--font-bolder">{{ ot_hrs }}</span>
                             </div>
                             <div class="col-md-6 text-left">
-                                <small class="m--font-bold">OT NDIFF HRS:</small>&nbsp;<span class="m--font-bolder">{{ row.ot_ndiff_hrs }}</span>
+                                <small class="m--font-bold">OT NDIFF HRS:</small>&nbsp;<span class="m--font-bolder">{{ ot_ndiff_hrs }}</span>
                             </div>
                         </div>
                         </template>
