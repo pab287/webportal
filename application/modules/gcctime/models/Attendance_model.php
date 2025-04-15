@@ -44,10 +44,11 @@
 
         }
 
-        function getCurrentAttendance() {
+        public function getCurrentAttendance() {
             $currentDate = $this->getLastSyncDate();
 
-            $this->db->select("a.*, b.device_name, b.status, c.name");
+            var_dump($currentDate);
+            $this->db->select("a.biometric_id, a.device_id, a.datetime, a.state, a.is_custom, b.device_name, b.status, c.name");
             $this->db->from("gcctimeutility.attendance a");
             $this->db->join("gcctimeutility.devices b", "b.id = a.device_id", "left");
             $this->db->join("gcctimeutility.personnel c", "c.biometric_id = a.biometric_id", "left");

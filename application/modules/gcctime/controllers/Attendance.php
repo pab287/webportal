@@ -202,7 +202,7 @@
                 foreach ($attendance as $rs) {
                     $biometric_id = $rs["biometric_id"];
                     $datetime = $rs["datetime"];
-
+                    $deviceName = $rs["state"] == 2 && $rs["is_custom"] == 2 ? "Gcctime Application" : $rs["device_name"];
                     $highlight = "";
                     $isLate = $this->shift_management->getSingleAttendanceLate($biometric_id, $datetime);
                     $isUndertime = $this->shift_management->getSingleAttendanceUndertime($biometric_id, $datetime);
@@ -239,7 +239,7 @@
                     $row[] = $cTime;
 
                     $row[] = $rs["name"];
-                    $row[] = $rs["device_name"];
+                    $row[] = $deviceName;
 
                     $textColor = '';
 
