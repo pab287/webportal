@@ -52,11 +52,16 @@
             return array("data" => $query->result(), "total" => $total);
         }
 
-        public function getEachEmployeeStatusDemographics() {
+        public function getEachEmployeeStatusDemographics($company_id = 0) {
+            // var_dump($company_id);
             $this->db->select("UCASE(IF(emp.employee_status='Black Listed', 'Blacklisted', emp.employee_status)) , UCASE(IF(emp.employee_status='End of Contract', 'Contract End', emp.employee_status))
                                employee_status, emp.employee_status `key`, COUNT(*) cnt");
             $this->db->where("emp.employee_status IS NOT NULL", NULL, FALSE);
             // $this->db->where("emp.work_status IN ('Regular', 'Probationary', 'Service contract', 'No contract')", NULL, FALSE);
+            if (isset($company_id) && $company_id != 0) {
+                $this->db->join($this->tblCompanies . ' company', 'emp.company_id = company.id', 'LEFT');
+                $this->db->where('company.id', $company_id);
+            }
             $this->db->group_by('emp.employee_status');
             $this->db->order_by('key', 'DESC');
             $query = $this->db->get($this->tblEmployees . " emp");

@@ -1435,7 +1435,7 @@
 
         function change_employee_company() {
             $data = $this->employee_model->changeEmployeeCompany();
-            echo json_encode($data);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
         function remove_profile_picture($employee_id) {

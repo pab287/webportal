@@ -1,3 +1,8 @@
+let globalPrintableSignatory = [];
+const psSignatoryModal = $("#modal-ps--signatory");
+const psResetSignatoryModal = $("#modal-ps--reset-signatory");
+const modalGenerateReport = $("#generate-report-modal");
+
 let _years = [];
 let _companies = [];
 let psEmployeeGroup = [];
@@ -18,11 +23,11 @@ const months = [
     { id: 12, text: "December" }
 ];
 
-var _clearTable = true;
-var _tempFilter = {};
-var _globalFooterHtml = null;
+let _clearTable = true;
+let _tempFilter = {};
+let _globalFooterHtml = null;
 let _totalTaxable = 0;
-var _tempData = {
+let _tempData = {
     show_by_date: true, show_picker: false,
     year_picker: false, month_picker: false, company_ids: 0,
 };
@@ -37,22 +42,22 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     }
 }
 
-var vmGeneratejournal = new Vue({
+const vmGeneratejournal = new Vue({
     el: "#generate-journal_content",
     data: _tempData,
     methods: {
         tempShowByDates: function (id) {
-            var _this = this;
-            var currentElement = _this.$el;
-            _this.show_by_date = (id == 1) ? true : false;
-            _this.month_picker = (id == 2) ? true : false;
-            _this.year_picker = (id == 3) ? true : false;
+            const _this = this;
+            let currentElement = _this.$el;
+            _this.show_by_date = (id == 1);
+            _this.month_picker = (id == 2);
+            _this.year_picker = (id == 3);
             _this.show_picker = false;
             if (id == 1) {
-                var filterDateRange = $(currentElement).find("#filter_date_range");
+                const filterDateRange = $(currentElement).find("#filter_date_range");
                 if (typeof filterDateRange !== "undefined" && filterDateRange.length == 1) {
                     filterDateRange.on("change", function () {
-                        var thisFilter = this;
+                        const thisFilter = this;
                         if (thisFilter.checked) {
                             $("#filter-by-date-range").removeClass('m--hide');
                             $("#filter-by-month-year").addClass('m--hide');
@@ -66,9 +71,9 @@ var vmGeneratejournal = new Vue({
             _this.renderSelect2Picker();
             return _this;
         }, tempShowPicker: function () {
-            var _this = this;
-            var currentElement = _this.$el;
-            _this.show_picker = (_this.show_picker == true) ? false : true;
+            const _this = this;
+            const currentElement = _this.$el;
+            _this.show_picker = !_this.show_picker;
             if (_this.show_picker === true) {
                 $(currentElement).find("#date-picker")
                     .daterangepicker({
@@ -80,9 +85,9 @@ var vmGeneratejournal = new Vue({
                         }
                     })
                     .on('apply.daterangepicker', function (ev, picker) {
-                        var tempStartDate = picker.startDate.format('MMM DD, YYYY');
-                        var tempEndDate = picker.endDate.format('MMM DD, YYYY');
-                        var tempFormat = tempStartDate + ' - ' + tempEndDate;
+                        const tempStartDate = picker.startDate.format('MMM DD, YYYY');
+                        const tempEndDate = picker.endDate.format('MMM DD, YYYY');
+                        const tempFormat = tempStartDate + ' - ' + tempEndDate;
                         $(currentElement).find("#date-range").val(tempFormat);
                     });
             } else {
@@ -91,9 +96,9 @@ var vmGeneratejournal = new Vue({
 
             return _this;
         }, renderSelect2Picker: function () {
-            var _this = this;
-            var currentElement = _this.$el;
-            var tempModal = $(currentElement).closest(".modal");
+            const _this = this;
+            const currentElement = _this.$el;
+            const tempModal = $(currentElement).closest(".modal");
             setTimeout(function () {
                 $(currentElement).find("select[name='filter_month']")
                     .select2({
@@ -142,16 +147,16 @@ var vmGeneratejournal = new Vue({
                         placeholder: "SELECT AN OPTION",
                         dropdownParent: tempModal,
                     }).on("select2:select", function (e) {
-                        var _thisSelect2 = this;
-                        var selectedValues = $(_thisSelect2).select2("val");
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
                         _this.company_ids = selectedValues;
                         $(currentElement)
                             .find("select#employee")
                             .val([])
                             .trigger("change");
                     }).on("select2:unselect", function (e) {
-                        var _thisSelect2 = this;
-                        var selectedValues = $(_thisSelect2).select2("val");
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
                         _this.company_ids = selectedValues;
                         $(currentElement)
                             .find("select#employee")
@@ -160,8 +165,8 @@ var vmGeneratejournal = new Vue({
                     });
             }, 200);
         }, resetFields: function () {
-            var _this = this;
-            var currentForm = $(_this.$el).find("#frm-journal-report");
+            const _this = this;
+            const currentForm = $(_this.$el).find("#frm-journal-report");
             if (typeof currentForm !== "undefined") {
                 _this.company_ids = 0;
                 psEmployeeGroup = [];
@@ -184,15 +189,27 @@ var vmGeneratejournal = new Vue({
             }
         },
     }, mounted: function () {
-        var _this = this;
+        const _this = this;
         _this.renderSelect2Picker();
     }
 });
 
 
-var vmReportHeaders = new Vue({
+const vmReportHeaders = new Vue({
     el: "#report-header",
     data: { show_header: false, filters: {} }
+});
+
+const vmActionSignatories = new Vue({
+    el: "#actionSignatories",
+    data: { show_signatories: false, signatories: {} },
+    methods: {
+        editSignatories: function () {
+            return psSignatoryModal.modal("show");
+        }, resetSignatories: function () {
+            return psResetSignatoryModal.modal("show");
+        }
+    }
 });
 
 $("#payroll_group").select2({
@@ -232,7 +249,7 @@ $("#payroll_group").select2({
                         if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
                             tempEmployeeSelector.empty();
                             $.each(tempData, function (ii, vv) {
-                                var tempOption = new Option(vv.text, vv.id, true, true);
+                                const tempOption = new Option(vv.text, vv.id, true, true);
                                 tempEmployeeSelector.append(tempOption);
                             });
                             tempEmployeeSelector.prop("disabled", true);
@@ -241,17 +258,15 @@ $("#payroll_group").select2({
                 }
             }
         });
-    } else {
-        if (typeof employees == "object" && typeof employees !== "undefined") {
-            const tempEmployeeSelector = $("form#frm-journal-report select#employee");
-            if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
-                tempEmployeeSelector.empty();
-                $.each(employees, function (ii, vv) {
-                    var tempOption = new Option(vv.text, vv.id, true, true);
-                    tempEmployeeSelector.append(tempOption);
-                });
-                tempEmployeeSelector.prop("disabled", true);
-            }
+    } else if (typeof employees == "object" && typeof employees !== "undefined") {
+        const tempEmployeeSelector = $("form#frm-journal-report select#employee");
+        if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
+            tempEmployeeSelector.empty();
+            $.each(employees, function (ii, vv) {
+                const tempOption = new Option(vv.text, vv.id, true, true);
+                tempEmployeeSelector.append(tempOption);
+            });
+            tempEmployeeSelector.prop("disabled", true);
         }
     }
     if (typeof data.text !== "undefined" && data.text) {
@@ -285,7 +300,7 @@ $("#payroll_group").select2({
                         if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
                             tempEmployeeSelector.empty();
                             $.each(tempData, function (ii, vv) {
-                                var tempOption = new Option(vv.text, vv.id, true, true);
+                                const tempOption = new Option(vv.text, vv.id, true, true);
                                 tempEmployeeSelector.append(tempOption);
                             });
                             tempEmployeeSelector.prop("disabled", true);
@@ -307,209 +322,7 @@ $("#payroll_group").select2({
     }
 });
 
-var column_names;
-var column_rows;
-
 $(document).ready(function(){
-    // let dtJournal;
-    // $.ajax({
-    //     url: baseUrl("payroll/reports/get_overtime_report"),
-    //     dataType: "json",
-    //     success: function (json) {
-    //         dtJournal = $('#tbl-journal').DataTable({
-    //             serverSide: true,
-    //             processing: true,
-    //             destroy: true,
-    //             paging: false,
-    //             searching: false,
-    //             bInfo : false,
-    //             ordering: false,
-    //             ajax: {
-    //                 url: baseUrl('payroll/reports/get_overtime_report'),
-    //                 type: 'POST',
-    //                 dataType: 'JSON',
-    //                 data: function (d) {
-    //                     d.csrf_token = _csrf_hash;
-    //                     d.ids = _tempIds;
-    //                     d.clear_table = _clearTable;
-    //                 }, 
-    //             },
-    //             columns: [
-    //                 { data: 'employee_name', name: 'employee_name', width: '30%'},
-    //                 { data: 'date_start'},
-    //                 { data: 'date_end'},
-    //                 { data: 'pay_date'},
-    //                 { data: 'ot_hrs', className: 'text-center', render: function (data, meta, row) {
-    //                     return numberFormat(data);
-    //                 }},
-    //                 { data: 'ot_amount', className: 'text-right', render: function (data, meta, row) {
-    //                     return '₱ '+numberFormat(data);
-    //                 }},
-    //             ], footerCallback: function (row, data, start, end, display) {
-    //                 var api = this.api(), data;
-    //                 // Remove the formatting to get integer data for summation
-    //                 var intVal = function (i) {
-    //                     return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
-    //                 };
-            
-    //                 let totalHrs = api
-    //                     .column(4)
-    //                     .data()
-    //                     .reduce(function (a, b) {
-    //                         return intVal(a) + intVal(b);
-    //                     }, 0);
-                    
-    //                 let totalAmount = api
-    //                     .column(5)
-    //                     .data()
-    //                     .reduce(function (a, b) {
-    //                         return intVal(a) + intVal(b);
-    //                     }, 0);
-                
-    //                 $(api.column(4).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalHrs) + "</span>");
-    //                 $(api.column(5).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAmount) + "</span>");
-    //             }
-    //         });
-    //         dtJournal.ajax.reload();
-    //     }
-    // });  
-
-    /*** $.ajax({
-        url: baseUrl("payroll/reports/get_overtime_summary"),
-        dataType: "json",
-        success: function (json) {
-            dtOTSummary = $('#tbl-overtime-summary').DataTable({
-                serverSide: true,
-                processing: true,
-                destroy: true,
-                paging: false,
-                searching: false,
-                bInfo : false,
-                ordering: false,
-                ajax: {
-                    url: baseUrl('payroll/reports/get_overtime_summary'),
-                    type: 'POST',
-                    dataType: 'JSON',
-                    data: function (d) {
-                        d.csrf_token = _csrf_hash;
-                        d.ids = _tempIds;
-                        d.clear_table = _clearTable;
-                        d.filters = _tempFilter;
-                    }, 
-                },
-                columns: [
-                    { data: 'employee_name', name: 'employee_name' },
-                    { data: 'overtime_in', className: 'text-center', width: '10%'},
-                    { data: 'day', className: 'text-center', width: '5%'},
-                    { data: 'daily_rate', className: 'text-right', width: '5%', render: function(data, type, row){
-                        return '₱ '+data;
-                    }},
-                    { data: 'allowance', className: 'text-center', width: '5%'},
-                    { data: 'ot_hrs', className:'text-center', render: function (data, type, row) {
-                        if (data && parseFloat(data) > 0) {
-                            const ot_hrs = parseFloat(data);
-                            return ot_hrs.toFixed(2);
-                        }
-                        return data;
-                    }},
-                    { data: 'ot_pay', className: 'text-right', render: function (data, type, row) {
-                        if (data && parseFloat(data) > 0) {
-                            const ot_pay = parseFloat(data);
-                            return '₱ '+ot_pay.toFixed(2);
-                        }
-                        return data;
-                    }},
-                    { data: 'ot_ndiff_hrs', className: 'text-center', render: function (data, type, row) {
-                        if (data && parseFloat(data) > 0) {
-                            const ot_ndiff_hrs = parseFloat(data);
-                            return ot_ndiff_hrs.toFixed(2);
-                        }
-                        return data;
-                    }},
-                    { data: 'night_diff', className: 'text-right', render: function (data, type, row) {
-                        if (data && parseFloat(data) > 0) {
-                            const ot_ndiff_pay = parseFloat(data);
-                            return ot_ndiff_pay.toFixed(2);
-                        }
-                        return data;
-                    }},
-                    { data: 'ot_adj', name: 'ot_adj', className: 'text-center',render: function (data, type, row) {
-
-                        return dtOTSummary.cells(0).data();
-                    }},
-                    { data: 'amount', className: 'text-right', width: '10%', render: function (data, type, row) {
-                        if (data && parseFloat(data) > 0) {
-                            const amount = parseFloat(data);
-                            return '₱ '+amount.toFixed(2);
-                        }
-                        return data;
-                    }},
-                    { data: 'total_pay', className: 'text-right', width: '10%', render: function (data, type, row) {
-                        return "";
-                    }}
-                ],columnDefs: [ {
-                    targets: [ 0, 9, 11 ],
-                    visible: false,
-                } ],rowGroup: {
-                    startRender: function ( _rows, group ) {
-                        return $('<tr><td colspan="11" class="bg-secondary"><i>' + group + '</i></td></tr>');
-                    },
-                    endRender: function ( rows, _group ) {
-                        var OTadj = rows
-                                .data()
-                                .pluck('ot_adj')
-                                .reduce( function (a, b) {
-                                    return b ? numberFormat(b) : 0.00;
-                                }, 0);
-                        var totalAmount = rows
-                                .data()
-                                .pluck('amount')
-                                .reduce( function (a, b) {
-                                    var totalOTAmount = parseFloat(a) + parseFloat(b);
-                                    return numberFormat(totalOTAmount);
-                                }, 0);
-                            
-                        var total = parseFloat(totalAmount) + parseFloat(OTadj);
-                        const uiAdjustment = parseFloat(OTadj) > 0 ? `<i>OT ADJ - ₱ ${numberFormat(OTadj)}</i>`: ``;
-                        const uiTotal = `<i><strong>₱ ${numberFormat(total)}</strong></i>`;
-
-                        const tempContainer = `<tr class="bg-secondary">
-                            <td colspan="6" class="text-right"></td>
-                            <td class="text-right"></td>
-                            <td class="text-center">${uiAdjustment}</td>
-                            <td class="text-right">${uiTotal}</td>
-                            </tr>`;
-
-                            return $(tempContainer);
-                            
-                        
-                    },
-                    dataSrc: [ 'employee_name' ],
-                    
-                }
-                , footerCallback: function (row, data, start, end, display) {
-                    var api = this.api(), data;
-                    // Remove the formatting to get integer data for summation
-                    var intVal = function (i) {
-                        return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
-                    };
-            
-                    let totalAmount = api
-                        .column(10)
-                        .data()
-                        .reduce(function (a, b) {
-                            return intVal(a) + intVal(b);
-                        }, 0);
-                       
-                    $(api.column(10).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAmount) + "</span>");
-                // }
-                }
-            });
-            dtOTSummary.ajax.reload();
-        }
-    });  ***/
-
-
     dtOTSummary = $('#tbl-overtime-summary').DataTable({
         dom: "rt",
         serverSide: true,
@@ -536,18 +349,17 @@ $(document).ready(function(){
                 const sheet = xlsx.xl.worksheets['sheet1.xml'];
 
                 let numrows = $('row', sheet).length;
-                numrows = $('row', sheet).length;
                 let mergeCells = $('mergeCells', sheet);
                 mergeCells[0].appendChild(_createNode(sheet, 'mergeCell', {
-                    attr: { ref: 'A' + numrows + ':' + 'I' + numrows },
+                    attr: { ref: 'A' + numrows + ':' + 'F' + numrows },
                 }));
 
                 function _createNode(doc, nodeName, opts) {
-                    var tempNode = doc.createElement(nodeName);
+                    const tempNode = doc.createElement(nodeName);
                     if (opts) {
                         if (opts.attr) { $(tempNode).attr(opts.attr); }
                         if (opts.children) {
-                            $.each(opts.children, function (key, value) {
+                            $.each(opts.children, function (_key, value) {
                                 tempNode.appendChild(value);
                             });
                         }
@@ -555,23 +367,23 @@ $(document).ready(function(){
                     }
                     return tempNode;
                 }
-            },
+            }
         }], columns: [
             { visible: false, data: 'employee_name' },
-            { data: 'overtime_in', width: '*' },
-            { data: 'day', width: '10%', className: "text-center" },
-            { data: 'daily_rate', width: '10%', className: "text-right",
+            { data: 'overtime_in', width: '10%' },
+            { data: 'day', width: '8%', className: "text-center" },
+            { data: 'daily_rate', width: '6%', className: "text-right",
                 render: function(data, type, row){
                     return '₱ '+data;
                 }
-            }, { data: 'allowance', width: '12%', className: "text-right", 
+            }, { data: 'allowance', width: '9%', className: "text-right", 
                 render: function (data) {
                     if (data && parseFloat(data) > 0) {
                         const allw = parseFloat(data);
-                        return allw.toFixed(2);
+                        return '₱ '+ allw.toFixed(2);
                     } else { return '-'; }
                 }
-            }, { data: 'ot_hrs', width: '12%', className: "text-right",
+            }, { data: 'ot_hrs', width: '5%', className: "text-right",
                 render: function (data, type, row) {
                     if (data && parseFloat(data) > 0) {
                         const ot_hrs = parseFloat(data);
@@ -579,30 +391,47 @@ $(document).ready(function(){
                     }
                     return data;
                 }
-            }, { data: 'ot_pay', width: '7%', className: "text-right",
-                render: function (data, type, row) {
+            }, { data: 'ot_pay', width: '8%', className: "text-right",
+                render: function (data) {
                     if (data && parseFloat(data) > 0) {
-                        const ot_pay = parseFloat(data);
+                        let ot_pay = parseFloat(data);
                         return '₱ '+ot_pay.toFixed(2);
-                    }
-                    return data;
+                    }else{ return '-'; }
                 }
-            }, { data: 'ot_ndiff_hrs', width: '12%', className: "text-right",
-                render: function (data, type, row) {
+            }, { data: 'ot_pay_20', className: "text-right", width: '8%', 
+                render: function (data) {
+                    if (data && parseFloat(data) > 0) {
+                        let ot_pay_20 = parseFloat(data);
+                        return '₱ '+ot_pay_20.toFixed(2);
+                    }else{ return '-'; }
+                }
+            }, { data: 'ot_pay_30', className: "text-right", width: '8%', 
+                render: function (data) {
+                    if (data && parseFloat(data) > 0) {
+                        let ot_pay_30 = parseFloat(data);
+                        return '₱ '+ot_pay_30.toFixed(2);
+                    }else{ return '-'; }
+                }
+            }, { data: 'ot_ndiff_hrs', width: '8%', className: "text-right",
+                render: function (data) {
                     if (data && parseFloat(data) > 0) {
                         const ot_ndiff_hrs = parseFloat(data);
                         return ot_ndiff_hrs.toFixed(2);
                     }
                     return data;
                 }
-            }, { data: 'night_diff', className: "text-right", width: '15%', 
-                render: function (data, type, row) {
+            }, { data: 'night_diff', className: "text-right", width: '8%', 
+                render: function (data) {
                     if (data && parseFloat(data) > 0) {
                         const ot_ndiff_pay = parseFloat(data);
-                        return ot_ndiff_pay.toFixed(2);
+                        return '₱ '+ot_ndiff_pay.toFixed(2);
                     } else { return '-'; }
                 }
-            }, { data: 'amount', className: "text-right pr-3", width: '10%', 
+            },
+            { data: null, className: "text-right", width: '5%', 
+                render: function () { return '-'; }
+            }, 
+            { data: 'amount', className: "text-right pr-3", width: '10%', 
                 render: function (data, type, row) {
                     if (data && parseFloat(data) > 0) {
                         const amount = parseFloat(data);
@@ -613,62 +442,94 @@ $(document).ready(function(){
             }
         ], rowGroup: {
             startRender: function ( _rows, group ) {
-                return $('<tr><td colspan="9" class="bg-secondary"><span class="m--font-boldest">' + group + '</span></td></tr>');
+                return $('<tr><td colspan="12" class="bg-secondary"><span class="m--font-boldest">' + group + '</span></td></tr>');
             },
             endRender: function ( rows, _group ) {
-                var OTadj = rows
-                        .data()
-                        .pluck('ot_adj')
-                        .reduce( function (a, b) {
-                            return b ? numberFormat(b) : 0.00;
-                        }, 0);
-                var totalAmount = rows
-                        .data()
-                        .pluck('amount')
-                        .reduce( function (a, b) {
-                            var totalOTAmount = parseFloat(a) + parseFloat(b);
-                            return numberFormat(totalOTAmount);
-                        }, 0);
+                let OTadj = rows
+                    .data()
+                    .pluck('ot_adj')
+                    .reduce( function (a, b) {
+                        return b ? toNumber(b) : 0.00;
+                    }, 0);
+                
+                let totalAmount = rows
+                .data()
+                .pluck('amount')
+                .reduce( function (a, b) {
+                    let totalOTAmount = parseFloat(a) + parseFloat(b);
+                    return toNumber(totalOTAmount);
+                }, 0);
                     
-                var total = parseFloat(totalAmount) + parseFloat(OTadj);
-                const uiAdjustment = parseFloat(OTadj) > 0 ? `<span>OT ADJ - ₱ ${numberFormat(OTadj)}</span>`: ``;
+                let total = parseFloat(totalAmount) + parseFloat(OTadj);
+                const uiAdjustmentAmount = parseFloat(OTadj) > 0 ? `<span class="m--font-boldest">₱ ${numberFormat(OTadj)}</span>`: `-`;
                 const uiTotal = `<strong>₱ ${numberFormat(total)}</strong>`;
 
                 const tempContainer = `<tr class="bg-secondary">
-                    <td colspan="7" class="text-right">&nbsp;</td>
-                    <td class="text-right pr-3">${uiAdjustment}</td>
+                    <td colspan="10" class="text-right">&nbsp;</td>
+                    <td class="text-right">${uiAdjustmentAmount}</td>
                     <td class="text-right pr-3">${uiTotal}</td>
                     </tr>`;
 
-                    return $(tempContainer);
-                    
-                
+                return $(tempContainer);
             },
             dataSrc: [ 'employee_name' ],
             
         }, drawCallback: function () {
-            var api = this.api();
-            var tempData = api.data();
+            const api = this.api();
+            const tempData = api.data();
             const _dtActions = $("#table-actions");
             const hasRowData = tempData.length > 0;
-            if (hasRowData && typeof _dtActions !== "undefined" && _dtActions.length == 1) {
-                if (_dtActions.hasClass("m--hide") == true) { _dtActions.removeClass("m--hide"); }
-            } else {
-                if (_dtActions.hasClass("m--hide") == false) { _dtActions.addClass("m--hide"); }
+            if (_dtActions.hasClass("m--hide") === false) { _dtActions.addClass("m--hide"); }
+            if (hasRowData && typeof _dtActions !== "undefined" && _dtActions.length == 1 && _dtActions.hasClass("m--hide") === true) {
+                _dtActions.removeClass("m--hide");
             }
-
             vmReportHeaders.show_header = hasRowData;
 
         }, footerCallback: function () {
-            var api = this.api();
-            var intVal = function (i) { return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0; };
-            let totalAmount = api.column(9).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const api = this.api();
+            const tempData = api.data();
+            let arrAdjustments = {};
+            if(tempData.length > 0) {
+                $.each(tempData, function (_i, row) {
+                    if (row.ot_adj && parseFloat(row.ot_adj) > 0) {
+                        if(jQuery.isEmptyObject(arrAdjustments[row.emp_id])) { arrAdjustments[row.emp_id] = []; }
+                        if(jQuery.inArray(row.ot_adj, arrAdjustments[row.emp_id]) == -1) { arrAdjustments[row.emp_id].push(row.ot_adj); }
+                    }
+                });
+            }
+
+            let totalAdjustmentAmount = 0;
+            if(Object.keys(arrAdjustments).length > 0) {
+                $.each(arrAdjustments, function (_i, adjAmount) {
+                    totalAdjustmentAmount += parseFloat(adjAmount);
+                });
+            }
             
-            const footerLabelTotal = $(api.column(8).footer());
+            const intVal = function (i) { return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : (typeof i === 'number') ? i : 0; };
+            const otPayTotalIndex = 6;
+            const otPay20TotalIndex = 7;
+            const otPay30TotalIndex = 8;
+            const nDiffTotalIndex = 10;
+            const adjustmentIndex = 11;
+            const grandTotalIndex = 12;
+
+            let otPayTotalAmount = api.column(otPayTotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let otPay20TotalAmount = api.column(otPay20TotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let otPay30TotalAmount = api.column(otPay30TotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let nDiffTotalAmount = api.column(nDiffTotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let totalAmount = api.column(grandTotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            
+            const grandTotalAmount = parseFloat(totalAmount) + parseFloat(totalAdjustmentAmount);
+            const footerLabelTotal = $(api.column(5).footer());
             footerLabelTotal.removeClass("text-center");
             footerLabelTotal.html(`<span class="m--font-boldest mr-3">GRAND TOTAL</span>`);
 
-            $(api.column(9).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAmount) + "</span>");
+            $(api.column(otPayTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otPayTotalAmount) + "</span>");
+            $(api.column(otPay20TotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otPay20TotalAmount) + "</span>");
+            $(api.column(otPay30TotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otPay30TotalAmount) + "</span>");
+            $(api.column(nDiffTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(nDiffTotalAmount) + "</span>");
+            $(api.column(adjustmentIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAdjustmentAmount) + "</span>");
+            $(api.column(grandTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(grandTotalAmount) + "</span>");
         }
     });
 
@@ -679,20 +540,16 @@ $(document).ready(function(){
         onSuccess: function (form) {
             let propDisabled = false;
             
-            var currentForm = form[0];
-            var formUrl = currentForm.action;
-            var formData = $(currentForm).serialize();
+            const currentForm = form[0];
+            const formUrl = currentForm.action;
 
             const tempEmployeeFilter = $(currentForm).find("select#employee");
             if(typeof tempEmployeeFilter !== "undefined"){
                 propDisabled = tempEmployeeFilter.is(":disabled");
                 if(propDisabled){ tempEmployeeFilter.prop("disabled", false); }
             }
-
-            const payrollGroup = $(currentForm).find("select#payroll_group").val();
-            console.log(payrollGroup);
             
-            var formData = $(currentForm).serialize();
+            let formData = $(currentForm).serialize();
             if(propDisabled){ tempEmployeeFilter.prop("disabled", true); }
             
             getScriptRendering(formUrl, formData, currentForm);
@@ -700,7 +557,7 @@ $(document).ready(function(){
         }
     });
     
-    var getScriptRendering = function (formUrl, formData, currentForm) {
+    const getScriptRendering = function (formUrl, formData, currentForm) {
         $.ajax({
             url: formUrl,
             type: "post",
@@ -713,20 +570,45 @@ $(document).ready(function(){
                     .prop("disabled", true);
             },
             success: function (json) {
-                _tempFilter = Object.assign({});
+                _tempFilter = {};
+                vmActionSignatories.show_signatories = false;
+                
                 if (json.response) {
                     _clearTable = false;
                     _tempIds = json.data;
-                    _tempFilter = Object.assign({}, json.filters);
-                    vmReportHeaders.filters = Object.assign({}, _tempFilter);
-
+                    _tempFilter = { ...json.filters };
+                    vmReportHeaders.filters = { ...json.filters };
+                    vmActionSignatories.show_signatories = true;
                     toastr.success(json.toastr_msg, "Filtered Overtime Summary Report");
+
+                    setTimeout( function () { modalGenerateReport.modal("hide"); }, 750);
                 } else {
                     _clearTable = true;
                     toastr.error(json.toastr_msg, "Filtered Overtime Summary Report");
                 }
     
                 dtOTSummary.ajax.reload();
+                const currentSelectCompanyId = $(currentForm).find("#company").val();
+                if (typeof currentSelectCompanyId !== "undefined" && parseInt(currentSelectCompanyId) > 0) {
+                    $.ajax({
+                        url: siteUrl("payroll/reports/get_current_signatory_by_company_and_type/" + currentSelectCompanyId + "/2"),
+                        global: false,
+                        dataType: "json",
+                        success: function (json) {
+                            let tempRow = {};
+                            let ctr = json.count ? json.count : 0;
+                            if (json.response) { tempRow = { ...json.data }; }
+                            
+                            vmActionSignatories.signatories = { ...tempRow };
+                            vmTempSignatory.row = { ...tempRow };
+                            vmTempSignatory.count = ctr;
+                            vmTempSignatory.$mount();
+
+                            vmPortletSignatories.row = { ...tempRow };
+                            vmPortletSignatories.count = ctr;
+                        }
+                    });
+                }
             }
         });
     }
@@ -734,4 +616,206 @@ $(document).ready(function(){
 
 const exportExcel = function(){
     dtOTSummary.button(".buttons-excel").trigger();
+}
+
+const vmPortletSignatories = new Vue({
+    el: "#portlet--signatories",
+    data: { row: {}, count: 0 }
+});
+
+const vmTempSignatory = new Vue({
+    el: "#signatory--content",
+    data: { row: {}, count: 0 },
+    methods: {
+        setGlobalSignatories: function () {
+            const _this = this;
+            const currentRow = _this.row;
+            globalPrintableSignatory = [];
+            if (typeof currentRow.meta_field !== "undefined" && typeof currentRow.meta_field == "object") {
+                $.each(currentRow.meta_field, function (i, v) {
+                    const tempData = { label: v.label, value: v.value, is_active: v.is_active };
+                    globalPrintableSignatory.push(tempData);
+                });
+            }
+            return globalPrintableSignatory;
+        },
+        activeSignatory: function (e) {
+            const currentTarget = e.target;
+            const formGroup = $(currentTarget).closest(".form-group.m-form__group.row");
+            if (typeof formGroup !== "undefined" && formGroup.length == 1) {
+                let isChecked = $(currentTarget).is(":checked");
+                const select2Container = formGroup.find(".select2--value");
+                if (typeof select2Container !== "undefined" && select2Container.length == 1) {
+                    if (isChecked) {
+                        if (select2Container.is(":disabled") === true) {
+                            select2Container.prop("disabled", false);
+                        }
+                    } else {
+                        if (select2Container.is(":disabled") === false) {
+                            select2Container.prop("disabled", true);
+                        }
+                    }
+                }
+            }
+        }, setModalSelect2: function () {
+            const _this = this;
+            const _currentElement = _this.$el;
+            const psModalSignatory = $(_currentElement)
+                .closest("#modal-ps--signatory");
+            if (typeof psModalSignatory !== "undefined" && psModalSignatory.length == 1) {
+                initSelect2Employee(psModalSignatory);
+            }
+        }, validateFields: function () {
+            const _this = this;
+            const currentElement = _this.$el;
+            const tempForm = $(currentElement).find("form#updatePrintableSignatories");
+            if (typeof tempForm !== "undefined") {
+                $.validate({
+                    form: tempForm,
+                    lang: 'en',
+                    onSuccess: function (form) {
+                        const tempUrl = form[0].action;
+                        const tempType = form[0].method;
+                        const formData = $(form[0]).serialize();
+
+                        $.ajax({
+                            url: tempUrl,
+                            type: tempType,
+                            dataType: "json",
+                            data: formData,
+                            beforeSend: function () {
+                                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            },
+                            success: function (json) {
+                                const currentModal = $(currentElement).closest(".modal");
+                                if (json.response) {
+                                    const currentData = json.data;
+                                    if (Object.keys(currentData).length > 0) {
+                                        const metaFields = currentData.meta_field;
+                                        const ctr = metaFields.length;
+
+                                        _this.row = { ...currentData };
+                                        _this.count = ctr;
+                                        _this.setGlobalSignatories();
+
+                                        vmPortletSignatories.row = { ...currentData };
+                                        vmPortletSignatories.count = ctr;
+
+                                        vmResetSignatories.row = { ...currentData };
+                                        vmResetSignatories.count = ctr;
+
+                                        if (typeof currentModal !== "undefined" && currentModal.length == 1) {
+                                            currentModal.modal("hide");
+                                        }
+                                    }
+                                } else {
+                                    toastr.error("Payroll Signatory", json.toastr_msg);
+                                }
+                                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            }
+                        });
+                        return false;
+                    },
+
+                });
+            }
+        }
+    }, mounted: function () {
+        const _this = this;
+        setTimeout(function () {
+            _this.setModalSelect2();
+            _this.setGlobalSignatories();
+            _this.validateFields();
+        }, 500);
+    }
+});
+
+const vmResetSignatories = new Vue({
+    el: "#reset-signatory--content",
+    data: { row: {}, count: 0 },
+    methods: {
+        validateFields: function () {
+            const _this = this;
+            const currentElement = _this.$el;
+            const tempForm = $(currentElement).find("form#resetPrintableSignatories");
+            if (typeof tempForm !== "undefined") {
+                $.validate({
+                    form: tempForm,
+                    lang: 'en',
+                    onSuccess: function (form) {
+                        const tempUrl = form[0].action;
+                        const tempType = form[0].method;
+                        const formData = $(form[0]).serialize();
+
+                        $.ajax({
+                            url: tempUrl,
+                            type: tempType,
+                            dataType: "json",
+                            data: formData,
+                            beforeSend: function () {
+                                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            },
+                            success: function (json) {
+                                let tempRow = {};
+                                let ctr = 0;
+
+                                if (json.response) {
+                                    tempRow = { ...json.data };
+                                    ctr = json.count;
+                                }
+                                vmTempSignatory.row = { ...tempRow };
+                                vmTempSignatory.count = ctr;
+                                vmTempSignatory.$mount();
+
+                                vmPortletSignatories.row = { ...tempRow };
+                                vmPortletSignatories.count = ctr;
+
+                                _this.row = { ...tempRow };
+                                _this.count = ctr;
+                                const currentModal = $(currentElement).closest(".modal");
+                                currentModal.modal("hide");
+
+                                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            }
+                        });
+                        return false;
+                    },
+
+                });
+            }
+        }
+    }, mounted: function () {
+        const _this = this;
+        _this.validateFields();
+    }
+});
+
+const initSelect2Employee = function (tempModal, portlet) {
+    if (typeof tempModal !== "undefined" && tempModal.length == 1) {
+        let tempSelector = tempModal.find("select.select2--value");
+        if (typeof portlet !== "undefined") { tempSelector = portlet.find("select.select2--value"); }
+        if (typeof tempSelector !== "undefined") {
+            tempSelector.select2({
+                tags: true,
+                allowClear: true,
+                placeholder: 'Select an option',
+                width: '100%',
+                dropdownParent: tempModal,
+                ajax: {
+                    url: baseUrl("payroll/reports/select_employee"),
+                    dataType: "json",
+                    delay: 250,
+                    global: false,
+                    processResults: function (data) {
+                        let tempData = [];
+                        $.each(data.results, function (i, v) {
+                            const dd = { id: v.text, text: v.text };
+                            tempData.push(dd);
+                        });
+                        return { results: tempData };
+                    }
+                }
+            });
+        }
+    }
 }

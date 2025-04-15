@@ -1,10 +1,13 @@
 //const { Socket } = require("engine.io");
 
+let select2_company_id = 0;
 let tblEvaluation;
 let selectedPieItem;
 let container_width;
 let colorSet = new am4core.ColorSet();
 let retentionChart;
+
+am4core.useTheme(am4themes_animated);
 
 am4core.ready(function () {
     // Themes begin
@@ -172,7 +175,7 @@ function getEmployeePerCompanyStatusChartV2(){
         return "company";
     }
 
-function getEmployeeStatusChart(){
+function getEmployeeStatusChart(company_id){
     var employeeStatusChartContainer = am4core.create("employee-status-chart-container", am4core.Container);
     employeeStatusChartContainer.width = am4core.percent(100);
     employeeStatusChartContainer.height = am4core.percent(100);
@@ -186,89 +189,145 @@ function getEmployeeStatusChart(){
     chartEmployeeStatus.parent = employeeStatusChartContainer;
 
     // Add data
-    getEachEmployeeStatusDemographics
-        .then((data) => {
-            $("#employee-status-graph-total span").html(data.total);
-            chartEmployeeStatus.data = data.data;
-        
-            // Set inner radius
-            var categoryAxis_empStatus = chartEmployeeStatus.yAxes.push(new am4charts.CategoryAxis());
-            categoryAxis_empStatus.dataFields.category = "employee_status";
-            categoryAxis_empStatus.renderer.minGridDistance = 20;
+    getEachEmployeeStatusDemographics(company_id).then((data) => {
+        $("#employee-status-graph-total span").html(data.total);
+        chartEmployeeStatus.data = data.data;
 
-            var valueAxis_empStatus = chartEmployeeStatus.xAxes.push(new am4charts.ValueAxis());
-            valueAxis_empStatus.dataFields.category = "cnt";
-            valueAxis_empStatus.renderer.minGridDistance = 100;
-            
-            // Add and chartEmployeeStatus Series
-            var series = chartEmployeeStatus.series.push(new am4charts.ColumnSeries3D());
-            series.dataFields.categoryY = "employee_status";
-            series.dataFields.valueX = "cnt";
-            series.columns.template.propertyFields.fill = "color";
-            series.columns.template.tooltipText = "{valueX.value}";
-            series.columns.template.column3D.stroke = am4core.color("#fff");
-            series.columns.template.column3D.strokeOpacity = 0.2;  
-            series.columns.template.adapter.add("fill", function(fill, target){
-                return chartEmployeeStatus.colors.getIndex(target.dataItem.index);
-              });   
-              series.columns.template.events.on("hit", function (e) {
-                const data = e.target.dataItem.dataContext;
-                const key = data.key;
+        // Set inner radius
+        var categoryAxis_empStatus = chartEmployeeStatus.yAxes.push(new am4charts.CategoryAxis());
+        categoryAxis_empStatus.dataFields.category = "employee_status";
+        categoryAxis_empStatus.renderer.minGridDistance = 20;
 
-                window.open(baseUrl('hris/masterfile/employee?status=' + key), "_blank");
-            }, this);  
-            
-        })
-        .catch((err) => {
-            console.log('some error handler here ' + err);
+        var valueAxis_empStatus = chartEmployeeStatus.xAxes.push(new am4charts.ValueAxis());
+        valueAxis_empStatus.dataFields.category = "cnt";
+        valueAxis_empStatus.renderer.minGridDistance = 100;
+
+        valueAxis_empStatus.strictMinMax = true;
+        valueAxis_empStatus.min = 0;
+        valueAxis_empStatus.numberFormatter = new am4core.NumberFormatter();
+        valueAxis_empStatus.numberFormatter.numberFormat = "#";
+
+        // Ensure only whole numbers are displayed on the x-axis
+        valueAxis_empStatus.renderer.labels.template.adapter.add("text", function(text) {
+            return Number.isInteger(parseFloat(text)) ? text : "";
         });
-        return "emp_status";
-    }
-    /* END START EMPLOYEE STATUS CHART */
 
-    /* START EMPLOYEE STATUS PIE CHART */
+        // Keep grid lines only at whole numbers
+        valueAxis_empStatus.renderer.grid.template.location = 0;
+        valueAxis_empStatus.renderer.ticks.template.disabled = true;
 
-    var employeeStatusChartContainer = am4core.create("active-employees-per-company-container-pie", am4core.Container);
-    employeeStatusChartContainer.width = am4core.percent(100);
-    employeeStatusChartContainer.height = am4core.percent(100);
+        // Add and chartEmployeeStatus Series
+        var series = chartEmployeeStatus.series.push(new am4charts.ColumnSeries3D());
+        series.dataFields.categoryY = "employee_status";
+        series.dataFields.valueX = "cnt";
+        series.columns.template.propertyFields.fill = "color";
+        series.columns.template.tooltipText = "{valueX.value}";
+        series.columns.template.column3D.stroke = am4core.color("#fff");
+        series.columns.template.column3D.strokeOpacity = 0.2;  
+        series.columns.template.adapter.add("fill", function(fill, target){
+            return chartEmployeeStatus.colors.getIndex(target.dataItem.index);
+        });   
 
-    /*var employeeStatusChartLegendContainer = am4core.create("employee-status-chart-legend", am4core.Container);
-    employeeStatusChartLegendContainer.width = am4core.percent(100);
-    employeeStatusChartLegendContainer.height = am4core.percent(100);*/
+        series.columns.template.events.on("hit", function (e) {
+            const data = e.target.dataItem.dataContext;
+            const key = data.key;
 
-    let chartEmployeeStatus = new am4charts.PieChart();
-    chartEmployeeStatus.responsive.enabled = true;
-    chartEmployeeStatus.parent = employeeStatusChartContainer;
-    chartEmployeeStatus.legend = new am4charts.Legend();
+            window.open(baseUrl('hris/masterfile/employee?status=' + key), "_blank");
+        }, this);  
+        
+    }).catch((err) => {
+        console.log('some error handler here ' + err);
+    });
+    return "emp_status";
+}
 
-    // Add data
-    getEachEmployeeStatusDemographics
-        .then((data) => {
-            $("#employee-status-graph-total span").html(data.total);
-            chartEmployeeStatus.data = data.data;
+// Employee Status Company Filter Start
+if ($('#select2_company').length > 0) {
+    $('#select2_company').select2({
+        placeholder: 'Select a company',
+        width: '100%',
+        allowClear: true,
+        ajax: {
+            url: baseUrl("hris/dashboard/get_company_select2_data"),
+            dataType: 'json',
+            delay: 250,
+            global: false,
+            processResults: function (data) {
+                return data;
+            },
+        }
+    }).on('select2:select', function (e) {
+        select2_company_id = e.params.data.id;
+        getEmployeeStatusChart(select2_company_id);
+        $('#employee-status-graph-company span').html(e.params.data.text);
+    }).on('select2:unselect', function (e) {
+        $('#employee-status-graph-company span').html('');
+        select2_company_id = 0;
+        getEmployeeStatusChart(select2_company_id);
 
-            // Set inner radius
-            chartEmployeeStatus.innerRadius = am4core.percent(40);
-            /*chartEmployeeStatus.legend = new am4charts.Legend();
-            chartEmployeeStatus.legend.parent = employeeStatusChartLegendContainer;*/
-            chartEmployeeStatus.responsive.enabled = true;
+        // Close the dropdown after 3 seconds        
+        setTimeout(() => {
+            $(this).select2('close');
+        }, 3000); 
+    });
+} else {
+    console.error('#select2_company element not found.');
+}
+// Employee Status Company Filter End
 
-            // Add and configure Series
-            var pieEmployeeStatus = chartEmployeeStatus.series.push(new am4charts.PieSeries());
-            pieEmployeeStatus.dataFields.value = "cnt";
-            pieEmployeeStatus.dataFields.category = "employee_status";
-            pieEmployeeStatus.slices.template.stroke = am4core.color("#fff");
-            pieEmployeeStatus.slices.template.strokeWidth = 2;
-            pieEmployeeStatus.slices.template.strokeOpacity = 1;
+/* END START EMPLOYEE STATUS CHART */
 
-            pieEmployeeStatus.labels.template.text = "{category}: {value}";
-            pieEmployeeStatus.slices.template.tooltipText = "[bold]{category}: {value}[/]";
+/* START EMPLOYEE STATUS PIE CHART */
+var employeeStatusChartContainer = am4core.create("active-employees-per-company-container-pie", am4core.Container);
+employeeStatusChartContainer.width = am4core.percent(100);
+employeeStatusChartContainer.height = am4core.percent(100);
 
-            // This creates initial animation
-            pieEmployeeStatus.hiddenState.properties.opacity = 1;
-            pieEmployeeStatus.hiddenState.properties.endAngle = -90;
-            pieEmployeeStatus.hiddenState.properties.startAngle = -90;
+/*var employeeStatusChartLegendContainer = am4core.create("employee-status-chart-legend", am4core.Container);
+employeeStatusChartLegendContainer.width = am4core.percent(100);
+employeeStatusChartLegendContainer.height = am4core.percent(100);*/
 
+let chartEmployeeStatus = new am4charts.PieChart();
+chartEmployeeStatus.responsive.enabled = true;
+chartEmployeeStatus.parent = employeeStatusChartContainer;
+chartEmployeeStatus.legend = new am4charts.Legend();
+
+// Add data
+getEachEmployeeStatusDemographics(company_id).then((data) => {
+        $("#employee-status-graph-total span").html(data.total);
+        chartEmployeeStatus.data = data.data;
+
+        // Set inner radius
+        chartEmployeeStatus.innerRadius = am4core.percent(40);
+        /*chartEmployeeStatus.legend = new am4charts.Legend();
+        chartEmployeeStatus.legend.parent = employeeStatusChartLegendContainer;*/
+        chartEmployeeStatus.responsive.enabled = true;
+
+        // Add and configure Series
+        var pieEmployeeStatus = chartEmployeeStatus.series.push(new am4charts.PieSeries());
+        pieEmployeeStatus.dataFields.value = "cnt";
+        pieEmployeeStatus.dataFields.category = "employee_status";
+        pieEmployeeStatus.slices.template.stroke = am4core.color("#fff");
+        pieEmployeeStatus.slices.template.strokeWidth = 2;
+        pieEmployeeStatus.slices.template.strokeOpacity = 1;
+
+        pieEmployeeStatus.labels.template.text = "{category}: {value}";
+        pieEmployeeStatus.slices.template.tooltipText = "[bold]{category}: {value}[/]";
+
+        // This creates initial animation
+        pieEmployeeStatus.hiddenState.properties.opacity = 1;
+        pieEmployeeStatus.hiddenState.properties.endAngle = -90;
+        pieEmployeeStatus.hiddenState.properties.startAngle = -90;
+
+        if(screen.width <= 450){
+            pieEmployeeStatus.labels.template.radius = am4core.percent(-98);
+        }else if(screen.width > 450 && screen.width <= 1280){
+            pieEmployeeStatus.labels.template.radius = am4core.percent(-40);
+        }else if(screen.width > 1280 && screen.width <= 1441){
+            pieEmployeeStatus.labels.template.radius = am4core.percent(-20);
+        }else{
+            pieEmployeeStatus.labels.template.radius = am4core.percent(10);
+        }
+        $(window).resize(function(){
             if(screen.width <= 450){
                 pieEmployeeStatus.labels.template.radius = am4core.percent(-98);
             }else if(screen.width > 450 && screen.width <= 1280){
@@ -278,39 +337,29 @@ function getEmployeeStatusChart(){
             }else{
                 pieEmployeeStatus.labels.template.radius = am4core.percent(10);
             }
-            $(window).resize(function(){
-                if(screen.width <= 450){
-                    pieEmployeeStatus.labels.template.radius = am4core.percent(-98);
-                }else if(screen.width > 450 && screen.width <= 1280){
-                    pieEmployeeStatus.labels.template.radius = am4core.percent(-40);
-                }else if(screen.width > 1280 && screen.width <= 1441){
-                    pieEmployeeStatus.labels.template.radius = am4core.percent(-20);
-                }else{
-                    pieEmployeeStatus.labels.template.radius = am4core.percent(10);
-                }
-            });
-            //make labels show in the middle
-            pieEmployeeStatus.ticks.template.disabled = false;
-            pieEmployeeStatus.alignLabels = true;
-
-            pieEmployeeStatus.labels.template.wrap = true;
-            //
-
-            pieEmployeeStatus.slices.template.states.getKey("hover").properties.scale = 1;
-            pieEmployeeStatus.slices.template.states.getKey("active").properties.shiftRadius = 0;
-            pieEmployeeStatus.slices.template.cursorOverStyle = am4core.MouseCursorStyle.pointer;
-
-            pieEmployeeStatus.slices.template.events.on("hit", function (e) {
-                const data = e.target.dataItem.dataContext;
-                const key = data.key;
-
-                window.open(baseUrl('hris/masterfile/employee?status=' + key), "_blank");
-            }, this);
-        })
-        .catch((err) => {
-            console.log('some error handler here ' + err);
         });
-    /* END START EMPLOYEE STATUS PIE CHART */
+        //make labels show in the middle
+        pieEmployeeStatus.ticks.template.disabled = false;
+        pieEmployeeStatus.alignLabels = true;
+
+        pieEmployeeStatus.labels.template.wrap = true;
+        //
+
+        pieEmployeeStatus.slices.template.states.getKey("hover").properties.scale = 1;
+        pieEmployeeStatus.slices.template.states.getKey("active").properties.shiftRadius = 0;
+        pieEmployeeStatus.slices.template.cursorOverStyle = am4core.MouseCursorStyle.pointer;
+
+        pieEmployeeStatus.slices.template.events.on("hit", function (e) {
+            const data = e.target.dataItem.dataContext;
+            const key = data.key;
+
+            window.open(baseUrl('hris/masterfile/employee?status=' + key), "_blank");
+        }, this);
+    })
+    .catch((err) => {
+        console.log('some error handler here ' + err);
+    });
+/* END START EMPLOYEE STATUS PIE CHART */
 
     /* START ACTIVE EMPLOYEES PER COMPANY */
     function getEmployeePerCompanyStatusChart(){
@@ -547,24 +596,47 @@ const getGenderDemographics = new Promise((resolve, reject) => {
     // });
 });
 
-const getEachEmployeeStatusDemographics = new Promise((resolve, reject) => {
-    $.ajax({
-        url: baseUrl('hris/dashboard/get_each_employee_status_demographics'),
-        type: "GET",
-        dataType: "JSON",
-        success: function (response) {
-            resolve(response);
-        },
-        error: function (response) {
-            reject(response);
-        }
-    });
+// const getEachEmployeeStatusDemographics = new Promise((resolve, reject) => {
+//     $.ajax({
+//         url: baseUrl('hris/dashboard/get_each_employee_status_demographics'),
+//         type: "GET",
+//         // type: "POST",
+//         dataType: "JSON",
+//         data: {
+//             company_id: select2_company_id
+//         },
+//         success: function (response) {
+//             resolve(response);
+//             console.log(response);
+//         },
+//         error: function (response) {
+//             reject(response);
+//         }
+//     });
 
-    // socket.emit("get_each_employee_status_demographics");
-    // socket.on('getEachEmployeeStatusDemographics', function(d){
-    //     resolve(d);
-    // });
-});
+//     // socket.emit("get_each_employee_status_demographics");
+//     // socket.on('getEachEmployeeStatusDemographics', function(d){
+//     //     resolve(d);
+//     // });
+// });
+
+function getEachEmployeeStatusDemographics(company_id) {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: baseUrl('hris/dashboard/get_each_employee_status_demographics/' + company_id),
+            type: "GET",
+            dataType: "JSON",
+            global: false,
+            // data: { company_id: company_id },
+            success: function (response) {
+                resolve(response);
+            },
+            error: function (response) {
+                reject(response);
+            }
+        });
+    });
+}
 
 const getActiveEmployeesOnEachCompany = new Promise((resolve, reject) => {
     $.ajax({
@@ -920,4 +992,3 @@ const loadTurnoverRateByYear = function (year=null){
         return false;
     }
 }
-

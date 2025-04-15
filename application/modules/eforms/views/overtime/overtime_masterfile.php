@@ -65,27 +65,11 @@
                                                 </a>
                                             </li>
                                             <li>
-                                                <a class="dropdown-item btn btnMass_update" href="javascript:void(0);" data-toggle="modal" data-target="#modal-mass-update">
-                                                    Mass Edit
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="dropdown-item btn btnMass_approve" href="javascript:void(0);" data-toggle="modal" data-target="#modal-mass-approve">
-                                                    Mass Approve
-                                                </a>
-                                            </li>
-                                            <li>
                                                 <a class="dropdown-item btn btnMass_approve" href="javascript:void(0);" data-toggle="modal" data-target="#modal-mass-disapprove">
                                                     Mass Disapprove
                                                 </a>
                                             </li>
                                         </ul>
-                                        <!-- <button class="btn btn-success m-btn m-btn--icon m-btn--pill btnAdvance_search" type="button" onclick='generateReference()'>
-                                            <span><i class="fa fa-refresh"></i><span>Generate</span></span>
-                                        </button>
-                                        <button class="btn btn-success m-btn m-btn--icon m-btn--pill btnAdvance_search" type="button" onclick='generateReferenceDetails()'>
-                                            <span><i class="fa fa-refresh"></i><span>Generate Reference Details</span></span>
-                                        </button> -->
                                     </div>
                                 </div>
                             </div>
@@ -98,7 +82,7 @@
                                         </span>
                                     </span>
                                 </div>
-                                <div class="m-btn-group btn-group" role="group">
+                                <div class="m-btn-group btn-group">
                                     <button id="tbl-btn-share" title="Export" type="button"
                                             class="btn btnExport btn-success m-btn dropdown-toggle"
                                             data-toggle="dropdown" aria-haspopup="true"
@@ -282,10 +266,10 @@
                         <div class="row m--margin-top-10">
                             <div class="col-md-6">
                                 <div class="form-group m-form__group">
-                                    <label for="approved_by">
+                                    <label for="approved_by" class="required">
                                         Approved By
                                     </label>
-                                    <select class="form-control m-input m-input--air" id="approved_by" name="approved_by"></select>
+                                    <select class="form-control m-input m-input--air" id="approved_by" name="approved_by" data-validation="required"></select>
                                 </div>
                             </div>
                         </div>
@@ -296,7 +280,7 @@
                                         <div class="m-portlet__head-caption">
                                             <div class="m-portlet__head-title">
                                                 <h3 class="m-portlet__head-text">
-                                                    Attachment Image
+                                                    Attachment Image <small style="color: red;">( Required )</small>
                                                 </h3>
                                             </div>
                                         </div>
@@ -485,7 +469,7 @@
             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Mass Approve Overtime</h5>
+                    <h5 class="modal-title">Mass Disapprove Overtime</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -501,7 +485,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" id="advanced_search" class="btn btn-primary btnEdit btn-submit">Approve</button>
+                    <button type="submit" id="advanced_search" class="btn btn-primary btnEdit btn-submit">Disapprove</button>
                     <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Close</button>
                 </div>
             </div>

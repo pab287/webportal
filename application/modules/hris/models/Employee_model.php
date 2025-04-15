@@ -1950,7 +1950,14 @@
                     }else{
                         $data->date_end = $data->date_end;
                     }
+
+                    if ($data->mobile_no) {
+                        $data->mobile_no = strlen($data->mobile_no) == 11 ? ltrim($data->mobile_no, '09') : $data->mobile_no;
+                    }
                     
+                    if ($data->company_phone_no){
+                        $data->company_phone_no = strlen($data->company_phone_no) == 11 ? ltrim($data->company_phone_no, '09') : $data->company_phone_no;
+                    }
 
                     $data->company = (isset($data->comp_description) && $data->comp_description)? $data->comp_description: "No assigned company";
                     $data->department = (isset($data->dept_description) && $data->dept_description)? $data->dept_description: "No assigned department";
@@ -3113,6 +3120,9 @@
                             $post["latitude"] = trim($tempCoords[0]);
                         }
                     }
+
+                    $post['mobile_no'] = isset($post['mobile_no']) && $post['mobile_no'] ? preg_replace('/[^a-zA-Z0-9]+/', '', $post['mobile_no']) : NULL;
+                    $post['company_phone_no'] = isset($post['company_phone_no']) && $post['company_phone_no'] ? preg_replace('/[^a-zA-Z0-9]+/', '', $post['company_phone_no']) : NULL;
 
                     $updated = $this->db->update($this->employeeTable, $post, $where);
                     if ($updated) {
@@ -6400,7 +6410,7 @@
             );
             $this->db->insert($this->employeeWorkExperienceTable, $work_experience_field);
             /* END SAVE WORK EXPERIENCE */
-
+            $currentData = $this->getEmployeeCurrentCompany($id);
             /* UPDATE COMPANY & OTHERS */
             $update_data = array(
                 "company_id" => $post->company_id,
@@ -6421,18 +6431,25 @@
             $this->db->insert($this->tblEmployeesCompanyHistory, $history_data);
             /* END UPDATE COMPANY & OTHERS */
 
+            $changes = $this->logChanges($currentData, $post);
             if ($this->db->trans_status() === FALSE) {
                 $this->db->trans_rollback();
                 $resultSet["success"] = false;
                 $resultSet["message"] = $this->db->error();
                 $resultSet["data"] = null;
+                $type = "error";
+                $use = "system";
             } else {
                 $this->db->trans_commit();
                 $resultSet["success"] = true;
                 $resultSet["message"] = "Employee was transferred successfully.";
                 $resultSet["data"] = $this->getEmployeeData($id);
+                $type = "success";
+                $use = "user";
             }
-
+            $formatted_date = date("F j, Y", strtotime($start_date));
+            $fullname =  $this->getEmployeeName($id);
+            $this->core_layout->setEventLog("User updated company details for employee: <strong>$fullname</strong> $changes. Effective date: <strong>$formatted_date</strong>","update", $type, "gcchris", $use);
             return $resultSet;
         }
 
@@ -8116,8 +8133,8 @@
                 $resultarray["status"] = TRUE;
                 $resultarray["response"] = "Data successfully saved!";
                  /*** edited contents logging ***/
-                 $logMessage = "Employee named `$tempEmployeeName` with payroll allowance data named `$allowanceName`, rate of `$rate` and frequency of `$frequency` has been added.";
-                 $this->core_layout->setEventLog($logMessage, "insert", "success", "gcchris", "user");
+                $logMessage = "Employee named `$tempEmployeeName` with payroll allowance data named `$allowanceName`, rate of `$rate` and frequency of `$frequency` has been added.";
+                $this->core_layout->setEventLog($logMessage, "insert", "success", "gcchris", "user");
                  /*** edited contents logging ***/
             } else {
                 $resultarray["status"] = FALSE;
@@ -8172,7 +8189,7 @@
             $data["loan_id"] = $post["loan_id"];
             $data['reference_id'] = (isset($post['reference_id'])) ? $post['reference_id'] : 0;
             $data['reference'] = (isset($post['reference'])) ? trim($post['reference']) : "";
-            $data["amount"] = $post["amount"];
+            $data["amount"] = str_replace(',', '', $post['amount']);
             $data["deduction_type"] = $post["deduction_type"];
             $data["percentage"] = 0;
             $data["fixed_deduction_amt"] = 0;
@@ -8181,9 +8198,11 @@
             $data["remarks"] = isset($post["remarks"]) && $post["remarks"] ? trim($post["remarks"]): NULL;
 
             if (intval($data["deduction_type"]) === 0) {
-                $data["percentage"] = 20;
+                $data["percentage"] = $post["deduct_type_value"];
+                $log = "With percentage deduction of: <strong>".$post["deduct_type_value"]."%</strong>";
             } else {
                 $data["fixed_deduction_amt"] = $post["deduct_type_value"];
+                $log = "With fixed deduction amount of: <strong>".$post["deduct_type_value"]."</strong>";
             }
 
             $query = $this->db->insert("gcchris.loans", $data);
@@ -8191,7 +8210,7 @@
             if ($query) {
                 $resultarray["status"] = TRUE;
                 $resultarray["response"] = "New loan information was successfully saved!";
-                $this->core_layout->setEventLog("User added new loan with amount: <strong>".$post["amount"]."</strong> for employee: $fullname","insert", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("User added new loan Type: <strong>".$this->getLoanTypeById($post["loan_id"]) ."</strong> with amount: <strong>".$post["amount"]."</strong>, $log for employee: <strong>$fullname</strong>","insert", "success", "gcchris", "user");
             } else {
                 $resultarray["status"] = FALSE;
                 $resultarray["response"] = $this->db->error();
@@ -10795,8 +10814,8 @@
                      * if($salary->field_description == 'Rate'){ $rate = $salary->table_value; }
                      */
 
-                     if($salary->field_description == 'Basic Rate'){ $basic = $salary->original_value; }
-                     if($salary->field_description == 'Rate'){ $rate = $salary->original_value; }
+                     if($row->field_description == 'Basic Rate'){ $basic = $row->original_value; }
+                     if($row->field_description == 'Rate'){ $rate = $row->original_value; }
                 }
 
                 $rate_remark = $rate_fr ? ' + '.$rate.' '.$rate_fr : '';
@@ -10875,17 +10894,36 @@
                     $remarks = $basic.' '.$payroll.' '.$rate_remark;
                     $basic_total = floatval($basic) + floatval($rate);
 
-                    $data = array(
-                        'emp_id' => $salary->unique_id,
-                        'sal_date' => date('Y-m-d'),
-                        'sal_rate' => number_format($basic_total, 2, '.', ''),
-                        'sal_position' => $query->name,
-                        'sal_remarks' => $remarks,
-                        'add_date' => date("Y-m-d H:i:s"),
-                        'add_by' => $user_emp_id
-                    );
+                    $hasSameDayHistory = $this->db->select('id')->limit(1)
+                    ->order_by('sal_date', 'DESC')
+                    ->get_where($this->employeeSalaryTable, array('emp_id' => $salary->unique_id, 'DATE(sal_date)' => date('Y-m-d'), 'is_archived' => 0));
 
-                    $historyStatus = $this->db->insert($this->employeeSalaryTable, $data);
+                    if ($hasSameDayHistory->num_rows() > 0) {
+                        $row = $hasSameDayHistory->row();
+
+                        $data = array (
+                            'sal_rate' => number_format($basic_total, 2, '.', ''),
+                            'sal_remarks' => $remarks,
+                            'update_date' => date('Y-m-d H:i:s'),
+                            'update_by' => $user_emp_id
+                        );
+
+                        $this->db->where('id', $row->id);
+                        $historyStatus = $this->db->update($this->employeeSalaryTable, $data);
+                    } else {
+                        $data = array(
+                            'emp_id' => $salary->unique_id,
+                            'sal_date' => date('Y-m-d'),
+                            'sal_rate' => number_format($basic_total, 2, '.', ''),
+                            'sal_position' => $query->name,
+                            'sal_remarks' => $remarks,
+                            'add_date' => date("Y-m-d H:i:s"),
+                            'add_by' => $user_emp_id
+                        );
+    
+                        $historyStatus = $this->db->insert($this->employeeSalaryTable, $data);
+                    }
+
                 }else{
                     $historyStatus = false;
                 }
@@ -10902,14 +10940,22 @@
             $rate = '';
             $rate_fr = '';
             $historyStatus = false;
+            $now = date('Y-m-d');
 
-            $this->db->select('b.name, a.basic_rate, a.payroll_type');
+            $this->db->select('b.name, a.basic_rate, a.payroll_type, DATE(a.date_start) as date_start');
             $this->db->from($this->employeeTable.' as a');
             $this->db->join($this->positionTable.' as b', 'b.id = a.position OR b.name = a.position', 'LEFT');
             $this->db->where('a.id', $arr['id']);
             $query = $this->db->get()->row();
             $this->db->reset_query();
             $basic = $query->basic_rate;
+
+            $date = $now;
+            if (isset($query->date_start) && $query->date_start) {
+                $date_hired = date('Y-m-d', strtotime($query->date_start . ' +7 days')); //tags the employee as newly hired
+                $date = ($now >= $query->date_start && $now <= $date_hired) ? $query->date_start : $now;
+                $date = $query->date_start > $now ? $query->date_start : $date;
+            }
 
             if($arr['payroll_type'] == 'hourly'){
                 $payroll = 'Hourly Rate';
@@ -10932,6 +10978,8 @@
             $this->db->limit(1);
             $this->db->order_by('id', 'DESC');
             $allowance = $this->db->from($this->tblAllowances)->get()->row();
+
+            $this->db->reset_query();
     
             if($allowance == null){
                 $rate_fr = null;
@@ -10945,17 +10993,37 @@
             $remarks = $arr['basic_rate'].' '.$payroll.' '.$rate_remark;
             $basic = floatval($arr['basic_rate']) + floatval($rate);
 
-            $data = array(
-                'emp_id' => $arr['id'],
-                'sal_date' => (isset($arr['date_hired']) && $arr['date_hired']) ? $arr['date_hired'] : date('Y-m-d'),
-                'sal_rate' => number_format($basic, 2, '.', ''),
-                'sal_position' => $query->name,
-                'sal_remarks' => $remarks,
-                'add_date' => date("Y-m-d H:i:s"),
-                'add_by' => $user_emp_id
-            );
+            // checks if has a same day history log
+            $hasSameDayHistory = $this->db->select('id')->limit(1)
+                ->order_by('sal_date', 'DESC')
+                ->get_where($this->employeeSalaryTable, array('emp_id' => $arr['id'], 'DATE(sal_date)' => $date, 'is_archived' => 0));
+            
+            if ($hasSameDayHistory->num_rows() > 0) {
+                $row = $hasSameDayHistory->row();
 
-            $historyStatus = $this->db->insert($this->employeeSalaryTable, $data);
+                $data = array(
+                    'sal_rate' => number_format($basic, 2, '.', ''),
+                    'sal_remarks' => $remarks,
+                    'update_date' => date('Y-m-d H:i:s'),
+                    'update_by' => $user_emp_id
+                );
+                
+                $this->db->where('id', $row->id);
+                $historyStatus = $this->db->update($this->employeeSalaryTable, $data);
+            } else {
+                $data = array(
+                    'emp_id' => $arr['id'],
+                    'sal_date' => (isset($arr['date_hired']) && $arr['date_hired']) ? $arr['date_hired'] : date('Y-m-d'),
+                    'sal_rate' => number_format($basic, 2, '.', ''),
+                    'sal_position' => $query->name,
+                    'sal_remarks' => $remarks,
+                    'add_date' => date("Y-m-d H:i:s"),
+                    'add_by' => $user_emp_id
+                );
+    
+                $historyStatus = $this->db->insert($this->employeeSalaryTable, $data);
+            }
+
 
             return $historyStatus;
         }
@@ -10968,17 +11036,25 @@
             $rate_fr = '';
             $historyStatus = false;
             $basic = 0;
+            $now = date('Y-m-d');
 
             if(!isset($arr["is_active"])){ $arr["is_active"] = 0; }
             $isActiveState = intval($arr["is_active"]) == 1;
 
-            $this->db->select('b.name, a.basic_rate, a.payroll_type');
+            $this->db->select('b.name, a.basic_rate, a.payroll_type, DATE(a.date_start) as date_start');
             $this->db->from($this->employeeTable.' as a');
             $this->db->join($this->positionTable.' as b', 'b.id = a.position OR b.name = a.position', 'LEFT');
             $this->db->where('a.id', $arr['emp_id']);
             $query = $this->db->get()->row();
             $this->db->reset_query();
             $basic = $query->basic_rate;
+            
+            $date = $now;
+            if (isset($query->date_start) && $query->date_start) {
+                $date_hired = date('Y-m-d', strtotime($query->date_start . ' +7 days')); //tags the employee as newly hired
+                $date = ($now >= $query->date_start && $now <= $date_hired) ? $query->date_start : $now;
+                $date = $query->date_start > $now ? $query->date_start : $date;
+            }
 
             if($query->payroll_type == 'daily'){ $payroll = 'Basic Daily Rate'; }
             else if($query->payroll_type == 'monthly'){ $payroll = 'Monthly Rate'; }
@@ -10992,17 +11068,36 @@
             $remarks = $basic.' '.$payroll.' '.$rate_remark;
             $basic_total = $isActiveState ? floatval($basic) + floatval($arr['rate']) : floatval($basic);
 
-            $data = array(
-                'emp_id' => $arr['emp_id'],
-                'sal_date' => date('Y-m-d'),
-                'sal_rate' => number_format($basic_total, 2, '.', ''),
-                'sal_position' => $query->name,
-                'sal_remarks' => $remarks,
-                'add_date' => date("Y-m-d H:i:s"),
-                'add_by' => $user_emp_id
-            );
+            // checks if has a same day history log
+            $hasSameDayHistory = $this->db->select('id')->limit(1)
+                ->order_by('sal_date', 'DESC')
+                ->get_where($this->employeeSalaryTable, array('emp_id' => $arr['emp_id'], 'DATE(sal_date)' => $date, 'is_archived' => 0));
 
-            $historyStatus = $this->db->insert($this->employeeSalaryTable, $data);
+            if ($hasSameDayHistory->num_rows() > 0) {
+                $row = $hasSameDayHistory->row();
+
+                $data = array(
+                    'sal_rate' => number_format($basic_total, 2, '.', ''),
+                    'sal_remarks' => $remarks,
+                    'update_date' => date('Y-m-d H:i:s'),
+                    'update_by' => $user_emp_id
+                );
+                
+                $this->db->where('id', $row->id);
+                $historyStatus = $this->db->update($this->employeeSalaryTable, $data);
+            } else {
+                $data = array(
+                    'emp_id' => $arr['emp_id'],
+                    'sal_date' => $date,
+                    'sal_rate' => number_format($basic_total, 2, '.', ''),
+                    'sal_position' => $query->name,
+                    'sal_remarks' => $remarks,
+                    'add_date' => date("Y-m-d H:i:s"),
+                    'add_by' => $user_emp_id
+                );
+                $historyStatus = $this->db->insert($this->employeeSalaryTable, $data);
+            }
+
             return $historyStatus;
         }
 
@@ -11250,21 +11345,26 @@
                         );
                     }
                 }
-                foreach ($changes as $field => $change) {
-                    if (strtolower($field) == 'department_id'){
-                        $changesString.= " Field: $field, from: <strong>". $this->getDepartmentById($change['old']). "</strong>, to: ". $this->getDepartmentById($change['new']). "\n";
+                if(!empty($changes)){
+                    foreach ($changes as $field => $change) {
+                        if (strtolower($field) == 'department_id'){
+                            $changesString.= " Field: $field, from: <strong>". $this->getDepartmentById($change['old']). "</strong>, to: <strong>". $this->getDepartmentById($change['new']). "</strong>\n";
+                            }
+                        else if (strtolower($field) == 'position'){
+                            $changesString.= " Field: $field, from: <strong>". $this->getPositionById($change['old']). "</strong>, to: <strong>". $this->getPositionById($change['new']). "</strong>\n";
                         }
-                    else if (strtolower($field) == 'position'){
-                        $changesString.= " Field: $field, from: <strong>". $this->getPositionById($change['old']). "</strong>, to: ". $this->getPositionById($change['new']). "\n";
-                    }
-                    else if (strtolower($field) == 'license_id'){
-                        $changesString.= " Field: $field, from: <strong>". $this->getLicenseTypeById($change['old']). "</strong>, to: <strong>". $this->getLicenseTypeById($change['new']). "</strong>\n";
-                    }
-                    else if (strtolower($field) == 'tl_supervisory') {
-                        $changesString .= " Field: TWO LEVEL SUPERVISORY from: <strong>" . ($change['old'] == 1 ? 'YES' : 'NO') . "</strong>, to: <strong>" . ($change['new'] == 1 ? 'YES' : 'NO') . "</strong>\n";
-                    }
-                    else if ($field != 'work_station' && $field != 'supervisor_meta'){
-                        $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
+                        else if (strtolower($field) == 'company_id'){
+                            $changesString.= " Field: $field, from: <strong>". $this->getCompanyById($change['old'])->description. "</strong>, to: <strong>". $this->getCompanyById($change['new'])->description. "</strong>\n";
+                        }
+                        else if (strtolower($field) == 'license_id'){
+                            $changesString.= " Field: $field, from: <strong>". $this->getLicenseTypeById($change['old']). "</strong>, to: <strong>". $this->getLicenseTypeById($change['new']). "</strong>\n";
+                        }
+                        else if (strtolower($field) == 'tl_supervisory') {
+                            $changesString .= " Field: TWO LEVEL SUPERVISORY from: <strong>" . ($change['old'] == 1 ? 'YES' : 'NO') . "</strong>, to: <strong>" . ($change['new'] == 1 ? 'YES' : 'NO') . "</strong>\n";
+                        }
+                        else if ($field != 'work_station' && $field != 'supervisor_meta'){
+                            $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
+                        }
                     }
                 }
 
@@ -11746,7 +11846,7 @@
             emp.pic_filename, emp.idno, emp.biometricno, pos.name as position ,pos.id as position_id, emp.work_status, emp.employee_status, emp.date_start, emp.date_end, com.code as company_id, emp.level, emp.date_regular, emp.date_end_prob, emp.resign_reason, pos.job_desc, emp.tl_supervisory, emp.supervisor_meta, emp.ques1, emp.ques2, emp.ques3, emp.ques4, emp.ques5, emp.ques6, emp.ques7, emp.ques8, emp.ques9,
             emp.email, emp.tax_status, emp.tin_no, emp.phealth_no, emp.pagibig_no, emp.sss_no,
             emp.fat_name, emp.mot_name, emp.partner_type, emp.spo_deceased, emp.partners_deceased, emp.spo_name, emp.partners_name, emp.fat_addr, emp.mot_addr, emp.spo_addr, emp.partners_addr, emp.fat_company, emp.mot_company, emp.spo_company, emp.partners_company, emp.fat_occupation, emp.mot_occupation, emp.spo_occupation, emp.partners_occupation, emp.fat_contact, emp.mot_contact, emp.spo_contact, emp.partners_contact, emp.emer_addr, emp.emer_contact, emp.emer_name, 
-            dept.description as department_description, emp.work_mode, emp.payroll_type
+            dept.description as department_description, emp.work_mode, emp.payroll_type, emp.allow_sms_notification
             ");
             $this->db->from($this->employeeTable." as emp");
             $this->db->join($this->positionTable." as pos", "pos.id = emp.position", "LEFT");
@@ -11818,4 +11918,37 @@
 
             return $resultset;
         }
+
+
+        private function getLoanTypeById($id){
+            $this->db->select("loan_name");
+            $this->db->from("payroll.loans");
+            $this->db->where("is_archive", 0);
+            $this->db->where("id", $id);
+            $query = $this->db->get();
+            $result = $query->row();
+            $this->db->reset_query();
+            return $result->loan_name;
+        }
+      
+        public function getEmployeeCurrentCompany($id){
+            $this->db->select("company_id, position, department_id");
+            $this->db->from($this->employeeTable);
+            $this->db->where("id", $id);
+            $query = $this->db->get();
+            $result = $query->row();
+            return $result;
+        }
+
+        private function getCompanyById($id){
+            $this->db->select("description");
+            $this->db->from($this->companyTable);
+            $this->db->where('id', $id);
+            $query = $this->db->get(); 
+            $result = $query->row();
+            $this->db->reset_query();
+            return $result;
+
+        }
+
     }

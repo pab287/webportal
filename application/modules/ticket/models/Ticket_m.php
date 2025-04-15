@@ -13,7 +13,7 @@ class Ticket_m extends CI_Model
         $this->load->model("datatable_model", "dt_model");
         $this->user_data = $this->session->userdata("logged_in");
         $this->load->model("core/upload_model", "file_upload");
-        $this->current_action = $this->core_layout->getCurrentActions();
+        $this->current_actions = $this->core_layout->getCurrentActions();
     }
 
     //function to display all ticketing entries
@@ -31,11 +31,10 @@ class Ticket_m extends CI_Model
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
         $rowCount = 0;
         $rowData = array();
-
         $view_own_request = (in_array("view_own_request", $this->core_layout->getCurrentActions())) ? true : false;
-
-        $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request);
-        $rowCount = $this->get_ticket_masterfile_count($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request);
+        $payroll =  (in_array("payroll_ticket", $this->core_layout->getCurrentActions())) ? true : false;
+        $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll);
+        $rowCount = $this->get_ticket_masterfile_count($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll);
 
         $totalNotFiltered = $rowCount;
 
@@ -46,7 +45,7 @@ class Ticket_m extends CI_Model
         return $resultset;
     }
 
-    public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request){
+    public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll){
         $resultset = array();
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id");
@@ -57,11 +56,19 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as sub" , "sub.name = a.sub_category", 'LEFT');
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
-        $this->db->where('a.is_archived', '0');
-        $this->db->where('a.status !=', "cancelled");
-        if($view_own_request){
-            $this->db->where('requestor', $this->user_data['emp_id']);
+        $current_user_id = $this->user_data['emp_id'];
+        if($payroll) {
+            $this->db->where('cat.name', 'payroll');
         }
+        if($view_own_request) {
+            if($payroll) {
+                $this->db->or_where('a.requestor', $current_user_id);
+            } else {
+                $this->db->where('a.requestor', $current_user_id);
+            }
+        }
+        $this->db->where('a.is_archived', '0');
+        $this->db->where("LOWER(a.status) != 'Cancelled'");
         if ($query_builder) {
             $lower_query = strtolower($query_builder);
             if (
@@ -119,7 +126,7 @@ class Ticket_m extends CI_Model
         return $resultset;
     }
     
-    private function get_ticket_masterfile_count($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request){
+    private function get_ticket_masterfile_count($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll){
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
@@ -129,9 +136,17 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '0');
-        $this->db->where('a.status !=', "cancelled");
-        if($view_own_request){
-            $this->db->where('requestor', $this->user_data['emp_id']);
+        $this->db->where("LOWER(a.status) != 'Cancelled'", NULL, FALSE);
+        $current_user_id = $this->user_data['emp_id']; 
+        if($payroll) {
+            $this->db->where('cat.name', 'payroll');
+        }
+        if($view_own_request) {
+            if($payroll) {
+                $this->db->or_where('a.requestor', $current_user_id);
+            } else {
+                $this->db->where('a.requestor', $current_user_id);
+            }
         }
         if($query_builder){
             $this->db->where($query_builder);
@@ -216,6 +231,7 @@ class Ticket_m extends CI_Model
         if ($limit != -1) {
             $this->db->limit($limit, $offset);
         }
+        $this->db->group_by("a.id");
         $query = $this->db->get();
         if ($query->num_rows() > 0) {
             $resultset = $query->result();
@@ -260,6 +276,7 @@ class Ticket_m extends CI_Model
         if($query_builder){
             $this->db->where($query_builder);
         }
+        $this->db->group_by("a.id");
         $query = $this->db->get();
         return $query->num_rows();
     }
@@ -682,7 +699,7 @@ class Ticket_m extends CI_Model
             $sub_category = 0;
         }
 
-        switch($post['category']) {
+        switch(strtolower($post['category'])) {
             case 'webportal':
             case 'website':
                 $responsibility = "SOFTWARE DEVELOPMENT";
@@ -692,10 +709,18 @@ class Ticket_m extends CI_Model
             case 'outlook':
                 $responsibility = "IT SUPPORT";
                 break;
+            case 'payroll':
+                $responsibility = "PAYROLL";
+                break;
                 
             case 'software':
                 $responsibility = $post['responsibility'];
                 break;
+
+            case 'inventory system':
+                $responsibility = "SOFTWARE DEVELOPMENT";
+                break;
+
             default:
                 $responsibility = "IT SUPPORT";
                 break;
@@ -747,7 +772,7 @@ class Ticket_m extends CI_Model
             'requestor' => $this->user_data['emp_id'],
             'requested_date' => $requested_date,
             'attachment' => implode(",",$img_arr),
-            'priority' => 'low',
+            'priority' => $post['severity'],
             'status' => 'open',
             'created_at' => $date,
             'responsibility' => $responsibility
@@ -779,6 +804,7 @@ class Ticket_m extends CI_Model
 
     function updateTicket($id){
         $post = $this->input->post();
+        $performed_by = (isset($post["performed_by"]) && $post["performed_by"]) ? $post["performed_by"] : 0;
         if(isset($post['category']) && $post['category'] == "webportal"){
             if(isset($post['sub_category'])){
                 $sub_category = $post['sub_category'];
@@ -788,7 +814,7 @@ class Ticket_m extends CI_Model
             $sub_category = 0;
         }
 
-        switch($post['category']) {
+        switch(strtolower($post['category'])) {
             case 'webportal':
             case 'website':
                 $responsibility = "SOFTWARE DEVELOPMENT";
@@ -798,9 +824,20 @@ class Ticket_m extends CI_Model
             case 'outlook':
                 $responsibility = "IT SUPPORT";
                 break;
+            case 'payroll':
+                $responsibility = "PAYROLL";
+                break;
                 
             case 'software':
                 $responsibility = $post['responsibility'];
+                break;
+
+            case 'inventory system':
+                $responsibility = "SOFTWARE DEVELOPMENT";
+                break;
+                
+            default:
+                $responsibility = "IT SUPPORT";
                 break;
         }
 
@@ -824,7 +861,7 @@ class Ticket_m extends CI_Model
             'message' => $post['issue'],
             // 'attachment' => implode(",",$img_arr),
             'priority' => $post['severity'],
-            'performed_by' => $post['performed_by'],
+            'performed_by' => $performed_by,
             'status' => $post['status'],
             'responsibility' => $responsibility
         );
@@ -1084,24 +1121,27 @@ class Ticket_m extends CI_Model
             $telegram_msg .= '<b>Date Needed</b>: '.strtoupper($data['requested_date']).chr(10);
         }
 
-		if($this->telegram_config_if_exist('new_ticket', 'count') > 0){
-
+        if ($data['responsibility'] == "PAYROLL") {
+            $config_key = 'new_ticket_payroll';
+        } else {
+            $config_key = 'new_ticket';
+        }
+        
+        if ($this->telegram_config_if_exist($config_key, 'count') > 0) {
             $inline_keyboard = [
                 [
                     [
                         "text" => "View Ticket",
-                        // "url" => 'http://152.69.208.158/web/ticket/ticket/edit_ticket?id=427' //doesnt send message when in development or in local
-                        "url" => base_url('ticket/ticket/edit_ticket?id=').$id
+                        // "url" => 'http://58.69.100.66/portaldev/ticket/ticket/edit_ticket?id='.$id //doesnt send message when in development or in local
+                        "url" => site_url('ticket/ticket/edit_ticket?id=') . $id
                     ]
                 ]
             ];
-
             $reply_markup = [
                 "inline_keyboard" => $inline_keyboard
             ];
-
-			$this->telegram($telegram_msg, $reply_markup);
-		}
+           $this->telegram($telegram_msg, $reply_markup, $config_key);
+        }
 
 		return $telegram_msg;
 	}
@@ -1118,9 +1158,9 @@ class Ticket_m extends CI_Model
 		}
 	}
 
-    public function telegram($msg, $reply_markup){
+    public function telegram($msg, $reply_markup,$config_key){
 		try {
-			$data = $this->telegram_config_if_exist('new_ticket', 'data');
+			$data = $this->telegram_config_if_exist($config_key, 'data');
 			if($data){
 
 				$telegrambot=$data->telegram_bot_token;
@@ -1190,5 +1230,35 @@ class Ticket_m extends CI_Model
         }
         return $delete;
       }
+
+      public function select2PerformedByPayrollData() {
+        $query = $this->db->query("SELECT c.id, CONCAT(c.firstname,' ',c.lastname) as emp_name 
+                                  FROM gccmaster.tblusers b, gccmaster.tblemployees c 
+                                  WHERE b.emp_id = c.id 
+                                  AND c.employee_status = 'Active' 
+                                  AND (b.role_id = 14 OR b.role_id = 124 OR b.role_id = 144) 
+                                  ORDER BY c.firstname ASC");
+        
+        $resultarray = array();
+        
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $data["id"] = $_query["id"];
+                $data["text"] = $_query["emp_name"];
+                $resultarray[] = $data;
+            }
+        }
+        
+        return $resultarray;
+    }
+
+    public function getDepartmentID(){
+        $this->db->select('department_id');
+        $this->db->from('gccmaster.tblemployees');
+        $this->db->where('id', $this->user_data['emp_id']);
+        $query = $this->db->get();
+        return $query->row()->department_id;
+    }
 
 }

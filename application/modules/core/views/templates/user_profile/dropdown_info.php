@@ -80,6 +80,17 @@
                              </span>
                         </a>
                     </li>
+                    <?php
+                    $twoFactorAuth = isset($this->session->userdata("logged_in")['TwoFactorAuth']) ? $this->session->userdata("logged_in")['TwoFactorAuth'] : 0;
+                    ?>
+                    <li class="m-nav__item">
+                        <a href="javascript:void(0);" class="m-nav__link" onclick="activate2FA(<?php echo $twoFactorAuth; ?>); return false;">
+                            <i class="m-nav__link-icon flaticon-user-ok"></i>
+                            <span class="m-nav__link-text 2FA">
+                                <?php echo ($twoFactorAuth == 1) ? 'Disable 2FA' : 'Enable 2FA'; ?>
+                            </span>
+                        </a>
+                    </li>
                     <li class="m-nav__separator m-nav__separator--fit"></li>
                     <li class="m-nav__item">
                         <a href="<?= site_url('login/logout') ?>"

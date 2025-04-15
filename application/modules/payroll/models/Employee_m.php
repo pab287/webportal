@@ -841,15 +841,38 @@
         }
 
         function updateEmployeeLoan($id) {
+            $currentCompanyData = $this->getEmployeeLoanById($id);
+
+            $post2 = $this->input->post();
+            $fullname =  $this->getEmployeeName($post2['emp_id']);
+            $raw_amount = $post2['amount'];
+            $formatted_amount = number_format(floatval(str_replace(',', '', $raw_amount)), 2, '.', '');
+
+            $amount = $post2['amount'];
+            $cleanAmount = str_replace(',', '', $amount);
+            if (!is_numeric($cleanAmount)) {
+                $resultSet["status"] = FALSE;
+                $resultSet["response"] = "Invalid amount format. Please enter a valid number.";
+                $resultSet["message"] = "Invalid amount format. Please enter a valid number.";
+                $resultSet["title"] = "Error Occurred.";
+                $resultSet["toast"] = "error";
+                return $resultSet;
+            }
+
+            $post2['amount'] = $formatted_amount;
             $post = $this->arrayToStdClass($this->input->post());
             $post->amount = str_replace(",", "", $post->amount);
 
             if (intval($post->deduction_type) === 1) {
                 $post->fixed_deduction_amt = str_replace(",", "", $post->deduct_type_value);
                 $post->percentage = 0;
+                $post2['fixed_deduction_amt'] = $post->fixed_deduction_amt;
+                $post2['percentage'] = 0;
             } else {
                 $post->fixed_deduction_amt = 0;
                 $post->percentage = str_replace(",", "", $post->deduct_type_value);
+                $post2['fixed_deduction_amt'] = 0;
+                $post2['percentage'] = $post->percentage;
             }
 
             $lastInterestChargeLog = null;
@@ -894,6 +917,7 @@
             $resultSet = array();
 
             $resultSet["success"] = $update;
+            $changes = $this->logChanges($currentCompanyData ,$post2);
             if ($update) {
                 $resultSet["message"] = "Employee Loan was updated successfully.";
                 $resultSet["title"] = "Loan Updated";
@@ -901,19 +925,21 @@
                 $resultSet["fail_uploads"] = !empty($uploadResult) ? $uploadResult["upload_errors"] : array();
                 $resultSet["primary_pic"] = !empty($uploadResult) ? $uploadResult["success_primary_pic"] : null;
                 $resultSet["uploading_primary_pic_failed"] = !empty($uploadResult) ? $uploadResult["uploading_primary_pic_failed"] : null;
-                
+                $use = "user";
                 $q = $this->getLoanRemark($id);
 
-                $msg = "User updated the loan with the remarks of ".$q->remarks." to ".$post->remarks;
-                $this->core_layout->setEventLog($msg, "update", "success", "payroll");
+                // $msg = "User updated the loan with the remarks of ".$q->remarks." to ".$post->remarks;
+                // $this->core_layout->setEventLog($msg, "update", "success", "payroll");
 
                 if($lastInterestChargeLog){ $this->core_layout->setEventLog($lastInterestChargeLog, "update", "success", "payroll"); }
             } else {
                 $resultSet["message"] = $this->db->error()["message"];
                 $resultSet["title"] = "Error Occurred.";
                 $resultSet["toast"] = "error";
+                $use = "system";
             }
-
+            $resultSet["changes"] = $changes;
+            $this->core_layout->setEventLog("User updated loans for:  <strong>".$fullname."</strong> ".$changes, "update", $resultSet["toast"], "gcchris",$use);
             return $resultSet;
         }
 
@@ -2088,6 +2114,74 @@
             $qTemp = $this->db->get();
             if ($qTemp->num_rows() > 0){ return $qTemp->row(); }
             else { return false; }
+        }
+        
+        private function getEmployeeLoanById($id) {
+            $this->db->select("emp_loans.*, master_loans.loan_name, master_loans.has_ref");
+            $this->db->where("emp_loans.id", $id);
+            $this->db->join("payroll.loans master_loans", "master_loans.id = emp_loans.loan_id", "INNER");
+            return $this->db->get("gcchris.loans emp_loans")->row();
+        }
+
+        private function logChanges($currentData, $newData) {
+            $changes = array();
+            $changesString = '';
+            foreach ($currentData as $field => $value) {
+                if (isset($newData[$field]) && $newData[$field]!= $value) {
+                    $changes[$field] = array(
+                        'old' => $value,
+                        'new' => $newData[$field]
+                    );
+                }
+            }
+            foreach ($changes as $field => $change) {
+                if($change){
+                    if($field == 'loan_id'){
+                        $changesString.= " Field: $field, from: <strong>".$this->getLoanTypeById($change['old']) ."</strong>, to: <strong>".$this->getLoanTypeById($change['new'])."</strong>\n";
+                    }
+                    else if($field == 'deduction_type'){
+                        $oldStatus = $change['old'] == 1 ? 'fix amount' : 'percentage';
+                        $newStatus = $change['new'] == 1 ? 'fix amount' : 'percentage';
+                        $changesString .= " Field: $field, from: <strong>$oldStatus</strong>, to: <strong>$newStatus</strong>\n";
+                    }
+                    else if($field == 'active'){
+                        $oldStatus = $change['old'] == 1 ? 'active' : 'suspended';
+                        $newStatus = $change['new'] == 1 ? 'active' : 'suspended';
+                        $changesString .= " Field: $field, from: <strong>$oldStatus</strong>, to: <strong>$newStatus</strong>\n";
+                    }
+                    else if (strtolower($field) == 'percentage'){
+                        $changesString.= " Field: $field, from: <strong>" . round($change['old']) . "%</strong>, to: <strong>" . round($change['new']) . "%</strong>\n";
+                    }
+                    else{
+                        $changesString.= " Field: $field, from: <strong>$change[old]</strong>, to: <strong>$change[new]</strong>\n";
+                    }
+                }
+            }
+            return $changesString;
+        }
+
+        private function getEmployeeName($id){
+            $this->db->select("id, firstname, middlename, lastname, suffix");
+            $this->db->from("gccmaster.tblemployees");
+            $this->db->where("id", $id);
+            $query = $this->db->get();
+            $rs = $query->row();
+            $tempRs = (array)$rs;
+            $fullname = $this->core_layout->getDisplayName($tempRs);
+            $tempFullname = (object)$fullname;
+            $rs->display_name = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+            return $rs->display_name;
+        }
+
+        private function getLoanTypeById($id){
+            $this->db->select("loan_name");
+            $this->db->from("payroll.loans");
+            $this->db->where("is_archive", 0);
+            $this->db->where("id", $id);
+            $query = $this->db->get();
+            $result = $query->row();
+            $this->db->reset_query();
+            return $result->loan_name;
         }
 
     }

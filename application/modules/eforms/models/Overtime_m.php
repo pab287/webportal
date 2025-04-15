@@ -1063,10 +1063,10 @@ class Overtime_m extends CI_Model {
         $queryDetails = $this->db->get();
         if($queryDetails->num_rows() == 1){
             $rawData = $queryDetails->row();
-            $tempMaxDate = strtotime(trim($rawData->max_date));
-            $tempDateFrom = strtotime(trim($rawData->date_from));
-            $validOTDates = $tempDateFrom > $tempMaxDate;
-
+            $tempMaxDate = $rawData->max_date ? strtotime("+1 day", strtotime(trim($rawData->max_date))): null;
+            $tempDateFrom = $rawData->date_from ? strtotime(trim($rawData->date_from)): null;
+            $validOTDates = ($tempMaxDate && $tempDateFrom) && $tempDateFrom > $tempMaxDate;
+            
             $resultarray = $queryDetails->row_array();
             $resultarray["valid_ot_dates"] = $validOTDates;
             $resultarray["images"] = array();
@@ -1086,10 +1086,13 @@ class Overtime_m extends CI_Model {
                     if (count($imageParts) === 2) {
                         $thumbnail = "{$imageParts[0]}/thumbnails/{$imageParts[1]}";
                         $filename = $imageParts[1];
+                        $realImagePath = realpath("uploads/files/images/overtime/{$imagePath}");
+                        $isFileExist = file_exists($realImagePath);
                         $images[] = array(
                             'filename' => $filename,
                             'image' => base_url("uploads/files/images/overtime/{$imagePath}"),
                             'thumbnail' => base_url("uploads/files/images/overtime/{$thumbnail}"),
+                            'file_exists' => $isFileExist
                         );
                     }
                 }

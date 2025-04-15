@@ -1,3 +1,4 @@
+let performed_by = [];
 let getUrlParameter = function getUrlParameter(sParam) {
     let sPageURL = decodeURIComponent(window.location.search.substring(1)),
         sURLVariables = sPageURL.split('&'),
@@ -149,10 +150,16 @@ $.ajax({
         
         vmTab1.vm_tab1 = Object.assign({}, data);
 
+        if(vmTab1.vm_tab1.category == "payroll"){
+           performed_by = _tempContentData.performed_by_payroll;
+        }else{
+           performed_by = _tempContentData.performed_by;
+        }
+        
         $("#performed_by").select2({
             width: "100%",
             placeholder: "Select an option",
-            data: _tempContentData.performed_by,
+            data: performed_by,
             allowClear: true,
         });
         
@@ -169,14 +176,18 @@ $.ajax({
             data: _tempContentData.category,
             allowClear: true,
         });
-        
+        let reqq;
         $("#sub_category").select2({
             width: "100%",
             placeholder: "Select an option",
             data: _tempContentData.subcategory,
             allowClear: true,
         });
-        
+        if(data.performed_by_id != 0){
+             reqq = data.performed_by_id
+        }else{
+             reqq = null
+        }
         $("#category").on("change", function (e) {
             let type = $("#category option:selected").text();
             if(type == 'webportal'){
@@ -189,9 +200,32 @@ $.ajax({
             }else{
                 $("#dept-res").hide();
             }
+            $("#performed_by").select2("destroy");
+            $("#performed_by").empty();
+            if(type == 'payroll'){
+                console.log(data.performed_by_id,"Reqq",reqq);
+                $("#performed_by").select2({
+                    width: "100%",
+                    placeholder: "Select an option",
+                    data:  _tempContentData.performed_by_payroll,
+                    allowClear: true,
+                }).val(reqq).trigger('change');
+            }else{
+                $("#performed_by").select2({
+                    width: "100%",
+                    placeholder: "Select an option",
+                    data:  _tempContentData.performed_by,
+                    allowClear: true,
+                }).val(reqq).trigger('change');
+            }
         });
-        
-        
+
+        if(!_currentActions.includes('can_perform_ticket')){
+            $("#performed_by").select2("destroy");
+            $("#performed_by").empty();
+            $("#performed_by_block").remove();
+        }
+
         $("#status").select2({
             width: "100%",
             placeholder: "Select an option",
@@ -225,7 +259,6 @@ $.ajax({
             $('#responsibility').val(data.responsibility).trigger('change');
         }
         $('#status').val(data.status).trigger('change');
-        $('#performed_by').val(data.performed_by_id).trigger('change');
         $('#category').val(data.category).trigger('change');
         $('#severity').val(data.severity_id).trigger('change');
         $('#department').val(data.department_id).trigger('change');

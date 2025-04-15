@@ -193,6 +193,28 @@
                     </div>
                 </div>
             </div>
+
+            <?php if (isset($page) && $page == 'profile'): ?>
+                <div class="m-portlet">
+                    <div class="m-portlet__body p-3">
+                        <div class="m-form__group form-group row align-items-center m-0 justify-content-center">
+                            <label class="col-sm-4 col-md-4 col-lg-8 col-xl-8 col-form-label">
+                                Allow <span style="font-weight: 700">SMS</span> Notification? 
+                                <i class="flaticon-questions-circular-button" style="font-size: 14px" data-toggle="m-tooltip" 
+                                data-skin='dark' title='Toggle switch to enable/disable SMS notifications.'></i>
+                            </label>
+                            <div class="col-3">
+                                <span class="m-switch m-switch--sm">
+                                    <label class="m-0">
+                                        <input type="checkbox" checked="checked" :checked="main.allow_sms_notification == 1 ? 'checked' : false" @change="changeSMS($event)">
+                                        <span></span>
+                                    </label>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
         <div class="col-xl-9 offset-xl-0 col-lg-10 offset-lg-1">
 
@@ -387,28 +409,173 @@
 </div>
 
 <?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0)): ?>
-<div id="temp-payslip_content--container">
-<?php $this->load->view("core/profile/modals/payroll_payslip"); ?>
-<script>
-    const viewPayrollPayslipModal = $("#view-payroll-payslip-modal");
-    var vmPayslipContent = new Vue({
-        el: "#temp-payslip_content",
-        data: { row: {} },
-    });
+    <div id="temp-payslip_content--container">
+        <?php $this->load->view("core/profile/modals/payroll_payslip"); ?>
+    </div>
+    <script>
+        const viewPayrollPayslipModal = $("#view-payroll-payslip-modal");
+        var vmPayslipContent = new Vue({
+            el: "#temp-payslip_content",
+            data: { row: {} },
+        });
 
-    $("#table-payroll_sheet-payslip").DataTable({ ordering: false });
-    $("#table-payroll_sheet-payslip_filter input[type='search']").removeClass("form-control-sm");
-    const getPayrollSheetData = function(id){
-        if(id){
-            $.get(siteUrl('core/profile/get_payroll_sheet_data'), { id: id }, "json")
-            .done(function(data){
-                const json = JSON.parse(data);
-                let tempRow = json.response ? Object.assign({}, json.data) : {};
-                vmPayslipContent.row = Object.assign({}, tempRow);
-                if(json.response){ viewPayrollPayslipModal.modal("show"); }
-            });
+        $(document).ready( function () {
+            $("#table-payroll_sheet-payslip").DataTable({ ordering: false });
+            $("#table-payroll_sheet-payslip_filter input[type='search']").removeClass("form-control-sm");
+        });
+        
+        const getPayrollSheetData = function(id){
+            if(id){
+                $.get(siteUrl('core/profile/get_payroll_sheet_data'), { id: id }, "json")
+                .done(function(data){
+                    const json = JSON.parse(data);
+                    let tempRow = json.response ? Object.assign({}, json.data) : {};
+                    vmPayslipContent.row = Object.assign({}, tempRow);
+
+                    var data = json.data;
+                    var totalOT = parseFloat(vmPayslipContent.row.ot_amount) + parseFloat(vmPayslipContent.row.ot_ndiff_amount);
+                    var totalOTHrs = (parseFloat(vmPayslipContent.row.ot_minutes) + parseFloat(vmPayslipContent.row.ot_ndiff_minutes)) / 60;
+                    vmPayslipContent.total_ot_hrs = numberFormat(totalOTHrs);
+                    vmPayslipContent.ot_hrs = numberFormat(parseFloat(vmPayslipContent.row.ot_minutes)/60);
+                    vmPayslipContent.ot_computation = numberFormat(totalOT);
+                    vmPayslipContent.ot_ndiff_hrs = numberFormat(parseFloat(vmPayslipContent.row.ot_ndiff_minutes) / 60);
+                    vmPayslipContent.ot_ndiff_computation = numberFormat(parseFloat(vmPayslipContent.row.ot_ndiff_amount));
+
+                    let tempLoan = [];
+                    let tempOthers = [];
+                    let totalLoan = parseFloat(vmPayslipContent.row.totalLoan.replace(/,/g, ''));
+                    let totalDeduction = 0;
+                    let totalOthersDeductions = 0;
+                    let overAllTotal = 0;
+                    const tempCreatedAdjustments = data.created_adjustments;
+
+                    if (data.sss && parseFloat(data.sss) > 0) {
+                        totalDeduction = totalDeduction + parseFloat(data.sss.replace(/,/g, ''));
+                    }
+
+                    if (data.sss_prov && parseFloat(data.sss_prov) > 0) {
+                        totalDeduction = totalDeduction + parseFloat(data.sss_prov.replace(/,/g, ''));
+                    }
+                    
+                    if (data.ph && parseFloat(data.ph) > 0) {
+                        totalDeduction = totalDeduction + parseFloat(data.ph.replace(/,/g, ''));
+                    }
+                    
+                    if (data.hdmf && parseFloat(data.hdmf) > 0) {
+                        totalDeduction = totalDeduction + parseFloat(data.hdmf.replace(/,/g, ''));
+                    }
+                    
+                    if (data.tax && parseFloat(data.tax) > 0) {
+                        totalDeduction = totalDeduction + parseFloat(data.tax.replace(/,/g, ''));
+                    }
+
+                    if (json.data.loans.length > 0) {
+                        $.each(json.data.loans, function (index, item) {
+                            if (item.loan_name.toLowerCase() != 'charges' && item.loan_name.toLowerCase() != 'under deduction' && item.loan_name.toLowerCase() != 'medical loan') {
+                                var temp_amount = parseFloat(item.amount_due.replace(/,/g, ''));
+    
+                                // for adding cash advance with loan adjustments
+                                if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
+                                    const created_adjustments = tempCreatedAdjustments.split(",");
+                                    var tempAdj = 0;
+                                    created_adjustments.forEach((row, i) => {
+                                        const temp_adjustment = row.split("||");
+                                        const adj_type = parseInt(temp_adjustment[2]);
+                                        const temp_status = parseInt(temp_adjustment[3]);
+                                        let _temp = parseFloat(item.amount_due);
+                                        if (adj_type == 1) {
+                                            _temp = parseFloat(temp_amount) + parseFloat(temp_adjustment[1]);
+                                        } else {
+                                            _temp = parseFloat(temp_amount) - parseFloat(temp_adjustment[1]);
+                                        }
+
+                                        tempAdj = _temp;
+                                        _temp = _temp;
+
+                                        if (typeof item.loan_name !== "undefined" && item.loan_name.toLowerCase() == 'cash advance') {
+                                            if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
+                                                temp_amount = _temp;
+                                            }
+                                        } else {
+                                            // includes loan adjustments when employee has no cash advance
+                                            if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
+                                                if (!tempLoan.some(el => el.loan_name === 'CASH ADVANCE')) {
+                                                    tempLoan.push({
+                                                        'loan_name' : 'CASH ADVANCE',
+                                                        'amount_due' : temp_adjustment[1],
+                                                        'loan_type' : adj_type
+                                                    });
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+    
+                                tempLoan.push({
+                                    'loan_name' : item.loan_name,
+                                    'amount_due' : numberFormat(temp_amount),
+                                    'loan_type' : item.loan_type
+                                });
+                            }
+    
+                            // for adding the charges to Other Deductions
+                            if (item.loan_name.toLowerCase() == 'charges' || item.loan_name.toLowerCase() == 'under deduction' || item.loan_name.toLowerCase() == 'medical loan') {
+                                vmPayslipContent.row.adjustment_deductions.push({
+                                    'label' : item.loan_name,
+                                    'display_value' : item.amount_due,
+                                    'value' : item.amount_due,
+                                    'adj_type' : 0
+                                });
+    
+                                totalLoan = totalLoan - parseFloat(item.amount_due.replace(/,/g, ''));
+                            }
+                        });
+                    } else {
+                        if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
+                            const created_adjustments = tempCreatedAdjustments.split(",");
+                            var tempAdj = 0;
+                            created_adjustments.forEach((row, i) => {
+                                const temp_adjustment = row.split("||");
+                                const adj_type = parseInt(temp_adjustment[2]);
+                                const temp_status = parseInt(temp_adjustment[3]);
+                                let _temp = parseFloat(temp_adjustment[1]);
+    
+                                tempAdj = _temp;
+                                _temp = formatNumber(_temp);
+    
+                                if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
+                                    tempLoan.push({
+                                        'loan_name' : 'cash advance',
+                                        'amount_due' : _temp,
+                                        'loan_type' : adj_type
+                                    });
+                                }
+                            });
+                        }
+                    }
+
+                    $.each(vmPayslipContent.row.adjustment_deductions, function (index, item) {
+                        totalOthersDeductions = totalOthersDeductions + parseFloat(item.display_value.replace(/,/g, ''));
+                    });
+
+                    console.log(totalDeduction, totalLoan, totalOthersDeductions);
+                    overAllTotal = parseFloat(totalDeduction) + parseFloat(totalLoan) + parseFloat(totalOthersDeductions) + parseFloat(vmPayslipContent.row.total_loans_interest);
+
+                    vmPayslipContent.row.loans = tempLoan;
+                    vmPayslipContent.row.totalLoan = numberFormat(totalLoan);
+                    vmPayslipContent.row.total_allowances = numberFormat(vmPayslipContent.row.total_allowances);
+                    vmPayslipContent.row.deductions = numberFormat(totalDeduction);
+                    vmPayslipContent.row.total_others_deductions = numberFormat(totalOthersDeductions);
+                    vmPayslipContent.row.overall_total_deductions = numberFormat(overAllTotal);
+                    vmPayslipContent.row.adjustment_d_count = vmPayslipContent.row.adjustment_deductions.length;
+
+                    if(json.response){ viewPayrollPayslipModal.modal("show"); }
+                });
+            }
         }
-    }
-</script>
-</div>
+
+        function formatNumber(value, decimals = 2) {
+            return parseFloat(value).toLocaleString("en-US", { maximumFractionDigits: decimals });
+        }
+    </script>
 <?php endif; ?>

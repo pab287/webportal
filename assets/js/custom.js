@@ -626,3 +626,33 @@ function delay(callback, ms) {
       }, ms || 0);
     };
   }
+
+  function activate2FA(status) {
+    if (status == 1) {
+        $(".two-factor-modal .modal-title").text("Deactivate Two-Factor Authentication?");
+    } else {
+        $(".two-factor-modal .modal-title").text("Activate Two-Factor Authentication?");
+    }
+    $(".two-factor-modal").modal("show");
+    $("#confirmTwoFactor").off("click").on("click", function () {
+        $.ajax({
+            url: siteUrl("users/activate_2FA"), 
+            type: "POST",
+            data: {
+                csrf_token: _csrf_hash, 
+                status: status 
+            },
+            dataType: "JSON",
+            success: function (response) {
+                console.log("Response: ", response);    
+                if (response.success) {
+                    window.location.replace(response.redirect);
+                } else {
+                    $(".two-factor-modal").modal("hide");
+                    toastr.error(response.message,"Please contact IT Department");
+                }
+            },
+        });
+    });
+}
+

@@ -207,7 +207,7 @@ var tblForInterview = $("#table-for-interview")
             }
         });
     }
-$("#blacklistedSearch").donetyping(function(callback){
+$("#generalSearch").donetyping(function(callback){
     search_val = $(this).val();
     tblForInterview.ajax.reload();
 });

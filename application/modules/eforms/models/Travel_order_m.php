@@ -5032,9 +5032,11 @@
 
         function sendEmailv2($email, $email_address, $id){
             if($this->checkEmail($email_address)){
-                $data = $this->travel_order_details($id)['data'];
-                $data->destination = $this->travel_order_details($id)['destination'];
-                $data->personnel = $this->travel_order_details($id)['personnel'];
+                $data = $this->travel_order_detailsv2($id)['data'];
+                $data->destination = $this->travel_order_detailsv2($id)['destination'];
+                $data->personnel = $this->travel_order_detailsv2($id)['personnel'];
+                $data->personnel = json_decode(json_encode($data->personnel));
+                $data->destination = json_decode(json_encode($data->destination));
                 if (is_numeric($data->vehicle_id) && $data->vehicle_id != 0 && !empty($data->vehicle_id)) {
                     $vehicle_data = $this->vehicle_details($data->vehicle_id);
                     // $data->plateno = $vehicle_data['plateno']; -> original source code that causing error 'Cannot use object of type stdClass as array'
@@ -5279,4 +5281,59 @@
 
             return $restructuredArray;
         }
+
+        public function travel_order_detailsv2($id) {
+            $arrData = array();
+            $newPersonnel = array();
+            $newDestination = array();
+            $this->db->from('gcceforms.travel_order');
+            $this->db->where('id', $id);
+            $query = $this->db->get();
+            $travel_order_data = $query->row();
+
+            if($travel_order_data->vehicle_id == "0"){
+                $plateno = "";
+            }else{
+                if ($travel_order_data->vehicle_id) {
+                    $vehicle_data = $this->vehicle_details($travel_order_data->vehicle_id);
+                    $gen_code = $vehicle_data->gen_code;
+                    $plateno = $gen_code . " | " . $vehicle_data->plateno . " | " . $vehicle_data->name;
+                } else {
+                    $plateno = $travel_order_data->vehicle_id;
+                }
+            }
+
+            $travel_order_data->plateno = $plateno;
+
+            if($travel_order_data->accomplished_by > 0){
+                $travel_order_data->accomplished_by_name = $this->getPersonnelName($travel_order_data->accomplished_by);
+            }
+
+
+            $personnel = $this->db->get_where("gcceforms.travel_personnel", array("travel_order_id"=>$id))->result_array();
+            $destination = $this->db->get_where("gcceforms.travel_destination", array("travel_order_id"=>$id))->result_array();
+            foreach($personnel as $personnels){
+                $personnels['employee_name'] = $this->getPersonnelName($personnels['employee_id']); 
+                $newPersonnel[] = $personnels;
+            }
+            
+            foreach($destination as $destinations){
+                $destinations['requested_by'] = $this->getPersonnelName($destinations['requested_by']);
+                $destinations['date_from'] = date("M d, Y g:i A", strtotime($destinations['date_from']));
+                $destinations['date_to'] = date("M d, Y g:i A", strtotime($destinations['date_to']));
+                $newDestination[] = $destinations;
+            }
+
+            $end_travel_order_time = end($destination);
+
+            if(isset($destination[0]['date_from']) && $destination[0]['date_from']){
+                $travel_order_data->duration = date("M d, Y g:i A", strtotime($destination[0]['date_from']))." - ".date("M d, Y g:i A", strtotime($end_travel_order_time['date_to']));
+            }
+
+            $arrData['data'] = $travel_order_data;
+            $arrData['personnel'] = $newPersonnel;
+            $arrData['destination'] = $newDestination;
+            return $arrData;
+        }
+
     }

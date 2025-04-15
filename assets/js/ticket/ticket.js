@@ -180,7 +180,7 @@ function itemDatatableActions($id, $status) {
             "</a>";
         _actionButton += " <a style='text-decoration: none;' " +
             "   href='" + baseUrl('ticket/ticket/view_ticket?id=') + $id + "' " +
-            "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit'" +
+            "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnView'" +
             "   data-toggle='m-tooltip' data-placement='bottom' title='' data-delay='{\"show\": 200, \"hide\": 0}'" +
             "   data-original-title='View Ticket'" +
             "   data-skin='dark'>" +
@@ -188,7 +188,7 @@ function itemDatatableActions($id, $status) {
             "</a>";
         _actionButton += " <button " +
             "   type='button' " +
-            "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit' " +
+            "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnArchive' " +
             "   onclick='deleteR(" + $id + ")'" +
             "   data-toggle='m-tooltip' data-placement='bottom' title='' data-delay='{\"show\": 200, \"hide\": 0}'" +
             "   data-original-title='Archive Ticket'" +

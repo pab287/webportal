@@ -12,6 +12,13 @@ $("select#category").select2({
     allowClear: true,
 });
 
+$("#severity").select2({
+    width: "100%",
+    placeholder: "Select an option",
+    data: _tempContentData.severity,
+    allowClear: true,
+}).val('low').trigger('change');
+
 $("select#responsiblity").select2({
     width: "100%",
     placeholder: "Select an option",
@@ -31,7 +38,7 @@ $("select#department").select2({
     placeholder: "Select an option",
     data: _tempContentData.department,
     allowClear: true,
-});
+}).val(_tempContentData.department_id).trigger('change');
 
 $('#date_required').datetimepicker({
     todayHighlight: true,

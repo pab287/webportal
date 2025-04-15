@@ -79,6 +79,7 @@
     <?php $this->load->view("users/modal/change_password_dialog") ?>
     <?php $this->load->view("users/modal/change_pin_dialog") ?>
     <?php $this->load->view("users/modal/forget_pin_dialog") ?>
+    <?php $this->load->view("users/modal/two_factor_dialog") ?>
     <?php $mBodyClass = (isset($no_sidenav) && $no_sidenav)? "m-grid__item m-grid__item--fluid m-grid m-grid--hor-desktop m-grid--desktop m-body": "m-grid__item m-grid__item--fluid m-grid m-grid--ver-desktop m-grid--desktop m-body"; ?>
     <!-- begin::Body -->
     <div class="<?php echo $mBodyClass; ?>">

@@ -619,7 +619,7 @@
 
                         <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 form-group">
                             <label for="required" class="required">Amount</label>
-                            <input type="text" name="amount" autocomplete="off" class="form-control text-right"
+                            <input type="text" id="loan_amount" name="amount" autocomplete="off" class="form-control text-right"
                                    data-validation="required">
                         </div>
                     </div>
@@ -653,7 +653,7 @@
 
                         <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 form-group">
                             <label for="required" class="required" id="deduct_type_value_label">Value</label>
-                            <input type="text" name="deduct_type_value" value="20" data-validation="required"
+                            <input type="text" name="deduct_type_value" data-validation="required"
                                    autocomplete="off" class="form-control text-right">
                         </div>
                     </div>
@@ -956,26 +956,36 @@
         scrollToTopOnError: false,
         onSuccess: function (form) {
             let formData = $(form).serialize();
-            const approvingAuthority = typeof _tempContentData.approving_authority !== "undefined" && _tempContentData.approving_authority ? 
-                _tempContentData.approving_authority: false;
 
-            formData += "&approving_authority="+approvingAuthority;
-            $.ajax({
-                url: $(form).attr("action"),
-                type: "POST",
-                data: formData,
-                dataType: "json",
-                beforeSend: function () {
-                    $(".btn-submit", form).addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                },
-                success: function (json) {
-                    if (json.status) { toastr.success(json.response, "Notice", 5000); } 
-                    else { toastr.error(json.response, "Notice", 5000); }
-                    $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                    if(json.for_approval){  toastr.info(json.approval_notification, "For Approval", 5000); }
-                    dtHistoryPayrollInfo.ajax.reload();
-                }
-            });
+            const basic = $("input[name=basic_rate]").val();
+
+            if (parsefloat(basic) > 0.00) {
+                const approvingAuthority = typeof _tempContentData.approving_authority !== "undefined" && _tempContentData.approving_authority ? 
+                    _tempContentData.approving_authority: false;
+    
+                formData += "&approving_authority="+approvingAuthority;
+                $.ajax({
+                    url: $(form).attr("action"),
+                    type: "POST",
+                    data: formData,
+                    dataType: "json",
+                    beforeSend: function () {
+                        $(".btn-submit", form).addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    },
+                    success: function (json) {
+                        if (json.status) { toastr.success(json.response, "Notice", 5000); } 
+                        else { toastr.error(json.response, "Notice", 5000); }
+                        $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                        if(json.for_approval){  toastr.info(json.approval_notification, "For Approval", 5000); }
+                        dtHistoryPayrollInfo.ajax.reload();
+                    }
+                });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'The basic rate is invalid.'
+                })
+            }
 
             return false;
         },
@@ -2064,7 +2074,6 @@
     });
 
     function openEditEmployeeBenefitModal(id, rate, benefit_id) {
-        console.log(id);
         $("#id", editEmployeeBenefitsModal).val(id);
         $("input[name='rate']", editEmployeeBenefitsModal).val(rate);
         $("#update_benefit_id", editEmployeeBenefitsModal).val(benefit_id);
@@ -2140,7 +2149,7 @@
                 $("input[name='amount']", editEmployeeLoan)
                     .maskMoney({
                         prefix: '',
-                        allowNegative: true,
+                        allowNegative: false,
                         thousands: ',',
                         decimal: '.',
                         affixesStay: false
@@ -2149,15 +2158,30 @@
 
 
                 const deduct_type_value = parseFloat(deduction_type === 0 ? response.percentage : response.fixed_deduction_amt).toLocaleString('en-US', {maximumFractionDigits: 2});
-                $("input[name='deduct_type_value']", editEmployeeLoan)
+                if (deduction_type == 0) {
+                    $("input[name='deduct_type_value']", editEmployeeLoan)
                     .maskMoney({
                         prefix: '',
-                        allowNegative: true,
+                        allowNegative: false,
                         thousands: ',',
+                        affixesStay: false,
                         decimal: '.',
-                        affixesStay: false
+                        precision: 0
                     })
                     .val(deduct_type_value);
+                }else{
+                    $("input[name='deduct_type_value']", editEmployeeLoan)
+                    .maskMoney({
+                        prefix: '',
+                        allowNegative: false,
+                        thousands: ',',
+                        affixesStay: false,
+                        decimal: '.',
+                        precision: 2
+                    })
+                    .val(deduct_type_value);
+                }
+
                 
                 const has_interest = parseFloat(response.interest_percentage) > 0;
                 if(has_interest){  $("#has_interest_charge", editEmployeeLoan).removeClass("m--hide"); }
@@ -2165,7 +2189,7 @@
                     const hasClassHidden = $("#has_interest_charge", editEmployeeLoan).hasClass("m--hide");
                     if(!hasClassHidden){ $("#has_interest_charge", editEmployeeLoan).addClass("m--hide"); }
                 }
-                $("input[name='deduction_type'][value='" + response.deduction_type + "']", editEmployeeLoan).attr('checked', true);
+                $("input[name='deduction_type'][value='" + response.deduction_type + "']", editEmployeeLoan).prop('checked', true).closest('label').addClass('m--checked');
                 $("input[name='active'][value='" + response.active + "']", editEmployeeLoan).prop('checked', true);
                 $("input[name='last_interest_charge'][value='" + response.last_interest_charge + "']", editEmployeeLoan).prop('checked', true);
                 $("#for_remarks").text(response.remarks);
@@ -2185,7 +2209,7 @@
             const url = $(form).attr("action");
             const formData = new FormData(form[0]);
             formData.append("csrf_token", _csrf_hash);
-
+            formData.append("emp_id", <?php echo $data->id; ?>);
             $.ajax({
                 url,
                 type: "POST",
@@ -2268,6 +2292,23 @@
         vmNewLoanRefs.reference = null;
 
         $("#frm-newLoan", addEmployeeLoan)[0].reset();
+
+        $("#loan_amount")
+        .maskMoney({
+            prefix: '',
+            allowNegative: true,
+            thousands: ',',
+            decimal: '.',
+            affixesStay: false
+        });
+
+        $("input[name='deduct_type_value']", addEmployeeLoan).maskMoney({
+            prefix: '',
+            allowNegative: false,
+            affixesStay: false,
+            decimal: '.',
+            precision: 0
+        }).val(20);
     });
 
     const vmNewLoanRefs = new Vue({
@@ -2319,7 +2360,6 @@
                 if(typeof caRefs != "undefined" && caRefs.length == 1){
                     if(caRefs.hasClass("select2-hidden-accessible") == true){ 
                         caRefs.empty().select2("destroy"); 
-                        console.log("destroyed");
                     }
 
                     caRefs.select2().empty();
@@ -2691,9 +2731,24 @@
             const field = $("input[name='deduct_type_value']");
             if (parseInt($(this).val()) === 0) {
                 // $("#deduct_type_value_label").html("Value");
-                field.val(20);
+            
+                $(field).maskMoney({
+                    prefix: '',
+                    allowNegative: false,
+                    affixesStay: false,
+                    decimal: '.',
+                    precision: 0
+                }).val(20);
+                // field.val(20);
             } else {
                 // $("#deduct_type_value_label").html("Amount");
+                $(field).maskMoney({
+                    prefix: '',
+                    allowNegative: false,
+                    thousands: ',',
+                    decimal: '.',
+                    affixesStay: false
+                });
                 field.val('');
             }
         });

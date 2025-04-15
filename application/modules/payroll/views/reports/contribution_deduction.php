@@ -166,7 +166,7 @@
                                     <template v-if="item.is_active === true">
                                         <div class="col-4 col-md-4 col-lg-4 col-sm-12">
                                             <div class="form-group m-form__group text-center">
-                                                <label class="m--font-boldest">{{item.label}}</label>
+                                                <label for="" class="m--font-boldest">{{item.label}}</label>
                                                 <p class="m--font-bolder mb-0">{{item.value}}</p>
                                             </div>
                                         </div>
@@ -195,8 +195,8 @@
         </div>
     </div>
     
-    <div class="modal fade" tabindex="-1" role="dialog" id="modal-ps--signatory">
-        <div class="modal-dialog modal-lg" role="document">
+    <div class="modal fade" tabindex="-1" id="modal-ps--signatory">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content" id="signatory--content">
                 <div class="modal-header">
                     <h5 class="modal-title">Contribution / Deduction Signatories</h5>
