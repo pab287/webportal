@@ -1337,26 +1337,26 @@
             }
         }
 
-        protected function setAttendanceAppRecord(Attendance $att): bool{
+        protected function setAttendanceAppRecord($att = null){
             $resultResponse = false;
-            if ($att->biometricId) {
+            if ($att->biometric_id) {
                 $date = (new DateTime($att->datetime))->format('Y-m-d');
                 $time = (new DateTime($att->datetime))->format('H:i');
-                $maxPayrollDate = $this->getPayrollMaxDate($att->biometricId);
+                $maxPayrollDate = $this->getPayrollMaxDate($att->biometric_id);
 
                 if ($maxPayrollDate !== false && strtotime($date) > strtotime($maxPayrollDate)) {
-                    $this->db->where('biometric_id', $att->biometricId);
+                    $this->db->where('biometric_id', $att->biometric_id);
                     $this->db->where('DATE(`datetime`)', $date);
                     $this->db->like('TIME(datetime)', $time, 'both');
                     $existingRecord = $this->db->get('gcctimeutility.attendance');
 
                     if ($existingRecord->num_rows() === 0) {
                         $resultResponse = $this->db->insert('gcctimeutility.attendance', [
-                            'biometric_id' => $att->biometricId,
+                            'biometric_id' => $att->biometric_id,
                             'state' => $att->state,
                             'datetime' => $att->datetime,
-                            'verify_method' => $att->verifyMethod,
-                            'is_custom' => $att->isCustom,
+                            'verify_method' => $att->verify_method,
+                            'is_custom' => $att->is_custom,
                             'created_at' => date('Y-m-d H:i:s'),
                         ]);
                     }
