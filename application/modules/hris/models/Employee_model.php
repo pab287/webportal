@@ -10551,14 +10551,6 @@
                             }
                         }
                     }else{
-                        if($type == 1){
-                            $history = $this->set_salary_history($post['id']);
-                            if($history){
-                                $resultset['salary_history'] = 'Salary History Generated';
-                            }else{
-                                $resultset['salary_history'] = 'No Salary History Generated.';
-                            }
-                        }
     
                         $data = array("is_approved"=>$type, "approval_by"=>$this->core_layout->getCurrentEmployeeId(), "approval_at"=>date("Y-m-d H:i:s"));
                         $updated = $this->db->update("gccmaster.field_value_approval", $data, array("id"=>$post["id"]));
@@ -10611,6 +10603,15 @@
                                 $coreHistoryLog->saveLoggedEventHistory();
                                 
                                 $responseData = $this->employee_m->fieldValueApprovals("hris", $rowData->unique_id);
+
+                                if($type == 1){
+                                    $history = $this->set_salary_history($post['id']);
+                                    if($history){
+                                        $resultset['salary_history'] = 'Salary History Generated';
+                                    }else{
+                                        $resultset['salary_history'] = 'No Salary History Generated.';
+                                    }
+                                }
                             }
                             
                             $_payrollData = ucwords($payrollData);
