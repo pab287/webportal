@@ -63,6 +63,19 @@
             }
         }
 
+        public function fixed_taxable_deduction(){
+            $this->core_layout->setPageTitle("Payroll - Fixed Taxable Deduction");
+            $this->core_layout->setPrivilegeName("payroll_fixed_taxable_deduction");
+
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+            $this->core_layout->addJs("js/payroll/employee/fixed_taxable_deduction.js", true);
+
+            $this->load->view('core/templates/header');
+            $this->load->view('payroll/payroll/fixed_taxable_deduction');
+            $this->load->view('core/templates/footer');
+        }
+
         function employee_masterfile($employee_status = "Active") {
             $employee_status = str_replace("%20", " ", $employee_status);
             $data = $this->employee->employeeMasterfile($employee_status);
@@ -426,6 +439,41 @@
         
         function get_employee_list(){
             $data = $this->employee->getEmployeeList();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function get_employee_select2_data(){
+            $data = $this->employee->getSelect2Employee();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function add_taxable_deduction(){
+            $data = $this->employee->addTaxableDeduction();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function update_taxable_deduction(){
+            $data = $this->employee->updateTaxableDeduction();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function get_fixed_taxable_deduction(){
+            $data = $this->employee->getFixedTaxableDeduction();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function update_status_taxable_deduction(){
+            $data = $this->employee->updateStatusTaxableDeduction();
             $this->output
                 ->set_content_type('json')
                 ->set_output(json_encode($data));

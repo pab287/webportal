@@ -2867,7 +2867,7 @@ class Payroll_m extends CI_Model
         return $employees;
     }
 
-    function generateIncomeTaxCalculator($temp_taxable_income, $parameters = array()){
+    protected function generateIncomeTaxCalculator($temp_taxable_income, $parameters = array()){
         $tempTax = new stdClass();
         $tempTax->ee = 0;
         $tempTax->er = 0;
@@ -2882,6 +2882,8 @@ class Payroll_m extends CI_Model
         $has_tin_no = (isset($_contAcctNumber->tin_no) && $_contAcctNumber->tin_no)? true: false;
 
         if($temp_taxable_income > 0){
+            $alteredTaxableDeduction = $this->getFixedTaxableDeduction($parameters->emp_id);
+            
             $hasPreviousDeduction = new stdClass();
             $hasPreviousDeduction->sss = 0;
             $hasPreviousDeduction->sss_er = 0;
@@ -2901,6 +2903,23 @@ class Payroll_m extends CI_Model
                 $hasPreviousDeduction->sss_er = floatval($prev_deduction->row()->total_sss_er);
                 $hasPreviousDeduction->tax = floatval($prev_deduction->row()->tax_total);
             }
+            $this->db->reset_query();
+
+            $adj_prev_deduction = $this->db
+                    ->select("SUM(psa.amount) as tax_total")
+                    ->join("payroll.payroll_sheet_created_adjustments as psa", "psa.payroll_sheet_id = ps.id AND psa.particulars = 'TAX' AND psa.adj_type = 1", "INNER")
+                    ->where("ps.month_name", $parameters->month_name)
+                    ->where("ps.year", $parameters->year)
+                    ->where("ps.payroll_sched", $parameters->payout_sched)
+                    ->where("ps.emp_id", $parameters->emp_id)
+                    ->where("ps.posted", 1)
+                    ->where("ps.is_bonus", 0)
+                    ->group_by("ps.emp_id")
+                    ->get("payroll.payroll_sheet as ps");
+            if($adj_prev_deduction->num_rows() > 0){
+                $hasPreviousDeduction->tax += floatval($adj_prev_deduction->row()->tax_total);
+            }
+            $this->db->reset_query();
 
             $tempHdmf = $this->getHdmf($parameters->remittance_sched_ctr, 1, $temp_taxable_income, $has_pagibig_no);
             $tempPhic = $this->calculatePhilHealth($parameters->remittance_sched_ctr, $temp_taxable_income, 1, $parameters->gross_pay, $has_phealth_no);
@@ -2916,15 +2935,27 @@ class Payroll_m extends CI_Model
             $tempTax->taxable_income = $tempTaxableIncome;
             $tempTax->temp_taxable_income = $temp_taxable_income;
             $tempTax->previous_deduction = $hasPreviousDeduction;
+            $tempTax->temp_deduction = $tempDeduction;
+            $tempTax->arr_deductions = array("hdmf"=>$tempHdmf->ee, "phic"=>$tempPhic->ee, "sss"=>$tempSss->ee);
+            $tempTax->original_tax = array("ee"=>$tempTax->ee, "er"=>$tempTax->er, "total"=>$tempTax->total);
+            $tempTax->alter_taxable_deduction = $alteredTaxableDeduction > 0;
+            if($alteredTaxableDeduction > 0){ $tempTax->ee = $alteredTaxableDeduction; }
 
-            if(($hasPreviousDeduction->tax == 0 && $parameters->is_last_remittance_schedule == false) ||
-            ($hasPreviousDeduction->tax > 0 && $parameters->is_last_remittance_schedule == true)){
+            if(($hasPreviousDeduction->tax == 0 && $parameters->is_last_remittance_schedule === false) ||
+            ($hasPreviousDeduction->tax > 0 && $parameters->is_last_remittance_schedule === true)){
                 $tempTax->ee = floatval($tempTax->ee);
                 $tempTax->er = floatval($tempTax->er);
                 $tempTax->total = floatval($tempTax->total);
                 
-                if($tempTax->ee > 0){ $tempTax->ee = $tempTax->ee / 2; }
-                if($tempTax->er > 0){ $tempTax->er = $tempTax->er / 2; }
+                if ($tempTax->ee > 0) {
+                    $halfEe = $tempTax->ee / 2;
+                    if ($hasPreviousDeduction->tax > 0 && $hasPreviousDeduction->tax <= $tempTax->ee && $halfEe != $hasPreviousDeduction->tax) {
+                        $tempTax->ee = $tempTax->ee - $hasPreviousDeduction->tax;
+                    } else {
+                        $tempTax->ee = $halfEe;
+                    }
+                }
+                if ($tempTax->er > 0){ $tempTax->er = $tempTax->er / 2; }
 
                 $tempTax->ee = round($tempTax->ee, 2);
                 $tempTax->er = round($tempTax->er, 2);
@@ -4031,14 +4062,14 @@ class Payroll_m extends CI_Model
         return $sss;
     }
 
-    private function calculateTax($taxable_income, $payroll_schedule, $switch = 1, $gross_pay = 0, $hasTinNo = true)
-    {
+
+    public function calculateTax($taxable_income, $payroll_schedule, $switch = 1, $gross_pay = 0, $hasTinNo = true){
         $tax = new StdClass();
         $tax->ee = 0;
         $tax->er = 0;
         $tax->total = 0;
 
-        if (intval($gross_pay) <= 0 || $hasTinNo == false) {
+        if (intval($gross_pay) <= 0 || $hasTinNo === false) {
             return $tax;
         }
 
@@ -8132,6 +8163,19 @@ class Payroll_m extends CI_Model
         return $flatArray;
     }
 
+    protected function getFixedTaxableDeduction($id = 0){
+        if($id){
+            $this->db->select("taxable_amount");
+            $this->db->from("payroll.fixed_taxable_deduction");
+            $this->db->where("employee_id", $id);
+            $this->db->where("is_active", 1);
+            $taxable = $this->db->get();
+            if ($taxable->num_rows() == 1){
+                return floatval($taxable->row()->taxable_amount);
+            } else { return 0; }
+        } else { return 0; }
+    }
+    
     public function setPrintablePayslipOthers($ids=array()){
         $resultset = array();
         $post = $this->input->post();

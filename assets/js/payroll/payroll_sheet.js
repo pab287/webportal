@@ -927,25 +927,20 @@ let dtPayrollSheet = _tblPayrollSheet
                 orderable: false,
                 className: "text-right",
                 render: function (data, type, row) {
-                    if (!data) {
-                        return `---`;
-                    }
-
+                    if (!data) { return `---`; }
                     let template = ``;
-                    let total_custom_adjustments = 0;
                     const custom_adjustments = data.split(",");
                     custom_adjustments.forEach((row, i) => {
                         const custom_adjustment = row.split("||");
                         const marginClass = i > 0 ? "mt-1" : "";
-                        const dividerClass = custom_adjustments.length === (i + 1) ? "custom-adjustment-total-divider" : "";
                         const adj_type = parseInt(custom_adjustment[2]);
                         const adjTypeClass = adj_type === 0 ? "m--font-danger" : "";
 
                         template += `<div class="mb-0 m--regular-font-size-sm1 m--font-bolder ${marginClass}">
-                                        <span>${custom_adjustment[0]}</span>
-                                        <span> - </span>
-                                        <span class="m--font-boldest ${adjTypeClass}">${numberFormat(custom_adjustment[1])}</span>
-                                     </div>`;
+                            <span>${custom_adjustment[0]}</span>
+                            <span> - </span>
+                            <span class="m--font-boldest ${adjTypeClass}">${numberFormat(custom_adjustment[1])}</span>
+                        </div>`;
                     });
 
                     return template;
@@ -1209,13 +1204,10 @@ let dtPayrollSheet = _tblPayrollSheet
                 className: "text-right",
                 render: function (data, _type, row) {
                     let approvedAmount = parseFloat(data);
-                    const tempData = numberFormat(data);
-
                     let template = ``;
-                    template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
                     if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
-                        var tempAdj = 0;
+                        let tempAdj = 0.00;
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
@@ -1264,10 +1256,8 @@ let dtPayrollSheet = _tblPayrollSheet
                     const tempDeduction = row.sss_hdmf_loan_deduction;
                     if (typeof tempDeduction !== "undefined" && tempDeduction) {
                         const deductions = tempDeduction.split(",");
-                        var deductedAmount = 0;
                         deductions.forEach((row, i) => {
                             const custom_deduction = row.split("||");
-                            const marginClass = i > 0 ? "mt-1" : "";
                             const _adj_type = parseInt(custom_deduction[2]);
                             const _adj_details = custom_deduction[0];
 
@@ -1287,7 +1277,8 @@ let dtPayrollSheet = _tblPayrollSheet
                         _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { total_loans: approvedAmount });
                         _dtRowLOAN.push(parseInt(row.id));
                     }
-                    return template;
+
+                    return $.isNumeric(template) === true ? numberFormat(template): template;
                 }
             },
             // charges
@@ -1917,14 +1908,13 @@ $("#form-emp-loans").submit( function(e){
 
     generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date, payrollGroup, globalWithLoans);
     $("#modal-ps--with-loans").modal('hide');
-    $(this).trigger('reset')[0];
+    return $(this).trigger('reset')[0];
 });
 
 $("#modal-ps--with-loans").on("shown.bs.modal", function(){
     const cancelAction = $(this).find("#cancel-emp-loans");
     if(typeof cancelAction !== "undefined" && cancelAction.length == 1){
         cancelAction.on("click", function(){
-            $("#form-emp-loans").trigger('reset')[0];
             const date_range = $("input[name='date_range']", '#frm-filter').val();
             const employees = $("#employees", '#frm-filter').val();
             const company = $("#company", '#frm-filter').val();
@@ -1936,6 +1926,8 @@ $("#modal-ps--with-loans").on("shown.bs.modal", function(){
             setTimeout(function(){
                 generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date, payrollGroup);
             }, 250);
+
+            return $("#form-emp-loans").trigger('reset')[0];
         });
     }
 });
@@ -2048,7 +2040,7 @@ function generate_ps(date_range, employees, company, payout_schedule, payout_seq
                                         tempRows = Object.assign({}, json.data);
                                     }
                                     vmPsNotification.count = tempCount;
-                                    if (vmPsNotification.notification_clicked == true) {
+                                    if (vmPsNotification.notification_clicked === true) {
                                         vmPsNotification.notification_clicked = false;
                                     }
                                     vmPsNotificationModal.count = tempCount;
@@ -2076,7 +2068,7 @@ function generate_ps(date_range, employees, company, payout_schedule, payout_seq
 
                 setTimeout(function () {
                     const rowCount = dtPayrollSheet.rows().count();
-                    if (rowCount > 0 && isCollapsedPortlet == true) { isCollapsedPortlet = _tblPortletPS.expand(); }
+                    if (rowCount > 0 && isCollapsedPortlet === true) { isCollapsedPortlet = _tblPortletPS.expand(); }
                 }, 500);
 
                 if (typeof selectedCompany.id !== "undefined" && selectedCompany.id !== null && selectedCompany.id) {
@@ -2439,6 +2431,7 @@ var vmPsFilterHistoryModal = new Vue({
             selectedCompany = Object.assign({}, data.company_collection);
             const tempId = data.payout_schedule;
             if(typeof psOccurrence[tempId] !== "undefined" && psOccurrence[tempId].length > 0){
+                $("#payroll_sequence").empty();
                 $.each(psOccurrence[tempId], function(_kk, _vv){
                     const newOption = new Option(_vv.text, _vv.id, false, false);
                     $("#payroll_sequence").append(newOption);
@@ -2465,6 +2458,8 @@ var vmPsFilterHistoryModal = new Vue({
 
             $("#frm-filter #employees").prop("disabled", false);
             if(data.employees_count > 0){
+                const hasPayrollGroup = data.group_count > 0;
+                $("#frm-filter #employees").empty();
                 $.each(data.employees_collection, function(_kxx, vxx){
                     const newGroupOption = new Option(vxx.text, vxx.id, false, false);
                     $("#frm-filter #employees").append(newGroupOption);
@@ -2472,10 +2467,12 @@ var vmPsFilterHistoryModal = new Vue({
                 $("#frm-filter #employees")
                 .val(data.employees)
                 .trigger("change")
-                .prop("disabled", true);
+                .prop("disabled", hasPayrollGroup);
             }
 
+            $("#company, #payout_schedule, #date-range").validate();
             psFilterHistoryModal.modal("hide");
+            toastr.info("Payroll Sheet, history filter has been applied.", "Payroll Sheet - Filter History", { timeOut: 5000 });
         }
     }
 });
@@ -2691,28 +2688,11 @@ cbSelectAll.on('change', function (e) {
     const checkedValue = e.target.checked;
     // select all in current page only
     $('tbody input[type=\'checkbox\']', _tblPayrollSheet).prop('checked', checkedValue);
-
-    // select all checkboxes even in other pages
-    /*dtPayrollSheet.column(0).nodes().to$().each(function (index) {
-        if (checkedValue) {
-            $(this).find('input[type="checkbox"]').prop('checked', 'checked');
-        } else {
-            $(this).find('input[type="checkbox"]').removeProp('checked');
-        }
-    });*/
     dtPayrollSheet.draw();
 });
 
-_tblPayrollSheet
-    .on('change', 'tbody input[type=\'checkbox\']', function () {
-        checkCbSelectAll();
-    });
-
-_tblPayrollSheet
-    .on('draw.dt', function () {
-        const pageInfo = dtPayrollSheet.page.info();
-        checkCbSelectAll();
-    });
+_tblPayrollSheet.on('change', 'tbody input[type=\'checkbox\']', function () { checkCbSelectAll(); });
+_tblPayrollSheet.on('draw.dt', function () { checkCbSelectAll(); });
 
 function checkCbSelectAll() {
     const cbCount = $('tbody input[type=\'checkbox\']', _tblPayrollSheet).length;
