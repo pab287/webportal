@@ -2422,7 +2422,7 @@ class Timesheet_model extends CI_Model{
         }
 
         $flexibleEmployee = intval($employee_time_sheet->is_flexi) == 1 && $isFlexibleEmployee;
-        $hasOT = intval($employee_time_sheet->has_overtime) == 1;
+        /*** $hasOT = intval($employee_time_sheet->has_overtime) == 1; ***/
         $isHoliday = (isset($employee_time_sheet->is_holiday) && intval($employee_time_sheet->is_holiday) == 1)? true: false;
 
         /*** attendance record ***/
@@ -2557,7 +2557,7 @@ class Timesheet_model extends CI_Model{
                     $tempAmInx = strtotime(date("Y-m-d H:i", strtotime("+2 hours", strtotime($employee_time_sheet->date . " " . $employee_time_sheet->shift_am_start))));
                     $has2hrsDeduction = true;
                 }
-                if($flexibleEmployee && $has2hrsDeduction == false && $allow_late_adjustment == false){ $tempAmInx = $_am_start; }
+                if($flexibleEmployee && $has2hrsDeduction === false && $allow_late_adjustment === false){ $tempAmInx = $_am_start; }
                 /*** am 2hrs deduction custom ***/
 
                 if($superFlexibleEmployee){
@@ -2596,7 +2596,7 @@ class Timesheet_model extends CI_Model{
         }
 
         if(($pm_in && $pmHalfDayAbsent) && ($pm_in > $pmHalfDayAbsent) && $allow_late_adjustment === false && $isHourlySlashPartimer === false){ $hasHalfDayDeduction = true; }
-        if($flexibleEmployee && $hasHalfDayDeduction == false && $allow_late_adjustment == false){ $employee_time_sheet->pm_late = 0; }
+        if($flexibleEmployee && $hasHalfDayDeduction === false && $allow_late_adjustment === false){ $employee_time_sheet->pm_late = 0; }
 
         if (($pm_in && $_pm_start && $_pm_end) && $pm_in >= $_pm_end) {
             $employee_time_sheet->pm_ut = round(($_pm_end - $_pm_start) / 60, 2);
@@ -2620,7 +2620,7 @@ class Timesheet_model extends CI_Model{
                 $tempPmInx = ($pm_in < $_pm_start) ? $_pm_start : $pm_in;
                 $tempPmOutx = ($pm_out > $_pm_end) ? $_pm_end : $pm_out;
 
-                if($flexibleEmployee && $hasHalfDayDeduction == false && $allow_late_adjustment == false){ $tempPmInx = $_pm_start; }
+                if($flexibleEmployee && $hasHalfDayDeduction === false && $allow_late_adjustment === false){ $tempPmInx = $_pm_start; }
 
                 if($superFlexibleEmployee){
                     $tempPmInx = $_pm_start;
