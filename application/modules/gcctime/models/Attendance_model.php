@@ -1312,10 +1312,13 @@
             
         }
 
+
         public function syncAttendanceApp($dateFrom=null, $dateTo=null){
-            $tempDateFrom = $dateFrom ? date("Y-m-d", strtotime($dateFrom)) : date("Y-m-d");
+            $tempDateFrom = $dateFrom ? date("Y-m-d", strtotime($dateFrom)) : date("Y-m-d", strtotime("-1 day"));
             $tempDateTo = $dateTo ? date("Y-m-d", strtotime($dateTo)) : date("Y-m-d", strtotime("+1 day", strtotime($tempDateFrom)));
             if($tempDateFrom && $tempDateTo){
+                var_dump($tempDateFrom);
+                var_dump($tempDateTo);
                 $this->db->select("biometric_id, CONCAT(date,' ', time) as datetime,
                     IF(id > 0, 2, 2) as is_custom, IF(id > 0, 2, 2) as state,
                     CASE
@@ -1484,4 +1487,4 @@
             $data['results'] = $this->db->get("gcchris.tbldepartments")->result();
             return $data;
         }
-    } 
+    }

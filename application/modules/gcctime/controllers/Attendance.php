@@ -1627,9 +1627,7 @@
         }
 
         public function get_app_attendance(){
-            $tempDateFrom = "2025-01-15";
-            $tempDateTo = "2025-01-21";
-            $attend = $this->attendance->syncAttendanceApp($tempDateFrom, $tempDateTo);
+            $attend = $this->attendance->syncAttendanceApp();
             echo $attend;
         }
     }
