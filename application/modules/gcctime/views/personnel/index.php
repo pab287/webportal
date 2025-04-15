@@ -112,7 +112,7 @@
 							<col width="*">
 							<!-- col width="5%" -->
 							<col width="5%">
-							<col width="8%">
+							<col width="12%">
 							<thead>
 								<tr>
 									<th>Biometric #</th>
@@ -169,13 +169,13 @@
 					</div>
 					<div class="form-group row">
 						<div class="col-md-12 col-12 col-lg-12 col-xl-12 col-sm-12">
-							<label class="form-control-label">Flexible Time</label>
+							<label for="flexi-dropdown" class="form-control-label">Flexible Time</label>
 							<select name="is_flexi" id="flexi-dropdown" class="form-control">
-								<option value="0">Default</option>
-								<option value="1">Yes</option>
-								<option value="2">1 in 1 out only</option>
-								<option value="3">Super Flexi</option>
-								<option value="4" disabled>No in and no out</option>
+								<option value="4">Default - No time in or out</option>
+								<option value="3">Super Flexi - 1 in or 1 out</option>
+								<option value="1">Flexi - 1 in and 1 out</option>
+								<option value="2">Drivers - 1 in and 1 out</option>
+								<option value="0">Regular - 2 in and 2 out</option>
 							</select>
 
 							<!-- Original source code for reference -->
