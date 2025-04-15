@@ -16,7 +16,7 @@ Class Login_m extends CI_Model
 
     function login($username, $password)
     {
-        $this->db->select('tblusers.*,tblemployees.id as emp_id ,tblemployees.firstname,tblemployees.lastname, tblemployees.middlename, tblemployees.suffix, tblemployees.company_id, tblemployees.department_id, tblemployees.level');
+        $this->db->select('tblusers.*,tblemployees.id as emp_id ,tblemployees.firstname,tblemployees.lastname, tblemployees.middlename, tblemployees.suffix, tblemployees.company_id, tblemployees.department_id');
         $this->db->from('tblusers');
         $this->db->join('tblemployees', 'tblemployees.id = tblusers.emp_id');
         $this->db->where('tblusers.username', $username);
@@ -35,7 +35,7 @@ Class Login_m extends CI_Model
     function direct_login($username, $password){
 		$this->db->select('gccmaster.tblusers.*,gccmaster.tblemployees.id as emp_id ,gccmaster.tblemployees.firstname, 
 			gccmaster.tblemployees.lastname, gccmaster.tblemployees.middlename, gccmaster.tblemployees.suffix, 
-			gccmaster.tblemployees.company_id, gccmaster.tblemployees.department_id, tblemployees.level');
+			gccmaster.tblemployees.company_id, gccmaster.tblemployees.department_id');
 			
 		$this->db->from('gccmaster.tblusers');
 		$this->db->join('gccmaster.tblemployees','gccmaster.tblemployees.id = gccmaster.tblusers.emp_id');
@@ -52,7 +52,7 @@ Class Login_m extends CI_Model
 
     function loginUsingRememberToken($remember_token)
     {
-        $this->db->select('tblusers.*,tblemployees.id as emp_id ,tblemployees.firstname,tblemployees.lastname, tblemployees.middlename, tblemployees.suffix, tblemployees.company_id, tblemployees.department_id, tblemployees.level');
+        $this->db->select('tblusers.*,tblemployees.id as emp_id ,tblemployees.firstname,tblemployees.lastname, tblemployees.middlename, tblemployees.suffix, tblemployees.company_id, tblemployees.department_id');
         $this->db->from('tblusers');
         $this->db->join('tblemployees', 'tblemployees.id = tblusers.emp_id');
         $this->db->where('tblusers.remember_token', $remember_token);
@@ -153,7 +153,7 @@ Class Login_m extends CI_Model
                         'TwoFactorAuth' => $row->auth,
                         'last_update' => $row->last_update,
                         'waive_count' => $row->waive_password_update,
-                        'level' => $row->level,
+                        'is_important' => $row->is_important,
                     );
 
                     $this->session->set_userdata('logged_in', $sess_array);
@@ -217,7 +217,7 @@ Class Login_m extends CI_Model
                     'TwoFactorAuth' =>  $res[0]->auth,
                     'last_update' => $res[0]->last_update,
                     'waive_count' => $res[0]->waive_password_update,
-                    'level' => $res[0]->level,
+                    'is_important' => $res[0]->is_important,
                 );
                 $this->session->set_userdata('logged_in', $sess_array);
                 $this->db->trans_commit();
@@ -354,7 +354,7 @@ Class Login_m extends CI_Model
                 'TwoFactorAuth' => $res[0]->auth,
                 'last_update' => $res[0]->last_update,
                 'waive_count' => $res[0]->waive_password_update,
-                'level' => $res[0]->level,
+                'is_important' => $res[0]->is_important,
             );
             $this->db->where('emp_id', $emp_id);
             $this->db->set('resend_attempts',0, false);

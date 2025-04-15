@@ -87,7 +87,7 @@
     else {
         const lastUpdateDate = new Date(session.last_update);
         const currentDate = new Date();
-        const isSupervisory = session.level.toLowerCase() == 'supervisory' || session.level.toLowerCase() == 'managerial' || session.level.toLowerCase() == 'executive';
+        const isSupervisory = session.is_important == 1;
         
         const dayThreshold = isSupervisory ? 60 : 90;
         const thresholdDate = new Date();
