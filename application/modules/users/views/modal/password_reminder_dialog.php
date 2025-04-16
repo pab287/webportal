@@ -7,9 +7,9 @@
             <div class="modal-body">
                 <p>For your account security, we require you to update your password as it has been over 
                     <?php if ($this->session->userdata('logged_in')['is_important'] == 1): ?>
-                        90 days
-                    <?php else: ?>
                         60 days
+                    <?php else: ?>
+                        90 days
                     <?php endif; ?> 
                     since your last change. Please take a moment to set a new password now.
                 </p>

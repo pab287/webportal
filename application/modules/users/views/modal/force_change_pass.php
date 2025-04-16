@@ -89,12 +89,13 @@
         const currentDate = new Date();
         const isSupervisory = session.is_important == 1;
         
-        const dayThreshold = isSupervisory ? 60 : 90;
-        const thresholdDate = new Date();
-        thresholdDate.setDate(currentDate.getDate() - dayThreshold);
-        
+        const dayThreshold = isSupervisory ? 5 : 15;
+        const daysSinceUpdate = Math.floor((currentDate - lastUpdateDate) / (1000 * 60 * 60 * 24));
+        console.log(lastUpdateDate);
+        console.log(currentDate,dayThreshold);
+        console.log(lastUpdateDate >= dayThreshold);
         // Check if password update is required
-        if (lastUpdateDate <= thresholdDate) {
+        if (daysSinceUpdate >= dayThreshold) {
             $(".password-change-reminder").modal("show");
             
             if (session.waive_count >= 3) {

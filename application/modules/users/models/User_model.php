@@ -627,10 +627,10 @@ class User_model extends CI_Model
             ->from('gccmaster.tblusers')
             ->get()->row();
             if($user->is_important == 1){
-                $new_last_update = ($user->waive_password_update == 0) ? date('Y-m-d H:i:s', strtotime('+60 days')) : date('Y-m-d H:i:s');
+                $new_last_update = ($user->waive_password_update == 0) ? date('Y-m-d H:i:s', strtotime('+55 days')) : date('Y-m-d H:i:s');
             }
             else{
-                $new_last_update = ($user->waive_password_update == 0) ? date('Y-m-d H:i:s', strtotime('+90 days')) : date('Y-m-d H:i:s');
+                $new_last_update = ($user->waive_password_update == 0) ? date('Y-m-d H:i:s', strtotime('+75 days')) : date('Y-m-d H:i:s');
             }
             $this->db->set('waive_password_update', $user->waive_password_update + 1);
             $this->db->set('last_update', $new_last_update);
