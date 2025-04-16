@@ -95,7 +95,7 @@
         const daysSinceUpdate = Math.floor((currentDate - lastUpdateDate) / (1000 * 60 * 60 * 24));
         console.log(lastUpdateDate);
         console.log(currentDate,dayThreshold);
-        console.log(lastUpdateDate >= dayThreshold);
+        console.log(daysSinceUpdate >= dayThreshold);
         // Check if password update is required
         if (daysSinceUpdate >= dayThreshold) {
             $(".password-change-reminder").modal("show");
