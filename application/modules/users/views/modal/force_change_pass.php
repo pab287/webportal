@@ -81,12 +81,14 @@
         $(this).find('i').toggleClass('fa-eye fa-eye-slash');
     });
 
-    if (session.last_update == null || session.last_update == "0000-00-00 00:00:00") {
+
+    function checkPass(currr){
+        if (session.last_update == null || session.last_update == "0000-00-00 00:00:00") {
         $(".password-change-reminder").modal("show");
     }
     else {
         const lastUpdateDate = new Date(session.last_update);
-        const currentDate = new Date();
+        const currentDate = new Date(currr);
         const isSupervisory = session.is_important == 1;
         
         const dayThreshold = isSupervisory ? 5 : 15;
@@ -103,6 +105,8 @@
             }
         }
     }
+    }
+
 
     const $passwordInput = $('#newPasswordInput');
     const $helpSection = $('.m-form__help');
