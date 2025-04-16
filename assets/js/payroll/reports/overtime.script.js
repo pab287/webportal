@@ -178,11 +178,9 @@ const vmGeneratejournal = new Vue({
                     select2Multiple.prop("disabled", false);
                     setTimeout(function(){ 
                         currentForm[0].reset(); 
-                        console.log("trigger 1");
                         setTimeout(function(){
                             select2Multiple.val([]);
                             select2Multiple.trigger("change");
-                            console.log("trigger 2");
                         }, 250);
                     }, 750);
                 }
@@ -428,6 +426,14 @@ $(document).ready(function(){
                     } else { return '-'; }
                 }
             },
+            { data: 'ot_allowance', className: "text-right", width: '8%', 
+                render: function (data) {
+                    if (data && parseFloat(data) > 0) {
+                        const ot_allowance = parseFloat(data);
+                        return '₱ '+ot_allowance.toFixed(2);
+                    } else { return '-'; }
+                }
+            },
             { data: null, className: "text-right", width: '5%', 
                 render: function () { return '-'; }
             }, 
@@ -442,7 +448,7 @@ $(document).ready(function(){
             }
         ], rowGroup: {
             startRender: function ( _rows, group ) {
-                return $('<tr><td colspan="12" class="bg-secondary"><span class="m--font-boldest">' + group + '</span></td></tr>');
+                return $('<tr><td colspan="13" class="bg-secondary"><span class="m--font-boldest">' + group + '</span></td></tr>');
             },
             endRender: function ( rows, _group ) {
                 let OTadj = rows
@@ -465,7 +471,7 @@ $(document).ready(function(){
                 const uiTotal = `<strong>₱ ${numberFormat(total)}</strong>`;
 
                 const tempContainer = `<tr class="bg-secondary">
-                    <td colspan="10" class="text-right">&nbsp;</td>
+                    <td colspan="11" class="text-right">&nbsp;</td>
                     <td class="text-right">${uiAdjustmentAmount}</td>
                     <td class="text-right pr-3">${uiTotal}</td>
                     </tr>`;
@@ -510,14 +516,16 @@ $(document).ready(function(){
             const otPay20TotalIndex = 7;
             const otPay30TotalIndex = 8;
             const nDiffTotalIndex = 10;
-            const adjustmentIndex = 11;
-            const grandTotalIndex = 12;
+            const otAllowanceIndex = 11;
+            const adjustmentIndex = 12;
+            const grandTotalIndex = 13;
 
-            let otPayTotalAmount = api.column(otPayTotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
-            let otPay20TotalAmount = api.column(otPay20TotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
-            let otPay30TotalAmount = api.column(otPay30TotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
-            let nDiffTotalAmount = api.column(nDiffTotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
-            let totalAmount = api.column(grandTotalIndex).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let otPayTotalAmount = api.column(otPayTotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
+            let otPay20TotalAmount = api.column(otPay20TotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
+            let otPay30TotalAmount = api.column(otPay30TotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
+            let nDiffTotalAmount = api.column(nDiffTotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
+            let otAllowanceAmount = api.column(otAllowanceIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
+            let totalAmount = api.column(grandTotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
             
             const grandTotalAmount = parseFloat(totalAmount) + parseFloat(totalAdjustmentAmount);
             const footerLabelTotal = $(api.column(5).footer());
@@ -528,6 +536,7 @@ $(document).ready(function(){
             $(api.column(otPay20TotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otPay20TotalAmount) + "</span>");
             $(api.column(otPay30TotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otPay30TotalAmount) + "</span>");
             $(api.column(nDiffTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(nDiffTotalAmount) + "</span>");
+            $(api.column(otAllowanceIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otAllowanceAmount) + "</span>");
             $(api.column(adjustmentIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAdjustmentAmount) + "</span>");
             $(api.column(grandTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(grandTotalAmount) + "</span>");
         }

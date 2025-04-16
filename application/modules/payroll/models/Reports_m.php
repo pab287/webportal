@@ -4030,12 +4030,13 @@ class Reports_m extends CI_Model{
         if (is_array($filteredIds) && count($filteredIds) > 0) {
             $select = "a.id, a.emp_id, b.firstname, b.lastname, b.middlename, b.suffix, b.company_id, b.idno,
             a.total_accredited_ot_hrs as ot_hrs, a.total_accredited_ndiff_ot_hrs as ot_ndiff_hrs,
-            DATE(a.overtime_in) as overtime_in,
+            IFNULL(DATE(a.overtime_in), DATE(a.date)) as overtime_in,
             ROUND(IF(LOWER(b.payroll_type) = 'monthly', ROUND( IFNULL(b.basic_rate, 0), 2) * 12 / ROUND( IFNULL(comp.work_days_in_year, 314), 2),
             IFNULL(b.basic_rate, 0)), 2) as basic_rate,
             ROUND(IF(LOWER(allw.frequency) = 'month', ROUND( IFNULL(allw.rate, 0), 2) * 12 / ROUND( IFNULL(comp.work_days_in_year, 314), 2),
             IFNULL(allw.rate, 0)), 2) as allowance_rate,
-            a.has_overtime, a.has_shift, IF((a.shift_am_start && a.shift_am_end) || (a.shift_pm_start && a.shift_pm_end), '1', '0') as ampm_shift";
+            a.has_overtime, a.has_shift, IF((a.shift_am_start && a.shift_am_end) || (a.shift_pm_start && a.shift_pm_end), '1', '0') as ampm_shift,
+            IF(a.is_holiday = 1 && a.paid_holiday = 1, '1', '0') as is_paid_holiday";
 
             $this->db->select($select);
             $this->db->from('gcctimeutility.timesheet a');
@@ -4051,7 +4052,7 @@ class Reports_m extends CI_Model{
             if ($limit != -1) {
                 $this->db->limit($limit, $offset);
             }
-            $this->db->order_by('b.lastname, b.firstname, a.overtime_in', 'asc');
+            $this->db->order_by('b.lastname, b.firstname, a.date', 'asc');
             $query = $this->db->get();
             if ($query->num_rows() > 0) {
                 $data = array();
@@ -4063,23 +4064,28 @@ class Reports_m extends CI_Model{
                     $item->daily_rate = $item->basic_rate;
                     $item->has_shift = $item->ampm_shift === "0" ? "0": $item->has_shift;
                     
-                    $item->allowance = intval($item->has_shift) === 0 && $item->ot_hrs >= 1 ? $item->allowance_rate: '';
+                    $otAllowance = floatval($item->allowance_rate) > 0 && $item->ot_hrs >= 1 ? floatval($item->allowance_rate): 0;
+                    $item->allowance = $otAllowance > 0 ? $otAllowance: '';
                     $totalOtHrs = $item->ot_hrs + $item->ot_ndiff_hrs;
                     $item->ot_hrs = $totalOtHrs;
                     $item->ot_hrs = ($item->ot_hrs == 0) ? '-' : $item->ot_hrs;
                     $totalOtPay = ($item->daily_rate / 8) * floatval($totalOtHrs);
+                    $totalOtAllowance = ($otAllowance / 8) * floatval($totalOtHrs);
+                    $item->ot_allowance = $totalOtAllowance === 0 ? '-' : $totalOtAllowance;
                     $item->ot_pay = $totalOtPay;
-                    $item->ot_pay_20 = intval($item->has_shift) === 1 ? $totalOtPay * 0.25 : '';
-                    $item->ot_pay_30 = intval($item->has_shift) === 0 ? $totalOtPay * 0.30 : '';
+                    $item->ot_pay_20 = intval($item->has_shift) === 1 && intval($item->is_paid_holiday) === 0 ? $totalOtPay * 0.25 : '';
+                    $item->ot_pay_30 = intval($item->has_shift) === 0 && intval($item->is_paid_holiday) === 0 ? $totalOtPay * 0.30 : '';
 
-                    $totalOtPayable = intval($item->has_shift) === 1 ? $totalOtPay * 1.25 : $totalOtPay * 1.30;
+                    $paidOT25 = intval($item->is_paid_holiday) === 0 ? 1.25 : 1;
+                    $paidOT30 = intval($item->is_paid_holiday) === 0 ? 1.30 : 1;
+                    $totalOtPayable = intval($item->has_shift) === 1 ? $totalOtPay * $paidOT25 : $totalOtPay * $paidOT30;
 
                     $item->ot_ndiff_hrs = ($item->ot_ndiff_hrs == 0) ? '-' : $item->ot_ndiff_hrs;
                     $totalOtNdPay = ($item->daily_rate / 8) * floatval($item->ot_ndiff_hrs);
                     $nightDiffPay = $totalOtNdPay * 0.10;
                     $item->night_diff = $nightDiffPay ? $nightDiffPay : '';
                     $item->ot_adj = $this->getOTAdjustment($coverageDate, $item->emp_id);
-                    $item->amount = $totalOtPayable + $nightDiffPay;
+                    $item->amount = $totalOtPayable + $nightDiffPay + $totalOtAllowance;
                     $item->total_pay = $item->amount;
                     $data[$key] = $item;
                 }
