@@ -110,7 +110,7 @@
             if (next_update <= currentDate) {
                 $(".password-change-reminder").modal("show");
                 
-                if (session.waive_count >= 3) {
+                if (session.waive_count >= 4) {
                     $("#changePasswordLater").hide();
                 }
             }
