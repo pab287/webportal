@@ -187,9 +187,9 @@ Class Login_m extends CI_Model
             }
 
             if($current->is_important == 1){
-                $next_update = date('Y-m-d H:i:s', strtotime('+90 days'));
+                $next_update = date('Y-m-d H:i:s', strtotime('+60 days'));
             }else{
-                $next_update = date('Y-m-d H:i:s', strtotime('+45 days'));
+                $next_update = date('Y-m-d H:i:s', strtotime('+90 days'));
             }
 
             $data = array(
