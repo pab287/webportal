@@ -623,7 +623,7 @@ class User_model extends CI_Model
         try {
             $id = $this->input->post('id');
             $user = $this->db->select('is_important,waive_password_update')
-            ->where('emp_id', $id)
+            ->where('id', $id)
             ->from('gccmaster.tblusers')
             ->get()->row();
             if($user->is_important == 1){

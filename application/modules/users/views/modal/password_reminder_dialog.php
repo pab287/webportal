@@ -15,7 +15,7 @@
                 </p>
             </div>
             <div class="modal-footer">
-                <button type="button" id="changePasswordLater" class="btn btn-warning btnClose" data-bs-dismiss="modal" onclick="changePasswordLater(<?php echo $this->session->userdata('logged_in')['emp_id']; ?>)">
+                <button type="button" id="changePasswordLater" class="btn btn-warning btnClose" data-bs-dismiss="modal" onclick="changePasswordLater(<?php echo $this->session->userdata('logged_in')['id']; ?>)">
                     Waive Password Update
                 </button>
                 <button type="button" id="changePasswordNow" class="btn btn-primary btnSave" data-bs-dismiss="modal" onclick="changePasswordNow()">
