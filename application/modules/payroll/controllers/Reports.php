@@ -51,9 +51,14 @@ class Reports extends MY_Controller {
     }
 
     function taxable_income(){
+        $this->load->model("payroll/payroll_m", "payroll");
+        $tempData = array();
+        $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
+        $tempData["company"] = $this->payroll->select2CompanyData();
+
         $this->core_layout->setPageTitle("Payroll - Reports");
         $this->core_layout->setPrivilegeName("payroll_taxable_income");
-        $this->core_layout->addJs("js/payroll/reports/taxable_income.script.js", true);
+        $this->core_layout->addJs("js/payroll/reports/taxable_income.script.js", true, $tempData);
 
         $this->load->view("core/templates/header");
         $this->load->view("payroll/reports/taxable_income");
@@ -298,7 +303,7 @@ class Reports extends MY_Controller {
                             $tempHtml .= "<th>{$field}</th>";
                         }
                     }
-                    $tempHtml .= "<th class='text-center'>Reg Pay</th>";
+                    $tempHtml .= "<th class='text-center'>Basic Pay</th>";
                     $tempHtml .= "<th class='text-center'>Gross Pay</th>";
                     $tempHtml .= "<th class='text-center'>Gross Pay Taxable</th>";
                     if(is_array($visibleFields) && count($visibleFields) > 0 && in_array("13th_month", $visibleFields)){

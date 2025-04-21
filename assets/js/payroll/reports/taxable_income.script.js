@@ -1,4 +1,7 @@
 let _tempIds = [];
+let _years = [];
+let _companies = [];
+
 const months = [
     { id: 1, text: "January" },
     { id: 2, text: "February" },
@@ -13,10 +16,10 @@ const months = [
     { id: 11, text: "November" },
     { id: 12, text: "December" }
 ];
-var _clearTable = true;
-var _tempFilter = {};
+let _clearTable = true;
+let _tempFilter = {};
 
-var _tempData = {
+let _tempData = {
     month_picker: true,
     year_picker: true, 
     company_ids: [],
@@ -24,12 +27,21 @@ var _tempData = {
     include13th_month: false,
 };
 
-var vmGenerateRemittance = new Vue({
+if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
+    if(typeof _tempContentData.years !== "undefined" && _tempContentData.years.length > 0){
+        _years = _tempContentData.years;
+    }
+    if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){
+        _companies = _tempContentData.company;
+    }
+}
+
+const vmGenerateRemittance = new Vue({
     el: "#generate-remittance_content",
     data: _tempData,
     methods: {
         tempShowByDates: function (id) {
-            var _this = this;
+            const _this = this;
             if(id === 1){
                 _this.month_picker = true;
                 _this.year_picker = true;
@@ -40,9 +52,9 @@ var vmGenerateRemittance = new Vue({
             _this.renderSelect2Picker();
             return _this;
         }, tempShowPicker: function () {
-            var _this = this;
-            var currentElement = _this.$el;
-            _this.show_picker = (_this.show_picker == true) ? false : true;
+            const _this = this;
+            const currentElement = _this.$el;
+            _this.show_picker = (_this.show_picker === true) ? false : true;
             if (_this.show_picker === true) {
                 setTimeout(function () {
                     $(currentElement).find("#date-picker")
@@ -55,9 +67,9 @@ var vmGenerateRemittance = new Vue({
                             }
                         })
                         .on('apply.daterangepicker', function (ev, picker) {
-                            var tempStartDate = picker.startDate.format('MMM DD, YYYY');
-                            var tempEndDate = picker.endDate.format('MMM DD, YYYY');
-                            var tempFormat = tempStartDate + ' - ' + tempEndDate;
+                            const tempStartDate = picker.startDate.format('MMM DD, YYYY');
+                            const tempEndDate = picker.endDate.format('MMM DD, YYYY');
+                            const tempFormat = tempStartDate + ' - ' + tempEndDate;
                             $(currentElement).find("#date-range").val(tempFormat);
                         });
                 }, 500);
@@ -67,9 +79,9 @@ var vmGenerateRemittance = new Vue({
 
             return _this;
         }, renderSelect2Picker: function () {
-            var _this = this;
-            var currentElement = _this.$el;
-            var tempModal = $(currentElement).closest(".modal");
+            const _this = this;
+            const currentElement = _this.$el;
+            const tempModal = $(currentElement).closest(".modal");
             setTimeout(function () {
                 $(currentElement).find("select[name='filter_month']")
                     .select2({
@@ -89,12 +101,14 @@ var vmGenerateRemittance = new Vue({
                         placeholder: "SELECT YEAR",
                         allowClear: true,
                         dropdownParent: tempModal,
-                        ajax: {
+                        data: _years,
+                        /*** ajax: {
                             url: baseUrl('payroll/get_posted_payroll_sheet_years'),
                             dataType: 'JSON',
                             type: 'GET',
                             global: false,
-                        }, language: { errorLoading: function () { return "Searching..." } }
+                        },  ***/
+                        language: { errorLoading: function () { return "Searching..." } }
                     }).on("select2:select, change", function(e){
                         const currentTarget = e.target;
                         if(typeof currentTarget !== "undefined"){ $(currentTarget).validate(); }
@@ -126,7 +140,8 @@ var vmGenerateRemittance = new Vue({
                         width: '100%',
                         placeholder: "SELECT AN OPTION",
                         dropdownParent: tempModal,
-                        ajax: {
+                        data: _companies,
+                        /*** ajax: {
                             url: baseUrl('payroll/select_company'),
                             dataType: 'json',
                             global: false,
@@ -134,10 +149,11 @@ var vmGenerateRemittance = new Vue({
                             processResults: function (data) {
                                 return data;
                             },
-                        }, language: { errorLoading: function () { return "Searching..." } }
+                        }, ***/
+                        language: { errorLoading: function () { return "Searching..." } }
                     }).on("select2:select, change", function (e) {
-                        var _thisSelect2 = this;
-                        var selectedValues = $(_thisSelect2).select2("val");
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
                         _this.company_ids = selectedValues;
                         $(currentElement)
                             .find("select#employee")
@@ -147,8 +163,8 @@ var vmGenerateRemittance = new Vue({
                         const currentTarget = e.target;
                         if(typeof currentTarget !== "undefined"){ $(currentTarget).validate(); }
                     }).on("select2:unselect", function (e) {
-                        var _thisSelect2 = this;
-                        var selectedValues = $(_thisSelect2).select2("val");
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
                         _this.company_ids = selectedValues;
                         $(currentElement)
                             .find("select#employee")
@@ -352,14 +368,14 @@ let dtRemittances = $('#tbl-phic_remittances').DataTable({
         },
     }, columns: tempColumns,
     drawCallback: function (settings) {
-        var api = this.api();
-        var btnPrint = $(settings.nTableWrapper).find(".printRemittanceAction");
-        var btnExport = $(settings.nTableWrapper).find(".exportRemittanceAction");
-        var dtActions = $(settings.nTableWrapper).find(".dtActions");
-        var dtDetails = $(settings.nTableWrapper).find(".dtDetails");
+        const api = this.api();
+        const btnPrint = $(settings.nTableWrapper).find(".printRemittanceAction");
+        const btnExport = $(settings.nTableWrapper).find(".exportRemittanceAction");
+        const dtActions = $(settings.nTableWrapper).find(".dtActions");
+        const dtDetails = $(settings.nTableWrapper).find(".dtDetails");
         if (typeof btnPrint !== "undefined" && typeof dtActions !== "undefined") {
             btnPrint.addClass("btn m-btn btn-brand m-btn--icon m--hide animated fadeIn mr-1");
-            var tempData = api.data();
+            const tempData = api.data();
             if (tempData.length > 0) {
                 if (btnPrint.hasClass("m--hide") == true) { btnPrint.removeClass("m--hide"); }
                 if (dtActions.hasClass("m--hide") == true) { dtActions.removeClass("m--hide"); }
@@ -370,7 +386,7 @@ let dtRemittances = $('#tbl-phic_remittances').DataTable({
         }
         if (typeof btnExport !== "undefined" && typeof dtActions !== "undefined") {
             btnExport.addClass("btn m-btn btn-brand m-btn--icon m--hide animated fadeIn");
-            var tempData = api.data();
+            const tempData = api.data();
             if (tempData.length > 0) {
                 if (btnExport.hasClass("m--hide") == true) { btnExport.removeClass("m--hide"); }
                 if (dtActions.hasClass("m--hide") == true) { dtActions.removeClass("m--hide"); }
@@ -382,9 +398,9 @@ let dtRemittances = $('#tbl-phic_remittances').DataTable({
         if (typeof dtDetails !== "undefined") {
             dtDetails.empty();
             if (typeof _tempFilter == "object" && Object.keys(_tempFilter).length > 0) {
-                var tempHtmlCompany = "";
+                let tempHtmlCompany = "";
                 if (typeof _tempFilter.companies == "object" && _tempFilter.companies.length > 0) {
-                    var _arrCompanies = "";
+                    let _arrCompanies = "";
                     $.each(_tempFilter.companies, function (i, v) {
                         _arrCompanies += `<span class="m-badge m-badge--metal m-badge--wide m-badge--rounded m--margin-right-5 m--font-bolder">${v}</span>`;
                     });
@@ -398,7 +414,7 @@ let dtRemittances = $('#tbl-phic_remittances').DataTable({
                     tempHtmlCompany += "&nbsp;";
                 }
 
-                var tempHtml = `<div class='row'>
+                const tempHtml = `<div class='row'>
                     <div class='col-12 col-md-5'>
                         <div class='row'>
                             <div class='col-12 col-md-4'>
@@ -415,9 +431,9 @@ let dtRemittances = $('#tbl-phic_remittances').DataTable({
             }
         }
     }, footerCallback: function (row, data, start, end, display) {
-        var api = this.api(), data;
+        const api = this.api();
         // Remove the formatting to get integer data for summation
-        var intVal = function (i) {
+        const intVal = function (i) {
             return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
         };
 
@@ -448,17 +464,17 @@ const generateFormValidate = $.validate({
     lang: "en",
     scrollToTopOnError: false,
     onSuccess: function (form) {
-        var currentForm = form[0];
-        var formUrl = currentForm.action;
-        var formData = $(currentForm).serialize();
+        const currentForm = form[0];
+        const formUrl = currentForm.action;
+        const formData = $(currentForm).serialize();
         getScriptRendering(formUrl, formData, currentForm);
         return false;
     }
 });
 
 function printDivMonthly(printdivname){
-    var newstr = document.getElementById(printdivname).innerHTML;
-    var printWindow = window.open(siteUrl('payroll/reports/printable_form'), '_blank');
+    const newstr = document.getElementById(printdivname).innerHTML;
+    const printWindow = window.open(siteUrl('payroll/reports/printable_form'), '_blank');
     setTimeout(function () {
         const appendContainer = printWindow.document.getElementById('append_printable-container');
         if (typeof appendContainer !== "undefined" && appendContainer !== null) {
@@ -475,7 +491,7 @@ function printDivMonthly(printdivname){
     return false;
 }
 
-var getScriptRendering = function (formUrl, formData, currentForm) {
+const getScriptRendering = function (formUrl, formData, currentForm) {
     $.ajax({
         url: formUrl,
         type: "post",
