@@ -673,19 +673,22 @@
 						modalContent.find("#department_settings").select2({
 							data: dropdownItems.query_description.results,
 							width: "100%",
-							placeholder: "SELECT AN OPTION"
+							placeholder: "SELECT AN OPTION",
+							dropdownParent: modalContent
 						});
 
 						modalContent.find("#location_settings").select2({
 							data: dropdownItems.query_location.results,
 							width: "100%",
-							placeholder: "SELECT AN OPTION"
+							placeholder: "SELECT AN OPTION",
+							dropdownParent: modalContent
 						});
 
 						modalContent.find("#shift_settings").select2({
 							data: dropdownItems.query_shift.results,
 							width: "100%",
-							placeholder: "SELECT AN OPTION"
+							placeholder: "SELECT AN OPTION",
+							dropdownParent: modalContent
 						});
 
 						vmAssign.temp_items = Object.assign({}, datax);
