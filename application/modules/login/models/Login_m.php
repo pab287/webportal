@@ -151,7 +151,7 @@ Class Login_m extends CI_Model
                         'company' => $row->company_id,
                         'department' => $row->department_id,
                         'TwoFactorAuth' => $row->auth,
-                        'last_update' => $row->last_update,
+                        'next_update' => $row->next_update,
                         'waive_count' => $row->waive_password_update,
                         'is_important' => $row->is_important,
                     );
@@ -175,12 +175,7 @@ Class Login_m extends CI_Model
             $username = $post['username'];
             $new_password = $post['password'];
             $this->db->trans_start();
-            $data = array(
-                'password' => md5($new_password),
-                'force_update' => 0,
-                'waive_password_update' => 0,
-                'last_update' => date('Y-m-d H:i:s')
-            );
+            
             $this->db->where('username', $username);
             $current = $this->db->get('gccmaster.tblusers')->row();
             if ($current->password == md5($post['password'])) {
@@ -190,6 +185,20 @@ Class Login_m extends CI_Model
                 );
                 return $response;
             }
+
+            if($current->is_important == 1){
+                $next_update = date('Y-m-d H:i:s', strtotime('+90 days'));
+            }else{
+                $next_update = date('Y-m-d H:i:s', strtotime('+45 days'));
+            }
+
+            $data = array(
+                'password' => md5($new_password),
+                'force_update' => 0,
+                'waive_password_update' => 1,
+                'next_update' => $next_update,
+            );
+
     
             $result = $this->db->where('username', $username)->update('gccmaster.tblusers', $data);
     
@@ -215,7 +224,7 @@ Class Login_m extends CI_Model
                     'company' => $res[0]->company_id,
                     'department' => $res[0]->department_id,
                     'TwoFactorAuth' =>  $res[0]->auth,
-                    'last_update' => $res[0]->last_update,
+                    'next_update' => $res[0]->next_update,
                     'waive_count' => $res[0]->waive_password_update,
                     'is_important' => $res[0]->is_important,
                 );
@@ -352,7 +361,7 @@ Class Login_m extends CI_Model
                 'company' => $res[0]->company_id,
                 'department' => $res[0]->department_id,
                 'TwoFactorAuth' => $res[0]->auth,
-                'last_update' => $res[0]->last_update,
+                'next_update' => $res[0]->next_update,
                 'waive_count' => $res[0]->waive_password_update,
                 'is_important' => $res[0]->is_important,
             );

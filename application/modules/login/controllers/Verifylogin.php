@@ -141,7 +141,7 @@ class Verifylogin extends MY_Controller{
                         'company' => $row->company_id,
                         'department' => $row->department_id,
                         'TwoFactorAuth' => $row->auth,
-                        'last_update' => $row->last_update,
+                        'next_update' => $row->next_update,
                         'waive_count' => $row->waive_password_update,
                         'is_important' => $row->is_important,
                     );
@@ -203,7 +203,7 @@ class Verifylogin extends MY_Controller{
                         'company' => $row->company_id,
                         'department' => $row->department_id,
                         'TwoFactorAuth' => $row->auth,
-                        'last_update' => $row->last_update,
+                        'next_update' => $row->next_update,
                         'waive_count' => $row->waive_password_update,
                         'is_important' => $row->is_important,
                     );

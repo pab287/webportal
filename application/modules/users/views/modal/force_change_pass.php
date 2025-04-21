@@ -82,22 +82,15 @@
     });
 
 
-    function checkPass(currr){
-        if (session.last_update == null || session.last_update == "0000-00-00 00:00:00") {
-        $(".password-change-reminder").modal("show");
-    }
+    if (session.next_update == null || session.next_update == "0000-00-00 00:00:00") {
+            $(".password-change-reminder").modal("show");
+        }
     else {
-        const lastUpdateDate = new Date(session.last_update);
-        const currentDate = new Date(currr);
-        const isSupervisory = session.is_important == 1;
+        const next_update = new Date(session.next_update);
+        const currentDate = new Date();
         
-        const dayThreshold = isSupervisory ? 5 : 15;
-        const daysSinceUpdate = Math.floor((currentDate - lastUpdateDate) / (1000 * 60 * 60 * 24));
-        console.log(lastUpdateDate);
-        console.log(currentDate,dayThreshold);
-        console.log(daysSinceUpdate >= dayThreshold);
-        // Check if password update is required
-        if (daysSinceUpdate >= dayThreshold) {
+        console.log("Next: ",next_update, "Today: ",currentDate);
+        if (next_update <= currentDate) {
             $(".password-change-reminder").modal("show");
             
             if (session.waive_count >= 3) {
@@ -105,6 +98,23 @@
             }
         }
     }
+
+    function checkPass(currr){
+        if (session.next_update == null || session.next_update == "0000-00-00 00:00:00") {
+            $(".password-change-reminder").modal("show");
+        }
+        else {
+            const next_update = new Date(session.next_update);
+            const currentDate = new Date(currr);
+            console.log("Next: ",next_update, "Today: ",currentDate);
+            if (next_update <= currentDate) {
+                $(".password-change-reminder").modal("show");
+                
+                if (session.waive_count >= 3) {
+                    $("#changePasswordLater").hide();
+                }
+            }
+        }
     }
 
 
