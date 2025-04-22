@@ -2346,6 +2346,7 @@ class Timesheet_model extends CI_Model{
         $this->db->reset_query();
 
         $superFlexibleEmployee = false;
+        $isOneInOut = false;
         $this->db->select("per.is_flexi");
         $this->db->from($this->tbl_employees." emp");
         $this->db->join($this->tbl_personnel." per", "per.biometric_id = emp.biometricno OR per.biometricno = emp.biometricno");
@@ -2359,6 +2360,7 @@ class Timesheet_model extends CI_Model{
         $qTempEmployee = $this->db->get();
         if($qTempEmployee->num_rows() == 1){
             $superFlexibleEmployee = true;
+            $isOneInOut = intval($qTempEmployee->row()->is_flexi) === 4;
         }
         $this->db->reset_query();
 
@@ -2653,17 +2655,17 @@ class Timesheet_model extends CI_Model{
 
         /*** altered section allowedPaidHoliday ***/
         /***if($isHoliday && $hasOT){ ***/
-        if($allowedPaidHoliday){
+        if($allowedPaidHoliday && $isOneInOut){
         /*** altered section allowedPaidHoliday ***/
             $employee_time_sheet->paid_holiday = 1;
-            $employee_time_sheet->am_late = 0;
+            /*** $employee_time_sheet->am_late = 0;
             $employee_time_sheet->pm_late = 0;
 
             $employee_time_sheet->am_ut = 0;
             $employee_time_sheet->pm_ut = 0;
 
             $employee_time_sheet->am_time_rendered = 0;
-            $employee_time_sheet->pm_time_rendered = 0;
+            $employee_time_sheet->pm_time_rendered = 0; ***/
         }else{
             $employee_time_sheet->paid_holiday = 0;
         }
