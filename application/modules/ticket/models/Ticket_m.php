@@ -718,6 +718,11 @@ class Ticket_m extends CI_Model
             case 'software':
                 $responsibility = $post['responsibility'];
                 break;
+
+            case 'inventory system':
+                $responsibility = "SOFTWARE DEVELOPMENT";
+                break;
+
             default:
                 $responsibility = "IT SUPPORT";
                 break;
@@ -832,6 +837,14 @@ class Ticket_m extends CI_Model
                 
             case 'software':
                 $responsibility = $post['responsibility'];
+                break;
+            
+            case 'inventory system':
+                $responsibility = "SOFTWARE DEVELOPMENT";
+                break;
+
+            default:
+                $responsibility = "IT SUPPORT";
                 break;
         }
 
