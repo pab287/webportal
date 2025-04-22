@@ -64,8 +64,8 @@
             <div id="printArea">
                 <div class="col-md-12">
                     <h5 class="text-center">TAXABLE INCOME REPORT</h5>
-                    <h4 class="text-center" id="company"></h4>
-                    <h6 class="text-center" id="month_year"></h6>
+                    <h4 class="text-center" id="company">&nbsp;</h4>
+                    <h6 class="text-center" id="month_year">&nbsp;</h6>
                 </div>
                 <div id="append--table_content">
                     
@@ -79,8 +79,8 @@
         </div>
     </div>
 </div>
-<div class="modal fade" tabindex="-1" role="dialog" id="generate-report-modal">
-    <div class="modal-dialog modal-lg" role="document">
+<div class="modal fade" tabindex="-1" id="generate-report-modal">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content" id="generate-remittance_content">
             <div class="modal-header">
                 <h5 class="modal-title">Generate Report</h5>
@@ -95,7 +95,7 @@
                     <div class="row mr-auto">
                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                             <div class="form-group">
-                                <label class="m--font-bolder">FILTER BY</label>
+                                <label for="" class="m--font-bolder">FILTER BY</label>
                                 <div class="m-checkbox-inline">
                                     <label class="m-checkbox">
                                         <input type="radio"
@@ -119,7 +119,7 @@
                         </div>
                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                             <div class="form-group">
-                                <label class="m--font-bolder">INCLUDE FILTER</label>
+                                <label for="" class="m--font-bolder">INCLUDE FILTER</label>
                                 <div class="m-checkbox-inline">
                                     <label class="m-checkbox">
                                         <input type="checkbox" name="13th_month" value="1" class="valid" @click="toggle13thMonthFilter($event)" />
@@ -135,7 +135,9 @@
                                 <template v-if="year_picker === true">
                                 <div class="form-group col-xl-6 col-lg-6 col-md-6 col-sm-12">
                                     <label for="" class="required m--font-bolder">YEAR</label>
-                                    <select class="form-control" name="filter_year" data-validation="required"></select>
+                                    <select class="form-control" name="filter_year" data-validation="required">
+                                        <option></option>
+                                    </select>
                                 </div>
                                 </template>
                                 <template v-if="month_picker === true">
