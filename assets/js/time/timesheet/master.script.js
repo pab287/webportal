@@ -669,7 +669,7 @@ $(document)
                                            data-placement="left" style="cursor: pointer;"></i>`;
                             }
 
-                            if (widthAdjustment === 1 && pendingAdjustment == true && verified === 0 && isPosted == false) {
+                            if (widthAdjustment === 1 && pendingAdjustment === true && verified === 0 && isPosted === false) {
                                 return `<i class="fa fa-exclamation-circle"
                                            data-toggle="m-tooltip"
                                            data-original-title="Has Time Adjustments."
@@ -678,13 +678,13 @@ $(document)
                                            data-id="${row.id}"
                                            style="font-size: 20px; cursor: pointer"
                                            onclick="openTimeAdjustmentListModal(this, ${row._emp_id})"></i>`;
-                            } else if (id && (hasShift || hasOvertimeRequest) && isPosted == false) {
+                            } else if (id && (hasShift || hasOvertimeRequest) && isPosted === false ) {
                                 let tempHtml = `<label class="m-checkbox m-checkbox--bold m-checkbox--state-brand table-cb">
                                     <input type="checkbox" name="selected[]" value="${row.id}"
                                         id="cb${row.id}" class="cb-emp-${row._emp_id}"><span></span>
                                 </label>`;
 
-                                if (regenerateRow == true || ctrAttendanceEntries == 1) {
+                                if (regenerateRow === true || ctrAttendanceEntries == 1) {
                                     tempHtml = `<i class="fa fa-refresh m--font-warning m--regular-font-size-lg3"
                                         data-toggle="m-tooltip" data-original-title="Re-generate Row"
                                         data-skin="dark"
@@ -1132,7 +1132,7 @@ $(document)
                     vmTimsheetActions.has_overtime_request = false;
 
                     if(typeof settings.json != "undefined"){
-                        const { has_existing_overtime } = settings.json;
+                        const { has_existing_overtime, default_shift_employees } = settings.json;
                         
                         if(has_existing_overtime.length > 0){
                             const ctrOT = has_existing_overtime.length;
@@ -1142,6 +1142,50 @@ $(document)
                             dtOvertimeRecords.clear();
                             dtOvertimeRecords.rows.add(has_existing_overtime);
                             dtOvertimeRecords.draw(false);
+                        }
+
+                        let arrEmpRecord = [];
+                        if(typeof default_shift_employees != "undefined" && Object.keys(default_shift_employees).length > 0){
+                            $.each(default_shift_employees, (_index, row) => {
+                                const { ctr } = row;
+                                if(ctr > 0){ arrEmpRecord.push(row); }
+                            });
+                        }
+
+                        if(arrEmpRecord.length > 0){
+                            _arrIds = [];
+                            const ctr = arrEmpRecord.length;
+                            let tempHtml = `<ul class='mt-2'>`;
+                            arrEmpRecord.forEach((row, _index) => {
+                                tempHtml += `<li class='m--font-bolder text-left ml-1'>${row.employee_name}</li>`;
+                                _arrIds.push(row.emp_id);
+                            });
+                            tempHtml += `</ul>`;
+                            Swal.fire({
+                                title: 'Default Shift Record/s?',
+                                html: `A TOTAL OF <b>${ctr}</b> DEFAULT SHIFT RECORD/s FOUND!<br>${tempHtml}<br>WOULD YOU LIKE TO GENERATE TIMESHEET RECORD/s?`,
+                                icon: 'question',
+                                showCancelButton: true,
+                                confirmButtonColor: '#3085d6',
+                                cancelButtonColor: '#d33',
+                                confirmButtonText: 'Yes, Generate it!'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    $.ajax({
+                                        url: siteUrl("gcctime/timesheet/generate_default_timesheet"),
+                                        type: "POST",
+                                        dataType: "JSON",
+                                        data: {
+                                            [_csrf_token]: _csrf_hash,
+                                            emp_id: _arrIds,
+                                            dates: $('#date-range').val(),
+                                        },
+                                        success: function (response) {
+                                            console.log(response);
+                                        }
+                                    });
+                                }
+                            });
                         }
                     }
 

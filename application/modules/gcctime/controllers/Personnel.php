@@ -120,13 +120,15 @@ class Personnel extends MY_Controller {
 					break;
 				}
 
-				$badgeStatus = "<span class='m-badge m-badge--metal m-badge--wide m--regular-font-size-sm4 m--font-boldest'>Regular</span>";
+				$badgeStatus = "<span class='m-badge m-badge--metal m-badge--wide m--regular-font-size-sm4 m--font-boldest'>Regular - 2 In & 2 Out</span>";
 				if($_getPersonnelCollection["is_flexi"] == 1){
-					$badgeStatus = "<span class='m-badge m-badge--info m-badge--wide m--regular-font-size-sm4 m--font-boldest'>Flexible</span>";
-				}else if($_getPersonnelCollection["is_flexi"] == 2){
-					$badgeStatus = "<span class='m-badge m-badge--warning m-badge--wide m--regular-font-size-sm4 m--font-boldest'>1 In & Out</span>";
-				}else if($_getPersonnelCollection["is_flexi"] == 3){
-					$badgeStatus = "<span class='m-badge m-badge--primary m-badge--wide m--regular-font-size-sm4 m--font-boldest'>Super Flexible</span>";
+					$badgeStatus = "<span class='m-badge m-badge--info m-badge--wide m--regular-font-size-sm4 m--font-boldest'>Flexible - 1 In & 1 Out</span>";
+				}elseif($_getPersonnelCollection["is_flexi"] == 2){
+					$badgeStatus = "<span class='m-badge m-badge--warning m-badge--wide m--regular-font-size-sm4 m--font-boldest'>Drivers - 1 In & Out</span>";
+				}elseif($_getPersonnelCollection["is_flexi"] == 3){
+					$badgeStatus = "<span class='m-badge m-badge--primary m-badge--wide m--regular-font-size-sm4 m--font-boldest'>Super Flexible - 1 In / 1 Out</span>";
+				}elseif($_getPersonnelCollection["is_flexi"] == 4){
+					$badgeStatus = "<span class='m-badge m-badge--success m-badge--wide m--regular-font-size-sm4 m--font-boldest'>Default - No In / Out</span>";
 				}
 
 				$tempDepartment = isset($getDepartmentData["description"]) && $getDepartmentData["description"] ? $getDepartmentData["description"] : "No Assigned Department";
@@ -141,7 +143,6 @@ class Personnel extends MY_Controller {
 					<p class='m--regular-font-size-sm5 mb-0'>Role: <span class='m--font-bolder'>{$role} - {$tempState}</span></p>
 				</div>";
 				$tempShiftSchedule = isset($_getPersonnelCollection["description"]) && $_getPersonnelCollection["description"]? $_getPersonnelCollection["description"]: "<span class='m--font-danger m--font-boldest'>No Assigned Shift</span>";
-				
 				
 				$formattedShiftSchedule = "<div>
 				<p class='mb-2 m--regular-font-size-sm1 m--font-bolder'>{$tempShiftSchedule}</p>
@@ -192,9 +193,9 @@ class Personnel extends MY_Controller {
 					$_action .= "<a href='javascript:void(0);' class='m-portlet__nav-link btn m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill btnAssignPersonnelSchedule' data-toggle='tooltip' title='Assign Personnel Schedule' data-id='{$personnelId}'><i class='la la-calendar'></i></a>";
 				}
 				if(in_array('edit', $actions)){
+					$_action .= "<a href='javascript:void(0);' class='m-portlet__nav-link btn m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditPersonnel' data-toggle='tooltip' title='Edit Profile' data-id='{$personnelId}'><i class='la la-edit'></i></a>";
 					$_action .= "<a href='".$link."' target='_blank' class='m-portlet__nav-link btn m-btn m-btn--hover-success m-btn--icon m-btn--icon-only m-btn--pill' data-toggle='tooltip' title='View Employee Profile'><i class='la la-user'></i></a>";
 					$_action .= "<a href='javascript:void(0);' onClick='addSiteLocation({$personnelId})' class='m-portlet__nav-link btn m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill' data-toggle='tooltip' title='View Sites'><i class='la la-map-o'></i></a>";
-					$_action .= "<a href='javascript:void(0);' class='m-portlet__nav-link btn m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditPersonnel' data-toggle='tooltip' title='Edit Profile' data-id='{$personnelId}'><i class='la la-edit'></i></a>";
 				}
 				if(in_array('delete', $actions)){
 					$_action .= "<a href='javascript:void(0);' onclick='deletepersonnel({$personnelId})' ";

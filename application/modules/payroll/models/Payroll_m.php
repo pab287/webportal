@@ -1159,7 +1159,8 @@ class Payroll_m extends CI_Model
                 $rendered_days_worked = 0;
                 $half_day_absent = 0;
                 $wholeDayAbsent = 0;
-                
+                $unpaidHoliday = 0;
+
                 if($isMonthlyPaidEmployee === false){
                     $timesheet = $this->db
                         ->where("ts.date >=", $start)

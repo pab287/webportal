@@ -956,13 +956,12 @@
         scrollToTopOnError: false,
         onSuccess: function (form) {
             let formData = $(form).serialize();
-
             const basic = $("input[name=basic_rate]").val();
 
-            if (parsefloat(basic) > 0.00) {
+            if (parseFloat(basic) > 0) {
                 const approvingAuthority = typeof _tempContentData.approving_authority !== "undefined" && _tempContentData.approving_authority ? 
                     _tempContentData.approving_authority: false;
-    
+                
                 formData += "&approving_authority="+approvingAuthority;
                 $.ajax({
                     url: $(form).attr("action"),

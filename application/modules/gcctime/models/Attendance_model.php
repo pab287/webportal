@@ -44,10 +44,11 @@
 
         }
 
-        function getCurrentAttendance() {
+        public function getCurrentAttendance() {
             $currentDate = $this->getLastSyncDate();
 
-            $this->db->select("a.*, b.device_name, b.status, c.name");
+            var_dump($currentDate);
+            $this->db->select("a.biometric_id, a.device_id, a.datetime, a.state, a.is_custom, b.device_name, b.status, c.name");
             $this->db->from("gcctimeutility.attendance a");
             $this->db->join("gcctimeutility.devices b", "b.id = a.device_id", "left");
             $this->db->join("gcctimeutility.personnel c", "c.biometric_id = a.biometric_id", "left");
@@ -1312,6 +1313,74 @@
             
         }
 
+
+        public function syncAttendanceApp($dateFrom=null, $dateTo=null){
+            $tempDateFrom = $dateFrom ? date("Y-m-d", strtotime($dateFrom)) : date("Y-m-d", strtotime("-1 day"));
+            $tempDateTo = $dateTo ? date("Y-m-d", strtotime($dateTo)) : date("Y-m-d", strtotime("+1 day", strtotime($tempDateFrom)));
+            if($tempDateFrom && $tempDateTo){
+                $this->db->select("biometric_id, CONCAT(date,' ', time) as datetime,
+                    IF(id > 0, 2, 2) as is_custom, IF(id > 0, 2, 2) as state,
+                    CASE
+                    WHEN `time_status` = 'in' THEN 0
+                    WHEN `time_status` = 'out' THEN 1
+                    WHEN `time_status` = 'overtime in' THEN 4
+                    WHEN `time_status` = 'overtime out' THEN 5
+                    ELSE 0 END as verify_method");
+                $this->db->where("DATE(`date`) >=", $tempDateFrom);
+                $this->db->where("DATE(`date`) <=", $tempDateTo);
+                $this->db->group_by("biometric_id, date, time");
+                $this->db->order_by("date, time", "ASC");
+                $appAttRecord = $this->db->get("gcctimeutility.app_attendance");
+                if($appAttRecord->num_rows() > 0){
+                    foreach ($appAttRecord->result() as $att) {
+                        $this->setAttendanceAppRecord($att);
+                    }
+                }
+            }
+        }
+
+        protected function setAttendanceAppRecord($att = null){
+            $resultResponse = false;
+            if ($att->biometric_id) {
+                $date = (new DateTime($att->datetime))->format('Y-m-d');
+                $time = (new DateTime($att->datetime))->format('H:i');
+                $maxPayrollDate = $this->getPayrollMaxDate($att->biometric_id);
+
+                if ($maxPayrollDate !== false && strtotime($date) > strtotime($maxPayrollDate)) {
+                    $this->db->where('biometric_id', $att->biometric_id);
+                    $this->db->where('DATE(`datetime`)', $date);
+                    $this->db->like('TIME(datetime)', $time, 'both');
+                    $existingRecord = $this->db->get('gcctimeutility.attendance');
+
+                    if ($existingRecord->num_rows() === 0) {
+                        $resultResponse = $this->db->insert('gcctimeutility.attendance', [
+                            'biometric_id' => $att->biometric_id,
+                            'state' => $att->state,
+                            'datetime' => $att->datetime,
+                            'verify_method' => $att->verify_method,
+                            'is_custom' => $att->is_custom,
+                            'created_at' => date('Y-m-d H:i:s'),
+                        ]);
+                    }
+                }
+            }
+            return $resultResponse;
+        }
+
+        protected function getPayrollMaxDate($biometric_id=null){
+            if($biometric_id){
+                $this->db->select("MAX(ps.date_end) as max_date");
+                $this->db->from("gccmaster.tblemployees emp");
+                $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+                $this->db->where("emp.biometricno", $biometric_id);
+                $this->db->group_by("emp.id");
+                $qTemp = $this->db->get();
+                if($qTemp->num_rows() == 1){ return $qTemp->row()->max_date; }
+                else{ return false; }
+            }else{ return false; }
+            
+        }
+
         private function merge_attendance($app_attendance){
             $this->db->set($app_attendance);
             $attendance = $this->db->insert('gcctimeutility.attendance');
@@ -1417,4 +1486,4 @@
             $data['results'] = $this->db->get("gcchris.tbldepartments")->result();
             return $data;
         }
-    } 
+    }

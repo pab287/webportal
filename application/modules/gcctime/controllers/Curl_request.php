@@ -1559,4 +1559,8 @@ class Curl_request extends MY_Controller {
 	function scheduled_cache_flush(){
 		$this->redis->flushall();
 	}
-} 
+	
+	public function get_app_attendance_records(){
+		$this->attendance->syncAttendanceApp();
+	}
+}
