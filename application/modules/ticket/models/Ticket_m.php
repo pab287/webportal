@@ -1008,16 +1008,85 @@ class Ticket_m extends CI_Model
         $avg_result = $avg_completion_query->row_array();
         $avg_seconds = isset($avg_result['avg_seconds']) ? $avg_result['avg_seconds'] : 0;
         
-        $hours = floor($avg_seconds / 3600);
-        $minutes = round(($avg_seconds % 3600) / 60);
-        $formatted_avg_time = $hours . "hrs " . $minutes . "mins";
+        $days = floor($avg_seconds / 86400);
+        $hours = floor(($avg_seconds % 86400) / 3600);
+        $minutes = floor(($avg_seconds % 3600) / 60);
+        $seconds = $avg_seconds % 60;
+        
+        $formatted_avg_time = '';
+        
+        if ($days > 0) {
+            $formatted_avg_time .= $days . ($days == 1 ? "day " : "days ");
+        }
+        if ($hours > 0) {
+            $formatted_avg_time .= $hours . ($hours == 1 ? "hr " : "hrs ");
+        }
+        if ($minutes > 0) {
+            $formatted_avg_time .= $minutes . ($minutes == 1 ? "min " : "mins ");
+        }
+        if ($seconds > 0) {
+            $formatted_avg_time .= $seconds . ($seconds == 1 ? "sec" : "secs");
+        }
+        
+        if ($formatted_avg_time === '') {
+            $formatted_avg_time = "INVALID";
+        }
+        
+        // Trim trailing space
+        $formatted_avg_time = rtrim($formatted_avg_time);
+
+        $avg_response_query = $this->db->query("
+            SELECT AVG(TIMESTAMPDIFF(SECOND, new_logs.created_at, completed_logs.created_at)) as avg_seconds
+            FROM gccticket.ticket t
+            JOIN (
+                SELECT ticket_id, created_at
+                FROM gccticket.trail_logs_event
+                WHERE type = 'new'
+            ) new_logs ON t.id = new_logs.ticket_id
+            JOIN (
+                SELECT ticket_id, created_at
+                FROM gccticket.trail_logs_event
+                WHERE type = 'in progress'
+            ) completed_logs ON t.id = completed_logs.ticket_id
+            WHERE t.status = 'in progress' AND t.is_archived = 0
+        ");
+
+        $avg_response_result = $avg_response_query->row_array();
+        $avg_response_seconds = isset($avg_response_result['avg_seconds']) ? $avg_response_result['avg_seconds'] : 0;
+        
+        $response_days = floor($avg_response_seconds / 86400);
+        $response_hours = floor(($avg_response_seconds % 86400) / 3600);
+        $response_minutes = floor(($avg_response_seconds % 3600) / 60);
+        $response_seconds = $avg_response_seconds % 60;
+        
+        $formatted_avg_response_time = '';
+        
+        if ($response_days > 0) {
+            $formatted_avg_response_time .= $response_days . ($response_days == 1 ? "day " : "days ");
+        }
+        if ($response_hours > 0) {
+            $formatted_avg_response_time .= $response_hours . ($response_hours == 1 ? "hr " : "hrs ");
+        }
+        if ($response_minutes > 0) {
+            $formatted_avg_response_time .= $response_minutes . ($response_minutes == 1 ? "min " : "mins ");
+        }
+        if ($response_seconds > 0) {
+            $formatted_avg_response_time .= $response_seconds . ($response_seconds == 1 ? "sec" : "secs");
+        }
+        
+        if ($formatted_avg_response_time === '') {
+            $formatted_avg_response_time = "INVALID";
+        }
+        
+        $formatted_avg_response_time = rtrim($formatted_avg_response_time);
         
         $data = [
             "widget" => [
                 "total" => $result['total'],
                 "open" => $result['open'],
                 "urgent" => $result['high'],
-                "ave" => $formatted_avg_time
+                "aveResolve" => $formatted_avg_time,
+                "aveResponse" => $formatted_avg_response_time,
             ],
         ];
         
@@ -1276,6 +1345,9 @@ class Ticket_m extends CI_Model
     }
 
     private function getEmployeeName($id){
+        if($id == 0 || $id == "" || $id == null){
+            return "No Assigned Name";
+        }
         $this->db->select("id, firstname, middlename, lastname, suffix");
         $this->db->from("gccmaster.tblemployees");
         $this->db->where("id", $id);
@@ -1538,19 +1610,39 @@ class Ticket_m extends CI_Model
             : 0.00;
     }
 
-    public function getAverageResponseTime(){
+    public function getAverageResolveTime(){
         $post = $this->input->post();
         $start_date = isset($post['start']) ? $post['start'] : date('Y-m-d');
         $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
-        $start_time = $start_date . ' 00:00:00';
-        $end_time = $end_date . ' 23:59:59';
-        $this->db->select();
-        $this->db->from("gccticket.ticket as a");
-        $this->db->where("a.is_archived", 0);
-        $this->db->join("gccticket.trail_logs_event as b", "a.id = b.ticket_id", "LEFT");
-        $result = $this->db->get()->row();
-        var_dump( $result );
-        die();
+        $avg_completion_query = $this->db->query("
+            SELECT 
+                AVG(TIMESTAMPDIFF(SECOND, nl.created_at, cl.created_at)) as avg_seconds
+            FROM gccticket.ticket t
+            JOIN (
+                SELECT ticket_id, created_at
+                FROM gccticket.trail_logs_event
+                WHERE type = 'new'
+            ) nl ON t.id = nl.ticket_id
+            JOIN (
+                SELECT ticket_id, created_at
+                FROM gccticket.trail_logs_event
+                WHERE type = 'completed'
+            ) cl ON t.id = cl.ticket_id
+            WHERE t.status = 'completed'
+            AND t.is_archived = 0
+            AND t.created_at BETWEEN ? AND ?
+        ", [
+            $start_date . ' 00:00:00',
+            $end_date . ' 23:59:59'
+           ]);
+        
+        $avg_result = $avg_completion_query->row_array();
+        $avg_seconds = isset($avg_result['avg_seconds']) ? $avg_result['avg_seconds'] : 0;
+        
+        $hours = floor($avg_seconds / 3600);
+        $minutes = round(($avg_seconds % 3600) / 60);
+
+        return $hours . "hrs " . $minutes . "mins";
     }
 
 

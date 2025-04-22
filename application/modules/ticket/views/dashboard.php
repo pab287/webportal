@@ -94,23 +94,23 @@
 						<div class="m-portlet__head-caption">
 							<div class="m-portlet__head-title">
 								<h3 class="m-portlet__head-text">
-									Average Respose Time
+									Average Time to Resolve
 								</h3>
 							</div>
 						</div>
 						<div class="m-portlet__head-tools">
-							<a href="javascript:void(0);" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg btnView" id="aveResponseTicketPicker"><i class="fa fa-calendar"></i>
+							<a href="javascript:void(0);" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg btnView" id="aveResolveTicketPicker"><i class="fa fa-calendar"></i>
 							</a>
 						</div>
 					</div>
 					<div class="m-portlet__body">
 						<div class="d-flex justify-content-center">
 							<span class="d-flex flex-column align-items-center">
-							<div class="m-loader m-loader--primary" v-if="!widget.aveResponse">
+							<div class="m-loader m-loader--primary" v-if="!widget.aveResolve">
 							</div>
 								<p v-else>
-								<span class="m--font-bolder" v-text="aveResponseRange"></span>
-								<h2 v-text="widget.aveResponse"></h2>
+								<span class="m--font-bolder" v-text="aveResolveRange"></span>
+								<h2 v-text="widget.aveResolve"></h2>
 								</p>
 							</span>
 						</div>
@@ -123,17 +123,23 @@
 						<div class="m-portlet__head-caption">
 							<div class="m-portlet__head-title">
 								<h3 class="m-portlet__head-text">
-									Average Time to Resolve
+									Average Response Time
 								</h3>
 							</div>
+						</div>
+						<div class="m-portlet__head-tools">
+							<a href="javascript:void(0);" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg btnView" id="aveResponseTicketPicker"><i class="fa fa-calendar"></i>
+							</a>
 						</div>
 					</div>
 					<div class="m-portlet__body">
 						<div class="d-flex justify-content-center">
 							<span class="d-flex flex-column align-items-center">
+								<div class="m-loader m-loader--primary" v-if="!widget.aveResponse">
+								</div>
 								<p v-else>
-									<span class="m--font-bolder"></span>
-									<h2>0</h2>
+								<span class="m--font-bolder" v-text="aveResponseRange"></span>
+								<h2 v-text="widget.aveResponse"></h2>
 								</p>
 							</span>
 						</div>

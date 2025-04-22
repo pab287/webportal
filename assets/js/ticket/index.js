@@ -18,6 +18,8 @@ let ticketDataSheet = new Vue({
     openTicketRange: textRange,
     totalTicketRange: textRange,
     urgentTicketRange: textRange,
+    aveResolveRange: textRange,
+    aveResponseRange: textRange,
     totalTicketByStatusRange: textRange,
     totalTicketByCategoryRange: textRange,
     totalTicketByPriorityRange: textRange,
@@ -428,7 +430,7 @@ const dateRangeConfig = {
 
 const makeAveResponseTimeRequest = (data) => {
   return $.ajax({
-      url: baseUrl("ticket/ticket/get_average_response_time/"),
+      url: baseUrl("ticket/ticket/get_average_resolve_time/"),
       type: "POST",
       dataType: "JSON",
       global: false,
@@ -440,13 +442,13 @@ const makeAveResponseTimeRequest = (data) => {
 };
 
 const handleAveResponseTimeResponse = (data) => {
-  ticketDataSheet.widget.aveResponse = data === 0 ? 
+  ticketDataSheet.widget.aveResolve = data === 0 ? 
       "NONE" : 
       data;
 };
 
 const handleAveResponseTimeCancel = () => {
-  ticketDataSheet.aveResponseRange = "All Time ";
+  ticketDataSheet.aveResolveRange = "All Time ";
   makeAveResponseTimeRequest({ all: true })
       .done(handleAveResponseTimeResponse);
 };
@@ -456,22 +458,22 @@ const handleAveResponseTimeApply = (ev, picker) => {
   const endDate = picker.endDate.format('YYYY-MM-DD');
 
   if (startDate === moment().format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
-    ticketDataSheet.aveResponseRange = "Today";
+    ticketDataSheet.aveResolveRange = "Today";
   } else if (startDate === moment().subtract(6, 'days').format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
-    ticketDataSheet.aveResponseRange = "Last 7 Days";
+    ticketDataSheet.aveResolveRange = "Last 7 Days";
   } else if (startDate === moment().subtract(29, 'days').format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
-    ticketDataSheet.aveResponseRange = "Last 30 Days";
+    ticketDataSheet.aveResolveRange = "Last 30 Days";
   } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
-    ticketDataSheet.aveResponseRange = "Yesterday";
+    ticketDataSheet.aveResolveRange = "Yesterday";
   } else {
     // Custom range
-    ticketDataSheet.aveResponseRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
+    ticketDataSheet.aveResolveRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
   }
   makeAveResponseTimeRequest({ start: startDate, end: endDate })
       .done(handleAveResponseTimeResponse);
 };
 
-$('#aveResponseTicketPicker').daterangepicker(dateRangeConfig)
+$('#aveResolveTicketPicker').daterangepicker(dateRangeConfig)
 .on('cancel.daterangepicker', handleAveResponseTimeCancel)
 .on('apply.daterangepicker', handleAveResponseTimeApply);
 

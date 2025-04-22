@@ -346,8 +346,8 @@ class Ticket extends MY_Controller {
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
-    public function get_average_response_time(){
-        $data = $this->ticket->getAverageResponseTime();
+    public function get_average_resolve_time(){
+        $data = $this->ticket->getAverageResolveTime();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
