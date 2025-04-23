@@ -225,6 +225,10 @@ $.ajax({
             $("#performed_by").empty();
             $("#performed_by_block").remove();
         }
+        
+        if(data.status == 'open'){
+            _tempContentData.status = [{'text': 'open', 'id': 'open'},{'text': 'In Progress', 'id': 'in progress'}];
+        }
 
         $("#status").select2({
             width: "100%",
@@ -624,7 +628,6 @@ let statuslog = new Vue({
             type: "GET",
             dataType: "JSON",
             success: function (response) {
-                console.log(response.data);
                 if (response) {
                     statuslog.trail =  response.data;
                 } else {
