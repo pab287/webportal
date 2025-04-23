@@ -3410,7 +3410,7 @@
                     $existingPersonnel = $this->db->get_where("gcctimeutility.personnel", array("biometricno" => $post["biometricno"]));
                     if ($existingPersonnel->num_rows() == 0){
                         $_tempData = (object) $_tempData;
-                        $addedPersonnel = $this->db->insert("gcctimeutility.personnel", array("biometricno" => $post["biometricno"], 
+                        $addedPersonnel = $this->db->insert("gcctimeutility.personnel", array("biometricno" => $post["biometricno"],
                             "biometric_id"=>$post["biometricno"],
                             "name" => strtoupper($_tempData->display_name_1),
                             "is_flexi"=>$workSchedule,

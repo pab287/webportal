@@ -11,7 +11,7 @@
         <div class="row m--margin-bottom-10">
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
                 <div class="form-group m-form__group row">
-                    <label for="company_id" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Company:</label>
+                    <label for="company_id" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label" :class="!vm_tab3.current_company_id ? 'required' : ''">Company:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
                         <div class="form-group m-form__group p-0">
                             <div class="input-group" v-if="vm_tab3.current_company_id">
@@ -39,7 +39,7 @@
             </div>
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
                 <div class="form-group m-form__group row">
-                    <label for="work_status" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">CLASSIFICATION:</label>
+                    <label for="work_status" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label required">CLASSIFICATION:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
                         <select class="form-control m-input" name="employee_status"
                                 placeholder="Select an option" id="classification" data-validation="required"
@@ -56,7 +56,7 @@
         <div class="row m--margin-bottom-10">
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
                 <div class="form-group m-form__group row">
-                    <label for="department_id" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Department:</label>
+                    <label for="department_id" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label required">Department:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
                         <select id="m--input-department_id" class="form-control m-input select2" name="department_id" placeholder="Select an option"  data-validation="required"
                                 v-model="vm_tab3.department_id"></select>
@@ -65,7 +65,7 @@
             </div>
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
                 <div class="form-group m-form__group row">
-                    <label for="work_status" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">STATUS:</label>
+                    <label for="work_status" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label required">STATUS:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
                         <select class="form-control m-input"
                                 name="work_status" id="status"
@@ -78,7 +78,7 @@
         <div class="row m--margin-bottom-10">
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
                 <div class="form-group m-form__group row">
-                    <label for="position" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Position:</label>
+                    <label for="position" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label required">Position:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
                         <select id="m--input-position_id" class="form-control m-input select2" name="position" placeholder="Select an option"  data-validation="required"
                         v-model="vm_tab3.position"></select>
@@ -93,8 +93,8 @@
 						<i class="la la-warning"></i>
 					</div>
 					<div class="m-alert__text">
-					  	<strong>REHIRE OPTION IS AVAILABLE!</strong>	
-					</div>		  	
+					  	<strong>REHIRE OPTION IS AVAILABLE!</strong>
+					</div>
                 </a>
             </div>
         </div>
@@ -104,7 +104,7 @@
             <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label text-center">
                 <label class="m-checkbox m-checkbox--check-bold m-checkbox--state-brand col-form-label" style="padding-top: 1px !important">
                     <input type="checkbox" id="is_two_level" :checked="vm_tab3.current_tl_supervisory == 1 ? true : false" name="tl_supervisory" value="1"> 
-                    <label> TWO LEVEL SUPERVISORY </label>
+                    <label for=""> TWO LEVEL SUPERVISORY </label>
                     <span></span>
                 </label>
                 <span class="flaticon-questions-circular-button" data-placement='right' data-toggle='m-tooltip' title='' data-original-title='Click box to enable Two Level Supervisory' data-skin="dark" style="font-size: 15px; margin-left: 3px;"></span>
@@ -113,7 +113,7 @@
         <div class="row m--margin-bottom-10" v-show="vm_tab3.level !== 'SUPERVISORY' && vm_tab3.level !== 'MANAGERIAL'  && vm_tab3.level !== 'EXECUTIVE' ">
             <div class="col-12 col-sm-12 col-md-8 col-lg-8 col-xl-8">
                 <div class="form-group m-form__group row">
-                    <label for="position" class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label">Immediate Supervisor:</label>
+                    <label for="position" class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label required">Immediate Supervisor:</label>
                     <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
                         <select id="m--input-supervisor_id" class="form-control m-input select2" name="supervisor" placeholder="Select an option"
                                 v-model="vm_tab3.supervisor" data-validation="required">
@@ -126,7 +126,7 @@
         <div class="row m--margin-bottom-10" v-show="vm_tab3.level !== 'SUPERVISORY' && vm_tab3.level !== 'MANAGERIAL'  && vm_tab3.level !== 'EXECUTIVE' ">
             <div class="col-12 col-sm-12 col-md-8 col-lg-8 col-xl-8" v-show="vm_tab3.current_tl_supervisory == 1">
                 <div id="remove-initial-class" class="form-group m-form__group row">
-                    <label for="position" class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label">Department Manager:</label>
+                    <label for="position" class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label required">Department Manager:</label>
                     <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
                         <select id="m--input-manager_id" class="form-control m-input select2" name="manager" placeholder="Select an option"
                                 v-model="vm_tab3.manager" data-validation="required">
@@ -136,51 +136,23 @@
                 </div>
             </div>
         </div>
-        <!-- div class="row m--margin-bottom-10">
-            <div class="col-xs-10 col-sm-10 col-md-12 col-lg-12 col-xl-10">
-                <div class="form-group m-form__group row">
-                    <label for="work_station" class="col-xs-6 col-sm-6 col-md-2 col-lg-2 col-xl-2 col-form-label">STATION:</label>
-                    <div class="col-xs-6 col-sm-6 col-md-10 col-lg-10 col-xl-10">
-                        <select class="form-control m-input"
-                                name="work_station[]" id="station"
-                                placeholder="Select an option"
-                                multiple>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div -->
-        <!-- div class="row m--margin-bottom-10" id="reason_row">
-            <div class="col-xs-10 col-sm-10 col-md-12 col-lg-12 col-xl-10">
-                <div class="form-group m-form__group row">
-                    <label for="reason_of_separation" class="col-xs-6 col-sm-6 col-md-2 col-lg-2 col-xl-2 col-form-label">Reason for Separation:</label>
-                    <div class="col-xs-6 col-sm-6 col-md-10 col-lg-10 col-xl-10">
-                        <div class="input-group">
-                            <textarea class="form-control m-input" 
-                                id="resign_reason" name="resign_reason" 
-                                data-validation="required">{{vm_tab3.resign_reason ? vm_tab3.resign_reason : ''}}</textarea>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div -->
         <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x"></div>
         <div class="row m--margin-bottom-10">
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
                 <div class="form-group m-form__group row">
-                    <label for="idno" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Identification #:</label>
+                    <label for="idno" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label required">Identification #:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
-                        <input type="number" name="idno" class="form-control m-input" maxlength="25" size="25"
-                               autocomplete="off" v-model="vm_tab3.idno"/>
+                        <input type="number" name="idno" class="form-control m-input" maxlength="25" size="25" autocomplete="off"
+                            v-model="vm_tab3.idno" data-validation="required" />
                     </div>
                 </div>
             </div>
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
                 <div class="form-group m-form__group row">
-                    <label for="biometricno" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Biometric #:</label>
+                    <label for="biometricno" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label required">Biometric #:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
                         <input type="number" name="biometricno" class="form-control m-input" maxlength="7" size="7" autocomplete="off"
-                               v-model="vm_tab3.biometricno"/>
+                            v-model="vm_tab3.biometricno" data-validation="required" />
                     </div>
                 </div>
             </div>
@@ -188,7 +160,7 @@
         <div class="row">
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
                 <div class="form-group m-form__group row">
-                    <label for="level" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Level / Ranking:</label>
+                    <label for="level" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label required">Level / Ranking:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
                         <select class="form-control m-input" name="level" placeholder="Select an option" data-validation="required"
                                 v-model="vm_tab3.level" id="level">
