@@ -18,11 +18,11 @@
                     <input type="hidden" name="emp_id">
 
                     <div class="form-group">
-                        <label for="">Date Started</label>
+                        <label for="" class="required">Date Started</label>
                         <div class="input-group date" id="m_datepicker_2">
                             <input type="text" class="form-control m-input" readonly
                                    placeholder="Select date" name="start_date"
-                                   data-validation="required" value="<?= date('M d,Y') ?>">
+                                   data-validation="required" value="<?= date('M d, Y') ?>">
                             <span class="input-group-addon">
                             <i class="la la-calendar-check-o"></i>
                         </span>
@@ -30,19 +30,19 @@
                     </div>
 
                     <div class="form-group mt-4">
-                        <label for="">Company</label>
+                        <label for="" class="required">Company</label>
                         <select id="change-company-company_id" name="company_id" class="form-control"
                                 data-validation="required"></select>
                     </div>
 
                     <div class="form-group mt-4">
-                        <label for="">Department</label>
+                        <label for="" class="required">Department</label>
                         <select id="change-company-department_id" name="department_id" class="form-control"
                                 data-validation="required"></select>
                     </div>
 
                     <div class="form-group mt-4">
-                        <label for="">Position</label>
+                        <label for="" class="required">Position</label>
                         <select id="change-company-position" name="position" class="form-control"
                                 data-validation="required"></select>
                     </div>

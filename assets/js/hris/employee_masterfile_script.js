@@ -915,13 +915,10 @@ if (typeof _tempContentData !== "undefined") {
                 .trigger("change")
                 .on("select2:select", function (e) {
                     const data = e.params.data;
-                    // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { work_status: data.id });
-
                     if(typeof this.vm_tab3 != 'undefined' && Object.keys(this.vm_tab3).length > 0){
-                        let { vm_tab3 } = this;
                         vmData = Object.assign({}, vmData, { work_status: data.id });
-                        // vmData = Object.assign({}, vmData);
                     }
+                    setTimeout(() => { $(e.target).validate(); }, 250);
                 });
 
             $('#level')
@@ -4728,6 +4725,7 @@ $("#m_datepicker-date_hired")
     }).on("changeDate", function (e) {
         const probeeEndDate = moment(e.date).add(180, 'days').format('YYYY-MM-DD');
         $("#m_datepicker-date_end_prob").val(probeeEndDate).datepicker('update');
+        setTimeout(() => { $(e.target).validate(); }, 250);
     });
 
     $("#m_datepicker-salary_effective_date")

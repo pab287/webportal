@@ -3211,7 +3211,7 @@
             $getDateHired = $this->getHiredDate($post['id']);
 
             $default_station = isset($post["default_station"]) && $post["default_station"] ? $post["default_station"]: null;
-            $workSchedule = isset($post["work_schedule"]) && $post["work_schedule"] ? $post["work_schedule"]: null;
+            $workSchedule = isset($post["work_schedule"]) && $post["work_schedule"] ? $post["work_schedule"]: 0;
             $work_station = isset($post["work_station"]) && $post["work_station"] ? $post["work_station"]: array();
             if (isset($post) && $post) {
                 unset($post["csrf_token"], $post["current_status"], $post["current_company_id"], $post["current_department_id"], $post["current_position_id"], $post["work_station"],$post["current_supervisor"], $post["default_station"], $post["work_schedule"]);
@@ -3346,7 +3346,7 @@
                                 $this->db->reset_query();
                                 $this->db->where($where);
                                 $this->db->set("date_end", '0000-00-00');
-                                $this->db->set('resignation_effective_date', NULL);
+                                $this->db->set('resignation_effective_date', null);
                                 $this->db->update($this->employeeTable);
                             }
 
@@ -3410,7 +3410,7 @@
                     $existingPersonnel = $this->db->get_where("gcctimeutility.personnel", array("biometricno" => $post["biometricno"]));
                     if ($existingPersonnel->num_rows() == 0){
                         $_tempData = (object) $_tempData;
-                        $addedPersonnel = $this->db->insert("gcctimeutility.personnel", array("biometricno" => $post["biometricno"], 
+                        $addedPersonnel = $this->db->insert("gcctimeutility.personnel", array("biometricno" => $post["biometricno"],
                             "biometric_id"=>$post["biometricno"],
                             "name" => strtoupper($_tempData->display_name_1),
                             "is_flexi"=>$workSchedule,
@@ -11152,16 +11152,16 @@
         }
 
         private function getEmployeeName($id){
-            $this->db->select("id, firstname, middlename, lastname, suffix");
+            $this->db->select("UCASE(
+                           CONCAT(firstname,
+                               CASE WHEN middlename IS NOT NULL AND middlename != '' THEN CONCAT(' ', substr(middlename,1,1),'.') ELSE ''
+                               END, ' ', lastname,
+                               CASE WHEN suffix IS NOT NULL AND suffix != '' AND suffix != 'N/A' AND suffix != 'NONE' THEN CONCAT(' ', suffix) ELSE '' END)
+                       ) as display_name");
             $this->db->from("gccmaster.tblemployees");
             $this->db->where("id", $id);
             $query = $this->db->get();
-            $rs = $query->row();
-            $tempRs = (array)$rs;
-            $fullname = $this->core_layout->getDisplayName($tempRs);
-            $tempFullname = (object)$fullname;
-            $rs->display_name = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
-            return $rs->display_name;
+            return $query->num_rows() === 1 && $query->row()->display_name != '' ? $query->row()->display_name : "No Assigned Name";
         }
 
         public function getOffensesCommendationTrail(){
