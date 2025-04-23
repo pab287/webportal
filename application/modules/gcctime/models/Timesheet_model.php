@@ -2407,10 +2407,8 @@ class Timesheet_model extends CI_Model{
             }
         }
 
-        if(is_array($_altered_shift) && count($_altered_shift) > 0){
-            foreach ($_altered_shift as $kkx => $vvx) {
-                $employee_time_sheet->$kkx = $vvx;
-            }
+        if(is_array($_altered_shift) && !empty($_altered_shift)){
+            foreach ($_altered_shift as $kkx => $vvx) { $employee_time_sheet->$kkx = $vvx; }
         }
 
         if(isset($employee_time_sheet->shift_am_start, $employee_time_sheet->shift_am_end) && ($employee_time_sheet->shift_am_start === "00:00:00" && $employee_time_sheet->shift_am_end === "00:00:00")){
@@ -2530,7 +2528,7 @@ class Timesheet_model extends CI_Model{
                 $employee_time_sheet->am_late = 0;
             }
 
-            if($isHoliday || $superFlexibleEmployee){ $employee_time_sheet->am_late = 0; }
+            if($superFlexibleEmployee){ $employee_time_sheet->am_late = 0; }
             /*** am 2hrs deduction custom ***/
         }
 
@@ -2543,7 +2541,7 @@ class Timesheet_model extends CI_Model{
             if(($am_in == null || $am_out == null) && ($_am_start && $_am_end)){
                 $employee_time_sheet->am_ut = round(($_am_end - $_am_start) / 60, 2);
             }
-            if($isHoliday || $superFlexibleEmployee){ $employee_time_sheet->am_ut = 0; }
+            if($superFlexibleEmployee){ $employee_time_sheet->am_ut = 0; }
         }
 
         if (($am_in && $_am_end) && ($am_in >= $_am_end)) {
@@ -2583,7 +2581,6 @@ class Timesheet_model extends CI_Model{
             $employee_time_sheet->am_ut = round(($_am_end - $_am_start) / 60, 2);
         }
         /*** am half day deduction custom ***/
-
         // END AM CALCULATION
 
         // START PM CALCULATION
@@ -2594,7 +2591,7 @@ class Timesheet_model extends CI_Model{
             if (($pm_in && $_pm_start) && ($pm_in > $_pm_start) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false) {
                 $employee_time_sheet->pm_late = round(($pm_in - $_pm_start) / 60, 2);
             }
-            if($isHoliday || $superFlexibleEmployee){ $employee_time_sheet->pm_late = 0; }
+            if($superFlexibleEmployee){ $employee_time_sheet->pm_late = 0; }
         }
 
         if(($pm_in && $pmHalfDayAbsent) && ($pm_in > $pmHalfDayAbsent) && $allow_late_adjustment === false && $isHourlySlashPartimer === false){ $hasHalfDayDeduction = true; }
@@ -2610,11 +2607,9 @@ class Timesheet_model extends CI_Model{
             if(($pm_in == null || $pm_out == null) && ($_pm_start && $_pm_end)){
                 $employee_time_sheet->pm_ut = round(($_pm_end - $_pm_start) / 60, 2);
             }
-            if($isHoliday || $superFlexibleEmployee){ $employee_time_sheet->pm_ut = 0; }
+            if($superFlexibleEmployee){ $employee_time_sheet->pm_ut = 0; }
         }
         
-       
-
         if ($pm_in >= $_pm_end) {
             $employee_time_sheet->pm_time_rendered = 0;
         } else {
@@ -9164,6 +9159,16 @@ class Timesheet_model extends CI_Model{
                 $hasOvertime = intval($qTemp->row()->has_overtime) === 1;
 
                 $timesheet = new stdClass();
+
+                $timesheet->am_late = 0;
+                $timesheet->pm_late = 0;
+                $timesheet->am_ut = 0;
+                $timesheet->pm_ut = 0;
+                $timesheet->total_late = 0;
+                $timesheet->total_ut = 0;
+                $timesheet->am_time_rendered = 0;
+                $timesheet->pm_time_rendered = 0;
+                
                 $timesheet->total_time_rendered = 8 * 60;
                 $timesheet->paid_holiday = 1;
                 $timesheet->verified = 1;
@@ -9181,7 +9186,6 @@ class Timesheet_model extends CI_Model{
                 if($updated){
                     $tempWhere = array();
                     $tempWhere["timesheet_id"] = $qTemp->row()->id;
-                    $timesheetId = $this->db->insert_id();
                     $tempData = new stdClass();
                     $tempData->status = 1;
                     $tempData->updated_by = $logged_in_user_emp_id;

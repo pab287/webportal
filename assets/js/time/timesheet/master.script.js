@@ -1582,15 +1582,15 @@ function setPaidHolidayRow(form) {
         type: "post",
         data: { emp_id: emp_id, date: date, id: timesheet_id, csrf_token: _csrf_hash },
         success: function (json) {
-            if (json.response) { }
+            if (json.response) {
+                const rowEl = dtTimesheet.row(row_index).node();
+            }
         }
     });
 }
 
 function undoPaidHolidayRow(form) {
-    const row_index = $(form).attr('data-row_index');
     const timesheet_id = $(form).attr('data-timesheet_id');
-
     $.ajax({
         url: siteUrl("gcctime/timesheet/undo_paid_holiday"),
         dataType: "json",
@@ -1637,7 +1637,6 @@ function regenerateRow(form) {
         type: "POST",
         success: function (response) {
             if (response.length <= 0) {
-
                 if (typeof timesheet_id !== "undefined" && timesheet_id) {
                     $.ajax({
                         url: baseUrl('gcctime/timesheet/get_timesheet_row/' + timesheet_id),
@@ -1682,11 +1681,13 @@ function regenerateRow(form) {
                                     if (hasTO >= 1) {
                                         $(rowEl).addClass('lacking lacking--contrast');
                                     }
+                                } else if (timesheet.id && parseInt(timesheet.has_shift) === 1){
+                                    $(rowEl).removeClass('absent absent--contrast');
                                 }
 
                                 if (((hasShift === 0 && (hasOvertime === 0 || hasOvertime === 1)) && (verified === 0 || !verified))
                                     || ((!hasShift && !hasOvertime) && (verified === 0 || !verified))
-                                    || (isHoliday == 1 && timesheet.allow_paid_holiday == false)) {
+                                    || (isHoliday == 1 && timesheet.allow_paid_holiday === false)) {
                                     $(rowEl).addClass('no-shift');
                                 } else {
                                     $(rowEl).hasClass("no-shift") && $(rowEl).removeClass("no-shift");
@@ -1767,10 +1768,7 @@ function verifySelected(form = null) {
             },
             success: function (response) {
                 if (response.success) {
-                    const verifiedEmpHolidays = response.data.verifiedIsHolidays;
                     $.each(selectedCheckboxes, function (i, cb) {
-                        const cbValue = $(cb).val();
-                        const cbIsHoliday = parseInt(verifiedEmpHolidays[cbValue]);
                         const tr = $(cb).closest('tr');
                         $(tr).removeClass(function () {
                             return $(this).attr('class').replace(/\b(?:even|odd)\b\s*/g, '');
@@ -1788,7 +1786,6 @@ function verifySelected(form = null) {
                     });
 
                     const verifiedEmpIds = response.data.verifiedEmpIds;
-                    // const verifiedIsHolidays = response.data.verifiedIsHolidasy;
                     verifiedEmpIds.forEach((id, index) => {
                         const row = $(`.tr-header-${id}`);
                         row.removeClass('group').addClass('group--verified');
