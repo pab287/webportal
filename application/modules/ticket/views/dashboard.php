@@ -98,10 +98,10 @@
 								</h3>
 							</div>
 						</div>
-						<!-- <div class="m-portlet__head-tools">
+						<div class="m-portlet__head-tools">
 							<a href="javascript:void(0);" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg btnView" id="aveResolveTicketPicker"><i class="fa fa-calendar"></i>
 							</a>
-						</div> -->
+						</div>
 					</div>
 					<div class="m-portlet__body">
 						<div class="d-flex justify-content-center">
@@ -127,10 +127,10 @@
 								</h3>
 							</div>
 						</div>
-						<!-- <div class="m-portlet__head-tools">
+						<div class="m-portlet__head-tools">
 							<a href="javascript:void(0);" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg btnView" id="aveResponseTicketPicker"><i class="fa fa-calendar"></i>
 							</a>
-						</div> -->
+						</div>
 					</div>
 					<div class="m-portlet__body">
 						<div class="d-flex justify-content-center">

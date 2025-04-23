@@ -1627,35 +1627,98 @@ class Ticket_m extends CI_Model
         $post = $this->input->post();
         $start_date = isset($post['start']) ? $post['start'] : date('Y-m-d');
         $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
-        $avg_completion_query = $this->db->query("
-            SELECT 
-                AVG(TIMESTAMPDIFF(SECOND, nl.created_at, cl.created_at)) as avg_seconds
-            FROM gccticket.ticket t
-            JOIN (
-                SELECT ticket_id, created_at
-                FROM gccticket.trail_logs_event
-                WHERE type = 'new'
-            ) nl ON t.id = nl.ticket_id
-            JOIN (
-                SELECT ticket_id, created_at
-                FROM gccticket.trail_logs_event
-                WHERE type = 'completed'
-            ) cl ON t.id = cl.ticket_id
-            WHERE t.status = 'completed'
-            AND t.is_archived = 0
-            AND t.created_at BETWEEN ? AND ?
-        ", [
-            $start_date . ' 00:00:00',
-            $end_date . ' 23:59:59'
-           ]);
-        
-        $avg_result = $avg_completion_query->row_array();
+        $this->db->select('AVG(TIMESTAMPDIFF(SECOND, nl.created_at, ip.created_at)) as avg_seconds');
+        $this->db->from('gccticket.ticket t');
+        $this->db->join('(SELECT ticket_id, created_at FROM gccticket.trail_logs_event WHERE type = "new") nl', 't.id = nl.ticket_id');
+        $this->db->join('(SELECT ticket_id, created_at FROM gccticket.trail_logs_event WHERE type = "completed") ip', 't.id = ip.ticket_id');
+        $this->db->where('t.status', 'completed');
+        $this->db->where('t.is_archived', 0);
+
+        if(!isset($post['all']) || !$post['all'] == 'true'){
+            $this->db->where('t.created_at >=', $start_date . ' 00:00:00');
+            $this->db->where('t.created_at <=', $end_date . ' 23:59:59');
+        }
+        $avg_response_result = $this->db->get();
+        $avg_result = $avg_response_result->row_array();
         $avg_seconds = isset($avg_result['avg_seconds']) ? $avg_result['avg_seconds'] : 0;
         
-        $hours = floor($avg_seconds / 3600);
-        $minutes = round(($avg_seconds % 3600) / 60);
+        $days = floor($avg_seconds / 86400);
+        $hours = floor(($avg_seconds % 86400) / 3600);
+        $minutes = floor(($avg_seconds % 3600) / 60);
+        $seconds = $avg_seconds % 60;
+        
+        $formatted_avg_time = '';
+           
+        if ($days > 0) {
+            $formatted_avg_time .= $days . ($days == 1 ? "day " : "days ");
+        }
+        if ($hours > 0) {
+            $formatted_avg_time .= $hours . ($hours == 1 ? "hr " : "hrs ");
+        }
+        if ($minutes > 0) {
+            $formatted_avg_time .= $minutes . ($minutes == 1 ? "min " : "mins ");
+        }
+        if ($seconds > 0) {
+            $formatted_avg_time .= $seconds . ($seconds == 1 ? "sec" : "secs");
+        }
+        
+        if ($formatted_avg_time === '') {
+            $formatted_avg_time = "INVALID";
+        }
+           
+        $formatted_avg_time = rtrim($formatted_avg_time);
+        return $formatted_avg_time;
+    }
 
-        return $hours . "hrs " . $minutes . "mins";
+    public function getAveResponseTime(){
+        $post = $this->input->post();
+        $start_date = isset($post['start']) ? $post['start'] : date('Y-m-d');
+        $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
+
+        $this->db->select('AVG(TIMESTAMPDIFF(SECOND, nl.created_at, ip.created_at)) as avg_seconds');
+        $this->db->from('gccticket.ticket t');
+        $this->db->join('(SELECT ticket_id, created_at FROM gccticket.trail_logs_event WHERE type = "new") nl', 't.id = nl.ticket_id');
+        $this->db->join('(SELECT ticket_id, created_at FROM gccticket.trail_logs_event WHERE type = "in progress") ip', 't.id = ip.ticket_id');
+        $this->db->where('t.status', 'in progress');
+        $this->db->where('t.is_archived', 0);
+
+        if(!isset($post['all']) || !$post['all'] == 'true'){
+            $this->db->where('t.created_at >=', $start_date . ' 00:00:00');
+            $this->db->where('t.created_at <=', $end_date . ' 23:59:59');
+        }
+        
+        $avg_response_query = $this->db->get();
+
+        $avg_response_result = $avg_response_query->row_array();
+        $avg_response_seconds = isset($avg_response_result['avg_seconds']) ? $avg_response_result['avg_seconds'] : 0;
+        
+        $response_days = floor($avg_response_seconds / 86400);
+        $response_hours = floor(($avg_response_seconds % 86400) / 3600);
+        $response_minutes = floor(($avg_response_seconds % 3600) / 60);
+        $response_seconds = $avg_response_seconds % 60;
+        
+        $formatted_avg_response_time = '';
+        
+        if ($response_days > 0) {
+            $formatted_avg_response_time .= $response_days . ($response_days == 1 ? "day " : "days ");
+        }
+        if ($response_hours > 0) {
+            $formatted_avg_response_time .= $response_hours . ($response_hours == 1 ? "hr " : "hrs ");
+        }
+        if ($response_minutes > 0) {
+            $formatted_avg_response_time .= $response_minutes . ($response_minutes == 1 ? "min " : "mins ");
+        }
+        if ($response_seconds > 0) {
+            $formatted_avg_response_time .= $response_seconds . ($response_seconds == 1 ? "sec" : "secs");
+        }
+        
+        if ($formatted_avg_response_time === '') {
+            $formatted_avg_response_time = "INVALID";
+        }
+        
+        $formatted_avg_response_time = rtrim($formatted_avg_response_time);
+    
+        return $formatted_avg_response_time;
     }
 
 
