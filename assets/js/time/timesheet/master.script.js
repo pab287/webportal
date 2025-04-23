@@ -1584,6 +1584,8 @@ function setPaidHolidayRow(form) {
         success: function (json) {
             if (json.response) {
                 const rowEl = dtTimesheet.row(row_index).node();
+                $('td:eq(7)', rowEl).empty().html(0);
+                $('td:eq(8)', rowEl).empty().html(0);
             }
         }
     });
