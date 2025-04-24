@@ -997,7 +997,6 @@ class Ticket_m extends CI_Model
             COUNT(CASE WHEN LOWER(priority) = 'high' AND LOWER(status) = 'open' THEN 1 END) as high
         ");
         $this->db->from("gccticket.ticket as a");
-        $this->db->join("gccticket.trail_logs_event as b", "a.id = b.ticket_id", "LEFT");
         $this->db->where('is_archived', 0);
         $this->db->where("LOWER(a.status) != 'cancelled'");
         $query = $this->db->get();
