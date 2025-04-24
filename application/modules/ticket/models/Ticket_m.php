@@ -70,7 +70,7 @@ class Ticket_m extends CI_Model
             }
         }
         $this->db->where('a.is_archived', '0');
-        $this->db->where("LOWER(a.status) != 'Cancelled'");
+        $this->db->where("LOWER(a.status) != 'cancelled'");
         if ($query_builder) {
             $lower_query = strtolower($query_builder);
             if (
@@ -138,7 +138,7 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '0');
-        $this->db->where("LOWER(a.status) != 'Cancelled'", NULL, FALSE);
+        $this->db->where("LOWER(a.status) != 'cancelled'", NULL, FALSE);
         $current_user_id = $this->user_data['emp_id']; 
         if($payroll) {
             $this->db->where('cat.name', 'payroll');
@@ -993,12 +993,13 @@ class Ticket_m extends CI_Model
     function allTickets() {
         $this->db->select("
             COUNT(*) as total, 
-            COUNT(CASE WHEN status = 'open' THEN 1 END) as 'open', 
-            COUNT(CASE WHEN priority = 'high' AND status = 'open' THEN 1 END) as high
+            COUNT(CASE WHEN LOWER(status) = 'open' THEN 1 END) as 'open', 
+            COUNT(CASE WHEN LOWER(priority) = 'high' AND LOWER(status) = 'open' THEN 1 END) as high
         ");
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccticket.trail_logs_event as b", "a.id = b.ticket_id", "LEFT");
         $this->db->where('is_archived', 0);
+        $this->db->where("LOWER(a.status) != 'cancelled'");
         $query = $this->db->get();
         $result = $query->row_array();
         
@@ -1432,6 +1433,7 @@ class Ticket_m extends CI_Model
         $end_time = $end_date . ' 23:59:59';
         $this->db->from("gccticket.ticket");
         $this->db->where("is_archived", 0);
+        $this->db->where("LOWER(status) != 'cancelled'");
         if(isset($post['all']) && $post['all'] == 'true'){
             return $this->db->count_all_results();
         }
@@ -1511,6 +1513,7 @@ class Ticket_m extends CI_Model
         foreach ($categories as $category) {
             $this->db->where('category', $category['name']);
             $this->db->where("is_archived", 0);
+            $this->db->where("LOWER(status) != 'cancelled'");
             if(isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']) {
                 $this->db->where("created_at >= ", $start_time);
                 $this->db->where("created_at <= ", $end_time);
