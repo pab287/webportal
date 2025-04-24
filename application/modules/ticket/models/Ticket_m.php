@@ -1538,7 +1538,7 @@ class Ticket_m extends CI_Model
          ");
         $this->db->from("gccticket.ticket");
         $this->db->where("is_archived", 0);
-        $this->db->where("status", "open");
+        // $this->db->where("status", "open");
         if(isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']){
             $this->db->where("created_at >= ", $start_time);
             $this->db->where("created_at <= ", $end_time);
