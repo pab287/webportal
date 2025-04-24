@@ -44,7 +44,7 @@ const tblPaymentsArchive = $("#table-payments-archive").DataTable({
             orderable: false,
             render: function (data, type, row, meta) {
                 var tempHtml = "";
-                if(row.is_penalty == '1'){
+                if(row.is_penalty == 1){
                     if(row.penalties.length > 1){
                         tempHtml += "<a href='javascript:void(0);' data-toggle='tooltip' data-placement='top' title='Archive' onclick='viewPenalty("+row.id+")'>see more</a>";
                     } else {

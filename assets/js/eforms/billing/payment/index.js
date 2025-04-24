@@ -73,7 +73,7 @@ const tblPayment = $("#table-payment").DataTable({
             orderable: false,
             render: function (data, type, row, meta) {
                 var tempHtml = "";
-                if(row.is_penalty == '1'){
+                if(row.is_penalty == 1){
                     if(row.penalties.length > 1){
                         tempHtml += "<a href='javascript:void(0);' data-toggle='tooltip' data-placement='top' title='Archive' onclick='viewPenalty("+row.id+")'>see more</a>";
                     } else {
@@ -269,8 +269,6 @@ $('#payment-date-picker').daterangepicker({
     selectedReadingStartDate = start;
     selectedReadingEndDate = end;
 
-    // let _label = "<strong>" + start.format("MMM. DD, YYYY") + "</strong> to <strong>" + end.format("MMM. DD, YYYY") + "</strong>";
-
     let _label = `<strong>${start.format("MMM. DD, YYYY")}</strong> to <strong>${end.format("MMM. DD, YYYY")}</strong>`;
 
     $(".selected-filter", $('#payment-date-picker')).html(_label);
@@ -351,59 +349,66 @@ function viewPenalty(id){
     }
 }
 
-function itemDatatableActions(row){
-	if(row){
+function itemDatatableActions(row) {
+	if(row) {
         var tempHtml = "---";
         var tempActions = [];
         var currentActions = ["view", "delete"];
-        $.each(currentActions, function(index, value){
+        $.each(currentActions, function(index, value) {
             tempActions.push(value);
         });
 
         tempHtml = `<div class="dropdown">
-                <a href="#" class="btn m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" data-toggle="dropdown"> 
-                    <i class="la la-ellipsis-h"></i>
-                </a>
-                <div class="dropdown-menu dropdown-menu-right">`;
-            $.each(tempActions, function(ii, vv){
-                switch(vv){
-                    case "view":
-                        tempHtml += `<a class="dropdown-item " data-toggle='modal' data-target='#m_viewPayment' href="javascript:void(0);" id='viewPayment' data-id='`+row.id+`'><i class="la la-eye"></i> View</a>`;
-                    break;
-                    case "delete":
-                        if(!row.isArchiveHide){
-                            tempHtml += `<a class="dropdown-item" style="color: #FF8383;" data-toggle='modal' data-target='#delete_modal' href="javascript:void(0);" onclick='modalArchive(`+ row.id +`,`+`\"` + row.account_name + `\",`+`\"` + row.payment_ref_no + `\")'><i class="la la-trash" style="color: #FF8383;"></i> Archive</a>`;
-                        }
-                    break;
-                }
-            });
-            tempHtml += `</div></div>`;
+                        <a href="#" class="btn m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" data-toggle="dropdown"> 
+                            <i class="la la-ellipsis-h"></i>
+                        </a>
+
+                        <div class="dropdown-menu dropdown-menu-right">`;
+
+                        $.each(tempActions, function(ii, vv){
+                            switch(vv){
+                                case "view":
+                                    tempHtml += `<a class="dropdown-item " data-toggle='modal' data-target='#m_viewPayment' href="javascript:void(0);" id='viewPayment' data-id='`+row.id+`'><i class="la la-eye"></i> View</a>`;
+                                break;
+                                case "delete":
+                                    if(!row.isArchiveHide){
+                                        tempHtml += `<a class="dropdown-item" style="color: #FF8383;" data-toggle='modal' data-target='#delete_modal' href="javascript:void(0);" onclick='modalArchive(`+ row.id +`,`+`\"` + row.account_name + `\",`+`\"` + row.payment_ref_no + `\")'><i class="la la-trash" style="color: #FF8383;"></i> Archive</a>`;
+                                    }
+                                break;
+                            }
+                        });
+
+            tempHtml += `</div>
+                    </div>`;
         return tempHtml;
-	}else{ return false; }
+
+	} else { 
+        return false; 
+    }
 }
 
 Inputmask.extendAliases({
     pesos: {
-              prefix: "₱ ",
-              groupSeparator: ".",
-              alias: "numeric",
-              placeholder: "0",
-              autoGroup: !0,
-              digits: 2,
-              digitsOptional: !1,
-              clearMaskOnLostFocus: !1
-          }
-  });
-  
-  $(".net_payment").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
-  $(".balance_covered").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
-  $(".sub_total").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
-  $(".reconnection_fee").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
-  $(".received_amount").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
-  $(".bill_amount").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
-  $(".overdue_fee").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
+        prefix: "₱ ",
+        groupSeparator: ".",
+        alias: "numeric",
+        placeholder: "0",
+        autoGroup: !0,
+        digits: 2,
+        digitsOptional: !1,
+        clearMaskOnLostFocus: !1
+    }
+});
 
-$('#table-payment').on("click","#viewPayment",function(){
+$(".net_payment").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
+$(".balance_covered").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
+$(".sub_total").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
+$(".reconnection_fee").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
+$(".received_amount").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
+$(".bill_amount").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
+$(".overdue_fee").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
+
+$('#table-payment').on("click","#viewPayment",function() {
     var payment_id = $(this).attr("data-id");
     $.ajax({
         url: baseUrl("eforms/billing/get_payment"),
@@ -441,7 +446,7 @@ $('#m_viewPayment').on('hide.bs.modal', function () {
     $(this).find("input").val('').end();
 });
 
-function modalArchive(id,name,payment_ref_no){
+function modalArchive(id,name,payment_ref_no) {
     const temp = `<p>Are you sure you wan't to archive <strong class='m--font-boldest'>${payment_ref_no}</strong>?</p>`;
     $('#m_archived').modal('show');
     $('#archive_text').empty().html(temp);
@@ -449,7 +454,7 @@ function modalArchive(id,name,payment_ref_no){
     $("#m_archived input[name=payment_ref_no]").val(payment_ref_no);
 }
 
-function archivePayment(){
+function archivePayment() {
     var id = document.getElementById('archive_id').value;
     var payment_ref_no = document.getElementById('payment_ref_no').value;
     $.ajax({
@@ -457,7 +462,7 @@ function archivePayment(){
         type: 'post',
         data: { csrf_token: _csrf_hash, id: id, payment_ref_no: payment_ref_no },
         success: function (data) {
-            if(data.status){
+            if(data.status) {
                 $('#m_archived').modal('hide');
                 tblPayment.ajax.reload();
             }
@@ -469,18 +474,18 @@ function archivePayment(){
 }
 
 $(".massPrint").on("click", function() {
-
     var selectedPayment = [];
+
     $("#table-payment tr.selected").each(function(){
         selectedPayment.push($(this).find('td').attr("data-id-print"));
     });
 
-    if(selectedPayment.length > 0){
+    if(selectedPayment.length > 0) {
         $.ajax({
             url: baseUrl("eforms/billing/print_payment"),
             type: "POST",
             data:{selectedPayment: selectedPayment, csrf_token: _csrf_hash},
-            success: function(response){
+            success: function(response) {
               
                 var w = window.open("about:blank");
                 w.document.open();
@@ -492,7 +497,7 @@ $(".massPrint").on("click", function() {
                     w.close();
                 }, 10);
 
-                w.onafterprint = function(){
+                w.onafterprint = function() {
                     savePrintLogs(selectedPayment);
                 };
             },
@@ -503,7 +508,7 @@ $(".massPrint").on("click", function() {
     }
 });
 
-function savePrintLogs(selectedPayment){
+function savePrintLogs(selectedPayment) {
     $.ajax({
         url: baseUrl("eforms/billing/save_print_logs"),
         type: 'post',
@@ -536,7 +541,7 @@ $("#ExportPDF").on("click", function() {
     saveExportLogs('Payments - Export PDF');
 });
 
-function saveExportLogs(export_){
+function saveExportLogs(export_) {
     $.ajax({
         url: baseUrl("eforms/billing/save_export_logs"),
         type: 'post',
