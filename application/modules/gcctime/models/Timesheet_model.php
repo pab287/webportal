@@ -9207,7 +9207,7 @@ class Timesheet_model extends CI_Model{
         return $resultset;
     }
 
-    function undoPaidHoliday(){
+    public function undoPaidHoliday(){
         $post = $this->input->post();
         $resultset = array();
         if(isset($post) && $post){
@@ -9215,7 +9215,7 @@ class Timesheet_model extends CI_Model{
             $tempWhere = $post;
             $tempWhere["is_holiday"] = 1;
             $tempWhere["paid_holiday"] = 1;
-            //$tempWhere["verified"] = 1;
+
             $qTemp = $this->db->get_where($this->tbl_timesheet, $tempWhere);
             if($qTemp->num_rows() == 1){
                 $tempId = $qTemp->row()->id;
@@ -9230,14 +9230,18 @@ class Timesheet_model extends CI_Model{
 
                 $updated = $this->db->update($this->tbl_timesheet, $alteredData, $post);
                 if($updated && $this->db->affected_rows() > 0){
-                    $this->db->update($this->tbl_timesheet_paid_holiday,
+                    $resultset["response"] = $this->db->update($this->tbl_timesheet_paid_holiday,
                     array(
                         "status"=>0,
                         "updated_by"=>$logged_in_user_emp_id,
                         "updated_at"=>date("Y-m-d H:i:s"),
                     ),
                     array("timesheet_id"=>$tempId));
+                }else{
+                    $resultset["response"] = false;
                 }
+            }else{
+                $resultset["response"] = false;
             }
         }else{
             $resultset["response"] = false;
