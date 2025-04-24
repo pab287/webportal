@@ -1486,7 +1486,6 @@ class Ticket_m extends CI_Model
         $data =  ["status" => [
             "Open" => $result['open'],
             "In progress" => $result['in progress'],
-            "Resolved" => $result['resolved'],
             "Completed" => $result['completed'],
             "Cancelled" => $result['cancelled']
         ],];
