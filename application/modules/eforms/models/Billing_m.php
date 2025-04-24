@@ -1754,7 +1754,7 @@ class Billing_m extends CI_Model {
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.readings r", "r.id = b.reading_id", "LEFT");
         $this->db->join("hydra_billing.payments as p", "p.bill_id = b.id", "LEFT");
-        $this->db->where("b.status", "1");
+        $this->db->where("b.status", 1);
         $this->db->group_by("b.id");
         if($query_builder){
             $this->db->where($query_builder);
@@ -1848,11 +1848,11 @@ class Billing_m extends CI_Model {
                     $disconnectionFee = $_query["reconnection_fee"];
                     $balance = $_query["balance_covered"];
                 }
-                $status = $_query["status"]=='1' ? 'Active' : 'Archive';
+                $status = $_query["status"]== 1 ? 'Active' : 'Archive';
 
                 if ($status=='Archive') {
                     $paid_status = 'Archive';
-                } elseif ($_query["is_paid"]=='1') {
+                } elseif ($_query["is_paid"] == 1) {
                     $paid_status = 'Paid';
                 } elseif ($current_date > $_query["due_date"]) {
                     $paid_status = 'Overdue'; 
@@ -1936,7 +1936,7 @@ class Billing_m extends CI_Model {
         $this->db->from("hydra_billing.bills b");
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.readings r", "r.id = b.reading_id", "LEFT");
-        $this->db->where("b.status", "1");
+        $this->db->where("b.status", 1);
         if($query_builder){
             $this->db->where($query_builder);
         }
@@ -2793,7 +2793,7 @@ class Billing_m extends CI_Model {
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.bills c", "c.id = b.bill_id", "LEFT");
         $this->db->join("gccmaster.tblemployees d", "d.id = b.created_by", "LEFT");
-        $this->db->where("b.is_archive",'0');
+        $this->db->where("b.is_archive", 0);
         
         // if daterange picker is set
         if (!empty($post['startDate']) && !empty($post['endDate']) && $post['startDate'] != "Invalid date" && $post['endDate'] != "Invalid date") {
@@ -2843,7 +2843,6 @@ class Billing_m extends CI_Model {
                 $data["penalties"] = unserialize($_query["penalties"]);
                 $data["payment_ref_no"] = $_query['payment_ref_no'];
                 $data["due_date"] = $_query['due_date'];
-                // $data["account_name"] = $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
                 $data["name"] = $_query["name"];
                 $data["id"] = $_query["id"];
                 $data["ref_no"] = $_query["ref_no"];
@@ -2927,7 +2926,7 @@ class Billing_m extends CI_Model {
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.bills c", "c.id = b.bill_id", "LEFT");
         $this->db->join("gccmaster.tblemployees d", "d.id = b.created_by", "LEFT");
-        $this->db->where("b.is_archive",'0');
+        $this->db->where("b.is_archive", 0);
 
         if (!empty($post['startDate']) && !empty($post['endDate']) && $post['startDate'] != 'Invalid date' && $post['endDate'] != 'Invalid date') {
             $start_date = date('Y-m-d', strtotime($post['startDate']));
@@ -5888,7 +5887,7 @@ class Billing_m extends CI_Model {
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.bills c", "c.id = b.bill_id", "LEFT");
         $this->db->join("gccmaster.tblemployees d", "d.id = b.created_by", "LEFT");
-        $this->db->where("b.is_archive",'1');
+        $this->db->where("b.is_archive", 1);
 
         if($search != ""){
             $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
@@ -5995,7 +5994,7 @@ class Billing_m extends CI_Model {
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.bills c", "c.id = b.bill_id", "LEFT");
         $this->db->join("gccmaster.tblemployees d", "d.id = b.created_by", "LEFT");
-        $this->db->where("b.is_archive",'1');
+        $this->db->where("b.is_archive", 1);
 
         if($search != ""){
             $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
@@ -6046,7 +6045,7 @@ class Billing_m extends CI_Model {
         $this->db->select("a.middlename, r.id, a.accountno, CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname)) as name, a.lot, a.block, r.ref_no, r.due_date, a.model, r.status as bill_status");
         $this->db->from("hydra_billing.bills r");
         $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
-        $this->db->where("r.status", "0");
+        $this->db->where("r.status", 0);
 
         // Add search filter dynamically
         if (!empty($search)) {
@@ -6112,7 +6111,7 @@ class Billing_m extends CI_Model {
         $this->db->select("a.middlename, r.id, a.accountno, CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname)) as name, a.lot, a.block, r.ref_no, r.due_date, a.model, r.status as bill_status");
         $this->db->from("hydra_billing.bills r");
         $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
-        $this->db->where("r.status", "0");
+        $this->db->where("r.status", 0);
 
         // Add search filter dynamically
         if (!empty($search)) {

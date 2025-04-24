@@ -72,7 +72,9 @@ function numberWithCommas(x) {
 
 $('#generalSearch').donetyping(function(callback) {
     search_val = $(this).val();
-    tblPaymentsArchive.ajax.reload();
+    if (search_val.length >= 3 || search_val.length === 0) {
+        tblPaymentsArchive.ajax.reload();
+    }
 });
 
 function viewPenalty(id){

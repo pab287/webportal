@@ -516,7 +516,9 @@ function savePrintLogs(selectedPayment){
 
 $('#generalSearch').donetyping(function(callback) {
     search_val = $(this).val();
-    tblPayment.ajax.reload();
+    if (search_val.length >= 3 || search_val.length === 0) {
+        tblPayment.ajax.reload();
+    }
 });
 
 $("#ExportExcel").on("click", function() {
