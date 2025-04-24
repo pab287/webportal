@@ -94,7 +94,7 @@
 						<div class="m-portlet__head-caption">
 							<div class="m-portlet__head-title">
 								<h3 class="m-portlet__head-text">
-									Average Time to Resolve
+									Average Time Completed
 								</h3>
 							</div>
 						</div>
