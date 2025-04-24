@@ -71,7 +71,7 @@
                                         Date Needed: <span style="color:red;">*</span>
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-6 input-group date" id="need_dt_group">
-                                        <input class="form-control m-input" type="text" name="date_required" id="date_required" data-validation="required"/>
+                                        <input class="form-control m-input" type="text" name="date_required" id="date_required" data-validation="required" readonly/>
                                         <span class="input-group-addon">
 											<i class="la la-calendar glyphicon-th"></i>
 										</span>

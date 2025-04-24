@@ -31,13 +31,6 @@ $('#date_required_group').datepicker({
     format: 'yyyy-mm-dd hh:mm',
 });
 
-$('#date_required_group').datetimepicker({
-    todayHighlight: true,
-    autoclose: true,
-    pickerPosition: 'bottom-left',
-    todayBtn: true,
-    dateTimeFormat: 'yyyy-mm-dd hh:mm',
-});
 let arrImg = [];
 let images = [];
 $.ajax({
@@ -69,7 +62,7 @@ $.ajax({
         $("#ticket_id").val(param_id);
 
         $("#issue").val(vmData.message);
-        $("#date_required").val(moment(vmData.requested_date).format("YYYY-MM-DD HH:mm"));
+        $("#date_required").val(moment(vmData.requested_date).format("MMMM D, YYYY hh:mm A"));
         $("#requested_by").val(vmData.requested_by);
 
         const picUrl = vmData.attachment ? baseUrl("uploads/files/images/employee_files/" + vmData.attachment) : baseUrl('assets/images/ams/images/no_image.jpg');
@@ -350,11 +343,11 @@ $('#date_required').datetimepicker({
     autoclose: true,
     pickerPosition: 'bottom-left',
     todayBtn: true,
-    dateTimeFormat: 'yyyy-mm-dd hh:mm',
+    format: 'MM dd, yyyy H:i P',
+    showMeridian: true,
 }).on("changeDate", function (e) {
-    moment(e.date).format("yyyy-mm-dd hh:mm tt");
-    var self = $(e.target);
-    self.validate();
+    var formattedDate = moment(e.date).format('YYYY-MM-DD HH:mm');
+    $(this).val(formattedDate);
 });
 
 let fileUploadPhoto = function () {

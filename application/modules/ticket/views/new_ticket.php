@@ -55,8 +55,8 @@
 					    <div class="row">
                             <div class="col-xs-12 col-sm-12 col-md-6">
                                 <div class="form-group m-form__group row">
-                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Category <span style="color:red;">*</span>
+                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label required">
+                                        Category 
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <select id="category" name="category"  data-validation="required">
@@ -65,8 +65,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="dept-res">
-                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Department Responsible: <span style="color:red;">*</span>
+                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label required">
+                                        Department Responsible: 
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <select id="responsiblity" name="responsibility"  data-validation="required">
@@ -75,8 +75,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="webportal">
-                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Module <span style="color:red;">*</span>
+                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label required">
+                                        Module 
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <select id="sub_category" name="sub_category"  data-validation="required">
@@ -85,19 +85,19 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Date Needed <span style="color:red;">*</span>
+                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label required">
+                                        Date Needed 
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9 input-group date">
-                                        <input class="form-control m-input" type="text" name="date_required" id="date_required" data-validation="required"/>
+                                        <input class="form-control m-input" type="text" name="date_required" id="date_required" data-validation="required" readonly/>
                                         <span class="input-group-addon">
 											<i class="la la-calendar glyphicon-th"></i>
 										</span>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Severity <span style="color:red;">*</span>
+                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label required">
+                                        Severity 
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <select id="severity" name="severity" class="form-control select2" data-validation="required">
@@ -106,8 +106,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Department <span style="color:red;">*</span>
+                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label required">
+                                        Department 
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <select id="department" name="department" data-validation="required">
@@ -116,8 +116,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label">
-                                        Issue <span style="color:red;">*</span>
+                                    <label class="col-sm-12 col-xs-12 col-md-3 col-form-label required">
+                                        Issue 
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-9">
                                         <textarea class="form-control m-input" id="issue" name="issue" rows="4" data-validation="required"></textarea>

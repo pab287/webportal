@@ -221,8 +221,8 @@ let ticketDataSheet = new Vue({
         value: parseInt(value),
         color: am4core.color(
           key === 'High' ? '#F4516C' : 
-          key === 'Medium' ? '#FFC75F' : 
-          key === 'Low' ? '#34BFA3' : '#34BFA3')
+          key === 'Medium' ? '#FFB822' : 
+          key === 'Low' ? '#36A3F7' : '#36A3F7')
       }));
 
       priorityChart = am4core.create("priority_chart", am4charts.PieChart);
