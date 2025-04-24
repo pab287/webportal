@@ -1,156 +1,115 @@
-$(document).ready(function(){
-
-});
-var search_val = "";
-var query_builder = "";
-var tblReadings = $("#table-payments-archive").DataTable({
-   dom: '<"toolbar">rtlip',
-   serverSide: true,
-   processing: true,
-   aaSorting: [],
-   ajax: {
+let search_val = "";
+let query_builder = "";
+const tblPaymentsArchive = $("#table-payments-archive").DataTable({
+    dom: '<"toolbar">rtlip',
+    serverSide: true,
+    processing: true,
+    aaSorting: [],
+    ajax: {
         url: baseUrl("eforms/billing/get_payment_archive_collection/"),
         type: "post",
         global: false,
         dataType: "json",
         data: function(d){
-           d.csrf_token = _csrf_hash,
-           d.search['value'] = search_val,
-           d.query_builder = query_builder
-       }
-   },
-   searching: true,
-   columns: [
-       { data: "ref_no", render: function (data) {
-              return "<strong style='color: #525252;'>"+data+"</strong>";
+            d.csrf_token = _csrf_hash,
+            d.search['value'] = search_val,
+            d.query_builder = query_builder
+        }
+    },
+    searching: true,
+    order: [[9, "desc"]],
+    columns: [
+        { data: "payment_ref_no", render: function (data) { return "<strong style='color: #525252;'>"+data+"</strong>";} },
+        { data: "name"},
+        { data: "ref_no"},
+        { data: "payment_type", className: "text-center"},
+        { data: "due_date", className: "text-center"},
+        { data: null, className: "text-right"},
+        { data: "net_payment", className: "text-right", render: function(data) {
+                return "<strong style='color: #525252;'>"+numberWithCommas(data)+"</strong>";
             }
         },
-       { data: "accountno"},
-       { data: "name"},
-       { data: "payment_date"},
-       { data: "model"},
-       { data: "block"},
-       { data: "lot"},
-       { data: "ar"},
-       { data: null, width: "5%", className: "text-center"},
+        { data: "received_amount", className: "text-right", render: function (data) {
+                return "<strong style='color: #525252;'>"+numberWithCommas(data)+"</strong>";
+            }
+        },
+        { data: "acknowledgement_receipt", className: "text-center"},
+        { data: "payment_date", className: "text-center"},
+    ],
+    columnDefs: [
+        {
+            data: null,
+            defaultContent: "",
+            targets: 5,
+            orderable: false,
+            render: function (data, type, row, meta) {
+                var tempHtml = "";
+                if(row.is_penalty == '1'){
+                    if(row.penalties.length > 1){
+                        tempHtml += "<a href='javascript:void(0);' data-toggle='tooltip' data-placement='top' title='Archive' onclick='viewPenalty("+row.id+")'>see more</a>";
+                    } else {
+                        var v = row.penalties[0];
+                        var sum = parseFloat(v.overdue) + parseFloat(row.reconnection_fee);
+                        tempHtml += '₱ ';
+                        tempHtml += sum.toFixed(2);
+                    }
+                } else {
+                    tempHtml += '₱ 0.00';
+                }
+                return tempHtml;
+            },
+        },
+        {
+            targets: "_all",
+            className: "v-middle",
+        }
    ],
-   columnDefs: [
-       { targets: [0]},       
-       {
-           data: null,
-           defaultContent: "",
-           targets: -1,
-           orderable: false,
-           render: function ( data, type, row, meta ) { 
-              var _action = "restore("+row.id+", '"+row.ref_no+"')";
-              var action = '<td class=" text-center"> <button type="button" onclick="'+_action+'" class="btn btn-default m-btn m-btn--hover-success m-btn--icon m-btn--icon-only m-btn--pill btnRestore" data-toggle="m-tooltip" data-original-title="Restore" data-placement="bottom" data-delay="{&quot;show&quot;: 300}" aria-describedby="tooltip638481"><i class="la la-reply"></i></button></td>';
-              return action; 
-          },
-       }
-   ],buttons: [
-       { 
-           extend: 'csv',
-           exportOptions: {
-               columns: "thead th:not(.notExport)"
-           }
-       }, { 
-           extend: 'excel',
-           exportOptions: {
-               columns: "thead th:not(.notExport)"
-           }
-       }, { 
-           extend: 'pdf',
-           exportOptions: {
-               columns: "thead th:not(.notExport)"
-           }
-       }
-   ]
 });
 
 function numberWithCommas(x) {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-function renderStatus(data) {
-  switch (data) {
-      case "1":
-          return '<div class="m-badge text-white m-badge--accent m-badge--wide" role="alert"><strong>Billed</strong></div>';
-          break;
-      default:
-          return '<div class="m-badge text-white m-badge--warning m-badge--wide" role="alert"><strong>Unbilled</strong></div>';
-          break;
-  }
-}
-
 $('#generalSearch').donetyping(function(callback) {
     search_val = $(this).val();
-    tblReadings.ajax.reload();
+    tblPaymentsArchive.ajax.reload();
 });
 
-$("#ExportExcel").on("click", function() {
-  tblReadings.button( '.buttons-excel' ).trigger();
-  saveExportLogs('Readings - Export Excel');
-});
-
-$("#ExportCSV").on("click", function() {
-  tblReadings.button( '.buttons-csv' ).trigger();
-  saveExportLogs('Readings - Export CSV');
-});
-
-$("#ExportPDF").on("click", function() {
-  tblReadings.button( '.buttons-pdf' ).trigger();
-  saveExportLogs('Readings - Export PDF');
-});
-
-function saveExportLogs(export_){
-  $.ajax({
-      url: baseUrl("eforms/billing/save_export_logs"),
-      type: 'post',
-      data: { csrf_token: _csrf_hash, export_: export_ },
-      success: function (data) {
-          
-      }
-  });
-}
-
-$("#cb-select-all").click(function () {
-  $('#table-payments tbody input[type="checkbox"]').prop('checked', this.checked);
-});
-
-$("#table-payments").on("click", "tbody input[type='checkbox']", function () {
-  const allCheckboxes = $("#table-payments tbody input[type='checkbox']").length;
-  const checkedCheckboxes = $("#table-payments tbody input[type='checkbox']:checked").length;
-  const checked = allCheckboxes <= checkedCheckboxes;
-  $('#cb-select-all').prop('checked', checked);
-});
-
-function restore(id, ref_no){
-  $("#modal-restore").modal("show");
-
-  $.validate({
-      form: '#frm-restore',
-      lang: 'en',
-      onSuccess: function (form) {
-          $.ajax({
-              url: baseUrl("eforms/billing/restore_payment/"),
-              type: "POST",
-              data: {id: id, ref_no: ref_no, csrf_token: _csrf_hash},
-              dataType: "json",
-              beforeSend: function () {
-                  $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-              },
-              success: function (data) {
-                  if (data.status) {
-                      $('#modal-restore').modal('hide');
-                      toastr.success(data.toastr_msg, "Successfully restored", 5000);
-                      tblReadings.ajax.reload();
-                  } else {
-                      toastr.error(data.toastr_msg, "Error!", 5000);
-                  }
-                  $(".btn-submit").removeClass("m-loader m-loader--light m-loader--right");
-              }
-          });
-          return false;
-      },
-  });
+function viewPenalty(id){
+    if(id != undefined){
+        $.ajax({
+            url: baseUrl("eforms/billing/view_penalties"),
+            type: 'post',
+            data: { csrf_token: _csrf_hash, id: id },
+            success: function (data) {
+                var list = "", total = 0, penalties = data.penalties;
+                for (var i = 0; i < penalties.length; i++) {
+                    var overdue = penalties[i].overdue;
+                    var total_amount = penalties[i].total_amount;
+                    var dueDate = penalties[i].dueDate;
+                    total = (parseFloat(total) + parseFloat(overdue));
+                    list = list + 
+                    "<div class='col-md'>"+
+                    "<div class='row'>"+
+                        "<div class='form-group form__group'><label><b>Due Date "+(i+1)+"</b></label><input value="+dueDate+" class='form-control m-input text-right' readonly type='text'></div>&nbsp;&nbsp;&nbsp;&nbsp;"+
+                        "<div class='form-group form__group'><label>Penalty</label><input value="+overdue+" class='form-control m-input overdue text-right' readonly type='text'></div>&nbsp;&nbsp;&nbsp;&nbsp;"+
+                    "</div>"+
+                    "</div>";
+                }
+                list = list + 
+                "<hr><div class='col-md'>"+
+                "<div class='row'>"+
+                    "<div class='form-group form__group'><label><strong>Total Penalties</strong></label><input class='form-control m-input overdue text-right' value="+total+" readonly type='text'></div>&nbsp;&nbsp;&nbsp;&nbsp;"+
+                "</div>"+
+                "</div>";
+                $("#title_penalties").html('Penalties of '+data.ref_no);
+                $("#view_penalties").html(list);
+                $(".overdue").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
+            },
+            error: function (request, status, error) {
+              toastr.error("Please check your internet connection.", "Connection error");
+            }
+        });
+        $('#m_view_penalty').modal('show');
+    }
 }

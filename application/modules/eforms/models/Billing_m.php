@@ -1729,7 +1729,25 @@ class Billing_m extends CI_Model {
         $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
 
-        $filterFields = array("a.middlename"," a.accountno", "a.meterno", "a.firstname", "a.lastname", "b.ref_no", "b.billing_from", "b.billing_to", "b.total_charges", "b.status", "b.due_date", "r.ref_no");
+        $filterFields = [
+            "a.middlename",
+            "a.accountno",
+            "a.meterno",
+            "a.firstname",
+            "a.middlename",
+            "a.lastname",
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            "b.ref_no",
+            "b.billing_from",
+            "b.billing_to",
+            "b.total_charges",
+            "b.status",
+            "b.due_date",
+            "r.ref_no"
+        ];
 
         $this->db->select("b.print_count, b.reading_id, a.middlename, b.is_paid, b.id, a.id as customer_id, a.accountno, a.meterno, a.firstname, a.lastname, a.is_disconnected, b.ref_no, b.billing_from, b.billing_to, b.total_charges, b.status, b.due_date, p.net_payment, p.sub_total, p.penalties, p.reconnection_fee, p.balance_covered, p.is_penalty, p.acknowledgement_receipt, r.ref_no as reading_ref_no");
         $this->db->from("hydra_billing.bills b");
@@ -1752,6 +1770,9 @@ class Billing_m extends CI_Model {
         }
         
         if($search != ""){
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
+
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
                 if ($key == 0) {
@@ -1890,7 +1911,27 @@ class Billing_m extends CI_Model {
 
     function getBillingCount($search, $query_builder, $post){
         $current_year = date('Y');
-        $filterFields = array("a.middlename"," a.accountno", "a.meterno", "a.firstname", "a.lastname", "b.ref_no", "b.billing_from", "b.billing_to", "b.total_charges", "b.status", "b.due_date", "r.ref_no");
+
+        $filterFields = [
+            "a.middlename",
+            "a.accountno",
+            "a.meterno",
+            "a.firstname",
+            "a.middlename",
+            "a.lastname",
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            "b.ref_no",
+            "b.billing_from",
+            "b.billing_to", 
+            "b.total_charges",
+            "b.status",
+            "b.due_date",
+            "r.ref_no"
+        ];
+
         $this->db->select("a.middlename, b.is_paid, b.id, a.accountno, a.meterno, a.firstname, a.lastname, b.ref_no, b.billing_from, b.billing_to, b.total_charges, b.status, b.due_date, r.ref_no as reading_ref_no");
         $this->db->from("hydra_billing.bills b");
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
@@ -1910,6 +1951,9 @@ class Billing_m extends CI_Model {
         }
 
         if($search != ""){
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
+
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
                 if ($key == 0) {
@@ -2681,10 +2725,11 @@ class Billing_m extends CI_Model {
         }
     }
 
-    function getBillingPayment(){
+    public function getBillingPayment(){
         $resultarray = array();
         $post = $this->input->post();
         $current_date = date("Y-m-d");
+        $current_year = date('Y');
 
         $order_val = array(array("column"=>"9", "dir"=>"desc"));
         $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
@@ -2694,11 +2739,55 @@ class Billing_m extends CI_Model {
         $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
         
-        $filterFields = array("b.payment_details"," b.ref_no"," a.firstname", "a.lastname", "b.payment_type", "b.received_amount", "b.payment_date", "b.net_payment", 
-        "b.created_by", "b.created_date", "c.ref_no", "d.firstname", "d.lastname","a.middlename", "b.acknowledgement_receipt");
+        $filterFields = [
+            "b.payment_details",
+            "b.ref_no",
+            "a.firstname",
+            "a.middlename",
+            "a.lastname",
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            // This is for fullname column sort 
+            "CONCAT(
+                TRIM(a.firstname), 
+                ' ',
+                CASE
+                    WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                    WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                    ELSE ''
+                END,
+                TRIM(a.lastname)
+            )", // John D. Doe
+            // This is for fullname column sort 
+            "b.payment_type",
+            "b.created_by", 
+            "b.created_date", 
+            "c.ref_no", 
+            "c.due_date",
+            "d.firstname", 
+            "d.middlename", 
+            "d.lastname",
+            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))", // John D. Doe
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))", // John Doe
+            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))", // Doe John
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))", // John Donegan Doe
+            "b.acknowledgement_receipt",
+        ];
 
-        $this->db->select("a.middlename, b.reconnection_fee, b.payment_details, b.is_penalty, b.ref_no as payment_ref_no, b.penalties, b.id, a.firstname, a.lastname, 
-        b.payment_type, b.received_amount, b.payment_date, b.net_payment, b.created_by, b.created_date, c.ref_no, d.firstname as created_firstname, 
+        $this->db->select("
+        CONCAT(
+            TRIM(a.firstname), 
+            ' ',
+            CASE
+                WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                ELSE ''
+            END,
+            TRIM(a.lastname)
+        ) AS name,
+        a.middlename, b.reconnection_fee, b.payment_details, b.is_penalty, b.ref_no as payment_ref_no, b.penalties, b.id, a.firstname, a.lastname, b.payment_type, b.received_amount, b.payment_date, b.net_payment, b.created_by, b.created_date, c.ref_no, d.firstname as created_firstname, 
         d.lastname as created_lastname, c.due_date, b.acknowledgement_receipt");
         $this->db->from("hydra_billing.payments b");
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
@@ -2706,7 +2795,22 @@ class Billing_m extends CI_Model {
         $this->db->join("gccmaster.tblemployees d", "d.id = b.created_by", "LEFT");
         $this->db->where("b.is_archive",'0');
         
+        // if daterange picker is set
+        if (!empty($post['startDate']) && !empty($post['endDate']) && $post['startDate'] != "Invalid date" && $post['endDate'] != "Invalid date") {
+            $start_date = date('Y-m-d', strtotime($post['startDate']));
+            $end_date = date('Y-m-d', strtotime($post['endDate']));
+            $this->db->where("b.payment_date >=", $start_date);
+            $this->db->where("b.payment_date <=", $end_date);
+        } else {
+            // Display records for current year only
+            $this->db->where("YEAR(b.payment_date)", $current_year);
+        }
+
+        // Search function
         if($search != ""){
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
+
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
                 if ($key == 0) {
@@ -2716,13 +2820,19 @@ class Billing_m extends CI_Model {
                 }
             }
             $this->db->group_end();
+        } else {
+            // Display records for current year only
+            $this->db->where("YEAR(b.payment_date)", $current_year);
         }
+
+        // Sort Column
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
         
+        // Limit and Offset datatable
         if($limit != -1){
             $this->db->limit($limit, $offset);
         }
-
-        $this->db->order_by("b.created_date","DESC");
         
         $query = $this->db->get();
         if($query->num_rows() > 0){
@@ -2733,9 +2843,10 @@ class Billing_m extends CI_Model {
                 $data["penalties"] = unserialize($_query["penalties"]);
                 $data["payment_ref_no"] = $_query['payment_ref_no'];
                 $data["due_date"] = $_query['due_date'];
-                $data["account_name"] = $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
+                // $data["account_name"] = $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
+                $data["name"] = $_query["name"];
                 $data["id"] = $_query["id"];
-                $data["bill"] = $_query["ref_no"];
+                $data["ref_no"] = $_query["ref_no"];
                 $data["payment_details"] = $_query["payment_details"];
                 $data["is_penalty"] = $_query["is_penalty"];
                 $data["reconnection_fee"] = $_query["reconnection_fee"];
@@ -2758,19 +2869,79 @@ class Billing_m extends CI_Model {
             }
         }
 
-        $total = $this->getPaymentCount($search);
+        $total = $this->getPaymentCount($search, $post);
         return array("data"=>$resultarray, "recordsTotal"=>$total, "recordsFiltered"=>$total);
     }
 
-    function getPaymentCount($search){
-        $filterFields = array("b.payment_details"," b.ref_no"," a.firstname", "a.lastname", "b.payment_type", "b.received_amount", "b.payment_date", "b.net_payment", "b.created_by", "b.created_date", "c.ref_no", "d.firstname", "d.lastname", "a.middlename", "b.acknowledgement_receipt");
-        $this->db->select("a.middlename, b.reconnection_fee, b.payment_details, b.is_penalty, b.ref_no as payment_ref_no, b.penalties, b.id, a.firstname, a.lastname, b.payment_type, b.received_amount, b.payment_date, b.net_payment, b.created_by, b.created_date, c.ref_no, d.firstname as created_firstname, d.lastname as created_lastname");
+    public function getPaymentCount($search, $post){
+        $current_year = date('Y');
+        $filterFields = [
+            "b.payment_details",
+            "b.ref_no",
+            "a.firstname",
+            "a.middlename",
+            "a.lastname",
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            "CONCAT(
+                TRIM(a.firstname), 
+                ' ',
+                CASE
+                    WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                    WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                    ELSE ''
+                END,
+                TRIM(a.lastname)
+            )", // John D. Doe
+            "b.payment_type",
+            "b.created_by", 
+            "b.created_date", 
+            "c.ref_no", 
+            "c.due_date",
+            "d.firstname", 
+            "d.middlename", 
+            "d.lastname",
+            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))", // John D. Doe
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))", // John Doe
+            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))", // Doe John
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))", // John Donegan Doe
+            "b.acknowledgement_receipt",
+        ];
+
+        $this->db->select("
+        CONCAT(
+            TRIM(a.firstname), 
+            ' ',
+            CASE
+                WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                ELSE ''
+            END,
+            TRIM(a.lastname)
+        ) AS name,
+        a.middlename, b.reconnection_fee, b.payment_details, b.is_penalty, b.ref_no as payment_ref_no, b.penalties, b.id, a.firstname, a.lastname, b.payment_type, b.received_amount, b.payment_date, b.net_payment, b.created_by, b.created_date, c.ref_no, d.firstname as created_firstname, 
+        d.lastname as created_lastname, c.due_date, b.acknowledgement_receipt");
         $this->db->from("hydra_billing.payments b");
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.bills c", "c.id = b.bill_id", "LEFT");
         $this->db->join("gccmaster.tblemployees d", "d.id = b.created_by", "LEFT");
         $this->db->where("b.is_archive",'0');
+
+        if (!empty($post['startDate']) && !empty($post['endDate']) && $post['startDate'] != 'Invalid date' && $post['endDate'] != 'Invalid date') {
+            $start_date = date('Y-m-d', strtotime($post['startDate']));
+            $end_date = date('Y-m-d', strtotime($post['endDate']));
+            $this->db->where("b.payment_date >=", $start_date);
+            $this->db->where("b.payment_date <=", $end_date);
+        } else {
+            $this->db->where("YEAR(b.payment_date)", $current_year); // Defaults to the current year
+        }
+
         if($search != ""){
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot
+
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
                 if ($key == 0) {
@@ -2780,7 +2951,10 @@ class Billing_m extends CI_Model {
                 }
             }
             $this->db->group_end();
+        } else {
+            $this->db->where("YEAR(b.payment_date)", $current_year);
         }
+
         $query = $this->db->get();
         return $query->num_rows();
     }
@@ -2788,7 +2962,7 @@ class Billing_m extends CI_Model {
     function getPaymentDetails($id){
         if(isset($id) && $id){
             $this->db->where("id",$id);
-            $query = $this->db->get("hydra_billing.payments");
+            $query = $this->db->get("hydra_billing.payments");                  
             return $query->row_array();
         }
     }
@@ -5651,58 +5825,195 @@ class Billing_m extends CI_Model {
     }
 
     function getPaymentArchiveCollection(){
-      $resultarray = array();
-      $post = $this->input->post();
+        $resultarray = array();
+        $post = $this->input->post();
 
-      $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
-      $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
-      $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+        $order_val = array(array("column" => "9", "dir" => "desc"));
+        $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
+        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
+        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+        $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
 
-      $filterFields = array("a.accountno", "a.firstname", "a.lastname",
-              "a.lot", "a.block", "r.ref_no", "r.payment_date", "a.middlename");
+        $filterFields = [
+            "b.ref_no",
+            "a.firstname",
+            "a.middlename",
+            "a.lastname",
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            // This is for fullname column sort 
+            "CONCAT(
+                TRIM(a.firstname), 
+                ' ',
+                CASE
+                    WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                    WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                    ELSE ''
+                END,
+                TRIM(a.lastname)
+            )", // John D. Doe
+            // This is for fullname column sort 
+            "b.payment_type",
+            "b.created_by", 
+            "b.created_date", 
+            "c.ref_no", 
+            "c.due_date",
+            "d.firstname", 
+            "d.middlename", 
+            "d.lastname",
+            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))", // John D. Doe
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))", // John Doe
+            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))", // Doe John
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))", // John Donegan Doe
+            "b.acknowledgement_receipt",
+        ];
 
-      $this->db->select("a.middlename,r.id,a.accountno,a.firstname,a.lastname,a.lot,a.block,r.ref_no,r.payment_date, a.model,r.acknowledgement_receipt as ar");
-      $this->db->from("hydra_billing.payments r");
-      $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
-      $this->db->where("r.is_archive", "1");
+        $this->db->select("
+        CONCAT(
+            TRIM(a.firstname), 
+            ' ',
+            CASE
+                WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                ELSE ''
+            END,
+            TRIM(a.lastname)
+        ) AS name,
+        a.middlename, b.reconnection_fee, b.payment_details, b.is_penalty, b.ref_no as payment_ref_no, b.penalties, b.id, a.firstname, a.lastname, b.payment_type, b.received_amount, b.payment_date, b.net_payment, b.created_by, b.created_date, c.ref_no, d.firstname as created_firstname, 
+        d.lastname as created_lastname, c.due_date, b.acknowledgement_receipt");
+        $this->db->from("hydra_billing.payments b");
+        $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
+        $this->db->join("hydra_billing.bills c", "c.id = b.bill_id", "LEFT");
+        $this->db->join("gccmaster.tblemployees d", "d.id = b.created_by", "LEFT");
+        $this->db->where("b.is_archive",'1');
 
-      if($search != ""){
-          $this->db->group_start();
-          foreach ($filterFields as $key => $field) {
-              if ($key == 0) {
-                  $this->db->like($field, $search, "both");
-              } else {
-                  $this->db->or_like($field, $search, "both");
-              }
-          }
-          $this->db->group_end();
-      }
-      $this->db->order_by('r.ref_no', 'DESC');
+        if($search != ""){
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot
 
-      if($limit != -1){
-          $this->db->limit($limit, $offset);
-      }
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
 
-      $query = $this->db->get();
+        // Sort Column
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
 
-      if($query->num_rows() > 0){
-          foreach($query->result_array() as $_query){
-              $data = array();
-              $data["name"] = $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
-              $data["id"] = $_query["id"];
-              $data["accountno"] = $_query["accountno"];
-              $data["block"] = $_query["block"];
-              $data["lot"] = $_query["lot"];
-              $data["model"] = $_query["model"];
-              $data["ref_no"] = $_query["ref_no"];
-              $data["payment_date"] = $_query["payment_date"];
-              $data["ar"] = $_query["ar"];
-              $resultarray[] = $data;
-          }
-      }
+        if($limit != -1){
+            $this->db->limit($limit, $offset);
+        }
 
-      $total = $this->getReadingArchiveCount($search);
-      return array("data"=>$resultarray, "recordsTotal"=>$total, "recordsFiltered"=>$total);
+        $query = $this->db->get();
+
+        if($query->num_rows() > 0){
+            foreach($query->result_array() as $_query){
+                $data["penalties"] = unserialize($_query["penalties"]);
+                $data["payment_ref_no"] = $_query['payment_ref_no'];
+                $data["due_date"] = $_query['due_date'];
+                $data["name"] = $_query["name"];
+                $data["id"] = $_query["id"];
+                $data["ref_no"] = $_query["ref_no"];
+                $data["is_penalty"] = $_query["is_penalty"];
+                $data["reconnection_fee"] = $_query["reconnection_fee"];
+                $data["payment_type"] = $_query["payment_type"];
+                $data["received_amount"] = '₱ '.number_format((float)$_query["received_amount"], 2, '.', '');
+                $data["payment_date"] = $_query["payment_date"];
+                $data["net_payment"] = '₱ '.number_format((float)$_query["net_payment"], 2, '.', '');
+                $data["created_by"] = $_query['created_firstname'].' '.$_query['created_lastname'];
+                $data["created_date"] = date('Y-m-d g:i A', strtotime($_query["created_date"]));
+                $data['acknowledgement_receipt'] = $_query["acknowledgement_receipt"];
+                $resultarray[] = $data;
+            }
+        }
+
+        $total = $this->getPaymentArchiveCount($search, $post);
+        return array("data"=>$resultarray, "recordsTotal"=>$total, "recordsFiltered"=>$total);
+    }
+
+    public function getPaymentArchiveCount($search, $post) {
+        $filterFields = [
+            "b.payment_details",
+            "b.ref_no",
+            "a.firstname",
+            "a.middlename",
+            "a.lastname",
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            // This is for fullname column sort 
+            "CONCAT(
+                TRIM(a.firstname), 
+                ' ',
+                CASE
+                    WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                    WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                    ELSE ''
+                END,
+                TRIM(a.lastname)
+            )", // John D. Doe
+            // This is for fullname column sort 
+            "b.payment_type",
+            "b.created_by", 
+            "b.created_date", 
+            "c.ref_no", 
+            "c.due_date",
+            "d.firstname", 
+            "d.middlename", 
+            "d.lastname",
+            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))", // John D. Doe
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))", // John Doe
+            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))", // Doe John
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))", // John Donegan Doe
+            "b.acknowledgement_receipt",
+        ];
+
+        $this->db->select("
+        CONCAT(
+            TRIM(a.firstname), 
+            ' ',
+            CASE
+                WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                ELSE ''
+            END,
+            TRIM(a.lastname)
+        ) AS name,
+        a.middlename, b.reconnection_fee, b.payment_details, b.is_penalty, b.ref_no as payment_ref_no, b.penalties, b.id, a.firstname, a.lastname, b.payment_type, b.received_amount, b.payment_date, b.net_payment, b.created_by, b.created_date, c.ref_no, d.firstname as created_firstname, 
+        d.lastname as created_lastname, c.due_date, b.acknowledgement_receipt");
+        $this->db->from("hydra_billing.payments b");
+        $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
+        $this->db->join("hydra_billing.bills c", "c.id = b.bill_id", "LEFT");
+        $this->db->join("gccmaster.tblemployees d", "d.id = b.created_by", "LEFT");
+        $this->db->where("b.is_archive",'1');
+
+        if($search != ""){
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot
+
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+
+        $query = $this->db->get();
+        return $query->num_rows();
     }
 
 
@@ -5724,6 +6035,7 @@ class Billing_m extends CI_Model {
             "a.lastname",
             "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
             "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
             "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
             "a.lot",
             "a.block",
@@ -5738,6 +6050,9 @@ class Billing_m extends CI_Model {
 
         // Add search filter dynamically
         if (!empty($search)) {
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
+
             $this->db->group_start();
             foreach ($filterFields as $field) {
                 $this->db->or_like($field, $search, "both");
@@ -5787,6 +6102,7 @@ class Billing_m extends CI_Model {
             "a.lastname",
             "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
             "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
             "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
             "a.lot",
             "a.block",
@@ -5800,6 +6116,9 @@ class Billing_m extends CI_Model {
 
         // Add search filter dynamically
         if (!empty($search)) {
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
+
             $this->db->group_start();
             foreach ($filterFields as $field) {
                 $this->db->or_like($field, $search, "both");

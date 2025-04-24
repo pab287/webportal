@@ -95,6 +95,8 @@ class Billing extends MY_Controller {
     function payment(){
         $this->core_layout->setPageTitle("Hydra - Payments");
         $this->core_layout->setPrivilegeName("billing_payment");
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
         $this->core_layout->addJs("js/eforms/billing/payment/index.js", true);
         $this->load->view('core/templates/header');
         $this->load->view('eforms/billing/payment/index');
