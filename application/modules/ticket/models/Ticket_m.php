@@ -857,7 +857,7 @@ class Ticket_m extends CI_Model
         // foreach($arr_pic as $img){
         //     $img_arr[] = "empcode_{$employeeId}/ticketing/".$img;
         // }
-        
+     
         $data = array(
             'department_id' => $post['department'],
             'requested_date' => $requested_date,
@@ -868,8 +868,10 @@ class Ticket_m extends CI_Model
             'priority' => $post['severity'],
             'performed_by' => $performed_by,
             'status' => $post['status'],
-            'responsibility' => $responsibility
+            'responsibility' => $responsibility,
+            'is_archived' => strtolower($post['status']) == 'cancelled' ? 1 : 0,
         );
+
         if(empty($str_pic)){
             $data['attachment'] = "";
         }
@@ -915,9 +917,7 @@ class Ticket_m extends CI_Model
     function deleteTicket($id){
         $this->db->where('id', $id);
         $data = array(
-            'status' => 'Cancelled',
             'is_archived' => 1,
-
         );
         $query = $this->db->update('gccticket.ticket', $data);
         return $query;

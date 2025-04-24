@@ -275,7 +275,6 @@ let ticketDataSheet = new Vue({
               open: parseInt(data[employee].open), 
               completed: parseInt(data[employee].completed), 
               in_progress: parseInt(data[employee]["in_progress"]), 
-              resolved: parseInt(data[employee].resolved),
               total: parseInt(data[employee].total)
           };
       }).sort((a, b) => a.total - b.total);
@@ -295,17 +294,15 @@ let ticketDataSheet = new Vue({
       valueAxis.renderer.opposite = true; 
   
       const statusColors = {
-          "Open": am4core.color("#36A3F7"),
-          "Resolved": am4core.color("#4ECDC4"),
+          "Open": am4core.color("#716ACA"),
           "Completed": am4core.color("#2CA189"),
-          "In Progress": am4core.color("#FFB822")
+          "In Progress": am4core.color("#00C5DC")
       };
   
       const statuses = [
           { key: "completed", label: "Completed" },
           { key: "open", label: "Open" },
           { key: "in_progress", label: "In Progress" },
-          { key: "resolved", label: "Resolved" }
       ];
   
       statuses.forEach(status => {
