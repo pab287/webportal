@@ -1471,7 +1471,6 @@ class Ticket_m extends CI_Model
             COUNT(*) as total, 
             COUNT(CASE WHEN status = 'open' THEN 1 END) as 'open', 
             COUNT(CASE WHEN status = 'in progress' THEN 1 END) as 'in progress', 
-            COUNT(CASE WHEN status = 'resolved' THEN 1 END) as 'resolved', 
             COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed, 
             COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as 'cancelled', 
          ");
