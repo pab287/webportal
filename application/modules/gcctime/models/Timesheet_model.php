@@ -3183,7 +3183,8 @@ class Timesheet_model extends CI_Model{
         $company = $this->db->get_where("gcchris.tblcompanies", array("id" => $company_id))->row();
         $inclusive_filter = $post->inclusive_filter;
         $hasExistingOvertime = array();
-
+        $default_shift_employees = array();
+        
         $excluded_employees = array_map(function ($list) {
             return $list->emp_id;
         }, $this->db->select("emp_id")
@@ -3408,7 +3409,6 @@ class Timesheet_model extends CI_Model{
                     return intval($dtr->verified) === 1;
                 });
 
-                $default_shift_employees = array();
                 $default_current_timestamp = strtotime(date('Y-m-d H:i:s'));
                 $FORM_SORTBY = "";
                 $ARRAY_SORTBY = array();
