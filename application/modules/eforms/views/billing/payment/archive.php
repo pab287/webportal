@@ -47,15 +47,15 @@
                 <thead>
                   <tr>
                     <th>Reference No.</th>
-                    <th>Account No.</th>
                     <th>Account Name</th>
-                    <th>Payment Date</th>
-                    <th>House Model</th>
-                    <th>Block No.</th>
-                    <th>Lot No.</th>
+                    <th>Bill</th>
+                    <th>Payment Type</th>
+                    <th>Due Date</th>
+                    <th>Overdue Fee</th>
+                    <th>Net Payment</th>
+                    <th>Received Amount</th>
                     <th>AR</th>
-                    <!-- <th>Status</th> -->
-                    <th class="notExport">Action</th>
+                    <th>Payment Date</th>
                   </tr>
                 </thead>
                 <tbody>	

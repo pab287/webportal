@@ -1,4 +1,3 @@
-<script src='https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js'></script>
 <div class="m-content">
 	<div class="row">
 		<div class="col-lg-12">
@@ -75,7 +74,7 @@
 											<span class="dropdown-toggle"></span>
 										</button>
 
-										<div class="dropdown-menu" aria-labelledby="btnGroupDrop1" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 40px, 0px); top: 0px; left: 0px; will-change: transform;">
+										<div class="dropdown-menu mt-2" aria-labelledby="btnGroupDrop1" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 40px, 0px); top: 0px; left: 0px; will-change: transform;">
 											<a href="javascript:void(0);" class="dropdown-item datatable-csv" id="ExportCSV">
 												<i class="m-nav__link-icon la la-file-o"></i>
 												<span class="m-nav__link-text">CSV</span>

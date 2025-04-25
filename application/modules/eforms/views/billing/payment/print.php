@@ -37,12 +37,15 @@
 
       $customer_name = ucfirst($account["firstname"]).' '.ucfirst($account["middlename"][0]).'. '.ucfirst($account["lastname"]);
 
-      $employee = $this->crud->load(array("id"=>$vv["created_by"]),"gccmaster.tblemployees");
-      if ($employee["suffix"] == "" || $employee["suffix"] == null || $employee["suffix"] == "N/A" || $employee["suffix"] == "NONE") {
-          $fullname = $employee["firstname"].' '.$employee["middlename"][0].'. '.$employee["lastname"];
-      } else {
-          $fullname = $employee["firstname"].' '.$employee["middlename"][0].'. '.$employee["lastname"].' '.$employee["suffix"];
-      }
+      /**
+       * Ni comment ko muna yung code kasi my buang dito na nag lagay ng code na to taz d rin ginamit at nag cause ng error sa staging
+       */
+      // $employee = $this->crud->load(array("id"=>$vv["created_by"]),"gccmaster.tblemployees");
+      // if ($employee["suffix"] == "" || $employee["suffix"] == null || $employee["suffix"] == "N/A" || $employee["suffix"] == "NONE") {
+      //     $fullname = $employee["firstname"].' '.$employee["middlename"][0].'. '.$employee["lastname"];
+      // } else {
+      //     $fullname = $employee["firstname"].' '.$employee["middlename"][0].'. '.$employee["lastname"].' '.$employee["suffix"];
+      // }
 
       $penalty = 0;
       if($vv["is_penalty"] == '1'){
