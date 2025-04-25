@@ -82,31 +82,12 @@
     });
 
 
-    if (session.next_update == null || session.next_update == "0000-00-00 00:00:00") {
-            $(".password-change-reminder").modal("show");
-        }
-    else {
-        const next_update = new Date(session.next_update);
-        const currentDate = new Date();
-        
-        console.log("Next: ",next_update, "Today: ",currentDate);
-        if (next_update <= currentDate) {
-            $(".password-change-reminder").modal("show");
-            
-            if (session.waive_count >= 3) {
-                $("#changePasswordLater").hide();
-            }
-        }
-    }
-
-    function checkPass(currr){
         if (session.next_update == null || session.next_update == "0000-00-00 00:00:00") {
             $(".password-change-reminder").modal("show");
         }
         else {
             const next_update = new Date(session.next_update);
             const currentDate = new Date(currr);
-            console.log("Next: ",next_update, "Today: ",currentDate);
             if (next_update <= currentDate) {
                 $(".password-change-reminder").modal("show");
                 
@@ -115,7 +96,24 @@
                 }
             }
         }
-    }
+
+    // function checkPass(currr){
+    //     if (session.next_update == null || session.next_update == "0000-00-00 00:00:00") {
+    //         $(".password-change-reminder").modal("show");
+    //     }
+    //     else {
+    //         const next_update = new Date(session.next_update);
+    //         const currentDate = new Date(currr);
+    //         console.log("Next: ",next_update, "Today: ",currentDate);
+    //         if (next_update <= currentDate) {
+    //             $(".password-change-reminder").modal("show");
+                
+    //             if (session.waive_count >= 4) {
+    //                 $("#changePasswordLater").hide();
+    //             }
+    //         }
+    //     }
+    // } <-- This function is for development only
 
 
     const $passwordInput = $('#newPasswordInput');
