@@ -187,18 +187,22 @@
                         <div class="m-list-timeline__items">
                             <template v-for="(item, index) in trail" :key="index">
                                 <div class="m-list-timeline__item">
-                                <span 
-                                    class="m-list-timeline__badge"
-                                    :class="{
-                                    'm-list-timeline__badge--success': item.type === 'open' || item.type === 'new',
-                                    'm-list-timeline__badge--warning': item.type === 'in progress',
-                                    'm-list-timeline__badge--info': item.type === 'completed',
-                                    'm-list-timeline__badge--danger': item.type === 'Cancelled'
-                                    }"
-                                ></span>
-                                <span class="m-list-timeline__text" v-text="item.log_message"></span><br>
-                                <span class="m-list-timeline__text" v-text="item.name"></span>
-                                <span class="m-list-timeline__text text-right" v-text="item.created_at"></span>
+                                    <span 
+                                        class="m-list-timeline__badge"
+                                        :class="{
+                                        'm-list-timeline__badge--success': item.type === 'open' || item.type === 'new',
+                                        'm-list-timeline__badge--warning': item.type === 'in progress',
+                                        'm-list-timeline__badge--info': item.type === 'completed',
+                                        'm-list-timeline__badge--danger': item.type === 'Cancelled',
+                                        'm-list-timeline__badge--focus': item.type === 'restore',
+                                        'm-list-timeline__badge--brand': item.type === 'archive'
+                                        }"
+                                    ></span>
+                                    <span class="m-list-timeline__text" v-text="item.log_message"></span></br>
+                                    <span class="m-list-timeline__text" ></span>
+                                    <span class="m-list-timeline__text" v-text="item.name"></span>
+                                    <span class="m-list-timeline__text" ></span></br>
+                                    <span class="m-list-timeline__text text-left" v-text="item.created_at"></span>
                                 </div>
                             </template>
                         </div>
