@@ -938,10 +938,10 @@ $(document)
                                     <span>Night Diff. Hrs.: </span>
                                     <span class='m--font-boldest'>${nDiffOTHrsFormmatted}</span>
                                 </div>
-                            </div>` : (hasShift == true) ? `0` : ``;
+                            </div>` : (hasShift === true) ? `0` : ``;
 
                             return data ? `<span class="" style="cursor: pointer;" data-toggle="m-tooltip" data-html="true"
-                                                 data-original-title="${tooltip}" data-delay='{"show": 150}'>${totalOTHrsFormmatted}</span>` : (hasShift == true) ? `0` : ``;
+                                                 data-original-title="${tooltip}" data-delay='{"show": 150}'>${totalOTHrsFormmatted}</span>` : (hasShift === true) ? `0` : ``;
                         }
                     },
                     {
@@ -955,7 +955,7 @@ $(document)
                         className: 'text-center',
                         render: function (data, type, row, meta) {
                             const allowPaidHoliday = row.allow_paid_holiday;
-                            const hasOvertime = typeof row.has_overtime !== "undefined" && parseInt(row.has_overtime) == 1 ? true : false;
+                            const hasOvertime = typeof row.has_overtime !== "undefined" && parseInt(row.has_overtime) === 1 ? true : false;
                             const scrub_status = parseInt(row.scrub_status);
                             const widthAdjustment = parseInt(row.with_adjustment);
                             const id = row.id ? parseInt(row.id) : null;
@@ -1024,8 +1024,8 @@ $(document)
                                 hideTimeAdjustmentClass = true;
                             }
 
-                            if (row.is_posted == false) {
-                                if (hideTimeAdjustmentClass == false) {
+                            if (row.is_posted === false) {
+                                if (hideTimeAdjustmentClass === false) {
                                     createTimeAdjustment = `<li class="m-nav__item create-time-adjustment-link ${hideTimeAdjustmentClass == true ? 'm--hide' : ''}">
                                         <a href="javascript:void(0)" class="m-nav__link"
                                         onclick="createTimeAdjustment(${row.id}, ${row._emp_id}, '${row.employee_name}',
@@ -1049,7 +1049,7 @@ $(document)
                                     </li>`;
                                 }
 
-                                if (regenHiddenClass == false) {
+                                if (regenHiddenClass === false) {
                                     regenerateRecord = `<li class="m-nav__item re-generate-button">
                                         <a href="javascript:void(0)" class="m-nav__link"
                                             onclick="confirmRegenerateRow('${row._date}', ${row._emp_id}, '${row.employee_name}', ${meta.row}, ${row.id})">
@@ -1059,7 +1059,7 @@ $(document)
                                     </li>`;
                                 }
 
-                                if (hideTimeAdjustmentLink == false) {
+                                if (hideTimeAdjustmentLink === false) {
                                     timeAdjustmentDetails = `<li class="m-nav__separator m-nav__separator--fit time-adjustment-details-separator"></li>
                                     <li class="m-nav__item time-adjustment-details">
                                         <a href="javascript:void(0)" class="m-nav__link"
@@ -1153,7 +1153,7 @@ $(document)
                         }
 
                         if(arrEmpRecord.length > 0){
-                            _arrIds = [];
+                            let _arrIds = [];
                             const ctr = arrEmpRecord.length;
                             let tempHtml = `<ul class='mt-2'>`;
                             arrEmpRecord.forEach((row, _index) => {
@@ -1208,7 +1208,7 @@ $(document)
                                 <small class='ml-3'>[ System Generated Timesheet Data ]</small>`:``;
                             if (last !== group) {
                                 let cbElement = '';
-                                if (!row.all_verified && isMonthlyPaid == false) {
+                                if (!row.all_verified && isMonthlyPaid === false) {
                                     cbElement = `<label class="m-checkbox m-checkbox--bold m-checkbox--state-light table-cb mr-3"
                                         style="margin-left: 5px;">
                                         <input type="checkbox" value="${row.id}" class="cb-emp-header"
@@ -1244,18 +1244,14 @@ $(document)
 
                     const isMonthlyPaid = (typeof rowData.is_monthly_paid !== "undefined" && rowData.is_monthly_paid) ? rowData.is_monthly_paid : false;
                     const completeAttendance = rowData.complete_attendance_count;
-                    
+                    const { am_in, am_out, pm_in, pm_out, total_time_rendered } = rowData;
+
                     let currentRowClass = null;
-                    let hasRendered = true;
-
+                    let hasRendered = typeof total_time_rendered !== "undefined" && total_time_rendered !== null && parseFloat(total_time_rendered) > 0;
                     if (isHoliday == 1 && paidHoliday == 0) { hasRendered = false; }
-
-                    hasRendered = typeof rowData.total_time_rendered !== "undefined"
-                        && rowData.total_time_rendered !== null
-                        && parseFloat(rowData.total_time_rendered) > 0 ? true : false;
-
                     if (scrub_status == 1 || scrub_status == 2) { hasRendered = true; }
                     if (isHoliday == 1 && hasOvertime == 1) { hasRendered = true; }
+                    hasRendered = am_in || am_out || pm_in || pm_out;
 
                     if (hasRendered) {
                         if ((scrub_status === 1 && verified === 0) || ((hasLOA >= 1 && hasWholeDayLoa <= 0) || (hasTO >= 1 && completeAttendance === false))) {
@@ -1269,7 +1265,7 @@ $(document)
 
                     if (((hasShift === 0 && (hasOvertime === 0 || hasOvertime === 1)) && (verified === 0 || !verified))
                         || ((!hasShift && !hasOvertime) && (verified === 0 || !verified))
-                        || (isHoliday == 1 && rowData.allow_paid_holiday == false)) {
+                        || (isHoliday == 1 && rowData.allow_paid_holiday === false)) {
                         currentRowClass = 'no-shift';
                     }
                     
@@ -1307,7 +1303,6 @@ $(document)
 
         tblTimesheet
             .on('draw.dt', function () {
-                const pageInfo = dtTimesheet.page.info();
                 checkCbSelectAll();
                 checkEachCluster();
             });
@@ -1573,7 +1568,6 @@ function undoIsHolidayDetailsModal(date, emp_id, employee, rowIndex, timesheetId
 function setPaidHolidayRow(form) {
     const date = $(form).attr('data-date');
     const emp_id = $(form).attr('data-emp_id');
-    const row_index = $(form).attr('data-row_index');
     const timesheet_id = $(form).attr('data-timesheet_id');
 
     $.ajax({
@@ -1582,22 +1576,24 @@ function setPaidHolidayRow(form) {
         type: "post",
         data: { emp_id: emp_id, date: date, id: timesheet_id, csrf_token: _csrf_hash },
         success: function (json) {
-            if (json.response) { }
+            if (json.response) {
+                setTimeout(function () { dtTimesheet.ajax.reload(null, false); }, 250);
+            }
         }
     });
 }
 
 function undoPaidHolidayRow(form) {
-    const row_index = $(form).attr('data-row_index');
     const timesheet_id = $(form).attr('data-timesheet_id');
-
     $.ajax({
         url: siteUrl("gcctime/timesheet/undo_paid_holiday"),
         dataType: "json",
         type: "post",
         data: { id: timesheet_id, csrf_token: _csrf_hash },
         success: function (json) {
-            if (json.response) { }
+            if(json.response){
+                setTimeout(function () { dtTimesheet.ajax.reload(null, false); }, 250);
+            }
         }
     });
 }
@@ -1637,7 +1633,6 @@ function regenerateRow(form) {
         type: "POST",
         success: function (response) {
             if (response.length <= 0) {
-
                 if (typeof timesheet_id !== "undefined" && timesheet_id) {
                     $.ajax({
                         url: baseUrl('gcctime/timesheet/get_timesheet_row/' + timesheet_id),
@@ -1682,11 +1677,13 @@ function regenerateRow(form) {
                                     if (hasTO >= 1) {
                                         $(rowEl).addClass('lacking lacking--contrast');
                                     }
+                                } else if (timesheet.id && parseInt(timesheet.has_shift) === 1){
+                                    $(rowEl).removeClass('absent absent--contrast');
                                 }
 
                                 if (((hasShift === 0 && (hasOvertime === 0 || hasOvertime === 1)) && (verified === 0 || !verified))
                                     || ((!hasShift && !hasOvertime) && (verified === 0 || !verified))
-                                    || (isHoliday == 1 && timesheet.allow_paid_holiday == false)) {
+                                    || (isHoliday == 1 && timesheet.allow_paid_holiday === false)) {
                                     $(rowEl).addClass('no-shift');
                                 } else {
                                     $(rowEl).hasClass("no-shift") && $(rowEl).removeClass("no-shift");
@@ -1767,10 +1764,7 @@ function verifySelected(form = null) {
             },
             success: function (response) {
                 if (response.success) {
-                    const verifiedEmpHolidays = response.data.verifiedIsHolidays;
                     $.each(selectedCheckboxes, function (i, cb) {
-                        const cbValue = $(cb).val();
-                        const cbIsHoliday = parseInt(verifiedEmpHolidays[cbValue]);
                         const tr = $(cb).closest('tr');
                         $(tr).removeClass(function () {
                             return $(this).attr('class').replace(/\b(?:even|odd)\b\s*/g, '');
@@ -1788,7 +1782,6 @@ function verifySelected(form = null) {
                     });
 
                     const verifiedEmpIds = response.data.verifiedEmpIds;
-                    // const verifiedIsHolidays = response.data.verifiedIsHolidasy;
                     verifiedEmpIds.forEach((id, index) => {
                         const row = $(`.tr-header-${id}`);
                         row.removeClass('group').addClass('group--verified');
