@@ -1736,10 +1736,10 @@ class Billing_m extends CI_Model {
             "a.firstname",
             "a.middlename",
             "a.lastname",
-            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
-            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))",  
             "b.ref_no",
             "b.billing_from",
             "b.billing_to",
@@ -1919,10 +1919,10 @@ class Billing_m extends CI_Model {
             "a.firstname",
             "a.middlename",
             "a.lastname",
-            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
-            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))",  
             "b.ref_no",
             "b.billing_from",
             "b.billing_to", 
@@ -2745,10 +2745,10 @@ class Billing_m extends CI_Model {
             "a.firstname",
             "a.middlename",
             "a.lastname",
-            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
-            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))",  
             // This is for fullname column sort 
             "CONCAT(
                 TRIM(a.firstname), 
@@ -2759,7 +2759,7 @@ class Billing_m extends CI_Model {
                     ELSE ''
                 END,
                 TRIM(a.lastname)
-            )", // John D. Doe
+            )",  
             // This is for fullname column sort 
             "b.payment_type",
             "b.created_by", 
@@ -2769,10 +2769,10 @@ class Billing_m extends CI_Model {
             "d.firstname", 
             "d.middlename", 
             "d.lastname",
-            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))", // John D. Doe
-            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))", // John Doe
-            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))", // Doe John
-            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))", // John Donegan Doe
+            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))",  
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))",  
+            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))",  
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))",  
             "b.acknowledgement_receipt",
         ];
 
@@ -2880,10 +2880,10 @@ class Billing_m extends CI_Model {
             "a.firstname",
             "a.middlename",
             "a.lastname",
-            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
-            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))",  
             "CONCAT(
                 TRIM(a.firstname), 
                 ' ',
@@ -2893,7 +2893,7 @@ class Billing_m extends CI_Model {
                     ELSE ''
                 END,
                 TRIM(a.lastname)
-            )", // John D. Doe
+            )",  
             "b.payment_type",
             "b.created_by", 
             "b.created_date", 
@@ -2902,10 +2902,10 @@ class Billing_m extends CI_Model {
             "d.firstname", 
             "d.middlename", 
             "d.lastname",
-            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))", // John D. Doe
-            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))", // John Doe
-            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))", // Doe John
-            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))", // John Donegan Doe
+            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))",  
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))",  
+            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))",  
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))",  
             "b.acknowledgement_receipt",
         ];
 
@@ -5839,10 +5839,10 @@ class Billing_m extends CI_Model {
             "a.firstname",
             "a.middlename",
             "a.lastname",
-            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
-            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))",
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", 
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))",
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))",
             // This is for fullname column sort 
             "CONCAT(
                 TRIM(a.firstname), 
@@ -5853,7 +5853,7 @@ class Billing_m extends CI_Model {
                     ELSE ''
                 END,
                 TRIM(a.lastname)
-            )", // John D. Doe
+            )",  
             // This is for fullname column sort 
             "b.payment_type",
             "b.created_by", 
@@ -5863,10 +5863,10 @@ class Billing_m extends CI_Model {
             "d.firstname", 
             "d.middlename", 
             "d.lastname",
-            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))", // John D. Doe
-            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))", // John Doe
-            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))", // Doe John
-            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))", // John Donegan Doe
+            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))",  
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))",  
+            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))",  
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))",  
             "b.acknowledgement_receipt",
         ];
 
@@ -5946,10 +5946,10 @@ class Billing_m extends CI_Model {
             "a.firstname",
             "a.middlename",
             "a.lastname",
-            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
-            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))",  
             // This is for fullname column sort 
             "CONCAT(
                 TRIM(a.firstname), 
@@ -5960,7 +5960,7 @@ class Billing_m extends CI_Model {
                     ELSE ''
                 END,
                 TRIM(a.lastname)
-            )", // John D. Doe
+            )",  
             // This is for fullname column sort 
             "b.payment_type",
             "b.created_by", 
@@ -5970,10 +5970,10 @@ class Billing_m extends CI_Model {
             "d.firstname", 
             "d.middlename", 
             "d.lastname",
-            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))", // John D. Doe
-            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))", // John Doe
-            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))", // Doe John
-            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))", // John Donegan Doe
+            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))",  
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))",  
+            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))",  
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))",  
             "b.acknowledgement_receipt",
         ];
 
@@ -6032,10 +6032,10 @@ class Billing_m extends CI_Model {
             "a.firstname",
             "a.middlename",
             "a.lastname",
-            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
-            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))",  
             "a.lot",
             "a.block",
             "r.ref_no"
@@ -6099,10 +6099,10 @@ class Billing_m extends CI_Model {
             "a.firstname",
             "a.middlename",
             "a.lastname",
-            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))", // John D. Doe
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", // John Doe
-            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))", // Doe John
-            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))", // John Donegan Doe
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))",  
             "a.lot",
             "a.block",
             "r.ref_no"
