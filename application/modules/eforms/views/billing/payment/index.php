@@ -1,4 +1,3 @@
-<script src='https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js'></script>
 <div class="m-content">
 	<div class="row">
 		<div class="col-lg-12">
