@@ -210,7 +210,7 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '1');
-        $this->db->or_where('a.status', "cancelled");
+        // $this->db->or_where('a.status', "cancelled");
         if($view_own_request){
             $this->db->where('requestor', $this->user_data['emp_id']);
         }
@@ -263,7 +263,7 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '1');
-        $this->db->or_where('a.status', "cancelled");
+        // $this->db->or_where('a.status', "cancelled");
         if($search){
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
