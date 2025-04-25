@@ -4036,7 +4036,7 @@ class Reports_m extends CI_Model{
             ROUND(IF(LOWER(allw.frequency) = 'month', ROUND( IFNULL(allw.rate, 0), 2) * 12 / ROUND( IFNULL(comp.work_days_in_year, 314), 2),
             IFNULL(allw.rate, 0)), 2) as allowance_rate,
             a.has_overtime, a.has_shift, IF((a.shift_am_start && a.shift_am_end) || (a.shift_pm_start && a.shift_pm_end), '1', '0') as ampm_shift,
-            IF(a.is_holiday = 1 && a.paid_holiday = 1, '1', '0') as is_paid_holiday";
+            IF(a.is_holiday = 1 && a.paid_holiday = 1, '1', '0') as is_paid_holiday, a.payrate_id";
 
             $this->db->select($select);
             $this->db->from('gcctimeutility.timesheet a');
@@ -4064,6 +4064,13 @@ class Reports_m extends CI_Model{
                     $item->daily_rate = $item->basic_rate;
                     $item->has_shift = $item->ampm_shift === "0" ? "0": $item->has_shift;
                     
+                    $payrateTemp = intval($item->has_shift) === 1 ? "regular" : "rest day";
+                    $payrateSetting = $this->getPayrateSetting($payrateTemp);
+                    $tempPayrateSetting = intval($item->payrate_id) > 0 ? $this->getPayrateSettingById($item->payrate_id) : $payrateSetting;
+                    $otMinutely = floatval($tempPayrateSetting->ot_rate) > 0 ? floatval($tempPayrateSetting->ot_rate): 1;
+                    $item->ot_minutely = $otMinutely;
+                    /*** code ends here ***/
+
                     $otAllowance = floatval($item->allowance_rate) > 0 && $item->ot_hrs >= 1 ? floatval($item->allowance_rate): 0;
                     $item->allowance = $otAllowance > 0 ? $otAllowance: '';
                     $totalOtHrs = $item->ot_hrs + $item->ot_ndiff_hrs;
@@ -5243,5 +5250,13 @@ class Reports_m extends CI_Model{
             }
         }
         return $data;
+    }
+
+    protected function getPayrateSetting($particular){
+        return $this->db->where("particulars", $particular)->get("payroll.payrate_settings")->row();
+    }
+
+    protected function getPayrateSettingById($id=null){
+        return $this->db->where("id", $id)->get("payroll.payrate_settings")->row();
     }
 }
