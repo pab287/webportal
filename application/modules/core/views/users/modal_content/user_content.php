@@ -36,6 +36,19 @@
                 <?php endif; ?>
             </select>
         </div>
+        <div class="row">
+            <div class="col-md-12" style="margin-left: 15px;">
+                <div class="form-group">
+                    <div class="m-checkbox-inline">
+                        <label class="m-checkbox">
+                            <input type="checkbox" name="is_important" <?php echo $row["is_important"] ? "checked" : ""; ?>>
+                                Has sensitive data
+                            <span></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="modal-footer">
         <button class="btn btn-danger" data-dismiss="modal">Cancel</button>

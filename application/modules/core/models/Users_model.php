@@ -15,7 +15,7 @@ class Users_model extends CI_Model{
 		
 		if(isset($post["id"]) && $post["id"]){
 			$resultset["post"] = $post;
-			$select = "users.id, employees.lastname, employees.firstname, employees.middlename, employees.biometricno, employees.employee_status, users.role_id";
+			$select = "users.id, employees.lastname, employees.firstname, employees.middlename, employees.biometricno, employees.employee_status, users.role_id, users.is_important";
 			$this->db->select($select);
 			$this->db->from("{$this->usersTable} as users");
 			$this->db->join("{$this->employeesTable} as employees", "employees.id=users.emp_id");
@@ -60,7 +60,7 @@ class Users_model extends CI_Model{
 			
 			$data = array();
 			$data["role_id"] = $post["role_id"];
-			
+			$data["is_important"] = isset($post["is_important"]) && $post["is_important"] == 'on'? 1: 0;
 			$tempData = $this->core_layout->getUserData($post["id"]);
 			$tempName = (object) $tempData;
 			$tempName = (isset($tempName->display_name_1) && $tempName->display_name_1)? $tempName->display_name_1: "No assigned name";

@@ -151,6 +151,9 @@ Class Login_m extends CI_Model
                         'company' => $row->company_id,
                         'department' => $row->department_id,
                         'TwoFactorAuth' => $row->auth,
+                        'next_update' => $row->next_update,
+                        'waive_count' => $row->waive_password_update,
+                        'is_important' => $row->is_important,
                     );
 
                     $this->session->set_userdata('logged_in', $sess_array);
@@ -172,17 +175,37 @@ Class Login_m extends CI_Model
             $username = $post['username'];
             $new_password = $post['password'];
             $this->db->trans_start();
+            
+            $this->db->where('username', $username);
+            $current = $this->db->get('gccmaster.tblusers')->row();
+            if ($current->password == md5($post['password'])) {
+                $response = array(
+                    'status' => false,
+                    'message' => 'New password cannot be the same as the old password'
+                );
+                return $response;
+            }
+
+            if($current->is_important == 1){
+                $next_update = date('Y-m-d H:i:s', strtotime('+60 days'));
+            }else{
+                $next_update = date('Y-m-d H:i:s', strtotime('+90 days'));
+            }
+
             $data = array(
                 'password' => md5($new_password),
-                'force_update' => 0
+                'force_update' => 0,
+                'waive_password_update' => 1,
+                'next_update' => $next_update,
             );
+
     
             $result = $this->db->where('username', $username)->update('gccmaster.tblusers', $data);
     
             if (!$result) {
                 $this->session->sess_destroy();
                 $this->db->trans_rollback();
-                $response = array('status' => 'false', 'message' => 'Failed to update password');
+                $response = array('status' => false, 'message' => 'Failed to update password');
             }else{
                 $res = $this->Login_m->login($username, $new_password);
                 $id = $res[0]->id;
@@ -201,14 +224,18 @@ Class Login_m extends CI_Model
                     'company' => $res[0]->company_id,
                     'department' => $res[0]->department_id,
                     'TwoFactorAuth' =>  $res[0]->auth,
+                    'next_update' => $res[0]->next_update,
+                    'waive_count' => $res[0]->waive_password_update,
+                    'is_important' => $res[0]->is_important,
                 );
                 $this->session->set_userdata('logged_in', $sess_array);
                 $this->db->trans_commit();
                 $url = site_url('portal/index');
-                $response = array('status' => 'success', 'message' => 'Password successfully updated', 'redirect' => $url);
-            } 
-        } else {    
-            $response = array('status' => 'failure', 'message' => 'No POST data received');
+                $loggedIn = $this->session->userdata("logged_in");
+                $response = array('status' => true, 'message' => 'Password successfully updated', 'redirect' => $url, "loggedIn" => $loggedIn);
+            }
+        } else {
+            $response = array('status' => false, 'message' => 'No POST data received');
         }
         return $response;
     }
@@ -334,6 +361,9 @@ Class Login_m extends CI_Model
                 'company' => $res[0]->company_id,
                 'department' => $res[0]->department_id,
                 'TwoFactorAuth' => $res[0]->auth,
+                'next_update' => $res[0]->next_update,
+                'waive_count' => $res[0]->waive_password_update,
+                'is_important' => $res[0]->is_important,
             );
             $this->db->where('emp_id', $emp_id);
             $this->db->set('resend_attempts',0, false);
@@ -452,9 +482,6 @@ Class Login_m extends CI_Model
         return $query->row();
     }
 
-    public function getLockedAccounts(){
-        
-    }
 
     public function getAttempts($username) {
         $this->db->select('login_attempts,lockout');

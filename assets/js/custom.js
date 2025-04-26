@@ -310,6 +310,36 @@ function openAttendanceLog() {
     $("#attendance-log").modal("show");
 }
 
+
+function changePasswordLater(id){
+    $.ajax({
+        url: baseUrl("users/change_password_later"),
+        type: "POST",
+        dataType: "JSON",
+        data: {
+            id:id,
+            csrf_token : _csrf_hash
+        },
+        global: false,
+        success: function (response) {
+            if(response){
+                $(".password-change-reminder").modal("hide");
+                toastr.success("","Password change waived successfully", 20000);
+            }else{
+                toastr.error("","Error", 20000);
+            }
+        }
+    });
+}
+   
+function changePasswordNow(){
+    $(".password-change-reminder").modal("hide");
+    $("#force_change_modal").modal("show", {
+        backdrop: 'static',
+        keyboard: false
+    });
+}
+
 function sendPin(form) {
     const formEl = $(form);
     const formData = new FormData(form);
@@ -644,7 +674,6 @@ function delay(callback, ms) {
             },
             dataType: "JSON",
             success: function (response) {
-                console.log("Response: ", response);    
                 if (response.success) {
                     window.location.replace(response.redirect);
                 } else {
@@ -655,4 +684,3 @@ function delay(callback, ms) {
         });
     });
 }
-
