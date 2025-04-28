@@ -87,7 +87,7 @@
         }
         else {
             const next_update = new Date(session.next_update);
-            const currentDate = new Date(currr);
+            const currentDate = new Date();
             if (next_update <= currentDate) {
                 $(".password-change-reminder").modal("show");
                 
