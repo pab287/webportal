@@ -4059,38 +4059,44 @@ class Reports_m extends CI_Model{
                 foreach ($query->result() as $key => $item) {
                     $employeeRecord = (object) $this->core_layout->getEmployeeData($item->emp_id);
                     $employeeName = $employeeRecord->display_name_1 ?? 'No assigned name';
+                    $totalOtHrs = $item->ot_hrs + $item->ot_ndiff_hrs;
+
+                    $payrateTemp = intval($item->has_shift) === 1 ? "regular" : "rest day";
+                    $payrateSetting = $this->getPayrateSetting($payrateTemp);
+                    $tempPayrateSetting = intval($item->payrate_id) > 0 ? $this->getPayrateSettingById($item->payrate_id) : $payrateSetting;
+                    $otRate = floatval($tempPayrateSetting->ot_rate) > 0 ? floatval($tempPayrateSetting->ot_rate): 1;
+                    $otNightDiffRate = floatval($tempPayrateSetting->ot_night_diff_rate) > 0 ? floatval($tempPayrateSetting->ot_night_diff_rate): 0;
+                    
+                    $tempOtRate = ($otRate * 100) - 100;
+                    $perMinute = $item->basic_rate / 8;
+                    $otAllowance = floatval($item->allowance_rate) > 0 && $item->ot_hrs >= 1 ? floatval($item->allowance_rate): 0;
+                    $allowancePerMinute = $otAllowance / 8;
+                    
+                    $totalOtPay = $perMinute * floatval($totalOtHrs);
+                    $totalOtNdPay = $perMinute * floatval($item->ot_ndiff_hrs);
+                    $totalOtAllowance = $allowancePerMinute * floatval($totalOtHrs);
+                    
+                    $tempOtPayWithRate = $otRate > 1 ? ($tempOtRate / 100) * $totalOtPay : 0;
+                    $totalOtPayable = $totalOtPay + $tempOtPayWithRate;
+                    $nightDiffPay = $otNightDiffRate > 0 ? $totalOtNdPay * $otNightDiffRate: 0;
+
+                    $item->_ot_rate = $tempOtRate;
+                    $item->_temp_ot_pay = $tempOtPayWithRate;
                     $item->employee_name = $employeeName;
                     $item->day = date('D', strtotime($item->overtime_in));
                     $item->daily_rate = $item->basic_rate;
                     $item->has_shift = $item->ampm_shift === "0" ? "0": $item->has_shift;
-                    
-                    $payrateTemp = intval($item->has_shift) === 1 ? "regular" : "rest day";
-                    $payrateSetting = $this->getPayrateSetting($payrateTemp);
-                    $tempPayrateSetting = intval($item->payrate_id) > 0 ? $this->getPayrateSettingById($item->payrate_id) : $payrateSetting;
-                    $otMinutely = floatval($tempPayrateSetting->ot_rate) > 0 ? floatval($tempPayrateSetting->ot_rate): 1;
-                    $item->ot_minutely = $otMinutely;
-                    /*** code ends here ***/
-
-                    $otAllowance = floatval($item->allowance_rate) > 0 && $item->ot_hrs >= 1 ? floatval($item->allowance_rate): 0;
+                    $item->pay_info = $tempPayrateSetting;
+                    $item->per_minute = $perMinute;
+                    $item->ot_hrs = $totalOtHrs > 0 ? $totalOtHrs: '-';
                     $item->allowance = $otAllowance > 0 ? $otAllowance: '';
-                    $totalOtHrs = $item->ot_hrs + $item->ot_ndiff_hrs;
-                    $item->ot_hrs = $totalOtHrs;
-                    $item->ot_hrs = ($item->ot_hrs == 0) ? '-' : $item->ot_hrs;
-                    $totalOtPay = ($item->daily_rate / 8) * floatval($totalOtHrs);
-                    $totalOtAllowance = ($otAllowance / 8) * floatval($totalOtHrs);
+                    $item->ot_rate = $otRate;
                     $item->ot_allowance = $totalOtAllowance === 0 ? '-' : $totalOtAllowance;
                     $item->ot_pay = $totalOtPay;
-                    $item->ot_pay_20 = intval($item->has_shift) === 1 && intval($item->is_paid_holiday) === 0 ? $totalOtPay * 0.25 : '';
-                    $item->ot_pay_30 = intval($item->has_shift) === 0 && intval($item->is_paid_holiday) === 0 ? $totalOtPay * 0.30 : '';
-
-                    $paidOT25 = intval($item->is_paid_holiday) === 0 ? 1.25 : 1;
-                    $paidOT30 = intval($item->is_paid_holiday) === 0 ? 1.30 : 1;
-                    $totalOtPayable = intval($item->has_shift) === 1 ? $totalOtPay * $paidOT25 : $totalOtPay * $paidOT30;
-
+                    $item->ot_pay_20 = $otRate > 1 && $tempOtRate == 25 && $tempOtPayWithRate > 0 ? $tempOtPayWithRate: '';
+                    $item->ot_pay_30 = $otRate > 1 && $tempOtRate == 30 && $tempOtPayWithRate > 0 ? $tempOtPayWithRate: '';
                     $item->ot_ndiff_hrs = ($item->ot_ndiff_hrs == 0) ? '-' : $item->ot_ndiff_hrs;
-                    $totalOtNdPay = ($item->daily_rate / 8) * floatval($item->ot_ndiff_hrs);
-                    $nightDiffPay = $totalOtNdPay * 0.10;
-                    $item->night_diff = $nightDiffPay ? $nightDiffPay : '';
+                    $item->night_diff = $nightDiffPay > 0 ? $nightDiffPay : '';
                     $item->ot_adj = $this->getOTAdjustment($coverageDate, $item->emp_id);
                     $item->amount = $totalOtPayable + $nightDiffPay + $totalOtAllowance;
                     $item->total_pay = $item->amount;
