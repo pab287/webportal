@@ -1569,16 +1569,16 @@ class Ticket_m extends CI_Model
     
         $this->db->select("a.performed_by, 
         COUNT(*) as ticket_count, 
-        CONCAT(
-            b.firstname, ' ', b.lastname, 
+        IF(a.performed_by = 0, 'Unassigned', CONCAT(
+            b.firstname, ' ', b.lastname,
             IF(
-                (b.suffix IS NOT NULL AND 
-                 LOWER(b.suffix) NOT IN ('n/a', 'none') AND 
-                 b.suffix != ''), 
-                CONCAT(' ', b.suffix), 
+                (b.suffix IS NOT NULL AND
+                LOWER(b.suffix) NOT IN ('n/a', 'none') AND
+                b.suffix != ''),
+                CONCAT(' ', b.suffix),
                 ''
             )
-        ) as name,
+        )) as name,
         SUM(CASE WHEN a.status = 'completed' THEN 1 ELSE 0 END) as completed,
         SUM(CASE WHEN a.status = 'open' THEN 1 ELSE 0 END) as open,
         SUM(CASE WHEN a.status = 'in progress' THEN 1 ELSE 0 END) as in_progress,
@@ -1589,7 +1589,7 @@ class Ticket_m extends CI_Model
         // $this->db->where("a.status !=", "completed");
         $this->db->where("a.status !=", "cancelled");
         // $this->db->where("a.status !=", "resolved");
-        $this->db->where("b.employee_status", "Active");
+        $this->db->where("(b.employee_status = 'Active' OR a.performed_by = 0)");
     
         if (isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']) {
             $this->db->where("a.created_at >= ", $start_time);

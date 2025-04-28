@@ -264,7 +264,7 @@
 					<div class="m-portlet__body">
 						<span class="m--font-bolder" v-text="totalTicketByAsigneeRange">
 						</span>
-						<div class="container-fluid d-flex justify-content-center align-items-center" id="assignee_chart" style="height: 500px;">
+						<div class="container-fluid d-flex justify-content-center align-items-center" id="assignee_chart" style="min-height: 300px; height: auto;">
 							<span class="m-loader m-loader--primary m-loader--lg"></span>
 						</div>
 					</div>

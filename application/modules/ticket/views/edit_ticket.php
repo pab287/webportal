@@ -151,7 +151,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="form-group m-form__group row" id="performed_by_block">
+                                <div class="form-group m-form__group row">
                                     <label for="issue" class="col-lg-4 col-md-4 col-sm-12 required" style="color: inherit !important;">
                                         Issue:
                                     </label>
@@ -162,11 +162,11 @@
                             </div>
                             <div class='col-lg-6 col-md-12 col-sm-12'>
                                 <div class="form-group m-form__group row" id="performed_by_block">
-                                    <label class="col-lg-4 col-md-6 col-sm-4">
+                                    <label class="col-lg-4 col-md-6 col-sm-4" style="color: inherit !important;">
                                         Performed by:
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-8">
-                                        <select id="performed_by" name="performed_by" class="form-control select2">
+                                        <select id="performed_by" name="performed_by" class="form-control select2" data-validation="required">
                                             <option></option>
                                         </select>
                                     </div>

@@ -48,28 +48,6 @@ let ticketDataSheet = new Vue({
         }
       });
     },
-    // updatePriorityWidget(data){
-    //   $("#high").text(data.high);
-    //   const percentage = Math.round((data.high / data.all) * 100);
-    //   $("#progress_high")
-    //     .css("width", percentage + "%")
-    //     .attr("aria-valuenow", percentage);
-    //   $("#percent_high").text(percentage + "%");
-
-    //   $("#medium").text(data.medium);
-    //   const mediumPercentage = Math.round((data.medium / data.all) * 100);
-    //   $("#progress_medium")
-    //       .css("width", mediumPercentage + "%")
-    //       .attr("aria-valuenow", mediumPercentage);
-    //   $("#percent_medium").text(mediumPercentage + "%");
-
-    //   $("#low").text(data.low);
-    //   const lowPercentage = Math.round((data.low / data.all) * 100);
-    //   $("#progress_low")
-    //       .css("width", lowPercentage + "%")
-    //       .attr("aria-valuenow", lowPercentage);
-    //   $("#percent_low").text(lowPercentage + "%");
-    // },
     getGraphDataStatus() {
       const vm = this;
       $.ajax({
@@ -87,6 +65,7 @@ let ticketDataSheet = new Vue({
       });
     },
     loadGraphByStatus(data){
+
       if (statusChart != null) {
         statusChart.dispose();
       }
@@ -95,6 +74,12 @@ let ticketDataSheet = new Vue({
         status: status.charAt(0).toUpperCase() + status.slice(1).replace(/\s/g, ' '),
         count: parseInt(count)
       })).sort((a, b) => b.count - a.count);
+      console.log(chartData);
+      if (chartData.every(item => item.count == 0)) {
+        $("#active_graph").html('<div class="d-flex justify-content-center align-items-center h-100"><h4 class="text-muted">NO DATA</h4></div>');
+        return; 
+      }
+
       statusChart = am4core.create("active_graph", am4charts.XYChart);
       statusChart.data = chartData;
       let categoryAxis = statusChart.yAxes.push(new am4charts.CategoryAxis());
@@ -112,8 +97,6 @@ let ticketDataSheet = new Vue({
       series.name = "Tickets";
       series.columns.template.tooltipText = "{categoryY}: [bold]{valueX}[/] tickets";
 
-
-      // Color the columns
       series.columns.template.adapter.add("fill", function(fill, target) {
           switch(target.dataItem.categoryY) {
               case "Open":
@@ -156,7 +139,10 @@ let ticketDataSheet = new Vue({
           status: key.charAt(0).toUpperCase() + key.slice(1),
           count: parseInt(value)
       })).sort((a, b) => b.count - a.count);
-
+      if (chartData.every(item => item.count == 0)) {
+        $("#type_graph").html('<div class="d-flex justify-content-center align-items-center h-100"><h4 class="text-muted">NO DATA</h4></div>');
+        return; 
+      }
       categoryChart = am4core.create("type_graph", am4charts.XYChart);
       categoryChart.data = chartData;
       let categoryAxis = categoryChart.yAxes.push(new am4charts.CategoryAxis());
@@ -174,8 +160,6 @@ let ticketDataSheet = new Vue({
       series.name = "Tickets";
       series.columns.template.tooltipText = "{categoryY}: [bold]{valueX}[/] tickets";
 
-
-      // Color the columns
       series.columns.template.adapter.add("fill", function(fill, target) {
         switch(target.dataItem.categoryY) {
               case "Hardware":
@@ -279,6 +263,16 @@ let ticketDataSheet = new Vue({
           };
       }).sort((a, b) => a.total - b.total);
 
+      if (chartData.length === 0) {
+        $("#assignee_chart").css("height", "200px");
+        $("#assignee_chart").html('<div class="d-flex justify-content-center align-items-center h-100"><h4 class="text-muted">NO DATA</h4></div>');
+        return;
+    }
+
+      const baseHeight = 100; 
+      const itemHeight = 50;  
+      const calculatedHeight = baseHeight + (chartData.length * itemHeight);
+      $("#assignee_chart").css("height", calculatedHeight + "px");
   
       am4core.useTheme(am4themes_animated);
       assigneeChart = am4core.create("assignee_chart", am4charts.XYChart);
@@ -382,7 +376,6 @@ let ticketDataSheet = new Vue({
       chartLabel.verticalCenter = "bottom";
       chartLabel.text = chartHand.value + '%';
       
-      // Axis labels
       let label0 = completionChart.radarContainer.createChild(am4core.Label);
       label0.isMeasured = false;
       label0.y = 10;
@@ -475,7 +468,6 @@ $('#aveResolveTicketPicker').daterangepicker(dateRangeConfig)
 .on('apply.daterangepicker', handleAveResolveTimeApply);
 
 
-// /////////
 const makeAveResponseTimeRequest = (data) => {
   return $.ajax({
       url: baseUrl("ticket/ticket/get_average_response_time/"),
@@ -562,7 +554,6 @@ const handleOpenTicketApply = (ev, picker) => {
   } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
     ticketDataSheet.openTicketRange = "Yesterday";
   } else {
-    // Custom range
     ticketDataSheet.openTicketRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
   }
   makeOpenTicketRequest({ start: startDate, end: endDate })
@@ -611,7 +602,6 @@ const handleUrgentTicketApply = (ev, picker) => {
   } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
     ticketDataSheet.urgentTicketRange = "Yesterday";
   } else {
-    // Custom range
     ticketDataSheet.urgentTicketRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
   }
   
@@ -661,7 +651,6 @@ const handleTotalApply = (ev, picker) => {
   } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
     ticketDataSheet.totalTicketRange = "Yesterday";
   } else {
-    // Custom range
     ticketDataSheet.totalTicketRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
   }
 
@@ -711,7 +700,6 @@ const makeTicketStatusRequest = (data) => {
     } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
       ticketDataSheet.totalTicketByStatusRange = "Yesterday";
     } else {
-      // Custom range
       ticketDataSheet.totalTicketByStatusRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
     }
     
@@ -761,7 +749,6 @@ const makeTicketStatusRequest = (data) => {
     } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
       ticketDataSheet.totalTicketByCategoryRange = "Yesterday";
     } else {
-      // Custom range
       ticketDataSheet.totalTicketByCategoryRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
     }
 
@@ -849,7 +836,6 @@ const handleTicketPrioritiesResponse = (data) => {
       } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
         ticketDataSheet.totalTicketByPriorityRange = "Yesterday";
       } else {
-        // Custom range
         ticketDataSheet.totalTicketByPriorityRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
       }
       
@@ -898,7 +884,6 @@ const handleTicketPrioritiesResponse = (data) => {
         } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
           ticketDataSheet.totalTicketByAsigneeRange = "Yesterday";
         } else {
-          // Custom range
           ticketDataSheet.totalTicketByAsigneeRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
         }
         
@@ -950,7 +935,6 @@ const handleTicketPrioritiesResponse = (data) => {
           } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
             ticketDataSheet.totalTicketCompletionRange = "Yesterday";
           } else {
-            // Custom range
             ticketDataSheet.totalTicketCompletionRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
           }
 
@@ -962,113 +946,3 @@ const handleTicketPrioritiesResponse = (data) => {
           .daterangepicker(dateRangeConfig)
           .on('cancel.daterangepicker', handleCompletionCancel)
           .on('apply.daterangepicker', handleCompletionApply);
-
-  // $.ajax({
-  //   url : baseUrl("ticket/ticket/all_status/"),
-  //   type: "GET",
-  //   dataType: "JSON",
-  //   success: function(data){
-  //     let dataCount = data.count;
-  //     let statusIcon = "";
-  //     let statusColor = "";
-  //       $.each(data, function(i ,val){
-  //         if(val.status == 'completed'){
-  //           statusIcon = "fa-check-square-o";
-  //           statusColor = "text-success";
-  //         }else if(val.status == 'in progress'){
-  //           statusIcon = "fa-refresh";
-  //           statusColor = "text-warning";
-  //         }else{
-  //           statusIcon = "fa-edit";
-  //           statusColor = "text-danger";
-  //         }
-  //         let status_list =   '<div class="m-widget4__item">'+
-  //                               '<div class="m-widget4__ext">'+
-  //                                 '<span class="m-widget4__icon m--font-brand">'+
-  //                                   '<i class="fa '+statusIcon+' text-info"></i>'+
-  //                                 '</span>'+
-  //                               '</div>'+
-  //                               '<div class="m-widget4__info">'+
-  //                                 '<span class="m-widget4__text">'+val.status.toUpperCase()+'</span>'+
-  //                               '</div>'+
-  //                               '<div class="m-widget4__ext text-right">'+
-  //                                 '<span class="m-widget4__number m--font-info">'+val.count+'</span>'+
-  //                               '</div>'+
-  //                             '</div>';
-          
-
-  //         $("#status_list").append(status_list);
-  //       });
-  //     }
-  // });
-
-  // $.ajax({
-  //   url : baseUrl("ticket/ticket/all_category/"),
-  //   type: "GET",
-  //   dataType: "JSON",
-  //   success: function(data){
-  //     let dataCount = data.count;
-  //     let categoryIcon = "";
-  //       $.each(data, function(i ,val){
-  //         if(val.category == 'hardware'){
-  //           categoryIcon = "fa-cogs";
-  //         }else if(val.category == 'software'){
-  //           categoryIcon = "fa-desktop";
-  //         }else{
-  //           categoryIcon = "fa-globe";
-  //         }
-  //         let status_list =   '<div class="m-widget4__item">'+
-  //                               '<div class="m-widget4__ext">'+
-  //                                 '<span class="m-widget4__icon m--font-brand">'+
-  //                                   '<i class="fa '+categoryIcon+' text-info"></i>'+
-  //                                 '</span>'+
-  //                               '</div>'+
-  //                               '<div class="m-widget4__info">'+
-  //                                 '<span class="m-widget4__text">'+val.category.toUpperCase()+'</span>'+
-  //                               '</div>'+
-  //                               '<div class="m-widget4__ext text-right">'+
-  //                                 '<span class="m-widget4__number m--font-info">'+val.count+'</span>'+
-  //                               '</div>'+
-  //                             '</div>';
-          
-
-  //         $("#category").append(status_list);
-  //       });
-  //     }
-  // });
-
-  // $.ajax({
-  //   url : baseUrl("ticket/ticket/all_sub_category/"),
-  //   type: "GET",
-  //   dataType: "JSON",
-  //   success: function(data){
-  //     let dataCount = data.count;
-  //     let status_list = "";
-
-  //     if(dataCount){
-  //       $.each(data, function(i ,val){
-  //         if(val.sub_category == "" || val.sub_category == 0){
-  //           status_list = "";
-  //         }else{
-  //           status_list =   '<div class="m-widget4__item">'+
-  //                               '<div class="m-widget4__ext">'+
-  //                                 '<span class="m-widget4__icon m--font-brand">'+
-  //                                   '<i class="fa fa-tag text-info"></i>'+
-  //                                 '</span>'+
-  //                               '</div>'+
-  //                               '<div class="m-widget4__info">'+
-  //                                 '<span class="m-widget4__text">'+val.sub_category.toUpperCase()+'</span>'+
-  //                               '</div>'+
-  //                               '<div class="m-widget4__ext text-right">'+
-  //                                 '<span class="m-widget4__number m--font-info">'+val.count+'</span>'+
-  //                               '</div>'+
-  //                             '</div>';
-          
-  //         }
-  //         $("#sub_category").append(status_list);
-  //       });
-  //     }else{
-  //       $("#sub_category").text("No tickets for Webportal.");
-  //     }
-  //   }
-  // });
