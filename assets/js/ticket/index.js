@@ -74,7 +74,6 @@ let ticketDataSheet = new Vue({
         status: status.charAt(0).toUpperCase() + status.slice(1).replace(/\s/g, ' '),
         count: parseInt(count)
       })).sort((a, b) => b.count - a.count);
-      console.log(chartData);
       if (chartData.every(item => item.count == 0)) {
         $("#active_graph").html('<div class="d-flex justify-content-center align-items-center h-100"><h4 class="text-muted">NO DATA</h4></div>');
         return; 
