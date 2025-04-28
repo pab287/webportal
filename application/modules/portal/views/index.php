@@ -84,7 +84,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
     <script src="<?php echo base_url('assets/plugins/bootstrap/bootstrap.min.js'); ?>"></script>
     <script src="<?php echo base_url('assets/js/jquery.dataTables.min.js'); ?>"></script>
     <script src="<?php echo base_url('assets/js/dataTables.bootstrap4.min.js'); ?>"></script>
-    <script src="<?php echo base_url('assets/js/custom.js'); ?>"></script>
+    <script src="<?php echo base_url('assets/js/custom.js'); ?>?v=1.0.1"></script>
     <?php echo $this->core_layout->getStoredJs(); ?>
 
     <!--end::Web font -->

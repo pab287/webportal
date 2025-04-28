@@ -1,3 +1,40 @@
+<style>
+@media (max-width: 767px) {
+  .password-change-reminder .modal-dialog {
+    width: 95%;
+    margin: 10px auto;
+    max-width: none;
+  }
+  
+  .password-change-reminder .modal-footer {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 15px;
+  }
+  
+  .password-change-reminder .modal-footer button {
+    margin: 5px 0;
+    padding: 12px;
+    width: 100%;
+    font-size: 16px;
+  }
+  
+  .password-change-reminder .modal-body {
+    font-size: 16px;
+    padding: 20px 15px;
+  }
+  
+  .password-change-reminder .modal-header {
+    padding: 15px;
+  }
+  
+  .password-change-reminder .modal-title {
+    font-size: 18px;
+    width: 100%;
+    text-align: center;
+  }
+}
+</style>
 <div class="modal fade password-change-reminder" data-backdrop="static" data-keyboard="false" tabindex="-1">
     <div class="modal-dialog" role="dialog">
         <div class="modal-content">

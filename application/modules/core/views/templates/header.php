@@ -43,7 +43,7 @@ if(isset($has_template_js) && $has_template_js) $temp_template_js = true;
 		<!-- end::Summernote JS -->
 		<?php echo $this->core_layout->getStoredJs(); ?>
 		
-		<script src="<?php echo base_url('assets/js/custom.js'); ?>"></script>
+		<script src="<?php echo base_url('assets/js/custom.js'); ?>?v=1.0.1"></script>
 
 		<!-- dt btn export to be remove -->
 		<script type="text/javascript" language="javascript" src="<?php echo base_url('assets/js/external/dataTables.buttons.min.js'); ?>"></script>
