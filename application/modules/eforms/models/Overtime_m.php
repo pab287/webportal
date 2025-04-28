@@ -1065,7 +1065,7 @@ class Overtime_m extends CI_Model {
             $rawData = $queryDetails->row();
             $tempMaxDate = $rawData->max_date ? strtotime("+1 day", strtotime(trim($rawData->max_date))): null;
             $tempDateFrom = $rawData->date_from ? strtotime(trim($rawData->date_from)): null;
-            $validOTDates = ($tempMaxDate && $tempDateFrom) && $tempDateFrom > $tempMaxDate;
+            $validOTDates = $tempMaxDate == null || ($tempMaxDate && $tempDateFrom) && $tempDateFrom > $tempMaxDate;
             
             $resultarray = $queryDetails->row_array();
             $resultarray["valid_ot_dates"] = $validOTDates;
