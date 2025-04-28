@@ -45,7 +45,7 @@ $('#date_required').datetimepicker({
     autoclose: true,
     pickerPosition: 'bottom-left',
     todayBtn: true,
-    format: 'MM dd, yyyy H:i P',
+    format: 'MM dd, yyyy HH:ii P',
     showMeridian: true,
 }).on("changeDate", function (e) {
     var formattedDate = moment(e.date).format('YYYY-MM-DD HH:mm');
