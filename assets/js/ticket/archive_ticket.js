@@ -95,7 +95,7 @@ let tbl = $("#table-tickets-archive").DataTable({
         },
         {data: null,
             render: function (data, type, row) {
-                if(row.status == 'Completed' || row.status == 'RESOLVED') {
+                if(row.status.toLowerCase()  == 'completed' || row.status == 'RESOLVED') {
                     return 'Ticket Completed';
                 }
                 if (!row.requested_date) return '---';

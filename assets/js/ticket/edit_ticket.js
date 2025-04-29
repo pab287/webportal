@@ -31,13 +31,6 @@ $('#date_required_group').datepicker({
     format: 'yyyy-mm-dd hh:mm',
 });
 
-$('#date_required_group').datetimepicker({
-    todayHighlight: true,
-    autoclose: true,
-    pickerPosition: 'bottom-left',
-    todayBtn: true,
-    dateTimeFormat: 'yyyy-mm-dd hh:mm',
-});
 let arrImg = [];
 let images = [];
 $.ajax({
@@ -69,7 +62,7 @@ $.ajax({
         $("#ticket_id").val(param_id);
 
         $("#issue").val(vmData.message);
-        $("#date_required").val(moment(vmData.requested_date).format("YYYY-MM-DD HH:mm"));
+        $("#date_required").val(moment(vmData.requested_date).format("MMMM D, YYYY hh:mm A"));
         $("#requested_by").val(vmData.requested_by);
 
         const picUrl = vmData.attachment ? baseUrl("uploads/files/images/employee_files/" + vmData.attachment) : baseUrl('assets/images/ams/images/no_image.jpg');
@@ -225,6 +218,10 @@ $.ajax({
             $("#performed_by").empty();
             $("#performed_by_block").remove();
         }
+        
+        if(data.status == 'open'){
+            _tempContentData.status = [{'text': 'open', 'id': 'open'},{'text': 'In Progress', 'id': 'in progress'}];
+        }
 
         $("#status").select2({
             width: "100%",
@@ -346,11 +343,11 @@ $('#date_required').datetimepicker({
     autoclose: true,
     pickerPosition: 'bottom-left',
     todayBtn: true,
-    dateTimeFormat: 'yyyy-mm-dd hh:mm',
+    format: 'MM dd, yyyy HH:ii P',
+    showMeridian: true,
 }).on("changeDate", function (e) {
-    moment(e.date).format("yyyy-mm-dd hh:mm tt");
-    var self = $(e.target);
-    self.validate();
+    var formattedDate = moment(e.date).format('YYYY-MM-DD HH:mm');
+    $(this).val(formattedDate);
 });
 
 let fileUploadPhoto = function () {
@@ -404,13 +401,11 @@ let fileUploadPhoto = function () {
             formData: {csrf_token: _csrf_hash, ticket_id: param_id},
             done: function (e, data) {
                 var result = data.result;
-                console.log(result.response);
                 if (result.response) {
                     var avatarImage = result.added_image;
                     var renderImage = result.render_image;
                     images.push(result.display_filename);
                     const filename = result.display_filename;
-                    console.log(filename.length);
                     const shortenedName = filename.length <= 20 ? filename : `${filename.slice(0, 20)}...`;
                     $("#picture").attr("src", renderImage);
                     $("#pic").val(images);
@@ -616,3 +611,22 @@ function delete_comment(id){
         }
       });
 }
+
+let statuslog = new Vue({
+    el: "#status-log",
+    data: {trail: null},
+    mounted: function () {
+        $.ajax({
+            url: baseUrl("ticket/ticket/get_trail_log/") + param_id,
+            type: "GET",
+            dataType: "JSON",
+            success: function (response) {
+                if (response) {
+                    statuslog.trail =  response.data;
+                } else {
+                    statuslog.trail = null;
+                }
+            }
+        })
+    }
+});

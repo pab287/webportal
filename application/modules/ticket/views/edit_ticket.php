@@ -34,7 +34,7 @@
 </style>
 <div class="m-content">
     <div class="row">
-		<div class="col-lg-9 col-md-9 col-sm-12">
+		<div class="col-lg-12 col-md-12 col-sm-12">
 			<div class="m-portlet m-portlet--mobile">
 				<div class="m-portlet__head">
 					<div class="m-portlet__head-caption">
@@ -51,35 +51,35 @@
 					    <div class="row">
                             <div class="col-lg-6 col-md-12 col-sm-12">
                                 <div class="form-group m-form__group row">
-                                    <label class="col-lg-4 col-md-6 col-sm-12 col-xs-12">
-                                        Reference: <span style="color:red;">*</span>
+                                    <label class="col-lg-4 col-md-6 col-sm-12 col-xs-12 required">
+                                        Reference: 
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-12 col-xs-12">
                                         <b v-text="vm_tab1.reference_no"></b>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-lg-4 col-md-6 col-sm-12 col-xs-12">
-                                        Requested by: <span style="color:red;">*</span>
+                                    <label class="col-lg-4 col-md-6 col-sm-12 col-xs-12 required">
+                                        Requested by: 
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-12 col-xs-12">
                                         <b v-text="vm_tab1.requested_by"></b>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-lg-4 col-md-6 col-sm-12 col-xs-12">
-                                        Date Needed: <span style="color:red;">*</span>
+                                    <label class="col-lg-4 col-md-6 col-sm-12 col-xs-12 required">
+                                        Date Needed: 
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-6 input-group date" id="need_dt_group">
-                                        <input class="form-control m-input" type="text" name="date_required" id="date_required" data-validation="required"/>
+                                        <input class="form-control m-input" type="text" name="date_required" id="date_required" data-validation="required" readonly/>
                                         <span class="input-group-addon">
 											<i class="la la-calendar glyphicon-th"></i>
 										</span>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Severity <span style="color:red;">*</span>
+                                    <label for="" class="col-sm-12 col-xs-12 col-md-4 required" style="color: inherit !important;">
+                                        Severity
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="severity" name="severity" class="form-control select2" data-validation="required">
@@ -112,8 +112,8 @@
                         <div class='row'>
                             <div class='col-lg-6 col-md-12 col-sm-12'>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Department <span style="color:red;">*</span>
+                                    <label class="col-sm-12 col-xs-12 col-md-4 required" style="color: inherit !important;">
+                                        Department
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="department" name="department" class="form-control select2" data-validation="required">
@@ -122,8 +122,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Category <span style="color:red;">*</span>
+                                    <label class="col-sm-12 col-xs-12 col-md-4 required" style="color: inherit !important;">
+                                        Category
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="category" name="category" class="form-control select2" data-validation="required">
@@ -132,8 +132,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="dept-res">
-                                    <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                    Department Responsible: <span style="color:red;">*</span>
+                                    <label class="col-sm-12 col-xs-12 col-md-4 required" style="color: inherit !important;">
+                                    Department Responsible:
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="responsibility" name="responsibility" class="form-control select2" data-validation="required">
@@ -142,8 +142,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row" id="webportal">
-                                    <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Sub-Category <span style="color:red;">*</span>
+                                    <label class="col-sm-12 col-xs-12 col-md-4 required" style="color: inherit !important;">
+                                        Sub-Category
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="sub_category" name="sub_category" class="form-control select2" data-validation="required">
@@ -152,8 +152,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-lg-4 col-md-4 col-sm-12 col-form-label">
-                                        Issue: <span style="color:red;">*</span>
+                                    <label for="issue" class="col-lg-4 col-md-4 col-sm-12 required" style="color: inherit !important;">
+                                        Issue:
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <textarea class="form-control m-input" id="issue" name="issue" rows="4" data-validation="required"></textarea>
@@ -162,18 +162,18 @@
                             </div>
                             <div class='col-lg-6 col-md-12 col-sm-12'>
                                 <div class="form-group m-form__group row" id="performed_by_block">
-                                    <label class="col-lg-4 col-md-6 col-sm-4">
+                                    <label class="col-lg-4 col-md-6 col-sm-4" style="color: inherit !important;">
                                         Performed by:
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-8">
-                                        <select id="performed_by" name="performed_by" class="form-control select2">
+                                        <select id="performed_by" name="performed_by" class="form-control select2" data-validation="required">
                                             <option></option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="form-group m-form__group row">
-                                    <label class="col-sm-12 col-xs-12 col-md-4 col-form-label">
-                                        Status: <span style="color:red;">*</span>
+                                    <label class="col-sm-12 col-xs-12 col-md-4 required" style="color: inherit !important;">
+                                        Status:
                                     </label>
                                     <div class="col-sm-12 col-xs-12 col-md-8">
                                         <select id="status" name="status" class="form-control select2" data-validation="required">
@@ -203,7 +203,46 @@
 			</div>
   	    <!--end::Portlet-->  
 		</div>
-        <div class="col-lg-3 col-md-3 col-sm-12">
+        <div class="col-lg-8 col-md-8 col-sm-12">
+            <div class="m-portlet m-portlet--mobile">
+                <div class="m-portlet__head">
+					<div class="m-portlet__head-caption">
+						<div class="m-portlet__head-title">
+							<h3 class="m-portlet__head-text">
+								Status Logs
+							</h3>
+						</div>
+					</div>
+				</div>
+                <div class="m-portlet__body" id="status-log">
+                    <div class="m-list-timeline">
+                        <div class="m-list-timeline__items">
+                            <template v-for="(item, index) in trail" :key="index">
+                                <div class="m-list-timeline__item">
+                                    <span 
+                                        class="m-list-timeline__badge"
+                                        :class="{
+                                        'm-list-timeline__badge--success': item.type === 'open' || item.type === 'new',
+                                        'm-list-timeline__badge--warning': item.type === 'in progress',
+                                        'm-list-timeline__badge--info': item.type === 'completed',
+                                        'm-list-timeline__badge--danger': item.type === 'Cancelled',
+                                        'm-list-timeline__badge--focus': item.type === 'restore',
+                                        'm-list-timeline__badge--brand': item.type === 'archive'
+                                        }"
+                                    ></span>
+                                    <span class="m-list-timeline__text" v-text="item.log_message"></span></br>
+                                    <span class="m-list-timeline__text" ></span>
+                                    <span class="m-list-timeline__text" v-text="item.name"></span>
+                                    <span class="m-list-timeline__text" ></span></br>
+                                    <span class="m-list-timeline__text text-left" v-text="item.created_at"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12">
 			<div class="m-portlet m-portlet--mobile">
                 <div class="m-portlet__head">
 					<div class="m-portlet__head-caption">

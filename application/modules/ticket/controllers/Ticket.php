@@ -17,9 +17,12 @@ class Ticket extends MY_Controller {
     function dashboard(){
         $this->core_layout->setPrivilegeName("ticket_dashboard");
         $this->core_layout->setPageTitle("TICKET - Dashboard");
-        $this->core_layout->addJs("js/ts/amschart/amschart.js", true);
-        $this->core_layout->addJs("js/ts/amschart/amschart_theme.js", true);
-        $this->core_layout->addJs("js/ts/amschart/amschart_chart.js", true);
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
+        $this->core_layout->addJs("global/js/amcharts4/core.js", true);
+        $this->core_layout->addJs("global/js/amcharts4/charts.js", true);
+        $this->core_layout->addJs("global/js/amcharts4/maps.js", true);
+        $this->core_layout->addJs("global/js/amcharts4/themes/animated.js", true);
         $this->core_layout->addJs("js/ticket/index.js", true);
         $this->load->view("core/templates/header");
         $this->load->view("ticket/dashboard");
@@ -264,13 +267,6 @@ class Ticket extends MY_Controller {
         ->set_content_type('json')
         ->set_output(json_encode($data));
     }
-
-    function all_status(){
-        $data = $this->ticket->allStatus();
-        $this->output
-        ->set_content_type('json')
-        ->set_output(json_encode($data));
-    }
     
     function all_category(){
         $data = $this->ticket->allCategory();
@@ -300,30 +296,64 @@ class Ticket extends MY_Controller {
         ->set_output(json_encode($data));
     }
 
-    function test_send(){
-        $data = array(
-            'ref_yr' => '2023',
-            'ref_series' => 'TEST',
-            'ref_month' => '08',
-            'category' => 'Hardware',
-            'sub_category' => '',
-            'reference_no' => 'TS23-08-0038',
-            'department_id' => '9',
-            'message' => 'test only',
-            'requestor' => 1762,
-            'requested_date' => '2023-08-16',
-            'priority' => 'low',
-            'status' => 'open',
-            'created_at' => '2023-08-16 09:00:00'
-        );
-
-        $data = $this->ticket->sendTelegram($data, 455);
-        var_dump($data);
-    }
-
     function remove_actionstkn(){
         $data = $this->ticket->removeActionstkn();
         $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_trail_log($id){
+        $data = $this->ticket->getTrailLog($id);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
       }
+
+    public function get_open_tickets(){
+        $data = $this->ticket->getOpenTickets();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_total_tickets(){
+        $data = $this->ticket->getTotalTickets();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_urgent_tickets(){
+        $data = $this->ticket->getUrgentTickets();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
     
+    public function get_all_status(){
+        $data = $this->ticket->getTotalPerStatus();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_all_category(){
+        $data = $this->ticket->getTotalPerCategory();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_all_priority(){
+        $data = $this->ticket->getTotalPerPriority();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_total_assignee(){
+        $data = $this->ticket->getTotalByAssignee();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_completion_rate(){
+        $data = $this->ticket->getCompletionRate();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_average_resolve_time(){
+        $data = $this->ticket->getAverageResolveTime();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_average_response_time(){
+        $data = $this->ticket->getAveResponseTime();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }

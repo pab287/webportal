@@ -45,11 +45,11 @@ $('#date_required').datetimepicker({
     autoclose: true,
     pickerPosition: 'bottom-left',
     todayBtn: true,
-    dateTimeFormat: 'yyyy/mm/dd hh:mm tt',
+    format: 'MM dd, yyyy HH:ii P',
+    showMeridian: true,
 }).on("changeDate", function (e) {
-    moment(e.date).format("yyyy/mm/dd hh:mm tt");
-    var self = $(e.target);
-    self.validate();
+    var formattedDate = moment(e.date).format('YYYY-MM-DD HH:mm');
+    $(this).val(formattedDate);
 });
 
 
