@@ -2438,7 +2438,7 @@ class Reports_m extends CI_Model{
                             if(is_array($tempCustomAdjustment) && count($tempCustomAdjustment) > 0){
                                 foreach ($tempCustomAdjustment as $rowx) {
                                     $_tempData = explode("||", $rowx);
-                                    if(is_array($_tempData) && !empty($_tempData)){
+                                    if(is_array($_tempData) && !empty($_tempData) && count($_tempData) === 3){
                                         $entryType = $_tempData[2];
                                         if(intval($entryType) === 1){
                                             $adjustmentsTotal = floatval($adjustmentsTotal) + floatval($_tempData[1]);
@@ -2453,7 +2453,7 @@ class Reports_m extends CI_Model{
                         if($value->created_adjustments){
                             $tempCustomAdjustment = explode(",", $value->created_adjustments);
                             if(is_array($tempCustomAdjustment) && count($tempCustomAdjustment) > 0){
-                                foreach ($tempCustomAdjustment as $xx => $rowx) {
+                                foreach ($tempCustomAdjustment as $rowx) {
                                     $_tempData = explode("||", $rowx);
                                     if(is_array($_tempData) && !empty($_tempData) && count($_tempData) === 4){
                                         $tempKey00 = trim(strtolower($_tempData[0]));
