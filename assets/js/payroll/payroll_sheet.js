@@ -1204,24 +1204,21 @@ let dtPayrollSheet = _tblPayrollSheet
                 className: "text-right",
                 render: function (data, _type, row) {
                     let approvedAmount = parseFloat(data);
+                    const tempData = numberFormat(data);
                     let template = ``;
                     const tempCreatedAdjustments = row.created_adjustments;
                     if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
-                        let tempAdj = 0.00;
+                        let tempAdjAmount = 0.00;
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
                             const adj_type = parseInt(temp_adjustment[2]);
                             const temp_status = parseInt(temp_adjustment[3]);
-                            let temp_amount = parseFloat(data);
-                            if (adj_type == 1) {
-                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
-                            } else {
-                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
-                            }
-                            tempAdj = temp_amount;
-                            temp_amount = numberFormat(temp_amount);
-
+                            let adjustedAmount = parseFloat(data);
+                            if (adj_type === 1) { adjustedAmount += parseFloat(temp_adjustment[1]); } 
+                            else { adjustedAmount -= parseFloat(temp_adjustment[1]); }
+                            const formattedAmount = numberFormat(adjustedAmount);
+                            tempAdjAmount = adjustedAmount;
                             if (temp_adjustment[0] == "LOAN" && temp_status === 0) {
                                 template = `<div class="mb-0 m--font-bolder m--font-accent">
                                     <span class='fa fa-exclamation-circle'></span>
@@ -1229,9 +1226,9 @@ let dtPayrollSheet = _tblPayrollSheet
                                 </div>`;
                             }
                             if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
-                                approvedAmount = tempAdj;
+                                approvedAmount = tempAdjAmount;
                                 template = `<div class="mb-0 m--font-bolder m--font-primary">
-                                    <span class="m--font-boldest">${temp_amount}</span>
+                                    <span class="m--font-boldest">${formattedAmount}</span>
                                 </div>`;
                             }
                         });
@@ -1271,7 +1268,7 @@ let dtPayrollSheet = _tblPayrollSheet
                     // deducted charges to total loans
 
                     if ($.inArray(parseInt(row.id), _dtRowLOAN) == -1) {
-                        if (typeof _globalFooterAdjustments.total_loans !== undefined) {
+                        if (typeof _globalFooterAdjustments.total_loans !== "undefined") {
                             approvedAmount = parseFloat(_globalFooterAdjustments.total_loans) + approvedAmount;
                         }
                         _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { total_loans: approvedAmount });
