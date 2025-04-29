@@ -106,6 +106,7 @@
                                     <th>30% OT PAY</th>
                                     <th>NDIFF HRS.</th>
                                     <th>NDIFF PAY</th>
+                                    <th>ALLOWANCE PAY</th>
                                     <th>ADJUSTMENT</th>
                                     <th>AMOUNT</th>
                                 </tr>
@@ -117,6 +118,7 @@
                                 <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
                                 <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
                                 <th class="text-right"><span class='m--font-boldest'>-</span></th>
+                                <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
                                 <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
                                 <th class="text-right"><span class='m--font-boldest'>-</span></th>
                                 <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>

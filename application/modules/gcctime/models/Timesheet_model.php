@@ -642,53 +642,9 @@ class Timesheet_model extends CI_Model{
                                     $overtime_end = $response["overtime_out"];
                                 }
 
-                                /*** $hasRenderedOT = ($total_accredited_ot_hrs > 0 || $ot_night_diff > 0)? true: false;
-                                $payrateResult = (object) $this->getPayrateSettingsById($tempRow->payrate_id); ***/
-
                                 $this->db->where("id", $tempRow->id);
                                 $this->db->where("verified", 0);
                                 
-                                /*** if(isset($tempRow->is_holiday) && intval($tempRow->is_holiday) == 1){
-                                    if($hasRenderedOT == true){
-                                        $totalOTHours = floatval($total_accredited_ot_hrs) + floatval($ot_night_diff);
-                                        $holidayAccreditedHours = $totalOTHours > 8? 8: $totalOTHours;
-                                        if(isset($payrateResult->response) && $payrateResult->response == true){
-                                            $_tempRow = $payrateResult->row;
-                                            if(is_numeric($_tempRow->is_holiday) && intval($_tempRow->is_holiday) == 1){
-                                                $tempHours = 8; /*** default holiday paid hours ***/
-                                                /***
-                                                $tempValue = $_tempRow->regular_rate + 0;
-
-                                                if($tempValue !== 0 && $tempValue > 1){
-                                                    $isFloat = is_float($tempValue);
-                                                    $arrTemp = explode(".", $tempValue);
-                                                    if($isFloat == true && count($arrTemp) == 2){
-                                                        $tempValuex = 0;
-                                                        if(intval($arrTemp[0]) > 0){
-                                                            $tempValuex = intval($arrTemp[0]) - 1;
-                                                            if(intval($arrTemp[1]) > 0){
-                                                                $tempValuex = $tempValuex.".".$arrTemp[1];
-                                                                $tempValuex = $tempValuex + 0;
-                                                                $tempValue = $tempValuex;
-                                                            }
-                                                        }
-                                                    }else{
-                                                        $tempValuex = 0;
-                                                        $tempValuex = intval($tempValue) - 1;
-                                                        $tempValue = $tempValuex;
-                                                    }
-                                                }
-
-                                                $tempHours = $holidayAccreditedHours > 0? $holidayAccreditedHours: $tempHours;
-                                                $tempTimeRendered = $tempValue * $tempHours;
-
-                                                $total_time_rendered = $tempTimeRendered * 60;
-                                                $this->db->set("total_time_rendered", $total_time_rendered);
-                                            }
-                                        }
-                                    }
-                                } ***/
-
                                 if(isset($tempRow->has_overtime) && intval($tempRow->has_overtime) == 0){ $this->db->set("has_overtime", 1); }
                                 $this->db->set("total_accredited_ot_hrs", $total_accredited_ot_hrs);
                                 $this->db->set("total_accredited_ndiff_ot_hrs", $ot_night_diff);
@@ -1251,7 +1207,7 @@ class Timesheet_model extends CI_Model{
 
                     $ot_start_dtr = date("Y-m-d H:i", strtotime($tempAttrAttendance[0]));
 		            $ot_end_dtr = date("Y-m-d H:i", strtotime($tempAttrAttendance[sizeof($tempAttrAttendance) - 1]));
-                    
+                
                     $ot_start = strtotime($ot_start_dtr) < strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from)))
                         ? date('Y-m-d H:i', strtotime($_overtime->date_from)) : $ot_start_dtr;
 
@@ -2680,7 +2636,7 @@ class Timesheet_model extends CI_Model{
 
         $shift_basis = $am_shift_only ? date("Y-m-d H:i", strtotime($date . " " . $am_end)) : date("Y-m-d H:i", strtotime($date . " " . $pm_end));
         $ot_attendances = array_values(
-            array_filter($attendance, function ($_attendance) use ($am_shift_only, $date, $am_end, $pm_end, $shift_basis) {
+            array_filter($attendance, function ($_attendance) use ($shift_basis) {
                 return strtotime($_attendance) > strtotime($shift_basis);
             })
         );
