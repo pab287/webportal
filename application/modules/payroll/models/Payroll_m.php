@@ -227,7 +227,6 @@ class Payroll_m extends CI_Model
         $this->db->order_by("id", "ASC");
         $results = $this->db->get("payroll.payout_schedule")->result();
         return $results;
-
     }
 
     function select2IncentiveTypeData(){

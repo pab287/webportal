@@ -1079,6 +1079,13 @@ class Reports_model extends CI_Model{
         return $this->db->get("gcchris.tbldepartments departments")->result();
     }
 
+    function select2PayoutScheduleData(){
+        $this->db->select("id, name as text, occurrence");
+        $this->db->order_by("id", "ASC");
+        $results = $this->db->get("payroll.payout_schedule")->result();
+        return $results;
+    }
+
     public function getSelect2EmployeeData(){
         $get = $this->input->get();
         $resultarray = array();
@@ -2834,5 +2841,137 @@ class Reports_model extends CI_Model{
         }
 
         return $finalResult;
+    }
+
+    public function selectPsPayrollGroup(){
+        $get = $this->input->get();
+        $arrData = array();
+        $resultset = array();
+        $companyId = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: 0;
+        if($companyId || $companyId == 0){
+            $this->db->select("id, description as text, employee_id");
+            $this->db->from("payroll.payroll_group");
+            $this->db->where("company_id", $companyId);
+            $this->db->where("status", 1);
+            $this->db->where("is_archived", 0);
+            if (isset($get['term']) && $get['term']) {
+                $this->db->like("description", $get['term'], "both");
+            }
+            $this->db->limit(10);
+            $this->db->order_by("description", "ASC");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() > 0){
+                foreach($qTemp->result() as $kk => $vv){
+                    $employees = array();
+                    $tempIds = @unserialize($vv->employee_id);
+                    unset($vv->employee_id);
+                    $this->db->from("gccmaster.tblemployees");
+                    $this->db->where_in("id", $tempIds);
+                    $this->db->order_by("lastname","ASC");
+                    $qTempEmp = $this->db->get();
+                    if($qTempEmp->num_rows() > 0){
+                        foreach($qTempEmp->result() as $rs){
+                            $tempRs = (array) $rs;
+                            $tempName = $this->core_layout->getDisplayName($tempRs);
+                            $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                            $employees[] = array(
+                                "id"=>$rs->id,
+                                "text"=>$tempName,
+                            );
+                        }
+                    }
+                    $vv->employees = $employees;
+                    $arrData[$kk] = $vv;
+                }
+            }
+        }
+
+        $resultset["results"] = $arrData;
+        return $resultset;
+    }
+
+    public function getPayrollGroupMultiple(){
+        $post = $this->input->post();
+        $resultset = array();
+        $employees = array();
+        if(isset($post["group_id"]) && $post["group_id"]){
+            $ids = $post["group_id"];
+            $tempIdx = array();
+            $this->db->select("employee_id");
+            $this->db->from("payroll.payroll_group");
+            $this->db->where("status", 1);
+            $this->db->where("is_archived", 0);
+            $this->db->where_in("id", $ids);
+            $q = $this->db->get();
+            if($q->num_rows() > 0){
+                foreach ($q->result() as $key => $value) {
+                    $idx = @unserialize($value->employee_id);
+                    if(is_array($idx) && count($idx) > 0){
+                        foreach ($idx as $kk => $vv) {
+                            if(!in_array($vv, $tempIdx)){ $tempIdx[] = $vv; }
+                        }
+                    }
+                }
+            }
+
+            if(is_array($tempIdx) && count($tempIdx) > 0){
+                $this->db->from("gccmaster.tblemployees");
+                $this->db->where_in("id", $tempIdx);
+                $this->db->order_by("lastname", "ASC");
+                $qTempEmp = $this->db->get();
+                if($qTempEmp->num_rows() > 0){
+                    foreach($qTempEmp->result() as $rs){
+                        $tempRs = (array) $rs;
+                        $tempName = $this->core_layout->getDisplayName($tempRs);
+                        $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                        $employees[] = array(
+                            "id"=>$rs->id,
+                            "text"=>$tempName,
+                        );
+                    }
+                }
+            }
+            $resultset["response"] = true;
+            $resultset["data"] = $employees;
+        }else{
+            $resultset["response"] = false;
+        }
+        
+        return $resultset;
+    }
+
+    public function selectEmployee(){
+        $get = $this->input->get();
+        $resultarray = array();
+        $companyIds = (isset($get["company_ids"]) && $get["company_ids"])? $get["company_ids"]: array();
+        $this->db->select("a.id, trim(a.firstname) as firstname, a.lastname, a.middlename, a.suffix");
+        $this->db->from("gccmaster.tblemployees a");
+        $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
+        $this->db->where("a.employee_status", "Active"); 
+        if(is_array($companyIds) && count($companyIds) > 0){ $this->db->where_in("b.id", $companyIds); }
+        if(isset($get["company_ids"]) && !is_array($get["company_ids"]) && $get["company_ids"]){
+            $this->db->where("b.id", $get["company_ids"]);
+        }
+        if (isset($get['q']) && $get['q']) {
+            $this->db->group_start();
+            $this->db->like("a.firstname", $get['q'], "both");
+            $this->db->or_like("a.lastname", $get['q'], "both");
+            $this->db->group_end();
+        }
+        $this->db->limit(10);
+        $this->db->order_by("trim(a.firstname)", "ASC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $display_employee = $this->format_name($_query);
+
+                $data["id"] = $_query["id"];
+                $data["text"] = $display_employee;
+                $resultarray[] = $data;
+            }
+        }
+        return array("results" => $resultarray);
     }
 }
