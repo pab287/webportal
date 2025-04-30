@@ -255,7 +255,7 @@ var tblTemp = $("#tbltemp").DataTable({
         { data: "asset_code", width: "15%" },
         {
             data: "description", width: "40%", render: function (data, type, row, meta) {
-                return descriptionDetail(row.description, row.brand, row.modelno, row.serialno, row.plateno, row.engineno, row.chasisno, row.type, row.desc);
+                return descriptionDetail(row.description, row.brand, row.modelno, row.serialno, row.plateno, row.engineno, row.chasisno, row.type, row.desc, row.is_component);
             }
         },
         { data: "remarks" },
@@ -275,26 +275,26 @@ var tblTemp = $("#tbltemp").DataTable({
     ]
 });
 
-function descriptionDetail($desc, $brand, $model, $serial, $plateno, $engineno, $chasisno, $type, $desc_det) {
-    if ($brand == '' || $brand == null) {
-        $brand = 'N/A';
-    }
-    if ($model == '' || $model == null) {
-        $model = 'N/A';
-    }
-    if ($serial == '' || $serial == null) {
-        $serial = 'N/A';
-    }
+function descriptionDetail($desc, $brand, $model, $serial, $plateno, $engineno, $chasisno, $type, $desc_det, $isComponent) {
+    if ($brand == '' || $brand == null) { $brand = 'N/A'; }
+    if ($model == '' || $model == null) { $model = 'N/A'; }
+    if ($serial == '' || $serial == null) { $serial = 'N/A'; }
     if ($type == 'Asset') {
         return '<b>' + $desc + '</b><br>Description: ' + $desc_det + '<br>Brand: ' + $brand + '<br>Model: ' + $model + '<br>Serial: ' + $serial;
     } else {
-        return '<b>' + $desc + '</b><br>Description: ' + $desc_det + '<br>Plate no.: ' + ($plateno ? $plateno : 'N/A') + '<br>Engine no.: ' + ($engineno    ? engineno : 'N/A') + '<br>Chasis no.: ' + ($chasisno ? chasisno : 'N/A');
+        let $templateResponse = `<b>${$desc}</b><p class='mb-1'>Description: ${$desc_det}</p>`;
+        if(parseInt($isComponent) === 0){
+            $templateResponse += `Plate no.: ${typeof $plateno != "undefined" && $plateno != null ? $plateno : 'N/A'}`;
+            $templateResponse += `<br>Engine no.: ${typeof $engineno != "undefined" && $engineno != null ? $engineno : 'N/A'}`;
+            $templateResponse += `<br>Chasis no.: ${typeof $chasisno != "undefined" && $chasisno != null ? $chasisno : 'N/A'}`;
+        }
+        return $templateResponse;
     }
 }
 
 function itemDatatableActions($id) {
     if ($id) {
-        var _actionButton = "";
+        let _actionButton = "";
         if ($.inArray("edit", _currentActions) !== -1) {
             _actionButton += " <button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' onclick='edit_asset_temp(" + $id + ")' data-toggle='modal' data-target='#edit_asset_modal' ><i class='la la-pencil-square'></i></button>";
         }

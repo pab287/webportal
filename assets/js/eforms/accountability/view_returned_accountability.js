@@ -174,7 +174,7 @@ var tblBody = $("#tblbody_returned").DataTable({
     },
     footerCallback: function () {
         $("#tblbody_returned tfoot tr").text("");
-        var api = this.api();
+        const api = this.api();
         $("#tblbody_returned tfoot tr").append("<td></td><td class='text-right'><b>Total: </b></td><td class='text-right'>PHP " + (api.column(2, { page: 'current' }).data().sum()).toLocaleString("PHP", { minimumFractionDigits: 2 }) + "</td>");
         $("#total_accountability_amount").append("PHP " + (api.column(2, { page: 'current' }).data().sum()).toLocaleString("PHP", { minimumFractionDigits: 2 }));
         
@@ -184,7 +184,7 @@ var tblBody = $("#tblbody_returned").DataTable({
     searching: false,
     columns: [
         { data: "asset_code", width: "15%" },
-        { data: "description", width: "50%", render: function (data, type, row, meta) { return descriptionDetail(row.description, row.brand, row.modelno, row.serialno, row.plateno, row.engineno, row.chasisno, row.type, row.desc, row.comp_description); } },
+        { data: "description", width: "50%", render: function (data, type, row, meta) { return descriptionDetail(row.description, row.brand, row.modelno, row.serialno, row.plateno, row.engineno, row.chasisno, row.type, row.desc, row.comp_description, row.is_component); } },
         { data: "amount", width: "15%", className: "text-right" },
         { data: "status", width: "5%", orderable: false, render: function (data, type, row, meta) { return statusDetail(row.is_returned); } },
         { data: "remarks", className: "text-center", orderable: false, render: function (data, type, row, meta) { return remarksModal(row.id, row.is_returned); } },
@@ -229,7 +229,7 @@ function itemDatatableActions($id, $isReturned) {
 
 document.getElementById('tblbody_returned').createTFoot().insertRow(0);
 
-function descriptionDetail($desc, $brand, $model, $serial, $plateno, $engineno, $chasisno, $type, $desc_det, $comp_description) {
+function descriptionDetail($desc, $brand, $model, $serial, $plateno, $engineno, $chasisno, $type, $desc_det, $comp_description, $isComponent) {
     if ($brand == '' || $brand == null) { $brand = 'N/A'; }
     if ($model == '' || $model == null) { $model = 'N/A'; }
     if ($serial == '' || $serial == null) { $serial = 'N/A'; }
@@ -239,7 +239,14 @@ function descriptionDetail($desc, $brand, $model, $serial, $plateno, $engineno, 
     if ($type == 'Asset') {
         return '<b>' + $desc + '</b><br>Description: ' + $desc_det + '<br>Brand: ' + $brand + '<br>Model: ' + $model + '<br>Serial: ' + $serial + '<br>' + $comp_description;
     } else if ($type == 'Vehicle') {
-        return '<b>' + $desc + '</b><br>Description: ' + $desc_det + '<br>Plate no.: ' + $plateno + '<br>Engine no.: ' + $engineno + '<br>Chasis no.: ' + $chasisno + '<br>' + $comp_description;
+        let $templateResponse = `<b>${$desc}</b><p class='mb-1'>Description: ${$desc_det}</p>`;
+        if(parseInt($isComponent) === 0){
+            $templateResponse += `Plate no.: ${typeof $plateno != "undefined" && $plateno != null ? $plateno : 'N/A'}`;
+            $templateResponse += `<br>Engine no.: ${typeof $engineno != "undefined" && $engineno != null ? $engineno : 'N/A'}`;
+            $templateResponse += `<br>Chasis no.: ${typeof $chasisno != "undefined" && $chasisno != null ? $chasisno : 'N/A'}<br>`;
+            $templateResponse += `<br>${$comp_description}`;
+        }
+        return $templateResponse;
     } else {
         return '<b>' + $desc + '</b>';
     }
