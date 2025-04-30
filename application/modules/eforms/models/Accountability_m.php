@@ -3884,53 +3884,43 @@ class Accountability_m extends CI_Model {
 
                 //if item is Asset
                 if($rs->type=="Asset"){
-                    $this->db->select("purchaseprice, beg_addcost, total_cost");
+                    $this->db->select("purchaseprice, beg_addcost, total_cost, isComponent as is_component");
                     $this->db->from("gccasset.assets");
                     $this->db->where("assetacode",$rs->asset_code);
                     $addcost_query = $this->db->get();
                     $additional_cost = $addcost_query->row_array();
+                    $rs->is_component = $additional_cost['is_component'];
                     $rs->description = $this->assetNames($rs->asset_id, $rs->type);
                     $rs->description = strtoupper($rs->description);
                         if($status['status'] == "Pending Accounting Notes"){
                             if($rs->amount != ($additional_cost['purchaseprice'] + $additional_cost['beg_addcost'])){
                                 $rs->amount = $additional_cost['purchaseprice'] + $additional_cost['beg_addcost'];
-                            }else{
-                                $rs->amount = $rs->cost;
-                            }
-                        }else{
-                            $rs->amount = $rs->amount;
+                            }else{ $rs->amount = $rs->cost; }
                         }
-                        $rs->cost = $rs->cost;
                         $rs->desc = $this->assetDesc($rs->asset_id, $rs->type);
                         $arrData[$key] = $rs;
                 }else{
                     //if item is Vehicles
-                    $this->db->select("purchaseprice, beg_addcost, total_cost");
+                    $this->db->select("purchaseprice, beg_addcost, total_cost, isCompo as is_component");
                     $this->db->from("gccasset.vehicles");
                     $this->db->where("gen_code",$rs->asset_code);
                     $addcost_query = $this->db->get();
                     $additional_cost = $addcost_query->row_array();
+                    $rs->is_component = $additional_cost['is_component'];
                     $rs->description = $this->assetNames($rs->asset_id, $rs->type);
                     $rs->description = strtoupper($rs->description);
                     if($status['status'] == "Pending Accounting Notes"){
                         if($rs->amount != $additional_cost['total_cost']){
                             $rs->amount = $additional_cost['total_cost'];
-                        }else{
-                            $rs->amount = $rs->cost;
-                        }
-                    }else{
-                        $rs->amount = $rs->amount;
+                        }else{ $rs->amount = $rs->cost; }
                     }
-                    $rs->cost = $rs->cost;
                     $rs->desc = $this->assetDesc($rs->asset_id, $rs->type);
                     $rs->desc = strtoupper($rs->desc);
-                    $arrData[$key] = $rs;    
+                    $arrData[$key] = $rs;
                 }
             }
             $data = array();
-            foreach ($arrData as $k => $v) {
-                $data[] = $v;
-            }
+            foreach ($arrData as $v) { $data[] = $v; }
             return $data;
         } else {
             return array();
@@ -4966,8 +4956,6 @@ class Accountability_m extends CI_Model {
 
     private function ret_body_detail_post($id, $limit = 10, $offset = 0, $sortBy, $sortOrder) {
         $data = array();
-
-        // $sql = "a.asset_code, a.description, a.remarks, a.amount, a.type, a.brand, a.modelno, a.series, a.is_returned, a.plateno, a.engineno, a.chasisno. a.description, b.created_dt";
         $this->db->select("a.asset_code, a.description, a.remarks, a.amount, a.*, b.created_dt");
         $this->db->from('gcceforms.accountability_body a');
         $this->db->join('gcceforms.accountability b', "a.accountability_id=b.id", "LEFT");
@@ -4978,24 +4966,29 @@ class Accountability_m extends CI_Model {
         if ($query->num_rows() > 0) {
             $arrData = array();
             foreach ($query->result() as $key => $rs) {
+                $rs->is_component = 0;
                 $return_comp = false;
                 if($rs->type == "Asset"){
                     $return_comp = $this->getComp($rs->asset_id);
-                }else if($rs->type == "Vehicle"){
+                    $this->db->select("isComponent as is_component");
+                    $tempAssetComp = $this->db->get_where("gccasset.assets", array("id" => $rs->asset_id));
+                    if($tempAssetComp->num_rows() == 1){ $rs->is_component = $tempAssetComp->row()->is_component; }
+                    $this->db->reset_query();
+                }
+                elseif($rs->type == "Vehicle"){
                     $return_comp = $this->getVehicleComp($rs->asset_id);
+                    $this->db->select("isCompo as is_component");
+                    $tempAssetComp = $this->db->get_where("gccasset.vehicles", array("id" => $rs->asset_id));
+                    if($tempAssetComp->num_rows() == 1){ $rs->is_component = $tempAssetComp->row()->is_component; }
+                    $this->db->reset_query();
                 }
 
                 $price = 0;
                 $rs->comp_description = "";
                 if ($return_comp && count($return_comp) > 0) {
-                    foreach ($return_comp as $data) {
-                        $price += $data['purchaseprice'];
-                    }
-                    if($rs->type == "Asset"){
-                        $rs->comp_description = $this->getCompdesc($return_comp);
-                    }else if($rs->type == "Vehicle"){
-                        $rs->comp_description = $this->getVehicleCompdesc($return_comp);
-                    }
+                    foreach ($return_comp as $data) { $price += $data['purchaseprice']; }
+                    if($rs->type == "Asset"){ $rs->comp_description = $this->getCompdesc($return_comp); }
+                    elseif($rs->type == "Vehicle"){ $rs->comp_description = $this->getVehicleCompdesc($return_comp); }
                 }
                 
                 $tempAssetName = $this->assetNames($rs->asset_id, $rs->type);
