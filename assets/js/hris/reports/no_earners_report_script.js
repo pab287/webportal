@@ -1,5 +1,13 @@
 let search_val = "", date_from = "", date_to = "", selectedCompany = null;
 let psEmployeeGroup = [], globalPrintableSignatory = [], company = [], _companies = [], _payoutSchedule = [], employee = [];
+let _globalFooterAdjustments = { sss: 0, sss_prov: 0, phic: 0, hdmf: 0, tax: 0, total_loans: 0 };
+let _dtRowSSS = [], _dtRowSSS_PROV = [], _dtRowPHIC = [], _dtRowHDMF = [], _dtRowTAX = [], _dtRowLOAN = [], _tempLastRow = [];
+let globalGrandTotal = {};
+const exportOptions = {
+    columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
+};
+
+let globalFilterOptions = {};
 let isCollapsedPortlet = true;
 let tempRangeDates = {
     min_date: moment().startOf('month').format("MM/DD/YYYY"),
@@ -294,3 +302,603 @@ const resetFilter = function (event) {
         psEmployeeGroup = [];
     }
 }
+
+const dtTable = $("#table-payroll-sheet").DataTable({
+    dom: 'rtlp',
+    serverSide: false,
+    destroy: true,
+    autoWidth: false,
+    ordering: false,
+    pageLength: 10,
+        columns: [
+            {
+                data: 'id',
+                width: "3%",
+                orderable: false,
+                visible: false,
+                className: "text-center",
+                render: function (data, type, row, meta) {
+                    return meta.row + meta.settings._iDisplayStart + 1;
+                }
+            },
+            {
+                data: "lastname",
+                render: function (data, type, row) {
+                    const mi = row.middlename.toLowerCase() !== "n/a" && row.middlename !== "" && row.middlename.toLowerCase() !== "none" ? row.middlename.substring(0, 1) + ". " : "";
+                    const suffix = row.suffix.toLowerCase() !== "n/a" && row.suffix !== "" && row.suffix.toLowerCase() !== "none" ? row.suffix : "";
+                    let complete_name = data + ", " + row.firstname + " " + suffix + " " + mi;
+                    let position = row.position.toUpperCase();
+                    complete_name = complete_name.toUpperCase();
+                    return `<span class="m--font-bolder">${complete_name}</span><br><small>` + position + `</small>`;
+                }
+            },
+            {
+                data: "rate",
+                width: "5%",
+                className: "text-right",
+                render: function (data) {
+                    return numberFormat(data);
+                }
+            },
+            {
+                data: "allowance_rate",
+                width: "5%",
+                className: "text-right",
+                render: function (data) {
+                    return numberFormat(data);
+                }
+            },
+            {
+                data: "no_of_days",
+                className: "text-center",
+                render: function (data) {
+                    return numberFormat(data);
+                }
+            },
+            {
+                data: "ot_amount",
+                className: "text-right",
+                render: function (data, type, row) {
+                    return numberFormat(data);
+                }
+            },
+            {
+                data: "ot_ndiff_amount",
+                className: "text-right",
+                render: function (data, type, row) {
+                    return numberFormat(data);
+                }
+            },
+            {
+                data: "total_holiday_amount",
+                className: "text-right",
+                render: function (data) {
+                    return numberFormat(data);
+                }
+            },
+            {
+                data: "basic_rate",
+                width: "5%",
+                className: "text-right",
+                render: function (data) {
+                    return numberFormat(data);
+                }
+            },
+            {
+                data: "total_allowances",
+                width: "5%",
+                className: "text-right",
+                render: function (data, type, row) {
+                    const tempData = numberFormat(data);
+                    let template = ``;
+                    template = tempData;
+                    const tempCreatedAdjustments = row.created_adjustments;
+                    if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
+                        const created_adjustments = tempCreatedAdjustments.split(",");
+                        created_adjustments.forEach((row, i) => {
+                            const temp_adjustment = row.split("||");
+                            const adj_type = parseInt(temp_adjustment[2]);
+                            const temp_status = parseInt(temp_adjustment[3]);
+                            let temp_amount = parseFloat(data);
+                            if (adj_type == 1) {
+                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
+                            } else {
+                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
+                            }
+                            temp_amount = numberFormat(temp_amount);
+
+                            if (temp_adjustment[0] == "ALLOWANCE" && temp_status === 0) {
+                                template = `<div class="mb-0 m--font-bolder m--font-accent">
+                                    <span class='fa fa-exclamation-circle'></span>
+                                    <span class="m--font-boldest">${tempData}</span>
+                                </div>`;
+                            }
+                            if (temp_adjustment[0] == "ALLOWANCE" && temp_status === 1) {
+                                template = `<div class="mb-0 m--font-bolder m--font-primary">
+                                    <span class="m--font-boldest">${temp_amount}</span>
+                                </div>`;
+                            }
+                        });
+                    }
+
+                    return template;
+                }
+            },
+            {
+                data: "custom_adjustments",
+                width: "6%",
+                orderable: false,
+                className: "text-right",
+                render: function (data, type, row) {
+                    if (!data) { return `---`; }
+                    let template = ``;
+                    const custom_adjustments = data.split(",");
+                    custom_adjustments.forEach((row, i) => {
+                        const custom_adjustment = row.split("||");
+                        const marginClass = i > 0 ? "mt-1" : "";
+                        const adj_type = parseInt(custom_adjustment[2]);
+                        const adjTypeClass = adj_type === 0 ? "m--font-danger" : "";
+
+                        template += `<div class="mb-0 m--regular-font-size-sm1 m--font-bolder ${marginClass}">
+                            <span>${custom_adjustment[0]}</span>
+                            <span> - </span>
+                            <span class="m--font-boldest ${adjTypeClass}">${numberFormat(custom_adjustment[1])}</span>
+                        </div>`;
+                    });
+
+                    return template;
+                }
+            },
+            {
+                data: "gross_pay",
+                width: "5%",
+                className: "text-right",
+                render: function (data) {
+                    return numberFormat(data);
+                }
+            },
+            {
+                data: "sss", // sss
+                className: "text-right",
+                render: function (data, type, row) {
+                    let approvedAmount = parseFloat(data);
+                    const tempData = numberFormat(data);
+                    let template = ``;
+                    template = tempData;
+                    const tempCreatedAdjustments = row.created_adjustments;
+                    if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
+                        var tempAdj = 0;
+                        const created_adjustments = tempCreatedAdjustments.split(",");
+                        created_adjustments.forEach((row, i) => {
+                            const temp_adjustment = row.split("||");
+                            const adj_type = parseInt(temp_adjustment[2]);
+                            const temp_status = parseInt(temp_adjustment[3]);
+                            let temp_amount = parseFloat(data);
+                            if (adj_type == 1) {
+                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
+                            } else {
+                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
+                            }
+                            tempAdj = temp_amount;
+                            temp_amount = numberFormat(temp_amount);
+                            if (temp_adjustment[0] == "SSS" && temp_status === 0) {
+                                template = `<div class="mb-0 m--font-bolder m--font-accent">
+                                    <span class='fa fa-exclamation-circle'></span>
+                                    <span class="m--font-boldest">${tempData}</span>
+                                </div>`;
+                            }
+                            if (temp_adjustment[0] == "SSS" && temp_status === 1) {
+                                approvedAmount = tempAdj;
+                                template = `<div class="mb-0 m--font-bolder m--font-primary">
+                                    <span class="m--font-boldest">${temp_amount}</span>
+                                </div>`;
+
+                            }
+                        });
+                    }
+                    if ($.inArray(parseInt(row.id), _dtRowSSS) == -1) {
+                        if (typeof _globalFooterAdjustments.sss !== "undefined") {
+                            approvedAmount = parseFloat(_globalFooterAdjustments.sss) + approvedAmount;
+                        }
+                        _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { sss: approvedAmount });
+                        _dtRowSSS.push(parseInt(row.id));
+                    }
+                    return template;
+                }
+            },
+            {
+                data: "sss_prov", // sss
+                className: "text-right",
+                render: function (data, type, row) {
+                    let approvedAmount = parseFloat(data);
+                    const tempData = numberFormat(data);
+                    let template = ``;
+                    template = tempData;
+                    const tempCreatedAdjustments = row.created_adjustments;
+                    if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
+                        var tempAdj = 0;
+                        const created_adjustments = tempCreatedAdjustments.split(",");
+                        created_adjustments.forEach((row, i) => {
+                            const temp_adjustment = row.split("||");
+                            const adj_type = parseInt(temp_adjustment[2]);
+                            const temp_status = parseInt(temp_adjustment[3]);
+                            let temp_amount = parseFloat(data);
+                            if (adj_type == 1) {
+                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
+                            } else {
+                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
+                            }
+                            tempAdj = temp_amount;
+                            temp_amount = numberFormat(temp_amount);
+                            if (temp_adjustment[0] == "SSS_PROV" && temp_status === 0) {
+                                template = `<div class="mb-0 m--font-bolder m--font-accent">
+                                    <span class='fa fa-exclamation-circle'></span>
+                                    <span class="m--font-boldest">${tempData}</span>
+                                </div>`;
+                            }
+                            if (temp_adjustment[0] == "SSS_PROV" && temp_status === 1) {
+                                approvedAmount = tempAdj;
+                                template = `<div class="mb-0 m--font-bolder m--font-primary">
+                                    <span class="m--font-boldest">${temp_amount}</span>
+                                </div>`;
+
+                            }
+                        });
+                    }
+                    if ($.inArray(parseInt(row.id), _dtRowSSS_PROV) == -1) {
+                        if (typeof _globalFooterAdjustments.sss_prov !== "undefined") {
+                            approvedAmount = parseFloat(_globalFooterAdjustments.sss_prov) + approvedAmount;
+                        }
+                        _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { sss_prov: approvedAmount });
+                        _dtRowSSS_PROV.push(parseInt(row.id));
+                    }
+                    return template;
+                }
+            },
+            {
+                data: "ph", // phic
+                className: "text-right",
+                render: function (data, type, row) {
+                    let approvedAmount = parseFloat(data);
+                    const tempData = numberFormat(data);
+                    let template = ``;
+                    template = tempData;
+                    const tempCreatedAdjustments = row.created_adjustments;
+                    if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
+                        var tempAdj = 0;
+                        const created_adjustments = tempCreatedAdjustments.split(",");
+                        created_adjustments.forEach((row, i) => {
+                            const temp_adjustment = row.split("||");
+                            const adj_type = parseInt(temp_adjustment[2]);
+                            const temp_status = parseInt(temp_adjustment[3]);
+                            let temp_amount = parseFloat(data);
+                            if (adj_type == 1) {
+                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
+                            } else {
+                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
+                            }
+                            tempAdj = temp_amount;
+                            temp_amount = numberFormat(temp_amount);
+
+                            if (temp_adjustment[0] == "PHIC" && temp_status === 0) {
+                                template = `<div class="mb-0 m--font-bolder m--font-accent">
+                                    <span class='fa fa-exclamation-circle'></span>
+                                    <span class="m--font-boldest">${tempData}</span>
+                                </div>`;
+                            }
+                            if (temp_adjustment[0] == "PHIC" && temp_status === 1) {
+                                approvedAmount = tempAdj;
+                                template = `<div class="mb-0 m--font-bolder m--font-primary">
+                                    <span class="m--font-boldest">${temp_amount}</span>
+                                </div>`;
+                            }
+                        });
+                    }
+                    if ($.inArray(parseInt(row.id), _dtRowPHIC) == -1) {
+                        if (typeof _globalFooterAdjustments.phic !== "undefined") {
+                            approvedAmount = parseFloat(_globalFooterAdjustments.phic) + approvedAmount;
+                        }
+                        _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { phic: approvedAmount });
+                        _dtRowPHIC.push(parseInt(row.id));
+                    }
+                    return template;
+                }
+            },
+            {
+                data: "hdmf", // hdmf
+                className: "text-right",
+                render: function (data, type, row) {
+                    let approvedAmount = parseFloat(data);
+                    const tempData = numberFormat(data);
+                    let template = ``;
+                    template = tempData;
+                    const tempCreatedAdjustments = row.created_adjustments;
+                    if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
+                        var tempAdj = 0;
+                        const created_adjustments = tempCreatedAdjustments.split(",");
+                        created_adjustments.forEach((row, i) => {
+                            const temp_adjustment = row.split("||");
+                            const adj_type = parseInt(temp_adjustment[2]);
+                            const temp_status = parseInt(temp_adjustment[3]);
+                            let temp_amount = parseFloat(data);
+                            if (adj_type == 1) {
+                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
+                            } else {
+                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
+                            }
+                            tempAdj = temp_amount;
+                            temp_amount = numberFormat(temp_amount);
+
+                            if (temp_adjustment[0] == "HDMF" && temp_status === 0) {
+                                template = `<div class="mb-0 m--font-bolder m--font-accent">
+                                    <span class='fa fa-exclamation-circle'></span>
+                                    <span class="m--font-boldest">${tempData}</span>
+                                </div>`;
+                            }
+                            if (temp_adjustment[0] == "HDMF" && temp_status === 1) {
+                                approvedAmount = tempAdj;
+                                template = `<div class="mb-0 m--font-bolder m--font-primary">
+                                    <span class="m--font-boldest">${temp_amount}</span>
+                                </div>`;
+                            }
+                        });
+                    }
+                    if ($.inArray(parseInt(row.id), _dtRowHDMF) == -1) {
+                        if (typeof _globalFooterAdjustments.hdmf !== "undefined") {
+                            approvedAmount = parseFloat(_globalFooterAdjustments.hdmf) + approvedAmount;
+                        }
+                        _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { hdmf: approvedAmount });
+                        _dtRowHDMF.push(parseInt(row.id));
+                    }
+                    return template;
+                }
+            },
+            {
+                data: "tax", // tax
+                className: "text-right",
+                render: function (data, type, row) {
+                    let approvedAmount = parseFloat(data);
+                    const tempData = numberFormat(data);
+                    let template = ``;
+                    template = tempData;
+                    const tempCreatedAdjustments = row.created_adjustments;
+                    if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
+                        var tempAdj = 0;
+                        const created_adjustments = tempCreatedAdjustments.split(",");
+                        created_adjustments.forEach((row, i) => {
+                            const temp_adjustment = row.split("||");
+                            const adj_type = parseInt(temp_adjustment[2]);
+                            const temp_status = parseInt(temp_adjustment[3]);
+                            let temp_amount = parseFloat(data);
+                            if (adj_type == 1) {
+                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
+                            } else {
+                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
+                            }
+                            tempAdj = temp_amount;
+                            temp_amount = numberFormat(temp_amount);
+
+                            if (temp_adjustment[0] == "TAX" && temp_status === 0) {
+                                template = `<div class="mb-0 m--font-bolder m--font-accent">
+                                    <span class='fa fa-exclamation-circle'></span>
+                                    <span class="m--font-boldest">${tempData}</span>
+                                </div>`;
+                            }
+                            if (temp_adjustment[0] == "TAX" && temp_status === 1) {
+                                approvedAmount = tempAdj;
+                                template = `<div class="mb-0 m--font-bolder m--font-primary">
+                                    <span class="m--font-boldest">${temp_amount}</span>
+                                </div>`;
+                            }
+                        });
+                    }
+                    if ($.inArray(parseInt(row.id), _dtRowTAX) == -1) {
+                        if (typeof _globalFooterAdjustments.tax !== "undefined") {
+                            approvedAmount = parseFloat(_globalFooterAdjustments.tax) + approvedAmount;
+                        }
+                        _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { tax: approvedAmount });
+                        _dtRowTAX.push(parseInt(row.id));
+                    }
+                    return template;
+                }
+            },
+            {
+                data: "total_loans", // loans
+                className: "text-right",
+                render: function (data, _type, row) {
+                    let approvedAmount = parseFloat(data);
+                    const tempData = numberFormat(data);
+                    let template = ``;
+                    const tempCreatedAdjustments = row.created_adjustments;
+                    if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
+                        let tempAdjAmount = 0.00;
+                        const created_adjustments = tempCreatedAdjustments.split(",");
+                        created_adjustments.forEach((row, i) => {
+                            const temp_adjustment = row.split("||");
+                            const adj_type = parseInt(temp_adjustment[2]);
+                            const temp_status = parseInt(temp_adjustment[3]);
+                            let adjustedAmount = parseFloat(data);
+                            if (adj_type === 1) { adjustedAmount += parseFloat(temp_adjustment[1]); } 
+                            else { adjustedAmount -= parseFloat(temp_adjustment[1]); }
+                            const formattedAmount = numberFormat(adjustedAmount);
+                            tempAdjAmount = adjustedAmount;
+                            if (temp_adjustment[0] == "LOAN" && temp_status === 0) {
+                                template = `<div class="mb-0 m--font-bolder m--font-accent">
+                                    <span class='fa fa-exclamation-circle'></span>
+                                    <span class="m--font-boldest">${tempData}</span>
+                                </div>`;
+                            }
+                            if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
+                                approvedAmount = tempAdjAmount;
+                                template = `<div class="mb-0 m--font-bolder m--font-primary">
+                                    <span class="m--font-boldest">${formattedAmount}</span>
+                                </div>`;
+                            }
+                        });
+                    }
+
+                    /*** updates on CA Column ***/
+                    const intDeduction = row.total_loans_interest;
+                    if (typeof intDeduction !== "undefined" && parseFloat(intDeduction) > 0) {
+                        let tempAmountCAInt = parseFloat(intDeduction);
+
+                        template += `<div class="mb-0 m--regular-font-size-sm1 m--font-bolder mt-1">
+                            <span>CA/INT</span>
+                            <span> - </span>
+                            <span class="m--font-boldest">${numberFormat(tempAmountCAInt)}</span>
+                        </div>`;
+
+                        approvedAmount = approvedAmount + tempAmountCAInt;
+                    }
+                    /*** updates on CA Column ***/
+
+                    // deducted charges to total loans
+                    const tempDeduction = row.sss_hdmf_loan_deduction;
+                    if (typeof tempDeduction !== "undefined" && tempDeduction) {
+                        const deductions = tempDeduction.split(",");
+                        deductions.forEach((row, i) => {
+                            const custom_deduction = row.split("||");
+                            const _adj_type = parseInt(custom_deduction[2]);
+                            const _adj_details = custom_deduction[0];
+
+                            if ((_adj_type === 0 && _adj_details.toLowerCase() == 'chrge') || (_adj_type === 0 && _adj_details.toLowerCase() == 'ud')) {
+                                approvedAmount = approvedAmount - custom_deduction[1];
+                            }
+                        });
+
+                        template = approvedAmount > 0 ? numberFormat(approvedAmount) : 0;
+                    }
+                    // deducted charges to total loans
+
+                    if ($.inArray(parseInt(row.id), _dtRowLOAN) == -1) {
+                        if (typeof _globalFooterAdjustments.total_loans !== "undefined") {
+                            approvedAmount = parseFloat(_globalFooterAdjustments.total_loans) + approvedAmount;
+                        }
+                        _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { total_loans: approvedAmount });
+                        _dtRowLOAN.push(parseInt(row.id));
+                    }
+
+                    return $.isNumeric(template) === true ? numberFormat(template): template;
+                }
+            },
+            // charges
+            { 
+                data: null, 
+                width: '5%',
+                orderable: false,
+                className: 'text-right',
+                render: function(data, _type, row){
+                    let template = ``;
+                    const tempDeduction = row.sss_hdmf_loan_deduction;
+                    let charge = 0;
+                    if (typeof tempDeduction !== "undefined" && tempDeduction) {
+                        const deductions = tempDeduction.split(",");
+                        deductions.forEach((row, i) => {
+                            const custom_deduction = row.split("||");
+                            const marginClass = i > 0 ? "mt-1" : "";
+                            const adj_type = parseInt(custom_deduction[2]);
+                            const _adj_details = custom_deduction[0];
+
+                            if ((adj_type === 0 && _adj_details.toLowerCase() == 'chrge') || (adj_type === 0 && _adj_details.toLowerCase() == 'ud')) {
+                                template += `<div class="mb-0 m--regular-font-size-sm1 m--font-bolder ${marginClass}">
+                                    <span class="m--font-boldest">${numberFormat(custom_deduction[1])}</span>
+                                </div>`;
+                                charge = parseFloat(charge) + parseFloat(custom_deduction[1]);
+                            }
+                        });
+                    }
+
+                    return numberFormat(charge);
+                }
+            },
+            // charges
+            {
+                data: "sss_loan",
+                width: "5%",
+                orderable: false,
+                className: "text-right",
+                render: function (data, _type, row) {
+                    let template = ``;
+                    const tempDeduction = row.sss_hdmf_loan_deduction;
+                    if (typeof tempDeduction !== "undefined" && tempDeduction) {
+                        const deductions = tempDeduction.split(",");
+                        deductions.forEach((row, i) => {
+                            const custom_deduction = row.split("||");
+                            const marginClass = i > 0 ? "mt-1" : "";
+                            const adj_type = parseInt(custom_deduction[2]);
+
+                            if (adj_type === 1) {
+                                const deductionDetails = custom_deduction[0].toUpperCase();
+                                template += `<div class="mb-0 m--regular-font-size-sm1 m--font-bolder ${marginClass}">
+                                    <span>${deductionDetails}</span>
+                                    <span> - </span>
+                                    <span class="m--font-boldest">${numberFormat(custom_deduction[1])}</span>
+                                </div>`;
+                            }
+                        });
+                    }
+
+                    return template ? template : numberFormat(data);
+                }
+            },
+            {
+                data: "hdmf_loan",
+                width: "5%",
+                orderable: false,
+                className: "text-right",
+                render: function (data, type, row) {
+                    let template = ``;
+                    const tempDeduction = row.sss_hdmf_loan_deduction;
+                    if (typeof tempDeduction !== "undefined" && tempDeduction) {
+                        var tempAdj = 0;
+                        const deductions = tempDeduction.split(",");
+                        deductions.forEach((row, i) => {
+                            const custom_deduction = row.split("||");
+                            const marginClass = i > 0 ? "mt-1" : "";
+                            const adj_type = parseInt(custom_deduction[2]);
+
+                            if (adj_type === 2) {
+                                const deductionDetails = custom_deduction[0].toUpperCase();
+                                template += `<div class="mb-0 m--regular-font-size-sm1 m--font-bolder ${marginClass}">
+                                    <span>${deductionDetails}</span>
+                                    <span> - </span>
+                                    <span class="m--font-boldest">${numberFormat(custom_deduction[1])}</span>
+                                </div>`;
+                            }
+                        });
+                    }
+
+                    return template ? template : numberFormat(data);
+                }
+            },
+            {
+                data: "net_pay", // net pay
+                className: "text-right",
+                render: function (data) {
+                    const tempHtml = "&#8369;&nbsp;&nbsp;" + numberFormat(data);
+                    return tempHtml;
+                }
+            },
+        ],
+        order: [[1, "asc"]],
+});
+$.validate({
+    form: '#frm-filter',
+    lang: 'en',
+    scrollToTopOnError: false,
+    onSuccess: function (form) {
+        let formData = $(form).serialize();
+        $.ajax({
+            url: siteUrl("hris/reports/no_earners_report_filtered_data"),
+            type: "post",
+            dataType: "json",
+            data: formData,
+            success: function (json) {
+                if(json.response){
+                    dtTable.rows.add(json.data).draw(false);
+                }
+            }
+        });
+        return false;
+    }
+});

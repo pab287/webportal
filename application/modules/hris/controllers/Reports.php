@@ -504,4 +504,11 @@ class Reports extends MY_Controller{
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
+
+    public function no_earners_report_filtered_data() {
+        $data = $this->report->noEarnerReportFilteredData();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 }

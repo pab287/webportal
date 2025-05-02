@@ -34,6 +34,7 @@
                     <div class="m-form m-form--label-align-right m--margin-bottom-30">
                     <div class="align-items-center">
                         <form class="m-form has-validation-callback" id="frm-filter">
+                            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                             <div class="row">
                                 <div class="col-xl-2 col-lg-2 col-md-2 col-sm-12 mt-2 pr-0">
                                     <div class="form-group m-form__group">
@@ -112,11 +113,8 @@
                                             PAYROLL GROUP
                                             <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">(Optional)</span>
                                         </label>
-                                        <select class="form-control" id="payroll_group" multiple="multiple"></select>
+                                        <select class="form-control" id="payroll_group" name="payroll_group[]" multiple="multiple"></select>
                                     </div>
-                                </div>
-                                <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1 ">
-                                    
                                 </div>
                             </div>
                             <div class="row mt-3">

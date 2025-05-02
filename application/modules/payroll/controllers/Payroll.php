@@ -271,6 +271,8 @@
             echo json_encode($employees);
         }
 
+
+
         function generate_payroll_sheet($_start = null, $_end = null) {
             $start = date('Y-m-d', strtotime($_start));
             $end = date('Y-m-d', strtotime($_end));
