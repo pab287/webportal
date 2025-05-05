@@ -3045,6 +3045,7 @@ class Reports_model extends CI_Model{
         $this->db->where("ps.net_pay", 0);
         $this->db->where("ps.is_bonus", 0);
         if(is_array($employeeIds) && count($employeeIds) > 0){ $this->db->where_in("ps.emp_id", $employeeIds); }
+        $this->db->order_by("emp.lastname, emp.firstname");
         $this->db->group_by("ps.id");
         $q = $this->db->get();
         if($q->num_rows() > 0){

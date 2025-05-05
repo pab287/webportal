@@ -245,7 +245,7 @@ $("#payroll_group").select2({
                         if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
                             tempEmployeeSelector.empty();
                             $.each(tempData, function (ii, vv) {
-                                var tempOption = new Option(vv.text, vv.id, true, true);
+                                const tempOption = new Option(vv.text, vv.id, true, true);
                                 tempEmployeeSelector.append(tempOption);
                             });
                             tempEmployeeSelector.prop("disabled", true);
@@ -467,7 +467,7 @@ const dtTable = $("#table-payroll-sheet").DataTable({
                     template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
                     if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
-                        var tempAdj = 0;
+                        let tempAdj = 0;
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
@@ -516,7 +516,7 @@ const dtTable = $("#table-payroll-sheet").DataTable({
                     template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
                     if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
-                        var tempAdj = 0;
+                        let tempAdj = 0;
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
@@ -663,7 +663,7 @@ const dtTable = $("#table-payroll-sheet").DataTable({
                     template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
                     if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
-                        var tempAdj = 0;
+                        let tempAdj = 0;
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
@@ -778,11 +778,10 @@ const dtTable = $("#table-payroll-sheet").DataTable({
                         _dtRowLOAN.push(parseInt(row.id));
                     }
 
-                    return $.isNumeric(template) === true ? numberFormat(template): template;
+                    console.log(data, template);
+                    return $.isNumeric(template) ? numberFormat(template) : template || 0.00;
                 }
-            },
-            // charges
-            { 
+            }, { 
                 data: null, 
                 width: '5%',
                 orderable: false,
@@ -810,9 +809,7 @@ const dtTable = $("#table-payroll-sheet").DataTable({
 
                     return numberFormat(charge);
                 }
-            },
-            // charges
-            {
+            }, {
                 data: "sss_loan",
                 width: "5%",
                 orderable: false,
@@ -840,8 +837,7 @@ const dtTable = $("#table-payroll-sheet").DataTable({
 
                     return template ? template : numberFormat(data);
                 }
-            },
-            {
+            }, {
                 data: "hdmf_loan",
                 width: "5%",
                 orderable: false,
@@ -850,7 +846,6 @@ const dtTable = $("#table-payroll-sheet").DataTable({
                     let template = ``;
                     const tempDeduction = row.sss_hdmf_loan_deduction;
                     if (typeof tempDeduction !== "undefined" && tempDeduction) {
-                        var tempAdj = 0;
                         const deductions = tempDeduction.split(",");
                         deductions.forEach((row, i) => {
                             const custom_deduction = row.split("||");
@@ -895,6 +890,7 @@ $.validate({
             data: formData,
             success: function (json) {
                 if(json.response){
+                    dtTable.clear();
                     dtTable.rows.add(json.data).draw(false);
                 }
             }
