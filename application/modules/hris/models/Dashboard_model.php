@@ -333,6 +333,7 @@
             $pageOptions = $this->utilities->getDatatablesConfigForPagination($tableConfigStd);
             $where = null;
             $selectMonth = null;
+            $current_date = date('Y-m-d');
 
             $select = "emp.idno,
                        'first_eval' evaluation_stage, 
@@ -394,7 +395,249 @@
 
             $query = $this->db->get($this->tblEmployees . " emp");
 
-            $resultSet['data'] = $query->result();
+            foreach($query->result() as $row) {
+                $res = [];
+                $date = date('Y-m-d', strtotime($row->evaluation_date));
+
+                if ($date > $current_date) {
+                    $res['cal_id'] = $row->cal_id;
+                    $res['company'] = $row->company;
+                    $res['date_end_prob'] = $row->date_end_prob;
+                    $res['date_start'] = $row->date_start;
+                    $res['emp_id'] = $row->emp_id;
+                    $res['employee_name'] = $row->employee_name;
+                    $res['evaluation_date'] = $row->evaluation_date;
+                    $res['evaluation_stage'] = $row->evaluation_stage;
+                    $res['firstname'] = $row->firstname;
+                    $res['idno'] = $row->idno;
+                    $res['lastname'] = $row->lastname;
+                    $res['middlename'] = $row->middlename;
+                    $res['position'] = $row->position;
+                    $res['suffix'] = $row->suffix;
+            
+                    // Add the result to the $res_data array
+                    $res_data[] = $res;
+                }
+            }
+
+            $resultSet['data'] = $res_data;
+            $resultSet['recordsTotal'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $search, $joinArr);
+            $resultSet['recordsFiltered'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $search, $joinArr);
+            
+            /*** remove consumes database records
+             * if($search['key'] != "" && $search['key']):
+             * $this->core_layout->logNotification("User ".$this->loggedInUsername." has searched ".$search['key']." using dashboard employee evaluation datatable.","success","hris","user");
+             * endif; 
+            remove consumes database records ***/
+            
+            return $resultSet;
+        }
+
+        public function getEvaluationListOverdue() {
+            $current_date = date('Y-m-d');
+            $tableConfig = $this->input->post();
+            $tableConfigStd = $this->utilities->parseFormDataToObject($tableConfig);
+            $pageOptions = $this->utilities->getDatatablesConfigForPagination($tableConfigStd);
+            $where = null;
+            $selectMonth = null;
+            $employee_data = [];
+            $stage = $this->input->post('evaluation_stage');
+        
+            $select = "emp.idno,
+                    
+                       `emp`.`id` `emp_id`,
+                       emp.lastname, emp.firstname, emp.middlename, emp.suffix, 
+                       UCASE(CONCAT(
+                            emp.firstname, ' ', 
+                            IF((emp.middlename = '' OR emp.middlename IS NULL OR LCASE(emp.middlename) = 'n/a' OR LCASE(emp.middlename) = 'none'), ' ', CONCAT(SUBSTR(emp.middlename,1,1), '. ')), 
+                            emp.lastname, ' ',
+                            IF((emp.suffix = '' OR emp.suffix IS NULL OR LCASE(emp.suffix) = 'n/a' OR LCASE(emp.suffix) = 'none'), ' ', emp.suffix)
+                         )) employee_name,
+                       `calendar`.`id` `cal_id`,
+                       `emp`.`date_start`, 
+                       `emp`.`date_end_prob`, 
+                       UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) company,
+                       UCASE(IF(positions.id IS NULL, emp.position, positions.name)) `position`,";
+
+            $where = "emp.work_status = 'PROBATIONARY' AND emp.employee_status = 'Active' ";
+
+            switch($stage) {
+                case 1: // 3rd month
+                    $select .= "DATE_ADD(emp.date_start, INTERVAL 3 MONTH) `evaluation_date_first`";
+                    $where .= "AND date_add(emp.date_start, interval 3 month) IS NOT NULL AND calendar.first_eval_date IS NULL";
+                    break;
+
+                case 2: // 4.5th month
+                    $select .= "DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) `evaluation_date_second`";
+                    $where .= "AND DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) IS NOT NULL AND calendar.first_eval_date IS NULL";
+                    break;
+
+                case 3: // Final
+                    $select .= "DATE_ADD(emp.date_start, INTERVAL 5 MONTH) `evaluation_date_final`";
+                    $where .= "AND calendar.date_discontinued IS NULL AND DATE_ADD(emp.date_start, INTERVAL 5 MONTH) IS NOT NULL";
+                    break;
+
+                default: // All
+                    $select .= "DATE_ADD(emp.date_start, INTERVAL 3 MONTH) `evaluation_date_first`,
+                               DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) `evaluation_date_second`,
+                               DATE_ADD(emp.date_start, INTERVAL 5 MONTH) `evaluation_date_final`";
+                    break;
+            }
+
+            $searchFields = "CONCAT(emp.firstname, emp.middlename, emp.lastname, emp.date_start, IF(companies.id IS NULL, emp.company_id, companies.code),
+                                    IF(positions.id IS NULL, emp.position, positions.name))";
+
+            $joinArr = array(
+                array("table" => "`gcchris`.`tblprobicalendar` `calendar`", "condition" => "`calendar`.`emp_id` = `emp`.`id`", "option" => "LEFT"),
+                array("table" => $this->tblCompanies . " companies", "condition" => "companies.id = emp.company_id", "option" => "LEFT"),
+                array("table" => $this->tblPosition . " positions", "condition" => "positions.id = emp.position", "option" => "LEFT")
+            );
+
+            $this->db->select($select);
+            foreach ($joinArr as $join) {
+                $this->db->join($join["table"], $join["condition"], $join["option"]);
+            }
+
+            $this->db->where($where);
+
+            $this->db->order_by($pageOptions->order_column, $pageOptions->order_direction);
+            if ($pageOptions->length > -1) {
+                $this->db->limit($pageOptions->length, $pageOptions->start);
+            }
+
+            $search = array('field' => $searchFields, 'key' => $pageOptions->search, 'option' => "both");
+            $this->db->like($search['field'], $search['key'], $search['option']);
+
+            $query = $this->db->get($this->tblEmployees . " emp");
+        
+            // List all employee first with & without overdue evaluation
+            foreach($query->result() as $row) {
+                $eval_date = [];
+
+                switch($stage) {
+                    case 1: // 3rd month
+                        $date = date('Y-m-d', strtotime($row->evaluation_date_first));
+                        if ($date < $current_date) {
+                            $datediff = strtotime($current_date) - strtotime($date);
+        
+                            $esd = array(
+                                "evaluation_stage" => "3RD MONTH", 
+                                "evaluation_date" => $date,
+                                "overdue_date" => round($datediff / (60 * 60 * 24))
+                            );
+                            array_push($eval_date, $esd);
+                        }
+                        break;
+    
+                    case 2: // 4.5th month
+                        $date = date('Y-m-d', strtotime($row->evaluation_date_second));
+                        if ($date < $current_date) {
+                            $datediff = strtotime($current_date) - strtotime($date);
+        
+                            $esd = array(
+                                "evaluation_stage" => "4.5TH MONTH", 
+                                "evaluation_date" => $date,
+                                "overdue_date" => round($datediff / (60 * 60 * 24))
+                            );
+                            array_push($eval_date, $esd);
+                        }
+                        break;
+    
+                    case 3: // Final
+                        $date = date('Y-m-d', strtotime($row->evaluation_date_final));
+                        if ($date < $current_date) {
+                            $datediff = strtotime($current_date) - strtotime($date);
+        
+                            $esd = array(
+                                "evaluation_stage" => "FINAL", 
+                                "evaluation_date" => $date,
+                                "overdue_date" => round($datediff / (60 * 60 * 24))
+                            );
+                            array_push($eval_date, $esd);
+                        }
+                        break;
+    
+                    default: // All
+                        $first_eval = date('Y-m-d', strtotime($row->evaluation_date_first));
+                        $sec_eval = date('Y-m-d', strtotime($row->evaluation_date_second));
+                        $final_eval = date('Y-m-d', strtotime($row->evaluation_date_final));
+        
+                        if ($first_eval < $current_date) {
+                            $datediff = strtotime($current_date) - strtotime($first_eval);
+        
+                            $esd = array(
+                                "evaluation_stage" => "3RD MONTH", 
+                                "evaluation_date" => $first_eval,
+                                "overdue_date" => round($datediff / (60 * 60 * 24))
+                            );
+                            array_push($eval_date, $esd);
+                        }
+                        if ($sec_eval < $current_date) {
+                            $datediff = strtotime($current_date) - strtotime($sec_eval);
+        
+                            $esd = array(
+                                "evaluation_stage" => "4.5TH MONTH", 
+                                "evaluation_date" => $sec_eval,
+                                "overdue_date" => round($datediff / (60 * 60 * 24))
+                            );
+                            array_push($eval_date, $esd);
+                        }
+                        if ($final_eval < $current_date) {
+                            $datediff =  strtotime($current_date) - strtotime($final_eval);
+        
+                            $esd = array(
+                                "evaluation_stage" => "FINAL", 
+                                "evaluation_date" => $final_eval,
+                                "overdue_date" => round($datediff / (60 * 60 * 24))
+                            );
+                            array_push($eval_date, $esd);
+                        }
+    
+                        break;
+                }
+
+                $employee_data['cal_id'] = $row->cal_id;
+                $employee_data['idno'] = $row->idno;
+                $employee_data['company'] = $row->company;
+                $employee_data['date_end_prob'] = $row->date_end_prob;
+                $employee_data['date_start'] = $row->date_start;
+                $employee_data['emp_id'] = $row->emp_id;
+                $employee_data['employee_name'] = $row->employee_name;
+                $employee_data['firstname'] = $row->firstname;
+                $employee_data['lastname'] = $row->lastname;
+                $employee_data['middlename'] = $row->middlename;
+                $employee_data['position'] = $row->position;
+                $employee_data['suffix'] = $row->suffix;
+                $employee_data['eval_stage_date'] = $eval_date;
+
+                $res_emp_data[] = $employee_data;
+            }
+
+            $overdue_emp = [];
+
+            // Find employee with overdue evaluation
+            foreach($res_emp_data as $emp) {
+                if (!empty($emp['eval_stage_date'])) {
+                    $emp_data = array(
+                        "cal_id" => $emp['cal_id'],
+                        "idno" => $emp['idno'],
+                        "company" => $emp['company'],
+                        "date_end_prob" => $emp['date_end_prob'],
+                        "date_start" => $emp['date_start'],
+                        "emp_id" => $emp['emp_id'],
+                        "employee_name" => $emp['employee_name'],
+                        "firstname" => $emp['firstname'],
+                        "lastname" => $emp['lastname'],
+                        "middlename" => $emp['middlename'],
+                        "position" => $emp['position'],
+                        "suffix" => $emp['suffix'],
+                        "eval_stage_date" => $emp['eval_stage_date']
+                    );
+                    array_push($overdue_emp, $emp_data);
+                }
+            }
+
+            $resultSet['data'] = $overdue_emp;
             $resultSet['recordsTotal'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $search, $joinArr);
             $resultSet['recordsFiltered'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $search, $joinArr);
             

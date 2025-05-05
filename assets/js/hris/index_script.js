@@ -889,6 +889,9 @@ function loadEvaluationTable(evaluation=null) {
         case 'final':
             th.text('Final Evaluation');
             break;
+        case 'overdue':
+            th.text('Overdue');
+            break;
         default:
             th.text('3rd Month');
             break;
@@ -908,6 +911,7 @@ function loadEvaluationTable(evaluation=null) {
                 url: baseUrl('hris/dashboard/get_evaluation_list/' + evaluation),
                 type: 'post',
                 dataType: 'json',
+                global: false,
                 data: function (d) {
                     d.csrf_token = _csrf_hash;
                 }
@@ -934,6 +938,80 @@ function loadEvaluationTable(evaluation=null) {
             ],
             pageLength: 10
         });
+}
+
+function loadOverdueEvaluationTable(stage) {
+    $('#table-employee-evaluation-overdue').DataTable({
+        destroy: true,
+        dom: 'lfrtip',
+        serverSide: true,
+        processing: true,
+        searching: true,
+        ordering: true,
+        lengthMenu: [[5, 10, 20, 30, 50, 100, -1], [5, 10, 20, 30, 50, 100, 'All']],
+        ajax: {
+            url: baseUrl('hris/dashboard/get_evaluation_list_overdue/'),
+            type: 'post',
+            dataType: 'json',
+            global: false,
+            data: function (d) {
+                d.csrf_token = _csrf_hash;
+                d.evaluation_stage = stage;
+            }
+        },
+        columns: [
+            {data: 'idno'},
+            {data: 'employee_name'},
+            {data: 'company'},
+            {data: 'position'},
+            {
+                data: 'date_start',
+                render: function (data) {
+                    return moment(data).format('ll');
+                }
+            },
+            {
+                // Evaluation Stage
+                data: 'eval_stage_date',
+                render: function (data) {                
+                    let stages = ``;
+
+                    for (let i = 0; i < data.length; i++) {
+                        stages += data[i].evaluation_stage + `<br>`;
+                    }
+
+                    return stages;
+                }
+            },
+            {
+                // Evaluation Date
+                data: 'eval_stage_date',
+                render: function (data) {                
+                    let date = ``;
+
+                    for (let i = 0; i < data.length; i++) {
+                        date += `<span class="m--font-boldest">${moment(data[i].evaluation_date).format('ll')}</span>` + `<br>`;
+                    }
+
+                    return date;
+                }
+            },
+            {
+                // Overdue Date of evaluation
+                data: 'eval_stage_date',
+                render: function (data) {                
+                    let overdue = ``;
+
+                    for (let i = 0; i < data.length; i++) {
+                        overdue += `<span class="m--font-boldest m--font-danger">${data[i].overdue_date} Days</span>` + `<br>`;
+                    }
+
+                    return overdue;
+                }
+            },
+        ],
+        pageLength: 10
+    });
 }
 
 function generateChartData(data) {

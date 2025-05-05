@@ -645,25 +645,32 @@
                 
             </div>
             <div class="m-portlet__head-tools">
-                <ul class="nav nav-pills nav-pills--brand m-nav-pills--align-right m-nav-pills--btn-pill m-nav-pills--btn-sm"
-                    role="tablist" id="evaluation_tab">
+                <ul class="nav nav-pills nav-pills--brand m-nav-pills--align-right m-nav-pills--btn-pill m-nav-pills--btn-sm" role="tablist" id="evaluation_tab">
                     <li class="nav-item m-tabs__item">
-                        <a class="nav-link m-tabs__link active"
-                           data-toggle="tab" role="tab" href="" onclick="loadEvaluationTable()">
+                        <a class="nav-link m-tabs__link active" data-toggle="tab" role="tab" href="#evaluation_list_tab_content" onclick="loadEvaluationTable();">
                             3rd Month
                         </a>
                     </li>
                     <li class="nav-item m-tabs__item">
-                        <a class="nav-link m-tabs__link"
-                           data-toggle="tab" role="tab" href="" onclick="loadEvaluationTable('2nd')">
+                        <a class="nav-link m-tabs__link" data-toggle="tab" role="tab" href="#evaluation_list_tab_content" onclick="loadEvaluationTable('2nd');">
                             4.5TH Month
                         </a>
                     </li>
                     <li class="nav-item m-tabs__item">
-                        <a class="nav-link m-tabs__link"
-                           data-toggle="tab" role="tab" href="" onclick="loadEvaluationTable('final')">
+                        <a class="nav-link m-tabs__link" data-toggle="tab" role="tab" href="#evaluation_list_tab_content" onclick="loadEvaluationTable('final');">
                             FINAL EVALUATION
                         </a>
+                    </li>
+                    <li class="nav-item m-tabs__item dropdown">
+                        <a class="nav-link m-tabs__link dropdown-toggle" data-toggle="dropdown" href="javascript:void(0)">
+                            Overdue
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right mt-2" x-placement="bottom-end">
+                            <a class="dropdown-item" data-toggle="tab" role="tab" href="#overdue_list_tab_content" onclick="loadOverdueEvaluationTable(0)">All</a>
+                            <a class="dropdown-item" data-toggle="tab" role="tab" href="#overdue_list_tab_content" onclick="loadOverdueEvaluationTable(1)">3rd Month</a>
+                            <a class="dropdown-item" data-toggle="tab" role="tab" href="#overdue_list_tab_content" onclick="loadOverdueEvaluationTable(2)">4.5TH Month</a>
+                            <a class="dropdown-item" data-toggle="tab" role="tab" href="#overdue_list_tab_content" onclick="loadOverdueEvaluationTable(3)">Final Evaluation</a>
+                        </div>
                     </li>
                 </ul>
 
@@ -678,13 +685,59 @@
                         <option value="final">
                             FINAL EVALUATION
                         </option>
+                        <option value="overdue">
+                            Overdue
+                        </option>
                     </select>  
                 </div>      
             </div>
             
         </div>
         <div class="m-portlet__body">
-            <div class="table-responsive">
+            <div class="tab-content">
+                <div class="tab-pane active show" aria-expanded="true" id="evaluation_list_tab_content">
+                    <div class="table-responsive">
+                        <table class="table table-hover m-table m-table--head-no-border" id="table-employee-evaluation" width="100%">
+                            <thead>
+                                <tr>
+                                    <th>ID NO.</th>
+                                    <th>EMPLOYEE</th>
+                                    <th>COMPANY</th>
+                                    <th>POSITION</th>
+                                    <th>DATE HIRED</th>
+                                    <th>EVALUATION DATE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane" aria-expanded="true" id="overdue_list_tab_content">
+                    <div class="table-responsive">
+                        <table class="table table-hover m-table m-table--head-no-border" id="table-employee-evaluation-overdue" width="100%">
+                            <thead>
+                                <tr>
+                                    <th>ID NO.</th>
+                                    <th>EMPLOYEE</th>
+                                    <th>COMPANY</th>
+                                    <th>POSITION</th>
+                                    <th>DATE HIRED</th>
+                                    <th>EVAL STAGE</th>
+                                    <th>EVAL DATE</th>
+                                    <th>OVERDUE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- <div class="table-responsive">
                 <table class="table table-hover m-table m-table--head-no-border"
                        id="table-employee-evaluation" width="100%">
                     <thead>
@@ -699,8 +752,8 @@
                     </thead>
                     <tbody></tbody>
                 </table>
-            </div>
+            </div> -->
         </div>
     </div>
     <!-- END EVALUATION LIST -->
-</div>
+</div> 
