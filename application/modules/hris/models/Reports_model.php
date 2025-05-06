@@ -1807,7 +1807,7 @@ class Reports_model extends CI_Model{
     }
 
     public function getSelect2Companies(){
-        $this->db->select('id, code text');
+        $this->db->select('id, code text, description, company_address');
         $this->db->where('is_archived', 0)        ;
         return $this->db->get($this->companyTable)->result();
     }
