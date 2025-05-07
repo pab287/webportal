@@ -1308,6 +1308,14 @@ const dtTableRequest = function (formData) {
             if(json.response){
                 dtTable.clear();
                 dtTable.rows.add(json.data).draw(false);
+            }else{
+                Swal.fire({
+                    title: 'Search filter, not found!',
+                    text: "No data found based on the search filter you provided!",
+                    icon: 'error',
+                });
+                dtTable.clear();
+                dtTable.rows.add([]).draw(false);
             }
         }, error: function (xhr, error, code) {
             if (error == "parsererror") {
