@@ -1079,6 +1079,13 @@ class Reports_model extends CI_Model{
         return $this->db->get("gcchris.tbldepartments departments")->result();
     }
 
+    function select2PayoutScheduleData(){
+        $this->db->select("id, name as text, occurrence");
+        $this->db->order_by("id", "ASC");
+        $results = $this->db->get("payroll.payout_schedule")->result();
+        return $results;
+    }
+
     public function getSelect2EmployeeData(){
         $get = $this->input->get();
         $resultarray = array();
@@ -1800,7 +1807,7 @@ class Reports_model extends CI_Model{
     }
 
     public function getSelect2Companies(){
-        $this->db->select('id, code text');
+        $this->db->select('id, code text, description, company_address');
         $this->db->where('is_archived', 0)        ;
         return $this->db->get($this->companyTable)->result();
     }
@@ -2835,4 +2842,221 @@ class Reports_model extends CI_Model{
 
         return $finalResult;
     }
+
+    public function selectPsPayrollGroup(){
+        $get = $this->input->get();
+        $arrData = array();
+        $resultset = array();
+        $companyId = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: 0;
+        if($companyId || $companyId == 0){
+            $this->db->select("id, description as text, employee_id");
+            $this->db->from("payroll.payroll_group");
+            $this->db->where("company_id", $companyId);
+            $this->db->where("status", 1);
+            $this->db->where("is_archived", 0);
+            if (isset($get['term']) && $get['term']) {
+                $this->db->like("description", $get['term'], "both");
+            }
+            $this->db->limit(10);
+            $this->db->order_by("description", "ASC");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() > 0){
+                foreach($qTemp->result() as $kk => $vv){
+                    $employees = array();
+                    $tempIds = @unserialize($vv->employee_id);
+                    unset($vv->employee_id);
+                    $this->db->from("gccmaster.tblemployees");
+                    $this->db->where_in("id", $tempIds);
+                    $this->db->order_by("lastname","ASC");
+                    $qTempEmp = $this->db->get();
+                    if($qTempEmp->num_rows() > 0){
+                        foreach($qTempEmp->result() as $rs){
+                            $tempRs = (array) $rs;
+                            $tempName = $this->core_layout->getDisplayName($tempRs);
+                            $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                            $employees[] = array(
+                                "id"=>$rs->id,
+                                "text"=>$tempName,
+                            );
+                        }
+                    }
+                    $vv->employees = $employees;
+                    $arrData[$kk] = $vv;
+                }
+            }
+        }
+
+        $resultset["results"] = $arrData;
+        return $resultset;
+    }
+
+    public function getPayrollGroupMultiple(){
+        $post = $this->input->post();
+        $resultset = array();
+        $employees = array();
+        if(isset($post["group_id"]) && $post["group_id"]){
+            $ids = $post["group_id"];
+            $tempIdx = array();
+            $this->db->select("employee_id");
+            $this->db->from("payroll.payroll_group");
+            $this->db->where("status", 1);
+            $this->db->where("is_archived", 0);
+            $this->db->where_in("id", $ids);
+            $q = $this->db->get();
+            if($q->num_rows() > 0){
+                foreach ($q->result() as $key => $value) {
+                    $idx = @unserialize($value->employee_id);
+                    if(is_array($idx) && count($idx) > 0){
+                        foreach ($idx as $kk => $vv) {
+                            if(!in_array($vv, $tempIdx)){ $tempIdx[] = $vv; }
+                        }
+                    }
+                }
+            }
+
+            if(is_array($tempIdx) && count($tempIdx) > 0){
+                $this->db->from("gccmaster.tblemployees");
+                $this->db->where_in("id", $tempIdx);
+                $this->db->order_by("lastname", "ASC");
+                $qTempEmp = $this->db->get();
+                if($qTempEmp->num_rows() > 0){
+                    foreach($qTempEmp->result() as $rs){
+                        $tempRs = (array) $rs;
+                        $tempName = $this->core_layout->getDisplayName($tempRs);
+                        $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                        $employees[] = array(
+                            "id"=>$rs->id,
+                            "text"=>$tempName,
+                        );
+                    }
+                }
+            }
+            $resultset["response"] = true;
+            $resultset["data"] = $employees;
+        }else{
+            $resultset["response"] = false;
+        }
+        
+        return $resultset;
+    }
+
+    public function selectEmployee(){
+        $get = $this->input->get();
+        $resultarray = array();
+        $companyIds = (isset($get["company_ids"]) && $get["company_ids"])? $get["company_ids"]: array();
+        $this->db->select("a.id, trim(a.firstname) as firstname, a.lastname, a.middlename, a.suffix");
+        $this->db->from("gccmaster.tblemployees a");
+        $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
+        $this->db->where("a.employee_status", "Active"); 
+        if(is_array($companyIds) && count($companyIds) > 0){ $this->db->where_in("b.id", $companyIds); }
+        if(isset($get["company_ids"]) && !is_array($get["company_ids"]) && $get["company_ids"]){
+            $this->db->where("b.id", $get["company_ids"]);
+        }
+        if (isset($get['q']) && $get['q']) {
+            $this->db->group_start();
+            $this->db->like("a.firstname", $get['q'], "both");
+            $this->db->or_like("a.lastname", $get['q'], "both");
+            $this->db->group_end();
+        }
+        $this->db->limit(10);
+        $this->db->order_by("trim(a.firstname)", "ASC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $display_employee = $this->format_name($_query);
+
+                $data["id"] = $_query["id"];
+                $data["text"] = $display_employee;
+                $resultarray[] = $data;
+            }
+        }
+        return array("results" => $resultarray);
+    }
+
+    protected function getPayrollGroupEmployeeIds($id = null){
+        $arrIds = array();
+        if($id){
+            $this->db->select("employee_id");
+            $this->db->from("payroll.payroll_group");
+            $this->db->where_in("id", $id);
+            $this->db->where("status", 1);
+            $this->db->where("is_archived", 0);
+            $q = $this->db->get();
+            if($q->num_rows() > 0){
+                $arrIds = @unserialize($q->row()->employee_id);
+            }
+        }
+        return $arrIds;
+    }
+
+    public function noEarnerReportFilteredData(){
+        $resultset = array();
+        $post = $this->input->post();
+        $employeeIds = isset($post["employees"]) && $post["employees"] ? $post["employees"]: array();
+        $start = date('Y-m-d', strtotime(date('Y-m-d')));
+        $end = date('Y-m-d', strtotime(date('Y-m-d')));
+        $payDate = date('Y-m-d', strtotime($post["pay_date"]));
+
+        if(isset($post["date_range"]) && $post["date_range"]){
+            $date_range = explode("-", $post["date_range"]);
+            $start = date('Y-m-d', strtotime(trim($date_range[0])));
+            $end = date('Y-m-d', strtotime(trim($date_range[1])));
+        }
+
+        if(isset($post["payroll_group"]) && !empty($post["payroll_group"]) && count($post["payroll_group"]) > 0){
+            $arrIds = $this->getPayrollGroupEmployeeIds($post["payroll_group"]);
+            if(is_array($arrIds) && count($arrIds) > 0){ $employeeIds = array_merge($employeeIds, $arrIds); }
+        }
+
+        $this->db->select("ps.*, emp.lastname, emp.firstname, emp.middlename, emp.suffix, emp.idno, IF(position.name IS NULL, emp.position, position.name) as position,
+            GROUP_CONCAT(DISTINCT(CONCAT(custom_adjustments.particulars,'||',custom_adjustments.amount, '||', custom_adjustments.cadj_type))) custom_adjustments,
+            GROUP_CONCAT(DISTINCT(CONCAT(created_adjustments.particulars,'||',created_adjustments.amount, '||', created_adjustments.adj_type, '||', created_adjustments.status))) created_adjustments,
+            GROUP_CONCAT(DISTINCT(CONCAT(ps_loan.code,'||',psl_payment.amount_due, '||', ps_loan.loan_class))) sss_hdmf_loan_deduction, 
+            IFNULL(ps_allowance.rate, 0) as allowance_rate, UPPER(TRIM(CONCAT(emp.firstname, ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+            END,' ', emp.lastname,
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
+            END))) as employee_name");
+        $this->db->from("payroll.payroll_sheet as ps");
+        $this->db->join("gccmaster.tblemployees emp", "emp.id = ps.emp_id", "INNER");
+        $this->db->join("payroll.payroll_sheet_custom_adjustments custom_adjustments", "custom_adjustments.payroll_sheet_id = ps.id", "LEFT");
+        $this->db->join("payroll.payroll_sheet_created_adjustments created_adjustments", "created_adjustments.payroll_sheet_id = ps.id", "LEFT");
+        $this->db->join("payroll.payroll_sheet_loan_payments psl_payment", "psl_payment.payroll_sheet_id = ps.id", "LEFT");
+        $this->db->join("gcchris.loans hr_loans", "hr_loans.id = psl_payment.loan_id", "LEFT");
+        $this->db->join("payroll.loans ps_loan", "ps_loan.id = hr_loans.loan_id", "LEFT");
+        $this->db->join("payroll.payroll_sheet_loan_interest_payments psli_payment", "psli_payment.payroll_sheet_id = ps.id AND psli_payment.is_active = 1", "LEFT");
+        $this->db->join("gcchris.loans hri_loans", "hri_loans.id = psli_payment.loan_id", "LEFT");
+        $this->db->join("payroll.loans psi_loan", "psi_loan.id = hri_loans.loan_id AND psi_loan.loan_class = 0", "LEFT");
+        $this->db->join("gcchris.allowances ps_allowance", "ps_allowance.emp_id = emp.id AND ps_allowance.is_active = 1 AND ps_allowance.is_archived = 0", "LEFT");
+        $this->db->join("gcchris.tblposition position", "position.id = emp.position", "LEFT");
+        $this->db->where("ps.date_start", $start);
+        $this->db->where("ps.date_end", $end);
+        $this->db->where("ps.pay_date", $payDate);
+        $this->db->where("ps.company_id", $post["company"]);
+        $this->db->where("ps.payroll_sched", $post["payout_schedule"]);
+        $this->db->where("ps.payroll_seq", $post["sequence"]);
+        $this->db->where("ps.posted", 1);
+        $this->db->where("ps.net_pay", 0);
+        $this->db->where("ps.is_bonus", 0);
+        if(is_array($employeeIds) && count($employeeIds) > 0){ $this->db->where_in("ps.emp_id", $employeeIds); }
+        $this->db->order_by("emp.lastname, emp.firstname");
+        $this->db->group_by("ps.id");
+        $q = $this->db->get();
+        if($q->num_rows() > 0){
+            $resultset["response"] = true;
+            $resultset["data"] = $q->result();
+        }else{
+            $resultset["response"] = false;
+            $resultset["data"] = array();
+        }
+        return $resultset;
+    }
+
+
 }

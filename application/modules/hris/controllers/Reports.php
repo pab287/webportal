@@ -300,7 +300,6 @@ class Reports extends MY_Controller{
 
     public function get_employees_for_salary_range($export=0)
     {
-        $post = $this->input->post();
         $data = $this->report->getEmployeesForSalaryRange($export);
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
@@ -403,6 +402,26 @@ class Reports extends MY_Controller{
         $this->load->view("core/templates/footer");
     }
 
+    public function no_earners_report(){
+        $this->core_layout->setPageTitle("HRIS - No Earners Report");
+        $this->core_layout->setPrivilegeName("hris_no_earners_report");
+        $tempData = array();
+        $tempData['company'] = $this->report->getSelect2Companies();
+        $tempData["payout_schedule"] = $this->report->select2PayoutScheduleData();
+        
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+
+        $this->core_layout->addJs("js/buttons.print.min.js", true);
+        $this->core_layout->addJs("js/jquery.autocomplete.min.js");
+        $this->core_layout->addJs("js/ams/jquery.maskMoney.min.js", true);
+        $this->core_layout->addJs('js/hris/reports/no_earners_report_script.js', true, $tempData);
+
+        $this->load->view("core/templates/header");
+        $this->load->view("masterfile/reports/no_earners_report", false);
+        $this->load->view("core/templates/footer");
+    }
+
     public function generate_attrition_report(){
         $data = $this->report->generateAttritionReport();
         $this->output
@@ -460,6 +479,34 @@ class Reports extends MY_Controller{
 
     public function get_employees_history(){
         $data = $this->report->getEmployeeSalaryHistory();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    function select_ps_payroll_group() {
+        $data = $this->report->selectPsPayrollGroup();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    function get_payroll_group_multiple() {
+        $data = $this->report->getPayrollGroupMultiple();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    function select_employee() {
+        $data = $this->report->selectEmployee();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function no_earners_report_filtered_data() {
+        $data = $this->report->noEarnerReportFilteredData();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));

@@ -227,7 +227,6 @@ class Payroll_m extends CI_Model
         $this->db->order_by("id", "ASC");
         $results = $this->db->get("payroll.payout_schedule")->result();
         return $results;
-
     }
 
     function select2IncentiveTypeData(){
@@ -7428,7 +7427,7 @@ class Payroll_m extends CI_Model
         /*** md5 key filters ***/
         $tempFilter = $get;
         unset($tempFilter["_"]);
-        $tempFilter["employees"] = implode('|', $tempFilter["employees"]);
+        $tempFilter["employees"] = isset($tempFilter["employees"]) ? implode('|', $tempFilter["employees"]) : "";
         $trimmed_array = array_map('trim', $tempFilter);
         $implodedFilters = implode('||',$trimmed_array);
         $md5KeyFilter = md5($implodedFilters);
@@ -7518,7 +7517,9 @@ class Payroll_m extends CI_Model
         $this->db->where("posted", 0);
         $this->db->where("is_bonus", 0);
         $this->db->where("is_archived", 0);
-        $this->db->where_in("emp_id", $employee_ids);
+        if(isset($employee_ids) && is_array($employee_ids) && count($employee_ids) > 0){
+            $this->db->where_in("emp_id", $employee_ids);
+        }
         $queryEmployees = $this->db->get();
         if($queryEmployees->num_rows() > 0){
             $employee_ids = array();
