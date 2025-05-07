@@ -3300,7 +3300,6 @@ class Timesheet_model extends CI_Model{
             $alteredShiftRecords = $this->getAlteredShiftRecordByDateRange($start, $end);
 
             foreach ($employees->result() as $employee) {
-                $schedule_resource = unserialize($employee->shift_resource);
                 $isNoInOut = intval($employee->is_flexi) === 4;
                 $id = $employee->id;
                 $employee_name = $employee->employee_name;
@@ -3596,12 +3595,17 @@ class Timesheet_model extends CI_Model{
                             $timesheets = array_filter($timesheets, function ($timesheet) {
                                 return $timesheet->all_verified === true;
                             });
-                            break;
+                        break;
                         case "incomplete":
                             $timesheets = array_filter($timesheets, function ($timesheet) {
                                 return $timesheet->all_verified === true;
                             });
-                            break;
+                        break;
+                        default:
+                            $timesheets = array_filter($timesheets, function ($timesheet) {
+                                return $timesheet->all_verified === true;
+                            });
+                        break;
                     }
                 }
             }
@@ -3701,12 +3705,13 @@ class Timesheet_model extends CI_Model{
         if($startDate){
             $this->db->select("date_from, date_to, employee, reference_no");
             $this->db->from($this->tbl_overtime);
-            $this->db->where("DATE(date_from) >=", $startDate);
             $this->db->where("status", "Approved");
+            $this->db->where("'{$startDate}' BETWEEN DATE(date_from) AND DATE(date_to)", null, false);
+            $this->db->or_where("DATE(date_from) >=", $startDate);
             $this->db->order_by("date_from", "ASC");
             $qOvertime = $this->db->get();
             if($qOvertime->num_rows() > 0){
-                foreach ($qOvertime->result() as $kx => $vvx) {
+                foreach ($qOvertime->result() as $vvx) {
                     $_from = date("Y-m-d", strtotime($vvx->date_from));
                     $_to = date("Y-m-d", strtotime($vvx->date_to));
                     $_reference = $vvx->reference_no;
@@ -3733,13 +3738,13 @@ class Timesheet_model extends CI_Model{
             $this->db->from($this->tbl_TO_Destination." a");
             $this->db->join($this->tbl_TO." b", "b.id = a.travel_order_id");
             $this->db->join($this->tbl_TO_Personnel." c", "c.travel_order_id = b.id");
-            $this->db->where("DATE(a.date_from) >=", $startDate);
             $this->db->where("b.status", "Approved");
+            $this->db->where("'{$startDate}' BETWEEN DATE(a.date_from) AND DATE(a.date_to)", null, false);
+            $this->db->or_where("DATE(a.date_from) >=", $startDate);
             $this->db->order_by("a.date_from", "ASC");
             $qTravelOrder = $this->db->get();
-    
             if($qTravelOrder->num_rows() > 0){
-                foreach ($qTravelOrder->result() as $kx => $vvx) {
+                foreach ($qTravelOrder->result() as $vvx) {
                     $_from = date("Y-m-d", strtotime($vvx->date_from));
                     $_to = date("Y-m-d", strtotime($vvx->date_to));
                     $_reference = $vvx->reference_no;
@@ -3771,24 +3776,23 @@ class Timesheet_model extends CI_Model{
         if($startDate){
             $this->db->select("date_from, date_to, employee, reference_no, type");
             $this->db->from($this->tbl_loa);
-            $this->db->where("DATE(date_from) >=", $startDate);
             $this->db->where("status", "Approved");
+            $this->db->where("'{$startDate}' BETWEEN DATE(date_from) AND DATE(date_to)", null, false);
+            $this->db->or_where("DATE(date_from) >=", $startDate);
             $this->db->order_by("date_from", "ASC");
             $qApprovedLoa = $this->db->get();
             if($qApprovedLoa->num_rows() > 0){
-                foreach ($qApprovedLoa->result() as $kx => $vvx) {
+                foreach ($qApprovedLoa->result() as $vvx) {
                     $_from = date("Y-m-d", strtotime($vvx->date_from));
                     $vvx->date_to = isset($vvx->date_to) && $vvx->date_to == "0000-00-00 00:00:00" ? $vvx->date_from: $vvx->date_to;
                     $_to = date("Y-m-d", strtotime($vvx->date_to));
                     $_reference = $vvx->reference_no;
                     $isWholeDayLoa = 0;
-                    $xDtDays = 0;
                     if(intval($vvx->type) >= 3){
                         $dt00 = strtotime($vvx->date_from);
                         $dt01 = strtotime($vvx->date_to);
                         $dtDiff = abs($dt01 - $dt00);
                         $dtDays = $dtDiff / ( 60 * 60 * 24);
-                        $xDtDays = $dtDays;
                         if(intval(floor($dtDays)) >= 1){
                             $isWholeDayLoa = 1;
                         }else{
