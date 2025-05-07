@@ -1156,7 +1156,7 @@ const dtTable = $("#table-payroll-sheet").DataTable({
             }, 0);
 
         let totalGross = api
-            .column(10)
+            .column(11)
             .data()
             .reduce(function (a, b) {
                 return intVal(a) + intVal(b);
@@ -1284,7 +1284,7 @@ const dtTable = $("#table-payroll-sheet").DataTable({
         $(api.column(7).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalHoliday) + "</span>");
         $(api.column(8).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalBasic) + "</span>");
         $(api.column(9).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalAllowance) + "</span>");
-        $(api.column(10).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalGross) + "</span>");
+        $(api.column(11).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalGross) + "</span>");
         $(api.column(12).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalSSS) + "</span>");
         $(api.column(13).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalSSS_PROV) + "</span>");
         $(api.column(14).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalPH) + "</span>");
@@ -1298,24 +1298,33 @@ const dtTable = $("#table-payroll-sheet").DataTable({
     }
 });
 
+const dtTableRequest = function (formData) {
+    return $.ajax({
+        url: siteUrl("hris/reports/no_earners_report_filtered_data"),
+        type: "post",
+        dataType: "json",
+        data: formData,
+        success: function (json) {
+            if(json.response){
+                dtTable.clear();
+                dtTable.rows.add(json.data).draw(false);
+            }
+        }, error: function (xhr, error, code) {
+            if (error == "parsererror") {
+                toastr.warning(code, "Re-loading Content", 5000);
+                setTimeout(() => dtTableRequest(formData), 250);
+            }
+        }
+    });
+}
+
 $.validate({
     form: '#frm-filter',
     lang: 'en',
     scrollToTopOnError: false,
     onSuccess: function (form) {
         let formData = $(form).serialize();
-        $.ajax({
-            url: siteUrl("hris/reports/no_earners_report_filtered_data"),
-            type: "post",
-            dataType: "json",
-            data: formData,
-            success: function (json) {
-                if(json.response){
-                    dtTable.clear();
-                    dtTable.rows.add(json.data).draw(false);
-                }
-            }
-        });
+        dtTableRequest(formData);
         return false;
     }
 });
