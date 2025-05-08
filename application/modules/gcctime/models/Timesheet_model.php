@@ -6585,23 +6585,11 @@ class Timesheet_model extends CI_Model{
             ->result(); ***/
 
         $resultSet["to_references"] = $this->db
-            ->select("travel_order.*, GROUP_CONCAT(destination.destination SEPARATOR '||') `destination`,	GROUP_CONCAT(destination.purpose SEPARATOR '||') purpose, CONCAT(DATE_FORMAT(destination.date_from, '%m/%d/%Y %h:%i%p'), ' - ', DATE_FORMAT(destination.date_to, '%m/%d/%Y %h:%i%p')) as to_dates")
+            ->select("travel_order.reference_no, GROUP_CONCAT(TRIM(destination.destination) SEPARATOR '||') `destination`, GROUP_CONCAT(TRIM(destination.purpose) SEPARATOR '||') purpose, GROUP_CONCAT(CONCAT(DATE_FORMAT(destination.date_from, '%m/%d/%Y %h:%i%p'), ' - ', DATE_FORMAT(destination.date_to, '%m/%d/%Y %h:%i%p')) SEPARATOR '||') as to_dates")
             ->join("gcceforms.travel_destination destination", "destination.travel_order_id = travel_order.id")
             ->join("gcceforms.travel_personnel personnel", "personnel.travel_order_id = travel_order.id", "LEFT")
             ->where("travel_order.status", "Approved")
-            ->group_start()
-                ->where(array(
-                    "DATE(destination.date_from) >=" => $date,
-                    "DATE(destination.date_to) <=" => $date,
-                ))
-                ->or_where(array(
-                    "DATE(destination.date_from) <=" => $date
-                ))
-                ->where(array(
-                    "DATE(destination.date_to) >=" => $date,
-                ))
-                /*** ->or_where("DATE(travel_order.created_dt)", $date) ***/
-            ->group_end()
+            ->where("'{$date}' BETWEEN DATE(destination.date_from) AND DATE(destination.date_to)", null, false)
             ->group_start()
                 ->where("travel_order.driver_id", $employee_id)
                 ->or_where("personnel.employee_id", $employee_id)
@@ -6609,7 +6597,7 @@ class Timesheet_model extends CI_Model{
             ->group_by("travel_order.id")
             ->get($this->tbl_TO . " travel_order")
             ->result();
-
+        
         $resultSet["date"] = $date;
         $resultSet["overtime"] = array();
 

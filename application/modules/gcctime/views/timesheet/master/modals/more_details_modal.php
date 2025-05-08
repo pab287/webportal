@@ -141,9 +141,11 @@
                     </td>
                     <td>
                         <?php
-                            $destinations = explode(",", $travel_order->destination);
-                            $purposes = explode(",", $travel_order->purpose);
+                            $destinations = explode("||", $travel_order->destination);
+                            $purposes = explode("||", $travel_order->purpose);
+                            $dates = explode("||", $travel_order->to_dates);
                             foreach ($destinations as $key => $destination) { ?>
+                                <?= $key > 0 ? "<hr class='mt-3' />" : "" ?>
                                 <div class="mb-2">
                                     <div class="m--font-bolder"><?= $destination ?></div>
                                     <div class="m--regular-font-size-sm1">
@@ -155,13 +157,14 @@
                                         <?php endif; ?>
                                     </div>
                                 </div>
-                            <?php } ?>
-                            <div class="mt-2">
+                                <div class="mt-2">
                                 <div class="m--font-boldest">TRAVEL ORDER DATE &amp; TIME</div>
                                 <div class="m--regular-font-size-sm1">
-                                    <span class="m--font-boldest"><?= $travel_order->to_dates ? $travel_order->to_dates: "---" ?></span>
+                                    <span class="m--font-boldest"><?= isset($dates[$key]) && $dates[$key] ? $dates[$key]: "---" ?></span>
                                 </div>
                             </div>
+                            <?php } ?>
+                            
                     </td>
                 </tr>
             <?php endforeach; ?>
