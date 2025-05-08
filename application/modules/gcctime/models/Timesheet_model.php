@@ -6585,7 +6585,7 @@ class Timesheet_model extends CI_Model{
             ->result(); ***/
 
         $resultSet["to_references"] = $this->db
-            ->select("travel_order.*, GROUP_CONCAT(destination.destination) `destination`,	GROUP_CONCAT(destination.purpose) purpose, CONCAT(DATE_FORMAT(destination.date_from, '%m/%d/%Y %h:%i%p'), ' - ', DATE_FORMAT(destination.date_to, '%m/%d/%Y %h:%i%p')) as to_dates")
+            ->select("travel_order.*, GROUP_CONCAT(destination.destination SEPARATOR '||') `destination`,	GROUP_CONCAT(destination.purpose SEPARATOR '||') purpose, CONCAT(DATE_FORMAT(destination.date_from, '%m/%d/%Y %h:%i%p'), ' - ', DATE_FORMAT(destination.date_to, '%m/%d/%Y %h:%i%p')) as to_dates")
             ->join("gcceforms.travel_destination destination", "destination.travel_order_id = travel_order.id")
             ->join("gcceforms.travel_personnel personnel", "personnel.travel_order_id = travel_order.id", "LEFT")
             ->where("travel_order.status", "Approved")
@@ -6611,7 +6611,10 @@ class Timesheet_model extends CI_Model{
             ->result();
 
         $resultSet["date"] = $date;
-        $resultSet["overtime"] = $this->db
+        $resultSet["overtime"] = array();
+
+        if($timesheet_id && $timesheet_id > 0){
+            $resultSet["overtime"] = $this->db
             ->select("ts_ot.*,
                         ot.reference_no,
                         ot.date_from,
@@ -6632,7 +6635,29 @@ class Timesheet_model extends CI_Model{
             ->where("ot.status", "Approved")
             ->get($this->tbl_timesheet_overtime . " ts_ot")
             ->result();
-
+        }else{
+            $resultSet["overtime"] = $this->db
+            ->select("ot.reference_no,
+                        ot.date_from,
+                        ot.date_to, ot.purpose,
+                        CONCAT(emp.lastname,
+                        CASE
+                            WHEN emp.suffix != 'N/A' AND emp.suffix != 'NONE' AND emp.suffix != '' AND emp.suffix IS NOT NULL
+                                THEN CONCAT(' ', emp.suffix)
+                            ELSE '' END, ', ',
+                        emp.firstname, ' ', CASE
+                            WHEN emp.middlename != 'N/A' AND emp.middlename != 'NONE'
+                                AND emp.middlename != '' AND emp.middlename IS NOT NULL
+                                THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.')
+                            ELSE '' END) `requestor`")
+            ->join($this->tbl_employees . " emp", "emp.id = ot.requested_by")
+            ->where("ot.status", "Approved")
+            ->where("ot.employee", $employee_id)
+            ->where("'{$date}' BETWEEN DATE(ot.date_from) AND DATE(ot.date_to)", null, false)
+            ->get($this->tbl_overtime . " ot")
+            ->result();
+        }
+        
         $this->db->select("shift_resource.shift_resource");
         $this->db->from($this->tbl_employees." emp");
         $this->db->join($this->tbl_personnel." personnel", "personnel.biometric_id = emp.biometricno OR personnel.biometricno = emp.biometricno");
@@ -6694,7 +6719,7 @@ class Timesheet_model extends CI_Model{
             ->get($this->tbl_tblholidays)
             ->row();
 
-        $resultSet["modal"] = $this->load->view('gcctime/timesheet/master/modals/more_details_modal', $resultSet, TRUE);
+        $resultSet["modal"] = $this->load->view('gcctime/timesheet/master/modals/more_details_modal', $resultSet, true);
         return $resultSet;
     }
 
