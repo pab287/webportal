@@ -3200,10 +3200,10 @@ class Timesheet_model extends CI_Model{
         }
 
         $this->db->select("emp.id, personnel.is_flexi, resource.shift_resource, UCASE(CONCAT(emp.lastname,
-                               CASE WHEN emp.suffix != 'N/A' AND emp.suffix !='NONE' AND emp.suffix !='' AND emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''  END, ', ',
-			                   emp.firstname, ' ', CASE WHEN emp.middlename != 'N/A' AND emp.middlename != 'NONE'
-			                   AND emp.middlename !='' AND emp.middlename IS NOT NULL THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE '' END)) `employee_name`, personnel.biometric_id,
-                               emp.payroll_type");
+            CASE WHEN emp.suffix != 'N/A' AND emp.suffix !='NONE' AND emp.suffix !='' AND emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''  END, ', ',
+            emp.firstname, ' ', CASE WHEN emp.middlename != 'N/A' AND emp.middlename != 'NONE'
+            AND emp.middlename !='' AND emp.middlename IS NOT NULL THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE '' END)) `employee_name`, personnel.biometric_id,
+            emp.payroll_type");
         $this->db->join("gcctimeutility.personnel personnel", "personnel.biometricno = emp.biometricno", "INNER");
         $this->db->join("gcctimeutility.shift_schedule_resource resource", "resource.shift_id = personnel.shift_id", "LEFT");
         $this->db->join("gcchris.tblcompanies companies", "companies.id = emp.company_id", "LEFT");
@@ -3298,7 +3298,7 @@ class Timesheet_model extends CI_Model{
             $tempLoaRecord = $this->getLoaRecordByDateRange($start);
             $tempOvertimeRecord = $this->getOvertimeRecordByDateRange($start);
             $alteredShiftRecords = $this->getAlteredShiftRecordByDateRange($start, $end);
-
+            
             foreach ($employees->result() as $employee) {
                 $isNoInOut = intval($employee->is_flexi) === 4;
                 $id = $employee->id;
@@ -3705,9 +3705,11 @@ class Timesheet_model extends CI_Model{
         if($startDate){
             $this->db->select("date_from, date_to, employee, reference_no");
             $this->db->from($this->tbl_overtime);
-            $this->db->where("status", "Approved");
+            $this->db->group_start();
             $this->db->where("'{$startDate}' BETWEEN DATE(date_from) AND DATE(date_to)", null, false);
             $this->db->or_where("DATE(date_from) >=", $startDate);
+            $this->db->group_end();
+            $this->db->where("status", "Approved");
             $this->db->order_by("date_from", "ASC");
             $qOvertime = $this->db->get();
             if($qOvertime->num_rows() > 0){
@@ -3738,9 +3740,11 @@ class Timesheet_model extends CI_Model{
             $this->db->from($this->tbl_TO_Destination." a");
             $this->db->join($this->tbl_TO." b", "b.id = a.travel_order_id");
             $this->db->join($this->tbl_TO_Personnel." c", "c.travel_order_id = b.id");
-            $this->db->where("b.status", "Approved");
+            $this->db->group_start();
             $this->db->where("'{$startDate}' BETWEEN DATE(a.date_from) AND DATE(a.date_to)", null, false);
             $this->db->or_where("DATE(a.date_from) >=", $startDate);
+            $this->db->group_end();
+            $this->db->where("b.status", "Approved");
             $this->db->order_by("a.date_from", "ASC");
             $qTravelOrder = $this->db->get();
             if($qTravelOrder->num_rows() > 0){
@@ -3776,9 +3780,11 @@ class Timesheet_model extends CI_Model{
         if($startDate){
             $this->db->select("date_from, date_to, employee, reference_no, type");
             $this->db->from($this->tbl_loa);
-            $this->db->where("status", "Approved");
+            $this->db->group_start();
             $this->db->where("'{$startDate}' BETWEEN DATE(date_from) AND DATE(date_to)", null, false);
             $this->db->or_where("DATE(date_from) >=", $startDate);
+            $this->db->group_end();
+            $this->db->where("status", "Approved");
             $this->db->order_by("date_from", "ASC");
             $qApprovedLoa = $this->db->get();
             if($qApprovedLoa->num_rows() > 0){
