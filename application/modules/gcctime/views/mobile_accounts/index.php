@@ -26,36 +26,21 @@
 					<div class="m-section">
 						<div class="m-section__content">
 				
-    <div class="table-responsive">
-							<table class="table table-bordered table-hover" id="table">
-								<thead>
-									<tr>
-										<th>
-											BIOMETRIC ID
-										</th>
-										<th>
-											NAME
-										</th>
-                    <th>
-											DEVICE NAME
-										</th>
-                    <th>
-											DEVICE ID
-										</th>
-										<th>
-											USERS UNIQUE ID
-										</th>
-										<th>
-											STATUS
-										</th>
-									</tr>
-								</thead>
-								<tbody>
-									
-								</tbody>
-							</table>
-
-</div>
+    						<div class="table-responsive">
+								<table class="table table-bordered table-hover" id="table">
+									<thead>
+										<tr>
+											<th> BIOMETRIC ID </th>
+											<th> NAME </th>
+											<th> DEVICE NAME </th>
+											<th> DEVICE ID </th>
+											<th> USERS UNIQUE ID </th>
+											<th> STATUS </th>
+										</tr>
+									</thead>
+									<tbody></tbody>
+								</table>
+							</div>
 						</div>
 					</div>
 					<!--end::Section-->

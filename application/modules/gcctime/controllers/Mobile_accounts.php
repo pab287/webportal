@@ -73,15 +73,18 @@ class Mobile_accounts extends MY_Controller {
 	}
 
 	private function get_fullname($emp_id){
-		$this->db->select("firstname, lastname, suffix");
+		// $this->db->select("firstname, lastname, suffix");
+		$this->db->select("CONCAT(lastname, CASE WHEN suffix != 'N/A' AND suffix !='NONE' AND suffix !='' AND suffix IS NOT NULL THEN CONCAT(' ', suffix) ELSE ''  END, ', ', firstname, ' ', CASE WHEN middlename != 'N/A' AND middlename != 'NONE' AND middlename !='' AND middlename IS NOT NULL THEN CONCAT(SUBSTR(middlename, 1, 1), '.') ELSE '' END) employee_name");
 		$this->db->where("id", $emp_id);
 		$data = $this->db->get("gccmaster.tblemployees");
 		$name = $data->row_array();
-		if($name['suffix'] != ""){
-			return $name['firstname'] . " " . $name['lastname'] . " " . $name['suffix'];
-		}else{
-			return $name['firstname'] . " " . $name['lastname'];
-		}
+
+		return isset($name['employee_name']) && $name['employee_name'] ? $name['employee_name'] : 'No Employee Name';
+		// if($name['suffix'] != ""){
+		// 	return $name['firstname'] . " " . $name['lastname'] . " " . $name['suffix'];
+		// }else{
+		// 	return $name['firstname'] . " " . $name['lastname'];
+		// }
 	}
 
 }
