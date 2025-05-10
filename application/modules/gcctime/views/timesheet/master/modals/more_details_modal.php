@@ -19,13 +19,17 @@
     </div>
 </div>
 <div class="modal-body">
-    <div class="table-responsive-sm <?=sizeof((array)$holiday_references) <= 0 ? ' m--hide' : '' ?>">
+    <div id="holiday-container" class="table-responsive-sm m--hide">
         <i class="fa fa-flag mr-2" style="font-size: 14px;"></i>
         <span class="mb-2 m--font-bolder">HOLIDAY</span>
         <table class="table table-striped table-bordered mt-1">
+            <colgroup>
+                <col style="width: 60%;" />
+                <col style="width: 40%;" />
+            </colgroup>
             <thead>
             <tr>
-                <th width="60%">Description</th>
+                <th>Description</th>
                 <th>Classification</th>
             </tr>
             </thead>
@@ -52,14 +56,18 @@
         <hr class="mt-4">
     </div>
 
-    <div class="table-responsive-sm <?= sizeof((array)$loa_references) <= 0 ? ' m--hide' : '' ?>">
+    <div id="loa-container" class="table-responsive-sm m--hide">
         <i class="flaticon-event-calendar-symbol mr-2" style="font-size: 14px;"></i>
         <span class="mb-2 m--font-bolder">APPLICABLE LEAVE OF ABSENCES</span>
 
         <table class="table table-striped table-bordered mt-1">
+            <colgroup>
+                <col style="width: 50%;" />
+                <col style="width: 50%;" />
+            </colgroup>
             <thead>
             <tr>
-                <th width="50%">Reference No</th>
+                <th>Reference No</th>
                 <th>Reason</th>
             </tr>
             </thead>
@@ -110,14 +118,18 @@
         <hr class="mt-4">
     </div>
 
-    <div class="table-responsive-sm <?= sizeof((array)$to_references) <= 0 ? ' m--hide' : '' ?>">
+    <div id="travelorder-container" class="table-responsive-sm m--hide">
         <i class="fa fa-car mr-2"></i>
         <span class="mb-2 m--font-bolder">APPLICABLE TRAVEL ORDERS</span>
 
         <table class="table table-striped table-bordered mt-1">
+            <colgroup>
+                <col style="width: 30%;" />
+                <col style="width: 70%;" />
+            </colgroup>
             <thead>
             <tr>
-                <th width="30%">Reference No</th>
+                <th>Reference No</th>
                 <th>DESTINATION & PURPOSE</th>
             </tr>
             </thead>
@@ -129,9 +141,11 @@
                     </td>
                     <td>
                         <?php
-                            $destinations = explode(",", $travel_order->destination);
-                            $purposes = explode(",", $travel_order->purpose);
+                            $destinations = explode("||", $travel_order->destination);
+                            $purposes = explode("||", $travel_order->purpose);
+                            $dates = explode("||", $travel_order->to_dates);
                             foreach ($destinations as $key => $destination) { ?>
+                                <?= $key > 0 ? "<hr class='mt-3' />" : "" ?>
                                 <div class="mb-2">
                                     <div class="m--font-bolder"><?= $destination ?></div>
                                     <div class="m--regular-font-size-sm1">
@@ -143,13 +157,14 @@
                                         <?php endif; ?>
                                     </div>
                                 </div>
-                            <?php } ?>
-                            <div class="mt-2">
+                                <div class="mt-2">
                                 <div class="m--font-boldest">TRAVEL ORDER DATE &amp; TIME</div>
                                 <div class="m--regular-font-size-sm1">
-                                    <span class="m--font-boldest"><?= $travel_order->to_dates ? $travel_order->to_dates: "---" ?></span>
+                                    <span class="m--font-boldest"><?= isset($dates[$key]) && $dates[$key] ? $dates[$key]: "---" ?></span>
                                 </div>
                             </div>
+                            <?php } ?>
+                            
                     </td>
                 </tr>
             <?php endforeach; ?>
@@ -158,53 +173,66 @@
         <hr class="mt-4">
     </div>
 
-    <div id="overtime-container" class="<?= sizeof((array)$overtime) <= 0 ? 'm--hide' : '' ?>">
+    <div id="overtime-container" class="m--hide">
         <div class="mt-4" id="list-container">
             <p class="m--regular-font-size-lg3 m--font-bolder">OVERTIME</p>
             <table class="table table-bordered" id="tbl-overtime">
+                <colgroup>
+                    <col style="width: 40%;" />
+                    <col style="width: 15%;" />
+                    <col style="width: 15%;" />
+                    <col style="width: 15%;" />
+                    <col style="width: 15%;" />
+                </colgroup>
                 <thead>
                 <tr>
                     <th style="vertical-align: top;">DETAILS</th>
-                    <th width="15%" class="text-center">
-                                        <span data-toggle="m-tooltip"
-                                              data-skin="dark"
-                                              data-original-title="Regular Overtime Hours"
-                                              data-delay='{"show": 600}'
-                                              style="cursor: pointer;">
-                                        REG. <br> OT HRS.
-                                        </span>
+                    <th class="text-center">
+                        <span data-toggle="m-tooltip"
+                                data-skin="dark"
+                                data-original-title="Regular Overtime Hours"
+                                data-delay='{"show": 600}'
+                                style="cursor: pointer;">
+                        REG. <br> OT HRS.
+                        </span>
+                    </th>
+                    <th class="text-center">
+                        <span data-toggle="m-tooltip"
+                                data-skin="dark"
+                                data-original-title="Regular Overtime Accredited Hours"
+                                data-delay='{"show": 600}'
+                                style="cursor: pointer;">
+                            REG. OT ACC. HRS.
+                        </span>
+                    </th>
+                    <th class="text-center">
+                        <span data-toggle="m-tooltip"
+                                data-skin="dark"
+                                data-original-title="Night Differential Overtime Hours"
+                                data-delay='{"show": 600}'
+                                style="cursor: pointer;">
+                        N-DIFF. OT HRS.
+                        </span>
                     </th>
                     <th width="15%" class="text-center">
-                                        <span data-toggle="m-tooltip"
-                                              data-skin="dark"
-                                              data-original-title="Regular Overtime Accredited Hours"
-                                              data-delay='{"show": 600}'
-                                              style="cursor: pointer;">
-                                            REG. OT ACC. HRS.
-                                        </span>
-                    </th>
-                    <th width="15%" class="text-center">
-                                        <span data-toggle="m-tooltip"
-                                              data-skin="dark"
-                                              data-original-title="Night Differential Overtime Hours"
-                                              data-delay='{"show": 600}'
-                                              style="cursor: pointer;">
-                                        N-DIFF. OT HRS.
-                                        </span>
-                    </th>
-                    <th width="15%" class="text-center">
-                                        <span data-toggle="m-tooltip"
-                                              data-skin="dark"
-                                              data-original-title="Night Differential Accredited Hours"
-                                              data-delay='{"show": 600}'
-                                              style="cursor: pointer;">
-                                            N-DIFF. OT ACC. HRS.
-                                        </span>
+                        <span data-toggle="m-tooltip"
+                                data-skin="dark"
+                                data-original-title="Night Differential Accredited Hours"
+                                data-delay='{"show": 600}'
+                                style="cursor: pointer;">
+                            N-DIFF. OT ACC. HRS.
+                        </span>
                     </th>
                 </tr>
                 </thead>
                 <tbody>
                 <?php foreach ($overtime as $_overtime): ?>
+                    <?php
+                        $strtotimeFrom = strtotime(date("Y-m-d", strtotime($_overtime->date_from)));
+                        $strtotimeTo = strtotime(date("Y-m-d", strtotime($_overtime->date_to)));
+                        $currDate = strtotime($date);
+                        ?>
+                    <?php if($currDate >= $strtotimeFrom && $currDate <= $strtotimeTo): ?>
                     <tr>
                         <td rowspan="2">
                             <div>
@@ -238,9 +266,9 @@
                             <div class="form-group">
                                 <input type="text" disabled=""
                                        class="form-control form-control--table"
-                                       value="<?= $_overtime->total_hrs ?>">
+                                       value="<?= isset($_overtime->total_hrs) ? $_overtime->total_hrs : '0.00' ?>">
                                 <p class="m--regular-font-size-sm3 text-center mb-0 mt-1 m--font-boldest text-muted">
-                                    <?= number_format(($_overtime->total_hrs * 60), 2, '.', '') ?> Mins.
+                                    <?= isset($overtime->total_hrs) ? number_format(($_overtime->total_hrs * 60), 2, '.', '') : '0.00' ?> Mins.
                                 </p>
                             </div>
                         </td>
@@ -248,9 +276,9 @@
                             <div class="form-group">
                                 <input type="text" disabled=""
                                        class="form-control form-control--table"
-                                       value="<?= $_overtime->accredited_hrs ?>">
+                                       value="<?= isset($_overtime->accredited_hrs) ? $_overtime->accredited_hrs: '0.00' ?>">
                                 <p class="m--regular-font-size-sm3 text-center mb-0 mt-1 m--font-boldest text-muted">
-                                    <?= number_format(($_overtime->accredited_hrs * 60), 2, '.', '') ?> Mins.
+                                    <?= isset($_overtime->accredited_hrs) ? number_format(($_overtime->accredited_hrs * 60), 2, '.', '') : '0.00' ?> Mins.
                                 </p>
                             </div>
                         </td>
@@ -258,9 +286,9 @@
                             <div class="form-group">
                                 <input type="text" disabled=""
                                        class="form-control form-control--table"
-                                       value="<?= $_overtime->ndiff_hrs ?>">
+                                       value="<?= isset($_overtime->ndiff_hrs) ? $_overtime->ndiff_hrs: '0.00' ?>">
                                 <p class="m--regular-font-size-sm3 text-center mb-0 mt-1 m--font-boldest text-muted">
-                                    <?= number_format(($_overtime->ndiff_hrs * 60), 2, '.', '') ?> Mins.
+                                    <?= isset($_overtime->ndiff_hrs) ? number_format(($_overtime->ndiff_hrs * 60), 2, '.', ''): '0.00' ?> Mins.
                                 </p>
                             </div>
                         </td>
@@ -268,9 +296,9 @@
                             <div class="form-group">
                                 <input type="text" disabled=""
                                        class="form-control form-control--table"
-                                       value="<?= $_overtime->accredited_ndiff_hrs ?>">
+                                       value="<?= isset($_overtime->accredited_ndiff_hrs) ? $_overtime->accredited_ndiff_hrs : '0.00' ?>">
                                 <p class="m--regular-font-size-sm3 text-center mb-0 mt-1 m--font-boldest text-muted">
-                                    <?= number_format(($_overtime->accredited_ndiff_hrs * 60), 2, '.', '') ?> Mins.
+                                    <?= isset($_overtime->accredited_ndiff_hrs) ? number_format(($_overtime->accredited_ndiff_hrs * 60), 2, '.', ''): '0.00' ?> Mins.
                                 </p>
                             </div>
                         </td>
@@ -280,9 +308,9 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group mb-0 text-center">
-                                        <label class="m--font-bolder">Overtime IN</label>
+                                        <label for="" class="m--font-bolder">Overtime IN</label>
                                         <input type="text" disabled="" class="form-control text-center"
-                                                value="<?= date("Y-m-d h:i A", strtotime($_overtime->overtime_in)) ?>" 
+                                                value="<?= isset($_overtime->overtime_in) ? date("Y-m-d h:i A", strtotime($_overtime->overtime_in)): date("Y-m-d h:i A", strtotime($_overtime->date_from)) ?>"
                                                 style="font-weight: 600;">
                                     </div>
                                 </div>
@@ -292,15 +320,16 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group mb-0 text-center">
-                                        <label  class="m--font-bolder">Overtime OUT</label>
+                                        <label for="" class="m--font-bolder">Overtime OUT</label>
                                         <input type="text" disabled="" class="form-control text-center"
-                                                value="<?= date("Y-m-d h:i A", strtotime($_overtime->overtime_out)) ?>" 
+                                                value="<?= isset($_overtime->overtime_out) ? date("Y-m-d h:i A", strtotime($_overtime->overtime_out)) : date("Y-m-d h:i A", strtotime($_overtime->date_to)) ?>"
                                                 style="font-weight: 600;">
                                     </div>
                                 </div>
                             </div>
                         </td>
                     </tr>
+                    <?php endif; ?>
                 <?php endforeach; ?>
                 </tbody>
             </table>

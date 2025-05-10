@@ -3200,10 +3200,10 @@ class Timesheet_model extends CI_Model{
         }
 
         $this->db->select("emp.id, personnel.is_flexi, resource.shift_resource, UCASE(CONCAT(emp.lastname,
-                               CASE WHEN emp.suffix != 'N/A' AND emp.suffix !='NONE' AND emp.suffix !='' AND emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''  END, ', ',
-			                   emp.firstname, ' ', CASE WHEN emp.middlename != 'N/A' AND emp.middlename != 'NONE'
-			                   AND emp.middlename !='' AND emp.middlename IS NOT NULL THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE '' END)) `employee_name`, personnel.biometric_id,
-                               emp.payroll_type");
+            CASE WHEN emp.suffix != 'N/A' AND emp.suffix !='NONE' AND emp.suffix !='' AND emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''  END, ', ',
+            emp.firstname, ' ', CASE WHEN emp.middlename != 'N/A' AND emp.middlename != 'NONE'
+            AND emp.middlename !='' AND emp.middlename IS NOT NULL THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE '' END)) `employee_name`, personnel.biometric_id,
+            emp.payroll_type");
         $this->db->join("gcctimeutility.personnel personnel", "personnel.biometricno = emp.biometricno", "INNER");
         $this->db->join("gcctimeutility.shift_schedule_resource resource", "resource.shift_id = personnel.shift_id", "LEFT");
         $this->db->join("gcchris.tblcompanies companies", "companies.id = emp.company_id", "LEFT");
@@ -3298,9 +3298,8 @@ class Timesheet_model extends CI_Model{
             $tempLoaRecord = $this->getLoaRecordByDateRange($start);
             $tempOvertimeRecord = $this->getOvertimeRecordByDateRange($start);
             $alteredShiftRecords = $this->getAlteredShiftRecordByDateRange($start, $end);
-
+            
             foreach ($employees->result() as $employee) {
-                $schedule_resource = unserialize($employee->shift_resource);
                 $isNoInOut = intval($employee->is_flexi) === 4;
                 $id = $employee->id;
                 $employee_name = $employee->employee_name;
@@ -3596,12 +3595,17 @@ class Timesheet_model extends CI_Model{
                             $timesheets = array_filter($timesheets, function ($timesheet) {
                                 return $timesheet->all_verified === true;
                             });
-                            break;
+                        break;
                         case "incomplete":
                             $timesheets = array_filter($timesheets, function ($timesheet) {
                                 return $timesheet->all_verified === true;
                             });
-                            break;
+                        break;
+                        default:
+                            $timesheets = array_filter($timesheets, function ($timesheet) {
+                                return $timesheet->all_verified === true;
+                            });
+                        break;
                     }
                 }
             }
@@ -3701,12 +3705,15 @@ class Timesheet_model extends CI_Model{
         if($startDate){
             $this->db->select("date_from, date_to, employee, reference_no");
             $this->db->from($this->tbl_overtime);
-            $this->db->where("DATE(date_from) >=", $startDate);
+            $this->db->group_start();
+            $this->db->where("'{$startDate}' BETWEEN DATE(date_from) AND DATE(date_to)", null, false);
+            $this->db->or_where("DATE(date_from) >=", $startDate);
+            $this->db->group_end();
             $this->db->where("status", "Approved");
             $this->db->order_by("date_from", "ASC");
             $qOvertime = $this->db->get();
             if($qOvertime->num_rows() > 0){
-                foreach ($qOvertime->result() as $kx => $vvx) {
+                foreach ($qOvertime->result() as $vvx) {
                     $_from = date("Y-m-d", strtotime($vvx->date_from));
                     $_to = date("Y-m-d", strtotime($vvx->date_to));
                     $_reference = $vvx->reference_no;
@@ -3733,13 +3740,15 @@ class Timesheet_model extends CI_Model{
             $this->db->from($this->tbl_TO_Destination." a");
             $this->db->join($this->tbl_TO." b", "b.id = a.travel_order_id");
             $this->db->join($this->tbl_TO_Personnel." c", "c.travel_order_id = b.id");
-            $this->db->where("DATE(a.date_from) >=", $startDate);
+            $this->db->group_start();
+            $this->db->where("'{$startDate}' BETWEEN DATE(a.date_from) AND DATE(a.date_to)", null, false);
+            $this->db->or_where("DATE(a.date_from) >=", $startDate);
+            $this->db->group_end();
             $this->db->where("b.status", "Approved");
             $this->db->order_by("a.date_from", "ASC");
             $qTravelOrder = $this->db->get();
-    
             if($qTravelOrder->num_rows() > 0){
-                foreach ($qTravelOrder->result() as $kx => $vvx) {
+                foreach ($qTravelOrder->result() as $vvx) {
                     $_from = date("Y-m-d", strtotime($vvx->date_from));
                     $_to = date("Y-m-d", strtotime($vvx->date_to));
                     $_reference = $vvx->reference_no;
@@ -3771,24 +3780,25 @@ class Timesheet_model extends CI_Model{
         if($startDate){
             $this->db->select("date_from, date_to, employee, reference_no, type");
             $this->db->from($this->tbl_loa);
-            $this->db->where("DATE(date_from) >=", $startDate);
+            $this->db->group_start();
+            $this->db->where("'{$startDate}' BETWEEN DATE(date_from) AND DATE(date_to)", null, false);
+            $this->db->or_where("DATE(date_from) >=", $startDate);
+            $this->db->group_end();
             $this->db->where("status", "Approved");
             $this->db->order_by("date_from", "ASC");
             $qApprovedLoa = $this->db->get();
             if($qApprovedLoa->num_rows() > 0){
-                foreach ($qApprovedLoa->result() as $kx => $vvx) {
+                foreach ($qApprovedLoa->result() as $vvx) {
                     $_from = date("Y-m-d", strtotime($vvx->date_from));
                     $vvx->date_to = isset($vvx->date_to) && $vvx->date_to == "0000-00-00 00:00:00" ? $vvx->date_from: $vvx->date_to;
                     $_to = date("Y-m-d", strtotime($vvx->date_to));
                     $_reference = $vvx->reference_no;
                     $isWholeDayLoa = 0;
-                    $xDtDays = 0;
                     if(intval($vvx->type) >= 3){
                         $dt00 = strtotime($vvx->date_from);
                         $dt01 = strtotime($vvx->date_to);
                         $dtDiff = abs($dt01 - $dt00);
                         $dtDays = $dtDiff / ( 60 * 60 * 24);
-                        $xDtDays = $dtDays;
                         if(intval(floor($dtDays)) >= 1){
                             $isWholeDayLoa = 1;
                         }else{
@@ -6581,23 +6591,11 @@ class Timesheet_model extends CI_Model{
             ->result(); ***/
 
         $resultSet["to_references"] = $this->db
-            ->select("travel_order.*, GROUP_CONCAT(destination.destination) `destination`,	GROUP_CONCAT(destination.purpose) purpose, CONCAT(DATE_FORMAT(destination.date_from, '%m/%d/%Y %h:%i%p'), ' - ', DATE_FORMAT(destination.date_to, '%m/%d/%Y %h:%i%p')) as to_dates")
+            ->select("travel_order.reference_no, GROUP_CONCAT(TRIM(destination.destination) SEPARATOR '||') `destination`, GROUP_CONCAT(TRIM(destination.purpose) SEPARATOR '||') purpose, GROUP_CONCAT(CONCAT(DATE_FORMAT(destination.date_from, '%m/%d/%Y %h:%i%p'), ' - ', DATE_FORMAT(destination.date_to, '%m/%d/%Y %h:%i%p')) SEPARATOR '||') as to_dates")
             ->join("gcceforms.travel_destination destination", "destination.travel_order_id = travel_order.id")
             ->join("gcceforms.travel_personnel personnel", "personnel.travel_order_id = travel_order.id", "LEFT")
             ->where("travel_order.status", "Approved")
-            ->group_start()
-                ->where(array(
-                    "DATE(destination.date_from) >=" => $date,
-                    "DATE(destination.date_to) <=" => $date,
-                ))
-                ->or_where(array(
-                    "DATE(destination.date_from) <=" => $date
-                ))
-                ->where(array(
-                    "DATE(destination.date_to) >=" => $date,
-                ))
-                /*** ->or_where("DATE(travel_order.created_dt)", $date) ***/
-            ->group_end()
+            ->where("'{$date}' BETWEEN DATE(destination.date_from) AND DATE(destination.date_to)", null, false)
             ->group_start()
                 ->where("travel_order.driver_id", $employee_id)
                 ->or_where("personnel.employee_id", $employee_id)
@@ -6605,9 +6603,12 @@ class Timesheet_model extends CI_Model{
             ->group_by("travel_order.id")
             ->get($this->tbl_TO . " travel_order")
             ->result();
-
+        
         $resultSet["date"] = $date;
-        $resultSet["overtime"] = $this->db
+        $resultSet["overtime"] = array();
+
+        if($timesheet_id && $timesheet_id > 0){
+            $resultSet["overtime"] = $this->db
             ->select("ts_ot.*,
                         ot.reference_no,
                         ot.date_from,
@@ -6628,7 +6629,29 @@ class Timesheet_model extends CI_Model{
             ->where("ot.status", "Approved")
             ->get($this->tbl_timesheet_overtime . " ts_ot")
             ->result();
-
+        }else{
+            $resultSet["overtime"] = $this->db
+            ->select("ot.reference_no,
+                        ot.date_from,
+                        ot.date_to, ot.purpose,
+                        CONCAT(emp.lastname,
+                        CASE
+                            WHEN emp.suffix != 'N/A' AND emp.suffix != 'NONE' AND emp.suffix != '' AND emp.suffix IS NOT NULL
+                                THEN CONCAT(' ', emp.suffix)
+                            ELSE '' END, ', ',
+                        emp.firstname, ' ', CASE
+                            WHEN emp.middlename != 'N/A' AND emp.middlename != 'NONE'
+                                AND emp.middlename != '' AND emp.middlename IS NOT NULL
+                                THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.')
+                            ELSE '' END) `requestor`")
+            ->join($this->tbl_employees . " emp", "emp.id = ot.requested_by")
+            ->where("ot.status", "Approved")
+            ->where("ot.employee", $employee_id)
+            ->where("'{$date}' BETWEEN DATE(ot.date_from) AND DATE(ot.date_to)", null, false)
+            ->get($this->tbl_overtime . " ot")
+            ->result();
+        }
+        
         $this->db->select("shift_resource.shift_resource");
         $this->db->from($this->tbl_employees." emp");
         $this->db->join($this->tbl_personnel." personnel", "personnel.biometric_id = emp.biometricno OR personnel.biometricno = emp.biometricno");
@@ -6690,7 +6713,7 @@ class Timesheet_model extends CI_Model{
             ->get($this->tbl_tblholidays)
             ->row();
 
-        $resultSet["modal"] = $this->load->view('gcctime/timesheet/master/modals/more_details_modal', $resultSet, TRUE);
+        $resultSet["modal"] = $this->load->view('gcctime/timesheet/master/modals/more_details_modal', $resultSet, true);
         return $resultSet;
     }
 

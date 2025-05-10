@@ -1179,9 +1179,9 @@ $(document)
                                             [_csrf_token]: _csrf_hash,
                                             emp_id: _arrIds,
                                             dates: $('#date-range').val(),
-                                        },
-                                        success: function (response) {
-                                            console.log(response);
+                                        }, success: function (response) {
+                                            if(response.success){ toastr.success(response.message, "Default Timesheet Record(s)"); }
+                                            else{ toastr.error(response.message, "Default Timesheet Record(s)"); }
                                         }
                                     });
                                 }
@@ -3523,12 +3523,27 @@ function openMoreDetailsModal(timesheet_id, employee_id, date) {
         type: 'GET',
         dataType: 'JSON',
         success: function (response) {
+            const { overtime, loa_references, to_references, holiday_references } = response;
+            $('.modal-content', modalContainer).empty();
             $('.modal-dialog', modalContainer).addClass('modal-lg');
             $('.modal-dialog', modalContainer).css('max-width', '');
-            $('.modal-content', modalContainer).empty().append(response.modal);
+            setTimeout(() => {
+                $('.modal-content', modalContainer).html(response.modal);
+                if(typeof overtime !== 'undefined' && overtime.length > 0) {
+                    $('.modal-content', modalContainer).find("#overtime-container").removeClass('m--hide');
+                }
+                if(typeof loa_references !== 'undefined' && loa_references.length > 0) {
+                    $('.modal-content', modalContainer).find("#loa-container").removeClass('m--hide');
+                }
+                if(typeof to_references !== 'undefined' && to_references.length > 0) {
+                    $('.modal-content', modalContainer).find("#travelorder-container").removeClass('m--hide');
+                }
+                if(typeof holiday_references !== 'undefined' && holiday_references !== null && Object.keys(holiday_references).length > 0) {
+                    $('.modal-content', modalContainer).find("#holiday-container").removeClass('m--hide');
+                }
+            }, 250);
         }
-    });
-    modalContainer.modal('show');
+    }).done(function () { modalContainer.modal('show'); });
 }
 
 $('#tbl-overtime').on('click', 'tbody .btnUpdate', function () {
