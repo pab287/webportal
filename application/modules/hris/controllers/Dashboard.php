@@ -54,8 +54,8 @@
             echo json_encode($data);
         }
 
-        public function get_evaluation_list_overdue() {
-            $data = $this->dashboard->getEvaluationListOverdue();
+        public function evaluation_overdue() {
+            $data = $this->dashboard->evaluation_overdue();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 

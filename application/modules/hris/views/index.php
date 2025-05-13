@@ -694,12 +694,38 @@
             
         </div>
         <div class="m-portlet__body">
-            <div class="tab-content">
-                <div class="tab-pane active show" aria-expanded="true" id="evaluation_list_tab_content">
+            <div id="employee_eval_list" class="tab-content">
+                <div class="tab-pane active" aria-expanded="true" id="evaluation_list_tab_content">
+                    <button id="tbl-btn-share" title="Export" type="button" class="btn btnExport btn-success m-btn--pill m-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="la la-external-link"></i>
+                        <span>Export</span>
+                        <span class="dropdown-toggle"></span>
+                    </button>
+
+                    <div class="dropdown-menu mt-2" aria-labelledby="btnGroupDrop1" x-placement="bottom-start" style="position: absolute; transform: translate3d(268px, 36px, 0px); top: 0px; left: 0px; will-change: transform;">
+                        <a href="javascript:void(0);" class="dropdown-item datatable-csv" id="eval_ExportCSV">
+                            <i class="m-nav__link-icon la la-file-o"></i>
+                            <span class="m-nav__link-text">CSV</span>
+                        </a>
+
+                        <a href="javascript:void(0);" class="dropdown-item datatable-pdf" id="eval_ExportPDF">
+                            <i class="m-nav__link-icon la la-file-pdf-o"></i>
+                            <span class="m-nav__link-text">PDF</span>
+                        </a>
+
+                        <a href="javascript:void(0);" class="dropdown-item datatable-excel" id="eval_ExportExcel">
+                            <i class="m-nav__link-icon la la-file-excel-o"></i>
+                            <span class="m-nav__link-text">EXCEL</span>
+                        </a>
+                    </div>
+                
                     <div class="table-responsive">
                         <table class="table table-hover m-table m-table--head-no-border" id="table-employee-evaluation" width="100%">
                             <thead>
                                 <tr>
+                                    <th class="toggle-all notExport text-center">
+										<input type="checkbox" id="cb-select-all"> <span></span>
+									</th>
                                     <th>ID NO.</th>
                                     <th>EMPLOYEE</th>
                                     <th>COMPANY</th>
@@ -716,10 +742,36 @@
                 </div>
 
                 <div class="tab-pane" aria-expanded="true" id="overdue_list_tab_content">
+                    <button id="tbl-btn-share" title="Export" type="button" class="btn btnExport btn-success m-btn--pill m-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="la la-external-link"></i>
+                        <span>Export</span>
+                        <span class="dropdown-toggle"></span>
+                    </button>
+
+                    <div class="dropdown-menu mt-2" aria-labelledby="btnGroupDrop1" x-placement="bottom-start" style="position: absolute; transform: translate3d(268px, 36px, 0px); top: 0px; left: 0px; will-change: transform;">
+                        <a href="javascript:void(0);" class="dropdown-item datatable-csv" id="eval_due_ExportCSV">
+                            <i class="m-nav__link-icon la la-file-o"></i>
+                            <span class="m-nav__link-text">CSV</span>
+                        </a>
+
+                        <a href="javascript:void(0);" class="dropdown-item datatable-pdf" id="eval_due_ExportPDF">
+                            <i class="m-nav__link-icon la la-file-pdf-o"></i>
+                            <span class="m-nav__link-text">PDF</span>
+                        </a>
+
+                        <a href="javascript:void(0);" class="dropdown-item datatable-excel" id="eval_due_ExportExcel">
+                            <i class="m-nav__link-icon la la-file-excel-o"></i>
+                            <span class="m-nav__link-text">EXCEL</span>
+                        </a>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="table table-hover m-table m-table--head-no-border" id="table-employee-evaluation-overdue" width="100%">
                             <thead>
                                 <tr>
+                                    <th class="toggle-all notExport text-center">
+										<input type="checkbox" id="cb-select-all"> <span></span>
+									</th>
                                     <th>ID NO.</th>
                                     <th>EMPLOYEE</th>
                                     <th>COMPANY</th>
@@ -757,3 +809,37 @@
     </div>
     <!-- END EVALUATION LIST -->
 </div> 
+
+<style>
+	.v-middle {
+		vertical-align: middle!important;
+	}
+
+	#table-employee-evaluation-overdue tbody td.select-checkbox:before,
+    #table-employee-evaluation tbody td.select-checkbox:before {
+		top: 0!important;
+		bottom: 0!important;
+		left: 0!important;
+		right: 0!important;
+		margin: auto!important;
+		border: 1px solid #767676;
+		border-radius: 2px!important;
+		height: 13px!important;
+		width: 13px!important;
+	}
+
+	#table-employee-evaluation-overdue tbody td.select-checkbox:after,
+    #table-employee-evaluation tbody td.select-checkbox:after {
+		position: absolute!important;
+		top: -8px!important;
+		bottom: 0!important;
+		left: 0!important;
+		right: 0!important;
+		margin: auto!important;
+	}
+
+	#table-employee-evaluation-overdue tbody tr.selected td.select-checkbox:before,
+    #table-employee-evaluation tbody tr.selected td.select-checkbox:before {
+		border: 1px solid #ffffff !important;
+	}
+</style>
