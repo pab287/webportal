@@ -316,7 +316,7 @@
                     $this->core_layout->setEventLog("Failed in adding leave of absence.","add", "error", "gcceforms", "system");
                 }
 
-                echo json_encode(array("status" => TRUE, "test" => $to, "last_id" => $last_id ,'email'=> $email_sent, 'sms' => $sms_sent));
+                echo json_encode(array("status" => TRUE, "test" => $to, "last_id" => $last_id ,'email'=> $email_sent, 'sms' => $sms_sent, 'sent_to' => $email));
             } else {
                 echo json_encode(array("status" => FALSE));
             }
