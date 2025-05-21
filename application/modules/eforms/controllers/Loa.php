@@ -295,6 +295,7 @@
                     if($contact){
                         $smsResponse = $this->contacts->sendSMS($contact, $msg);
                         if(isset($smsResponse["data"]) && $smsResponse["data"] !== false){
+                            $sms_sent = true;
                             $this->core_layout->setEventLog("Sent SMS to head contact for leave of absence ".$referenceNumber.".","add", "success", "gcceforms", "user");
                         }else{
                             $this->core_layout->setEventLog("Failed in sending SMS to head contact for leave of absence ".$referenceNumber.".","add", "error", "gcceforms", "system");
@@ -307,7 +308,7 @@
                         $mailer['send_to'] = $send_email;
                         $details['url'] = site_url('eforms/loa/view_loa?id=').$last_id;
                         $email_content = $this->load->view("eforms/email_templates/email_loa_for_approval.php", array("data" => $details), true);
-                        $this->core_layout->send_email('core', 'GC & C Conyx PH', 'Leave of Absence', $email_content, $mailer);
+                        $email_sent = $this->core_layout->send_email('core', 'GC & C Conyx PH', 'Leave of Absence', $email_content, $mailer);
                     }
                     $reference_no = $this->db->get_where("gcceforms.loa", array("id"=>$last_id))->row('reference_no');
                     $this->core_layout->setEventLog("Filed leave of absence ".$reference_no.".","add", "success", "gcceforms", "user");
@@ -315,7 +316,7 @@
                     $this->core_layout->setEventLog("Failed in adding leave of absence.","add", "error", "gcceforms", "system");
                 }
 
-                echo json_encode(array("status" => TRUE, "test" => $to, "last_id" => $last_id));
+                echo json_encode(array("status" => TRUE, "test" => $to, "last_id" => $last_id ,'email'=> $email_sent, 'sms' => $sms_sent));
             } else {
                 echo json_encode(array("status" => FALSE));
             }
