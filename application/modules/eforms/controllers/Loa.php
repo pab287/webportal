@@ -263,7 +263,7 @@
                     $smsContact = $this->getContactDetails($head_contact, 'no', $head_contact['allow_sms']);
                     $emailContact = $this->getContactDetails($head_contact, 'email');
                     $contact = $smsContact['contact'] ?? null;
-                    $msgName = $smsContact['name'] ?? null;
+                    $msgName = ucwords($smsContact['name']) ?? null;
                     $email = $emailContact['contact'] ?? null;
                     $emailName = $emailContact['name'] ?? null;
 
