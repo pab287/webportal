@@ -876,11 +876,11 @@ if (typeof _tempContentData !== "undefined") {
                 $("#station").on("select2:select", function (evt) {
                     var element = evt.params.data.element;
                     var $element = $(element);
-                  
+                
                     $element.detach();
                     $(this).append($element);
                     $(this).trigger("change");
-                  });
+                });
 
                 // $("#station").empty();
             
@@ -891,7 +891,7 @@ if (typeof _tempContentData !== "undefined") {
                 //         console.log(tempOption);
                 //     });
                 // }
-                  
+                
                 if(typeof vmData.default_station != 'undefined' && parseInt(vmData.default_station) > 0){
                     setTimeout(function(){ 
                         const dsOption = new Option(vmData.default_station_description, vmData.default_station, true, true);
@@ -1075,6 +1075,11 @@ if (typeof _tempContentData !== "undefined") {
                 });
 
                 return _data;
+            }, inputDateEnd(e) {
+                const instance = this;
+                let vmData = instance.vm_tab3;
+                var status = $("#classification").val();
+                instance.vm_tab3 = Object.assign({}, vmData, { 'employee_status': status });
             }
         }
     });
@@ -4684,6 +4689,10 @@ var validatePersonalEmployeeData = function () {
                         .removeClass(
                             "m-btn--custom m-loader m-loader--light m-loader--right"
                         );
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.error("AJAX Error:", textStatus, errorThrown);
+                    toastr.error(errorThrown);
                 }
             });
             return false;
