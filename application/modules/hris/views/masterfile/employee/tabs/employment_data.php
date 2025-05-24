@@ -278,7 +278,7 @@
                                 <i class="la la-calendar"></i>
                             </span>
                             <input type="text" id="m_datepicker-date_end" name="date_end" class="form-control m-input" maxlength="12" size="12"
-                                   autocomplete="off" v-model.lazy="vm_tab3.date_end" @input="inputDateEnd" disabled />
+                                   autocomplete="off" v-model.lazy="vm_tab3.date_end" disabled />
                         </div>
                         <span class="m-form__help pull-right">Date Format: YYYY-MM-DD</span>
                     </div>

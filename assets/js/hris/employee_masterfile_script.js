@@ -841,6 +841,7 @@ if (typeof _tempContentData !== "undefined") {
                         status.attr('readonly');
                     }
 
+                    vmTab3.vm_tab3 = Object.assign({}, vmData, { employee_status: data.id });
                     if(typeof this.vm_tab3 != 'undefined' && Object.keys(this.vm_tab3).length > 0){
                         let { vm_tab3 } = this;
                         vmData = Object.assign({}, vmData, { employee_status: data.id });
@@ -1075,11 +1076,6 @@ if (typeof _tempContentData !== "undefined") {
                 });
 
                 return _data;
-            }, inputDateEnd(e) {
-                const instance = this;
-                let vmData = instance.vm_tab3;
-                var status = $("#classification").val();
-                instance.vm_tab3 = Object.assign({}, vmData, { 'employee_status': status });
             }
         }
     });
@@ -4588,7 +4584,7 @@ var validatePersonalEmployeeData = function () {
             var currentForm = form[0];
             var formUrl = currentForm.action;
             var formData = $(currentForm).serialize();
-           
+        
             $.ajax({
                 url: formUrl,
                 type: "post",
