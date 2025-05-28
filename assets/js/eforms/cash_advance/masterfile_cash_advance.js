@@ -137,6 +137,9 @@ function renderStatusHtml(data) {
         case "For Final Approval":
             return '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>For Final Approval</strong></div>';
             break;
+        case 'Released': 
+            return '<div class="m-badge m-badge--focus m-badge--wide" role="alert"><strong>Released</strong></div>';
+            break;
         default:
             return '<div class="m-badge m-badge--info m-badge--wide" role="alert"><strong>Cancelled</strong></div>';
             break;
@@ -222,6 +225,9 @@ $(document).ready(function () {
                         }, {
                             id: "For Final Approval",
                             text: "For Final Approval"
+                        }, {
+                            id: 'Released',
+                            text: 'Released'
                         }
                     ]
                 },

@@ -99,6 +99,18 @@ function renderStatusHtml(data){
         case "Awaiting Approval":
             return '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>Awaiting Approval</strong></div>';
         break;
+        case "For Posting":
+            return '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>For Posting</strong></div>';
+            break;
+        case "Posted":
+            return '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>Posted</strong></div>';
+            break;
+        case "For Final Approval":
+            return '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>For Final Approval</strong></div>';
+            break;
+        case 'Released': 
+            return '<div class="m-badge m-badge--focus m-badge--wide" role="alert"><strong>Released</strong></div>';
+            break;
         default:
             return '<div class="m-badge m-badge--metal text-white m-badge--wide" role="alert"><strong>Cancelled</strong></div>';
         break;

@@ -806,21 +806,26 @@ class Cash_advance_m extends CI_Model {
             $arrData = array();
             foreach($query->result() as $key => $rs){
                 $attachments=array();
-                if(is_numeric($rs->company)){
-                    $rs->company =  $this->getCompany($rs->company);
-                }else{
-                    $rs->company = $rs->company;
-                }
-                if(is_numeric($rs->department)){
-                    $rs->department = $this->getDepartment($rs->department);
-                }else{
-                    $rs->department = $rs->department;
-                }
-                if(is_numeric($rs->position)){
-                    $rs->position = ucwords($this->getPosition($rs->position));
-                }else{
-                    $rs->position = ucwords($rs->position);
-                }
+
+                $rs->company = (is_numeric($rs->company)) ? $this->getCompany($rs->company) : $rs->company;
+                $rs->department = (is_numeric($rs->department)) ? $this->getDepartment($rs->department) : $rs->department;
+                $rs->position = (is_numeric($rs->position)) ? ucwords($this->getPosition($rs->position)) : ucwords($rs->position);
+
+                // if(is_numeric($rs->company)){
+                //     $rs->company =  $this->getCompany($rs->company);
+                // }else{
+                //     $rs->company = $rs->company;
+                // }
+                // if(is_numeric($rs->department)){
+                //     $rs->department = $this->getDepartment($rs->department);
+                // }else{
+                //     $rs->department = $rs->department;
+                // }
+                // if(is_numeric($rs->position)){
+                //     $rs->position = ucwords($this->getPosition($rs->position));
+                // }else{
+                //     $rs->position = ucwords($rs->position);
+                // }
                 $tempRs = (array) $rs;
                 $fullname = $this->core_layout->getDisplayName($tempRs);
                 $tempFullname = (object) $fullname;
@@ -1403,46 +1408,54 @@ class Cash_advance_m extends CI_Model {
             $phoneNo = $row->mobile_no;
             $this->db->where('cash_advance.id', $id);
             $query = $this->db->update('gcceforms.cash_advance', $data);
-            $this->db->from("gcchris.loans");
-            $this->db->where("reference", $ca_details->reference_no);
-            $q = $this->db->get();
-            if($q->num_rows() > 0){
-                $tempRemarks = "[System Generated:Updated Cash Advance form CA Module]";
-                $approvedRemarks = $this->input->post("approved_remarks");
-                if(isset($approvedRemarks) && $approvedRemarks){
-                    $tempRemarks = "{$tempRemarks}, {$approvedRemarks}";
-                }
-                $loan_data = array('active' => 0, 'remarks' => $tempRemarks );
-                $this->db->where('reference', $ca_details->reference_no);
-                $this->db->update('gcchris.loans', $loan_data);
-            }else{
-                $caInterestPercentage = $ca_details->acctg_ca_interest_percentage ? floatval($ca_details->acctg_ca_interest_percentage): 0.00;
-                $loan_data = array(
-                    'emp_id' => $ca_details->employee,
-                    'loan_id' => 1,
-                    'reference_id'=> $id,
-                    'reference' => $ca_details->reference_no,
-                    'amount' => $amt_approved,
-                    'deduction_type' => ($ca_details->deduct_type == '') ? 1 : 0,
-                    'fixed_deduction_amt' => ($ca_details->deduct_type == '') ? $ca_details->amt_to_b_deducted : 0.00,
-                    'percentage' => ($ca_details->deduct_type != '') ? $ca_details->amt_to_b_deducted : 0.00,
-                    'interest_percentage' => $caInterestPercentage,
-                    'active' => 0,
-                    'created_by' => 0,
-                    'created_at' => $date,
-                    'is_archived' => 0,
-                    'archived_by' => 0,
-                    'remarks' => '[System Generated:New Cash Advance form CA Module]'
-                );
-                $for_loan = $this->db->insert('gcchris.loans', $loan_data);
-                if($for_loan){
-                    $msg = "Cash Advance Masterfile - Cash Advance loan is automatically added to payroll deduction with the reference no: `".$ca_details->reference_no."`, employee `".$id."` and set status to `Suspended`";
-                    $this->core_layout->setEventLog($msg,"insert", "success", "gcceforms", "user");
-                }else{
-                    $msg = "Cash Advance Masterfile - Cash Advance loan failed to add to payroll deduction with the reference no: `".$ca_details->reference_no."`, employee `".$id."` and set status to `Suspended`";
-                    $this->core_layout->setEventLog($msg,"insert", "error", "gcceforms", "system");
-                }
-            }
+
+            /**
+             * removed to transfer it in Released status. will not delete for future reference.
+             */
+            // $this->db->from("gcchris.loans");
+            // $this->db->where("reference", $ca_details->reference_no);
+            // $q = $this->db->get();
+            // if($q->num_rows() > 0){
+            //     $tempRemarks = "[System Generated:Updated Cash Advance form CA Module]";
+            //     $approvedRemarks = $this->input->post("approved_remarks");
+            //     if(isset($approvedRemarks) && $approvedRemarks){
+            //         $tempRemarks = "{$tempRemarks}, {$approvedRemarks}";
+            //     }
+            //     $loan_data = array('active' => 0, 'remarks' => $tempRemarks );
+            //     $this->db->where('reference', $ca_details->reference_no);
+            //     $this->db->update('gcchris.loans', $loan_data);
+            // }else{
+            //     $caInterestPercentage = $ca_details->acctg_ca_interest_percentage ? floatval($ca_details->acctg_ca_interest_percentage): 0.00;
+            //     $loan_data = array(
+            //         'emp_id' => $ca_details->employee,
+            //         'loan_id' => 1,
+            //         'reference_id'=> $id,
+            //         'reference' => $ca_details->reference_no,
+            //         'amount' => $amt_approved,
+            //         'deduction_type' => ($ca_details->deduct_type == '') ? 1 : 0,
+            //         'fixed_deduction_amt' => ($ca_details->deduct_type == '') ? $ca_details->amt_to_b_deducted : 0.00,
+            //         'percentage' => ($ca_details->deduct_type != '') ? $ca_details->amt_to_b_deducted : 0.00,
+            //         'interest_percentage' => $caInterestPercentage,
+            //         'active' => 0,
+            //         'created_by' => 0,
+            //         'created_at' => $date,
+            //         'is_archived' => 0,
+            //         'archived_by' => 0,
+            //         'remarks' => '[System Generated:New Cash Advance form CA Module]'
+            //     );
+            //     $for_loan = $this->db->insert('gcchris.loans', $loan_data);
+            //     if($for_loan){
+            //         $msg = "Cash Advance Masterfile - Cash Advance loan is automatically added to payroll deduction with the reference no: `".$ca_details->reference_no."`, employee `".$id."` and set status to `Suspended`";
+            //         $this->core_layout->setEventLog($msg,"insert", "success", "gcceforms", "user");
+            //     }else{
+            //         $msg = "Cash Advance Masterfile - Cash Advance loan failed to add to payroll deduction with the reference no: `".$ca_details->reference_no."`, employee `".$id."` and set status to `Suspended`";
+            //         $this->core_layout->setEventLog($msg,"insert", "error", "gcceforms", "system");
+            //     }
+            // }
+            /**
+             * removed to transfer it in Released status. will not delete for future reference.
+             */
+
             if($query){
                 $this->sendTelegram($id);
                 $sendMsgNotification = $this->sendSMSNotification($id, $phoneNo);
@@ -3665,6 +3678,87 @@ class Cash_advance_m extends CI_Model {
             }
            
             return $this->core_layout->setEventLog("Cash Advance Report exported using <strong>$type</strong>.".$filter." total result(s): ".$post['total'], "generate", "success", "gcceforms", "user");
+        }
+
+        public function released($id){
+            $data = array();
+            $date = date('Y-m-d H:i:s');
+            $post = $this->input->post();
+
+            if ($post) {
+                $temp = array(
+                    'status' => 'Released',
+                    'released_by' => $this->user_data['emp_id'],
+                    'released_dt' => date("Y-m-d H:i:s"),
+                    'dn_no' => trim($post['dn_number']),
+                    'voucher_reference_no' => trim($post['voucher_ref']),
+                    'released_remarks' => trim($post['released_remarks'])
+                );
+
+                $this->db->where('id', $id);
+                $query = $this->db->update($this->cashAdvanceTable, $temp);
+
+                if ($query) {
+
+                    $ca_details = $this->getCaDetails($id);
+                    $this->db->select('active');
+                    $this->db->from("gcchris.loans");
+                    $this->db->where("reference", $ca_details->reference_no);
+                    $q = $this->db->get();
+
+                    if ($q->num_rows() > 0) {
+                        $rows = $q->row();
+                        $status = $rows->active;
+                        $tempRemarks = "[System Generated:Updated Cash Advance form CA Module]";
+                        $approvedRemarks = $ca_details->approved_remarks;
+                        if(isset($approvedRemarks) && $approvedRemarks){
+                            $tempRemarks = "{$tempRemarks}, {$approvedRemarks}";
+                        }
+                        $loan_data = array('active' => $status, 'remarks' => $tempRemarks );
+                        $this->db->where('reference', $ca_details->reference_no);
+                        $this->db->update('gcchris.loans', $loan_data);
+                    } else {
+                        $caInterestPercentage = $ca_details->acctg_ca_interest_percentage ? floatval($ca_details->acctg_ca_interest_percentage): 0.00;
+                        $loan_data = array(
+                            'emp_id' => $ca_details->employee,
+                            'loan_id' => 1,
+                            'reference_id'=> $id,
+                            'reference' => $ca_details->reference_no,
+                            'amount' => $ca_details->amt_approved,
+                            'deduction_type' => strtolower($ca_details->deduct_type) == 'percentage' ? 0 : 1,
+                            'fixed_deduction_amt' => strtolower($ca_details->deduct_type) == 'fixed' ? $ca_details->amt_to_b_deducted : 0.00,
+                            'percentage' => strtolower($ca_details->deduct_type) == 'percentage' ? $ca_details->amt_to_b_deducted : 0.00,
+                            'interest_percentage' => $caInterestPercentage,
+                            'active' => 0,
+                            'created_by' => 0,
+                            'created_at' => $date,
+                            'is_archived' => 0,
+                            'archived_by' => 0,
+                            'remarks' => "[System Generated:New Cash Advance form CA Module], {$ca_details->approved_remarks}"
+                        );
+
+                        $for_loan = $this->db->insert('gcchris.loans', $loan_data);
+                        if($for_loan){
+                            $msg = "Cash Advance Masterfile - Cash Advance loan is automatically added to payroll deduction with the reference no: `".$ca_details->reference_no."`, employee `".$id."` and set status to `Suspended`";
+                            $this->core_layout->setEventLog($msg,"insert", "success", "gcceforms", "user");
+                        }else{
+                            $msg = "Cash Advance Masterfile - Cash Advance loan failed to add to payroll deduction with the reference no: `".$ca_details->reference_no."`, employee `".$id."` and set status to `Suspended`";
+                            $this->core_layout->setEventLog($msg,"insert", "error", "gcceforms", "system");
+                        }
+                    }
+
+                    $data['state'] = true;
+                    $data['msg'] = 'Cash Advance is succefully Released!';
+                } else {
+                    $data['state'] = false;
+                    $data['msg'] = 'Failed to Released Cash Advance';
+                }
+            } else {
+                $data['state'] = false;
+                $data['msg'] = 'No Data found.';
+            }
+
+            return $data;
         }
 
 }

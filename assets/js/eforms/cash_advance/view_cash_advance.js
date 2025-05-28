@@ -136,7 +136,9 @@ $("#posted").hide();
 
 $("#final_approval_modal").hide();
 $("#undo_for_final_modal").hide();
-undo_for_final_modal
+
+$("#released").hide();
+
 $("#set_acctg_modal .test_charge").keypress( function() {
     console.log( "Handler for `keypress` called." );
   });
@@ -370,6 +372,11 @@ $.ajax({
                 $("#acctg_bal_dt").append("On <b>" + moment(data.acctg_bal_dt).format('LLL') + "</b>");
                 $("#acctg_bal_remarks").append("Remarks: <b>" + data.acctg_bal_remarks2 + "</b>");
                 $("#status_detail").addClass("alert alert-success");
+
+                if (jQuery.inArray("ca_released", _currentActions) !== -1) {
+                    $("#buttons").append("<button type='button' data-toggle='modal' data-target='#released' class='btn btn-success btnUndo_approval m-btn m-btn--custom m-btn--air m-btn--box'>Released</buttons>");
+                }
+
                 if (jQuery.inArray("undo_approval", _currentActions) !== -1) {
                     $("#buttons").append("<button type='button' data-toggle='modal' data-target='#undo_approval_modal' class='btn btn-danger btnUndo_approval m-btn m-btn--custom m-btn--air m-btn--box'>Undo Approval</button>");
                 }
@@ -533,6 +540,28 @@ $.ajax({
                     // $("#buttons").append("<a href='" + baseUrl(temp_url) + "'><button type='button' title='Back to Masterfile' class='btn btn-metal text-white btnBack m-btn m-btn--custom m-btn--air m-btn--box'><span><span>Back</span></span></button></a>");
                     $("#buttons").append("<a href='" + baseUrl(temp_url) + "' title='Back to Masterfile' class='btn btn-metal text-white btnBack m-btn m-btn--custom m-btn--air m-btn--box'><span><span>BACK</span></span></a>");
                 }
+                break;
+            case 'Released':
+                $("#hr_bal").append("<b>" + data.hr_bal_remarks + "</b> from <b>PAYROLL</b> by <b>" + data.hr_bal_by + "</b>");
+                $("#hr_bal_dt").append("On <b>" + moment(data.hr_bal_dt).format('LLL') + "</b>");
+                $("#hr_bal_remarks").append("Remarks: <b>" + data.hr_remarks + "</b>");
+                $("#acctg_bal").append("<b>" + data.acctg_bal_remarks + "</b> from <b>Acctg</b> by <b>" + data.acctg_bal_by + "</b>");
+                $("#acctg_bal_dt").append("On <b>" + moment(data.acctg_bal_dt).format('LLL') + "</b>");
+                $("#acctg_bal_remarks").append("Remarks: <b>" + data.acctg_bal_remarks2 + "</b>");
+                $("#status_detail").addClass("alert alert-focus");
+
+                if (jQuery.inArray("print", _currentActions) !== -1) {
+                    $("#buttons").append("<button type='button' onclick='printArea()' class='btn btn-accent btnPrint m-btn m-btn--custom m-btn--air m-btn--box'><span><span>Print Report</span></span></button>");
+                }
+
+                if (jQuery.inArray("back", _currentActions) !== -1) {
+                    $("#buttons").append("<a href='" + baseUrl('eforms/cash_advance/masterfile') + "' title='Back to Masterfile' class='btn btn-metal text-white btnBack m-btn m-btn--custom m-btn--air m-btn--box'><span><span>BACK</span></span></a>");
+                }
+
+                $("#disapproved_by").hide();
+                $("#reason").hide();
+                $("#cancelled_by").hide();
+
                 break;
             default:
                 if (data.hr_bal_by) {
@@ -1691,3 +1720,53 @@ function setCaInterestPercentage(){
         }
       });
 }
+
+$.validate({
+    form: '#released-form',
+    lang: 'en',
+    onSuccess: function(form) {
+        var currentForm = form[0];
+		var formData = $(currentForm).serialize();
+
+        Swal.fire({
+            title: 'Released',
+            icon: 'question',
+            text: "Are you sure you wan't to released this cash advance now? You can't undo the changes afterwards.",
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: baseUrl("eforms/cash_advance/released/") + param_id,
+                    type: "POST",
+                    dataType: "JSON",
+                    data: formData,
+                    beforeSend: function () {
+                        $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    },
+                    success: function (data) {
+                        if (data.state) {
+                            toastr.success(data.msg, "Updated successfully!", 5000);
+                            $('#released').modal('hide');
+                            $('#released-form').trigger('reset');
+                            location.reload();
+                        } else{
+                            toastr.error(data.msg, "Error!", 5000);
+                        }
+        
+                        $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    }
+                });
+            }
+        });
+
+
+        return false;
+    }
+});
+
+$("#released").on('hidden.bs.modal', function (e) {
+    $("#released-form").trigger('reset');
+});

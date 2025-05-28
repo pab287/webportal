@@ -75,363 +75,405 @@ label.col-6.px-0.colon--after:after {
                 <form action="#" id="form_cash_advance" class="m-form m-form--fit form-horizontal">
                     <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                     <div class="m-portlet__body">
-                            <div id="cash_advance_renderer">
-                                <div class="form-group m-form__group row" :class="loading_content === true ? '':'m--hide'">
-                                    <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
-                                        <h3 class="m--font-brand">Loading Content Please Wait . . . </h3>
+                        <div id="cash_advance_renderer">
+                            <div class="form-group m-form__group row" :class="loading_content === true ? '':'m--hide'">
+                                <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
+                                    <h3 class="m--font-brand">Loading Content Please Wait . . . </h3>
+                                </div>
+                                <div class="col-1 col-md-1 col-lg-1 col-sm-1 col-xs-12">
+                                    <div class="m-loader m-loader--lg" style="width: 30px; display: inline-block;"></div>
+                                </div>
+                            </div>
+                            <div class="row" :class="loading_content === true ? 'm--hide':''">
+                                <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Reference #: </label>
+                                        <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="cash_advance_no">
+                                            <h5 v-text="vm_tab1.reference_no">&nbsp;</h5>
+                                        </div>
                                     </div>
-                                    <div class="col-1 col-md-1 col-lg-1 col-sm-1 col-xs-12">
-                                        <div class="m-loader m-loader--lg" style="width: 30px; display: inline-block;"></div>
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Employee Name:</label>
+                                        <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="employee">
+                                            <b v-text="vm_tab1.display_name">&nbsp;</b>
+                                        </div>
+                                    </div>
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Employment Status:</label>
+                                        <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="emp_status">
+                                            <b v-text="vm_tab1.emp_status">&nbsp;</b>
+                                        </div>
+                                    </div>
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Employment Date:</label>
+                                        <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="emp_date">
+                                            <b v-text="moment(vm_tab1.date_employed).format('LL')">&nbsp;</b>
+                                        </div>
+                                    </div>
+                                    <div class="form-group m-form__group row pb-3">
+                                        <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Company:</label>
+                                        <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="company">
+                                            <p class="mb-0"><b v-text="vm_tab1.company"></b></p>
+                                            <p class="mb-0"><span v-text="vm_tab1.department"></span></p>
+                                            <p class="mb-0"><span v-text="vm_tab1.position"></span></p>
+                                        </div>
+                                    </div>
+                                    <div class="form-group m-form__group row pb-3">
+                                        <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Status:</label>
+                                        <div class=" col-md-8 col-sm-8 col-xs-12" id="status">
+                                            <span id="status_detail"><b v-text="vm_tab1.status">&nbsp;</b></span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Last Vale:</label>
+                                        <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="last_vale">
+                                            <h5 v-text="vm_tab1.last_vale">&nbsp;</h5>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="row" :class="loading_content === true ? 'm--hide':''">
-                                    <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
-                                        <div class="form-group m-form__group row pb-0">
-                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Reference #: </label>
-                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="cash_advance_no">
-                                                <h5 v-text="vm_tab1.reference_no">&nbsp;</h5>
+                                <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Amount Applied:</label>
+                                        <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="amt_applied">
+                                            <b v-text="vm_tab1.amt_applied">&nbsp;</b>
+                                        </div>
+                                    </div>
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Deduction Amount:</label>
+                                        <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="amt_deduct">
+                                            <b v-text="vm_tab1.amt_to_b_deducted"></b><strong id="percent_sign" class="ml-2"></strong>
+                                        </div>
+                                    </div>
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Purpose:</label>
+                                        <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="purpose">
+                                            <p class="mb-0"><b v-text="vm_tab1.purpose">&nbsp;</b></p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-5">
+                                        <div class="form-group m-form__group row pb-0" v-if="vm_tab1.recommend_remarks">
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Allowable:</label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="allowable">
+                                                <b v-text="vm_tab1.recommend_remarks">&nbsp;</b>
+                                            </div>
+                                        </div>
+                                        <div class="form-group m-form__group row pb-0" v-if="vm_tab1.amt_approved">
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Amount Approved:</label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="amount_approved">
+                                                <h5 v-text="vm_tab1.amt_approved">&nbsp;</h5>
                                             </div>
                                         </div>
                                         <div class="form-group m-form__group row pb-0">
-                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Employee Name:</label>
-                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="employee">
-                                                <b v-text="vm_tab1.display_name">&nbsp;</b>
-                                            </div>
-                                        </div>
-                                        <div class="form-group m-form__group row pb-0">
-                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Employment Status:</label>
-                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="emp_status">
-                                                <b v-text="vm_tab1.emp_status">&nbsp;</b>
-                                            </div>
-                                        </div>
-                                        <div class="form-group m-form__group row pb-0">
-                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Employment Date:</label>
-                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="emp_date">
-                                                <b v-text="moment(vm_tab1.date_employed).format('LL')">&nbsp;</b>
-                                            </div>
-                                        </div>
-                                        <div class="form-group m-form__group row pb-3">
-                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Company:</label>
-                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="company">
-                                                <p class="mb-0"><b v-text="vm_tab1.company"></b></p>
-                                                <p class="mb-0"><span v-text="vm_tab1.department"></span></p>
-                                                <p class="mb-0"><span v-text="vm_tab1.position"></span></p>
-                                            </div>
-                                        </div>
-                                        <div class="form-group m-form__group row pb-3">
-                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Status:</label>
-                                            <div class=" col-md-8 col-sm-8 col-xs-12" id="status">
-                                                <span id="status_detail"><b v-text="vm_tab1.status">&nbsp;</b></span>
-                                            </div>
-                                        </div>
-                                        <div class="form-group m-form__group row pb-0">
-                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Last Vale:</label>
-                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="last_vale">
-                                                <h5 v-text="vm_tab1.last_vale">&nbsp;</h5>
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Interest Percentage:</label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
+                                                <template v-if="vm_tab1.acctg_ca_interest_percentage">
+                                                <h5><span v-text="vm_tab1.acctg_ca_interest_percentage">&nbsp;</span><span class="ml-2">%</span></h5>
+                                                </template>
+                                                <template v-else>
+                                                <h5><span>0.00</span><span class="ml-2">%</span></h5>
+                                                </template>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
+                                </div>
+                                <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
+                                    <div class="form-group m-form__group row pb-0">
+                                        <h2 class="col-12">ACCOUNTING DETAILS</h2>
+                                    </div>
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class="col-md-8 col-sm-8 col-xs-12">
+                                        CASH ADVANCE BALANCE PENDING:
+                                        </label>
+                                        <div class=" text-right">
+                                            <b class="cabp"> {{vm_tab1.acctg_ca_pending_formatted}} </b>
+                                        </div>
+                                    </div>
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class="col-md-8 col-sm-8 col-xs-12">
+                                        CASH ADVANCE INTEREST:
+                                        </label>
+                                        <div class=" text-right">
+                                            <b v-text="vm_tab1.acctg_ca_interest_formatted"></b>
+                                        </div>
+                                    </div>
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class="col-md-8 col-sm-8 col-xs-12">
+                                        SSS LOAN:
+                                        </label>
+                                        <div class="  text-right" id="amt_ocharge">   
+                                            <b v-text="vm_tab1.acctg_sss_loan_formatted"></b>
+                                        </div>
+                                    </div>
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class="col-md-8 col-sm-8 col-xs-12">
+                                        HDMF LOAN:
+                                        </label>
+                                        <div class=" text-right">   
+                                            <b v-text="vm_tab1.acctg_hdmf_loan_formatted"></b>
+                                        </div>
+                                    </div>
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class="col-md-8 col-sm-8 col-xs-12">
+                                                MEDICAL LOAN:
+                                        </label>
+                                        <div class=" text-right">   
+                                            <b v-text="vm_tab1.acctg_outside_loan_formatted"></b>
+                                        </div>
+                                    </div>
+                                    <template v-if="count > 0">
                                         <div class="form-group m-form__group row pb-0">
-                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Amount Applied:</label>
-                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="amt_applied">
-                                                <b v-text="vm_tab1.amt_applied">&nbsp;</b>
+                                            <label class="col-12"><span class="m--font-boldest">OTHER CHARGES</span></label>
+                                        </div>
+                                        <div class="form-group m-form__group row pt-0 pb-0">
+                                            <div v-for="(item, index) in vm_charge" class="col-12 row m-0">
+                                                <label class="col-6 px-0 colon--after">{{ item.description }}</label>   
+                                                <b class="iacharge col-6 px-0 text-right">{{'₱' + ' ' + item.amount }}  </b>  
                                             </div>
                                         </div>
-                                        <div class="form-group m-form__group row pb-0">
-                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Deduction Amount:</label>
-                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="amt_deduct">
-                                                <b v-text="vm_tab1.amt_to_b_deducted"></b><strong id="percent_sign" class="ml-2"></strong>
+                                    </template>
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class="">REMARKS:</label>
+                                        <div class="col-md-8 col-sm-8 col-xs-12">
+                                            <p class="mb-0">
+                                                <template v-if="vm_tab1.acctg_bal_remarks2">
+                                                    <b v-text="vm_tab1.acctg_bal_remarks2">&nbsp;</b>
+                                                </template>
+                                                <template v-else>
+                                                    <span class="pull-right">N/A</span>
+                                                </template>
+                                            </p>  
+                                        </div> 
+                                    </div>
+                                    <div class="form-group m-form__group row pb-0">
+                                        <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Accounting Details Last Edited By: </label>
+                                        <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">   
+                                            <p>
+                                            <span id="acctg_bal"></span>
+                                            <span id="acctg_bal_dt"></span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x" :class="loading_content === true ? 'm--hide':''"></div>
+                            <div class="row">
+                                <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
+                                    <div class="form-group m-form__group row pb-0" v-if="vm_tab1.created_by && vm_tab1.created_by !== 'N/A'">
+                                        <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Created By: </label>
+                                        <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
+                                            <p class="mb-0"><b v-text="vm_tab1.created_by"></b> ON <b v-text="moment(vm_tab1.created_dt).format('LLL')"></b></p>
+                                        </div>
+                                    </div>
+                                    <div class="form-group m-form__group row pb-0" v-if="vm_tab1.last_edited_by && vm_tab1.last_edited_by !== 'N/A'">
+                                        <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Last Edited By: </label>
+                                        <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="last_edited_by">
+                                        <p class="mb-0"><b v-text="vm_tab1.last_edited_by"></b> ON <b v-text="vm_tab1.last_edited_dt !== '0000-00-00 00:00:00' ? moment(vm_tab1.last_edited_dt).format('LLL') : 'N/A'"></b></p>
+                                        </div>
+                                    </div>
+                                    <template v-if="vm_tab1.status == 'Awaiting Approval'">
+                                        <div class="form-group m-form__group row pb-0" v-if="vm_tab1.final_approved_dt && vm_tab1.final_approved_by !== 'NULL'">
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Undo for final approval by: </label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="final_approved_by">
+                                            <p class="mb-0"><b v-text="vm_tab1.final_approved_by"></b> ON <b v-text="vm_tab1.final_approved_dt !== '0000-00-00 00:00:00' ? moment(vm_tab1.final_approved_dt).format('LLL') : 'N/A'"></b></p>
                                             </div>
                                         </div>
-                                        <div class="form-group m-form__group row pb-0">
-                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Purpose:</label>
-                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="purpose">
-                                                <p class="mb-0"><b v-text="vm_tab1.purpose">&nbsp;</b></p>
-                                            </div>
-                                        </div>
-                                        <div class="mt-5">
-                                            <div class="form-group m-form__group row pb-0" v-if="vm_tab1.recommend_remarks">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Allowable:</label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="allowable">
-                                                    <b v-text="vm_tab1.recommend_remarks">&nbsp;</b>
-                                                </div>
-                                            </div>
-                                            <div class="form-group m-form__group row pb-0" v-if="vm_tab1.amt_approved">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Amount Approved:</label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="amount_approved">
-                                                    <h5 v-text="vm_tab1.amt_approved">&nbsp;</h5>
-                                                </div>
-                                            </div>
-                                            <div class="form-group m-form__group row pb-0">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Interest Percentage:</label>
+                                        <div class="form-group m-form__group row" v-if="vm_tab1.final_approved_remarks && vm_tab1.final_approved_remarks !== 'N/A'">
+                                                <label class="col-md-4 col-lg-4 col-sm-4 col-xs-12">Remarks: </label>
                                                 <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                                    <template v-if="vm_tab1.acctg_ca_interest_percentage">
-                                                    <h5><span v-text="vm_tab1.acctg_ca_interest_percentage">&nbsp;</span><span class="ml-2">%</span></h5>
-                                                    </template>
-                                                    <template v-else>
-                                                    <h5><span>0.00</span><span class="ml-2">%</span></h5>
-                                                    </template>
+                                                    <p class="mb-0"><b v-text="vm_tab1.final_approved_remarks"></b></p>
                                                 </div>
+                                            </div>
+                                    </template>
+                                    <template v-if="vm_tab1.for_posting_by">
+                                        <div v-if="vm_tab1.status == 'Awaiting Approval'" class="form-group m-form__group row pb-0" id="undo_posting">
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Undo Posting by:</label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">   
+                                                <b v-text="vm_tab1.for_posting_by"></b> ON <b v-text="moment(vm_tab1.for_posting_dt).format('LLL')"></b>
+                                            </div>
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Remarks:</label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">   
+                                                <p class="mb-0"><b v-text="vm_tab1.for_posting_remarks">&nbsp;</b></p>
+                                            </div>
+                                        </div>
+                                        <div v-show="vm_tab1.status == 'For Posting'" class="form-group m-form__group row pb-0" id="for_posting">
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">For Posting by:</label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="amt_deduct">   
+                                                <b v-text="vm_tab1.for_posting_by"></b> ON <b v-text="moment(vm_tab1.for_posting_dt).format('LLL')"></b>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
+                                    <div id="recommend_by" v-if="vm_tab1.recommend_by">
+                                        <div class="form-group m-form__group row pb-0">
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Recommended By: </label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
+                                                <p class="mb-0"><b v-text="vm_tab1.recommend_by"></b> ON <b v-text="moment(vm_tab1.recommend_dt).format('LLL')"></b></p>
+                                            </div>
+                                        </div>
+                                        <div class="form-group m-form__group row" v-if="vm_tab1.recommend_remark2 && vm_tab1.recommend_remark2 !== 'N/A'">
+                                            <label class="col-12 col-md-12 col-lg-12 col-sm-12">Remarks: </label>
+                                            <div class="col-12 col-md-12 col-lg-12 col-sm-12">
+                                                <p class="mb-0"><b v-text="vm_tab1.recommend_remark2"></b></p>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
+                                </div>
+                                <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
+                                    <div id="approved_by" v-if="vm_tab1.approved_by">
                                         <div class="form-group m-form__group row pb-0">
-                                            <h2 class="col-12">ACCOUNTING DETAILS</h2>
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Marked As Approved By: </label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
+                                                <p class="mb-0"><b v-text="vm_tab1.approved_by"></b> ON <b v-text="moment(vm_tab1.approved_dt).format('LLL')"></b></p>
+                                            </div>
                                         </div>
+                                        <div class="form-group m-form__group row" v-if="vm_tab1.approved_remarks && vm_tab1.approved_remarks !== 'N/A'">
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Remarks: </label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
+                                                <p class="mb-0"><b v-text="vm_tab1.approved_remarks"></b></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="cancelled_by" v-if="vm_tab1.cancelled_by">
                                         <div class="form-group m-form__group row pb-0">
-                                            <label class="col-md-8 col-sm-8 col-xs-12">
-                                            CASH ADVANCE BALANCE PENDING:
-                                            </label>
-                                            <div class=" text-right">
-                                                <b class="cabp"> {{vm_tab1.acctg_ca_pending_formatted}} </b>
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Cancelled By: </label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
+                                                <p class="mb-0"><b v-text="vm_tab1.cancelled_by"></b> ON <b v-text="moment(vm_tab1.cancelled_dt).format('LLL')"></b></p>
+                                            </div>
+                                        </div>
+                                        <div class="form-group m-form__group row">
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Remarks: </label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
+                                                <p class="mb-0"><b v-text="vm_tab1.cancelled_remarks"></b></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="disapproved_by" v-if="vm_tab1.disapproved_by">
+                                        <div class="form-group m-form__group row pb-0">
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Disapproved By: </label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
+                                                <p class="mb-0"><b v-text="vm_tab1.disapproved_by"></b> ON <b v-text="moment(vm_tab1.disapproved_dt).format('LLL')"></b></p>
                                             </div>
                                         </div>
                                         <div class="form-group m-form__group row pb-0">
-                                            <label class="col-md-8 col-sm-8 col-xs-12">
-                                            CASH ADVANCE INTEREST:
-                                            </label>
-                                            <div class=" text-right">
-                                                <b v-text="vm_tab1.acctg_ca_interest_formatted"></b>
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Remarks: </label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
+                                                <p class="mb-0"><b v-text="vm_tab1.disapproved_remarks"></b></p>
                                             </div>
                                         </div>
-                                        <div class="form-group m-form__group row pb-0">
-                                            <label class="col-md-8 col-sm-8 col-xs-12">
-                                            SSS LOAN:
-                                            </label>
-                                            <div class="  text-right" id="amt_ocharge">   
-                                                <b v-text="vm_tab1.acctg_sss_loan_formatted"></b>
-                                            </div>
-                                        </div>
-                                        <div class="form-group m-form__group row pb-0">
-                                            <label class="col-md-8 col-sm-8 col-xs-12">
-                                            HDMF LOAN:
-                                            </label>
-                                            <div class=" text-right">   
-                                                <b v-text="vm_tab1.acctg_hdmf_loan_formatted"></b>
-                                            </div>
-                                        </div>
-                                        <div class="form-group m-form__group row pb-0">
-                                            <label class="col-md-8 col-sm-8 col-xs-12">
-                                                    MEDICAL LOAN:
-                                            </label>
-                                            <div class=" text-right">   
-                                                <b v-text="vm_tab1.acctg_outside_loan_formatted"></b>
-                                            </div>
-                                        </div>
-                                        <template v-if="count > 0">
-                                            <div class="form-group m-form__group row pb-0">
-                                                <label class="col-12"><span class="m--font-boldest">OTHER CHARGES</span></label>
-                                            </div>
-                                            <div class="form-group m-form__group row pt-0 pb-0">
-                                                <div v-for="(item, index) in vm_charge" class="col-12 row m-0">
-                                                    <label class="col-6 px-0 colon--after">{{ item.description }}</label>   
-                                                    <b class="iacharge col-6 px-0 text-right">{{'₱' + ' ' + item.amount }}  </b>  
-                                                </div>
-                                            </div>
-                                        </template>
-                                        <div class="form-group m-form__group row pb-0">
-                                            <label class="">REMARKS:</label>
-                                            <div class="col-md-8 col-sm-8 col-xs-12">
-                                                <p class="mb-0">
-                                                    <template v-if="vm_tab1.acctg_bal_remarks2">
-                                                        <b v-text="vm_tab1.acctg_bal_remarks2">&nbsp;</b>
-                                                    </template>
-                                                    <template v-else>
-                                                        <span class="pull-right">N/A</span>
-                                                    </template>
-                                                </p>  
-                                            </div> 
-                                        </div>
-                                        <div class="form-group m-form__group row pb-0">
-                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Accounting Details Last Edited By: </label>
+                                    </div>
+
+                                    <template v-if="vm_tab1.status == 'For Posting'">
+                                        <div class="form-group m-form__group row pb-0" id="undo_posted">
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Undo Posted by:</label>
                                             <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">   
-                                                <p>
-                                                <span id="acctg_bal"></span>
-                                                <span id="acctg_bal_dt"></span>
+                                                <b v-text="vm_tab1.posted_by"></b> ON <b v-text="moment(vm_tab1.posted_dt).format('LLL')"></b>
+                                            </div>
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Remarks:</label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">   
+                                                <p class="mb-0"><b v-text="vm_tab1.posted_remarks"></b></p>
+                                            </div>
+                                        </div>
+                                        <div class="form-group m-form__group row pb-0" id="posted">
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Posted by:</label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="amt_deduct">   
+                                                <b v-text="vm_tab1.posted_by"></b> ON <b v-text="moment(vm_tab1.posted_dt).format('LLL')"></b>
+                                            </div>
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Remarks:</label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">   
+                                                <p class="mb-0"><b v-text="vm_tab1.posted_remarks"></b></p>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <template v-if="vm_tab1.status == 'Released'">
+                                <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x" :class="loading_content === true ? 'm--hide':''"></div>
+                                <div class="form-group m-form__group row">
+                                    <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                                        <h4>RELEASED DETAILS</h4>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group m-form__group row pb-0" v-if="vm_tab1.created_by && vm_tab1.created_by !== 'N/A'">
+                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12"><strong>Released By: </strong></label>
+                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
+                                                <p class="mb-0"><b v-text="vm_tab1.released_by"></b> ON <b v-text="moment(vm_tab1.released_dt).format('LLL')"></b></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group m-form__group row pb-0" v-if="vm_tab1.released_remarks">
+                                            <label class=" col-md-12 col-lg-12 col-sm-12 col-xs-12"><strong>Remarks: </strong></label>
+                                            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                                                <p class="mb-0">
+                                                    <b v-text="vm_tab1.released_remarks"></b>
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group m-form__group row pb-0">
+                                            <label class=" col-md-5 col-lg-5 col-sm-12 col-xs-12"><strong>Debit Note #: </strong></label>
+                                            <div class="col-md-7 col-lg-7 col-sm-12 col-xs-12">
+                                                <h5 class="mb-0" v-text="vm_tab1.dn_no"> </h5>
+                                            </div>
+                                        </div>
+                                        <div class="form-group m-form__group row pb-0">
+                                        <label class=" col-md-5 col-lg-5 col-sm-12 col-xs-12"> <strong>Voucher Reference #: </strong></label>
+                                            <div class="col-md-7 col-lg-7 col-sm-12 col-xs-12">
+                                                <h5 class="mb-0" v-text="vm_tab1.voucher_reference_no"></h5>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x" :class="loading_content === true ? 'm--hide':''"></div>
-                                <div class="row">
-                                    <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
-                                        <div class="form-group m-form__group row pb-0" v-if="vm_tab1.created_by && vm_tab1.created_by !== 'N/A'">
-                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Created By: </label>
-                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                                <p class="mb-0"><b v-text="vm_tab1.created_by"></b> ON <b v-text="moment(vm_tab1.created_dt).format('LLL')"></b></p>
-                                            </div>
-                                        </div>
-                                        <div class="form-group m-form__group row pb-0" v-if="vm_tab1.last_edited_by && vm_tab1.last_edited_by !== 'N/A'">
-                                            <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Last Edited By: </label>
-                                            <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="last_edited_by">
-                                            <p class="mb-0"><b v-text="vm_tab1.last_edited_by"></b> ON <b v-text="vm_tab1.last_edited_dt !== '0000-00-00 00:00:00' ? moment(vm_tab1.last_edited_dt).format('LLL') : 'N/A'"></b></p>
-                                            </div>
-                                        </div>
-                                        <template v-if="vm_tab1.status == 'Awaiting Approval'">
-                                            <div class="form-group m-form__group row pb-0" v-if="vm_tab1.final_approved_dt && vm_tab1.final_approved_by !== 'NULL'">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Undo for final approval by: </label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="final_approved_by">
-                                                <p class="mb-0"><b v-text="vm_tab1.final_approved_by"></b> ON <b v-text="vm_tab1.final_approved_dt !== '0000-00-00 00:00:00' ? moment(vm_tab1.final_approved_dt).format('LLL') : 'N/A'"></b></p>
-                                                </div>
-                                            </div>
-                                            <div class="form-group m-form__group row" v-if="vm_tab1.final_approved_remarks && vm_tab1.final_approved_remarks !== 'N/A'">
-                                                    <label class="col-md-4 col-lg-4 col-sm-4 col-xs-12">Remarks: </label>
-                                                    <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                                        <p class="mb-0"><b v-text="vm_tab1.final_approved_remarks"></b></p>
-                                                    </div>
-                                                </div>
-                                        </template>
-                                        <template v-if="vm_tab1.for_posting_by">
-                                            <div v-if="vm_tab1.status == 'Awaiting Approval'" class="form-group m-form__group row pb-0" id="undo_posting">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Undo Posting by:</label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">   
-                                                    <b v-text="vm_tab1.for_posting_by"></b> ON <b v-text="moment(vm_tab1.for_posting_dt).format('LLL')"></b>
-                                                </div>
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Remarks:</label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">   
-                                                    <p class="mb-0"><b v-text="vm_tab1.for_posting_remarks">&nbsp;</b></p>
-                                                </div>
-                                            </div>
-                                            <div v-show="vm_tab1.status == 'For Posting'" class="form-group m-form__group row pb-0" id="for_posting">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">For Posting by:</label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="amt_deduct">   
-                                                    <b v-text="vm_tab1.for_posting_by"></b> ON <b v-text="moment(vm_tab1.for_posting_dt).format('LLL')"></b>
-                                                </div>
-                                            </div>
-                                        </template>
-                                    </div>
-                                    <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
-                                        <div id="recommend_by" v-if="vm_tab1.recommend_by">
-                                            <div class="form-group m-form__group row pb-0">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Recommended By: </label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                                    <p class="mb-0"><b v-text="vm_tab1.recommend_by"></b> ON <b v-text="moment(vm_tab1.recommend_dt).format('LLL')"></b></p>
-                                                </div>
-                                            </div>
-                                            <div class="form-group m-form__group row" v-if="vm_tab1.recommend_remark2 && vm_tab1.recommend_remark2 !== 'N/A'">
-                                                <label class="col-12 col-md-12 col-lg-12 col-sm-12">Remarks: </label>
-                                                <div class="col-12 col-md-12 col-lg-12 col-sm-12">
-                                                    <p class="mb-0"><b v-text="vm_tab1.recommend_remark2"></b></p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">
-                                        <div id="approved_by" v-if="vm_tab1.approved_by">
-                                            <div class="form-group m-form__group row pb-0">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Marked As Approved By: </label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                                    <p class="mb-0"><b v-text="vm_tab1.approved_by"></b> ON <b v-text="moment(vm_tab1.approved_dt).format('LLL')"></b></p>
-                                                </div>
-                                            </div>
-                                            <div class="form-group m-form__group row" v-if="vm_tab1.approved_remarks && vm_tab1.approved_remarks !== 'N/A'">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Remarks: </label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                                    <p class="mb-0"><b v-text="vm_tab1.approved_remarks"></b></p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div id="cancelled_by" v-if="vm_tab1.cancelled_by">
-                                            <div class="form-group m-form__group row pb-0">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Cancelled By: </label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                                    <p class="mb-0"><b v-text="vm_tab1.cancelled_by"></b> ON <b v-text="moment(vm_tab1.cancelled_dt).format('LLL')"></b></p>
-                                                </div>
-                                            </div>
-                                            <div class="form-group m-form__group row">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Remarks: </label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                                    <p class="mb-0"><b v-text="vm_tab1.cancelled_remarks"></b></p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div id="disapproved_by" v-if="vm_tab1.disapproved_by">
-                                            <div class="form-group m-form__group row pb-0">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Disapproved By: </label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                                    <p class="mb-0"><b v-text="vm_tab1.disapproved_by"></b> ON <b v-text="moment(vm_tab1.disapproved_dt).format('LLL')"></b></p>
-                                                </div>
-                                            </div>
-                                            <div class="form-group m-form__group row pb-0">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Remarks: </label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">
-                                                    <p class="mb-0"><b v-text="vm_tab1.disapproved_remarks"></b></p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <template v-if="vm_tab1.status == 'For Posting'">
-                                            <div class="form-group m-form__group row pb-0" id="undo_posted">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Undo Posted by:</label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">   
-                                                    <b v-text="vm_tab1.posted_by"></b> ON <b v-text="moment(vm_tab1.posted_dt).format('LLL')"></b>
-                                                </div>
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Remarks:</label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">   
-                                                    <p class="mb-0"><b v-text="vm_tab1.posted_remarks"></b></p>
-                                                </div>
-                                            </div>
-                                            <div class="form-group m-form__group row pb-0" id="posted">
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Posted by:</label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12" id="amt_deduct">   
-                                                    <b v-text="vm_tab1.posted_by"></b> ON <b v-text="moment(vm_tab1.posted_dt).format('LLL')"></b>
-                                                </div>
-                                                <label class=" col-md-4 col-lg-4 col-sm-4 col-xs-12">Remarks:</label>
-                                                <div class="col-md-8 col-lg-8 col-sm-8 col-xs-12">   
-                                                    <p class="mb-0"><b v-text="vm_tab1.posted_remarks"></b></p>
-                                                </div>
-                                            </div>
-                                        </template>
+                            </template>
+                        </div>
+                        
+                        <div class="row mt-5 m--hide" id="list-content">
+                            <div class="col-md-8">
+                                <div class="form-group m-form__group row">
+                                    <div class="m_datatable  m-datatable--default  m-datatable--scroll col-12 table-responsive-m" style="overflow-x: scroll;">
+                                        <table class="table table-striped table-bordered" id="table-cash-advance-content" width="100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>CA #</th>
+                                                    <th>Purpose</th>
+                                                    <th>Date Approved</th>
+                                                    <th>Active Balance</th>
+                                                    <th>Payroll Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
-                            <div class="row mt-5 m--hide" id="list-content">
-                                <div class="col-md-8">
-                                    <div class="form-group m-form__group row">
-                                        <div class="m_datatable  m-datatable--default  m-datatable--scroll col-12 table-responsive-m" style="overflow-x: scroll;">
-                                            <table class="table table-striped table-bordered" id="table-cash-advance-content" width="100%">
-                                                <thead>
-                                                    <tr>
-                                                        <th>CA #</th>
-                                                        <th>Purpose</th>
-                                                        <th>Date Approved</th>
-                                                        <th>Active Balance</th>
-                                                        <th>Payroll Status</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody></tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group m-form__group row">
-                                        <div class="m_datatable  m-datatable--default  m-datatable--scroll col-12 table-responsive">
-                                            <table class="table table-striped table-bordered" id="table-file-content" width="100%">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Type</th>
-                                                        <th>File Name</th>
-                                                        <th>Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody> 
+                            <div class="col-md-4">
+                                <div class="form-group m-form__group row">
+                                    <div class="m_datatable  m-datatable--default  m-datatable--scroll col-12 table-responsive">
+                                        <table class="table table-striped table-bordered" id="table-file-content" width="100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Type</th>
+                                                    <th>File Name</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody> 
 
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="modal-footer" id="buttons">
-
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    <div class="modal-footer" id="buttons"></div>
+                </form>
+            </div>
 	    </div>
     </div>    
 </div>
@@ -1419,6 +1461,63 @@ label.col-6.px-0.colon--after:after {
     </div>
 </div>
 <!-- undo for final approval -->
+
+<!-- released modal -->
+<div class="modal fade" id="released" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: block;">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">
+                    Released
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">
+                        ×
+                    </span>
+                </button>
+            </div>
+            <form id="released-form" autocomplete="off">
+                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                <div class="col-12 modal-body">
+                    <div class="form-group row align-items-center">
+                        <label class="col-md-12 col-lg-12 col-sm-12 col-xs-12 form-control-label m-0 required">
+                            Debit Note #
+                        </label>
+                        <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                            <input class="form-control" name="dn_number" id="dn_number" data-validation="required">
+                        </div>
+                    </div>
+                    <div class="form-group row align-items-center">
+                        <label class="col-md-6 col-lg-6 col-sm-12 col-xs-12 form-control-label m-0 required">
+                            Voucher Reference #
+                        </label>
+                        <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                            <input class="form-control" name="voucher_ref" id="voucher_ref" data-validation="required">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-md-12 col-lg-12 col-sm-12 col-xs-12 form-control-label">
+                            Remarks
+                        </label>
+                        <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                            <textarea class="form-control" name="released_remarks" rows="3" id="released_remarks"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn text-white btn-submit btn-primary  btnSave">
+                        Released
+                    </button>
+                    <button type="button" class="btn text-white btn-metal btnClose" data-dismiss="modal">
+                        Close
+                    </button>       
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- released modal -->
+
 <style>
 .hideTable{
     display: none

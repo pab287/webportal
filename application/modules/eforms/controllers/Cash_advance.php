@@ -524,4 +524,11 @@ class Cash_advance extends MY_Controller {
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
+    public function released($id){
+        $data = $this->cash_advance->released($id);
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
 }
