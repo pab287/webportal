@@ -22,6 +22,7 @@
             $data = $this->GCCTIME_EFORM->isSignout();
             echo $data;
         }
+        
         public function portal_modules(){
             $data = $this->GCCTIME_EFORM->portalModules();
             echo $data;

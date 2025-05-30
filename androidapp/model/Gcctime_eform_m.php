@@ -67,7 +67,6 @@
         return json_encode(["status" => false, "msg" => "Username or password is incorrect."]);
     }
 
-
     public function isSuspended() {
         $emp_id = $_POST['emp_id'] ?? null;
         if (!$emp_id) {
