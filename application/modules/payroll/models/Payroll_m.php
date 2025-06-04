@@ -7547,11 +7547,8 @@ class Payroll_m extends CI_Model
                 $rows = $query->row();
                 $rows->amount_formatted = number_format($rows->amount, 2, ".", ",");
 
-                if($rows->approved_dt != strtotime('0000-00-00 00:00:00')){
+                if($rows->approved_dt !== '0000-00-00 00:00:00'){
                     $to_date = date('Y-m-d', strtotime($rows->approved_dt));
-                    /*** $dates = explode('-', $range);
-                    $date_start = date('Y-m-d', strtotime($dates[0]));
-                    $date_end = date('Y-m-d', strtotime($dates[1])); ***/
     
                     $this->db->from('payroll.payroll_sheet');
                     $this->db->where('emp_id', $emp->id);
@@ -7586,10 +7583,10 @@ class Payroll_m extends CI_Model
                             if(($last_date >= $date_start) && ($last_date <= $date_end) || ($get_payment->amount == 0 && $last_date <= $date_start && $last_date <= $date_end) || ($get_payment->amount != 0 && $last_date <= $date_start && $last_date <= $date_end)){
                                 $tempId = $row->emp_id;
                             }
-                        }else if($sched == 2){
+                        }elseif($sched == 2){
                             // for checking cash advance loan within cut off or after 2 payouts and suspended cash advance status
                             if(($to_date >= $row->date_start) && ($to_date <= $row->date_end) || ($get_payment->amount == 0 && $to_date <= $row->date_start && $to_date <= $row->date_end) || ($get_payment->amount != 0 && $to_date <= $row->date_start && $to_date <= $row->date_end)){
-                                $tempId = $row->emp_id;   
+                                $tempId = $row->emp_id;
                             }
                         }else{
                             $tempId = $row->emp_id;
@@ -7614,8 +7611,7 @@ class Payroll_m extends CI_Model
         $this->db->where("doc_type", "Police Clearance");
         $this->db->or_where("doc_type", "NBI Clearance");
         $this->db->group_end();
-        $data = $this->db->get()->num_rows();
-        return $data;
+        return $this->db->get()->num_rows();
     }
     // for getting employees with available cash advance within the last cut off
     
