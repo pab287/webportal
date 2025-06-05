@@ -1060,10 +1060,10 @@
                 </ul>
                 <div class="tab-content" id="offense-content">
                     <div id="offenses-tab">
-                        <table class="responsive">
+                        <table class="responsive" style="width: 100%; max-width: 100%; overflow-x: auto;">
                             <thead class="customsalary">
                                 <tr>
-                                    <th scope="col" colspan="4" v-text="activeTab">OFFENSE AND COMMENDATIONS</th>
+                                    <th scope="col" colspan="6" v-text="activeTab">OFFENSE AND COMMENDATIONS</th>
                                 </tr>
                             </thead>
                             <thead>
@@ -1072,6 +1072,8 @@
                                     <th class="" scope="col" style="width: 13%">DATE</th>
                                     <th class="" scope="col">NATURE</th>
                                     <th class="" scope="col">ACTION TAKEN</th>
+                                    <th class="" scope="col" style="width: 60px;">VIEW</th>
+                                    <th class="" scope="col" style="width: 150px;">FILE</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1081,6 +1083,14 @@
                                         <td data-label="DATE" v-text="formatDate(offense.offcom_date)"></td>
                                         <td data-label="NATURE" v-text="offense.offcom_nature"></td>
                                         <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
+                                        <td data-label="VIEW" class="text-center" style="width: 60px; text-align: center;">
+                                            <span>
+                                                <button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" @click="openFile(offense.filename)">
+                                                    <i class="fa fa-eye"></i>
+                                                </button>
+                                            </span>
+                                        </td>
+                                        <td data-label="FILE" v-text="offense.filename" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></td>
                                     </tr>
                                 </template>
                                 <template v-else>
@@ -1089,6 +1099,8 @@
                                         <td data-label="DATE">NONE</td>
                                         <td data-label="NATURE">NONE</td>
                                         <td data-label="ACTION TAKEN">NONE</td>
+                                        <td data-label="BUTTON" style="width: 60px; text-align: center;">---</td>
+                                        <td data-label="FILE" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">NONE</td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -1321,6 +1333,22 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="pdfViewerModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">File Viewer</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <iframe id="pdfFrame" style="width: 100%; height: 800px;" frameborder="0"></iframe>
             </div>
         </div>
     </div>
