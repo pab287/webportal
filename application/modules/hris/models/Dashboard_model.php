@@ -394,17 +394,17 @@
                 case "2nd":
                     $evalDateExpr = "DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY)";
                     $select .= ", $evalDateExpr AS evaluation_date";
-                    $where .= "AND DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) > '$current_date' AND calendar.first_eval_date IS NULL";
+                    $where .= "AND $evalDateExpr > '$current_date' AND calendar.second_eval_date IS NULL";
                     break;
                 case "final":
                     $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 5 MONTH)";
                     $select .= ", $evalDateExpr AS evaluation_date";
-                    $where .= "AND DATE_ADD(emp.date_start, INTERVAL 5 MONTH) > '$current_date' AND calendar.date_discontinued IS NULL";
+                    $where .= "AND $evalDateExpr > '$current_date' AND calendar.date_discontinued IS NULL";
                     break;
                 default:
                     $evalDateExpr = "DATE_ADD(emp.date_start, interval 3 month)";
                     $select .= ", $evalDateExpr AS evaluation_date";
-                    $where .= "AND DATE_ADD(emp.date_start, interval 3 month) > '$current_date' AND calendar.first_eval_date IS NULL";
+                    $where .= "AND $evalDateExpr > '$current_date' AND calendar.first_eval_date IS NULL";
                     break;
             }
 
@@ -454,7 +454,9 @@
         
                 $this->db->group_start();
                 foreach ($filterFields as $field) {
-                    $this->db->or_like($field, $search, "both");
+                    foreach ($searchTerms as $term) {
+                        $this->db->or_like($field, $term, "both");
+                    }
                 }
                 $this->db->group_end();
             }
@@ -572,17 +574,17 @@
                 case "2nd":
                     $evalDateExpr = "DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY)";
                     $select .= ", $evalDateExpr AS evaluation_date";
-                    $where .= "AND DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) > '$current_date' AND calendar.first_eval_date IS NULL";
+                    $where .= "AND $evalDateExpr > '$current_date' AND calendar.second_eval_date IS NULL";
                     break;
                 case "final":
                     $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 5 MONTH)";
                     $select .= ", $evalDateExpr AS evaluation_date";
-                    $where .= "AND DATE_ADD(emp.date_start, INTERVAL 5 MONTH) > '$current_date' AND calendar.date_discontinued IS NULL";
+                    $where .= "AND $evalDateExpr > '$current_date' AND calendar.date_discontinued IS NULL";
                     break;
                 default:
                     $evalDateExpr = "DATE_ADD(emp.date_start, interval 3 month)";
                     $select .= ", $evalDateExpr AS evaluation_date";
-                    $where .= "AND DATE_ADD(emp.date_start, interval 3 month) > '$current_date' AND calendar.first_eval_date IS NULL";
+                    $where .= "AND $evalDateExpr > '$current_date' AND calendar.first_eval_date IS NULL";
                     break;
             }
         
@@ -632,7 +634,9 @@
         
                 $this->db->group_start();
                 foreach ($filterFields as $field) {
-                    $this->db->or_like($field, $search, "both");
+                    foreach ($searchTerms as $term) {
+                        $this->db->or_like($field, $term, "both");
+                    }
                 }
                 $this->db->group_end();
             }
@@ -714,32 +718,42 @@
             $where = "emp.work_status = 'PROBATIONARY' AND emp.employee_status = 'Active' ";
 
             $evalDateExpr = "";
+  
             switch($stage) {
-                case 1: // 3rd month
+                case 1: // 3rd month overdue
                     $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 3 MONTH)";
                     $select .= "$evalDateExpr AS evaluation_date";
-                    $where .= "AND date_add(emp.date_start, interval 3 month) < '$current_date' AND calendar.first_eval_date IS NULL";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND calendar.first_eval_date IS NULL
+                            AND (calendar.second_eval IS NULL OR calendar.second_eval = '')
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '')";
                     $eval_stage = "3rd month";
                     break;
-        
-                case 2: // 4.5th month
+
+                case 2: // 4.5th month overdue
                     $evalDateExpr = "DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY)";
                     $select .= "$evalDateExpr AS evaluation_date";
-                    $where .= "AND DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) < '$current_date' AND calendar.first_eval_date IS NULL";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND calendar.second_eval_date IS NULL
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '')";
                     $eval_stage = "4.5th month";
                     break;
-        
-                case 3: // Final
+
+                case 3: // Final (5th month) overdue
                     $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 5 MONTH)";
                     $select .= "$evalDateExpr AS evaluation_date";
-                    $where .= " AND DATE_ADD(emp.date_start, INTERVAL 5 MONTH) < '$current_date' AND calendar.date_discontinued IS NULL";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND calendar.date_discontinued IS NULL";
                     $eval_stage = "Final";
                     break;
-        
-                default: // All
+
+                default: // fallback to 3rd month
                     $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 3 MONTH)";
                     $select .= "$evalDateExpr AS evaluation_date";
-                    $where .= "AND date_add(emp.date_start, interval 3 month) < '$current_date' AND calendar.first_eval_date IS NULL";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND calendar.first_eval_date IS NULL
+                            AND (calendar.second_eval IS NULL OR calendar.second_eval = '')
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '')";
                     $eval_stage = "3rd month";
                     break;
             }
@@ -791,7 +805,9 @@
         
                 $this->db->group_start();
                 foreach ($filterFields as $field) {
-                    $this->db->or_like($field, $search, "both");
+                    foreach ($searchTerms as $term) {
+                        $this->db->or_like($field, $term, "both");
+                    }
                 }
                 $this->db->group_end();
             }
@@ -917,32 +933,37 @@
 
             $evalDateExpr = "";
             switch($stage) {
-                case 1: // 3rd month
+                case 1: // 3rd month overdue
                     $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 3 MONTH)";
                     $select .= "$evalDateExpr AS evaluation_date";
-                    $where .= "AND date_add(emp.date_start, interval 3 month) < '$current_date' AND calendar.first_eval_date IS NULL";
-                    $eval_stage = "3rd month";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND calendar.first_eval_date IS NULL
+                            AND (calendar.second_eval IS NULL OR calendar.second_eval = '')
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '')";
                     break;
-        
-                case 2: // 4.5th month
+
+                case 2: // 4.5th month overdue
                     $evalDateExpr = "DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY)";
                     $select .= "$evalDateExpr AS evaluation_date";
-                    $where .= "AND DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) < '$current_date' AND calendar.first_eval_date IS NULL";
-                    $eval_stage = "4.5th month";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND calendar.second_eval_date IS NULL
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '')";
                     break;
-        
-                case 3: // Final
+
+                case 3: // Final (5th month) overdue
                     $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 5 MONTH)";
                     $select .= "$evalDateExpr AS evaluation_date";
-                    $where .= " AND DATE_ADD(emp.date_start, INTERVAL 5 MONTH) < '$current_date' AND calendar.date_discontinued IS NULL";
-                    $eval_stage = "Final";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND calendar.date_discontinued IS NULL";
                     break;
-        
-                default: // All
+
+                default: // fallback to 3rd month
                     $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 3 MONTH)";
                     $select .= "$evalDateExpr AS evaluation_date";
-                    $where .= "AND date_add(emp.date_start, interval 3 month) < '$current_date' AND calendar.first_eval_date IS NULL";
-                    $eval_stage = "3rd month";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND calendar.first_eval_date IS NULL
+                            AND (calendar.second_eval IS NULL OR calendar.second_eval = '')
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '')";
                     break;
             }
         
@@ -992,7 +1013,9 @@
 
                 $this->db->group_start();
                 foreach ($filterFields as $field) {
-                    $this->db->or_like($field, $search, "both");
+                    foreach ($searchTerms as $term) {
+                        $this->db->or_like($field, $term, "both");
+                    }
                 }
                 $this->db->group_end();
             }
@@ -1046,36 +1069,46 @@
             ];    
         
             $select = "emp.idno,
-                        emp.id AS emp_id,
-                        emp.lastname, emp.firstname, emp.middlename, emp.suffix, 
-                        UCASE(CONCAT(
-                            emp.firstname, ' ', 
-                            IF((emp.middlename = '' OR emp.middlename IS NULL OR LCASE(emp.middlename) = 'n/a' OR LCASE(emp.middlename) = 'none'), ' ', CONCAT(SUBSTR(emp.middlename,1,1), '. ')), 
-                            emp.lastname, ' ',
-                            IF((emp.suffix = '' OR emp.suffix IS NULL OR LCASE(emp.suffix) = 'n/a' OR LCASE(emp.suffix) = 'none'), ' ', emp.suffix))) employee_name,
-                        calendar.id AS cal_id,
-                        emp.date_start, 
-                        emp.date_end_prob, 
-                        UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) company,
-                        UCASE(IF(positions.id IS NULL, emp.position, positions.name)) position,
-                        DATE_ADD(emp.date_start, INTERVAL 3 MONTH) evaluation_date_first,
-                        DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) evaluation_date_second,
-                        DATE_ADD(emp.date_start, INTERVAL 5 MONTH) evaluation_date_final";
-        
-            $where = "emp.work_status = 'PROBATIONARY' 
-                        AND emp.employee_status = 'Active'
-                        AND (
-                            DATE_ADD(emp.date_start, INTERVAL 3 MONTH) < '$current_date'
-                            OR DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) < '$current_date'
-                            OR DATE_ADD(emp.date_start, INTERVAL 5 MONTH) < '$current_date'
-                        )";
+                emp.id AS emp_id,
+                emp.lastname, emp.firstname, emp.middlename, emp.suffix, 
+                UCASE(CONCAT(
+                    emp.firstname, ' ', 
+                    IF((emp.middlename = '' OR emp.middlename IS NULL OR LCASE(emp.middlename) = 'n/a' OR LCASE(emp.middlename) = 'none'), ' ', CONCAT(SUBSTR(emp.middlename,1,1), '. ')), 
+                    emp.lastname, ' ',
+                    IF((emp.suffix = '' OR emp.suffix IS NULL OR LCASE(emp.suffix) = 'n/a' OR LCASE(emp.suffix) = 'none'), ' ', emp.suffix))) employee_name,
+                calendar.id AS cal_id,
+                emp.date_start, 
+                emp.date_end_prob, 
+                UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) company,
+                UCASE(IF(positions.id IS NULL, emp.position, positions.name)) position,
+                DATE_ADD(emp.date_start, INTERVAL 3 MONTH) evaluation_date_first,
+                DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) evaluation_date_second,
+                DATE_ADD(emp.date_start, INTERVAL 5 MONTH) evaluation_date_final,
+                calendar.first_eval,
+                calendar.first_eval_date,
+                calendar.second_eval,
+                calendar.second_eval_date,
+                calendar.date_discontinued,
+                (DATE_ADD(emp.date_start, INTERVAL 3 MONTH) < '$current_date' AND calendar.first_eval_date IS NULL) AS is_3rd_overdue,
+                (DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) < '$current_date' AND calendar.second_eval_date IS NULL) AS is_4th_overdue,
+                (DATE_ADD(emp.date_start, INTERVAL 5 MONTH) < '$current_date' AND calendar.date_discontinued IS NULL) AS is_final_overdue
+                ";
+
+            $where = "
+                    emp.work_status = 'PROBATIONARY' 
+                    AND emp.employee_status = 'Active'
+                    AND (
+                        (DATE_ADD(emp.date_start, INTERVAL 3 MONTH) < '$current_date' AND calendar.first_eval_date IS NULL)
+                        OR (DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) < '$current_date' AND calendar.second_eval_date IS NULL)
+                        OR (DATE_ADD(emp.date_start, INTERVAL 5 MONTH) < '$current_date' AND calendar.date_discontinued IS NULL)
+                    )
+                    ";
         
             $joinArr = array(
                 array("table" => "gcchris.tblprobicalendar AS calendar", "condition" => "calendar.emp_id = emp.id", "option" => "LEFT"),
                 array("table" => $this->tblCompanies . " companies", "condition" => "companies.id = emp.company_id", "option" => "LEFT"),
                 array("table" => $this->tblPosition . " positions", "condition" => "positions.id = emp.position", "option" => "LEFT")
             );
-        
             $this->db->select($select);
             foreach ($joinArr as $join) {
                 $this->db->join($join["table"], $join["condition"], $join["option"]);
@@ -1106,7 +1139,9 @@
         
                 $this->db->group_start();
                 foreach ($filterFields as $field) {
-                    $this->db->or_like($field, $search, "both");
+                    foreach ($searchTerms as $term) {
+                        $this->db->or_like($field, $term, "both");
+                    }
                 }
                 $this->db->group_end();
             }
@@ -1125,50 +1160,57 @@
             $query = $this->db->get($this->tblEmployees . " emp");
         
             // List all employee first with & without overdue evaluation
-            $res_emp_data = array();
+            $res_emp_data_all = [];
             foreach($query->result() as $row) {
                 $eval_stage_date = [];
-        
+
                 $first_eval = date('Y-m-d', strtotime($row->evaluation_date_first));
                 $sec_eval = date('Y-m-d', strtotime($row->evaluation_date_second));
                 $final_eval = date('Y-m-d', strtotime($row->evaluation_date_final));
-        
+
+                // Return in boolean
+                $is_3rd_done   = !empty($row->first_eval_date);
+                $is_4th_done   = !empty($row->second_eval_date);
+                $is_final_done = !empty($row->date_discontinued);
+
+                // Return in boolean
+                $is_3rd_overdue   = $first_eval < $current_date && !$is_3rd_done;
+                $is_4th_overdue   = $sec_eval < $current_date && !$is_4th_done;
+                $is_final_overdue = $final_eval < $current_date && !$is_final_done;
+
                 // 3rd month overdue evaluation
-                if ($first_eval < $current_date) {
+                if ($is_3rd_overdue && !$is_4th_done && !$is_final_done) {
                     $datediff = strtotime($current_date) - strtotime($first_eval);
-        
-                    $esd = array(
+
+                    $eval_stage_date[] = array(
                         "evaluation_stage" => "3RD MONTH", 
                         "evaluation_date" => $first_eval,
                         "overdue_date" => round($datediff / (60 * 60 * 24))
                     );
-                    array_push($eval_stage_date, $esd);
                 }
-        
+                
                 // 4.5th month overdue evaluation
-                if ($sec_eval < $current_date) {
+                if ($is_4th_overdue && !$is_final_done) {
                     $datediff = strtotime($current_date) - strtotime($sec_eval);
-        
-                    $esd = array(
+
+                    $eval_stage_date[] = array(
                         "evaluation_stage" => "4.5TH MONTH", 
                         "evaluation_date" => $sec_eval,
                         "overdue_date" => round($datediff / (60 * 60 * 24))
-                    );
-                    array_push($eval_stage_date, $esd);
+                    );                
                 }
-        
+
                 // Final overdue evaluation
-                if ($final_eval < $current_date) {
+                if ($is_final_overdue) {
                     $datediff =  strtotime($current_date) - strtotime($final_eval);
-        
-                    $esd = array(
+
+                    $eval_stage_date[] = array(
                         "evaluation_stage" => "FINAL", 
                         "evaluation_date" => $final_eval,
                         "overdue_date" => round($datediff / (60 * 60 * 24))
                     );
-                    array_push($eval_stage_date, $esd);
                 }
-        
+                
                 $employee_data['checkbox'] = '';
                 $employee_data['cal_id'] = $row->cal_id;
                 $employee_data['idno'] = $row->idno;
@@ -1183,13 +1225,19 @@
                 $employee_data['position'] = $row->position;
                 $employee_data['suffix'] = $row->suffix;
                 $employee_data['eval_stage_date'] = $eval_stage_date;
-        
-                $res_emp_data[] = $employee_data;
+                $employee_data['is_3rd_done'] = $is_3rd_done;
+                $employee_data['is_4th_done'] = $is_4th_done;
+                $employee_data['is_final_done'] = $is_final_done;
+                $employee_data['is_3rd_overdue'] = $is_3rd_overdue;
+                $employee_data['is_4th_overdue'] = $is_4th_overdue;
+                $employee_data['is_final_overdue'] = $is_final_overdue;
+
+                $res_emp_data_all[] = $employee_data;
             }
-        
+
             $total = $this->all_evaluation_overdue_count($search);
 
-            $resultSet['data'] = $res_emp_data;
+            $resultSet['data'] = $res_emp_data_all;
             $resultSet['recordsTotal'] = $total;
             $resultSet['recordsFiltered'] = $total;
             return $resultSet;
@@ -1231,29 +1279,37 @@
             ];
 
             $select = "emp.idno,
-                        emp.id AS emp_id,
-                        emp.lastname, emp.firstname, emp.middlename, emp.suffix, 
-                        UCASE(CONCAT(
-                            emp.firstname, ' ', 
-                            IF((emp.middlename = '' OR emp.middlename IS NULL OR LCASE(emp.middlename) = 'n/a' OR LCASE(emp.middlename) = 'none'), ' ', CONCAT(SUBSTR(emp.middlename,1,1), '. ')), 
-                            emp.lastname, ' ',
-                            IF((emp.suffix = '' OR emp.suffix IS NULL OR LCASE(emp.suffix) = 'n/a' OR LCASE(emp.suffix) = 'none'), ' ', emp.suffix))) employee_name,
-                        calendar.id AS cal_id,
-                        emp.date_start, 
-                        emp.date_end_prob, 
-                        UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) company,
-                        UCASE(IF(positions.id IS NULL, emp.position, positions.name)) position,
-                        DATE_ADD(emp.date_start, INTERVAL 3 MONTH) evaluation_date_first,
-                        DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) evaluation_date_second,
-                        DATE_ADD(emp.date_start, INTERVAL 5 MONTH) evaluation_date_final";
-        
-            $where = "emp.work_status = 'PROBATIONARY' 
-                        AND emp.employee_status = 'Active'
-                        AND (
-                            DATE_ADD(emp.date_start, INTERVAL 3 MONTH) < '$current_date'
-                            OR DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) < '$current_date'
-                            OR DATE_ADD(emp.date_start, INTERVAL 5 MONTH) < '$current_date'
-                        )";
+                emp.id AS emp_id,
+                emp.lastname, emp.firstname, emp.middlename, emp.suffix, 
+                UCASE(CONCAT(
+                    emp.firstname, ' ', 
+                    IF((emp.middlename = '' OR emp.middlename IS NULL OR LCASE(emp.middlename) = 'n/a' OR LCASE(emp.middlename) = 'none'), ' ', CONCAT(SUBSTR(emp.middlename,1,1), '. ')), 
+                    emp.lastname, ' ',
+                    IF((emp.suffix = '' OR emp.suffix IS NULL OR LCASE(emp.suffix) = 'n/a' OR LCASE(emp.suffix) = 'none'), ' ', emp.suffix))) employee_name,
+                calendar.id AS cal_id,
+                emp.date_start, 
+                emp.date_end_prob, 
+                UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) company,
+                UCASE(IF(positions.id IS NULL, emp.position, positions.name)) position,
+                DATE_ADD(emp.date_start, INTERVAL 3 MONTH) evaluation_date_first,
+                DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) evaluation_date_second,
+                DATE_ADD(emp.date_start, INTERVAL 5 MONTH) evaluation_date_final,
+                calendar.first_eval,
+                calendar.first_eval_date,
+                calendar.second_eval,
+                calendar.second_eval_date,
+                calendar.date_discontinued";
+
+            $where = "
+                    emp.work_status = 'PROBATIONARY' 
+                    AND emp.employee_status = 'Active'
+                    AND (calendar.date_discontinued IS NULL)
+                    AND (
+                        (DATE_ADD(emp.date_start, INTERVAL 3 MONTH) < '$current_date' AND calendar.first_eval_date IS NULL)
+                        OR (DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) < '$current_date' AND calendar.second_eval_date IS NULL)
+                        OR (DATE_ADD(emp.date_start, INTERVAL 5 MONTH) < '$current_date')
+                    )
+                    ";
 
             $joinArr = array(
                 array("table" => "gcchris.tblprobicalendar AS calendar", "condition" => "calendar.emp_id = emp.id", "option" => "LEFT"),
@@ -1291,7 +1347,9 @@
 
                 $this->db->group_start();
                 foreach ($filterFields as $field) {
-                    $this->db->or_like($field, $search, "both");
+                    foreach ($searchTerms as $term) {
+                        $this->db->or_like($field, $term, "both");
+                    }
                 }
                 $this->db->group_end();
             }

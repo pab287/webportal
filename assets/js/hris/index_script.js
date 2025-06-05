@@ -875,12 +875,35 @@ initEvaluationTableSearchBox();
 
 // =================================================================================
 
+$('#evaluation_tab [data-toggle="tab"]').on('click', function (e) {
+    e.preventDefault();
+
+    // Remove active class from all nav links
+    $('#evaluation_tab .nav-link, #evaluation_tab .dropdown-item').removeClass('active');
+
+    // Add active class to the clicked link
+    $(this).addClass('active');
+
+    // Handle dropdown: mark the dropdown toggle as active if a dropdown-item was clicked
+    if ($(this).hasClass('dropdown-item')) {
+        $(this).closest('.dropdown').find('.dropdown-toggle').addClass('active');
+    }
+
+    // Hide all tab panes
+    $('.tab-pane').removeClass('show active');
+
+    // Show the corresponding tab
+    const target = $(this).attr('href');
+    $(target).addClass('show active');
+});
+
 let loadEvaluationTable_stage;
+let search_val_eval_list = "";
 
 const tblEvaluation = $('#table-employee-evaluation').DataTable({
     destroy: true,
     // dom: 'lfrtip',
-    dom: '<"toolbar">frtlip',
+    dom: '<"toolbar">rtlip',
     serverSide: true,
     processing: true,
     searching: true,
@@ -894,6 +917,7 @@ const tblEvaluation = $('#table-employee-evaluation').DataTable({
         global: false,
         data: function (d) {
             d.csrf_token = _csrf_hash;
+            d.search['value'] = search_val_eval_list;
         }
     },
     columns: [
@@ -932,166 +956,18 @@ const tblEvaluation = $('#table-employee-evaluation').DataTable({
             targets: "_all",
             className: "v-middle",
         }
-   ]
-});
-
-loadEvaluationTable();
-
-function loadEvaluationTable(evaluation = null) {
-    if(evaluation == null){
-        evaluation = $(".employee_evaluation_options").val();
-    }
-
-    loadEvaluationTable_stage = evaluation;
-    const newUrl = baseUrl('hris/dashboard/get_evaluation_list/' + loadEvaluationTable_stage);
-    tblEvaluation.ajax.url(newUrl).load();
-
-    const th = $('#table-employee-evaluation').find('th:eq(5)');
-    switch (evaluation) {
-        case '2nd':
-            th.text('4.5th Month');
-            break;
-        case 'final':
-            th.text('Final Evaluation');
-            break;
-        case 'overdue':
-            th.text('Overdue');
-            break;
-        default:
-            th.text('3rd Month');
-            break;
-    }
-}
-
-$('#table-employee-evaluation #cb-select-all').on('change', function() {
-    if (this.checked) {
-        tblEvaluation.rows().select();
-    } else {
-        tblEvaluation.rows().deselect();
-    }
-});
-
-tblEvaluation.on('select deselect', function() {
-    if (tblEvaluation.rows({ selected: true }).count() !== tblEvaluation.rows().count()) {
-        $('#table-employee-evaluation #cb-select-all').prop('checked', false);  
-    } else {
-        $('#table-employee-evaluation #cb-select-all').prop('checked', true);
-    }
-});
-
-// =================================================================================
-
-let tblOverdueEvaluation_stage;
-
-function loadOverdueEvaluationTable(stage) {
-    tblOverdueEvaluation_stage = stage;
-    tblOverdueEvaluation.ajax.reload();
-}
-
-const tblOverdueEvaluation = $('#table-employee-evaluation-overdue').DataTable({
-    destroy: true,
-    // dom: 'lfrtip',
-    dom: '<"toolbar">frtlip',
-    serverSide: true,
-    processing: true,
-    searching: true,
-    ordering: true,
-    lengthMenu: [[5, 10, 20, 30, 50, 100, -1], [5, 10, 20, 30, 50, 100, 'All']],
-    ajax: {
-        url: baseUrl('hris/dashboard/evaluation_overdue/'),
-        type: 'post',
-        dataType: 'json',
-        global: false,
-        data: function (d) {
-            d.csrf_token = _csrf_hash;
-            d.evaluation_stage = tblOverdueEvaluation_stage;
-        }
-    },
-    order: [[5, "desc"]],
-    columns: [
-        {data: 'checkbox'},
-        {data: 'idno'},
-        {data: 'employee_name'},
-        {data: 'company'},
-        {data: 'position'},
-        {
-            data: 'date_start',
-            render: function (data) {
-                return moment(data).format('ll');
-            } 
-        },
-        {
-            // Evaluation Stage
-            data: 'eval_stage_date',
-            orderable: false,
-            render: function (data, type, row, meta) {
-                let stages = ``;
-
-                for (let i = 0; i < data.length; i++) {
-                    stages += data[i].evaluation_stage + `<br>`;
-                }
-
-                return stages;
-            }
-        },
-        {
-            // Evaluation Date
-            data: 'eval_stage_date',
-            orderable: false,
-            render: function (data, type, row, meta) {                
-                let date = ``;
-
-                for (let i = 0; i < data.length; i++) {
-                    date += `<span class="m--font-boldest">${moment(data[i].evaluation_date).format('ll')}</span> \n`;
-                }
-
-                return date;
-            }
-        },
-        {
-            // Overdue Date of evaluation
-            data: 'eval_stage_date',
-            orderable: false,
-            className: 'text-center',
-            render: function (data) {                
-                let overdue = ``;
-
-                for (let i = 0; i < data.length; i++) {
-                    overdue += `<span class="m--font-boldest m--font-danger">${data[i].overdue_date} Days</span>` + `<br>`;
-                }
-
-                return overdue;
-            }
-        },
-    ],
-    pageLength: 10,
-    select: {
-        style:    'multi',
-        selector: 'td:first-child'
-    },
-    columnDefs: [
-        {    
-            orderable: false,
-            className: 'select-checkbox',
-            targets: 0,
-        },
-        {
-            targets: "_all",
-            className: "v-middle",
-        }
     ],
     buttons: [
         { 
             extend: 'csv',
             exportOptions: {
-                columns: "thead th:not(.notExport)"
+                columns: "thead th:not(.notExport)",
             },
             customize: function(csv) {
                 let data = csv.split('\n');
 
-                let targetUppercase = [1, 3]; // Columns to make uppercase
-                let removeSpecialChar = [5, 6, 7]; // Remove special characters from these columns like peso sign
-                let removeComma = [5, 6, 7]; // Column to remove commas
+                let targetUppercase = [3]; // Columns to make uppercase
+                let removeComma = [5, 6]; // Column to remove commas
 
                 // Loop through each row
                 data = data.map((row, rowIndex) => {  
@@ -1110,11 +986,6 @@ const tblOverdueEvaluation = $('#table-employee-evaluation-overdue').DataTable({
                             col = col.toUpperCase();
                         }
 
-                        // Remove special characters from specific columns
-                        if (removeSpecialChar.includes(columnIndex)) {
-                            col = col.replace(/[^\w\s.]/gi, '');
-                        }
-                
                         // Remove commas from specific columns
                         if (columnIndex === removeComma) {
                             col = col.replace(/,/g, '');
@@ -1136,35 +1007,11 @@ const tblOverdueEvaluation = $('#table-employee-evaluation-overdue').DataTable({
             exportOptions: {
                 columns: "thead th:not(.notExport)"
             },
-            customize: function(xlsx) {
-                let sheet = xlsx.xl.worksheets['sheet1.xml'];
-
-                // Convert Column B to Uppercase
-                $('row:not(:nth-child(2)) c[r^="B"], row:not(:nth-child(2)) c[r^="D"]', sheet).each(function () {
-                    let cell = $(this).find('is t, v'); // Find the text inside
-                    let text = cell.text().trim(); // Get the existing text
-
-                    if (text) {
-                        cell.text(text.toUpperCase()); // Convert to uppercase
-                    }
-                });
-
-                // Remove special characters from specific columns
-                $('row:not(:nth-child(2)) c[r^="F"], row:not(:nth-child(2)) c[r^="G"], row:not(:nth-child(2)) c[r^="H"]', sheet).each(function () {
-                    let cell = $(this).find('is t, v'); // Find the text inside
-                    let text = cell.text().trim(); // Get the existing text
-
-                    if (text) {
-                        let numericValue = parseFloat(text.replace(/[^\d.-]/g, ''));
-                        cell.text(numericValue);
-                    }
-                });
-            }
         },
         { 
-            extend: 'pdf',
+            extend: 'pdfHtml5',
             exportOptions: {
-                columns: "thead th:not(.notExport)"
+                columns: "thead th:not(.notExport)",
             },
             orientation: 'landscape',
             pageSize: 'LEGAL',
@@ -1194,29 +1041,23 @@ const tblOverdueEvaluation = $('#table-employee-evaluation-overdue').DataTable({
                     let targetUppercase = [4, 5, 6, 7]; // Columns to make uppercase
                     let targetCenter = [4, 5, 6, 7]; // Columns to center align
                     let targetRight = []; // Column to right align
-                    let removeSpecialChar = []; // Remove special characters from these columns like peso sign
 
                     row.forEach((cell, columnIndex) => {
-                        console.log(cell);
-                        if (!cell.text) { return; }
-
-                        // 👇 Split multi-line strings into actual lines
-                        // if (typeof cell.text === 'string' && cell.text.includes('\n')) {
-                        //     cell.text = cell.text.split('\n');
-                        // }
-
-                        // Set font size for other rows
-                        cell.style = { fontSize: 9 }; 
-
-                        // Background color for even and odd rows
+                        // Always set background color for even and odd rows
                         if (rowIndex % 2 === 0) {
                             cell.fillColor = '#f9f9f9'; // Light gray for even rows
                         } else {
                             cell.fillColor = '#ffffff'; // White for odd rows
                         }
 
+                        // Set font size for other rows
+                        cell.style = { fontSize: 9 }; 
+
+                        // Vertical center
+                        cell.valign = 'middle'; 
+
                         // Set text to uppercase for specific columns
-                        if (targetUppercase.includes(columnIndex)) {
+                        if (cell.text && targetUppercase.includes(columnIndex)) {
                             cell.text = cell.text.toUpperCase();
                         }
 
@@ -1229,16 +1070,314 @@ const tblOverdueEvaluation = $('#table-employee-evaluation-overdue').DataTable({
                         if (targetRight.includes(columnIndex)) {
                             cell.alignment = 'right';
                         }
-
-                        // Remove special characters from specific columns
-                        // if (removeSpecialChar.includes(columnIndex)) {
-                        //     cell.text = cell.text.replace(/[^\w\s,.]/gi, '');
-                        // }
                     });
                 });
             }
         }
     ],
+});
+
+$('#EvalSearch').donetyping(function(callback) {
+    search_val_eval_list = $(this).val();
+    tblEvaluation.ajax.reload();
+});
+
+loadEvaluationTable();
+
+function loadEvaluationTable(evaluation = null) {
+    if(evaluation == null){
+        evaluation = $(".employee_evaluation_options").val();
+    }
+
+    loadEvaluationTable_stage = evaluation;
+    const newUrl = baseUrl('hris/dashboard/get_evaluation_list/' + loadEvaluationTable_stage);
+    tblEvaluation.ajax.url(newUrl).load();
+
+    const th = $('#table-employee-evaluation').find('th:eq(6)');
+    switch (evaluation) {
+        case '2nd':
+            th.text('4.5TH MONTH');
+            break;
+        case 'final':
+            th.text('FINAL EVALUATION');
+            break;
+        case 'overdue':
+            th.text('Overdue');
+            break;
+        default:
+            th.text('3RD MONTH');
+            break;
+    }
+}
+
+$('#table-employee-evaluation #cb-select-all').on('change', function() {
+    if (this.checked) {
+        tblEvaluation.rows().select();
+    } else {
+        tblEvaluation.rows().deselect();
+    }
+});
+
+tblEvaluation.on('select deselect', function() {
+    if (tblEvaluation.rows({ selected: true }).count() !== tblEvaluation.rows().count()) {
+        $('#table-employee-evaluation #cb-select-all').prop('checked', false);  
+    } else {
+        $('#table-employee-evaluation #cb-select-all').prop('checked', true);
+    }
+});
+
+// Evaluation Overdue datatable export button
+
+$("#eval_ExportExcel").on("click", function() {
+    tblEvaluation.button( '.buttons-excel' ).trigger();
+    // saveExportLogs('Payments - Export Excel');
+});
+
+$("#eval_ExportCSV").on("click", function() {
+    tblEvaluation.button( '.buttons-csv' ).trigger();
+    // saveExportLogs('Payments - Export CSV');
+});
+
+$("#eval_ExportPDF").on("click", function() {
+    tblEvaluation.button( '.buttons-pdf' ).trigger();
+    // saveExportLogs('Payments - Export PDF');
+});
+
+// =================================================================================
+
+let tblOverdueEvaluation_stage;
+
+function loadOverdueEvaluationTable(stage) {
+    tblOverdueEvaluation_stage = stage;
+    tblOverdueEvaluation.ajax.reload();
+
+    // Hide export button if stage == 0, 0 is ALL
+    if (stage == 0) {
+        $('#exportBtn_eval_overdue').hide();
+    } else {
+        $('#exportBtn_eval_overdue').show();
+    }
+}
+
+let search_val_eval_overdue = "";
+
+const tblOverdueEvaluation = $('#table-employee-evaluation-overdue').DataTable({
+    destroy: true,
+    // dom: 'lfrtip',
+    dom: '<"toolbar">rtlip',
+    serverSide: true,
+    processing: true,
+    searching: true,
+    ordering: true,
+    lengthMenu: [[5, 10, 20, 30, 50, 100, -1], [5, 10, 20, 30, 50, 100, 'All']],
+    ajax: {
+        url: baseUrl('hris/dashboard/evaluation_overdue/'),
+        type: 'post',
+        dataType: 'json',
+        global: false,
+        data: function (d) {
+            d.csrf_token = _csrf_hash;
+            d.search['value'] = search_val_eval_overdue;
+            d.evaluation_stage = tblOverdueEvaluation_stage;
+        }
+    },
+    order: [[5, "desc"]],
+    columns: [
+        {data: 'checkbox'},
+        {data: 'idno'},
+        {data: 'employee_name'},
+        {data: 'company'},
+        {data: 'position'},
+        {
+            data: 'date_start',
+            render: function (data) {
+                return moment(data).format('ll');
+            } 
+        },
+        {
+            // Evaluation Stage
+            data: 'eval_stage_date',
+            orderable: false,
+            render: function (data, type, row, meta) {
+                let stages = [];
+
+                for (let i = 0; i < data.length; i++) {
+                    stages += data[i].evaluation_stage + ` <br>`;
+                }
+
+                return stages;
+            }
+        },
+        {
+            // Evaluation Date
+            data: 'eval_stage_date',
+            orderable: false,
+            render: function (data, type, row, meta) {                
+                let date = ``;
+
+                for (let i = 0; i < data.length; i++) {
+                    date += `${moment(data[i].evaluation_date).format('ll')} <br>`;
+                }
+
+                return date;
+            }
+        },
+        {
+            // Overdue Date of evaluation
+            data: 'eval_stage_date',
+            orderable: false,
+            className: 'text-center',
+            render: function (data) {                
+                let overdue = ``;
+                
+                for (let i = 0; i < data.length; i++) {
+                    let day_or_days = (data[i].overdue_date === 1) ? "Day" : "Days";
+                    overdue += `<span class="m--font-boldest m--font-danger">${data[i].overdue_date} ${day_or_days}</span> <br>`;
+                }
+
+                return overdue;
+            }
+        },
+    ],
+    pageLength: 10,
+    select: {
+        style:    'multi',
+        selector: 'td:first-child'
+    },
+    columnDefs: [
+        {    
+            orderable: false,
+            className: 'select-checkbox',
+            targets: 0,
+        },
+        {
+            targets: "_all",
+            className: "v-middle",
+        }
+    ],
+    buttons: [
+        { 
+            extend: 'csv',
+            exportOptions: {
+                columns: "thead th:not(.notExport)",
+            },
+            customize: function(csv) {
+                let data = csv.split('\n');
+
+                let targetUppercase = [3]; // Columns to make uppercase
+                let removeComma = [5, 7]; // Column to remove commas
+
+                // Loop through each row
+                data = data.map((row, rowIndex) => {  
+                    // Split row into columns, considering quoted fields
+                    let columns = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+
+                    columns = columns.map((col, columnIndex) => {
+                        col = col.trim(); // Remove extra spaces
+                
+                        if (rowIndex === 0) { 
+                            return col.replace(/\b\w/g, char => char.toUpperCase());
+                        }
+                
+                        // Convert to uppercase for specific columns
+                        if (targetUppercase.includes(columnIndex)) {
+                            col = col.toUpperCase();
+                        }
+
+                        // Remove commas from specific columns
+                        if (columnIndex === removeComma) {
+                            col = col.replace(/,/g, '');
+                        }
+                
+                        return col;
+                    });
+
+                    return columns.join(","); // Join modified columns
+                });
+
+                // Add UTF-8 BOM to the beginning of the CSV data for letter "ñ" to appear correctly
+                const utf8BOM = '\uFEFF';
+                return utf8BOM + data.join("\n"); // Reassemble CSV
+            }
+        },
+        { 
+            extend: 'excel',
+            exportOptions: {
+                columns: "thead th:not(.notExport)"
+            },
+        },
+        { 
+            extend: 'pdfHtml5',
+            exportOptions: {
+                columns: "thead th:not(.notExport)",
+            },
+            orientation: 'landscape',
+            pageSize: 'LEGAL',
+            customize: function(doc) {
+                // Set dynamic widths for all columns
+                let columnWidths = new Array(doc.content[1].table.body[0].length).fill('*');
+
+                // Define custom widths for specific columns (adjust index as needed)
+                columnWidths[0] = '8%';
+                columnWidths[1] = '18%';
+                
+                // Set font size for header row
+                doc.styles = doc.styles || {};
+                doc.styles.tableHeader = doc.styles.tableHeader || {};
+                doc.styles.tableHeader.fontSize = 9; 
+                doc.styles.tableHeader.fillColor = '#2d4154'; // Set header background color
+
+                // Apply column widths
+                doc.content[1].table.widths = columnWidths;
+
+                // Loop through table body and target specific column
+                doc.content[1].table.body.forEach(function (row, rowIndex) {
+
+                    // Skip header row from all styles
+                    if (rowIndex === 0) { return; }
+
+                    let targetUppercase = [4, 5, 6, 7]; // Columns to make uppercase
+                    let targetCenter = [4, 5, 6, 7]; // Columns to center align
+                    let targetRight = []; // Column to right align
+
+                    row.forEach((cell, columnIndex) => {
+                        // Always set background color for even and odd rows
+                        if (rowIndex % 2 === 0) {
+                            cell.fillColor = '#f9f9f9'; // Light gray for even rows
+                        } else {
+                            cell.fillColor = '#ffffff'; // White for odd rows
+                        }
+
+                        // Set font size for other rows
+                        cell.style = { fontSize: 9 }; 
+
+                        // Vertical center
+                        cell.valign = 'middle'; 
+
+                        // Set text to uppercase for specific columns
+                        if (cell.text && targetUppercase.includes(columnIndex)) {
+                            cell.text = cell.text.toUpperCase();
+                        }
+
+                        // Center align specific columns
+                        if (targetCenter.includes(columnIndex)) {
+                            cell.alignment = 'center';
+                        } 
+                        
+                        // Right align specific columns
+                        if (targetRight.includes(columnIndex)) {
+                            cell.alignment = 'right';
+                        }
+                    });
+                });
+            }
+        }
+    ],
+});
+
+$('#overdueEvalSearch').donetyping(function(callback) {
+    search_val_eval_overdue = $(this).val();
+    tblOverdueEvaluation.ajax.reload();
 });
 
 $('#table-employee-evaluation-overdue #cb-select-all').on('change', function() {
@@ -1259,7 +1398,7 @@ tblOverdueEvaluation.on('select deselect', function() {
 
 // =================================================================================
 
-// Evaluation datatable export button
+// Evaluation Overdue datatable export button
 
 
 $("#eval_due_ExportExcel").on("click", function() {
