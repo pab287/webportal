@@ -1053,10 +1053,10 @@
         <div id="empEmploymentInfo-body" class="collapse" :class="{show :activeSection == 'empEmploymentInfo'}" aria-labelledby="empEmploymentInfo-head" data-parent="#accordionMain">
             <div class="card-body">
                 <ul class="nav nav-tabs nav-fill" id="offense-tabs">
-                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="" @click="filterOffenses('offenses')" aria-expanded="true">Offenses</a></li>
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('commendations')">Commendations</a></li>
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('notices')">Notices</a></li>
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('others')">Others</a></li>
+                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="" @click="filterOffenses('offenses')" aria-expanded="true">OFFENSES</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('commendations')">COMMENDATIONS</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('notices')">NOTICES</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('others')">OTHERS</a></li>
                 </ul>
                 <div class="tab-content" id="offense-content">
                     <div id="offenses-tab">

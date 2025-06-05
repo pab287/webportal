@@ -58,10 +58,10 @@
                          data-parent="#accordionOtherEmploymentData">
                          <div class="card-body m-portlet__body--custom table-responsive">
                             <ul class="nav nav-tabs nav-fill" id="offense-tabs">
-                                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#offenses-tab">Offenses</a></li>
-                                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#commendation-tab">Commendations</a></li>
-                                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#notices-tab">Notices</a></li>
-                                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#others-tab">Others</a></li>
+                                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#offenses-tab">OFFENSES</a></li>
+                                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#commendation-tab">COMMENDATIONS</a></li>
+                                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#notices-tab">NOTICES</a></li>
+                                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#others-tab">OTHERS</a></li>
                             </ul>
                             <div class="tab-content" id="offense-content">
                                 <div class="tab-pane" id="offenses-tab" role="tabpanel">
@@ -71,7 +71,7 @@
                                                 <th>Type</th>
                                                 <th>Dates</th>
                                                 <th>Nature</th>
-                                                <th>Sanction/Remarks</th>
+                                                <th>Action Taken</th>
                                                 <th></th>
                                                 <th>File</th>
                                                 <th>Action</th>
@@ -87,7 +87,7 @@
                                                 <th>Type</th>
                                                 <th>Dates</th>
                                                 <th>Nature</th>
-                                                <th>Sanction/Remarks</th>
+                                                <th>Action Taken</th>
                                                 <th></th>
                                                 <th>File</th>
                                                 <th>Action</th>
@@ -103,7 +103,7 @@
                                                 <th>Type</th>
                                                 <th>Dates</th>
                                                 <th>Nature</th>
-                                                <th>Sanction/Remarks</th>
+                                                <th>Action Taken</th>
                                                 <th></th>
                                                 <th>File</th>
                                                 <th>Action</th>
@@ -119,7 +119,7 @@
                                                 <th>Type</th>
                                                 <th>Dates</th>
                                                 <th>Nature</th>
-                                                <th>Sanction/Remarks</th>
+                                                <th>Action Taken</th>
                                                 <th></th>
                                                 <th>File</th>
                                                 <th>Action</th>
