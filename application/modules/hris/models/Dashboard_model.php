@@ -477,23 +477,8 @@
             $res_data = array();
             
             foreach($query->result() as $row) {
+                $res = (array) $row;
                 $res['checkbox'] = '';
-                $res['cal_id'] = $row->cal_id;
-                $res['company'] = $row->company;
-                $res['date_end_prob'] = $row->date_end_prob;
-                $res['date_start'] = $row->date_start;
-                $res['emp_id'] = $row->emp_id;
-                $res['employee_name'] = $row->employee_name;
-                $res['evaluation_date'] = $row->evaluation_date;
-                $res['evaluation_stage'] = $row->evaluation_stage;
-                $res['firstname'] = $row->firstname;
-                $res['idno'] = $row->idno;
-                $res['lastname'] = $row->lastname;
-                $res['middlename'] = $row->middlename;
-                $res['position'] = $row->position;
-                $res['suffix'] = $row->suffix;
-        
-                // Add the result to the $res_data array
                 $res_data[] = $res;
             }
         
@@ -828,6 +813,7 @@
             // List all employee first with & without overdue evaluation
             $res_emp_data = array();
             foreach($query->result() as $row) {   
+                $employee_data = (array) $row;
                 
                 // Evaluation stage and date START
                 $eval_stage_date = [];
@@ -845,18 +831,6 @@
                 // Evaluation stage and date END
         
                 $employee_data['checkbox'] = '';
-                $employee_data['cal_id'] = $row->cal_id;
-                $employee_data['idno'] = $row->idno;
-                $employee_data['company'] = $row->company;
-                $employee_data['date_end_prob'] = $row->date_end_prob;
-                $employee_data['date_start'] = $row->date_start;
-                $employee_data['emp_id'] = $row->emp_id;
-                $employee_data['employee_name'] = $row->employee_name;
-                $employee_data['firstname'] = $row->firstname;
-                $employee_data['lastname'] = $row->lastname;
-                $employee_data['middlename'] = $row->middlename;
-                $employee_data['position'] = $row->position;
-                $employee_data['suffix'] = $row->suffix;
                 $employee_data['eval_stage_date'] = $eval_stage_date;
         
                 $res_emp_data[] = $employee_data;
@@ -1162,6 +1136,7 @@
             // List all employee first with & without overdue evaluation
             $res_emp_data_all = [];
             foreach($query->result() as $row) {
+                $employee_data = (array) $row;
                 $eval_stage_date = [];
 
                 $first_eval = date('Y-m-d', strtotime($row->evaluation_date_first));
@@ -1212,25 +1187,7 @@
                 }
                 
                 $employee_data['checkbox'] = '';
-                $employee_data['cal_id'] = $row->cal_id;
-                $employee_data['idno'] = $row->idno;
-                $employee_data['company'] = $row->company;
-                $employee_data['date_end_prob'] = $row->date_end_prob;
-                $employee_data['date_start'] = $row->date_start;
-                $employee_data['emp_id'] = $row->emp_id;
-                $employee_data['employee_name'] = $row->employee_name;
-                $employee_data['firstname'] = $row->firstname;
-                $employee_data['lastname'] = $row->lastname;
-                $employee_data['middlename'] = $row->middlename;
-                $employee_data['position'] = $row->position;
-                $employee_data['suffix'] = $row->suffix;
                 $employee_data['eval_stage_date'] = $eval_stage_date;
-                $employee_data['is_3rd_done'] = $is_3rd_done;
-                $employee_data['is_4th_done'] = $is_4th_done;
-                $employee_data['is_final_done'] = $is_final_done;
-                $employee_data['is_3rd_overdue'] = $is_3rd_overdue;
-                $employee_data['is_4th_overdue'] = $is_4th_overdue;
-                $employee_data['is_final_overdue'] = $is_final_overdue;
 
                 $res_emp_data_all[] = $employee_data;
             }
