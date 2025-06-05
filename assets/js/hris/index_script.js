@@ -1157,6 +1157,24 @@ function loadOverdueEvaluationTable(stage) {
     } else {
         $('#exportBtn_eval_overdue').show();
     }
+
+    let overdue_eval_stage_text = `Overdue`;
+
+    switch (stage) {
+        case 1:
+            overdue_eval_stage_text = `3rd Month`;
+            break;
+        case 2:
+            overdue_eval_stage_text = `4.5TH Month`;
+            break;
+        case 3:
+            overdue_eval_stage_text = `Final`;
+            break;
+        default:
+            overdue_eval_stage_text = `Overdue`;
+    }
+
+    $('.overdue_eval_stage_text').text(overdue_eval_stage_text);
 }
 
 let search_val_eval_overdue = "";

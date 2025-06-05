@@ -663,7 +663,7 @@
                     </li>
                     <li class="nav-item m-tabs__item dropdown">
                         <a class="nav-link m-tabs__link dropdown-toggle" data-toggle="dropdown" href="javascript:void(0)">
-                            Overdue
+                            <span class="overdue_eval_stage_text">Overdue</span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right mt-2" x-placement="bottom-end">
                             <a class="dropdown-item" data-toggle="tab" role="tab" href="#overdue_list_tab_content" onclick="loadOverdueEvaluationTable(1)">3rd Month</a>
