@@ -897,6 +897,8 @@ $('#evaluation_tab [data-toggle="tab"]').on('click', function (e) {
     $(target).addClass('show active');
 });
 
+// =================================================================================
+// Load Evaluation Table
 let loadEvaluationTable_stage;
 let search_val_eval_list = "";
 
@@ -1075,108 +1077,13 @@ const tblEvaluation = $('#table-employee-evaluation').DataTable({
             }
         }
     ],
-});
-
-$('#EvalSearch').donetyping(function(callback) {
-    search_val_eval_list = $(this).val();
-    tblEvaluation.ajax.reload();
-});
-
-loadEvaluationTable();
-
-function loadEvaluationTable(evaluation = null) {
-    if(evaluation == null){
-        evaluation = $(".employee_evaluation_options").val();
-    }
-
-    loadEvaluationTable_stage = evaluation;
-    const newUrl = baseUrl('hris/dashboard/get_evaluation_list/' + loadEvaluationTable_stage);
-    tblEvaluation.ajax.url(newUrl).load();
-
-    const th = $('#table-employee-evaluation').find('th:eq(6)');
-    switch (evaluation) {
-        case '2nd':
-            th.text('4.5TH MONTH');
-            break;
-        case 'final':
-            th.text('FINAL EVALUATION');
-            break;
-        case 'overdue':
-            th.text('Overdue');
-            break;
-        default:
-            th.text('3RD MONTH');
-            break;
-    }
-}
-
-$('#table-employee-evaluation #cb-select-all').on('change', function() {
-    if (this.checked) {
-        tblEvaluation.rows().select();
-    } else {
-        tblEvaluation.rows().deselect();
-    }
-});
-
-tblEvaluation.on('select deselect', function() {
-    if (tblEvaluation.rows({ selected: true }).count() !== tblEvaluation.rows().count()) {
+    drawCallback: function () {
         $('#table-employee-evaluation #cb-select-all').prop('checked', false);  
-    } else {
-        $('#table-employee-evaluation #cb-select-all').prop('checked', true);
     }
 });
 
-// Evaluation Overdue datatable export button
-
-$("#eval_ExportExcel").on("click", function() {
-    tblEvaluation.button( '.buttons-excel' ).trigger();
-    // saveExportLogs('Payments - Export Excel');
-});
-
-$("#eval_ExportCSV").on("click", function() {
-    tblEvaluation.button( '.buttons-csv' ).trigger();
-    // saveExportLogs('Payments - Export CSV');
-});
-
-$("#eval_ExportPDF").on("click", function() {
-    tblEvaluation.button( '.buttons-pdf' ).trigger();
-    // saveExportLogs('Payments - Export PDF');
-});
-
-// =================================================================================
-
+// Load Overdue Evaluation Table
 let tblOverdueEvaluation_stage;
-
-function loadOverdueEvaluationTable(stage) {
-    tblOverdueEvaluation_stage = stage;
-    tblOverdueEvaluation.ajax.reload();
-
-    // Hide export button if stage == 0, 0 is ALL
-    if (stage == 0) {
-        $('#exportBtn_eval_overdue').hide();
-    } else {
-        $('#exportBtn_eval_overdue').show();
-    }
-
-    let overdue_eval_stage_text = `Overdue`;
-
-    switch (stage) {
-        case 1:
-            overdue_eval_stage_text = `3rd Month`;
-            break;
-        case 2:
-            overdue_eval_stage_text = `4.5TH Month`;
-            break;
-        case 3:
-            overdue_eval_stage_text = `Final`;
-            break;
-        default:
-            overdue_eval_stage_text = `Overdue`;
-    }
-
-    $('.overdue_eval_stage_text').text(overdue_eval_stage_text);
-}
-
 let search_val_eval_overdue = "";
 
 const tblOverdueEvaluation = $('#table-employee-evaluation-overdue').DataTable({
@@ -1391,7 +1298,116 @@ const tblOverdueEvaluation = $('#table-employee-evaluation-overdue').DataTable({
             }
         }
     ],
+    drawCallback: function () {
+        $('#table-employee-evaluation-overdue #cb-select-all').prop('checked', false); 
+    }
 });
+// =================================================================================
+
+// Load Evaluation Table START
+$('#EvalSearch').donetyping(function(callback) {
+    search_val_eval_list = $(this).val();
+    tblEvaluation.ajax.reload();
+});
+
+loadEvaluationTable();
+
+function loadEvaluationTable(evaluation = null) {
+    $('.overdue_eval_stage_text').text('Overdue');
+
+    if(evaluation == null){
+        evaluation = $(".employee_evaluation_options").val();
+    }
+
+    loadEvaluationTable_stage = evaluation;
+    const newUrl = baseUrl('hris/dashboard/get_evaluation_list/' + loadEvaluationTable_stage);
+    tblEvaluation.ajax.url(newUrl).load();
+
+    const th = $('#table-employee-evaluation').find('th:eq(6)');
+    switch (evaluation) {
+        case '2nd':
+            th.text('4.5TH MONTH');
+            break;
+        case 'final':
+            th.text('FINAL EVALUATION');
+            break;
+        case 'overdue':
+            th.text('Overdue');
+            break;
+        default:
+            th.text('3RD MONTH');
+            break;
+    }
+
+    tblOverdueEvaluation.rows().deselect();
+}
+
+$('#table-employee-evaluation #cb-select-all').on('change', function() {
+    if (this.checked) {
+        tblEvaluation.rows().select();
+    } else {
+        tblEvaluation.rows().deselect();
+    }
+});
+
+tblEvaluation.on('select deselect', function() {
+    if (tblEvaluation.rows({ selected: true }).count() !== tblEvaluation.rows().count()) {
+        $('#table-employee-evaluation #cb-select-all').prop('checked', false);  
+    } else {
+        $('#table-employee-evaluation #cb-select-all').prop('checked', true);
+    }
+});
+
+// Evaluation Overdue datatable export button
+$("#eval_ExportExcel").on("click", function() {
+    tblEvaluation.button( '.buttons-excel' ).trigger();
+    // saveExportLogs('Payments - Export Excel');
+});
+
+$("#eval_ExportCSV").on("click", function() {
+    tblEvaluation.button( '.buttons-csv' ).trigger();
+    // saveExportLogs('Payments - Export CSV');
+});
+
+$("#eval_ExportPDF").on("click", function() {
+    tblEvaluation.button( '.buttons-pdf' ).trigger();
+    // saveExportLogs('Payments - Export PDF');
+});
+
+// =================================================================================
+
+// Load Evaluation Table Overdue START
+function loadOverdueEvaluationTable(stage) {
+    tblOverdueEvaluation_stage = stage;
+    tblOverdueEvaluation.ajax.reload();
+
+    // Hide export button if stage == 0, 0 is ALL
+    if (stage == 0) {
+        $('#exportBtn_eval_overdue').hide();
+    } else {
+        $('#exportBtn_eval_overdue').show();
+    }
+
+    let overdue_eval_stage_text = `Overdue`;
+
+    switch (stage) {
+        case 1:
+            overdue_eval_stage_text = `3rd Month`;
+            break;
+        case 2:
+            overdue_eval_stage_text = `4.5TH Month`;
+            break;
+        case 3:
+            overdue_eval_stage_text = `Final`;
+            break;
+        default:
+            overdue_eval_stage_text = `Overdue`;
+    }
+
+    $('.overdue_eval_stage_text').text(overdue_eval_stage_text);
+
+    tblEvaluation.rows().deselect();
+}
 
 $('#overdueEvalSearch').donetyping(function(callback) {
     search_val_eval_overdue = $(this).val();
@@ -1414,11 +1430,7 @@ tblOverdueEvaluation.on('select deselect', function() {
     }
 });
 
-// =================================================================================
-
 // Evaluation Overdue datatable export button
-
-
 $("#eval_due_ExportExcel").on("click", function() {
     tblOverdueEvaluation.button( '.buttons-excel' ).trigger();
     // saveExportLogs('Payments - Export Excel');
@@ -1433,7 +1445,6 @@ $("#eval_due_ExportPDF").on("click", function() {
     tblOverdueEvaluation.button( '.buttons-pdf' ).trigger();
     // saveExportLogs('Payments - Export PDF');
 });
-
 // =================================================================================
 
 function generateChartData(data) {
