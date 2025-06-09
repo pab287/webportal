@@ -1060,7 +1060,13 @@
                 </ul>
                 <div class="tab-content" id="offense-content">
                     <div id="offenses-tab">
-                        <table class="responsive" style="width: 100%; max-width: 100%; overflow-x: auto; table-layout: fixed !important;">
+                        <table class="responsive">
+                            <col width="*">
+                            <col width="*">
+                            <col width="*">
+                            <col width="*">
+                            <col width="7%">
+                            <col width="*">
                             <thead class="customsalary">
                                 <tr>
                                     <th scope="col" colspan="6" v-text="activeTab">OFFENSE AND COMMENDATIONS</th>
@@ -1069,11 +1075,11 @@
                             <thead>
                                 <tr>
                                     <th class="" scope="col">TYPE</th>
-                                    <th class="" scope="col" style="width: 13%">DATE</th>
+                                    <th class="" scope="col">DATE</th>
                                     <th class="" scope="col">NATURE</th>
                                     <th class="" scope="col">ACTIONS TAKEN</th>
-                                    <th class="" scope="col" style="width: 20px !important; min-width: 20px; max-width: 20px;">VIEW</th>
-                                    <th class="" scope="col" style="width: 150px;">FILE</th>
+                                    <th class="" scope="col">VIEW</th>
+                                    <th class="" scope="col">FILE</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1083,16 +1089,15 @@
                                         <td data-label="DATE" v-text="formatDate(offense.offcom_date)"></td>
                                         <td data-label="NATURE" v-text="offense.offcom_nature"></td>
                                         <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
-                                        <td data-label="VIEW" class="text-center" style="width: 20px !important; min-width: 20px; max-width: 20px; text-align: center; padding: 0;">
+                                        <td data-label="VIEW" class="text-center">
                                             <span>
                                                 <button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" 
-                                                        @click="openFile(offense.filename)"
-                                                        style="width: 20px; height: 20px; padding: 0; min-width: 20px; line-height: 1;">
+                                                        @click="openFile(offense.filename)">
                                                     <i class="fa fa-eye" style="font-size: 12px;"></i>
                                                 </button>
                                             </span>
                                         </td>
-                                        <td data-label="FILE" v-text="offense.filename" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></td>
+                                        <td data-label="FILE" v-text="offense.filename" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></td>
                                     </tr>
                                 </template>
                                 <template v-else>
@@ -1101,8 +1106,8 @@
                                         <td data-label="DATE">NONE</td>
                                         <td data-label="NATURE">NONE</td>
                                         <td data-label="ACTION TAKEN">NONE</td>
-                                        <td data-label="BUTTON" style="width: 20px !important; text-align: center; padding: 0;">---</td>
-                                        <td data-label="FILE" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">NONE</td>
+                                        <td data-label="BUTTON">---</td>
+                                        <td data-label="FILE" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">NONE</td>
                                     </tr>
                                 </template>
                             </tbody>
