@@ -511,7 +511,13 @@ $(document).ready(function(){
                 });
             }
             
-            const intVal = function (i) { return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : (typeof i === 'number') ? i : 0; };
+            const intVal = function (i) {
+                if (typeof i === 'string') {
+                    return parseFloat(i.replace(/[^0-9.-]/g, '').trim()) || 0;
+                }
+                return typeof i === 'number' ? i : 0;
+            };
+
             const otPayTotalIndex = 6;
             const otPay20TotalIndex = 7;
             const otPay30TotalIndex = 8;
@@ -527,6 +533,8 @@ $(document).ready(function(){
             let otAllowanceAmount = api.column(otAllowanceIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
             let totalAmount = api.column(grandTotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
             
+            console.log(otAllowanceAmount);
+
             const grandTotalAmount = parseFloat(totalAmount) + parseFloat(totalAdjustmentAmount);
             const footerLabelTotal = $(api.column(5).footer());
             footerLabelTotal.removeClass("text-center");
