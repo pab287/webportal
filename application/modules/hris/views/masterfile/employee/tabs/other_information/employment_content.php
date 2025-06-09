@@ -71,7 +71,7 @@
                                                 <th>Type</th>
                                                 <th>Dates</th>
                                                 <th>Nature</th>
-                                                <th>Action Taken</th>
+                                                <th>Actions Taken</th>
                                                 <th></th>
                                                 <th>File</th>
                                                 <th>Action</th>
@@ -87,7 +87,7 @@
                                                 <th>Type</th>
                                                 <th>Dates</th>
                                                 <th>Nature</th>
-                                                <th>Action Taken</th>
+                                                <th>Actions Taken</th>
                                                 <th></th>
                                                 <th>File</th>
                                                 <th>Action</th>
@@ -103,7 +103,7 @@
                                                 <th>Type</th>
                                                 <th>Dates</th>
                                                 <th>Nature</th>
-                                                <th>Action Taken</th>
+                                                <th>Actions Taken</th>
                                                 <th></th>
                                                 <th>File</th>
                                                 <th>Action</th>
@@ -119,7 +119,7 @@
                                                 <th>Type</th>
                                                 <th>Dates</th>
                                                 <th>Nature</th>
-                                                <th>Action Taken</th>
+                                                <th>Actions Taken</th>
                                                 <th></th>
                                                 <th>File</th>
                                                 <th>Action</th>

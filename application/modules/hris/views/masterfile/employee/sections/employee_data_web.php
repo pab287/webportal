@@ -1071,7 +1071,7 @@
                                     <th class="" scope="col">TYPE</th>
                                     <th class="" scope="col" style="width: 13%">DATE</th>
                                     <th class="" scope="col">NATURE</th>
-                                    <th class="" scope="col">ACTION TAKEN</th>
+                                    <th class="" scope="col">ACTIONS TAKEN</th>
                                     <th class="" scope="col" style="width: 60px;">VIEW</th>
                                     <th class="" scope="col" style="width: 150px;">FILE</th>
                                 </tr>

@@ -525,7 +525,7 @@
                 <td data-label="TYPE">NONE</td>
                 <td data-label="DATE">NONE</td>
                 <td data-label="NATURE">NONE</td>
-                <td data-label="ACTION TAKEN">NONE</td>
+                <td data-label="ACTIONS TAKEN">NONE</td>
             </tr>
         </template>
         <template v-else>
