@@ -710,8 +710,8 @@
                     $select .= "$evalDateExpr AS evaluation_date";
                     $where .= "AND $evalDateExpr < '$current_date'
                             AND calendar.first_eval_date IS NULL
-                            AND (calendar.second_eval IS NULL OR calendar.second_eval = '')
-                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '')";
+                            AND (calendar.second_eval IS NULL OR calendar.second_eval = '0000-00-00')
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
                     $eval_stage = "3rd month";
                     break;
 
@@ -720,7 +720,7 @@
                     $select .= "$evalDateExpr AS evaluation_date";
                     $where .= "AND $evalDateExpr < '$current_date'
                             AND calendar.second_eval_date IS NULL
-                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '')";
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
                     $eval_stage = "4.5th month";
                     break;
 
@@ -737,8 +737,8 @@
                     $select .= "$evalDateExpr AS evaluation_date";
                     $where .= "AND $evalDateExpr < '$current_date'
                             AND calendar.first_eval_date IS NULL
-                            AND (calendar.second_eval IS NULL OR calendar.second_eval = '')
-                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '')";
+                            AND (calendar.second_eval IS NULL OR calendar.second_eval = '0000-00-00')
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
                     $eval_stage = "3rd month";
                     break;
             }
