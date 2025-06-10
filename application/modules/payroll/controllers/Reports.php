@@ -1000,4 +1000,28 @@ class Reports extends MY_Controller {
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
     }
+
+    public function custom_report() {
+        $this->load->model("payroll/payroll_m", "payroll");
+        $tempData = array(); 
+        $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
+        $tempData["company"] = $this->payroll->select2CompanyData();
+        $tempData["payout_schedule"] = $this->payroll->select2PayoutScheduleData();
+        
+        $this->core_layout->setPageTitle("Payroll - Custom Payroll sheet Report");
+        $this->core_layout->setPrivilegeName("payroll_custom_report");
+        $this->core_layout->addJs("js/buttons.print.min.js", true);
+        $this->core_layout->addJs("js/payroll/reports/custom_payrollsheet_report.js", true, $tempData);
+
+        $this->load->view("core/templates/header");
+        $this->load->view("payroll/reports/custom_payrollsheet_report");
+        $this->load->view("core/templates/footer");
+    }
+
+    function generate_custom_posted_netpay_records(){
+        $data = $this->reports->generateCustomPostedNetpayRecords();
+        $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+    }
 }
