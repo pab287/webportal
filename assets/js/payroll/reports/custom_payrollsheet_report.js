@@ -239,7 +239,7 @@ const dtNetPayReport = tableNetpay.DataTable({
         title: function(){
             return `<div class="text-center m--regular-font-size-lg2">PAYROLL NET PAY SUMMARY REPORT</div>`;
         },
-        exportOptions: { stripHtml: false },
+        exportOptions: { stripHtml: false, columns: ':visible:not(:eq(0)):not(.actions)' },
         customize: function (win) {
             var css = `@page { size: portrait; margin: 0.5cm; } 
                 .print-size-25{ width: 25% }
