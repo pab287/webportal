@@ -118,6 +118,16 @@
             $this->load->view("core/templates/footer");
         }
 
+        function questions(){
+            $this->core_layout->setPageTitle("HRIS - Questions Masterfile");
+            $this->core_layout->setPrivilegeName("hris_questions");
+            $this->core_layout->addJs("js/hris/questions_masterfile_script.js", true);
+
+            $this->load->view("core/templates/header");
+            $this->load->view("hris/masterfile/questions/index");
+            $this->load->view("core/templates/footer");
+        }
+
         function edit_personnel_request($id = null) {
             if ($id) {
                 $this->core_layout->setPageTitle("HRIS - Edit Personnel Request");
