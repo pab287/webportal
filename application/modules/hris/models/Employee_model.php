@@ -56,6 +56,8 @@
         protected $applicationTable = "gcchris.tbapplication";
         protected $now = null;
 
+        private $user_data = array();
+
         function __construct() {
             parent::__construct();
             $this->load->model("access_control_model", "acl_model");
@@ -70,6 +72,7 @@
             
             $this->loggedinData = $this->user_data = $this->session->userdata("logged_in");
             $this->loggedInUsername = $this->loggedinData["username"];
+            $this->user_data = $this->session->userdata("logged_in");
 
         }
 
@@ -11999,6 +12002,146 @@
             $this->db->reset_query();
             return $result;
 
+        }
+
+        public function getEmployeeQuestions(){
+            $data = array();
+            $rowCount = 0;
+            $rowData = array();
+            $post = $this->input->post();
+            $order_val = array(array("column"=>"0", "dir"=>"DESC"));
+            $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+            $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
+            $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+            $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+            $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
+            $archive = (isset($post["is_archived"]) && $post["is_archived"]) ? $post["is_archived"] : 0;
+            $rowData = $this->getEmployeeQuestionsData($search, $limit, $offset, $sortBy, $sortOrder,$archive);
+            $rowCount = $this->getEmployeeQuestionsDataCount($search,$archive);
+            $data["recordsTotal"] = $rowCount;
+            $data["recordsFiltered"] = $rowCount;
+            $data["data"] = $rowData;
+            return $data;
+        }
+
+        private function getEmployeeQuestionsData($search, $limit, $offset, $sortBy, $sortOrder,$archive = 0){
+            $resultset = array();
+            $filterFields = array("a.question");
+            $this->db->select("a.question,a.id");
+            $this->db->from('gcchris.tblquestions a');
+            $this->db->where('a.is_archive',$archive);
+
+            if ($search) {
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+            $i = $sortOrder[0]['column'];
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            if ($limit != -1) {
+                $this->db->limit($limit, $offset);
+            }
+            
+            $query = $this->db->get();
+            if ($query->num_rows() > 0) {
+                $resultset = $query->result(); 
+            } else {
+                $resultset= []; 
+            }
+            return $resultset; 
+
+        }
+
+        private function getEmployeeQuestionsDataCount($search,$archive = 0){
+            $filterFields = array("a.question");
+            $this->db->select("a.question,a.id");
+            $this->db->from('gcchris.tblquestions a');
+            $this->db->where('a.is_archive',$archive);
+
+            if ($search) {
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+            $query = $this->db->get();
+            return $query->num_rows();
+        }
+
+        public function addNewQuestion(){
+            $resultArray = array();
+            $post = $this->input->post();
+            unset($post['csrf_token']);
+            $post['created_by'] = $this->user_data['emp_id'];
+            $post['created_at'] = date('Y-m-d H:i:s');
+            $insert = $this->db->insert('gcchris.tblquestions', $post);
+            if($insert){
+                $this->core_layout->setEventLog("Added New Question successfully", "insert", "success", "gcchris", "user");
+                $resultArray['status'] = true;
+                $resultArray['message'] = "New question has been added successfully.";
+            }else{
+                $this->core_layout->setEventLog("Failed to add new question", "insert", "error", "gcchris", "system");
+                $resultArray['status'] = false;
+                $resultArray['message'] = "Failed to add new question. Please try again later.";
+            }
+            return $resultArray;
+        }
+
+        public function archiveQuestion() {
+            $post = $this->input->post();
+            $id = $post['id'];
+            $modified_by = $this->user_data['emp_id']; 
+            $modified_dt = date('Y-m-d H:i:s');
+            $query = $this->db->set('is_archive', 1)->set('updated_at', $modified_dt)->set('updated_by', $modified_by)->where('id', $id)->update('gcchris.tblquestions');
+            if ($query) {
+                $this->core_layout->setEventLog("Archived Question Successfully with id: {$id}", "archive", "success", "gcchris", "user");
+                return array('status' => true, 'message' => 'Manpower request archived successfully.');
+            } else {
+                $this->core_layout->setEventLog("Failed to archive Question with ID: {$id}", "archive", "error", "gcchris", "system");
+                return array('status' => false, 'message' => 'Update failed.');
+            }
+        }
+
+        public function restoreQuestion(){
+            $post = $this->input->post();
+            $id = $post['id'];
+            $modified_by = $this->user_data['emp_id']; 
+            $modified_dt = date('Y-m-d H:i:s');
+            $query = $this->db->set('is_archive', 0)->set('updated_at', $modified_dt)->set('updated_by', $modified_by)->where('id', $id)->update('gcchris.tblquestions');
+            if ($query) {
+                $this->core_layout->setEventLog("Restored Question Successfully with id: {$id}", "restore", "success", "gcchris", "user");
+                return array('status' => true, 'message' => 'Manpower request archived successfully.');
+            } else {
+                $this->core_layout->setEventLog("Failed to restore Question with ID: {$id}", "restore", "error", "gcchris", "system");
+                return array('status' => false, 'message' => 'Update failed.');
+            }
+        }
+
+        public function updateQuestion() {
+            $post = $this->input->post();
+            $id = $post['id'];
+            $post['updated_by'] = $this->user_data['emp_id'];
+            $post['updated_at'] = date('Y-m-d H:i:s');
+            unset($post['id'],$post['csrf_token']);
+            $result = $this->db->where("id", $id)->update('gcchris.tblquestions', $post);
+            if ($result) {
+                $this->core_layout->setEventLog("Successfully updated question with ID: $id", "update", "success", "gcchris", "user");
+                return ['status' => true, 'message' => 'Update successful'];
+            } else {
+                $this->core_layout->setEventLog("Failed to update question with ID: $id", "update", "error", "gcchris", "system");
+                return ['status' => false, 'message' => 'Update failed'];
+            }
         }
 
     }

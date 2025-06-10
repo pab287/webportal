@@ -121,7 +121,9 @@
         function questions(){
             $this->core_layout->setPageTitle("HRIS - Questions Masterfile");
             $this->core_layout->setPrivilegeName("hris_questions");
-            $this->core_layout->addJs("js/hris/questions_masterfile_script.js", true);
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
+            $this->core_layout->addJs("js/hris/questions_masterfile_script.js", TRUE);
 
             $this->load->view("core/templates/header");
             $this->load->view("hris/masterfile/questions/index");
@@ -1964,6 +1966,31 @@
 
         public function get_employee_allowance_count($id=null){
             $data = $this->employee_model->getEmployeeAllowanceCount($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_employee_questions(){
+            $data = $this->employee_model->getEmployeeQuestions();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function add_new_question(){
+            $data = $this->employee_model->addNewQuestion();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function archive_question(){
+            $data = $this->employee_model->archiveQuestion();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function restore_question(){
+            $data = $this->employee_model->restoreQuestion();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function update_question(){
+            $data = $this->employee_model->updateQuestion();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
