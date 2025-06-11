@@ -446,32 +446,14 @@ $('#datePicker_top_consumer').datepicker({
     orientation: "bottom right",
     viewMode: "months",
     minViewMode: "months",
-    endDate: getCurrentDate(),
+    /**
+     * Why endDate is set to next year December?
+     * If the date picker is set to the current year,
+     * it will not allow the user to select a month in the next year or next year.
+     * resulting in an error when the user cant select the current year
+     */
+    endDate: (new Date().getFullYear() + 1) + '-12' // current year + 1, December
 });
-
-// $('#datePicker_top_consumer').datepicker({
-//     format: 'yyyy-mm',
-//     todayHighlight: true,
-//     autoclose: true,
-//     orientation: "bottom right",
-//     viewMode: "months",
-//     minViewMode: "months",
-//     endDate: getCurrentDate_top_consumer(),
-// }).on('changeYear', function(e) {
-//     // Get the current view date
-//     const viewDate = e.date;
-//     const currentDate = new Date(getCurrentDate_top_consumer());
-
-//     // Check if the view date is less than the current date
-//     if (viewDate.getFullYear() < currentDate.getFullYear() || 
-//         (viewDate.getFullYear() === currentDate.getFullYear() && viewDate.getMonth() < currentDate.getMonth())) {
-//         // Remove the disabled class from the .next button
-//         $('.datepicker .next').removeClass('disabled');
-//     } else {
-//         // Add the disabled class to the .next button
-//         $('.datepicker .next').addClass('disabled');
-//     }
-// });
 
 function getCurrentDate_top_consumer() {
     const today = new Date();
