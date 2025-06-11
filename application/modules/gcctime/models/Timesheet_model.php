@@ -575,7 +575,7 @@ class Timesheet_model extends CI_Model{
                             $pm_end = !empty($schedule) ? $schedule->pm_end : null;
                             
                             $alteredCustomShiftId = 0;
-                            $alteredHasShiftSchedule = 1;
+                            $alteredHasShiftSchedule = 0;
 
                             if(isset($alteredShifts) && $alteredShifts && count(get_object_vars($alteredShifts)) > 0){
                                 if(isset($alteredShifts->has_shift)){
