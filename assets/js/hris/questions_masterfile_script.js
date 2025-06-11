@@ -21,7 +21,30 @@ tblQuestions = $('#employement_questions').DataTable({
     },
     columns: [
         { data: "id", name: "id", visible: false },
-        { data: "question", name: "question", width: "90%", title: "question" },
+        { data: "question", name: "question", width: "45%", title: "question" },
+        {
+            data: "statement",
+            name: "statement",
+            width: "45%",
+            title: "statement",
+            render: function(data, type, row) {
+                if (data) {
+                    return `
+                        <label href="javascript:void(0)" 
+                               onclick="statementEdit(${row.id}, '${data}')"
+                               data-toggle="tooltip"
+                               title="Click to edit">
+                            <span>${data}</span>
+                        </label>
+                    `;
+                }
+                return `
+                    <button class="btn btn-focus btn-sm statement-action" onclick="statementEdit(${row.id})">
+                        <i class="la la-edit"></i> Add Statement
+                    </button>
+                `;
+            }
+        },
         { data: null, orderable: false, title: "Actions" , render: function(data, type, row) {
             if(isArchived == 1){
                 return `<button class="btn btn-focus btn-sm" onclick="onboardingRestore(${row.id})"><i class="la la-mail-reply"></i></button>`;
@@ -44,7 +67,7 @@ tblQuestions = $('#employement_questions').DataTable({
             <div class="input-group align-items-center">
                 <input type="text" class="form-control m-input" name="question" aria-describedby="basic-addon2" id="update_question_input" data-validation="required">
                 <span id="closeButton" style="position: absolute; right: 130px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 5;">X</span>
-                <button class="btn btn-sm btnUpdate p-0 ml-2 border-0" type="submit" id="updateQuestion"><span class="input-group-text">Update Item</span></button>
+                <button class="btn btn-sm btnUpdate p-0 ml-2 border-0" type="submit" id="updateQuestion"><span class="input-group-text">Update Question</span></button>
             </div>
         </div>
         </form>`;        
@@ -113,6 +136,47 @@ function questionEdit(id){
         $('#update_item').attr('hidden', '');    
     });
 }
+
+function statementEdit(id, data){
+    let rowData = tblQuestions.row('#'+id).data();
+    itemId = id;
+    $('#question').val(rowData.question);
+    if(data){
+        $('#statement').val(data);
+    }
+    $('#modal-questions').modal('show');
+}
+
+$('#form_statement').submit(function(e) {
+    e.preventDefault();
+    $.validate({
+        form : '#form_statement',
+        lang: 'en',
+        onSuccess : function(form) {
+            let formData = $(form).serializeArray();
+            formData.push({name: 'csrf_token', value: $("#csrf_token").val()});
+            formData.push({name: 'id', value: itemId});
+            $.ajax({
+                url: baseUrl("hris/masterfile/update_statement"),
+                type: "post",
+                dataType: "json",
+                data: formData,
+                success: function(response) {
+                    if(response.status){
+                        $('#new_question')[0].reset();
+                        toastr.success(response.message);
+                        tblQuestions.ajax.reload(null, false);
+                    }
+                    else{
+                        toastr.error(response.message);
+                    }
+                    $('#modal-questions').modal('hide');
+                },
+            });
+            return false;
+        }
+    });
+});
 
 function onboardingItemArchive(id){
     Swal.fire({
@@ -223,3 +287,19 @@ function getArchivedItems() {
     $('#update_item:visible').attr('hidden', '');
     tblQuestions.ajax.reload();
 }
+
+$('#modal-questions').on('hidden.bs.modal', function (e) {
+    $(this).find('input, textarea').each(function() {
+        switch(this.type) {
+            case 'checkbox':
+            case 'radio':
+                this.checked = false;
+                break;
+            case 'select-multiple':
+                $(this).selectpicker('val', '');
+                break;
+            default:
+                $(this).val('');
+        }
+    });
+});

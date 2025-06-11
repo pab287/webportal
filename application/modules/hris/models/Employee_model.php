@@ -12026,8 +12026,8 @@
 
         private function getEmployeeQuestionsData($search, $limit, $offset, $sortBy, $sortOrder,$archive = 0){
             $resultset = array();
-            $filterFields = array("a.question");
-            $this->db->select("a.question,a.id");
+            $filterFields = array("a.question,a.statement");
+            $this->db->select("a.question,a.id,a.statement");
             $this->db->from('gcchris.tblquestions a');
             $this->db->where('a.is_archive',$archive);
 
@@ -12059,8 +12059,7 @@
         }
 
         private function getEmployeeQuestionsDataCount($search,$archive = 0){
-            $filterFields = array("a.question");
-            $this->db->select("a.question,a.id");
+            $filterFields = array("a.question,a.statement");
             $this->db->from('gcchris.tblquestions a');
             $this->db->where('a.is_archive',$archive);
 
@@ -12129,6 +12128,22 @@
         }
 
         public function updateQuestion() {
+            $post = $this->input->post();
+            $id = $post['id'];
+            $post['updated_by'] = $this->user_data['emp_id'];
+            $post['updated_at'] = date('Y-m-d H:i:s');
+            unset($post['id'],$post['csrf_token']);
+            $result = $this->db->where("id", $id)->update('gcchris.tblquestions', $post);
+            if ($result) {
+                $this->core_layout->setEventLog("Successfully updated question with ID: $id", "update", "success", "gcchris", "user");
+                return ['status' => true, 'message' => 'Update successful'];
+            } else {
+                $this->core_layout->setEventLog("Failed to update question with ID: $id", "update", "error", "gcchris", "system");
+                return ['status' => false, 'message' => 'Update failed'];
+            }
+        }
+
+        public function updateStatement(){
             $post = $this->input->post();
             $id = $post['id'];
             $post['updated_by'] = $this->user_data['emp_id'];
