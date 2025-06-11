@@ -10992,7 +10992,7 @@
             $historyStatus = false;
             $now = date('Y-m-d');
 
-            $this->db->select('b.name, a.basic_rate, a.payroll_type, DATE(a.date_start) as date_start');
+            $this->db->select('b.id as position_id, b.name, a.basic_rate, a.payroll_type, DATE(a.date_start) as date_start');
             $this->db->from($this->employeeTable.' as a');
             $this->db->join($this->positionTable.' as b', 'b.id = a.position OR b.name = a.position', 'LEFT');
             $this->db->where('a.id', $arr['id']);
@@ -11065,7 +11065,7 @@
                     'emp_id' => $arr['id'],
                     'sal_date' => (isset($arr['date_hired']) && $arr['date_hired']) ? $arr['date_hired'] : date('Y-m-d'),
                     'sal_rate' => number_format($basic, 2, '.', ''),
-                    'sal_position' => $query->name,
+                    'sal_position' => $query->position_id,
                     'sal_remarks' => $remarks,
                     'add_date' => date("Y-m-d H:i:s"),
                     'add_by' => $user_emp_id
@@ -11091,7 +11091,7 @@
             if(!isset($arr["is_active"])){ $arr["is_active"] = 0; }
             $isActiveState = intval($arr["is_active"]) == 1;
 
-            $this->db->select('b.name, a.basic_rate, a.payroll_type, DATE(a.date_start) as date_start');
+            $this->db->select('b.id as position_id, b.name, a.basic_rate, a.payroll_type, DATE(a.date_start) as date_start');
             $this->db->from($this->employeeTable.' as a');
             $this->db->join($this->positionTable.' as b', 'b.id = a.position OR b.name = a.position', 'LEFT');
             $this->db->where('a.id', $arr['emp_id']);
@@ -11140,7 +11140,7 @@
                     'emp_id' => $arr['emp_id'],
                     'sal_date' => $date,
                     'sal_rate' => number_format($basic_total, 2, '.', ''),
-                    'sal_position' => $query->name,
+                    'sal_position' => $query->position_id,
                     'sal_remarks' => $remarks,
                     'add_date' => date("Y-m-d H:i:s"),
                     'add_by' => $user_emp_id
