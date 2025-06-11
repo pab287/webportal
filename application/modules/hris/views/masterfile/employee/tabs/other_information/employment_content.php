@@ -72,7 +72,7 @@
                                                 <th>Dates</th>
                                                 <th>Nature</th>
                                                 <th>Actions Taken</th>
-                                                <th></th>
+                                                <th>View</th>
                                                 <th>File</th>
                                                 <th>Action</th>
                                             </tr>
@@ -88,7 +88,7 @@
                                                 <th>Dates</th>
                                                 <th>Nature</th>
                                                 <th>Actions Taken</th>
-                                                <th></th>
+                                                <th>View</th>
                                                 <th>File</th>
                                                 <th>Action</th>
                                             </tr>
@@ -104,7 +104,7 @@
                                                 <th>Dates</th>
                                                 <th>Nature</th>
                                                 <th>Actions Taken</th>
-                                                <th></th>
+                                                <th>View</th>
                                                 <th>File</th>
                                                 <th>Action</th>
                                             </tr>
@@ -120,7 +120,7 @@
                                                 <th>Dates</th>
                                                 <th>Nature</th>
                                                 <th>Actions Taken</th>
-                                                <th></th>
+                                                <th>View</th>
                                                 <th>File</th>
                                                 <th>Action</th>
                                             </tr>
