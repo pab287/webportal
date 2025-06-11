@@ -158,7 +158,6 @@ class Timesheet_model extends CI_Model{
                 }, unserialize($shift_resource->shift_resource)); ***/
 
                 $schedule = $this->getScheduleList($weekday, $shift_resource_array);
-                var_dump($schedule);
                 /*** altered shift schedule from custom shift `start` ***/
                 /*** $tempAlteredIndexId = "shift-id_{$shift_id}"; ***/
                 $alteredCustomShiftId = 0;
