@@ -394,7 +394,7 @@
                 case "2nd":
                     $evalDateExpr = "DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY)";
                     $select .= ", $evalDateExpr AS evaluation_date";
-                    $where .= "AND $evalDateExpr > '$current_date' 
+                    $where .= "AND $evalDateExpr >= '$current_date' 
                                 AND calendar.second_eval_date IS NULL
                                 AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')
                             ";
@@ -402,13 +402,13 @@
                 case "final":
                     $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 5 MONTH)";
                     $select .= ", $evalDateExpr AS evaluation_date";
-                    $where .= "AND $evalDateExpr > '$current_date' 
+                    $where .= "AND $evalDateExpr >= '$current_date' 
                                 AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
                     break;
                 default:
                     $evalDateExpr = "DATE_ADD(emp.date_start, interval 3 month)";
                     $select .= ", $evalDateExpr AS evaluation_date";
-                    $where .= "AND $evalDateExpr > '$current_date' 
+                    $where .= "AND $evalDateExpr >= '$current_date' 
                                 AND (calendar.first_eval_date IS NULL OR calendar.date_discontinued = '0000-00-00')";
                     break;
             }
@@ -564,7 +564,7 @@
                 case "2nd":
                     $evalDateExpr = "DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY)";
                     $select .= ", $evalDateExpr AS evaluation_date";
-                    $where .= "AND $evalDateExpr > '$current_date' 
+                    $where .= "AND $evalDateExpr >= '$current_date' 
                                 AND calendar.second_eval_date IS NULL
                                 AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')
                             ";
@@ -572,13 +572,13 @@
                 case "final":
                     $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 5 MONTH)";
                     $select .= ", $evalDateExpr AS evaluation_date";
-                    $where .= "AND $evalDateExpr > '$current_date' 
+                    $where .= "AND $evalDateExpr >= '$current_date' 
                                 AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
                     break;
                 default:
                     $evalDateExpr = "DATE_ADD(emp.date_start, interval 3 month)";
                     $select .= ", $evalDateExpr AS evaluation_date";
-                    $where .= "AND $evalDateExpr > '$current_date' 
+                    $where .= "AND $evalDateExpr >= '$current_date' 
                                 AND (calendar.first_eval_date IS NULL OR calendar.date_discontinued = '0000-00-00')";
                     break;
             }
