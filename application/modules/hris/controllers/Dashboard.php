@@ -54,6 +54,11 @@
             echo json_encode($data);
         }
 
+        public function evaluation_overdue() {
+            $data = $this->dashboard->evaluation_overdue();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
         public function get_retention_rate($ctr=0) {
             $data = $this->dashboard->getRetentionRate($ctr);
             echo json_encode($data);
