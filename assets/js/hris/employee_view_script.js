@@ -367,6 +367,35 @@ let employeeDataSheet = new Vue({
               ? data 
               : data.replace(/\n/g, '<br>');
           },
+          openFile(name) {
+            var fileUrl = baseUrl("uploads/files/documents/employee_files/empcode_" + id + "/offenses_commendation/" + encodeURIComponent(name));
+            function checkFileExists(url, callback) {
+                $.ajax({
+                    url: url,
+                    type: 'HEAD',
+                    success: function(response, status, xhr) {
+                        var mimeType = xhr.getResponseHeader("Content-Type");
+                        callback(true, mimeType);
+                    },
+                    error: function(xhr, status, error) {
+                        callback(false, null);
+                    }
+                });
+            }
+        
+            checkFileExists(fileUrl, function(exists, mimeType) {
+                if (!exists) {
+                    $('#pdfViewerModal .modal-body').html('<p class="text-danger">Error: File not found.</p>');
+                    $('#pdfViewerModal').modal('show');
+                } else if (mimeType && mimeType.startsWith('application/pdf')) {
+                    $('#pdfViewerModal .modal-body').html('<iframe id="pdfFrame" style="width: 100%; height: 600px;" frameborder="0"></iframe>');
+                    $('#pdfViewerModal').modal('show');
+                    $('#pdfFrame').attr('src', fileUrl);
+                } else {
+                    window.open(fileUrl, '_blank');
+                }
+            });
+        }
     }
 })
 

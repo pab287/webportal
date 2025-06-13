@@ -1031,7 +1031,7 @@
                         <th class="" scope="col">TYPE</th>
                         <th class="" scope="col" style="width: 13%">DATE</th>
                         <th class="" scope="col">NATURE</th>
-                        <th class="" scope="col">ACTION TAKEN</th>
+                        <th class="" scope="col">ACTIONS TAKEN</th>
                     </tr>
                     </thead>
                     <tbody>
