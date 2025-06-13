@@ -10820,7 +10820,7 @@
                 $rate = '';
                 $rate_fr = '';
 
-                $this->db->select('b.name, a.basic_rate, a.payroll_type');
+                $this->db->select('b.id as position_id, b.name, a.basic_rate, a.payroll_type');
                 $this->db->from($this->employeeTable.' as a');
                 $this->db->join($this->positionTable.' as b', 'b.id = a.position OR b.name = a.position', 'LEFT');
                 $this->db->where('a.id', $emp_id);
@@ -10876,7 +10876,7 @@
                     'emp_id' => $emp_id,
                     'sal_date' => date('Y-m-d'),
                     'sal_rate' => number_format($basic_total, 2, '.', ''),
-                    'sal_position' => $query->name,
+                    'sal_position' => $query->position_id,
                     'sal_remarks' => $remarks,
                     'add_date' => date('Y-m-d H:i:s'),
                     'add_by' => $user_emp_id
@@ -10892,7 +10892,7 @@
                 $rate_fr = '';
                 $basic = '';
 
-                $this->db->select('b.name, a.basic_rate, a.payroll_type');
+                $this->db->select('b.id as position_id, b.name, a.basic_rate, a.payroll_type');
                 $this->db->from($this->employeeTable.' as a');
                 $this->db->join($this->positionTable.' as b', 'b.id = a.position OR b.name = a.position', 'LEFT');
                 $this->db->where('a.id', $salary->unique_id);
@@ -10965,7 +10965,7 @@
                             'emp_id' => $salary->unique_id,
                             'sal_date' => date('Y-m-d'),
                             'sal_rate' => number_format($basic_total, 2, '.', ''),
-                            'sal_position' => $query->name,
+                            'sal_position' => $query->position_id,
                             'sal_remarks' => $remarks,
                             'add_date' => date("Y-m-d H:i:s"),
                             'add_by' => $user_emp_id
