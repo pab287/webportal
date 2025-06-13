@@ -5314,13 +5314,14 @@ class Reports_m extends CI_Model{
                     }
                 }
                 $sqlSelect = "a.*, SUM(a.net_pay) as net_pay, b.lastname, b.firstname, b.middlename, b.suffix, UPPER(c.code) as company_description, 
-                    IF(d.name IS NULL, b.position, d.name) as position, UPPER(b.work_status) as work_status, b.date_start, UPPER(e.code) as department_description";
+                    IF(d.name IS NULL, b.position, d.name) as position, UPPER(b.work_status) as work_status, b.date_start, UPPER(e.code) as department_description, f.description as payroll_group";
                 $this->db->select($sqlSelect);
                 $this->db->from($this->tbl_payroll_sheet." a");
                 $this->db->join($this->tbl_employees." b", "b.id = a.emp_id");
                 $this->db->join($this->tbl_tblcompanies." c", "c.id = a.company_id");
                 $this->db->join($this->tbl_tblposition." d", "d.id = b.position", "left");
                 $this->db->join($this->tbl_tbldepartment.' e', 'e.id = b.department_id OR e.code = b.department_id', 'LEFT');
+                $this->db->join($this->tbl_payroll_group.' f', 'f.employee_id LIKE CONCAT("%s:", LENGTH(b.id), ' . $this->db->escape(':"') . ', b.id, ' . $this->db->escape('";%') . ')', 'LEFT');
                 $this->db->where("a.posted", 1);
                 foreach ($tempFilter as $key => $value) { 
                     if($key == 'date_start' OR $key == 'date_end'){
@@ -5344,12 +5345,12 @@ class Reports_m extends CI_Model{
                 }
                 /** added for payroll_group */
 
+                // $this->db->order_by("f.description", "ASC");
                 $this->db->order_by("b.lastname", "ASC");
                 $this->db->group_by("a.emp_id, a.company_id");
                 $queryNetpay = $this->db->get();
                 
                 if($queryNetpay->num_rows() > 0){
-                    $ctr = 1;
                     foreach ($queryNetpay->result() as $key => $value) {
                         $tempRs = (array) $value;
                         $tempDisplay = (object) $this->core_layout->getDisplayName($tempRs);
