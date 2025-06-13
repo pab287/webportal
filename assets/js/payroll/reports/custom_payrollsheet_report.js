@@ -233,6 +233,7 @@ const dtNetPayReport = tableNetpay.DataTable({
     dom: 'rt',
     ordering: false,
     pageLength: -1,
+    scrollX: true,
     buttons: [{
         extend: 'print',
         footer: false,
@@ -477,13 +478,21 @@ const dtNetPayReport = tableNetpay.DataTable({
         { data: "department_description", width: "10%" },
         { data: "position", width: "16%" },
         { data: "work_status", visible: false },
-        { data: "payroll_group", width: '14%' },
+        { data: "payroll_group", width: '14%',
+            render: function (data) {
+                return data ? data : ' No group assigned ';
+            }
+        },
         { data: "rate", width: "*", visible: false,
             render: function(data) {
                 return numberFormat(data);
             }
         },
-        { data: "no_of_days", width: "*", visible: false },
+        { data: "no_of_days", width: "*", visible: false,
+            render: function (data) {
+                return numberFormat(data);
+            }
+        },
         { data: "basic_rate", width: "*", visible: false,
             render: function(data) {
                 return numberFormat(data);

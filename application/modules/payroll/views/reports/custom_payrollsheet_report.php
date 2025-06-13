@@ -133,13 +133,13 @@
                 </div>
             </form>
         </div>
-        <div class="col">
+        <div class="col-xl-9 col-lg-9 col-md-9 col-sm-12">
             <div class="m-portlet">
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
                         <div class="m-portlet__head-title">
                         <span class="m-portlet__head-icon">
-                            <i class="flaticon-clipboard"></i>
+                            <i class="flaticon-clipboard"></i> 
                         </span>
                             <h3 class="m-portlet__head-text">Custom Payroll sheet Report</h3>
                         </div>
@@ -271,7 +271,7 @@
                         </div>
                     </div>
                 
-                    <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
+                    <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded tbl-responsive-sm m-datatable--scroll">
                         <table class="table table-striped table-bordered" id="tbl-neypay_report" width="100%" style="font-family: roboto;">
                             <thead>
                                 <tr>
