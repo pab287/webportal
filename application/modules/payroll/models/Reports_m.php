@@ -5313,15 +5313,16 @@ class Reports_m extends CI_Model{
                         $filteredCompany = trim($tempCompany->row()->code);
                     }
                 }
-                $sqlSelect = "a.*, SUM(a.net_pay) as net_pay, b.lastname, b.firstname, b.middlename, b.suffix, UPPER(c.code) as company_description, 
-                    IF(d.name IS NULL, b.position, d.name) as position, UPPER(b.work_status) as work_status, b.date_start, UPPER(e.code) as department_description, f.description as payroll_group";
+                $sqlSelect = "a.*, SUM(a.basic_rate) as basic_rate, SUM(a.no_of_days) as no_of_days, SUM(a.total_undertime_amount) as total_undertime_amount, SUM(a.ot_amount) as ot_amount, SUM(a.total_ndiff_amount) as total_ndiff_amount, SUM(a.ot_ndiff_amount) as ot_ndiff_amount, SUM(a.total_holiday_amount) as total_holiday_amount, SUM(a.total_allowances) as total_allowances, SUM(a.net_pay) as net_pay, b.lastname, b.firstname, b.middlename, b.suffix, UPPER(c.code) as company_description, IF(d.name IS NULL, b.position, d.name) as position, UPPER(b.work_status) as work_status, b.date_start, UPPER(e.code) as department_description";
+
+                //GROUP_CONCAT(DISTINCT f.description SEPARATOR ',') as payroll_group
                 $this->db->select($sqlSelect);
                 $this->db->from($this->tbl_payroll_sheet." a");
                 $this->db->join($this->tbl_employees." b", "b.id = a.emp_id");
                 $this->db->join($this->tbl_tblcompanies." c", "c.id = a.company_id");
                 $this->db->join($this->tbl_tblposition." d", "d.id = b.position", "left");
                 $this->db->join($this->tbl_tbldepartment.' e', 'e.id = b.department_id OR e.code = b.department_id', 'LEFT');
-                $this->db->join($this->tbl_payroll_group.' f', 'f.employee_id LIKE CONCAT("%s:", LENGTH(b.id), ' . $this->db->escape(':"') . ', b.id, ' . $this->db->escape('";%') . ')', 'LEFT');
+                // $this->db->join($this->tbl_payroll_group.' f', 'f.employee_id LIKE CONCAT("%s:", LENGTH(b.id), ' . $this->db->escape(':"') . ', b.id, ' . $this->db->escape('";%') . ')', 'INNER');
                 $this->db->where("a.posted", 1);
                 foreach ($tempFilter as $key => $value) { 
                     if($key == 'date_start' OR $key == 'date_end'){
@@ -5345,6 +5346,8 @@ class Reports_m extends CI_Model{
                 }
                 /** added for payroll_group */
 
+                // $this->db->where('f.is_archived', 0);
+
                 // $this->db->order_by("f.description", "ASC");
                 $this->db->order_by("b.lastname", "ASC");
                 $this->db->group_by("a.emp_id, a.company_id");
@@ -5359,6 +5362,8 @@ class Reports_m extends CI_Model{
                         $value->net_pay_decimal = number_format($value->net_pay, 2, ".", ",");
                         $arrData[$key] = $value;
                         $grandTotal+= floatval($value->net_pay);
+
+                        $value->payroll_group = $this->get_payroll_group($value->emp_id);
 
                     }
                 }
@@ -5384,5 +5389,23 @@ class Reports_m extends CI_Model{
             $resultset["response"] = false;
         }
         return $resultset;
+    }
+
+    function get_payroll_group($id) { 
+        $result = ' --- ';
+
+        $this->db->select('GROUP_CONCAT(DISTINCT f.description SEPARATOR ", ") as payroll_group');
+        $this->db->join($this->tbl_payroll_group.' f', 'f.employee_id LIKE CONCAT("%s:", LENGTH(b.id), ' . $this->db->escape(':"') . ', b.id, ' . $this->db->escape('";%') . ')', 'LEFT');
+        $this->db->from($this->tbl_employees.' b');
+        $this->db->where('b.id', $id);
+        $this->db->where('f.is_archived', 0);
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $row = $query->row();
+            $result = $row->payroll_group;
+        }
+
+        return $result;
     }
 }
