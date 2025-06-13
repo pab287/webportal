@@ -476,7 +476,8 @@ const dtNetPayReport = tableNetpay.DataTable({
         { data: "company_description", width: "15%" },
         { data: "department_description", width: "10%" },
         { data: "position", width: "16%" },
-        { data: "work_status", width: "14%" },
+        { data: "work_status", visible: false },
+        { data: "payroll_group", width: '14%' },
         { data: "rate", width: "*", visible: false,
             render: function(data) {
                 return numberFormat(data);
@@ -521,6 +522,13 @@ const dtNetPayReport = tableNetpay.DataTable({
         },
         
     ],
+    // rowGroup: {
+    //     dataSrc: ['payroll_group'],
+    //     startRender: function ( rows, group ) {
+    //         var comp = rows.data().pluck('payroll_group');
+    //         return group;
+    //     }
+    // },
     footerCallback: function (row, data, start, end, display) {
         _globalNetPay = 0;
         var api = this.api();
@@ -530,14 +538,14 @@ const dtNetPayReport = tableNetpay.DataTable({
         };
 
         totalNetPay = api
-            .column(14)
+            .column(15)
             .data()
             .reduce(function (a, b) {
                 return intVal(a) + intVal(b);
             }, 0);
 
         _globalNetPay = numberFormat(totalNetPay);
-        $(api.column(14).footer()).html("<span class='m--font-boldest'>" + _globalNetPay + "</span>");
+        $(api.column(15).footer()).html("<span class='m--font-boldest'>" + _globalNetPay + "</span>");
     }
 });
 

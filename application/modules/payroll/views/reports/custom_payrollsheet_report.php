@@ -197,63 +197,70 @@
                                         </li>
                                         <li class="dropdown-item pt-1 pb-1">
                                             <label class="m-checkbox mb-0" onclick="event.stopPropagation()">
-                                                <input type="checkbox" checked="checked" oninput="showOrHideColumn(5, this)">
+                                                <input type="checkbox" oninput="showOrHideColumn(5, this)">
                                                 WORK STATUS
                                                 <span></span>
                                             </label>
                                         </li>
                                         <li class="dropdown-item pt-1 pb-1">
                                             <label class="m-checkbox mb-0" onclick="event.stopPropagation()">
-                                                <input type="checkbox" oninput="showOrHideColumn(6, this)">
-                                                RATE
+                                                <input type="checkbox" checked="checked" oninput="showOrHideColumn(6, this)">
+                                                PAYROLL GROUP
                                                 <span></span>
                                             </label>
                                         </li>
                                         <li class="dropdown-item pt-1 pb-1">
                                             <label class="m-checkbox mb-0" onclick="event.stopPropagation()">
                                                 <input type="checkbox" oninput="showOrHideColumn(7, this)">
-                                                DAYS
+                                                RATE
                                                 <span></span>
                                             </label>
                                         </li>
                                         <li class="dropdown-item pt-1 pb-1">
                                             <label class="m-checkbox mb-0" onclick="event.stopPropagation()">
                                                 <input type="checkbox" oninput="showOrHideColumn(8, this)">
-                                                BASIC PAY
+                                                DAYS
                                                 <span></span>
                                             </label>
                                         </li>
                                         <li class="dropdown-item pt-1 pb-1">
                                             <label class="m-checkbox mb-0" onclick="event.stopPropagation()">
                                                 <input type="checkbox" oninput="showOrHideColumn(9, this)">
+                                                BASIC PAY
+                                                <span></span>
+                                            </label>
+                                        </li>
+                                        <li class="dropdown-item pt-1 pb-1">
+                                            <label class="m-checkbox mb-0" onclick="event.stopPropagation()">
+                                                <input type="checkbox" oninput="showOrHideColumn(10, this)">
                                                 UT
                                                 <span></span>
                                             </label>
                                         </li>
                                         <li class="dropdown-item pt-1 pb-1">
                                             <label class="m-checkbox mb-0" onclick="event.stopPropagation()">
-                                                <input type="checkbox" checked="checked" oninput="showOrHideColumn(10, this)">
+                                                <input type="checkbox" checked="checked" oninput="showOrHideColumn(11, this)">
                                                 OT
                                                 <span></span>
                                             </label>
                                         </li>
                                         <li class="dropdown-item pt-1 pb-1">
                                             <label class="m-checkbox mb-0" onclick="event.stopPropagation()">
-                                                <input type="checkbox" checked="checked" oninput="showOrHideColumn(11, this)">
+                                                <input type="checkbox" checked="checked" oninput="showOrHideColumn(12, this)">
                                                 OT.ND
                                                 <span></span>
                                             </label>
                                         </li>
                                         <li class="dropdown-item pt-1 pb-1">
                                             <label class="m-checkbox mb-0" onclick="event.stopPropagation()">
-                                                <input type="checkbox" oninput="showOrHideColumn(12, this)">
+                                                <input type="checkbox" oninput="showOrHideColumn(13, this)">
                                                 HOL
                                                 <span></span>
                                             </label>
                                         </li>
                                         <li class="dropdown-item pt-1 pb-1">
                                             <label class="m-checkbox mb-0" onclick="event.stopPropagation()">
-                                                <input type="checkbox" checked="checked" oninput="showOrHideColumn(13, this)">
+                                                <input type="checkbox" checked="checked" oninput="showOrHideColumn(14, this)">
                                                 ALLOWANCE
                                                 <span></span>
                                             </label>
@@ -274,6 +281,7 @@
                                     <th>Department</th>
                                     <th>Position</th>
                                     <th>Work Status</th>
+                                    <th>Payroll Group</th>
                                     <th>Rate</th>
                                     <th>Days</th>
                                     <th>Basic Pay</th>
@@ -288,7 +296,7 @@
                             <tbody></tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="14" style="text-align:right; font-weight: 600;">GRAND TOTAL</th>
+                                    <th colspan="15" style="text-align:right; font-weight: 600;">GRAND TOTAL</th>
                                     <th class="text-right" style="font-weight: 600;">0.00</th>
                                 </tr>
                             </tfoot>
