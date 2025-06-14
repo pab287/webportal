@@ -4065,6 +4065,8 @@ class Reports_m extends CI_Model{
                     $payrateTemp = intval($item->has_shift) === 1 ? "regular" : "rest day";
                     $payrateSetting = $this->getPayrateSetting($payrateTemp);
                     $tempPayrateSetting = intval($item->payrate_id) > 0 ? $this->getPayrateSettingById($item->payrate_id) : $payrateSetting;
+                    $allowPaidAllowance = $tempPayrateSetting->particulars !== "regular" || intval($item->has_shift) === 0 || intval($tempPayrateSetting->is_holiday) === 1 ? 1 : 0;
+                    
                     $otRate = floatval($tempPayrateSetting->ot_rate) > 0 ? floatval($tempPayrateSetting->ot_rate): 1;
                     $otNightDiffRate = floatval($tempPayrateSetting->ot_night_diff_rate) > 0 ? floatval($tempPayrateSetting->ot_night_diff_rate): 0;
                     
@@ -4075,7 +4077,7 @@ class Reports_m extends CI_Model{
                     
                     $totalOtPay = $perMinute * floatval($totalOtHrs);
                     $totalOtNdPay = $perMinute * floatval($item->ot_ndiff_hrs);
-                    $totalOtAllowance = $allowancePerMinute * floatval($totalOtHrs);
+                    $totalOtAllowance = $allowPaidAllowance === 1 ? $allowancePerMinute * floatval($totalOtHrs): 0;
                     
                     $tempOtPayWithRate = $otRate > 1 ? ($tempOtRate / 100) * $totalOtPay : 0;
                     $totalOtPayable = $totalOtPay + $tempOtPayWithRate;
