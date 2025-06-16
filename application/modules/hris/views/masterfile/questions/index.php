@@ -47,7 +47,7 @@
 
 <div class="modal fade" id="modal-questions" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
 	<div class="modal-dialog modal-lg" role="document">
-		<form id="form_statement" method="post">
+		<form id="update_item">
 			<div class="modal-content">
 				<div class="modal-header">
 					<h5 class="modal-title" id="exampleModalLabel">Update Statement</h5>
@@ -58,7 +58,36 @@
 				<div class="modal-body">
 					<div class="form-group">
 						<label for="statement">Question</label>
-						<textarea class="form-control" id="question" rows="3" readonly></textarea>
+						<textarea class="form-control" id="new_question" name="question" rows="3" data-validation="required"></textarea>
+					</div>
+					<div class="form-group">
+						<label for="statement">Statement</label>
+						<textarea class="form-control" id="new_statement" name="statement" rows="3"></textarea>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<button type="submit" class="btn btn-primary btnSave">Save changes</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+
+<div class="modal fade" id="new-modal-questions" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<form id="new_question">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="exampleModalLabel">New Statement</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="form-group">
+						<label for="statement">Question</label>
+						<textarea class="form-control" id="question" name="question" rows="3" data-validation="required"></textarea>
 					</div>
 					<div class="form-group">
 						<label for="statement">Statement</label>

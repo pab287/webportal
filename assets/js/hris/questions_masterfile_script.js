@@ -22,57 +22,29 @@ tblQuestions = $('#employement_questions').DataTable({
     columns: [
         { data: "id", name: "id", visible: false },
         { data: "question", name: "question", width: "45%", title: "question" },
-        {
-            data: "statement",
-            name: "statement",
-            width: "45%",
-            title: "statement",
+        { data: "statement",name: "statement", width: "45%", title: "statement",
             render: function(data, type, row) {
                 if (data) {
-                    return `
-                        <label href="javascript:void(0)" 
-                               onclick="statementEdit(${row.id}, '${data}')"
-                               data-toggle="tooltip"
-                               title="Click to edit">
-                            <span>${data}</span>
-                        </label>
-                    `;
+                    return `<span>${data}</span>`;
                 }
-                return `
-                    <button class="btn btn-focus btn-sm statement-action" onclick="statementEdit(${row.id})">
-                        <i class="la la-edit"></i> Add Statement
-                    </button>
-                `;
+                return `<span class="text-muted">---</span>`;
             }
         },
         { data: null, orderable: false, title: "Actions" , render: function(data, type, row) {
             if(isArchived == 1){
                 return `<button class="btn btn-focus btn-sm" onclick="onboardingRestore(${row.id})"><i class="la la-mail-reply"></i></button>`;
             }
-            return `<button class="btn btn-primary btn-sm" onclick="questionEdit(${row.id})"><i class="la la-edit"></i></button>
+            return `<button class="btn btn-primary btn-sm" onclick="statementEdit(${row.id})"><i class="la la-edit"></i></button>
                     <button class="btn btn-danger btn-sm" onclick="onboardingItemArchive(${row.id})"><i class="la la-trash"></i></button>`;
         } },
     ],
     initComplete: function () {
-        const newForm = `<form id="new_question">
-        <div class="form-group m-form__group col-lg-12 col-md-12 col-sm-12">
+        const newForm = `<div class="form-group m-form__group col-lg-12 col-md-12 col-sm-12">
             <div class="input-group align-items-center">
-                <input type="text" class="form-control m-input" name="question" placeholder="Add new question" aria-describedby="basic-addon2" data-validation="required">
-                <button class="btn btn-sm btnSave p-0 ml-2 border-0" type="submit" id="newQuestion"><span class="input-group-text">Add New</span></button>
+                <a class="btn btn-sm btnSave p-0 ml-2 border-0" type="button" id="newQuestion" data-toggle="modal" data-target="#new-modal-questions" ><span class="input-group-text btn-success">Add New</span></a>
             </div>
-        </div>
-        </form>`;
-        const update_Form = `<form id="update_item" hidden>
-        <div class="form-group m-form__group col-lg-12 col-md-12 col-sm-12">
-            <div class="input-group align-items-center">
-                <input type="text" class="form-control m-input" name="question" aria-describedby="basic-addon2" id="update_question_input" data-validation="required">
-                <span id="closeButton" style="position: absolute; right: 130px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 5;">X</span>
-                <button class="btn btn-sm btnUpdate p-0 ml-2 border-0" type="submit" id="updateQuestion"><span class="input-group-text">Update Question</span></button>
-            </div>
-        </div>
-        </form>`;        
-        
-        $(update_Form).appendTo("#employement_questions_wrapper .newForm");
+        </div>`;
+
         $(newForm).appendTo("#employement_questions_wrapper .newForm");
 
         const filterDiv = $('<div>').addClass('dataTables_filter');
@@ -84,7 +56,6 @@ tblQuestions = $('#employement_questions').DataTable({
             tblQuestions.ajax.reload();
         },1000);
         submitForm();
-        updateForm();
     },
 });
 
@@ -103,6 +74,7 @@ function submitForm() {
                 success: function(response) {
                     if(response.status){
                         $('#new_question')[0].reset();
+                        $('#new-modal-questions').modal('hide');
                         toastr.success(response.message);
                         tblQuestions.ajax.reload(null, false);
                     }
@@ -118,65 +90,14 @@ function submitForm() {
 }
 
 
-function questionEdit(id){
+function statementEdit(id){
     let rowData = tblQuestions.row('#'+id).data();
     itemId = id;
-    itemData = rowData.question;
-    $('#new_question')[0].reset();
-    $('#update_question_input').val(rowData.question);
-    $('#update_item').removeAttr('hidden');
-    $('#new_question').hide();
-    $('#update_question_input').focus();
-
-
-    $('#closeButton').click(function() {
-        console.log('Close button clicked');
-        $('#update_item')[0].reset();
-        $('#new_question').show();
-        $('#update_item').attr('hidden', '');    
-    });
-}
-
-function statementEdit(id, data){
-    let rowData = tblQuestions.row('#'+id).data();
-    itemId = id;
-    $('#question').val(rowData.question);
-    if(data){
-        $('#statement').val(data);
-    }
+    $('#new_question').val(rowData.question);
+    $('#nwe_statement').val(rowData.statement);
     $('#modal-questions').modal('show');
 }
 
-$('#form_statement').submit(function(e) {
-    e.preventDefault();
-    $.validate({
-        form : '#form_statement',
-        lang: 'en',
-        onSuccess : function(form) {
-            let formData = $(form).serializeArray();
-            formData.push({name: 'csrf_token', value: $("#csrf_token").val()});
-            formData.push({name: 'id', value: itemId});
-            $.ajax({
-                url: baseUrl("hris/masterfile/update_statement"),
-                type: "post",
-                dataType: "json",
-                data: formData,
-                success: function(response) {
-                    if(response.status){
-                        $('#new_question')[0].reset();
-                        toastr.success(response.message);
-                        tblQuestions.ajax.reload(null, false);
-                    }
-                    else{
-                        toastr.error(response.message);
-                    }
-                    $('#modal-questions').modal('hide');
-                },
-            });
-            return false;
-        }
-    });
-});
 
 function onboardingItemArchive(id){
     Swal.fire({
@@ -238,21 +159,14 @@ function onboardingRestore(id){
     });
 }
 
-function updateForm(){
-    $.validate({
-        form : '#update_item',
-        lang: 'en',
-        onSuccess : function(form) {
+$.validate({
+    form : '#update_item',
+    lang: 'en',
+    onSuccess : function(form) {
             let formData = $(form).serializeArray();
             formData.push({name: 'csrf_token', value: $("#csrf_token").val()});
             formData.push({name: 'id', value: itemId});
-            if (itemData == $('#update_question_input').val()){
-                $('#update_item')[0].reset();
-                toastr.error("Data input is the same as before.");
-                $('#new_question').show();
-                $('#update_item').attr('hidden', '');
-                return false;
-            }
+
             $.ajax({
                 url: baseUrl("hris/masterfile/update_question"),
                 type: "post",
@@ -262,20 +176,55 @@ function updateForm(){
                     if(response.status){
                         $('#update_item')[0].reset();
                         toastr.success(response.message);
-                        $('#new_question').show();
-                        $('#update_item').attr('hidden', '');
+                        $('#modal-questions').modal('hide');
                         tblQuestions.ajax.reload(null, false);
                     }
                     else{
                         toastr.error(response.message);
                     }
-    
                 },
             });
+
             return false;
         }
     });
-}
+
+    // $.validate({
+    //     form : '#update_item',
+    //     lang: 'en',
+    //     onSuccess : function(form) {
+    //         let formData = $(form).serializeArray();
+    //         formData.push({name: 'csrf_token', value: $("#csrf_token").val()});
+    //         formData.push({name: 'id', value: itemId});
+    //         if (itemData == $('#update_question_input').val()){
+    //             $('#update_item')[0].reset();
+    //             toastr.error("Data input is the same as before.");
+    //             $('#new_question').show();
+    //             $('#update_item').attr('hidden', '');
+    //             return false;
+    //         }
+    //         $.ajax({
+    //             url: baseUrl("hris/masterfile/update_question"),
+    //             type: "post",
+    //             dataType: "json",
+    //             data: formData,
+    //             success: function(response) {
+    //                 if(response.status){
+    //                     $('#update_item')[0].reset();
+    //                     toastr.success(response.message);
+    //                     $('#new_question').show();
+    //                     $('#update_item').attr('hidden', '');
+    //                     tblQuestions.ajax.reload(null, false);
+    //                 }
+    //                 else{
+    //                     toastr.error(response.message);
+    //                 }
+    
+    //             },
+    //         });
+    //         return false;
+    //     }
+    // });
 
 function getArchivedItems() {
     isArchived = 1 - isArchived;

@@ -12026,7 +12026,7 @@
 
         private function getEmployeeQuestionsData($search, $limit, $offset, $sortBy, $sortOrder,$archive = 0){
             $resultset = array();
-            $filterFields = array("a.question,a.statement");
+            $filterFields = array("a.question","a.statement");
             $this->db->select("a.question,a.id,a.statement");
             $this->db->from('gcchris.tblquestions a');
             $this->db->where('a.is_archive',$archive);
@@ -12059,7 +12059,7 @@
         }
 
         private function getEmployeeQuestionsDataCount($search,$archive = 0){
-            $filterFields = array("a.question,a.statement");
+            $filterFields = array("a.question","a.statement");
             $this->db->from('gcchris.tblquestions a');
             $this->db->where('a.is_archive',$archive);
 
