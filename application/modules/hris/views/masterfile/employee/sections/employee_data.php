@@ -1031,6 +1031,7 @@
                         <th class="" scope="col">TYPE</th>
                         <th class="" scope="col" style="width: 13%">DATE</th>
                         <th class="" scope="col">NATURE</th>
+                        <th class="" scope="col">VIEW</th>
                         <th class="" scope="col">ACTIONS TAKEN</th>
                     </tr>
                     </thead>
@@ -1040,6 +1041,7 @@
                                 <td data-label="TYPE">NONE</td>
                                 <td data-label="DATE">NONE</td>
                                 <td data-label="NATURE">NONE</td>
+                                <td data-label="VIEW">NONE</td>
                                 <td data-label="ACTION TAKEN">NONE</td>
                             </tr>
                         </template>
@@ -1047,6 +1049,7 @@
                             <tr v-for="offense in offenses" :key="offense.id">
                                 <td data-label="TYPE" v-text="offense.offcom_type"></td>
                                 <td data-label="DATE" v-text="offense.offcom_date"></td>
+                                <td data-label="FILE" @click="openFileMobile(offense.filename)" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"> {{ offense.filename.length > 30 ? offense.filename.substring(0, 30) + '...' : offense.filename }}</td>
                                 <td data-label="NATURE" v-text="offense.offcom_nature"></td>
                                 <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
                             </tr>
