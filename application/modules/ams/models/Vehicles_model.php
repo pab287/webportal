@@ -1040,7 +1040,8 @@
                 $resultSet["uploading_primary_pic_failed"] = !empty($uploadResult) ? $uploadResult["uploading_primary_pic_failed"] : null;
                 $resultSet["id"] = $id;
             } else {
-                $this->core_layout->setEventLog("User failed to add new vehicle with the the db id of `".$id."` in fixed asset masterfile datatable.","insert", "error", "gccasset", "system");
+                // $this->core_layout->setEventLog("User failed to add new vehicle with the the db id of `".$id."` in fixed asset masterfile datatable.","insert", "error", "gccasset", "system");
+                $this->core_layout->setEventLog("User failed to add new vehicle in fixed asset masterfile datatable.","insert", "error", "gccasset", "system");
                 $resultSet["success"] = false;
                 $resultSet["message"] = $this->db->error();
             }
@@ -1577,11 +1578,11 @@
 
             $this->db->where("id", $post->id);
             if (!$this->db->update("gccasset.asset_cost", $post)) {
-                $this->core_layout->setEventLog("User updated costing with db id of `".$post->$id."` in Vehicles costing Masterfile.","update", "success", "gccasset", "user");
+                $this->core_layout->setEventLog("User updated costing with db id of `".$post->id."` in Vehicles costing Masterfile.","update", "success", "gccasset", "user");
                 $resultSet['success'] = false;
                 $resultSet['message'] = $this->db->error();
             } else {
-                $this->core_layout->setEventLog("User failed to update costing with db id of `".$post->$id."` in Vehicles costing Masterfile.","update", "error", "gccasset", "system");
+                $this->core_layout->setEventLog("User failed to update costing with db id of `".$post->id."` in Vehicles costing Masterfile.","update", "error", "gccasset", "system");
                 $resultSet['success'] = true;
                 $resultSet['message'] = "Cost data was updated.";
             }
@@ -1902,7 +1903,7 @@
             $search = $this->input->post();
             $search_result = $search["search"];
             
-            if($search["search"] != NULL OR $search["search"] != ""){
+            if($search["search"] != NULL || $search["search"] != ""){
                 $like = "AND (reference_no LIKE '%$search_result%' OR date_issued LIKE '%$search_result%')";
             }else{
                 $like = "";
@@ -1922,12 +1923,12 @@
                 $tempName = isset($name->display_name_1) && $name->display_name_1 ? strtoupper($name->display_name_1): "NO ASSIGNED NAME";
                 
                 $display['borrower'] = $tempName;
-                // $display['company'] = $this->getEmployementData($result['borrower'],'department');
-                $display['company'] = 'adssad';
+                $display['company'] = $this->getEmployementData($result['borrower'],'department');
+                // $display['company'] = 'adssad';
                 $display['date_issued'] = $result['date_issued'];
                 $display['module'] = $result['module'];
                 if($result['days_overdue'] != 'N/A'){
-                    if($result['days_overdue'] > 1 AND $result['days_overdue'] != 0){
+                    if($result['days_overdue'] > 1 && $result['days_overdue'] != 0){
                         $day = "days";
                     }else{
                         $day = "day";
@@ -1955,26 +1956,37 @@
             $this->db->select("*");
             $this->db->where("id",$id);
             $query = $this->db->get("gccmaster.tblemployees");
-            $data = $query->row();
-            if($column == 'department'){
-                if(is_numeric($data->department_id)){
-                    return $this->db->get_where("gcchris.tbldepartments", array("id"=>$data->department_id))->row("description");
+            $html = "NO ". strtoupper($column) ." NAME";
+            
+            if ($query->num_rows() > 0) {
+                $data = $query->row();
+
+                if($column == 'department'){
+                    $html = is_numeric($data->department_id) ? $this->db->get_where("gcchris.tbldepartments", array("id"=>$data->department_id))->row("description") : $data->department_id;
+                    // if(is_numeric($data->department_id)){
+                    //     return $this->db->get_where("gcchris.tbldepartments", array("id"=>$data->department_id))->row("description");
+                    // }else{
+                    //     return $data->department_id;
+                    // }
+                }else if($column == 'company'){
+                    $html = is_numeric($data->company_id) ? $this->db->get_where("gcchris.tblcompanies", array("id"=>$data->company_id))->row("description") : $data->company_id;
+
+                    // if(is_numeric(trim($data->company_id))){
+                    //     return $this->db->get_where("gcchris.tblcompanies", array("id"=>$data->company_id))->row("description");
+                    // }else{
+                    //     return $data->company_id;
+                    // }
                 }else{
-                    return $data->department_id;
-                }
-            }else if($column == 'company'){
-                if(is_numeric(trim($data->company_id))){
-                    return $this->db->get_where("gcchris.tblcompanies", array("id"=>$data->company_id))->row("description");
-                }else{
-                    return $data->company_id;
-                }
-            }else{
-                if(is_numeric($data->position)){
-                    return $this->db->get_where("gcchris.tblposition", array("id"=>$data->position))->row("name");
-                }else{
-                    return $data->position;
+                    $html = is_numeric($data->position) ? $this->db->get_where("gcchris.tblposition", array("id"=>$data->position))->row("name") : $data->position;
+                    // if(is_numeric($data->position)){
+                    //     return $this->db->get_where("gcchris.tblposition", array("id"=>$data->position))->row("name");
+                    // }else{
+                    //     return $data->position;
+                    // }
                 }
             }
+
+            return $html;
         }
 
         function getVehicleMaintenanceLog($id) {
