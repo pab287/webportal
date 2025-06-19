@@ -1049,7 +1049,7 @@
                             <tr v-for="offense in offenses" :key="offense.id">
                                 <td data-label="TYPE" v-text="offense.offcom_type"></td>
                                 <td data-label="DATE" v-text="offense.offcom_date"></td>
-                                <td data-label="FILE" @click="openFileMobile(offense.filename)" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: underline;"> {{ offense.filename.length > 30 ? offense.filename.substring(0, 30) + '...' : offense.filename }}</td>
+                                <td data-label="FILE" @click="openFileMobile(offense.filename)" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: underline;"> {{ offense.filename.length > 15 ? offense.filename.substring(0, 15) + '...' : offense.filename }}</td>
                                 <td data-label="NATURE" v-text="offense.offcom_nature"></td>
                                 <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
                             </tr>
