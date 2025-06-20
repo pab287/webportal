@@ -11815,21 +11815,12 @@
         }
 
         public function getEmpWorkExperience($id){
-            /** commented as returns buggy results */
-            // $this->db->select("xps.id, xps.emp_id, xps.work_to,
-            //                    IFNULL(comp.code, xps.work_company) as work_company, xps.work_status, xps.work_reason, xps.work_from, old_idno,
-            //                    IF(pos.id IS NULL, xps.work_position, pos.`name`) work_position");
-            // $this->db->from($this->employeeWorkExperienceTable . " xps");
-            // $this->db->join($this->positionTable . " pos", "pos.id = xps.work_position", "LEFT");
-            // $this->db->join($this->companyTable . " comp", "comp.id = xps.work_company AND (UPPER(xps.work_reason) = 'TRANSFER COMPANY' OR `xps`.`old_idno` != NULL OR `xps`.`old_idno` != '')", "LEFT");
-            // $this->db->where('xps.emp_id', $id);
-            // $this->db->order_by("xps.work_from DESC, xps.work_to DESC");
-
-            $this->db->select("xps.id, xps.emp_id, xps.work_to, UPPER(IFNULL(comp.code, xps.work_company)) as work_company, xps.work_status, xps.work_reason, xps.work_from, old_idno, UPPER(IF(pos.id IS NULL, xps.work_position, pos.name)) work_position");
+            $this->db->select("xps.id, xps.emp_id, xps.work_to,
+                            IFNULL(comp.code, xps.work_company) as work_company, xps.work_status, xps.work_reason, xps.work_from, old_idno,
+                            IF(pos.id IS NULL, xps.work_position, pos.`name`) work_position");
             $this->db->from($this->employeeWorkExperienceTable . " xps");
-            $this->db->join($this->employeeTable. ' emp', 'emp.id = xps.emp_id', 'LEFT');
             $this->db->join($this->positionTable . " pos", "pos.id = xps.work_position", "LEFT");
-            $this->db->join($this->companyTable . " comp", "comp.id = emp.company_id", "LEFT");
+            $this->db->join($this->companyTable . " comp", "comp.id = xps.work_company AND (UPPER(xps.work_reason) = 'TRANSFER COMPANY' OR `xps`.`old_idno` != NULL OR `xps`.`old_idno` != '')", "LEFT");
             $this->db->where('xps.emp_id', $id);
             $this->db->where('xps.is_archived', 0);
             $this->db->order_by("xps.work_from DESC, xps.work_to DESC");
