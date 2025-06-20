@@ -619,7 +619,7 @@
                                 <td data-label="TO" v-text="experience.work_to"></td>
                                 <td data-label="POSITION" v-text="experience.work_position"></td>
                                 <td data-label="ID NO" v-text="experience.old_idno || 'N/A'"></td>
-                                <td data-label="STATUS" v-text="experience.work_status || '<br>'"></td>
+                                <td data-label="STATUS" v-text="experience.work_status || '---'"></td>
                                 <td data-label="REASON FOR LEAVING" v-text="experience.work_reason || 'N/A'"></td>
                             </tr>
                         </template>
