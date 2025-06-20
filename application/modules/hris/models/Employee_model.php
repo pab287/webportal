@@ -6441,6 +6441,7 @@
             $previous_date_year = date('Y', strtotime($previous_date));
 
             $id = $post->emp_id;
+            $currentData = $this->getEmployeeCurrentCompany($id);
 
             $company_history_latest = $this->db->where("emp_id", $id)
                 ->order_by("created_at", "desc")
@@ -6457,11 +6458,12 @@
                 "work_status" => $post->current_status,
                 "work_reason" => "TRANSFER COMPANY",
                 "add_date" => date('Y-m-d H:i:s'),
-                "add_by" => $employee_id
+                "add_by" => $employee_id,
+                "old_idno" => $currentData->idno ? $currentData->idno : ''
             );
             $this->db->insert($this->employeeWorkExperienceTable, $work_experience_field);
             /* END SAVE WORK EXPERIENCE */
-            $currentData = $this->getEmployeeCurrentCompany($id);
+
             /* UPDATE COMPANY & OTHERS */
             $update_data = array(
                 "company_id" => $post->company_id,
@@ -11985,7 +11987,7 @@
         }
     
         public function getEmployeeCurrentCompany($id){
-            $this->db->select("company_id, position, department_id");
+            $this->db->select("company_id, position, department_id, idno");
             $this->db->from($this->employeeTable);
             $this->db->where("id", $id);
             $query = $this->db->get();
