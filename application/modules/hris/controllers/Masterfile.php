@@ -174,6 +174,7 @@
                 die();
             }
             $data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataDetails($employee_id)));
+            $data->questions_list = $this->employee_model->getQuestionsList();
             $data->tab=$tab;
             $this->core_layout->setPageTitle("HRIS - View Employee Masterfile");
             $this->core_layout->setBodyClass("hris view-employee_masterfile");
@@ -246,7 +247,8 @@
                 $arrData["for_approval_history"] = $this->employee->fieldValueApprovals("hris", $id);
                 $arrData["loans_dropdown"] = $this->employee_model->getLoanCollection($id, 0);
                 $arrData["loans_ca_reference"] = $this->employee->getCaRef($id);
-
+                $arrData["questions_list"] = $this->employee_model->getQuestionsList();
+                
                 $this->core_layout->addJs("plugins/star-rating/js/jquery.star-rating-svg.min.js", TRUE);
                 $this->core_layout->addCss("plugins/star-rating/css/star-rating-svg.css");
                 $this->core_layout->addJs("plugins/pdf/pdf.min.js", true);

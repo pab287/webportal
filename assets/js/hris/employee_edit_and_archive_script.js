@@ -982,6 +982,19 @@ $(".m-content")
                     },
                     success: function (response) {
                         initRegularEditDialog(response);
+
+                        
+                    let vmTabUpdateQuestions = new Vue({
+                        el: "#employee-data-update-question-answers",
+                        data: { vm_question: questions_list },
+                        methods: {
+                            hasAnswer(count) {
+                                const answer = tempData['ques' + count];
+                                return answer ? answer : 'N/A';
+                            },
+                        }
+                    });
+
                     }
                 });
             }

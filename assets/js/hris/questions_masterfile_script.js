@@ -55,39 +55,40 @@ tblQuestions = $('#employement_questions').DataTable({
             search_val = $(this).val();
             tblQuestions.ajax.reload();
         },1000);
-        submitForm();
     },
 });
 
-function submitForm() {
-    $.validate({
-        form : '#new_question',
-        lang: 'en',
-        onSuccess : function(form) {
-            let formData = $(form).serializeArray();
-            formData.push({name: 'csrf_token', value: $("#csrf_token").val()});
-            $.ajax({
-                url: baseUrl("hris/masterfile/add_new_question"),
-                type: "post",
-                dataType: "json",
-                data: formData,
-                success: function(response) {
-                    if(response.status){
-                        $('#new_question')[0].reset();
-                        $('#new-modal-questions').modal('hide');
-                        toastr.success(response.message);
-                        tblQuestions.ajax.reload(null, false);
-                    }
-                    else{
-                        toastr.error(response.message);
-                    }
-    
-                },
-            });
-            return false;
-        }
-    });
-}
+$.validate({
+    form : '#new_question_form',
+    lang: 'en',
+    onSuccess : function(form) {
+        let formData = $(form).serializeArray();
+        formData.push({name: 'csrf_token', value: $("#csrf_token").val()});
+        $.ajax({
+            url: baseUrl("hris/masterfile/add_new_question"),
+            type: "post",
+            dataType: "json",
+            data: formData,
+            success: function(response) {
+                if(response.status){
+                    $('#new_question_form')[0].reset();
+                    $('#new-modal-questions').modal('hide');
+                    toastr.success(response.message);
+                    tblQuestions.ajax.reload(null, false);
+                }
+                else{
+                    toastr.error(response.message);
+                }
+
+            },
+        });
+        return false;
+    }
+});
+
+// function submitForm() {
+
+// }
 
 
 function statementEdit(id){
@@ -232,8 +233,7 @@ function getArchivedItems() {
     
     $('#archived_items .m-nav__link-text').text(isActive ? 'Show Archived Items' : 'Show Active Questions');
     $('#itemHead').text(isActive ? 'List of Active Items' : 'List of Archived Questions');
-    $('#new_question').toggle(isActive);
-    $('#update_item:visible').attr('hidden', '');
+    $('#newQuestion').toggle(isActive);
     tblQuestions.ajax.reload();
 }
 

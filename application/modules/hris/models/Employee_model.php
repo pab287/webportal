@@ -5199,9 +5199,35 @@
             $this->db->trans_begin();
             $resultSet = array();
             $data = array();
-            foreach ($post->ques as $key => $answer) {
-                $data["ques" . ($key + 1)] = $answer;
+            $data = [
+                'ques1' => $post->ques1 ?? 'N/A',
+                'ques2' => $post->ques2 ?? 'N/A',
+                'ques3' => $post->ques3 ?? 'N/A',
+                'ques4' => $post->ques4 ?? 'N/A',
+                'ques5' => $post->ques5 ?? 'N/A',
+                'ques6' => $post->ques6 ?? 'N/A',
+                'ques7' => $post->ques7 ?? 'N/A',
+                'ques8' => $post->ques8 ?? 'N/A',
+                'ques9' => $post->ques9 ?? 'N/A',
+            ];
+            $moreQuestions = array();
+
+            $currentQuestions = $this->getEmpQuestionsById($id)->more_questions;
+            foreach ($post as $key => $value) {
+                if (strpos($key, 'ques') === 0) {
+                    $questionNumber = substr($key, 4);
+                    if (is_numeric($questionNumber) && $questionNumber >= 10) {
+                        $moreQuestions[(int)$questionNumber] = $value;
+                    }
+                }
             }
+
+            if (!empty($moreQuestions)) {
+                $data['more_questions'] = serialize($moreQuestions);
+            } else {
+                $data['more_questions'] = null;
+            }
+
             $currentData = $this->getEmpQuestionsById($id);
             $this->db->where("id", $post->id);
             $this->db->update($this->employeeTable, $data);
@@ -11415,7 +11441,7 @@
                         else if (strtolower($field) == 'tl_supervisory') {
                             $changesString .= " Field: TWO LEVEL SUPERVISORY from: <strong>" . ($change['old'] == 1 ? 'YES' : 'NO') . "</strong>, to: <strong>" . ($change['new'] == 1 ? 'YES' : 'NO') . "</strong>\n";
                         }
-                        else if ($field != 'work_station' && $field != 'supervisor_meta'){
+                        else if ($field != 'work_station' && $field != 'supervisor_meta' && $field != 'more_questions'){
                             $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
                         }
                     }
@@ -11668,7 +11694,7 @@
             }
     
             private function getEmpQuestionsById($id){
-                $this->db->select("ques1,ques2,ques3,ques4,ques5,ques6,ques7,ques8,ques9");
+                $this->db->select("ques1,ques2,ques3,ques4,ques5,ques6,ques7,ques8,ques9,more_questions");
                 $this->db->from($this->employeeTable);
                 $this->db->where('id', $id);
                 $query = $this->db->get(); 
@@ -12157,6 +12183,18 @@
                 $this->core_layout->setEventLog("Failed to update question with ID: $id", "update", "error", "gcchris", "system");
                 return ['status' => false, 'message' => 'Update failed'];
             }
+        }
+
+        public function getQuestionsList(){
+            $data = array();
+            $this->db->select("id, question, statement");
+            $this->db->from('gcchris.tblquestions');
+            $this->db->where('is_archive', 0);
+            $query = $this->db->get();
+            if ($query->num_rows() > 0) {
+                $data = $query->result_array();
+            }
+            return $data;
         }
 
     }

@@ -44,17 +44,7 @@ let employeeDataSheet = new Vue({
             path:"",
             dependents:[],
             job_desc:"",
-            questions:{
-                ques1: "HAVE YOU EVER BEEN EMPLOYED BY US BEFORE? IN WHAT BRANCH AND WHAT POSITION?",
-                ques2: "WHO REFERRED YOU TO OUR COMPANY?",
-                ques3: "NAME OF FRIENDS/RELATIVES EMPLOYED IN THIS COMPANY",
-                ques4: "WHERE DID YOU LEARN OF THE VACANCY? ADVERTISING / WALK IN / REFERRAL / SCHOOL PLACEMENT / OTHERS (PLS. SPECIFY)?",
-                ques5: "DO YOU HAVE ANY CURRENT ILLNESS OR PHYSICAL DEFECTS? IF YES, PLEASE DESCRIBE.",
-                ques6: "HAVE YOU BEEN HOSPITALIZED FOR THE PAST 12 MONTHS? IF YES, STATE WHAT ILLNESS, DATE OF CONFINEMENT AND NAME OF HOSPITAL.",
-                ques7: "HAVE YOU BEEN CHARGED OF ANY CRIMINAL, CIVIL, OR ADMINISTRATIVE OFFENSE? IF YES, PLEASE DESCRIBE.",
-                ques8: "HAVE YOU FILED ANY LABOR CASE AGAINST PREVIOUS EMPLOYERS? IF YES, WHAT TYPE DOLE,NLRC OR OTHER, PLEASE DESCRIBE.",
-                ques9: "WERE YOU INVOLVED OR HAVE PREVIOUSLY PARTICIPATED IN ANY LABOR STRIKE? IF YES, PLEASE DESCRIBE."
-            },
+            questions:[],
             educations:"",
             licensesAndCerts:{
                 licenses:"",
@@ -105,6 +95,7 @@ let employeeDataSheet = new Vue({
     mounted(){
         this.getSidebarData();
         getPerformanceRating(id);
+        this.questions = _tempContentData.questions_list;
         if (_tempContentData.tab == null){
             this.$data.activeSection = "personalInfo"
         }else{
@@ -305,13 +296,9 @@ let employeeDataSheet = new Vue({
                 year: 'numeric' 
               });
         },
-        hasAnswer(question) {
-            const answerKey = this.main[question];
-            return answerKey != null && (typeof answerKey !== 'string' || answerKey.trim()) &&
-                   (typeof answerKey !== 'object' || Object.keys(answerKey).length) &&
-                   (Array.isArray(answerKey) ? answerKey.length : true)
-                ? answerKey
-                : "N/A";
+        hasAnswer(count) {
+            const answer = this.main['ques' + count];
+            return answer ? answer : 'N/A';
         },
 
         getExpirationClass(expirationDate) {

@@ -428,17 +428,17 @@
         </div>
         <div id="employmentQuestion-body" class="collapse" :class="{show :activeSection == 'employmentQuestion'}" aria-labelledby="employmentQuestion-head" data-parent="#accordionMain">
             <div class="card-body">
-                <table class="responsive mb-1" v-for="(question, key) in questions" :key="key">
+                <table class="responsive mb-1" v-for="(item, index) in questions" :key="index">
                     <thead>
                         <tr>
-                            <th class="" scope="col" v-text="question">
+                            <th scope="col" v-text="item.statement == '' || item.statement == null ? item.question : item.statement">
                             </th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td class="questions">
-                                <span v-text="hasAnswer(key)"></span>
+                                <span v-text="hasAnswer(item.id)"></span>
                             </td>
                         </tr>
                     </tbody>

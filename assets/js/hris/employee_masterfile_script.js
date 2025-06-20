@@ -37,6 +37,7 @@ let dtPerformanceRating = null;
 var dtReturnToWork = null;
 var companyExceptCurrent, tempData;
 var tempDataId = 0;
+let questions_list = [];
 let clickedView = 'grid';
 
 var tableEmployeeGrid = $("#table-employee-grid");
@@ -439,6 +440,7 @@ function loadEmployees(employee_status = "All") {
 
 if (typeof _tempContentData !== "undefined") {
     tempData = _tempContentData.data;
+    questions_list = _tempContentData.questions_list ? _tempContentData.questions_list : [];
     tempDataId = (typeof tempData.id !== "undefined" && tempData.id) ? tempData.id : 0;
     var tempDropdownData = _tempContentData.dropdown_data;
 
@@ -1082,19 +1084,12 @@ if (typeof _tempContentData !== "undefined") {
 
     var vmTabQuestions = new Vue({
         el: "#questions-content",
-        data: { vm_question: tempData },
-        created() {
-            var _data = this.vm_question;
-            var _tempQQ = {};
-            for (var xx = 1; xx <= 9; xx++) {
-                var tempKey = "ques" + xx;
-                var _currentQuestion = $.trim(_data[tempKey]);
-                if (typeof _currentQuestion !== "undefined" && (_currentQuestion == null || _currentQuestion == "")) {
-                    _currentQuestion = "---";
-                    _tempQQ = Object.assign({}, _tempQQ, { [tempKey]: _currentQuestion });
-                }
-            }
-            this.vm_question = Object.assign({}, _data, _tempQQ);
+        data: { vm_question: questions_list },
+        methods: {
+            hasAnswer(count) {
+                const answer = tempData['ques' + count];
+                return answer ? answer : 'N/A';
+            },
         }
     });
 
