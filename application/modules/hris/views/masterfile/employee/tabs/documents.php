@@ -190,6 +190,29 @@
 
         <hr/>
 
+        <div class="m-widget2 mt-4" id="licenses-certifications">
+            <div class="mb-4 d-flex flex-row align-items-center accordion-header">
+                <button class="btn btn-default m-btn--icon m-btn--icon-only m-btn--pill"
+                        data-toggle="collapse"
+                        data-target="#collapsibleLicensesCertifications"
+                        aria-expanded="false" aria-controls="collapsibleLicensesCertifications">
+                    <i class="more-less fa fa-chevron-right"></i>
+                </button>
+                <h5 class="ml-3 mb-0">Licenses And Certifications</h5>
+                <span class="pl-2 m-menu__link-badge">
+                    <span class="m-badge m-badge--success" id="liscerts-total-badge"></span>
+                </span>
+            </div>
+            <div id="collapsibleLicensesCertifications" class="collapse">
+                <div id="alert-no-licenses-certifications-yet">
+                    <h6 class="mt-2 text-muted" style="padding-left: 48px;">No record(s) to show.</h6>
+                </div>
+                <div class="row"></div>
+            </div>
+        </div>
+
+        <hr/>
+
         <div class="m-widget2 mt-4" id="performance-evaluation">
             <div class="mb-4 d-flex flex-row align-items-center accordion-header">
                 <button class="btn btn-default m-btn--icon m-btn--icon-only m-btn--pill"

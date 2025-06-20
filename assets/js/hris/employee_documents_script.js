@@ -6,6 +6,7 @@ const medicalRecordsContainer = $("#medical-records .row");
 const offensesContainer = $("#offenses-commendations .row");
 const performanceEvalContainer = $("#performance-evaluation .row");
 const bgcheckContainer = $("#background-check .row");
+const license_certContainer = $("#licenses-certifications .row");
 
 loadDocuments();
 
@@ -25,6 +26,7 @@ function loadDocuments() {
             const offenses = response.offenses;
             const performance = response.performance;
             const bgcheck = response.bgcheck;
+            const license_cert = response.licenses;
 
             const allowedFileTypes = [
                 {
@@ -101,6 +103,17 @@ function loadDocuments() {
                 $('#alert-no-offenses-commendations-yet').html('<h6 class="mt-2 text-muted"' +
                     'style="padding-left: 48px;">' +
                     'No offenses and commendations to show.' +
+                    '</h6>');
+            }
+
+            if (license_cert.length) {
+                $('#alert-no-licenses-certifications-yet').html('');
+                $('#liscerts-total-badge').html(license_cert.length + ' Files');
+            } else {
+                $('#liscerts-total-badge').html(0);
+                $('#alert-no-licenses-certifications-yet').html('<h6 class="mt-2 text-muted"' +
+                    'style="padding-left: 48px;">' +
+                    'No lincenses and certifications to show.' +
                     '</h6>');
             }
 
@@ -609,6 +622,106 @@ function loadDocuments() {
                     '            </div>';
 
                 offensesContainer.append(rowTemplate);
+            });
+
+            license_certContainer.html('');
+            license_cert.forEach((license) => {
+                let icon = '';
+                let color = '';
+                const doc_type = license.doc_type ? license.doc_type : "N/A";
+                const date_uploaded = license.date_uploaded ? license.date_uploaded : "No specified date.";
+                let ext = license.doc_filename ? license.doc_filename.split(".") : "";
+                ext = ext[ext.length - 1];
+                allowedFileTypes.forEach((item, i) => {
+                    if (item._type.includes(ext)) {
+                        icon = item.icon;
+                        color = item.color;
+                    }
+                });
+                const icon_path = baseUrl('assets/images/file_icons/' + icon);
+                const filepath = license.filepath;
+
+                let previewButton = '';
+                if (icon === 'pdf.svg' || icon === 'doc.svg') {
+                    previewButton = '' +
+                        '    <button ' + (license.exists ? '' : 'disabled') +
+                        '           title="' + (license.exists ? 'Preview' : 'No file in directory.') + '" ' +
+                        '           data-original-title="' + (license.exists ? 'Preview' : 'No file in directory.') + '"' +
+                        '           onclick="previewDocument(\'' + filepath + '\', \'' + icon + '\', \'' + license.doc_filename + '\')"' +
+                        '           class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView ' + (license.exists ? 'm-btn--hover-primary' : '') + '">' +
+                        '       <i class="la la-eye"></i>' +
+                        '    </button>';
+                } else if (icon === 'jpg.svg') {
+                    previewButton = '' +
+                        '    <a data-lightbox="roadtrip" class="lbox" data-title="' + license.doc_filename + '" href="' + filepath + '"></a>' +
+                        '    <button onclick="openLightBox(this)" ' + (license.exists ? '' : 'disabled') +
+                        '            title="' + (license.exists ? 'Preview' : 'No file in directory.') + '" ' +
+                        '            data-original-title="' + (license.exists ? 'Preview' : 'No file in directory.') + '"' +
+                        '            class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView ' + (license.exists ? 'm-btn--hover-primary' : '') + '">' +
+                        '            <i class="la la-eye"></i>' +
+                        '    </button>';
+                } else if (icon === 'default.svg') {
+                    previewButton = '';
+                }
+
+                const isDisabled = license.exists ? '': 'disabled';
+                const hasClass = license.exists ? 'm-btn--hover-primary' : '';
+
+                let currentAction = `<button ${isDisabled} 
+                    title="Download" data-original-title="Download" 
+                    onclick="downloadDocument(\'${filepath}\')"
+                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView ${hasClass}">
+                    <i class="la la-download"></i>
+                </button>`;
+
+                if(license.exists == false){
+                    currentAction = `<a href='javascript:void(0);' title='File Not Found!' data-original-title='File Not Found!'
+                    class='btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView m-btn--hover-danger btnNotFound'>
+                    <i class='la la-exclamation'></i></a>`;
+                }
+
+                if(license.to_replace == true && license.exists == false){
+                    const { id, emp_id, to_replace_filename, added_by_name, to_replace_filepath } = license;
+                    const toReplace = Object.assign( { id, emp_id, to_replace_filename, added_by_name, to_replace_filepath });
+
+                    const docStringify = JSON.stringify(toReplace);
+                    currentAction = `<button 
+                        title="Download File And Re-upload" data-original-title="Download File And Re-upload" data-raw='${docStringify}'
+                        class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView m-btn--hover-warning btnDownloadFile">
+                        <i class="la la-download"></i>
+                    </button>`;
+                }
+
+                const rowTemplate = '' +
+                    '            <div class="col-xl-6">' +
+                    '                <div class="m-widget2__item m-widget2__item--' + color + '">' +
+                    '                    <div class="m-widget2__checkbox">' +
+                    '                        <div class="m-widget2__img m-widget2__img--icon">' +
+                    '                            <img src="' + icon_path + '" alt="">' +
+                    '                        </div>' +
+                    '                    </div>' +
+                    '                    <div class="m-widget2__desc">' +
+                    '                       <span class="m-widget2__text">' +
+                    '                           ' + doc_type +
+                    '                       </span>' +
+                    '                       <br>' +
+                    '                       <span class="m-widget2__user-name">' +
+                    '                              ' + license.doc_filename +
+                    '                       </span>' +
+                    '                       <br>' +
+                    '                       <span class="m-widget2__user-name">' +
+                    '                           <span class="m-widget2__link">' +
+                    '                              ' + date_uploaded +
+                    '                           </span>' +
+                    '                       </span>' +
+                    '                    </div>' +
+                    '                    <div class="m-widget2__actions">' +
+                    '                        ' + previewButton + currentAction +
+                    '                    </div>' +
+                    '                </div>' +
+                    '            </div>';
+
+                    license_certContainer.append(rowTemplate);
             });
 
             performanceEvalContainer.html('');

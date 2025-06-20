@@ -1684,6 +1684,26 @@ if (typeof _tempContentData !== "undefined") {
                                 modalContent.find('#with-expiry').addClass('d-none');
                             }
                         });
+                        let url = baseUrl("hris/masterfile/upload_employee_liscert");
+                        $("#fileupload_liscert")
+                        .fileupload({
+                            url: url,
+                            dataType: "json",
+                            formData: { csrf_token: _csrf_hash, employee_id: tempDataId },
+                            done: function (e, data) {
+                                var result = data.result;
+                                if (result.response) {
+                                    modalContent.find("#liscert_attachment").val(result.filename);
+                                    modalContent.find("#temp_fileupload").empty().text(result.filename);
+                                    toastr.success(result.toastr_msg, "Upload License and Certificate File", 5000);
+                                } else {
+                                    toastr.error(result.toastr_msg, "Upload License and Certificate File", 5000);
+                                }
+                            }
+                        })
+                        .prop("disabled", !$.support.fileInput)
+                        .parent()
+                        .addClass($.support.fileInput ? undefined : "disabled");
 
                         $.validate({
                             form: "#form-licensure",

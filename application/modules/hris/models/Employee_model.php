@@ -4559,7 +4559,7 @@
                 $document->to_replace_filename = null;
                 $document->to_replace_filepath = null;
 
-                if($fileExist == false){
+                if($fileExist == true){
                     $tempFiles = scandir("uploads/files/documents/employee_files/empcode_{$employee_id}/documents/");
                     foreach ($tempFiles as $file) {
                         if(strstr($file, $document->doc_filename)){
@@ -4656,7 +4656,7 @@
                 $training->to_replace_filename = null;
                 $training->to_replace_filepath = null;
 
-                if($fileExist == false){
+                if($fileExist == true){
                     $tempFiles = scandir("uploads/files/documents/employee_files/empcode_{$employee_id}/trainings/");
                     foreach ($tempFiles as $file) {
                         if(strstr($file, $training->doc_filename)){
@@ -4705,7 +4705,7 @@
                 $medical->to_replace_filename = null;
                 $medical->to_replace_filepath = null;
 
-                if($fileExist == false){
+                if($fileExist == true){
                     $tempFiles = scandir("uploads/files/documents/employee_files/empcode_{$employee_id}/medical/");
                     foreach ($tempFiles as $file) {
                         if(strstr($file, $medical->doc_filename)){
@@ -4755,7 +4755,7 @@
                 $offense->to_replace_filename = null;
                 $offense->to_replace_filepath = null;
 
-                if($fileExist == false){
+                if($fileExist == true){
                     $tempFiles = scandir("uploads/files/documents/employee_files/empcode_{$employee_id}/offenses_commendation/");
                     foreach ($tempFiles as $file) {
                         if(strstr($file, $offense->doc_filename)){
@@ -4770,6 +4770,58 @@
             }
             /* OFFENSE AND COMMENDATION */
 
+            $this->db->reset_query();
+            /* Licenses And Certifications */
+
+            $this->db->select("licenses.*, DATE_FORMAT(licenses.add_date, '%b %d, %Y %h:%i:%s %p') date_uploaded, 
+            licenses.license_type as doc_type, licenses.liscert_attachment doc_filename, 
+            CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+            END,' ', UPPER(TRIM(emp.lastname)),
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
+            END) as added_by_name", FALSE);
+
+        $this->db->join("gccmaster.tblemployees as emp", "emp.id = licenses.add_by", "LEFT");
+        $this->db->where("licenses.emp_id", $employee_id);
+        $this->db->where("licenses.liscert_attachment !=", "");
+        $this->db->where("licenses.liscert_attachment IS NOT NULL", NULL, FALSE);
+        $this->db->where("(licenses.is_archived=0 OR licenses.is_archived IS NULL)", NULL, FALSE);
+        $this->db->like('CONCAT(licenses.license_type, licenses.liscert_attachment, DATE(licenses.add_date), DATE(licenses.release_date), licenses.rating, licenses.exam_place)', $searchKey, 'both');
+        $this->db->order_by("licenses.id", "desc");
+        $licenses = array();
+        $_licenses = $this->db->get($this->employeeLicensureTable . " licenses")->result();
+
+        foreach ($_licenses as $license) {
+            $path = "uploads/files/documents/employee_files/empcode_" . $employee_id . "/licenses_certificates/" . $license->doc_filename;
+            $realpath = realpath($path);
+            $fileExist = file_exists($realpath);
+            $license->exists = file_exists($realpath);
+            $license->filepath = base_url($path);
+
+            $license->to_replace = false;
+            $license->to_replace_filename = null;
+            $license->to_replace_filepath = null;
+
+            if($fileExist == true){
+                $tempFiles = scandir("uploads/files/documents/employee_files/empcode_{$employee_id}/licenses_certificates/");
+                foreach ($tempFiles as $file) {
+                    if(strstr($file, $license->doc_filename)){
+                        $license->to_replace_filename = $file;
+                        $license->to_replace = true;
+                        $license->to_replace_filepath = base_url("uploads/files/documents/employee_files/empcode_{$employee_id}/licenses_certificates/{$file}");
+                    }
+                }
+            }
+
+            array_push($licenses, $license);
+        }
+
+            /* Licenses And Certifications */
+            $this->db->reset_query();
             /* PERFORMANCE EVALUATION */
             $this->db->select("performance.*, DATE_FORMAT(performance.created_at, '%b %d, %Y %h:%i:%s %p') date_uploaded, 
                 'Performance Evaluation' as doc_type, performance.filename as doc_filename, 
@@ -4802,7 +4854,7 @@
                 $p->to_replace_filename = null;
                 $p->to_replace_filepath = null;
 
-                if($fileExist == false){
+                if($fileExist == true){
                     $tempFiles = scandir("uploads/files/documents/employee_files/empcode_{$employee_id}/performance_eval/");
                     foreach ($tempFiles as $file) {
                         if(strstr($file, $p->doc_filename)){
@@ -4823,7 +4875,8 @@
                 "medical" => $medical_records,
                 "offenses" => $offenses,
                 "performance" => $performance,
-                "bgcheck" => $bgcheck
+                "bgcheck" => $bgcheck,
+                "licenses" => $licenses
             );
         }
 
@@ -5397,13 +5450,16 @@
             );
             $id = $post->id;
             $is_active = isset($post->is_active) && $post->is_active == 1 ? $post->is_active : 0;
+            $current_filename = $post->current_filename;
+
+            unset($post->current_filename);
             unset($post->id);
             $currentData = $this->getLicensureById($id);
-            if ($post->license_type != 'Certificate') {
+            if ($post->license_type != 'Certificate' && $post->license_type != '0-CERTIFICATE') {
                 $license = explode('-', $post->license_type);
                 $post->license_id = $license[0];
                 $post->license_type = $license[1];
-                $license_type = ($license[0] != 0) ? $this->getLicense($license[0])->type : null;
+                // $license_type = ($license[0] != 0) ? $this->getLicense($license[0])->type : null;
                 $post->certificate_name = null; 
             }else{
                 $post->license_type = 'CERTIFICATE';
@@ -5417,7 +5473,39 @@
                 unset($post->is_active);
             }
             $this->db->where("id", $id);
-            if ($this->db->update($this->employeeLicensureTable, $post)) {  
+            if ($this->db->update($this->employeeLicensureTable, $post)) { 
+
+                $emp_id = $this->db->where("id", $id)->get($this->employeeLicensureTable)->row("emp_id");
+                $uploadPath = './uploads/files/documents/employee_files/empcode_' . $emp_id . '/licenses_certificates';
+                $uploaded = null;
+                
+                if ($_FILES["files"]["name"]) {
+                    $current_file_path = $uploadPath . "/" . $current_filename;
+    
+                    if (!file_exists(realpath($uploadPath))) {
+                        mkdir($uploadPath, 0777, true);
+                    }
+    
+                    if ($current_filename && file_exists(realpath($current_file_path))) {
+                        unlink(realpath($current_file_path));
+                    }
+    
+                    $config = array();
+                    $config['upload_path'] = $uploadPath;
+                    $config['allowed_types'] = 'jpg|jpeg|png|PNG|JPG|JPEG|pdf|doc|docx';
+                    $config['max_size'] = 10000;
+                    $config['create_thumbnail'] = false;
+    
+                    $uploaded = $this->file_upload->uploadFile($config);
+    
+                    if ($uploaded['response']) {
+                        $this->db->where("id", $id)
+                            ->update($this->employeeLicensureTable, array("liscert_attachment" => $uploaded['files'][0]['file_name']));
+                            $post->filename = $uploaded['files'][0]['file_name'];
+                    }
+                }
+                
+
                 $changes = $this->logChanges($currentData, $post);
                 $fullname =  $this->getEmployeeName($currentData->emp_id);
                 // unset($post->license_id);
@@ -11999,6 +12087,71 @@
             $this->db->reset_query();
             return $result;
 
+        }
+
+        public function uploadEmployeeLicenseCert(){
+            $resultset = array();
+            $post = $this->input->post();
+
+            if (isset($post["employee_id"]) && $post["employee_id"]) {
+                $imagesPath = "./uploads/files/documents/employee_files/empcode_{$post["employee_id"]}/licenses_certificates/";
+
+                $createFilePath = false;
+
+                if (!file_exists($imagesPath)) {
+                    $mkdir = mkdir($imagesPath, 0777, true);
+                    if ($mkdir) {
+                        $createFilePath = true;
+                    }
+                } else {
+                    $createFilePath = true;
+                }
+
+                if ($createFilePath) {
+
+                    $config = array();
+                    $config['upload_path'] = $imagesPath;
+                    $config['allowed_types'] = 'jpg|jpeg|png|pdf|PNG|JPG|JPEG|PDF';
+                    $config['max_size'] = 100000;
+                    $config['create_thumbnail'] = false;
+
+                    $data = $this->file_upload->uploadFile($config);
+                    if ($data["response"]) {
+                        $files = $data["files"][0];
+                        $filename = $files["file_name"];
+                        if ($filename) {
+                            $resultset["response"] = true;
+                            $resultset["toastr_msg"] = "File upload successful.";
+                            $resultset["toastr_state"] = "success";
+                            $resultset["filename"] = $filename;
+                            $this->core_layout->setEventLog("License and Certificates - File upload successful.","file upload", "success", "gcchris", "user");
+                        } else {
+                            $resultset["response"] = false;
+                            $resultset["toastr_msg"] = "File upload to specific path failed!";
+                            $resultset["toastr_state"] = "error";
+                            $this->core_layout->setEventLog("License and Certificates - File upload to specific path failed.","file upload", "error", "gcchris", "system");
+                        }
+                    } else {
+                        $resultset["response"] = false;
+                        $resultset["toastr_msg"] = "File upload failed!";
+                        $resultset["toastr_state"] = "error";
+                        $this->core_layout->setEventLog("License and Certificates - File upload failed.","file upload", "error", "gcchris", "system");
+                    }
+
+                } else {
+                    $resultset["response"] = false;
+                    $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
+                    $resultset["toastr_state"] = "warning";
+                    $this->core_layout->setEventLog("License and Certificates - Failed to create directory folder for the uploaded file.","file upload", "error", "gcchris", "system");
+                }
+            } else {
+                $resultset["response"] = false;
+                $resultset["toastr_msg"] = "Employee data not found!";
+                $resultset["toastr_state"] = "error";
+                $this->core_layout->setEventLog("License and Certificates - Employee data not found.","file upload", "error", "gcchris", "system");
+            }
+
+            return $resultset;
         }
 
     }
