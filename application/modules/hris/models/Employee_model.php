@@ -992,13 +992,15 @@
         function getEmployeeWorkExperience() {
             $post = $this->input->post();
             if ($post) {
-                $columns = array("work_company", "work_from", "work_to", "work_position", "work_status", "work_reason", "id", "emp_id", "old_idno");
+                $columns = array("work_company", "work_from", "work_to", "work_position", "work_status", "work_reason", "id", "emp_id", 'add_date', "old_idno");
                 $dir = "DESC";
                 $order = "work_from";
                 if (isset($post["order"]) && $post["order"]) {
                     $dir = $post["order"][0]["dir"];
                     $order = $columns[$post["order"][0]["column"]];
-                }
+                } 
+                $orderRaw = 'work_from DESC, work_to DESC, add_date DESC';
+                //here
                 $draw = (isset($post['draw']) && $post['draw']) ? $post['draw'] : 0;
                 $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
                 $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 0;
@@ -1017,7 +1019,7 @@
                 $totalFiltered = $totalData;
 
                 if (empty($searchValue)) {
-                    $posts = $dtTable->dtAllPosts($limit, $start, $order, $dir);
+                    $posts = $dtTable->dtAllPosts($limit, $start, $order, $dir, $orderRaw);
                 } else {
                     $posts = $dtTable->dtSearch($limit, $start, $searchValue, $order, $dir);
                     $totalFiltered = $dtTable->dtPostSearchCount($searchValue);
@@ -6392,7 +6394,7 @@
                         "archived_table" => "gccmaster.tblemployees",
                         "archived_id" => $emp_id,
                         "archived_by" => $user["employee_id"],
-                        "archived_at" => date('Y - m - d H:i:s'),
+                        "archived_at" => date('Y-m-d H:i:s'),
                         "status" => 3
                     )
                 );
@@ -6420,7 +6422,7 @@
                 "archived_table" => $archived_table,
                 "archived_id" => $archived_id,
                 "archived_by" => $employee_id,
-                "archived_at" => date('Y - m - d H:i:s'),
+                "archived_at" => date('Y-m-d H:i:s'),
                 "status" => $status);
             $this->db->insert($this->tblArchivedItems, $archived_data);
         }
@@ -6454,7 +6456,7 @@
                 "work_position" => $post->current_position,
                 "work_status" => $post->current_status,
                 "work_reason" => "TRANSFER COMPANY",
-                "add_date" => date('Y - m - d H:i:s'),
+                "add_date" => date('Y-m-d H:i:s'),
                 "add_by" => $employee_id
             );
             $this->db->insert($this->employeeWorkExperienceTable, $work_experience_field);
@@ -11823,7 +11825,7 @@
             $this->db->join($this->companyTable . " comp", "comp.id = xps.work_company AND (UPPER(xps.work_reason) = 'TRANSFER COMPANY' OR `xps`.`old_idno` != NULL OR `xps`.`old_idno` != '')", "LEFT");
             $this->db->where('xps.emp_id', $id);
             $this->db->where('xps.is_archived', 0);
-            $this->db->order_by("xps.work_from DESC, xps.work_to DESC");
+            $this->db->order_by("xps.work_from DESC, xps.work_to DESC, xps.add_date DESC");
             $query = $this->db->get();
             return ['works' => $query->result()];
         }
@@ -11981,7 +11983,7 @@
             $this->db->reset_query();
             return $result->loan_name;
         }
-      
+    
         public function getEmployeeCurrentCompany($id){
             $this->db->select("company_id, position, department_id");
             $this->db->from($this->employeeTable);
