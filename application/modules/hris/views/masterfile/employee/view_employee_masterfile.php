@@ -87,10 +87,10 @@
                                         </div>
                                     </div>
                                     <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
-                                        <div class="col-xl-6">
+                                        <div class="col-xl-4">
                                             <span>Position:</span>
                                         </div>
-                                        <div class="col-xl-6 text-xl-right text-lg-right text-sm-center">
+                                        <div class="col-xl-8 text-xl-right text-lg-right text-sm-center">
                                             <span class="m--font-bolder" v-text="main.position"></span>
                                         </div>
                                     </div>
