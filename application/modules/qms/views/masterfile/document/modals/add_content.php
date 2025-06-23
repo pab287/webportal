@@ -27,7 +27,6 @@
     </button>
 </div>
 <form id="form-add_policy" method="post" action="<?php echo site_url("qms/masterfile/set_modal_policy"); ?>" enctype="multipart/form-data" autocomplete="off">
-<!-- <form id="form-add_policy" method="post" action="#" enctype="multipart/form-data"> -->
     <div class="modal-body">
         <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
         <div class="row">
@@ -49,16 +48,16 @@
                                 <span>Memo No.</span>
                             </div>
                             <div class="colcat1 p-0">
-                                <input type="number" id="memo-ref_year" name="ref_year" class="form-control m-input" placeholder="year" data-validation="required">
+                                <input type="number" id="memo-ref_year" name="ref_year" class="form-control" placeholder="year" data-validation="required" style="padding-right: 5px !important">
                             </div>
                             <div class="colcat3 p-0">
                                 <span>-</span>
                             </div>
                             <div class="colcat4 p-0">
-                                <input type="number" id="memo-ref_series" name="ref_series" class="form-control m-input" placeholder="series" data-validation="required">
+                                <input type="number" id="memo-ref_series" name="ref_series" class="form-control" placeholder="series" data-validation="required" style="padding-right: 5px !important">
                             </div>
                             <div class="colcat4 p-0">
-                                <input type="text" id="memo-ref_department" name="ref_department" class="form-control m-input" placeholder="dept" data-validation="required">
+                                <input type="text" id="memo-ref_department" name="ref_department" class="form-control" placeholder="dept" data-validation="required">
                             </div>
                         </div>
                     </div>
@@ -76,12 +75,6 @@
                     <div id="others-category">
                         <input type="text" name="document_no" id="policy-docno" class="form-control" data-validation="required">
                     </div>
-
-                    <!-- <div class="input-group">
-                        <input type="text" class="form-control input-sm" />
-                        <span class="input-group-btn" style="width:0px;"></span>
-                        <input type="text" class="form-control input-sm" />
-                    </div> -->
                 </div>
             </div>
             <div class="col-md-2">
@@ -99,7 +92,7 @@
         </div>
 
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="form-group">
                     <label for="policy-name" class="form-control-label required">Title</label>
                     <input type="text" name="title" id="policy-name" class="form-control" data-validation="required">

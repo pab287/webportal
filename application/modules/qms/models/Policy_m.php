@@ -1084,7 +1084,7 @@
             return array('data' => $result);
         }
 
-        function get_documents($year = '', $search = null, $builder = null, $advance = null){
+        function get_documents($year = '', $search = null, $builder = null, $advance = null, $category = 1){
             $resultset = array();
             $arrData = array();
 
@@ -1114,6 +1114,7 @@
             $this->db->join($this->tbldept.' as f', 'f.policy_id = a.id', 'LEFT');
             $this->db->where('a.ref_year', $year);
             $this->db->where('a.is_archived', 0);
+            $this->db->where('a.category_id', $category);
             $this->db->order_by('a.id', 'desc');
 
             $filterFields = array('a.title', 'a.scope', 'a.objective', 'a.effective_date', 'b.name', 'a.document_no', 'a.ref_code', 'a.ref_year', 'a.ref_series', 'a.ref_department');
@@ -1251,7 +1252,7 @@
 
             if($query->num_rows() > 0){
                 foreach($query->result() as $key => $rs){
-                    $contents = $this->get_documents($rs->ref_year, $search, $builder, $advance);
+                    $contents = $this->get_documents($rs->ref_year, $search, $builder, $advance, $post['id']);
 
                     if(count($contents) > 0){
                         $rs->contents = $contents;
