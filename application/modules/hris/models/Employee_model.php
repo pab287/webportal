@@ -8969,6 +8969,7 @@
             $this->db->select("id, is_active");
             $this->db->where("emp_id", $post["emp_id"]);
             $this->db->where("is_archived", 0);
+            $this->db->where('id !=', $id);
             $qAllw = $this->db->get("gcchris.allowances");
             if($qAllw->num_rows() > 0){
                 $multipleAllowances = false;
@@ -8976,7 +8977,7 @@
                 $checkColumn = array_column($qAllw->result_array(), "is_active");
                 $isActiveColumn = array_count_values($checkColumn);
                 if(($recordCount > 1 && isset($isActiveColumn[1]) && $isActiveColumn[1] == $recordCount) ||
-                 ($recordCount > 1 && $postStdClass->is_active && (isset($isActiveColumn[0]) && $isActiveColumn[0] > 0) && (isset($isActiveColumn[1]) && $isActiveColumn[1] > 0))){
+                    ($recordCount > 1 && $postStdClass->is_active && (isset($isActiveColumn[0]) && $isActiveColumn[0] > 0) && (isset($isActiveColumn[1]) && $isActiveColumn[1] > 0))){
                     $multipleAllowances = true;
                 }
 
@@ -9070,6 +9071,13 @@
                 $this->db->where("id", $id);
                 $this->db->set($tempData);
                 $updated = $this->db->update("gcchris.allowances");
+
+                /** automatically inactive the active allowance when activating a different allowance */
+                if ($updated) {
+                    $this->db->where("id !=", $id);
+                    $this->db->where('is_archived', 0);
+                    $this->db->update('gcchris.allowances', array( 'is_active' => 0 ));
+                }
             }
 
             $coreHistoryLog = $this->core_layout->coreHistoryLogs();
@@ -9111,8 +9119,8 @@
                                 $toValue = is_numeric($toValue) ? number_format($toValue, 2, ".", ","): $toValue;
                                 
                                 $logMessage = $fromValue ? 
-                                    "Employee named `$tempEmployeeName` with payroll allowance data field `$nKey` has been updated from `$fromValue` to `$toValue`.": 
-                                    "Employee named `$tempEmployeeName` with payroll allowance data field `$nKey` has been updated into `$toValue`.";
+                                    "Employee named `$tempEmployeeName` with payroll allowance data field `Allowance $nKey` has been updated from `$fromValue` to `$toValue`.": 
+                                    "Employee named `$tempEmployeeName` with payroll allowance data field `Allowance $nKey` has been updated into `$toValue`.";
                                 $coreHistoryLog->setEventLog($logMessage, $fromValue ? "update": "insert", "success", "gcchris", "user");
                                 $coreHistoryLog->saveLoggedEventHistory();
                             }
@@ -9161,8 +9169,8 @@
                     $toValue = $value;
 
                     $logMessage = $fromValue ? 
-                            "Employee named `$tempEmployeeName` with payroll allowance data field `$tempDescription` and value of from `$fromValue` to `$toValue` is for approval status.": 
-                            "Employee named `$tempEmployeeName` with payroll allowance data field `$tempDescription` and value of `$toValue` is for approval status.";
+                            "Employee named `$tempEmployeeName` with payroll allowance data field `Allowance $tempDescription` and value of from `$fromValue` to `$toValue` is for approval status.": 
+                            "Employee named `$tempEmployeeName` with payroll allowance data field `Allowance $tempDescription` and value of `$toValue` is for approval status.";
                         $coreHistoryLog->setEventLog($logMessage, $fromValue ? "update": "insert", "success", "gcchris", "user");
                         $coreHistoryLog->saveLoggedEventHistory();
                 }
@@ -9201,7 +9209,7 @@
             $type = count($forApprovalFields) > 1 ? "are": "is";
             $resultSet["for_approval"] = true;
             $resultSet["email_sent"] = $emailSent;
-            $resultSet["approval_notification"] = "The following field(s) `{$explodedApproval}` {$type} for approval status.";
+            $resultSet["approval_notification"] = "The following field(s) `Allowance {$explodedApproval}` {$type} for approval status.";
         }
 
             /*** $this->db->where("id", $id);
@@ -10567,6 +10575,14 @@
                                             array("is_approved"=>3, "approval_by"=>$this->core_layout->getCurrentEmployeeId(), "approval_at"=>$approvalDate),
                                             $cancelApprovalWhere);
                                             $this->db->reset_query();
+
+                                            /** automatically inactive the active allowance when activating a different allowance */
+                                            if ($rowData->table_field == 'is_active' && $rowData->original_value == 1) {
+                                                $this->db->where('id !=', $rowData->table_id);
+                                                $this->db->where('is_archived', 0);
+                                                $this->db->where('is_active', 1);
+                                                $this->db->update($rowData->database_table, array('is_active' => 0));
+                                            }
                                         }
                                     }
                                     $coreHistoryLog = $this->core_layout->coreHistoryLogs();
@@ -10575,7 +10591,8 @@
                                     $coreHistoryLog->setHistoryLogTableFieldId($rowData->table_id);
                                     $coreHistoryLog->setHistoryLogEmployeeId($rowData->unique_id);
         
-                                    $logMessage = "Employee named `$rowData->employee_name` with payroll $payrollData data field `$rowData->field_description` has been `$approval` with a value of `$rowData->table_value`.";
+                                    $_allowance = $payrollData == 'allowance' ? 'allowance ' . $rowData->field_description : $rowData->field_description;
+                                    $logMessage = "Employee named `$rowData->employee_name` with payroll $payrollData data field `$_allowance` has been `$approval` with a value of `$rowData->table_value`.";
                                     $coreHistoryLog->setEventLog($logMessage, $approval, "success", "gcchris", "user");
                                     $coreHistoryLog->saveLoggedEventHistory();
                                     
@@ -10643,6 +10660,14 @@
                                         array("is_approved"=>3, "approval_by"=>$this->core_layout->getCurrentEmployeeId(), "approval_at"=>$approvalDate),
                                         $cancelApprovalWhere);
                                         $this->db->reset_query();
+
+                                        /** automatically inactive the active allowance when activating a different allowance */
+                                        if ($rowData->table_field == 'is_active' && $rowData->original_value == 1) {
+                                            $this->db->where('id !=', $rowData->table_id);
+                                            $this->db->where('is_archived', 0);
+                                            $this->db->where('is_active', 1);
+                                            $this->db->update($rowData->database_table, array('is_active' => 0));
+                                        }
                                     }
                                 }
                                 $coreHistoryLog = $this->core_layout->coreHistoryLogs();
@@ -10651,7 +10676,8 @@
                                 $coreHistoryLog->setHistoryLogTableFieldId($rowData->table_id);
                                 $coreHistoryLog->setHistoryLogEmployeeId($rowData->unique_id);
     
-                                $logMessage = "Employee named `$rowData->employee_name` with payroll $payrollData data field `$rowData->field_description` has been `$approval` with a value of `$rowData->table_value`.";
+                                $_allowance = $payrollData == 'allowance' ? 'allowance ' . $rowData->field_description : $rowData->field_description;
+                                $logMessage = "Employee named `$rowData->employee_name` with payroll $payrollData data field `$_allowance` has been `$approval` with a value of `$rowData->table_value`.";
                                 $coreHistoryLog->setEventLog($logMessage, $approval, "success", "gcchris", "user");
                                 $coreHistoryLog->saveLoggedEventHistory();
                                 
