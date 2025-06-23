@@ -46,11 +46,6 @@
 							<table class="table table-striped table-bordered" id="table-readings-archive" width="100%">
                                 <thead>
 									<tr>
-                                        <th>
-				                            <label class="m-checkbox m-checkbox--air m-checkbox--state-primary">
-				                                <input type="checkbox" id="cb-select-all"><span></span>
-				                            </label>
-				                        </th>
 										<th>Reference No.</th>
 										<th>Account No.</th>
 										<th>Account Name</th>
@@ -61,7 +56,6 @@
 										<th>Lot No.</th>
 										<th>Reading</th>
 										<th>Status</th>
-										<th class="notExport">Action</th>
 									</tr>
 								</thead>
 								<tbody>	
@@ -73,31 +67,4 @@
 			</div>
 		</div>
 	</div>
-</div>
-
-<div class="modal fade" tabindex="-1" role="dialog" id="modal-restore">
-	<form id="frm-restore">
-    <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-		<div class="modal-dialog modal-md" role="document">
-			<div class="modal-content">
-				<div class="modal-header">
-					<h5 class="modal-title">Restore Allowance</h5>
-					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-						<span aria-hidden="true">&times;</span>
-					</button>
-				</div>
-				<div class="modal-body">
-                    <div class="form-group m-form__group row">
-                        <label class="col-12 col-form-label form-control-label">
-                            <b>Restore</b> data to masterfile table. Click <b>yes</b> if you wish to proceed.
-                        </label>
-                    </div>
-				</div>
-				<div class="modal-footer">
-					<button type="submit" class="btn btn-primary btn-submit btnRestore">Yes</button>
-                    <button type="button" class="btn btn-metal text-white btnCancel" data-dismiss="modal">No</button>
-				</div>
-			</div>
-		</div>
-	</form>
 </div>

@@ -785,9 +785,14 @@ class Billing_m extends CI_Model {
         $query = $this->db->update('hydra_billing.tbl_meter_history');
     }
 
-    function createReading(){
+    public function createReading(){
         $current_date = date("Y-m-d H:i:s");
         $post = $this->input->post();
+
+        $reading_date = date("Y-m-d", strtotime($post['reading_date'])); // 2-digit month (e.g., "06")
+        $month = date("m", strtotime($reading_date)); // 2-digit month (e.g., "06")
+        $year = date("Y", strtotime($reading_date)); 
+
         $code = 'MRR';
         $ref_no = $this->series($current_date, 'hydra_billing.readings', $code);
         $ref_series = explode("-",$ref_no)[2];
@@ -805,97 +810,62 @@ class Billing_m extends CI_Model {
         $post["status"] = "Unbilled";
         $resultarray = array();
 
-        /**
-         * Temporary
-         * 
-         * Message: Allow user to create reading where input reading is less than the last reading
-         * 
-         * Start
-         */
+        $existReading = $this->check_existing_reading($post["account_id"], $post["meterno"], $month, $year);
+        if ($existReading == 0) {
+            if($this->getRecentReading($post["account_id"], $post["meterno"]) > $post["reading"]){
 
-        // Check if the account was about to read is if the meter was replaced
-        $m = $this->checkMeterReplace($post["account_id"], $post["meterno"]);
+                // Check if the account was about to read is if the meter was replaced
+                $m = $this->checkMeterReplace($post["account_id"], $post["meterno"]);
 
-        if($m === "0") {
-            $query = $this->db->insert('hydra_billing.readings', $post);
+                if ($m === "0") {
+                    $query = $this->db->insert('hydra_billing.readings', $post);
+                    if($query){
+                        $this->updateInitialReading($post["account_id"], $post["meterno"]);
 
-            if ($query) {
-                $this->updateInitialReading($post["account_id"], $post["meterno"]);
-
-                $resultarray["status"] = TRUE;
-                $resultarray["msg"] = "Reading successfully saved.";
-                $this->core_layout->setEventLog("Reading - Created new readings ".$post["ref_no"],"insert", "success", "hydra_billing", "user");
-            } else{
-                $resultarray["status"] = FALSE;
-                $resultarray["msg"] = "Error saving reading.";
-                $this->core_layout->setEventLog("Reading - Created new readings ".$post["ref_no"],"insert", "error", "hydra_billing", "user");
+                        $resultarray["status"] = true;
+                        $resultarray["msg"] = "Reading successfully saved.";
+                        $this->core_layout->setEventLog("Reading - Created new readings ".$post["ref_no"],"insert", "success", "hydra_billing", "user");
+                    }else{
+                        $resultarray["status"] = false;
+                        $resultarray["msg"] = "Error saving reading.";
+                        $this->core_layout->setEventLog("Reading - Created new readings ".$post["ref_no"],"insert", "error", "hydra_billing", "user");
+                    }
+                } else {
+                    $resultarray["status"] = false;
+                    $resultarray["msg"] = "Current reading must equal or exceed to previous reading.";
+                }
+            } else {
+                $query = $this->db->insert('hydra_billing.readings', $post);
+                if($query){
+                    $resultarray["status"] = true;
+                    $resultarray["msg"] = "Reading successfully saved.";
+                    $this->core_layout->setEventLog("Reading - Created new readings ".$post["ref_no"],"insert", "success", "hydra_billing", "user");
+                }else{
+                    $resultarray["status"] = false;
+                    $resultarray["msg"] = "Error saving reading.";
+                    $this->core_layout->setEventLog("Reading - Created new readings ".$post["ref_no"],"insert", "error", "hydra_billing", "user");
+                }
             }
         } else {
-            $query = $this->db->insert('hydra_billing.readings', $post);
-
-            if($query){
-                $resultarray["status"] = TRUE;
-                $resultarray["msg"] = "Reading successfully saved.";
-                $this->core_layout->setEventLog("Reading - Created new readings ".$post["ref_no"],"insert", "success", "hydra_billing", "user");
-            }else{
-                $resultarray["status"] = FALSE;
-                $resultarray["msg"] = "Error saving reading.";
-                $this->core_layout->setEventLog("Reading - Created new readings ".$post["ref_no"],"insert", "error", "hydra_billing", "user");
-            }
+            $resultarray["status"] = false;
+            $resultarray["msg"] = "Reading for this month already exists.";
+            $this->core_layout->setEventLog("Reading - Attempt to create reading in a month that already has reading, reading date set: " . $post["reading_date"], "insert", "error", "hydra_billing", "user");
         }
-        // END
-        // ================================================================================================================
-        
 
-        /**
-         * ================================================================================================================
-         * 
-         * Original Code
-         * 
-         * Message: Temporarily remove recent reading checking
-         * 
-         * Start
-         */
-
-        // if($this->getRecentReading($post["account_id"], $post["meterno"]) > $post["reading"]){
-
-        //     // Check if the account was about to read is if the meter was replaced
-        //     $m = $this->checkMeterReplace($post["account_id"], $post["meterno"]);
-
-        //     if ($m === "0") {
-        //         $query = $this->db->insert('hydra_billing.readings', $post);
-        //         if($query){
-        //             $this->updateInitialReading($post["account_id"], $post["meterno"]);
-
-        //             $resultarray["status"] = TRUE;
-        //             $resultarray["msg"] = "Reading successfully saved.";
-        //             $this->core_layout->setEventLog("Reading - Created new readings ".$post["ref_no"],"insert", "success", "hydra_billing", "user");
-        //         }else{
-        //             $resultarray["status"] = FALSE;
-        //             $resultarray["msg"] = "Error saving reading.";
-        //             $this->core_layout->setEventLog("Reading - Created new readings ".$post["ref_no"],"insert", "error", "hydra_billing", "user");
-        //         }
-        //     } else {
-        //         $resultarray["status"] = FALSE;
-        //         $resultarray["msg"] = "Current reading must equal or exceed to previous reading.";
-        //     }
-        // } else {
-        //     $query = $this->db->insert('hydra_billing.readings', $post);
-        //     if($query){
-        //         $resultarray["status"] = TRUE;
-        //         $resultarray["msg"] = "Reading successfully saved.";
-        //         $this->core_layout->setEventLog("Reading - Created new readings ".$post["ref_no"],"insert", "success", "hydra_billing", "user");
-        //     }else{
-        //         $resultarray["status"] = FALSE;
-        //         $resultarray["msg"] = "Error saving reading.";
-        //         $this->core_layout->setEventLog("Reading - Created new readings ".$post["ref_no"],"insert", "error", "hydra_billing", "user");
-        //     }
-        // }
-
-        // End
-        // ================================================================================================================
-    
         return $resultarray;
+    }
+
+    public function check_existing_reading($account_id, $meterno, $month, $year) {
+        $this->db->select('id, meterno, account_id, reading_date, reading');
+        $this->db->from('hydra_billing.readings');
+        $this->db->where('account_id', $account_id);
+        $this->db->where('meterno', $meterno);
+        $this->db->where('is_archived', 0);
+        $this->db->where('YEAR(reading_date)', $year);
+        $this->db->where('MONTH(reading_date)', $month);
+
+        $query = $this->db->get();
+        return $query->num_rows();
     }
 
     function getRecentReading($account_id, $meterno){
@@ -982,7 +952,10 @@ class Billing_m extends CI_Model {
         $tempCode = "MRR{$tempYear}-{$tempMonth}-{$tempSeries}";
         return $tempCode;
     }
-    function getReadingCollection(){
+
+    public function getReadingCollection(){
+        $current_year = date('Y');
+
         $post = $this->input->post();
         $order_val = array(array("column" => "1", "dir" => "desc"));
         $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
@@ -990,45 +963,68 @@ class Billing_m extends CI_Model {
         $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
         $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
-        $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
-        
-        $count = $this->getReadingCount($search, $sortBy, $sortOrder, $query_builder, $post);
-        if($count > 0){
-            return $this->getReadingCollection_daterange();
-        }else{
-            return $this->getReadingCollection_initial();
-        }
-    }
 
-    function getReadingCollection_daterange(){
         $resultarray = array();
-        $post = $this->input->post();
         $to_billed = false;
-
-        $order_val = array(array("column" => "1", "dir" => "desc"));
-        $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
-        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
-        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
-        $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
-        $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
-        $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
-
-        $filterFields = array("a.accountno", "r.meterno", "a.firstname", "a.lastname",
-                "a.lot", "a.block", "r.ref_no", "r.reading_date", "r.status", "r.reading", "a.middlename");
         
-        $this->db->select("a.middlename, r.id, a.accountno, r.meterno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.reading_date, r.status, r.reading, r.status as status, a.model,r.is_billed");
+        $filterFields = [
+            "r.ref_no", 
+            "a.accountno", 
+            "a.firstname",
+            "a.middlename",
+            "a.lastname",
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))",
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", 
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))",
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))",
+            // This is for fullname column sort 
+            "CONCAT(
+                TRIM(a.firstname), 
+                ' ',
+                CASE
+                    WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                    WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                    ELSE ''
+                END,
+                TRIM(a.lastname)
+            )",  
+            // This is for fullname column sort 
+            "r.meterno",
+            "r.reading_date", 
+            "a.model",
+            "a.block", 
+            "a.lot", 
+            "r.reading", 
+            "r.status", 
+        ];
+        
+        $this->db->select("
+        CONCAT(
+            TRIM(a.firstname), 
+            ' ',
+            CASE
+                WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                ELSE ''
+            END,
+            TRIM(a.lastname)
+        ) AS name,
+        a.middlename, r.id, a.accountno, r.meterno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.reading_date, r.status, r.reading, a.model, r.is_billed");
         $this->db->from("hydra_billing.readings r");
         $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
-        $this->db->where("r.is_archived", "0");
-        if($query_builder){
-            $this->db->where($query_builder);
-        }
-        if(($post['startDate'] != 'Invalid date') && ($post['endDate'] != 'Invalid date')){
+        $this->db->where("r.is_archived", 0);
+
+        if (isset($post['startDate']) && isset($post['endDate'])) {
             $this->db->where("r.reading_date >=", $post['startDate']);
             $this->db->where("r.reading_date <=", $post['endDate']);
+        } else {
+            $this->db->where("YEAR(r.reading_date)", $current_year); // Defaults to the current year
         }
         
-        if($search != ""){
+        if ($search != "") {
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
+
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
                 if ($key == 0) {
@@ -1039,129 +1035,94 @@ class Billing_m extends CI_Model {
             }
             $this->db->group_end();
         }
+
         $i = $sortOrder[0]['column'];
         $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
 
-        if($limit != -1){
+        if ($limit != -1) {
             $this->db->limit($limit, $offset);
         }
 
         $query = $this->db->get();
 
-        if($query->num_rows() > 0){
-            foreach($query->result_array() as $_query){
-                $data = array();
-                $data["name"] = $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
-                $data["id"] = $_query["id"];
-                $data["accountno"] = $_query["accountno"];
-                $data["meterno"] = $_query["meterno"];
-                $data["block"] = $_query["block"];
-                $data["lot"] = $_query["lot"];
-                $data["model"] = $_query["model"];
-                $data["ref_no"] = $_query["ref_no"];
-                $data["reading_date"] = $_query["reading_date"];
-                $data["status"] = $_query["is_billed"];
-                $data["reading"] = number_format((float)$_query["reading"], 2, '.', '');
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $_query["status"] = $_query["is_billed"];
+                $_query["reading"] = number_format((float)$_query["reading"], 2, '.', '');
 
-                if($_query["is_billed"] == 0){
+                if ($_query["is_billed"] == 0) {
                     $to_billed = true;
                 }
 
-                $resultarray[] = $data;
+                $resultarray[] = $_query;
             }
         }
-        $sql = $this->db->last_query();
 
-        $total = $this->getReadingCount($search, $sortBy, $sortOrder, $query_builder, $post);
-        return array("data"=>$resultarray, "recordsTotal"=>$total, "recordsFiltered"=>$total, "to_billed" => $to_billed, "sql"=>$sql);
-    }
-    
-    function getReadingCollection_initial(){
-        $resultarray = array();
-        $post = $this->input->post();
-        $to_billed = false;
-
-        $order_val = array(array("column" => "1", "dir" => "desc"));
-        $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
-        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
-        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
-        $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
-        $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
-        $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
-
-        $filterFields = array("a.accountno", "r.meterno", "a.firstname", "a.lastname",
-                "a.lot", "a.block", "r.ref_no", "r.reading_date", "r.status", "r.reading", "a.middlename");
-        
-        $this->db->select("a.middlename, r.id, a.accountno, r.meterno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.reading_date, r.status, r.reading, r.status as status, a.model,r.is_billed");
-        $this->db->from("hydra_billing.readings r");
-        $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
-        $this->db->where("r.is_archived", "0");
-        if($query_builder){
-            $this->db->where($query_builder);
-        }
-        
-        if($search != ""){
-            $this->db->group_start();
-            foreach ($filterFields as $key => $field) {
-                if ($key == 0) {
-                    $this->db->like($field, $search, "both");
-                } else {
-                    $this->db->or_like($field, $search, "both");
-                }
-            }
-            $this->db->group_end();
-        }
-        $i = $sortOrder[0]['column'];
-        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
-
-        if($limit != -1){
-            $this->db->limit($limit, $offset);
-        }
-
-        $query = $this->db->get();
-
-        if($query->num_rows() > 0){
-            foreach($query->result_array() as $_query){
-                $data = array();
-                $data["name"] = $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
-                $data["id"] = $_query["id"];
-                $data["accountno"] = $_query["accountno"];
-                $data["meterno"] = $_query["meterno"];
-                $data["block"] = $_query["block"];
-                $data["lot"] = $_query["lot"];
-                $data["model"] = $_query["model"];
-                $data["ref_no"] = $_query["ref_no"];
-                $data["reading_date"] = $_query["reading_date"];
-                $data["status"] = $_query["is_billed"];
-                $data["reading"] = number_format((float)$_query["reading"], 2, '.', '');
-
-                if($_query["is_billed"] == 0){
-                    $to_billed = true;
-                }
-
-                $resultarray[] = $data;
-            }
-        }
-        $sql = $this->db->last_query();
-
-        $total = $this->getReadingCount($search, $sortBy, $sortOrder, $query_builder, $post);
-        return array("data"=>$resultarray, "recordsTotal"=>$total, "recordsFiltered"=>$total, "to_billed" => $to_billed, "sql"=>$sql);
+        $total = $this->getReadingCount($search, $post);
+        return array("data" => $resultarray, "recordsTotal" => $total, "recordsFiltered" => $total, "to_billed" => $to_billed);
     }
 
-    function getReadingCount($search, $sortBy, $sortOrder, $query_builder, $post){
-        $filterFields = array("a.accountno", "a.meterno", "a.firstname", "a.lastname", "a.lot", "a.block", "r.ref_no", "r.reading_date", "r.status", "r.reading", "a.middlename");
-        $this->db->select("a.middlename,r.id,a.accountno,a.meterno,a.firstname,a.lastname, a.lot,a.block,r.ref_no,r.reading_date,r.status,r.reading,r.status as status");
-        $this->db->from("hydra_billing.readings r");
+    public function getReadingCount($search, $post){
+        $current_year = date('Y');
+        
+        $filterFields = [
+            "r.ref_no", 
+            "a.accountno", 
+            "a.firstname",
+            "a.middlename",
+            "a.lastname",
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))",
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", 
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))",
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))",
+            // This is for fullname column sort 
+            "CONCAT(
+                TRIM(a.firstname), 
+                ' ',
+                CASE
+                    WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                    WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                    ELSE ''
+                END,
+                TRIM(a.lastname)
+            )",  
+            // This is for fullname column sort 
+            "r.meterno",
+            "r.reading_date", 
+            "a.model",
+            "a.block", 
+            "a.lot", 
+            "r.reading", 
+            "r.status", 
+        ];
+
+        $this->db->select("
+        CONCAT(
+            TRIM(a.firstname), 
+            ' ',
+            CASE
+                WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                ELSE ''
+            END,
+            TRIM(a.lastname)
+        ) AS name,
+        a.middlename, r.id, a.accountno, r.meterno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.reading_date, r.status, r.reading, a.model, r.is_billed");
+        $this->db->from("hydra_billing.readings as r");        
         $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
-        $this->db->where("r.is_archived", "0");
-        if($query_builder){
-            $this->db->where($query_builder);
-        }
-        if($post['startDate'] && $post['endDate']){
+        $this->db->where("r.is_archived", 0);
+
+        if (isset($post['startDate']) && isset($post['endDate'])) {
             $this->db->where("r.reading_date >=", $post['startDate']);
             $this->db->where("r.reading_date <=", $post['endDate']);
+        } else {
+            $this->db->where("YEAR(r.reading_date)", $current_year); // Defaults to the current year
         }
-        if($search != ""){
+
+        if ($search != "") {
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
+
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
                 if ($key == 0) {
@@ -1172,30 +1133,74 @@ class Billing_m extends CI_Model {
             }
             $this->db->group_end();
         }
-        //$this->db->order_by('r.ref_no', 'DESC');
-        $i = $sortOrder[0]['column'];
-        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+
         $query = $this->db->get();
         return $query->num_rows();
     }
 
-    function getReadingArchiveCollection(){
-        $resultarray = array();
+    public function getReadingArchiveCollection(){
         $post = $this->input->post();
-
+        $order_val = array(array("column" => "1", "dir" => "desc"));
         $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
         $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
         $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+        $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+        $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
 
-        $filterFields = array("a.accountno", "r.meterno", "a.firstname", "a.lastname",
-                "a.lot", "a.block", "r.ref_no", "r.reading_date", "r.status", "r.reading", "a.middlename");
-
-        $this->db->select("a.middlename,r.id,a.accountno,r.meterno,a.firstname,a.lastname,a.lot,a.block,r.ref_no,r.reading_date,r.status,r.reading,r.status as status, a.model,r.is_billed");
+        $resultarray = array();
+        $to_billed = false;
+        
+        $filterFields = [
+            "r.ref_no", 
+            "a.accountno", 
+            "a.firstname",
+            "a.middlename",
+            "a.lastname",
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))",
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", 
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))",
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))",
+            // This is for fullname column sort 
+            "CONCAT(
+                TRIM(a.firstname), 
+                ' ',
+                CASE
+                    WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                    WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                    ELSE ''
+                END,
+                TRIM(a.lastname)
+            )",  
+            // This is for fullname column sort 
+            "r.meterno",
+            "r.reading_date", 
+            "a.model",
+            "a.block", 
+            "a.lot", 
+            "r.reading", 
+            "r.status", 
+        ];
+        
+        $this->db->select("
+        CONCAT(
+            TRIM(a.firstname), 
+            ' ',
+            CASE
+                WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                ELSE ''
+            END,
+            TRIM(a.lastname)
+        ) AS name,
+        a.middlename, r.id, a.accountno, r.meterno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.reading_date, r.status, r.reading, a.model, r.is_billed");
         $this->db->from("hydra_billing.readings r");
         $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
-        $this->db->where("r.is_archived", "1");
+        $this->db->where("r.is_archived", 1);
 
-        if($search != ""){
+        if ($search != "") {
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
+
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
                 if ($key == 0) {
@@ -1206,42 +1211,81 @@ class Billing_m extends CI_Model {
             }
             $this->db->group_end();
         }
-        $this->db->order_by('r.ref_no', 'DESC');
 
-        if($limit != -1){
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+
+        if ($limit != -1) {
             $this->db->limit($limit, $offset);
         }
 
         $query = $this->db->get();
 
-        if($query->num_rows() > 0){
-            foreach($query->result_array() as $_query){
-                $data = array();
-                $data["name"] = $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
-                $data["id"] = $_query["id"];
-                $data["accountno"] = $_query["accountno"];
-                $data["meterno"] = $_query["meterno"];
-                $data["block"] = $_query["block"];
-                $data["lot"] = $_query["lot"];
-                $data["model"] = $_query["model"];
-                $data["ref_no"] = $_query["ref_no"];
-                $data["reading_date"] = $_query["reading_date"];
-                $data["status"] = $_query["is_billed"];
-                $data["reading"] = number_format((float)$_query["reading"], 2, '.', '');
-                $resultarray[] = $data;
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $_query["status"] = $_query["is_billed"];
+                $_query["reading"] = number_format((float)$_query["reading"], 2, '.', '');
+
+                if ($_query["is_billed"] == 0) {
+                    $to_billed = true;
+                }
+
+                $resultarray[] = $_query;
             }
         }
 
         $total = $this->getReadingArchiveCount($search);
-        return array("data"=>$resultarray, "recordsTotal"=>$total, "recordsFiltered"=>$total);
+        return array("data" => $resultarray, "recordsTotal" => $total, "recordsFiltered" => $total, "to_billed" => $to_billed);
     }
 
-    function getReadingArchiveCount($search){
-        $filterFields = array("a.accountno", "a.meterno", "a.firstname", "a.lastname", "a.lot", "a.block", "r.ref_no", "r.reading_date", "r.status", "r.reading", "a.middlename");
-        $this->db->select("a.middlename,r.id,a.accountno,a.meterno,a.firstname,a.lastname,a.lot,a.block,r.ref_no,r.reading_date,r.status,r.reading,r.status as status");
+    public function getReadingArchiveCount($search){
+        $filterFields = [
+            "r.ref_no", 
+            "a.accountno", 
+            "a.firstname",
+            "a.middlename",
+            "a.lastname",
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))",
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))", 
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))",
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))",
+            // This is for fullname column sort 
+            "CONCAT(
+                TRIM(a.firstname), 
+                ' ',
+                CASE
+                    WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                    WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                    ELSE ''
+                END,
+                TRIM(a.lastname)
+            )",  
+            // This is for fullname column sort 
+            "r.meterno",
+            "r.reading_date", 
+            "a.model",
+            "a.block", 
+            "a.lot", 
+            "r.reading", 
+            "r.status", 
+        ];
+        
+        $this->db->select("
+        CONCAT(
+            TRIM(a.firstname), 
+            ' ',
+            CASE
+                WHEN LOWER(TRIM(a.middlename)) = 'n/a' THEN ''
+                WHEN TRIM(a.middlename) != '' THEN CONCAT(LEFT(TRIM(a.middlename), 1), '. ')
+                ELSE ''
+            END,
+            TRIM(a.lastname)
+        ) AS name,
+        a.middlename, r.id, a.accountno, r.meterno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.reading_date, r.status, r.reading, a.model, r.is_billed");
         $this->db->from("hydra_billing.readings r");
         $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
-        $this->db->where("r.status", "1");
+        $this->db->where("r.is_archived", 1);
+
         if($search != ""){
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
@@ -1324,7 +1368,7 @@ class Billing_m extends CI_Model {
         return $resultset;
     }
 
-    function updateReading(){
+    public function updateReading(){
         $current_date = date("Y-m-d H:i:s");
         $post = $this->input->post();
         $resultarray = array();
@@ -1332,34 +1376,77 @@ class Billing_m extends CI_Model {
         $id = $post["id"];
         unset($post["id"]);
         $post["pic"] = serialize($post['pic']);
+        $old_reading_date = date("Y-m-d", strtotime($post["old_reading_date"]));
+        $old_reading = $post["old_reading"];
+        $reading_date = date("Y-m-d", strtotime($post["reading_date"]));
+        $reading = $post['reading'];
 
         $array = array();
         $array["reading"] = $post["reading"];
+        $array["reading_date"] = $reading_date;
         $array["updated_by"] = $this->getUserdata()['emp_id'];
         $array["updated_at"] = $current_date;
 
         $logs_reading = "(Reading from ".$post['old_reading']." into ".$post['reading'].")";
         $logs_reading_date = "(Reading Date from ".$post['old_reading_date']." into ".$post['reading_date'].")";
 
-        $previousReading = $this->getPreviousReadingDetails($post['account_id'],$post['reading_date'],$post['meterno']);
-        if($previousReading["reading"] > $post["reading"]){
-            $resultarray["status"] = FALSE;
-            $resultarray["msg"] = "Current reading must equal or exceed to previous reading.";
-        } else {
-            $this->db->where("id",$id);
-            $query = $this->db->update("hydra_billing.readings",$array);
+        $previousReading = $this->getPreviousReadingDetails($post['account_id'],$post['old_reading_date'],$post['meterno']);
 
-            if($query){
-                $resultarray["status"] = TRUE;
-                $resultarray["msg"] = "Reading successfully updated.";
-                $this->core_layout->setEventLog("Reading - Change reading of ".$post["ref_no"]." ".$logs_reading." ".$logs_reading_date,"update", "success", "hydra_billing", "user");
-            }else{
-                $resultarray["status"] = FALSE;
-                $resultarray["msg"] = "Error updating account.";
-                $this->core_layout->setEventLog("Reading - Change reading of ".$post["ref_no"]." ".$logs_reading." ".$logs_reading_date,"update", "success", "hydra_billing", "user");
+        // NEW: Get future readings after this reading_date
+        $this->db->select("id, reading, reading_date");
+        $this->db->from("hydra_billing.readings");
+        $this->db->where("account_id", $post["account_id"]);
+        $this->db->where("meterno", $post["meterno"]);
+        $this->db->where("reading_date >", $reading_date);
+        $this->db->where("id !=", $id); // avoid checking against itself
+        $this->db->where("is_archived", 0);
+        $this->db->order_by("reading_date", "ASC");
+        $this->db->limit(1);
+        $futureReadings = $this->db->get()->result_array();
+        
+        $isValid = true;
+
+        if ($previousReading && $reading < $previousReading["reading"]) {
+            $isValid = false;
+            $resultarray["status"] = false;
+            $resultarray["msg"] = "Invalid update: current reading must be equal to or greater than the previous reading.";
+            $this->core_layout->setEventLog("Reading update failed for ".$post["ref_no"].": attempted to enter a reading lower than the previous reading.", "update", "fail", "hydra_billing", "user");
+        }
+
+        // NEW: Check against future readings
+        if ($isValid && !empty($futureReadings)) {
+            foreach ($futureReadings as $future) {
+                if ($reading > $future["reading"]) {
+                    $isValid = false;
+                    $resultarray["status"] = false;
+                    $resultarray["msg"] = "Invalid update: new reading (".$reading.") is greater than its next reading (".$future["reading"].") on ".$future["reading_date"].".";
+                    $this->core_layout->setEventLog("Reading update failed for ".$post["ref_no"].": new reading is greater than future reading on ".$future["reading_date"].".", "update", "fail", "hydra_billing", "user");
+                    break;
+                }
             }
         }
-        $resultarray["test"] = $previousReading["reading"];
+
+        // Proceed to update if valid
+        if ($isValid) {
+            $this->db->where("id", $id);
+            $query = $this->db->update("hydra_billing.readings", $array);
+
+            if ($query) {
+                $resultarray["status"] = true;
+                $resultarray["msg"] = "Reading successfully updated.";
+                $this->core_layout->setEventLog(
+                    "Reading updated for ".$post["ref_no"].": reading changed to ".$logs_reading." on ".$logs_reading_date.".",
+                    "update", "success", "hydra_billing", "user"
+                );
+            } else {
+                $resultarray["status"] = false;
+                $resultarray["msg"] = "An error occurred while updating the reading. Please try again.";
+                $this->core_layout->setEventLog(
+                    "Reading update failed for ".$post["ref_no"].": database update error.",
+                    "update", "fail", "hydra_billing", "user"
+                );
+            }
+        }
 
         return $resultarray;
     }
