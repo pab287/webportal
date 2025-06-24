@@ -656,11 +656,11 @@
                             4.5TH Month
                         </a>
                     </li>
-                    <li class="nav-item m-tabs__item">
+                    <!-- <li class="nav-item m-tabs__item">
                         <a class="nav-link m-tabs__link" data-toggle="tab" role="tab" href="#evaluation_list_tab_content" onclick="loadEvaluationTable('final');">
                             FINAL EVALUATION
                         </a>
-                    </li>
+                    </li> -->
                     <li class="nav-item m-tabs__item dropdown">
                         <a class="nav-link m-tabs__link dropdown-toggle" data-toggle="dropdown" href="javascript:void(0)">
                             <span class="overdue_eval_stage_text">Overdue</span>
@@ -668,7 +668,7 @@
                         <div class="dropdown-menu dropdown-menu-right mt-2" x-placement="bottom-end">
                             <a class="dropdown-item" data-toggle="tab" role="tab" href="#overdue_list_tab_content" onclick="loadOverdueEvaluationTable(1)">3rd Month</a>
                             <a class="dropdown-item" data-toggle="tab" role="tab" href="#overdue_list_tab_content" onclick="loadOverdueEvaluationTable(2)">4.5TH Month</a>
-                            <a class="dropdown-item" data-toggle="tab" role="tab" href="#overdue_list_tab_content" onclick="loadOverdueEvaluationTable(3)">Final Evaluation</a>
+                            <!-- <a class="dropdown-item" data-toggle="tab" role="tab" href="#overdue_list_tab_content" onclick="loadOverdueEvaluationTable(3)">Final Evaluation</a> -->
                             <!-- <div class="dropdown-divider"></div>
                             <a class="dropdown-item" data-toggle="tab" role="tab" href="#overdue_list_tab_content" onclick="loadOverdueEvaluationTable(0)">All</a> -->
                         </div>
@@ -679,7 +679,7 @@
                     <select id="" class="employee_evaluation_options form-control" onchange="loadEvaluationTable()">
                         <option value=" ">3rd Month</option>
                         <option value="2nd">4.5th Month</option>
-                        <option value="final">FINAL EVALUATION</option>
+                        <!-- <option value="final">FINAL EVALUATION</option> -->
                         <option value="overdue">Overdue</option>
                     </select>  
                 </div>      

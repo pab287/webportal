@@ -3593,7 +3593,7 @@
                     $_45Month = "{$dateStarted} - {$_45Month}";
 
                     $qtr["month_30"] = "3rd Month";
-                    $qtr["month_45"] = "4.5 Month";
+                    $qtr["month_45"] = "4.5th Month";
 
                     $range["month_30"] = $_3rdMonth;
                     $range["month_45"] = $_45Month;
@@ -6139,19 +6139,21 @@
             $first_eval = $this->getFirstEvalCalendar();
             $second_eval = $this->getSecondEvalCalendar();
             $final_eval = $this->getFinalEvalCalendar();
-            return array_merge($first_eval, $second_eval, $final_eval);
+
+            // return array_merge($first_eval, $second_eval, $final_eval); // Original code returns all three evaluations
+            return array_merge($first_eval, $second_eval); // Modified code to return only first and second evaluations
         }
 
         private function getFirstEvalCalendar() {
             $select = "'first_eval' evaluation_stage, emp.id emp_id, emp.lastname, emp.firstname, ";
-            $select .= "calendar.id cal_id, '1st Evaluation' string_eval, ";
+            $select .= "calendar.id cal_id, '3rd Month Evaluation' string_eval, ";
             $select .= "emp.middlename, emp.suffix, ";
-            $select .= "UPPER(CONCAT('1st : ', emp.firstname, ' ', emp.middlename,' ',emp.lastname, ";
+            $select .= "UPPER(CONCAT('3rd : ', emp.firstname, ' ', emp.middlename,' ',emp.lastname, ";
             $select .= "    CASE WHEN emp.suffix = 'NONE' THEN '' ";
             $select .= "        WHEN emp.suffix = 'N/A' THEN '' ";
             $select .= "        WHEN emp.suffix IS NULL THEN '' ";
             $select .= "        ELSE CONCAT(' ', emp.suffix) END )) title, ";
-            $select .= "'1st Evaluation' description, ";
+            $select .= "'3rd Month Evaluation' description, ";
             $select .= "emp.date_start, emp.date_end_prob, DATE_ADD(emp.date_start, INTERVAL 3 MONTH) `start`, ";
             $select .= "CASE
                             WHEN calendar.`status`='discontinue' THEN '#F44336'
@@ -6182,14 +6184,14 @@
 
         private function getSecondEvalCalendar() {
             $select = "'second_eval' evaluation_stage, emp.id emp_id, emp.lastname, emp.firstname, ";
-            $select .= "calendar.id cal_id, '2nd Evaluation' string_eval, ";
+            $select .= "calendar.id cal_id, '4.5th Month Evaluation' string_eval, ";
             $select .= "emp.middlename, emp.suffix, ";
-            $select .= "UPPER(CONCAT('2nd : ', emp.firstname, ' ', emp.middlename,' ',emp.lastname, ";
+            $select .= "UPPER(CONCAT('4.5th : ', emp.firstname, ' ', emp.middlename,' ',emp.lastname, ";
             $select .= "    CASE WHEN emp.suffix = 'NONE' THEN '' ";
             $select .= "        WHEN emp.suffix = 'N/A' THEN '' ";
             $select .= "        WHEN emp.suffix IS NULL THEN '' ";
             $select .= "        ELSE CONCAT(' ', emp.suffix) END )) title, ";
-            $select .= "'Second Evaluation' description, ";
+            $select .= "'4.5th Month Evaluation' description, ";
             $select .= "emp.date_start, emp.date_end_prob, DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) `start`, ";
             $select .= "CASE
                             WHEN calendar.`status`='discontinue' THEN '#F44336'

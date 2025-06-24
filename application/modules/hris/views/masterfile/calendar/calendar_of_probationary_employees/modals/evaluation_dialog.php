@@ -3,8 +3,8 @@
         <form id="frm-add-probee-evaluation">
             <div class="modal-header">
                 <div>
-                    <p class="mb-0"><?= $string_eval ?></p>
-                    <h5 class="modal-title" id="exampleModalLabel"><?= $title ?></h5>
+                    <h5 class="modal-title" id="exampleModalLabel" style="font-weight: 600;"><?= $title ?></h5>
+                    <p class="mb-0"><small><?= $string_eval ?></small></p>
                 </div>
                 <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
                     <span aria-hidden="true">×</span>

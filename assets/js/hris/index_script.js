@@ -1404,7 +1404,7 @@ function loadOverdueEvaluationTable(stage) {
             overdue_eval_stage_text = `Overdue`;
     }
 
-    $('.overdue_eval_stage_text').text(overdue_eval_stage_text);
+    $('.overdue_eval_stage_text').text('Overdue: ' + overdue_eval_stage_text);
 
     tblEvaluation.rows().deselect();
 }
