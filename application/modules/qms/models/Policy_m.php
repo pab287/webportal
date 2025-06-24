@@ -327,11 +327,14 @@
                     if($code == 'Memo No.'){
                         $post['document_no'] = $code.' '.$post['ref_year'].'-'.$post['ref_series'].' '.$post['ref_department'];
                         $post['ref_code'] = $code;
-                    }
-
-                    if($code == 'KRA/PI'){
+                    } else if($code == 'KRA/PI'){
                         $post['document_no'] = $code.' '.$post['ref_year'];
                         $post['ref_code'] = $code;
+                    } else {
+                        $post['ref_code'] = null;
+                        $post['ref_year'] = null;
+                        $post['ref_series'] = null;
+                        $post['ref_department'] = null;
                     }
 
                     $post['added_by'] = $this->user_data['emp_id'];
