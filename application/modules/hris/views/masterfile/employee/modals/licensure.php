@@ -80,6 +80,10 @@
         </span>
         <p id="temp_fileupload" style='text-overflow: ellipsis; white-space: nowrap; overflow: hidden;' class="form-control m-input m--margin-top-10" disabled="disabled">&nbsp;</p>
     </div>
+    <div class="form-group">
+		<label for="remarks" class="form-control-label">Remarks</label>
+		<input id="remarks" name="remarks" type="text" autocomplete="off" class="form-control m-input" />
+	</div>
 </div>
 <div class="modal-footer">
     <button type="submit" class="btn btn-primary btnSave"><i class="la la-check mr-2"></i>Save</button>
