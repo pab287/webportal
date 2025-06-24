@@ -100,6 +100,10 @@
                     </span>
                     <p id="temp_fileupload" style='text-overflow: ellipsis; white-space: nowrap; overflow: hidden;' class="form-control m-input m--margin-top-10" disabled="disabled"><?= $data->liscert_attachment ?></p>
                 </div>
+                <div class="form-group">
+                    <label for="remarks" class="form-control-label">Remarks</label>
+                    <textarea id="remarks" name="remarks" class="form-control m-input"rows="3"cols="50"autocomplete="off"><?= $data->remarks ?></textarea>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary btnSave"><i class="la la-check mr-2"></i>Save</button>

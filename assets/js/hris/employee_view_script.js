@@ -367,8 +367,14 @@ let employeeDataSheet = new Vue({
               ? data 
               : data.replace(/\n/g, '<br>');
           },
-          openFile(name) {
-            var fileUrl = baseUrl("uploads/files/documents/employee_files/empcode_" + id + "/offenses_commendation/" + encodeURIComponent(name));
+          openFile(name,offense=false) {
+            let tab;
+            if (offense){
+                tab = "offenses_commendation";
+            }else{
+                tab = "licenses_certificates";
+            }
+            var fileUrl = baseUrl("uploads/files/documents/employee_files/empcode_" + id + "/"+tab+"/" + encodeURIComponent(name));
             function checkFileExists(url, callback) {
                 $.ajax({
                     url: url,
