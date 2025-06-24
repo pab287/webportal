@@ -1084,13 +1084,22 @@ if (typeof _tempContentData !== "undefined") {
 
     var vmTabQuestions = new Vue({
         el: "#questions-content",
-        data: { vm_question: questions_list },
-        methods: {
-            hasAnswer(count) {
-                const answer = tempData['ques' + count];
-                return answer ? answer : 'N/A';
-            },
-        }
+        data: { vm_question: [] },
+        mounted(){
+            if (tempData.more_questions && tempData.more_questions.length > 0) {
+                this.vm_question = tempData.more_questions;
+            }
+            else{
+                this.vm_question = questions_list;
+                this.vm_question.forEach(q => {
+                    if( tempData[`ques${q.id}`] == null ||  tempData[`ques${q.id}`] == undefined || tempData[`ques${q.id}`] == ""){
+                        q.answer = "N/A"
+                    }else{
+                        q.answer = tempData[`ques${q.id}`];
+                    }
+                });
+            }
+        },
     });
 
     if (typeof tableDependents !== "undefined") {

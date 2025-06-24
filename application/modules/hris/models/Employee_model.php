@@ -1922,6 +1922,7 @@
 
                 if ($query->num_rows() == 1) {
                     $data = $query->row();
+                    $data->more_questions = unserialize($data->more_questions);
                     $currentImage = base_url("assets/images/profile/no_image.jpg");
                     $imageFile = $data->pic_filename;
                     $imagePath = realpath("uploads/files/images/employee_files/empcode_{$id}/{$imageFile}");
@@ -5196,42 +5197,14 @@
 
         function updateEmployeeQuestionAnswers($post) {
             $id = $post->id;
+            unset($post->id, $post->csrf_token);
             $this->db->trans_begin();
             $resultSet = array();
-            $data = array();
-            $data = [
-                'ques1' => $post->ques1 ?? 'N/A',
-                'ques2' => $post->ques2 ?? 'N/A',
-                'ques3' => $post->ques3 ?? 'N/A',
-                'ques4' => $post->ques4 ?? 'N/A',
-                'ques5' => $post->ques5 ?? 'N/A',
-                'ques6' => $post->ques6 ?? 'N/A',
-                'ques7' => $post->ques7 ?? 'N/A',
-                'ques8' => $post->ques8 ?? 'N/A',
-                'ques9' => $post->ques9 ?? 'N/A',
-            ];
-            $moreQuestions = array();
-
-            $currentQuestions = $this->getEmpQuestionsById($id)->more_questions;
-            foreach ($post as $key => $value) {
-                if (strpos($key, 'ques') === 0) {
-                    $questionNumber = substr($key, 4);
-                    if (is_numeric($questionNumber) && $questionNumber >= 10) {
-                        $moreQuestions[(int)$questionNumber] = $value;
-                    }
-                }
-            }
-
-            if (!empty($moreQuestions)) {
-                $data['more_questions'] = serialize($moreQuestions);
-            } else {
-                $data['more_questions'] = null;
-            }
-
+            $data['more_questions'] = serialize($post->questions);
             $currentData = $this->getEmpQuestionsById($id);
-            $this->db->where("id", $post->id);
+            $this->db->where("id", $id);
             $this->db->update($this->employeeTable, $data);
-            $fullname = $this->getEmployeeName($post->id);
+            $fullname = $this->getEmployeeName($id);
             if ($this->db->trans_status() === FALSE) {
                 $resultSet["success"] = "false";
                 $resultSet["message"] = $this->db->error();
@@ -5242,7 +5215,7 @@
                 $fullname =  $this->getEmployeeName($id);
                 $resultSet["success"] = "true";
                 $resultSet["message"] = "Record was successfully updated.";
-                $resultSet["data"] = $post->ques;
+                $resultSet["data"] = $post->questions;
                 $this->core_layout->setEventLog("User Updated employment questionaires details for employee: <strong>$fullname</strong> $changes","update", "success", "gcchris", "user");
                 $this->db->trans_commit();
             }
@@ -11921,7 +11894,7 @@
 
         public function getEmployee($emp_id){
             $data = array();
-            $this->db->select("emp.id,emp.mot_deceased,emp.fat_deceased, emp.lastname, emp.firstname, emp.middlename, emp.suffix, emp.curr_addr, emp.prov_addr, emp.citizenship, emp.religion, emp.languages, emp.email, emp.gender, emp.civil_stat, emp.bday, emp.birthplace, emp.bloodtype, emp.height, emp.weight, emp.hair_color, emp.complexion, emp.tel_no, emp.mobile_no, 
+            $this->db->select("emp.more_questions,emp.id,emp.mot_deceased,emp.fat_deceased, emp.lastname, emp.firstname, emp.middlename, emp.suffix, emp.curr_addr, emp.prov_addr, emp.citizenship, emp.religion, emp.languages, emp.email, emp.gender, emp.civil_stat, emp.bday, emp.birthplace, emp.bloodtype, emp.height, emp.weight, emp.hair_color, emp.complexion, emp.tel_no, emp.mobile_no, 
             emp.pic_filename, emp.idno, emp.biometricno, pos.name as position ,pos.id as position_id, emp.work_status, emp.employee_status, emp.date_start, emp.date_end, com.code as company_id, emp.level, emp.date_regular, emp.date_end_prob, emp.resign_reason, pos.job_desc, emp.tl_supervisory, emp.supervisor_meta, emp.ques1, emp.ques2, emp.ques3, emp.ques4, emp.ques5, emp.ques6, emp.ques7, emp.ques8, emp.ques9,
             emp.email, emp.tax_status, emp.tin_no, emp.phealth_no, emp.pagibig_no, emp.sss_no,
             emp.fat_name, emp.mot_name, emp.partner_type, emp.spo_deceased, emp.partners_deceased, emp.spo_name, emp.partners_name, emp.fat_addr, emp.mot_addr, emp.spo_addr, emp.partners_addr, emp.fat_company, emp.mot_company, emp.spo_company, emp.partners_company, emp.fat_occupation, emp.mot_occupation, emp.spo_occupation, emp.partners_occupation, emp.fat_contact, emp.mot_contact, emp.spo_contact, emp.partners_contact, emp.emer_addr, emp.emer_contact, emp.emer_name, 
@@ -11935,7 +11908,7 @@
             $data = $this->db->get()->row();
 
             $meta = @unserialize($data->supervisor_meta);
-
+            $data->more_questions = @unserialize($data->more_questions);
             if (is_array($meta)) {
                 $data->supervisor = $meta['supervisory'];
 

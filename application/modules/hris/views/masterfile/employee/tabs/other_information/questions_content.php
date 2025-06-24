@@ -23,7 +23,7 @@
                 <div class="form-group">
                     <label class="col-md-12"><h6 v-text="item.question"></h6></label>
                     <div class="col-md-12">
-                        <p class="m-form-row__paragraph" v-text="hasAnswer(item.id)"></p>
+                        <p class="m-form-row__paragraph" v-text="item.answer"></p>
                     </div>
                 </div>
             </template>

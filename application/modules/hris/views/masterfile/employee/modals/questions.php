@@ -15,7 +15,10 @@
                     <div class="form-group m-form__group row">
                         <label class="col-md-12"><h6 v-text="item.question"></h6></label>
                         <div class="col-md-12">
-                            <input type="text" :name="'ques'+[item.id]" :value="hasAnswer(item.id)" autocomplete="off" class="form-control m-input" data-validation="required"/>
+                            <input type="hidden" type="text" :name="'question_id'" :value="item.id">
+                            <input type="text" :name="'answer'" :value="item.answer" autocomplete="off" class="form-control m-input" data-validation="required"/>
+                            <input type="hidden" :name="'question'" :value="item.question" type="text">
+                            <input type="hidden" :name="'statement'" :value="item.statement" type="text">
                         </div>
                     </div>
                 </template>

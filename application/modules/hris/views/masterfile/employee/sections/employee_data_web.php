@@ -438,7 +438,7 @@
                     <tbody>
                         <tr>
                             <td class="questions">
-                                <span v-text="hasAnswer(item.id)"></span>
+                                <span v-text="item.answer"></span>
                             </td>
                         </tr>
                     </tbody>

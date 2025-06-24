@@ -50,7 +50,7 @@
 		<form id="update_item">
 			<div class="modal-content">
 				<div class="modal-header">
-					<h5 class="modal-title" id="exampleModalLabel">Update Statement</h5>
+					<h5 class="modal-title" id="exampleModalLabel">Update Question</h5>
 					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 						<span aria-hidden="true">&times;</span>
 					</button>
@@ -58,7 +58,7 @@
 				<div class="modal-body">
 					<div class="form-group">
 						<label for="statement">Question</label>
-						<textarea class="form-control" id="new_question" name="question" rows="3" data-validation="required"></textarea>
+						<textarea class="form-control" id="new_question" name="question" rows="3" readonly></textarea>
 					</div>
 					<div class="form-group">
 						<label for="statement">Statement</label>

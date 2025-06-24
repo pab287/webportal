@@ -95,7 +95,7 @@ let employeeDataSheet = new Vue({
     mounted(){
         this.getSidebarData();
         getPerformanceRating(id);
-        this.questions = _tempContentData.questions_list;
+
         if (_tempContentData.tab == null){
             this.$data.activeSection = "personalInfo"
         }else{
@@ -157,6 +157,19 @@ let employeeDataSheet = new Vue({
                 this.$data.activeSection = "personalInfo"
                 this.getPersonalInformation();
              }
+        }
+        if (this.main.more_questions && this.main.more_questions.length > 0) {
+            this.questions = this.main.more_questions;
+        }
+        else{
+            this.questions = _tempContentData.questions_list;
+            this.questions.forEach(q => {
+                if( this.main[`ques${q.id}`] == null ||  this.main[`ques${q.id}`] == undefined || this.main[`ques${q.id}`] == ""){
+                    q.answer = "N/A"
+                }else{
+                    q.answer = this.main[`ques${q.id}`];
+                }
+            });
         }
     },
     methods:{
@@ -295,10 +308,6 @@ let employeeDataSheet = new Vue({
                 day: '2-digit', 
                 year: 'numeric' 
               });
-        },
-        hasAnswer(count) {
-            const answer = this.main['ques' + count];
-            return answer ? answer : 'N/A';
         },
 
         getExpirationClass(expirationDate) {
@@ -1026,10 +1035,3 @@ $('#offense-tabs .nav-link').on('click', function(e) {
     var targetId = $(this).attr('href');
     $(targetId).addClass('active show');
  });
-
-//  $('#empEmploymentInfo-body').on('shown.bs.collapse', function() {
-//     console.log('Hello WOlrd');
-//     $('#offense-tabs .nav-link').addClass('active');
-//     $("#offenses-tab").show();
-    
-// });

@@ -468,22 +468,19 @@
         </div>
         <div id="collapseQuestion" class="collapse" :class="{show :activeSection == 'employmentQuestion'}" role="tabpanel" aria-labelledby="headingQuestion" data-parent="#accordionOtherAdditionalInfo">
             <div class="card-body m-portlet__body--custom table-responsive">
-                <table class="responsive mb-1" v-for="(question, key) in questions" :key="key">
+                <table class="responsive mb-1" v-for="(item, index) in questions" :key="index">
                     <thead>
                         <tr>
-                        <th scope="col">Questions</th>
+                            <th scope="col" v-text="item.statement == '' || item.statement == null ? item.question : item.statement">
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <th class="" scope="col" v-text="question">
-                            </th>
-                        </tr>
-                        <tr>
                             <td class="questions">
-                                <span v-text="hasAnswer(key)"></span>
+                                <span v-text="item.answer"></span>
                             </td>
-                        </tr>   
+                        </tr>
                     </tbody>
                 </table>
             </div>
