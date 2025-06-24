@@ -982,27 +982,25 @@ $(".m-content")
                     },
                     success: function (response) {
                         initRegularEditDialog(response);
-
-                        
-                    let vmTabUpdateQuestions = new Vue({
-                        el: "#employee-data-update-question-answers",
-                        data: { vm_question: [] },
-                        mounted(){
-                            if (tempData.more_questions && tempData.more_questions.length > 0) {
-                                this.vm_question = tempData.more_questions;
-                            }
-                            else{
-                                this.vm_question = questions_list;
-                                this.vm_question.forEach(q => {
-                                    if( tempData[`ques${q.id}`] == null ||  tempData[`ques${q.id}`] == undefined || tempData[`ques${q.id}`] == ""){
-                                        q.answer = "N/A"
-                                    }else{
-                                        q.answer = tempData[`ques${q.id}`];
-                                    }
-                                });
-                            }
-                        },
-                    });
+                        vmTabUpdateQuestions = new Vue({
+                            el: "#employee-data-update-question-answers",
+                            data: { vm_question: [] },
+                            mounted(){
+                                if (tempData.more_questions && tempData.more_questions.length > 0) {
+                                    this.vm_question = tempData.more_questions;
+                                }
+                                else{
+                                    this.vm_question = questions_list;
+                                    this.vm_question.forEach(q => {
+                                        if( tempData[`ques${q.id}`] == null ||  tempData[`ques${q.id}`] == undefined || tempData[`ques${q.id}`] == ""){
+                                            q.answer = "N/A"
+                                        }else{
+                                            q.answer = tempData[`ques${q.id}`];
+                                        }
+                                    });
+                                }
+                            },
+                        });
 
                     }
                 });
@@ -1071,16 +1069,8 @@ $(".m-content")
                     },
                     dataType: "JSON",
                     success: function (response) {
-                        if (response.success) {
-                            const data = response.data;
-                            if (data) {
-                                data.forEach((answer, i) => {
-                                    const item = $(answers)[i];
-                                    $(item).html(answer);
-                                });
-                            }
-                        }
-
+                        console.log(vmTabQuestions.vm_question, questions);
+                        vmTabQuestions.vm_question = questions;
                         _toaster(response, 'Answers Updated.', 10000);
                         closeDialog();
                     }

@@ -39,7 +39,7 @@ var companyExceptCurrent, tempData;
 var tempDataId = 0;
 let questions_list = [];
 let clickedView = 'grid';
-
+let vmTabUpdateQuestions = null;
 var tableEmployeeGrid = $("#table-employee-grid");
 
 var modalTempContentLg = modalTempContent.clone().prop("id", "modalTempContentLg").appendTo(".m-content");
