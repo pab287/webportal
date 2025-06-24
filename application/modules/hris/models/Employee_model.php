@@ -849,7 +849,7 @@
         function getEmployeeLicensure() {
             $post = $this->input->post();
             if ($post) {
-                $columns = array("license_type", "exam_place", "rating", "release_date", "exam_date", "license_no", "expiration_date", "license_id", "id", "emp_id",'certificate_name');
+                $columns = array("license_type", "exam_place", "rating", "release_date", "exam_date", "license_no", "expiration_date", "license_id", "id", "emp_id",'certificate_name','remarks','liscert_attachment');
                 $dir = "release_date";
                 $order = "id";
                 if (isset($post["order"]) && $post["order"]) {
@@ -892,6 +892,8 @@
                         $nestedData['exam_date'] = $pst->exam_date ? $pst->exam_date : "";
                         $nestedData['license_no'] = $pst->license_no ;
                         $nestedData['certificate_name'] = $pst->certificate_name;
+                        $nestedData['remarks'] = $pst->remarks;
+                        $nestedData['liscert_attachment'] = $pst->liscert_attachment;
                         if($pst->expiration_date && $pst->expiration_date != '0000-00-00'){
                             if(date("Y-m-d") >= $pst->expiration_date){
                                 $expiration_date = "<span class='m-badge m-badge--danger m-badge--wide'>$pst->expiration_date</span>";

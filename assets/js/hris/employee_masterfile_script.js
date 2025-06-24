@@ -1490,6 +1490,24 @@ if (typeof _tempContentData !== "undefined") {
                 { data: "exam_date", title: "Exam Date", className: "text-center" },
                 { data: "license_no", title: "License Cert. No.", className: "text-center" },
                 { data: "expiration_date", title: "Expiry Date", className: "text-center" },
+                { data: "remarks", title: "Remarks", className: "text-center",
+                    render: function(data, type, row) {
+                      return data && data.trim() !== '' ? data : 'none';
+                    }
+                  },
+                  {
+                    data: "liscert_attachment", 
+                    title: "Attachment", 
+                    className: "text-center",
+                    render: function(data, type, row) {
+                      if (!data || data.trim() === '') {
+                        return 'none';
+                      }
+                      
+                      const truncated = data.length > 15 ? data.substring(0, 15) + '...' : data;
+                      return `<span style="cursor: pointer; color: #007bff; text-decoration: underline;" onclick="openCert('${data}')">${truncated}</span>`;
+                    }
+                  },
                 { data: null, title: "Action", width: "8%", className: "text-center" }
             ],
             columnDefs: [
@@ -6557,3 +6575,39 @@ $("#company_no").inputmask({
 	mask: "(0\\9) 9999-99999",
 	alias: 'phonenumber'
 });
+
+function openCert(name) {
+    // Construct the full URL of the file
+    var fileUrl = baseUrl("uploads/files/documents/employee_files/empcode_" + tempDataId + "/licenses_certificates/" + encodeURIComponent(name));
+    // Function to check if file exists and get its MIME type
+    function checkFileExists(url, callback) {
+        $.ajax({
+            url: url,
+            type: 'HEAD',
+            success: function(response, status, xhr) {
+                var mimeType = xhr.getResponseHeader("Content-Type");
+                callback(true, mimeType);
+            },
+            error: function(xhr, status, error) {
+                callback(false, null);
+            }
+        });
+    }
+
+    // Check if file exists
+    checkFileExists(fileUrl, function(exists, mimeType) {
+        if (!exists) {
+            // Show error message if file doesn't exist
+            $('#pdfViewerModal .modal-body').html('<p class="text-danger">Error: File not found.</p>');
+            $('#pdfViewerModal').modal('show');
+        } else if (mimeType && mimeType.startsWith('application/pdf')) {
+            // Show PDF in modal
+            $('#pdfViewerModal .modal-body').html('<iframe id="pdfFrame" style="width: 100%; height: 600px;" frameborder="0"></iframe>');
+            $('#pdfViewerModal').modal('show');
+            $('#pdfFrame').attr('src', fileUrl);
+        } else {
+            // Open non-PDF files in new window
+            window.open(fileUrl, '_blank');
+        }
+    });
+}

@@ -82,7 +82,7 @@
     </div>
     <div class="form-group">
 		<label for="remarks" class="form-control-label">Remarks</label>
-        <textarea id="remarks" name="remarks" class="form-control m-input" rows="3" cols="50" autocomplete="off"></textarea>
+        <textarea id="remarks" name="remarks" class="form-control m-input" maxlength="200" rows="3" cols="50" autocomplete="off"></textarea>
 	</div>
 </div>
 <div class="modal-footer">

@@ -524,6 +524,7 @@
                         <th class="" scope="col" style="width: 15%">RELEASE DATE</th>
                         <th class="" scope="col" style="width: 15%">EXAM DATE</th>
                         <th class="" scope="col">LICENSE NO.</th>
+                        <th class="" scope="col">ATTACHMENT</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -535,6 +536,7 @@
                                 <td data-label="RELEASE DATE">None</td>
                                 <td data-label="EXAM DATE">None</td>
                                 <td data-label="LICENSE NO.">None</td>
+                                <td data-label="ATTACHMENT">None</td>
                             </tr>
                         </template>
                         <template v-else>
@@ -545,6 +547,17 @@
                                 <td data-label="RELEASE DATE" v-text="license.release_date"></td>
                                 <td data-label="EXAM DATE" v-text="license.exam_date"></td>
                                 <td data-label="LICENSE NO." v-text="license.license_no"></td>
+                                <td data-label="ATTACHMENT" v-text="license.liscert_attachment || '---'"
+                                    :style="{
+                                        'white-space': 'nowrap',
+                                        'overflow': 'hidden',
+                                        'text-overflow': 'ellipsis',
+                                        'cursor': license.liscert_attachment ? 'pointer' : 'default',
+                                        'color': license.liscert_attachment ? '#007bff' : 'inherit',
+                                        'text-decoration': license.liscert_attachment ? 'underline' : 'none'
+                                    }"
+                                    @click="license.liscert_attachment ? openFile(license.liscert_attachment, false) : null">
+                                </td>
                             </tr>
                         </template>
                     </tbody>
