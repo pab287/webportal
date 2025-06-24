@@ -213,7 +213,9 @@
                                                     <?php if(isset($count) && $count > 0): ?>
                                                         <?php foreach ($raw_data as $data) { ?>
                                                             <tr>
-                                                                <td align="left" style="color: #888888; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 24px;"><?php echo $data->field_description; ?></td>
+                                                                <td align="left" style="color: #888888; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 24px;">
+                                                                    <?php echo $data->field_description == 'Rate' ? 'Allowance ' . $data->field_description : $data->field_description; ?>
+                                                                </td>
                                                                 <td align="left" style="color: #888888; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 24px;"><?php echo strtoupper($data->table_value); ?></td>
                                                             </tr>
                                                         <?php } ?>
