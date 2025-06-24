@@ -9074,9 +9074,11 @@
 
                 /** automatically inactive the active allowance when activating a different allowance */
                 if ($updated) {
-                    $this->db->where("id !=", $id);
-                    $this->db->where('is_archived', 0);
-                    $this->db->update('gcchris.allowances', array( 'is_active' => 0 ));
+                    if (isset($post['is_active']) && $post['is_active'] == 1) {
+                        $this->db->where("id !=", $id);
+                        $this->db->where('is_archived', 0);
+                        $this->db->update('gcchris.allowances', array( 'is_active' => 0 ));
+                    }
                 }
             }
 
