@@ -1325,6 +1325,9 @@ class Ticket_m extends CI_Model
         elseif($type == "archive"){
             $message = "Ticket archived";
         }
+        elseif($type == "resolved"){
+            $message = "Ticket resolved";
+        }
         $post = array(
             'log_message' => $message,
             'user_id' => $this->user_data['emp_id'],
@@ -1734,8 +1737,29 @@ class Ticket_m extends CI_Model
         $this->db->where('is_archived', 0);
         $this->db->where('requestor', $this->user_data['emp_id']);
         $this->db->where(strtolower('status'), 'open');
+        $this->db->order_by('id', 'desc');
         $query = $this->db->get();
         return $query->result_array();
+    }
+
+    public function closeTicket() {
+        $post = $this->input->post();
+        $data = array(
+            'status' => "resolved"
+        );
+        $this->db->where('id', $post['id']);
+        $update = $this->db->update('gccticket.ticket', $data);
+        if ($update) {
+            $this->addTrailLog($post['id'], "resolved");
+            $this->core_layout->setEventLog("User closed the ticket with reference no {$post['reference_no']}","update","success","gccticket","user");
+        } else {
+            $this->core_layout->setEventLog("User failed to close the ticket with reference no {$post['reference_no']}","update","error","gccticket","system");
+        }
+        return array(
+            'status' => $update,
+            'tickets'=> $this->getExistingTicketPerUser(),
+            'message' => $update ? "Ticket closed successfully." : "Failed to close the ticket."
+        );
     }
 
 
