@@ -232,7 +232,7 @@ function getArchivedItems() {
     const isActive = isArchived === 0;
     
     $('#archived_items .m-nav__link-text').text(isActive ? 'Show Archived Items' : 'Show Active Questions');
-    $('#itemHead').text(isActive ? 'List of Active Items' : 'List of Archived Questions');
+    $('#itemHead').text(isActive ? 'Employment Questions Masterfile' : 'List of Archived Questions');
     $('#newQuestion').toggle(isActive);
     tblQuestions.ajax.reload();
 }
