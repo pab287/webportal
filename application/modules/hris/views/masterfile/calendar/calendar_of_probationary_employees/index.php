@@ -22,7 +22,7 @@
                 <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--final-evaluation">5TH MONTH EVALUATION</span>
                 <!-- <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--exceeds-second-evaluation">EXCEEDS 2ND EVALUATION</span> -->
                 <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--pass-regularize">PASSED / REGULARIZED</span>
-                <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--fail-empty_eval-discontinue">NO 3RD & 5TH MONTH EVALUATION / FAILED / DISCONTINUED</span>
+                <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--fail-empty_eval-discontinue">NO 3RD OR 5TH MONTH EVALUATION / FAILED / DISCONTINUE</span>
             </div>
 
             <div id="m_calendar" class="fc fc-unthemed fc-ltr"></div>
