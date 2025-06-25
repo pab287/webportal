@@ -30,13 +30,25 @@ tblQuestions = $('#employement_questions').DataTable({
                 return `<span class="text-muted">---</span>`;
             }
         },
-        { data: null, orderable: false, title: "Actions" , render: function(data, type, row) {
-            if(isArchived == 1){
-                return `<button class="btn btn-focus btn-sm" onclick="onboardingRestore(${row.id})"><i class="la la-mail-reply"></i></button>`;
+        { data: null, orderable: false, title: "Actions" ,
+            render: function(data, type, row) {
+                if(row.id >= 1 && row.id <= 9) {
+                    return `<button class="btn btn-primary btn-sm" onclick="statementEdit(${row.id})">
+                            <i class="la la-edit"></i>
+                           </button>`;
+                } else if(isArchived == 1) {
+                    return `<button class="btn btn-focus btn-sm" onclick="onboardingRestore(${row.id})">
+                            <i class="la la-mail-reply"></i>
+                           </button>`;
+                }
+                return `<button class="btn btn-primary btn-sm" onclick="statementEdit(${row.id})">
+                        <i class="la la-edit"></i>
+                       </button>
+                       <button class="btn btn-danger btn-sm" onclick="onboardingItemArchive(${row.id})">
+                        <i class="la la-trash"></i>
+                       </button>`;
             }
-            return `<button class="btn btn-primary btn-sm" onclick="statementEdit(${row.id})"><i class="la la-edit"></i></button>
-                    <button class="btn btn-danger btn-sm" onclick="onboardingItemArchive(${row.id})"><i class="la la-trash"></i></button>`;
-        } },
+        },
     ],
     initComplete: function () {
         const newForm = `<div class="form-group m-form__group col-lg-12 col-md-12 col-sm-12">
