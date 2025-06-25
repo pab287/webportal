@@ -3723,7 +3723,7 @@
                         }
                         // END
         
-                        $post = array_map('strtoupper', $post);
+                        // $post = array_map('strtoupper', $post);
                         $saved = $this->db->insert($this->employeeLicensureTable, $post);
                         $fullname = $this->getEmployeeName($post['emp_id']);
                         if ($saved) {
