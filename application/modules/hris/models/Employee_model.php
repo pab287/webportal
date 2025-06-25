@@ -12100,8 +12100,8 @@
 
                 $createFilePath = false;
 
-                if (!file_exists($imagesPath)) {
-                    $mkdir = mkdir($imagesPath, 0777, true);
+                if (!file_exists(realpath($imagesPath))) {
+                    $mkdir = mkdir($imagesPath, 0777 , true);
                     if ($mkdir) {
                         $createFilePath = true;
                     }
