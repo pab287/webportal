@@ -739,7 +739,7 @@
                     $select .= "$evalDateExpr AS evaluation_date";
                     $where .= "AND $evalDateExpr < '$current_date'
                             AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
-                    $eval_stage = "Final";
+                    $eval_stage = "5th Month";
                     break;
 
                 default: // fallback to 3rd month
