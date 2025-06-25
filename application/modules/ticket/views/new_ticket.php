@@ -171,7 +171,7 @@
 		</div>
 	</div>
 </div>
-<div class="modal fade" tabindex="-1" role="dialog" id="preview-document-dialog">
+<div class="modal fade" tabindex="-1" role="dialog" id="ticket-preview-dialog">
     <div class="modal-dialog modal-extra-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">

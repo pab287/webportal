@@ -356,4 +356,9 @@ class Ticket extends MY_Controller {
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
+    public function get_existing_ticket_per_user(){
+        $data = $this->ticket->getExistingTicketPerUser();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }

@@ -1728,5 +1728,15 @@ class Ticket_m extends CI_Model
         return $formatted_avg_response_time;
     }
 
+    function getExistingTicketPerUser(){
+        $this->db->select("a.id,a.reference_no,a.created_at,a.message");
+        $this->db->from('gccticket.ticket a');
+        $this->db->where('is_archived', 0);
+        $this->db->where('requestor', $this->user_data['emp_id']);
+        $this->db->where(strtolower('status'), 'open');
+        $query = $this->db->get();
+        return $query->result_array();
+    }
+
 
 }
