@@ -11909,6 +11909,9 @@
 
             $meta = @unserialize($data->supervisor_meta);
             $data->more_questions = @unserialize($data->more_questions);
+            foreach ($data->more_questions as $item) {
+                $item->statement = $this->getStatementPerId($item->id);
+            }
             if (is_array($meta)) {
                 $data->supervisor = $meta['supervisory'];
 
@@ -12168,6 +12171,18 @@
                 $data = $query->result_array();
             }
             return $data;
+        }
+
+        private function getStatementPerId($id){
+            $data = array();
+            $this->db->select("statement");
+            $this->db->from('gcchris.tblquestions');
+            $this->db->where('id', $id);
+            $query = $this->db->get();
+            if ($query->num_rows() > 0) {
+                $data = $query->row_array();
+            }
+            return $data['statement'] ?? '';
         }
 
     }

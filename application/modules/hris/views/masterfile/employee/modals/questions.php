@@ -18,7 +18,6 @@
                             <input type="hidden" type="text" :name="'question_id'" :value="item.id">
                             <input type="text" :name="'answer'" :value="item.answer" autocomplete="off" class="form-control m-input" data-validation="required"/>
                             <input type="hidden" :name="'question'" :value="item.question" type="text">
-                            <input type="hidden" :name="'statement'" :value="item.statement" type="text">
                         </div>
                     </div>
                 </template>

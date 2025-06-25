@@ -95,7 +95,7 @@ function statementEdit(id){
     let rowData = tblQuestions.row('#'+id).data();
     itemId = id;
     $('#new_question').val(rowData.question);
-    $('#nwe_statement').val(rowData.statement);
+    $('#new_statement').val(rowData.statement);
     $('#modal-questions').modal('show');
 }
 
