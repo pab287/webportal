@@ -1009,7 +1009,7 @@ class Billing_m extends CI_Model {
             END,
             TRIM(a.lastname)
         ) AS name,
-        a.middlename, r.id, a.accountno, r.meterno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.reading_date, r.status, r.reading, a.model, r.is_billed");
+        a.middlename, r.id, a.accountno, r.meterno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.reading_date, r.status, CAST(r.reading AS DECIMAL(10,2)) AS reading, a.model, r.is_billed");
         $this->db->from("hydra_billing.readings r");
         $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
         $this->db->where("r.is_archived", 0);
@@ -1192,7 +1192,7 @@ class Billing_m extends CI_Model {
             END,
             TRIM(a.lastname)
         ) AS name,
-        a.middlename, r.id, a.accountno, r.meterno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.reading_date, r.status, r.reading, a.model, r.is_billed");
+        a.middlename, r.id, a.accountno, r.meterno, a.firstname, a.lastname, a.lot, a.block, r.ref_no, r.reading_date, r.status, CAST(r.reading AS DECIMAL(10,2)) AS reading, a.model, r.is_billed");
         $this->db->from("hydra_billing.readings r");
         $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
         $this->db->where("r.is_archived", 1);
