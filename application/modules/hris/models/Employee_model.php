@@ -11909,9 +11909,11 @@
 
             $meta = @unserialize($data->supervisor_meta);
             $data->more_questions = @unserialize($data->more_questions);
-            foreach ($data->more_questions as $item) {
+            if (!$data->more_questions == null){            
+                foreach ($data->more_questions as $item) {
                 $item->statement = $this->getStatementPerId($item->id);
-            }
+            }}
+
             if (is_array($meta)) {
                 $data->supervisor = $meta['supervisory'];
 
