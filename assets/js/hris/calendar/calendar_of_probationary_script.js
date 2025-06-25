@@ -3,7 +3,7 @@ let holidayCalendar;
 
 function openEvaluationDialog(data) {
     if (data.title) {
-        data.title = data.title.replace(/^(3RD|4\.5TH)\s*:/i, '').trim();
+        data.title = data.title.replace(/^(3RD|5TH)\s*:/i, '').trim();
     }
     
     $.ajax({

@@ -3583,20 +3583,24 @@
                     $range["quarter_4"] = "October - December";
 
                 } else {
+                    $_dateStarted = date('F d, Y', strtotime($dateStarted));
                     $_3rdMonth = date('F d, Y', strtotime("+3 months", strtotime($dateStarted)));
 
                     $fifthEvaluationDate = date('Y-m-d', strtotime("+5 months", strtotime($dateStarted)));
                     $_45Month = date('F d, Y', strtotime("-15 days", strtotime($fifthEvaluationDate)));
+                    $_5thMonth = date('F d, Y', strtotime($fifthEvaluationDate));
 
-                    $dateStarted = date('F d, Y', strtotime($dateStarted));
-                    $_3rdMonth = "{$dateStarted} - {$_3rdMonth}";
-                    $_45Month = "{$dateStarted} - {$_45Month}";
+                    $_3rdMonthRange = "{$_dateStarted} - {$_3rdMonth}";
+                    $_45MonthRange = "{$_dateStarted} - {$_45Month}";
+                    $_5thMonthRange = "{$_dateStarted} - {$_5thMonth}";
 
                     $qtr["month_30"] = "3rd Month";
-                    $qtr["month_45"] = "4.5th Month";
+                    // $qtr["month_45"] = "4.5th Month";
+                    $qtr["month_50"] = "5th Month";
 
-                    $range["month_30"] = $_3rdMonth;
-                    $range["month_45"] = $_45Month;
+                    $range["month_30"] = $_3rdMonthRange;
+                    // $range["month_45"] = $_45MonthRange;
+                    $range["month_50"] = $_5thMonthRange;
                 }
 
                 $data["quarter"] = $qtr;
@@ -6141,7 +6145,7 @@
             $final_eval = $this->getFinalEvalCalendar();
 
             // return array_merge($first_eval, $second_eval, $final_eval); // Original code returns all three evaluations
-            return array_merge($first_eval, $second_eval); // Modified code to return only first and second evaluations
+            return array_merge($first_eval, $final_eval); // Modified code to return only first and final evaluations
         }
 
         private function getFirstEvalCalendar() {
@@ -6216,14 +6220,14 @@
 
         private function getFinalEvalCalendar() {
             $select = "'status' evaluation_stage, emp.id emp_id, emp.lastname, emp.firstname, ";
-            $select .= "calendar.id cal_id, 'Final Evaluation' string_eval, ";
+            $select .= "calendar.id cal_id, '5th Month Evaluation' string_eval, ";
             $select .= "emp.middlename, emp.suffix, ";
-            $select .= "UPPER(CONCAT('Final : ', emp.firstname, ' ', emp.middlename,' ',emp.lastname, ";
+            $select .= "UPPER(CONCAT('5th : ', emp.firstname, ' ', emp.middlename,' ',emp.lastname, ";
             $select .= "    CASE WHEN emp.suffix = 'NONE' THEN '' ";
             $select .= "        WHEN emp.suffix = 'N/A' THEN '' ";
             $select .= "        WHEN emp.suffix IS NULL THEN '' ";
             $select .= "        ELSE CONCAT(' ', emp.suffix) END )) title, ";
-            $select .= "'Final Evaluation' description, ";
+            $select .= "'5th Month Evaluation' description, ";
             $select .= "emp.date_start, emp.date_end_prob, DATE_ADD(emp.date_start, INTERVAL 5 MONTH) `start`, ";
             $select .= "CASE
                             WHEN (calendar.first_eval IS NULL OR calendar.first_eval = '') AND (calendar.second_eval OR calendar.second_eval = '') IS NULL THEN '#F44336'
