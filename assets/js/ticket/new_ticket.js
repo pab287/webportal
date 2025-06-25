@@ -306,6 +306,7 @@ function checkExistingTickets(){
         success: function (data) {
             if (data.length > 0) {
                 $("#ticket-preview-dialog").modal("show");
+                ticket_vue.vm_tickets = data;
             }
             console.log(data);
         }
@@ -314,10 +315,9 @@ function checkExistingTickets(){
 
 ticket_vue = new Vue({
     el: "#fticket-preview-dialog",
-    data: {vm_tickets: {}},
+    data: {vm_tickets: []},
     mounted: function () {
-        setTimeout(function (data) {
-            var vmData = this.vmTab1.vm_tab1;
-        }, 400);
+        checkExistingTickets();
+        console.log(this.vm_tickets);
     }
 });
