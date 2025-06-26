@@ -9076,6 +9076,7 @@
                 if ($updated) {
                     if (isset($post['is_active']) && $post['is_active'] == 1) {
                         $this->db->where("id !=", $id);
+                        $this->db->where('emp_id', $employeeId);
                         $this->db->where('is_archived', 0);
                         $this->db->update('gcchris.allowances', array( 'is_active' => 0 ));
                     }
@@ -10582,6 +10583,7 @@
                                             if ($rowData->table_field == 'is_active' && $rowData->original_value == 1) {
                                                 $this->db->where('id !=', $rowData->table_id);
                                                 $this->db->where('is_archived', 0);
+                                                $this->db->where('emp_id', $rowData->unique_id);
                                                 $this->db->where('is_active', 1);
                                                 $this->db->update($rowData->database_table, array('is_active' => 0));
                                             }
@@ -10667,6 +10669,7 @@
                                         if ($rowData->table_field == 'is_active' && $rowData->original_value == 1) {
                                             $this->db->where('id !=', $rowData->table_id);
                                             $this->db->where('is_archived', 0);
+                                            $this->db->where('emp_id', $rowData->unique_id);
                                             $this->db->where('is_active', 1);
                                             $this->db->update($rowData->database_table, array('is_active' => 0));
                                         }
