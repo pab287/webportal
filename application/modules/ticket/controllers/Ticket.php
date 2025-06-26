@@ -75,7 +75,7 @@ class Ticket extends MY_Controller {
         $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
-        $this->core_layout->addJs("js/ticket/new_ticket.js", true,$tempData);
+        $this->core_layout->addJs("js/ticket/new_ticket.js", true,$tempData,"?v=0.0.1");
 		$this->load->view('core/templates/header');
         $this->load->view('ticket/new_ticket');
         $this->load->view('core/templates/footer');

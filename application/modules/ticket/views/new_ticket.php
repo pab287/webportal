@@ -198,8 +198,8 @@
                                     <td data-label="message" v-text="ticket.message"></td>
                                     <td data-label="created_at" v-text="formatDate(ticket.created_at)"></td>
                                     <td data-label="action" class="text-center">
-                                        <button class="btn btn-info btn-sm" @click="closeTicket(ticket.id,ticket.reference_no)" title="Close Ticket">
-                                            <i class="la la-edit"></i> Close Ticket
+                                        <button class="btn btn-info btn-sm" @click="closeTicket(ticket.id,ticket.reference_no)" title="Resolve Ticket">
+                                             Resolve Ticket
                                         </button>
                                     </td>
                                 </tr>
@@ -207,6 +207,11 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger btnBack" onclick="window.location.href='<?=base_url('ticket/tickets')?>'">
+                    Return to masterfile
+                </button>
             </div>
         </div>
     </div>
