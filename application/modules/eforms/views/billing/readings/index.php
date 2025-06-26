@@ -46,7 +46,7 @@
               <div class="col-xl-8 order-2 order-xl-1">
                 <div class="form-group m-form__group row align-items-center">
                   <div class="col-md-12">
-                    <a href="javascript:void(0)" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--pill btnNew text-white" data-toggle="modal" data-target="#m_newReading">
+                    <a href="javascript:void(0)" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--pill btnNew newReadingBtn text-white" data-toggle="modal" data-target="#m_newReading">
                       <span><i class="la la-plus"></i><span>New</span></span>
                     </a>
 

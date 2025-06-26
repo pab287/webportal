@@ -456,6 +456,7 @@ class Billing_m extends CI_Model {
             $query = $this->db->get();
         endif;
 
+        $previous_reading_date = $this->getRecentReadingDate($query->row_array()["id"], $query->row_array()["meterno_raw"]);
         $previous_reading = $this->getRecentReading($query->row_array()["id"], $query->row_array()["meterno_raw"]);
 
         $ir = $this->checkMeterReplace($query->row_array()["id"], $query->row_array()["meterno_raw"]);
@@ -470,6 +471,7 @@ class Billing_m extends CI_Model {
         return array(
             "data" => $query->row(), 
             "previous_reading" => $previous_reading ? number_format($previous_reading, 2, '.', '') : "0.00",
+            "previous_reading_date" => $previous_reading_date,
             "initial_reading" => $ir,
             "current_usage" => $current_usage,
         );
@@ -880,6 +882,18 @@ class Billing_m extends CI_Model {
         // $reading = $query->row_array()["reading"]; // --> original
         $reading = !is_null($query->row_array()) ? $query->row_array()["reading"] : 0.00;
         return $reading;
+    }
+
+    function getRecentReadingDate($account_id, $meterno){
+        $this->db->select("reading_date");
+        $this->db->from("hydra_billing.readings");
+        $this->db->where("account_id",$account_id);
+        $this->db->where("meterno",$meterno);
+        $this->db->where("is_archived", 0);
+        $this->db->order_by('reading_date', 'desc');
+        $this->db->limit(1);
+        $query = $this->db->get();
+        return !is_null($query->row_array()) ? $query->row_array()["reading_date"] : null;
     }
 
     function series($current_date, $query, $code){

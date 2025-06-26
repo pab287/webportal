@@ -300,6 +300,15 @@ $("#select2_account_edit").select2({
   }
 });
 
+$('.newReadingBtn').click(function(e){
+  $('#fromCreateReading').trigger("reset");
+  $(".picInput").remove();
+  $(".dip_img").remove();
+  $("#picture_null").show();
+  $('#m_newReading #select2_account').val('').trigger("change");
+  $('.initial-reading').html('');
+});
+
 function account_details(){
   var account_id = $('[name="account_id"]').val();
   if(typeof account_id != "undefined" && account_id && account_id != 'null'){
@@ -315,7 +324,17 @@ function account_details(){
         $(".account_name").val(data.data.firstname+" "+data.data.lastname);
         $("#reading").val("");
 
-        console.log(data);
+        // Get year and month from previous reading date
+        const yearMonth = moment(data.previous_reading_date).format("YYYY-MM");
+
+        // Set the start date for the reading date picker to the first day of the month of the previous reading date
+        let previous_reading_date_startDate = moment(yearMonth + "-01").format('YYYY/MM/DD');
+        
+        // Set the reading date picker to the previous reading date plus one month to avoid selecting the same month
+        const futureDateMonth = moment(previous_reading_date_startDate).add(1, 'month').format('YYYY/MM/DD');
+
+        // Set the reading date picker to the previous reading date
+        $('#readingdate').datetimepicker("setStartDate", futureDateMonth);
 
         if (data.initial_reading === "0") {
           $('.initial-reading').html(`<small style="color: #ff0000;">This meter was replaced.</small>`);
