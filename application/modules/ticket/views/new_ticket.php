@@ -179,7 +179,7 @@
             </div>
             <div class="modal-body">
                 <p style="color: red;">
-                    You currently have {{vm_tickets.length}} open ticket(s). Please close them or contact IT for assistance before creating a new one.
+                    You currently have {{vm_tickets.length}} open ticket(s). Please close them or contact the IT department for assistance before creating a new one.
                 </p>
                 <div style="max-height: 500px; overflow-y: scroll;">
                     <table class="table table-striped table-bordered table-hover responsive" id="ticket-preview-table">
