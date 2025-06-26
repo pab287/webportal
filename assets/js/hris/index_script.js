@@ -1329,7 +1329,7 @@ function loadEvaluationTable(evaluation = null) {
             th.text('4.5TH MONTH');
             break;
         case 'final':
-            th.text('FINAL EVALUATION');
+            th.text('5TH MONTH');
             break;
         case 'overdue':
             th.text('Overdue');
@@ -1398,13 +1398,13 @@ function loadOverdueEvaluationTable(stage) {
             overdue_eval_stage_text = `4.5TH Month`;
             break;
         case 3:
-            overdue_eval_stage_text = `Final`;
+            overdue_eval_stage_text = `5TH MONTH`;
             break;
         default:
             overdue_eval_stage_text = `Overdue`;
     }
 
-    $('.overdue_eval_stage_text').text(overdue_eval_stage_text);
+    $('.overdue_eval_stage_text').text('Overdue: ' + overdue_eval_stage_text);
 
     tblEvaluation.rows().deselect();
 }

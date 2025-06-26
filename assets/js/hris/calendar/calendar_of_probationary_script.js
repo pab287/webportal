@@ -2,6 +2,10 @@ const modalContainer = $('.document-modal-container');
 let holidayCalendar;
 
 function openEvaluationDialog(data) {
+    if (data.title) {
+        data.title = data.title.replace(/^(3RD|5TH)\s*:/i, '').trim();
+    }
+    
     $.ajax({
         url: baseUrl("hris/calendar/open_edit_modal"),
         type: "POST",

@@ -16,22 +16,18 @@
         </div>
         <div class="m-portlet__body">
             <div class="row mb-5 text-center">
-                    <span class="alert m-alert m-alert--air evaluation-color-legends__item__color--first-evaluation">1ST EVALUATION</span>
-                    <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--second-evaluation contrast fc-title ">2ND EVALUATION</span>   
-                    <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--final-evaluation">FINAL EVALUATION</span>
-                    <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--exceeds-first-evaluation">EXCEEDS 1ST EVALUATION</span>
-                    <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--exceeds-second-evaluation">EXCEEDS 2ND EVALUATION</span>
-                    <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--pass-regularize">PASSED / REGULARIZED</span>
-                    <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--fail-empty_eval-discontinue">NO 1ST AND 2ND EVALUATION / FAILED / DISCONTINUED</span>
-                
+                <span class="alert m-alert m-alert--air evaluation-color-legends__item__color--first-evaluation">3RD MONTH EVALUATION</span>
+                <!-- <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--second-evaluation contrast fc-title ">2ND EVALUATION</span>    -->
+                <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--exceeds-first-evaluation">EXCEEDS 3RD MONTH EVALUATION</span>
+                <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--final-evaluation">5TH MONTH EVALUATION</span>
+                <!-- <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--exceeds-second-evaluation">EXCEEDS 2ND EVALUATION</span> -->
+                <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--pass-regularize">PASSED / REGULARIZED</span>
+                <span class="alert m-alert m-alert--square m-alert--air evaluation-color-legends__item__color--fail-empty_eval-discontinue">NO 3RD OR 5TH MONTH EVALUATION / FAILED / DISCONTINUE</span>
             </div>
 
             <div id="m_calendar" class="fc fc-unthemed fc-ltr"></div>
         </div>
     </div>
 
-    <div class="modal fade document-modal-container"
-         data-keyboard="false" data-backdrop="static"
-         modal-exempt-custom tabindex="-1"
-         role="dialog"></div>
+    <div class="modal fade document-modal-container" data-keyboard="false" data-backdrop="static" modal-exempt-custom tabindex="-1" role="dialog"></div>
 </div>
