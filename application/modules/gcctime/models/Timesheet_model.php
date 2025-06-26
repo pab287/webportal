@@ -196,13 +196,13 @@ class Timesheet_model extends CI_Model{
                     $no_shift_schedule = true;
                 }
                 
-                $am_shift_only = (($am_start !== null && $am_end !== null) && (($pm_start === null || $pm_start == "00:00:00") && ($pm_end === null || $pm_end == "00:00:00")) && $no_shift_schedule == false);
-                $pm_shift_only = ((($am_start === null || $am_start == "00:00:00") && ($am_end === null || $am_end == "00:00:00")) && ($pm_start !== null && $pm_end !== null) && $no_shift_schedule == false);
+                $am_shift_only = (($am_start !== null && $am_end !== null) && (($pm_start === null || $pm_start == "00:00:00") && ($pm_end === null || $pm_end == "00:00:00")) && $no_shift_schedule === false);
+                $pm_shift_only = ((($am_start === null || $am_start == "00:00:00") && ($am_end === null || $am_end == "00:00:00")) && ($pm_start !== null && $pm_end !== null) && $no_shift_schedule === false);
                 $isWholeDay = ($am_shift_only === false && $pm_shift_only === false && $no_shift_schedule === false);
 
                 $tempHoliday = (object) $this->getCurrentDateIsHoliday($date);
-                $isHoliday = ($tempHoliday->is_holiday == true)? 1: 0;
-                $payRateId = ($tempHoliday->is_holiday == true && $tempHoliday->payrate_id)? $tempHoliday->payrate_id: 0;
+                $isHoliday = ($tempHoliday->is_holiday === true)? 1: 0;
+                $payRateId = ($tempHoliday->is_holiday === true && $tempHoliday->payrate_id)? $tempHoliday->payrate_id: 0;
 
                 $employee_time_sheet = new StdClass();
                 $employee_time_sheet->emp_id = $employee->id;
@@ -265,10 +265,10 @@ class Timesheet_model extends CI_Model{
                         if($am_end !== $timesheet_exist->shift_am_end){ $hasShiftUpdate = true; }
                         if($pm_start !== $timesheet_exist->shift_pm_start){ $hasShiftUpdate = true; }
                         if($pm_end !== $timesheet_exist->shift_pm_end){ $hasShiftUpdate = true; }
-                    }else if($am_shift_only){
+                    }elseif ($am_shift_only){
                         if($am_start !== $timesheet_exist->shift_am_start){ $hasShiftUpdate = true; }
                         if($am_end !== $timesheet_exist->shift_am_end){ $hasShiftUpdate = true; }
-                    }else if($pm_shift_only){
+                    }elseif ($pm_shift_only){
                         if($pm_start !== $timesheet_exist->shift_pm_start){ $hasShiftUpdate = true; }
                         if($pm_end !== $timesheet_exist->shift_pm_end){ $hasShiftUpdate = true; }
                     }
@@ -383,7 +383,7 @@ class Timesheet_model extends CI_Model{
                             $toArray = (array) $timesheetHourlyPartimer;
                             if(is_array($toArray) && count($toArray) > 0){ $tempRow->is_tagged_hourly = true; }
                             
-                            $updatedRow = $this->updateTimesheetShiftComputation($tempRow);
+                            $updatedRow = $this->updateTimesheetShiftComputation($tempRow, false, $night_diff_cfg);
                             $updatedTimesheet = (array) $updatedRow;
                             if(is_array($toArray) && count($toArray) > 0){
                                 $updatedTimesheet = array_merge($updatedTimesheet, $toArray);
@@ -510,7 +510,7 @@ class Timesheet_model extends CI_Model{
                                     $toArray = (array) $timesheetHourlyPartimer;
                                     if(is_array($toArray) && count($toArray) > 0){ $tempRow->is_tagged_hourly = true; }
                                     
-                                    $updatedRow = $this->updateTimesheetShiftComputation($tempRow);
+                                    $updatedRow = $this->updateTimesheetShiftComputation($tempRow, false, $night_diff_cfg);
                                     $updatedTimesheet = (array) $updatedRow;
                                     if(is_array($toArray) && count($toArray) > 0){
                                         $updatedTimesheet = array_merge($updatedTimesheet, $toArray);
@@ -629,7 +629,7 @@ class Timesheet_model extends CI_Model{
                                     "status" => "Approved"
                                 )
                             );
-
+                                
                             $hasApprovedOvertimeRequest = $temp_overtime->num_rows() == 1;
 
                             if((intval($tempRow->has_overtime) == 1 || $hasApprovedOvertimeRequest) && intval($tempRow->verified) !== 1){
@@ -699,7 +699,7 @@ class Timesheet_model extends CI_Model{
                                 $toArray = (array) $timesheetHourlyPartimer;
                                 if(is_array($toArray) && count($toArray) > 0){ $tempDatax->is_tagged_hourly = true; }
 
-                                $updatedRow = $this->updateTimesheetShiftComputation($tempDatax);
+                                $updatedRow = $this->updateTimesheetShiftComputation($tempDatax, false, $night_diff_cfg);
                                 $updatedTimesheet = (array) $updatedRow;
                                 if(is_array($toArray) && count($toArray) > 0){
                                     $updatedTimesheet = array_merge($updatedTimesheet, $toArray);
@@ -1000,7 +1000,7 @@ class Timesheet_model extends CI_Model{
                                                     $toArray = (array) $timesheetHourlyPartimer;
                                                     if(is_array($toArray) && count($toArray) > 0){ $tempRow->is_tagged_hourly = true; }
                                                     
-                                                    $updatedRow = $this->updateTimesheetShiftComputation($tempRow);
+                                                    $updatedRow = $this->updateTimesheetShiftComputation($tempRow, false, $night_diff_cfg);
                                                     $updatedTimesheet = (array) $updatedRow;
                                                     if(is_array($toArray) && count($toArray) > 0){
                                                         $updatedTimesheet = array_merge($updatedTimesheet, $toArray);
@@ -2283,7 +2283,7 @@ class Timesheet_model extends CI_Model{
         return $employee_time_sheet;
     }
 
-    public function updateTimesheetShiftComputation($employee_time_sheet, $allow_late_adjustment=false){
+    public function updateTimesheetShiftComputation($employee_time_sheet, $allow_late_adjustment=false, $night_diff_cfg=null){
         /*** reset late, undertime and time rendered ***/
         $employee_time_sheet->am_ut = 0;
         $employee_time_sheet->pm_ut = 0;
@@ -2512,6 +2512,8 @@ class Timesheet_model extends CI_Model{
 
         if (($am_in && $_am_end) && ($am_in >= $_am_end)) {
             $employee_time_sheet->am_time_rendered = 0;
+            $employee_time_sheet->am_ndiff_rendered = 0;
+
         } else {
             if (($am_in && $am_out) && ($_am_start && $_am_end)) {
                 $has2hrsDeduction = false;
@@ -2533,9 +2535,33 @@ class Timesheet_model extends CI_Model{
 
                 $am_time_rendered = $tempAmOutx - $tempAmInx;
                 $employee_time_sheet->am_time_rendered = round(($am_time_rendered) / 60, 2);
+
+                /*** regular ndiff am rendered computation ***/
+                $currentAmDate = date("Y-m-d", strtotime($employee_time_sheet->date));
+                $amNdiffStart = date("Y-m-d H:i", strtotime($currentAmDate." 22:00:00"));
+                $amNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentAmDate." 05:00:00")));
+
+                if(isset($night_diff_cfg->start_time) && $night_diff_cfg->start_time){
+                    $amNdiffStart = date("Y-m-d H:i", strtotime($currentAmDate." ".$night_diff_cfg->start_time));
+                }
+                if(isset($night_diff_cfg->end_time) && $night_diff_cfg->end_time){
+                    $amNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentAmDate." ".$night_diff_cfg->end_time)));
+                }
+
+                $_amNdiffStart = strtotime($amNdiffStart);
+                $_amNdiffEnd = strtotime($amNdiffStart) <= $_am_end && strtotime($amNdiffEnd) >= $_am_end ? $_am_end : strtotime($amNdiffEnd);
+
+                $tempAmNdiffStart = $tempAmInx >= $_amNdiffStart && $tempAmInx <= $_amNdiffEnd ? $tempAmInx : $_amNdiffStart;
+                $tempAmNdiffEnd = $tempAmOutx >= $_amNdiffStart && $tempAmOutx <= $_amNdiffEnd ? $tempAmOutx : $_amNdiffEnd;
+
+                $am_ndiff_rendered = $tempAmNdiffEnd - $tempAmNdiffStart;
+                $employee_time_sheet->am_ndiff_rendered = round(($am_ndiff_rendered) / 60, 2);
+                /*** regular ndiff am rendered computation ***/
             }
+
             if(($am_in == null || $am_out == null) && ($_am_start && $_am_end)){
                 $employee_time_sheet->am_time_rendered = 0;
+                $employee_time_sheet->am_ndiff_rendered = 0;
             }
             /*** if($isHoliday){ $employee_time_sheet->am_time_rendered = 0; } ***/
         }
@@ -2543,8 +2569,9 @@ class Timesheet_model extends CI_Model{
         /*** am half day deduction custom ***/
         if(($am_in && $amHalfDayAbsent) && ($am_in >= $amHalfDayAbsent) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
             $employee_time_sheet->am_late = 0;
-            $employee_time_sheet->am_time_rendered = 0;
             $employee_time_sheet->am_ut = round(($_am_end - $_am_start) / 60, 2);
+            $employee_time_sheet->am_time_rendered = 0;
+            $employee_time_sheet->am_ndiff_rendered = 0;
         }
         /*** am half day deduction custom ***/
         // END AM CALCULATION
@@ -2578,6 +2605,7 @@ class Timesheet_model extends CI_Model{
         
         if ($pm_in >= $_pm_end) {
             $employee_time_sheet->pm_time_rendered = 0;
+            $employee_time_sheet->pm_ndiff_rendered = 0;
         } else {
             if (($pm_in && $pm_out) && ($pm_out > $pm_in) && ($_pm_start && $_pm_end)) {
                 $tempPmInx = ($pm_in < $_pm_start) ? $_pm_start : $pm_in;
@@ -2592,6 +2620,27 @@ class Timesheet_model extends CI_Model{
 
                 $pm_time_rendered = $tempPmOutx - $tempPmInx;
                 $employee_time_sheet->pm_time_rendered = round(($pm_time_rendered) / 60, 2);
+
+                /*** regular ndiff pm rendered computation ***/
+                $currentPmDate = date("Y-m-d", strtotime($employee_time_sheet->date));
+                $pmNdiffStart = date("Y-m-d H:i", strtotime($currentPmDate." 22:00:00"));
+                $pmNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentPmDate." 05:00:00")));
+
+                if(isset($night_diff_cfg->start_time) && $night_diff_cfg->start_time){
+                    $pmNdiffStart = date("Y-m-d H:i", strtotime($currentPmDate." ".$night_diff_cfg->start_time));
+                }
+                if(isset($night_diff_cfg->end_time) && $night_diff_cfg->end_time){
+                    $pmNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentPmDate." ".$night_diff_cfg->end_time)));
+                }
+
+                $_pmNdiffStart = $_pm_start >= strtotime($pmNdiffStart) && $_pm_start <= strtotime($pmNdiffEnd) ? $_pm_start : strtotime($pmNdiffStart);
+                $_pmNdiffEnd = $_pm_end >= strtotime($pmNdiffStart) && $_pm_end <= strtotime($pmNdiffEnd) ? $_pm_end : strtotime($pmNdiffEnd);
+
+                $tempPmNdiffStart = $tempPmInx >= $_pmNdiffStart && $tempPmInx <= $_pmNdiffEnd ? $tempPmInx : $_pmNdiffStart;
+                $tempPmNdiffEnd = $tempPmOutx >= $_pmNdiffStart && $tempPmOutx <= $_pmNdiffEnd ? $tempPmOutx : $_pmNdiffEnd;
+                $pm_ndiff_rendered = $tempPmNdiffEnd - $tempPmNdiffStart;
+                $employee_time_sheet->pm_ndiff_rendered = round(($pm_ndiff_rendered) / 60, 2);
+                /*** regular ndiff pm rendered computation ***/
             }
             if(($pm_in == null || $pm_out == null) && ($_pm_start && $_pm_end)){
                 $employee_time_sheet->pm_time_rendered = 0;
@@ -2634,7 +2683,8 @@ class Timesheet_model extends CI_Model{
         $employee_time_sheet->total_late = $employee_time_sheet->am_late + $employee_time_sheet->pm_late;
         $employee_time_sheet->total_ut = $employee_time_sheet->am_ut + $employee_time_sheet->pm_ut;
         $employee_time_sheet->total_time_rendered = $employee_time_sheet->am_time_rendered + $employee_time_sheet->pm_time_rendered;
-
+        $employee_time_sheet->total_ndiff_rendered = $employee_time_sheet->am_ndiff_rendered + $employee_time_sheet->pm_ndiff_rendered;
+        
         return $employee_time_sheet;
     }
 
@@ -6735,7 +6785,7 @@ class Timesheet_model extends CI_Model{
         $start = date('Y-m-d', strtotime($inclusive_dates[0]));
         $end = date('Y-m-d', strtotime($inclusive_dates[1]));
         $file = $this->arrayToStdClass($_FILES['file_import']);
-        $non_existing = array(); 
+        $non_existing = array();
 
         $not_in_personnel = array();
         $no_shifts = array();
@@ -6946,6 +6996,9 @@ class Timesheet_model extends CI_Model{
             $timesheet = array();
             $tempAttendanceData = array();
 
+            $night_diff_cfg = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "NIGHT_DIFF_PARAMS"))->row();
+            $this->db->reset_query();
+
             if (intval($rows_count) >= 2) {
                 for ($i = 2; $i <= $rows_count; $i++) {
                     if(isset($rows[$i]["A"], $rows[$i]["B"]) && ($rows[$i]["A"] && $rows[$i]["B"])){
@@ -7153,7 +7206,7 @@ class Timesheet_model extends CI_Model{
                             $toArray = (array) $getHourlyTimeSheet;
                             if(is_array($toArray) && count($toArray) > 0){ $employee_time_sheet->is_tagged_hourly = true; }
 
-                            $updatedTimeSheet = $this->updateTimesheetShiftComputation($employee_time_sheet);
+                            $updatedTimeSheet = $this->updateTimesheetShiftComputation($employee_time_sheet, false, $night_diff_cfg);
                             if(is_array($toArray) && count($toArray) > 0){
                                 if(isset($employee_time_sheet->is_tagged_hourly)){ unset($employee_time_sheet->is_tagged_hourly); }
                                 $updatedTimeSheet = array_merge((array) $updatedTimeSheet, $toArray);

@@ -920,9 +920,6 @@ class Payroll_m extends CI_Model
                 if($cash_advance_loan['state']){
                     $employees['caStatus'] = $cash_advance_loan['state'];
                     $employees['caStatus1'] = $cash_advance_loan['response'];
-                }else{
-                    $employees['caStatus'] = $cash_advance_loan['state'];
-                    $employees['caStatus1'] = $cash_advance_loan['response'];
                 }
             }
 
