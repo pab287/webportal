@@ -2957,10 +2957,11 @@ if (typeof _tempContentData !== "undefined") {
                 { data: "offcom_action", },
                 { data: "filename",className: "text-center",
                     render:  function(data, type, row, meta){
+                        const isDisabled = (row.filename == '---') ? 'disabled' : '';
                         return `
                         <span>
                             <button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill"
-                                    onclick="openFile('${tempDataId}', '${data}')">
+                                    onclick="openFile('${tempDataId}', '${data}')" ${isDisabled}>
                                 <i class="fa fa-eye"></i>
                             </button>
                         </span>`;
