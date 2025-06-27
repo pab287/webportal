@@ -1526,7 +1526,7 @@ if (typeof _tempContentData !== "undefined") {
                                 license += '<p style="margin: 0; font-size: 9px;"  class="badge badge-info">'+row.type+'</p>';
                             }
                             license += '<p style="margin: 0">'+data+'</p>';
-                        }else if(data == 'CERTIFICATE'){
+                        }else if(data.toLowerCase() == 'certificate'){
                             license += '<p style="margin: 0; font-size: 9px;"  class="badge badge-info">'+"PERSONAL"+'</p>';
                             license += '<p style="margin: 0">'+row.certificate_name+'</p>';
                         }
