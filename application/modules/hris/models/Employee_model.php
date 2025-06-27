@@ -3723,7 +3723,8 @@
                         }
                         // END
         
-                        // $post = array_map('strtoupper', $post);
+                        $post = array_map('strtoupper', $post);
+                        $post['liscert_attachment'] = strtolower($post['liscert_attachment']);
                         $saved = $this->db->insert($this->employeeLicensureTable, $post);
                         $fullname = $this->getEmployeeName($post['emp_id']);
                         if ($saved) {
