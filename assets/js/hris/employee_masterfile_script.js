@@ -1087,7 +1087,16 @@ if (typeof _tempContentData !== "undefined") {
         data: { vm_question: [] },
         mounted(){
             if (tempData.more_questions && tempData.more_questions.length > 0) {
-                this.vm_question = tempData.more_questions;
+                this.vm_question = [...tempData.more_questions];
+                const existingIds = new Set(tempData.more_questions.map(q => q.id));
+                questions_list.forEach(q => {
+                    if (!existingIds.has(q.id)) {
+                        this.vm_question.push({
+                            ...q,
+                            answer: "N/A" 
+                        });
+                    }
+                });
             }
             else{
                 this.vm_question = questions_list;

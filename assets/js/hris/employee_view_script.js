@@ -158,8 +158,18 @@ let employeeDataSheet = new Vue({
                 this.getPersonalInformation();
              }
         }
+
         if (this.main.more_questions && this.main.more_questions.length > 0) {
             this.questions = this.main.more_questions;
+            const existingIds = new Set(this.main.more_questions.map(q => q.id));
+            _tempContentData.questions_list.forEach(q => {
+                if (!existingIds.has(q.id)) {
+                    this.questions.push({
+                        ...q,
+                        answer: "N/A" 
+                    });
+                }
+            });
         }
         else{
             this.questions = _tempContentData.questions_list;

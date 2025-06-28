@@ -988,6 +988,15 @@ $(".m-content")
                             mounted(){
                                 if (tempData.more_questions && tempData.more_questions.length > 0) {
                                     this.vm_question = tempData.more_questions;
+                                    const existingIds = new Set(tempData.more_questions.map(q => q.id));
+                                    questions_list.forEach(q => {
+                                        if (!existingIds.has(q.id)) {
+                                            this.vm_question.push({
+                                                ...q,
+                                                answer: "N/A" 
+                                            });
+                                        }
+                                    });
                                 }
                                 else{
                                     this.vm_question = questions_list;
@@ -1069,7 +1078,6 @@ $(".m-content")
                     },
                     dataType: "JSON",
                     success: function (response) {
-                        console.log(vmTabQuestions.vm_question, questions);
                         vmTabQuestions.vm_question = questions;
                         _toaster(response, 'Answers Updated.', 10000);
                         closeDialog();
