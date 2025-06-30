@@ -1957,4 +1957,9 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
+        public function upload_employee_liscert(){
+            $data = $this->employee_model->uploadEmployeeLicenseCert();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
     }
