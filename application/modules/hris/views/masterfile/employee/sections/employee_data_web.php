@@ -1103,9 +1103,10 @@
                                         <td data-label="NATURE" v-text="offense.offcom_nature"></td>
                                         <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
                                         <td data-label="VIEW" class="text-center">
+                                            <template v-if="offense.filename !== '---'"></template>
                                             <span>
                                                 <button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" 
-                                                        @click="openFile(offense.filename)">
+                                                        @click="openFile(offense.filename)" :disabled="offense.filename == '---' ? 'disabled' : false">
                                                     <i class="fa fa-eye" style="font-size: 12px;"></i>
                                                 </button>
                                             </span>

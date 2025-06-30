@@ -1515,7 +1515,7 @@
                         $nestedData['offcom_date'] = $pst->offcom_date;
                         $nestedData['offcom_nature'] = $pst->offcom_nature;
                         $nestedData['offcom_action'] = $pst->offcom_action;
-                        $nestedData['filename'] = $pst->filename;
+                        $nestedData['filename'] = $pst->filename ? $pst->filename : '---';
                         $data[] = $nestedData;
                     }
                 }
@@ -12004,7 +12004,7 @@
 
         public function getEmploymentInformation($id){
             $post = $this->input->post();
-            $data['offenses'] =  $this->db->order_by('offcom_date', 'DESC')->get_where($this->employeeOffensesTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            $data['offenses'] =  $this->db->select('*, IFNULL(filename, "---") as filename')->order_by('offcom_date', 'DESC')->get_where($this->employeeOffensesTable, array("emp_id" => $id,"is_archived" => 0))->result();
             $this->db->reset_query();
             $data['salaries'] = $this->db
                 ->select("sal.id, sal.add_date, sal.sal_date, sal.sal_rate, sal.sal_remarks, IF(pos.id IS NULL, sal.sal_position, pos.name) sal_position")
