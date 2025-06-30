@@ -76,6 +76,19 @@
             $this->load->view('core/templates/footer');
         }
 
+        public function night_differential(){
+            $this->core_layout->setPageTitle("Payroll - Employee Night Differential");
+            $this->core_layout->setPrivilegeName("payroll_night_differential");
+
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+            $this->core_layout->addJs("js/payroll/employee/night_differential.js", true);
+
+            $this->load->view('core/templates/header');
+            $this->load->view('payroll/payroll/night_differential');
+            $this->load->view('core/templates/footer');
+        }
+
         function employee_masterfile($employee_status = "Active") {
             $employee_status = str_replace("%20", " ", $employee_status);
             $data = $this->employee->employeeMasterfile($employee_status);
@@ -474,6 +487,13 @@
 
         public function update_status_taxable_deduction(){
             $data = $this->employee->updateStatusTaxableDeduction();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public get_employee_nightdiff_list(){
+            $data = $this->employee->getEmployeeNightDiffList();
             $this->output
                 ->set_content_type('json')
                 ->set_output(json_encode($data));

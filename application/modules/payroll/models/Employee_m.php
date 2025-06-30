@@ -2138,21 +2138,17 @@
                 if($change){
                     if($field == 'loan_id'){
                         $changesString.= " Field: $field, from: <strong>".$this->getLoanTypeById($change['old']) ."</strong>, to: <strong>".$this->getLoanTypeById($change['new'])."</strong>\n";
-                    }
-                    else if($field == 'deduction_type'){
+                    } elseif ($field == 'deduction_type'){
                         $oldStatus = $change['old'] == 1 ? 'fix amount' : 'percentage';
                         $newStatus = $change['new'] == 1 ? 'fix amount' : 'percentage';
                         $changesString .= " Field: $field, from: <strong>$oldStatus</strong>, to: <strong>$newStatus</strong>\n";
-                    }
-                    else if($field == 'active'){
+                    } elseif ($field == 'active'){
                         $oldStatus = $change['old'] == 1 ? 'active' : 'suspended';
                         $newStatus = $change['new'] == 1 ? 'active' : 'suspended';
                         $changesString .= " Field: $field, from: <strong>$oldStatus</strong>, to: <strong>$newStatus</strong>\n";
-                    }
-                    else if (strtolower($field) == 'percentage'){
+                    } elseif (strtolower($field) == 'percentage'){
                         $changesString.= " Field: $field, from: <strong>" . round($change['old']) . "%</strong>, to: <strong>" . round($change['new']) . "%</strong>\n";
-                    }
-                    else{
+                    } else {
                         $changesString.= " Field: $field, from: <strong>$change[old]</strong>, to: <strong>$change[new]</strong>\n";
                     }
                 }
@@ -2184,4 +2180,21 @@
             return $result->loan_name;
         }
 
+        public function getEmployeeNightDiffList(){
+            $this->db->select("ps_ndiff.*, CONCAT(UPPER(TRIM(emp.firstname)), '',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(' ', SUBSTR(emp.middlename, 1, 1), '. ') ELSE ' '
+            END,'', UPPER(TRIM(emp.lastname)),
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
+            END) as employee_name", false);
+            $this->db->from("gccmaster.tblemployees emp");
+            $this->db->left("payroll.employee_regular_ndiff as ps_ndiff", "emp.id = ps_ndiff.emp_id", "LEFT");
+            $this->db->where("emp.employee_status", "Active");
+            $data = $this->db->get()->result();
+            
+            return array("data" => $data);
+        }
     }
