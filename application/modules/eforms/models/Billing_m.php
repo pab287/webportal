@@ -1984,7 +1984,20 @@ class Billing_m extends CI_Model {
                 $data["overdue"] = number_format(($overdue + $data["balanceLastBill"]["total_penalty"]),2,".",",");
                 $data["disconnection_fee"] = $disconnectionFee;
 
-                $total_charges = ($_query['total_charges'] + $balanceLastBill["total_balance"] + $disconnectionFee + $data["overdue"]) - $balance - $totalPayments;
+                $total_charges = ($_query['total_charges'] + $balanceLastBill["total_balance"] + $disconnectionFee + $data["overdue"]) - $balance - $_query['balance_covered'] - $totalPayments;
+
+                $t = [
+                    'total_charges' => $_query['total_charges'],
+                    'balanceLastBill' => $balanceLastBill["total_balance"],
+                    'disconnectionFee' => $disconnectionFee,
+                    'overdue' => $data["overdue"],
+                    'balance' => $balance,
+                    'balance_covered' => $_query['balance_covered'],
+                    'totalPayments' => $totalPayments,
+                    'solution' => "(" .$_query['total_charges'] . " + " . $balanceLastBill["total_balance"] . " + " . $disconnectionFee . " + " . $data["overdue"] . ")" . " - " . $balance  . " - " . $totalPayments . " = " . $total_charges 
+                ];
+
+                // var_dump($t);
 
                 if ($_query["is_paid"] == 1 && $total_charges <= $_query['balance_covered']) {
                     /**
