@@ -171,20 +171,47 @@
 		</div>
 	</div>
 </div>
-<div class="modal fade" tabindex="-1" role="dialog" id="preview-document-dialog">
+<div class="modal fade" tabindex="-1" role="dialog" id="ticket-preview-dialog">
     <div class="modal-dialog modal-extra-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Modal title</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <h5 class="modal-title">Open Tickets</h5>
             </div>
             <div class="modal-body">
-                <p>Modal body text goes here.</p>
+                <p style="color: red;">
+                    You currently have {{vm_tickets.length}} open ticket(s). Please close them or contact the IT department for assistance before creating a new one.
+                </p>
+                <div style="max-height: 500px; overflow-y: scroll;">
+                    <table class="table table-striped table-bordered table-hover responsive" id="ticket-preview-table">
+                        <thead>
+                            <tr>
+                                <th width="20%">Ticket ID</th>
+                                <th width="*">Description</th>
+                                <th width="20%">Created At</th>
+                                <th width="15%" class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template v-for="ticket in vm_tickets" :key="ticket.id">
+                                <tr>
+                                    <td data-label="reference_no" v-text="ticket.reference_no"></td>
+                                    <td data-label="message" v-text="ticket.message"></td>
+                                    <td data-label="created_at" v-text="formatDate(ticket.created_at)"></td>
+                                    <td data-label="action" class="text-center">
+                                        <button class="btn btn-info btn-sm" @click="closeTicket(ticket.id,ticket.reference_no)" title="Resolve Ticket">
+                                             Resolve Ticket
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger btnBack" onclick="window.location.href='<?=base_url('ticket/tickets')?>'">
+                    Return to masterfile
+                </button>
             </div>
         </div>
     </div>

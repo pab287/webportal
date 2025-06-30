@@ -95,8 +95,11 @@ let tbl = $("#table-tickets").DataTable({
         {
             data: null,
             render: function (data, type, row) {
-                if(row.status == 'completed' || row.status == 'RESOLVED') {
+                if(row.status == 'completed' || row.status.toLowerCase() == 'resolved') {
                     return 'Ticket Completed';
+                }
+                if(row.status.toLowerCase() == 'cancelled') {
+                    return 'Ticket Cancelled';
                 }
                 if (!row.requested_date) return '---';
                 
