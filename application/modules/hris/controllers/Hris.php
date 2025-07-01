@@ -19,6 +19,8 @@
 
         function index()
         {
+            $this->core_layout->setPrivilegeName("hris_dashboard");
+
             $this->core_layout->addJs("global/js/amcharts4/core.js", true);
             $this->core_layout->addJs("global/js/amcharts4/charts.js", true);
             $this->core_layout->addJs("global/js/amcharts4/maps.js", true);

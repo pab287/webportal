@@ -256,7 +256,7 @@ class Reports_model extends CI_Model{
 
         $select = "emp.id, emp.date_start date_hired,";
         $select .= "DATE_ADD(emp.date_start, INTERVAL 3 MONTH) firstEvaluation,";
-        $select .= "DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) secondEvaluation,";
+        // $select .= "DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) secondEvaluation,";
         $select .= "DATE_ADD(emp.date_start, INTERVAL 5 MONTH) finalEvaluation,";
         $select .= "emp.date_end_prob end_of_contract,";
         $select .= "DATEDIFF(emp.date_end_prob, CURDATE()) daysBeforeEvaluation,";
