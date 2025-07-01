@@ -133,9 +133,18 @@ function loadEmployees(employee_status = "All") {
                         d.search['value'] = $("#generalSearch").val();
                         d.emp_status = $("#emp_status").val();
                         d.emp_sex = $("#emp_sex").val();
-                        if(typeof _currentActions !== "undefined" && Object.keys(_currentActions).length > 0 && _currentActions.includes("view_by_company")){
-                            d.list_view = 'by_company';
+                        let arrPrivileges = [];
+                        if(typeof _currentActions !== "undefined" && Object.keys(_currentActions).length > 0 && _currentActions.includes("view_by_dept")){
+                            arrPrivileges.push('by_department');
                         }
+                        if(typeof _currentActions !== "undefined" && Object.keys(_currentActions).length > 0 && _currentActions.includes("view_by_company")){
+                            arrPrivileges.push('by_company');
+                        }
+
+                        if(arrPrivileges.length > 0){
+                            d.list_view = arrPrivileges;
+                        }
+
                         return d;
                     },
                     global: false,

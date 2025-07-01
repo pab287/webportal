@@ -316,29 +316,42 @@
         // }
         // new function get user session ID and Display Head Department Employees
         //for HR Display all Employees
-        function getEmployeeDatatableRequest($employee_status) {
+        public function getEmployeeDatatableRequest($employee_status) {
             $resultSet = array();
-
-            $emp_id = $this->loggedinData["emp_id"];
-            $this->db->select('dept.*');
-            $this->db->where('head_id', $emp_id);
-            $query = $this->db->get('gcchris.tbldepartments dept');
-            $res = $query->result();
-            $dep_id = array();
-            foreach($res as $row) {
-                $dep_id[] = $row->id;
-            }
-
             $post = $this->input->post();
             $companyId = 0;
-            $viewByCompany = isset($post['list_view']) ? $post["list_view"] : 'all';
-            if($viewByCompany == 'by_company') {
+            $dep_id = array();
+            
+            $isViewByCompany = false;
+            $isViewByDepartment = false;
+            $emp_id = $this->core_layout->getCurrentEmployeeId();
+
+            if(isset($post['list_view']) && is_array($post['list_view']) && in_array('by_company', $post['list_view'])) {
+                $isViewByCompany = true;
                 $this->db->select("company_id");
                 $this->db->where("id", $emp_id);
                 $this->db->where("employee_status", "active");
                 $queryCompId = $this->db->get("gccmaster.tblemployees");
                 if($queryCompId->num_rows() == 1){
                     $companyId = $queryCompId->row()->company_id;
+                }
+            }
+            if(isset($post['list_view']) && is_array($post['list_view']) && in_array('by_department', $post['list_view'])) {
+                $isViewByDepartment = true;
+                $this->db->select('id');
+                $this->db->where('head_id', $emp_id);
+                $queryDept = $this->db->get('gcchris.tbldepartments');
+                if($queryDept->num_rows() > 0){
+                    $res = $queryDept->result();
+                    foreach($res as $row) { $dep_id[] = $row->id; }
+                }else{
+                    $this->db->select('dept.id');
+                    $this->db->where('emp.id', $emp_id);
+                    $this->db->join('gcchris.tbldepartments as dept', 'dept.id = emp.department_id OR dept.code = emp.department_id', 'INNER');
+                    $queryDept = $this->db->get('gccmaster.tblemployees emp');
+                    if($queryDept->num_rows() == 1){
+                        $dep_id[] = $queryDept->row()->id;
+                    }
                 }
             }
 
@@ -413,8 +426,8 @@
                 emp.is_incomplete, emp.work_status, emp.date_start,
                 emp.gender, emp.email, emp.curr_addr as address, emp.mobile_no");
                                
-            if(!in_array(8, $dep_id) && $dep_id){ $this->db->where_in('emp.department_id', $dep_id); }
-            if($viewByCompany == 'by_company') { $this->db->where('emp.company_id', $companyId); }
+            if(is_array($dep_id) && !in_array(8, $dep_id) && !empty($dep_id) && $isViewByDepartment){ $this->db->where_in('emp.department_id', $dep_id); }
+            if($isViewByCompany && $companyId) { $this->db->where('emp.company_id', $companyId); }
             $this->db->order_by($order, $dir);
             $this->db->group_by("emp.id");
             $query = $this->db->get("gccmaster.tblemployees emp");
@@ -482,18 +495,16 @@
         }
 
         function getEmployeeCount($employee_status) {
-            $emp_id = $this->loggedinData["emp_id"];
-            $this->db->select('dept.*');
-            $this->db->where('head_id', $emp_id);
-            $query = $this->db->get('gcchris.tbldepartments dept');
-            $res = $query->result();
-            $dep_id = array();
-            foreach($res as $row) { $dep_id[] = $row->id; }
-
             $post = $this->input->post();
             $companyId = 0;
-            $viewByCompany = isset($post['list_view']) ? $post["list_view"] : 'all';
-            if($viewByCompany == 'by_company') {
+            $dep_id = array();
+
+            $isViewByCompany = false;
+            $isViewByDepartment = false;
+            $emp_id = $this->core_layout->getCurrentEmployeeId();
+
+            if(isset($post['list_view']) && is_array($post['list_view']) && in_array('by_company', $post['list_view'])) {
+                $isViewByCompany = true;
                 $this->db->select("company_id");
                 $this->db->where("id", $emp_id);
                 $this->db->where("employee_status", "active");
@@ -502,6 +513,25 @@
                     $companyId = $queryCompId->row()->company_id;
                 }
             }
+            if(isset($post['list_view']) && is_array($post['list_view']) && in_array('by_department', $post['list_view'])) {
+                $isViewByDepartment = true;
+                $this->db->select('id');
+                $this->db->where('head_id', $emp_id);
+                $queryDept = $this->db->get('gcchris.tbldepartments');
+                if($queryDept->num_rows() > 0){
+                    $res = $queryDept->result();
+                    foreach($res as $row) { $dep_id[] = $row->id; }
+                }else{
+                    $this->db->select('dept.id');
+                    $this->db->where('emp.id', $emp_id);
+                    $this->db->join('gcchris.tbldepartments as dept', 'dept.id = emp.department_id OR dept.code = emp.department_id', 'INNER');
+                    $queryDept = $this->db->get('gccmaster.tblemployees emp');
+                    if($queryDept->num_rows() == 1){
+                        $dep_id[] = $queryDept->row()->id;
+                    }
+                }
+            }
+
             $sex = isset($post['emp_sex']) ? $post["emp_sex"] : 'All';
             $orderx = (isset($post["order"]) && $post["order"]) ? $post["order"] : false;
             $dir = "DESC";
@@ -561,8 +591,8 @@
                 IF(positions.id IS NULL, emp.position, positions.name) position,
                 emp.is_incomplete, emp.work_status, emp.date_start");
                                
-            if(!in_array(8, $dep_id) && $dep_id){ $this->db->where_in('emp.department_id', $dep_id); }
-            if($viewByCompany == 'by_company') { $this->db->where('emp.company_id', $companyId); }
+            if(is_array($dep_id) && !in_array(8, $dep_id) && !empty($dep_id) && $isViewByDepartment){ $this->db->where_in('emp.department_id', $dep_id); }
+            if($isViewByCompany && $companyId) { $this->db->where('emp.company_id', $companyId); }
             $this->db->order_by($order, $dir);
             $this->db->group_by("emp.id");
             $query = $this->db->get("gccmaster.tblemployees emp");
@@ -11510,7 +11540,6 @@
         }
 
         private function logChanges($currentData, $newData) {
-                // var_dump($currentData, $newData);
                 if (is_object($currentData)) {
                     $currentData = get_object_vars($currentData);
                 }
