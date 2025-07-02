@@ -502,7 +502,7 @@
                                             <textarea name="comment" id="comment" class="form-control" placeholder="Write here" row="3"></textarea>
                                         </div>
                                     </div>
-                                    <button class="btn btn-success btn-sm" type="submit">Add</button>
+                                    <button class="btn btn-success btn-sm btnSave" type="submit">Add</button>
                                 </div>
                             </form>
                             </div>
