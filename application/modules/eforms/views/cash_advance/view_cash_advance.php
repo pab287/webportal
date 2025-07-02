@@ -495,29 +495,29 @@ label.col-6.px-0.colon--after:after {
             <form id = "recommend_form">
                 <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                 <div class="col-12 modal-body">
-                    <div class="form-group m-form__group row">
-                        <label class=" form-control-label">
-                            Employee:
-                        </label>
-                        <div class="col-md-8 col-sm-8 col-xs-12" id="employee_name">   
-                            <b v-text="vm_tab2.display_name"></b>
+                    <div class="form-group m-form__group row mb-0">
+                        <div class="col-md-4 col-sm-4 col-xs-12">
+                            <label for="" class=" form-control-label">Employee: </label>
+                        </div>
+                        <div class="col-md-8 col-sm-8 col-xs-12" id="employee_name">
+                            <b v-text="vm_tab2.display_name ?? ''">&nbsp;</b>
                         </div>
                         <input type="hidden" name="employee" v-model="vm_tab2.employee"/>
                     </div>
-                    <div class="form-group m-form__group row">
-                        <label class=" form-control-label">
-                            Amount Applied:
-                        </label>
-                        <div class="col-md-8 col-sm-8 col-xs-12" id="amt_applied" v-text="vm_tab2.amt_applied">   
-                        
+                    <div class="form-group m-form__group row mb-0">
+                        <div class="col-md-4 col-sm-4 col-xs-12">
+                            <label for="" class="form-control-label">Amount Applied: </label>
                         </div>
-                        <input type="hidden" name="amt_applied" v-model="vm_tab2.amt_applied"/>
+                        <div class="col-md-8 col-sm-8 col-xs-12" id="amt_applied" v-text="vm_tab2.amt_applied ?? '0.00'">&nbsp;</div>
+                        <input type="hidden" name="amt_applied" v-model="vm_tab2.amt_applied" />
                     </div>
                     <div class="form-group m-form__group row">
-                        <label class=" col-form-label form-control-label">
-                            Remarks:
-                        </label>
-                        <div class="col-md-8 col-sm-8 col-xs-12">
+                        <div class="col-md-12 col-sm-12 col-xs-12">
+                            <label for="" class="col-form-label form-control-label">
+                                Remarks:
+                            </label>
+                        </div>
+                        <div class="col-md-12 col-sm-12 col-xs-12">
                             <textarea class="form-control" name="recommend_remark2" rows="5"></textarea>
                         </div>
                     </div>
@@ -564,8 +564,8 @@ label.col-6.px-0.colon--after:after {
                 <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                 <div class="col-12 modal-body">
                     <div class="form-group m-form__group row">
-                        <label class="col-12 col-form-label form-control-label">
-                            Do you want to undo the note of this form?
+                        <label for="" class="col-12 col-form-label form-control-label">
+                            Are you sure you want to undo the <strong>SUP recommendation</strong> on this cash advance?
                         </label>
                     </div>
                 </div>
@@ -575,7 +575,7 @@ label.col-6.px-0.colon--after:after {
                     </button>
                     <button type="button" class="btn btn-metal text-white btnClose" data-dismiss="modal">
                         No
-                    </button>				    
+                    </button>
                 </div>
             </form>
         </div>

@@ -62,14 +62,14 @@ class Logs_model extends CI_Model{
                     $value["created_date"] = date("F d, Y h:i:s A", strtotime($value["created_at"]));
                     $_tempData[$key] = $value;
                 }
-                $resultset["status"] = TRUE;
+                $resultset["status"] = true;
                 $resultset["data"] = array("data"=>$_tempData);
             }else{
-                $resultset["status"] = FALSE;
+                $resultset["status"] = false;
                 $resultset["data"] = array("data"=>array());
             }
         else:
-            $resultset["status"] = FALSE;
+            $resultset["status"] = false;
             $resultset["data"] = array("data"=>array());
         endif;
         return $resultset;
