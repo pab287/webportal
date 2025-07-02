@@ -312,6 +312,5 @@
 <script>
     jQuery(document).ready(function () {
         getTicketDetails();
-        getStatusLogs();
     });
 </script>
