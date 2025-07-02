@@ -227,7 +227,7 @@ $.validate({
                 $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
             },
             success: function (data) {
-                if (data) {
+                if (data.result) {
                     toastr.success("Ticket was successfully saved.", "New Ticket Saved.", 5000)
                     setTimeout(() => {
                         window.location.assign(baseUrl("ticket/tickets"));
@@ -305,6 +305,9 @@ function checkExistingTickets(){
         },
         success: function (data) {
             if (data.length > 0) {
+                if(data.length >= 5){
+                    $("#closeModal").hide();
+                }
                 $("#ticket-preview-dialog").modal("show");
                 ticket_vue.vm_tickets = data;
             }
@@ -317,7 +320,6 @@ ticket_vue = new Vue({
     data: {vm_tickets: []},
     mounted: function () {
         checkExistingTickets();
-        console.log(this.vm_tickets);
     },
     methods: {
         closeTicket(ticket_id,reference_no) {
@@ -340,6 +342,8 @@ ticket_vue = new Vue({
                     }
                     if (self.vm_tickets.length === 0) {
                         $("#ticket-preview-dialog").modal("hide");
+                    }else if(self.vm_tickets.length <= 5){
+                        $("#closeModal").show();
                     }
                 }
             });

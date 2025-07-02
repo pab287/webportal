@@ -1,3 +1,4 @@
+
 let getUrlParameter = function getUrlParameter(sParam) {
     let sPageURL = decodeURIComponent(window.location.search.substring(1)),
         sURLVariables = sPageURL.split('&'),
@@ -14,6 +15,27 @@ let getUrlParameter = function getUrlParameter(sParam) {
 param_id = getUrlParameter('id');
 
 jQuery(document).ready(function () {
+    if (_tempContentData.status) {
+        Swal.fire({
+            title: "Ticket Status",
+            text: _tempContentData.message,
+            icon: 'success',
+            confirmButtonText: 'Continue',
+            allowOutsideClick: false,
+            timer: 3000,
+            showClass: {
+                popup: 'animate__animated animate__fadeInDown'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__fadeOutUp'
+            }
+        }).then((result) => {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.delete('serve');
+            window.location.replace(currentUrl.toString());
+        });
+    }
+
     $("#progress").hide();
     $("#reopen_field").hide();
     $("#onhold_field").hide();
@@ -168,7 +190,6 @@ $.ajax({
         }else{
             vmData.status = "<span class='m-badge m-badge--metal m-badge--wide text-white'>"+vmData.status+"</span>";
         }
-        console.log(data);
         vmTab1.vm_tab1 = Object.assign({}, data);
     }
 });
@@ -356,7 +377,6 @@ let statuslog = new Vue({
             type: "GET",
             dataType: "JSON",
             success: function (response) {
-                console.log(response.data);
                 if (response) {
                     statuslog.trail =  response.data;
                 } else {

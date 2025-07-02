@@ -691,7 +691,14 @@ class Ticket_m extends CI_Model
     }
 
     function saveTicket(){
+        $resultArray = array();
         $post = $this->input->post();
+        $check = $this->getExistingTicketPerUser();
+
+        if(count($check) >= 5){
+            return array("result" => false, "toastr_msg" => "You currently have ". count($check). " pending request(s). Please resolve them or reach out to the IT department for assistance before submitting a new one.");
+        }
+
         if(isset($post['category']) && $post['category'] == "webportal"){
             if(isset($post['sub_category'])){
                 $sub_category = $post['sub_category'];
@@ -789,10 +796,14 @@ class Ticket_m extends CI_Model
         if($result){
             $this->core_layout->setEventLog("User added ticket with Ref. No. `".$reference_no."` on category datatable.","insert", "success", "gccticket", "user");
             $this->addTrailLog($last_id,"new");
+            $resultArray['result'] = true;
+            $resultArray['toastr_msg'] = "Ticket with Ref. No. `".$reference_no."` has been successfully added.";
         }else{
-            $this->core_layout->setEventLog("User failed to add ticket with Ref. No. `".$reference_no."` on category datatable.","insert", "failed", "gccticket", "system");
+            $this->core_layout->setEventLog("User failed to add new ticket.","insert", "failed", "gccticket", "system");
+            $resultArray['result'] = false;
+            $resultArray['toastr_msg'] = "User failed to add new ticket";
         }
-        return $result;
+        return $resultArray;
     }
 
     public function series($year, $month){
@@ -1181,6 +1192,11 @@ class Ticket_m extends CI_Model
                         "text" => "View Ticket",
                         // "url" => 'http://58.69.100.66/portaldev/ticket/ticket/edit_ticket?id='.$id //doesnt send message when in development or in local
                         "url" => site_url('ticket/ticket/edit_ticket?id=') . $id
+                    ],
+                    [
+                        "text" => "Serve Ticket",
+                        // "url" => 'http://58.69.100.66/portaldev/ticket/ticket/view_ticket?id='.$id.'&serve=true',
+                        "url" => site_url('ticket/ticket/view_ticket?id=') . $id.'&serve=true' 
                     ]
                 ]
             ];
@@ -1349,7 +1365,7 @@ class Ticket_m extends CI_Model
     }
 
     private function getTicketByid($id){
-        $this->db->select('a.id,a.requested_date,a.priority,a.category,a.sub_category,a.department_id,a.category,a.status,a.message,a.attachment,a.performed_by');
+        $this->db->select('a.id,a.requested_date,a.priority,a.category,a.sub_category,a.department_id,a.category,a.status,a.message,a.attachment,a.performed_by,a.reference_no');
         $this->db->from('gccticket.ticket as a');
         $this->db->where('a.id', $id);
         $query = $this->db->get();
@@ -1760,6 +1776,44 @@ class Ticket_m extends CI_Model
             'tickets'=> $this->getExistingTicketPerUser(),
             'message' => $update ? "Ticket closed successfully." : "Failed to close the ticket."
         );
+    }
+
+    public function serveTicket($id) {
+        $ticket = $this->getTicketByid($id);
+        
+        if (!$ticket) {
+            return ['status' => false, 'message' => 'Ticket not found.'];
+        }
+        
+        $status = strtolower($ticket->status);
+        $statusMessages = [
+            'in progress' => 'Ticket is already in progress',
+            'completed' => 'Ticket is already completed',
+            'resolved' => 'Ticket is already completed',
+            'cancelled' => 'Ticket is cancelled'
+        ];
+        
+        if (isset($statusMessages[$status])) {
+            return ['status' => false, 'message' => $statusMessages[$status]];
+        }
+        
+        $this->db->where('id', $id);
+        $update = $this->db->update('gccticket.ticket', [
+            'status' => 'in progress',
+            'performed_by' => $this->user_data['emp_id']
+        ]);
+        
+        if ($update) {
+            $this->addTrailLog($id, 'in progress');
+            $this->core_layout->setEventLog("User served the ticket with reference no {$ticket->reference_no}", 'update', 'success', 'gccticket', 'user');
+        } else {
+            $this->core_layout->setEventLog("User failed to serve the ticket with reference no {$ticket->reference_no}", 'update', 'error', 'gccticket', 'system');
+        }
+        
+        return [
+            'status' => $update,
+            'message' => $update ? 'Ticket served successfully.' : 'Failed to serve the ticket.'
+        ];
     }
 
 

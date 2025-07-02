@@ -179,7 +179,7 @@
             </div>
             <div class="modal-body">
                 <p style="color: red;">
-                    You currently have {{vm_tickets.length}} open ticket(s). Please close them or contact the IT department for assistance before creating a new one.
+                    You currently have {{vm_tickets.length}} pending request(s). Please resolve them or reach out to the IT department for assistance before submitting a new one.
                 </p>
                 <div style="max-height: 500px; overflow-y: scroll;">
                     <table class="table table-striped table-bordered table-hover responsive" id="ticket-preview-table">
@@ -209,7 +209,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger btnBack" onclick="window.location.href='<?=base_url('ticket/tickets')?>'">
+                <button type="button" id="closeModal" class="btn btn-danger btnBack" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning btnBack" onclick="window.location.href='<?=base_url('ticket/tickets')?>'">
                     Return to masterfile
                 </button>
             </div>

@@ -105,11 +105,17 @@ class Ticket extends MY_Controller {
     }
 
     function view_ticket(){
+        $data = array();
+        $serve = filter_var( $this->input->get('serve'), FILTER_VALIDATE_BOOLEAN);
+        if($serve){
+            $id = $this->input->get('id');
+            $data = $this->ticket->serveTicket($id);
+        }
         $this->core_layout->setPrivilegeName("ticket_masterfile");
         $this->core_layout->setPageTitle("TICKET - View Ticket");
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
-        $this->core_layout->addJs("js/ticket/view_ticket.js", true);
+        $this->core_layout->addJs("js/ticket/view_ticket.js",true,$data);
 		$this->load->view('core/templates/header');
         $this->load->view('ticket/view_ticket');
         $this->load->view('core/templates/footer');
@@ -365,5 +371,12 @@ class Ticket extends MY_Controller {
         $data = $this->ticket->closeTicket();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
+
+    // public function serve_ticket(){
+    //     $id = $this->input->get('id');
+    //     $data = $this->ticket->serveTicket($id);
+    //     var_dump($data);
+    //     $this->view_ticket();
+    // }
 
 }
