@@ -182,10 +182,10 @@ function itemDatatableActions($id, $status) {
             "   <i class='la la-pencil-square'></i>" +
             "</a>";
         _actionButton += " <a style='text-decoration: none;' " +
-            "   href='" + baseUrl('ticket/ticket/view_ticket?id=') + $id + "' " +
             "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnView'" +
-            "   data-toggle='m-tooltip' data-placement='bottom' title='' data-delay='{\"show\": 200, \"hide\": 0}'" +
             "   data-original-title='View Ticket'" +
+            "   data-toggle='modal' data-target='#view-ticket-modal'" +
+            "   data-ticket-id='" + $id + "'" + 
             "   data-skin='dark'>" +
             "   <i class='la la-eye'></i>" +
             "</a>";

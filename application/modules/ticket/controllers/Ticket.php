@@ -35,6 +35,7 @@ class Ticket extends MY_Controller {
         $this->core_layout->addJs('js/querybuilder/query-builder.standalone.min.js', TRUE);
         $this->core_layout->setPageTitle("TICKET - Masterfile");
         $this->core_layout->addJs("js/ticket/ticket.js", true);
+        $this->core_layout->addJs("js/ticket/view_ticket.js",true);
 		$this->load->view('core/templates/header');
         $this->load->view('ticket/tickets');
         $this->load->view('core/templates/footer');

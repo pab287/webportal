@@ -1,5 +1,5 @@
 
-let getUrlParameter = function getUrlParameter(sParam) {
+getUrlParameter = function getUrlParameter(sParam) {
     let sPageURL = decodeURIComponent(window.location.search.substring(1)),
         sURLVariables = sPageURL.split('&'),
         sParameterName,
@@ -15,7 +15,7 @@ let getUrlParameter = function getUrlParameter(sParam) {
 param_id = getUrlParameter('id');
 
 jQuery(document).ready(function () {
-    if (_tempContentData.status) {
+    if (typeof _tempContentData !== 'undefined' && _tempContentData && _tempContentData.status) {
         Swal.fire({
             title: "Ticket Status",
             text: _tempContentData.message,
@@ -43,155 +43,166 @@ jQuery(document).ready(function () {
 });
 
 let images = [];
-$.ajax({
-    url: baseUrl("ticket/ticket/ticket_details/") + param_id,
-    type: "GET",
-    dataType: "JSON",
-    success: function (data) {
-        getComments();
-        if (data.status !== 'Closed') {
-            $(".fileinput-button").css("display", "inline-block");
-        }
-
-        const vmData = data;
-        
-        $("#ticket_id").val(param_id);
-
-        const allowedFileTypes = [
-            {
-                _type: ["jpg", "jpeg", "png", "PNG", "JPEG", "JPG"],
-                icon: "jpg.svg",
-                color: "success"
-            },
-            {
-                _type: ["docx", "DOCX"],
-                icon: "doc.svg",
-                color: "info"
-            },
-            {
-                _type: ["pdf", "PDF"],
-                icon: "pdf.svg",
-                color: "danger"
-            },
-        ];
-        const picUrl = vmData.attachment ? baseUrl("uploads/files/images/employee_files/" + vmData.attachment) : baseUrl('assets/images/ams/images/no_image.jpg');
-        const created_by = vmData.requestor;
-        const arrImg = vmData.attachment.split(',');
-        arrImg.forEach(function(file){
-            const fileArr = file.split("/");
-            const filename = fileArr[fileArr.length - 1];
-            const ext = filename.split(".");
-
-            var avatarImage = baseUrl("uploads/files/images/employee_files/empcode_"+ created_by +"/ticketing/" + filename);
-            var renderImage = vmData.picture;
-            images.push(filename);
-            const filename1 = filename;
-            const shortenedName = filename1.length <= 20 ? filename1 : `${filename1.slice(0, 20)}...`;
-            $("#picture").attr("src", renderImage);
-            $("#pic").val(images);
-            let icon = '';
-            let color = '';
-            test = ext[ext.length - 1];
-            allowedFileTypes.forEach((item, i) => {
-                if (item._type.includes(test)) {
-                    icon = item.icon;
-                    color = item.color;
-                }
-                
-            });
-            const icon_path = baseUrl('assets/images/file_icons/' + icon);
-            let viewButton = '';
-                if (ext == 'docx') {
-                    viewButton = '';
-                } else{
-                    if(filename){
-                    viewButton = '' +
-                        ' <button '+
-                            ' title="Preview" ' +
-                            ' onclick="previewDocument(\'' + avatarImage + '\', \'' + icon + '\', \'' + filename + '\')"' +
-                            ' class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnRemove" type="button" id="previewFile"> '+
-                            ' <i class="la la-eye"></i>' +
-                        ' </button>';
-                    }else{
-                        viewButton = '';
+function getTicketDetails(){
+    $.ajax({
+        url: baseUrl("ticket/ticket/ticket_details/") + param_id,
+        type: "GET",
+        dataType: "JSON",
+        success: function (data) {
+            if (data.status !== 'Closed') {
+                $(".fileinput-button").css("display", "inline-block");
+            }
+    
+            const vmData = data;
+            
+            $("#ticket_id").val(param_id);
+    
+            const allowedFileTypes = [
+                {
+                    _type: ["jpg", "jpeg", "png", "PNG", "JPEG", "JPG"],
+                    icon: "jpg.svg",
+                    color: "success"
+                },
+                {
+                    _type: ["docx", "DOCX"],
+                    icon: "doc.svg",
+                    color: "info"
+                },
+                {
+                    _type: ["pdf", "PDF"],
+                    icon: "pdf.svg",
+                    color: "danger"
+                },
+            ];
+            const picUrl = vmData.attachment ? baseUrl("uploads/files/images/employee_files/" + vmData.attachment) : baseUrl('assets/images/ams/images/no_image.jpg');
+            const created_by = vmData.requestor;
+            const arrImg = vmData.attachment.split(',');
+            arrImg.forEach(function(file){
+                const fileArr = file.split("/");
+                const filename = fileArr[fileArr.length - 1];
+                const ext = filename.split(".");
+    
+                var avatarImage = baseUrl("uploads/files/images/employee_files/empcode_"+ created_by +"/ticketing/" + filename);
+                var renderImage = vmData.picture;
+                images.push(filename);
+                const filename1 = filename;
+                const shortenedName = filename1.length <= 20 ? filename1 : `${filename1.slice(0, 20)}...`;
+                $("#picture").attr("src", renderImage);
+                $("#pic").val(images);
+                let icon = '';
+                let color = '';
+                test = ext[ext.length - 1];
+                allowedFileTypes.forEach((item, i) => {
+                    if (item._type.includes(test)) {
+                        icon = item.icon;
+                        color = item.color;
                     }
-                }
-            var fileList = '<div class="m-widget2">'+
-                '<div class="m-widget2__item m-widget2__item--'+color+'">' +
-                    '<div class="m-widget2__checkbox">'+
-                        '<div class="m-widget2__img m-widget2__img--icon">'+
-                        '<img src="'+icon_path+'" width="35" alt>' +
+                    
+                });
+                const icon_path = baseUrl('assets/images/file_icons/' + icon);
+                let viewButton = '';
+                    if (ext == 'docx') {
+                        viewButton = '';
+                    } else{
+                        if(filename){
+                        viewButton = '' +
+                            ' <button '+
+                                ' title="Preview" ' +
+                                ' onclick="previewDocument(\'' + avatarImage + '\', \'' + icon + '\', \'' + filename + '\')"' +
+                                ' class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnRemove" type="button" id="previewFile"> '+
+                                ' <i class="la la-eye"></i>' +
+                            ' </button>';
+                        }else{
+                            viewButton = '';
+                        }
+                    }
+                var fileList = '<div class="m-widget2">'+
+                    '<div class="m-widget2__item m-widget2__item--'+color+'">' +
+                        '<div class="m-widget2__checkbox">'+
+                            '<div class="m-widget2__img m-widget2__img--icon">'+
+                            '<img src="'+icon_path+'" width="35" alt>' +
+                            '</div>'+
+                        '</div>'+
+                        '<div class="m-widget2__desc">'+
+                            '<span class="m-widget2__user-text">'+
+                            ''+
+                            '</span><br>'+
+                            '<span class="m-widget2__user-name">'+
+                            shortenedName +
+                            '</span>'+
+                            '<span class="m-widget2__user-name">'+
+                            '</span><br><br>'+
+                        '</div>' +
+                        '<div class="m-widget2__actions">' +
+                        '' + viewButton +
                         '</div>'+
                     '</div>'+
-                    '<div class="m-widget2__desc">'+
-                        '<span class="m-widget2__user-text">'+
-                        ''+
-                        '</span><br>'+
-                        '<span class="m-widget2__user-name">'+
-                        shortenedName +
-                        '</span>'+
-                        '<span class="m-widget2__user-name">'+
-                        '</span><br><br>'+
-                    '</div>' +
-                    '<div class="m-widget2__actions">' +
-                    '' + viewButton +
-                    '</div>'+
-                '</div>'+
-                '</div>';
-                $("#uploaded_files").append(fileList);
-        });
+                    '</div>';
+                    $("#uploaded_files").append(fileList);
+            });
+    
+            if (vmData.emp_id) {
+                var performed_by = new Option(vmData.performed_by_det, vmData.performed_by, true, true);
+                $('#performed_by').append(performed_by).trigger('change');
+            }
+    
+            // let _status = null;
+            // switch (vmData.status) {
+            //     case 'Closed':
+            //         _status = 'COMPLETED';
+            //         break;
+            //     case 'Confirmed':
+            //         _status = 'RESOLVED'
+            //         break;
+            //     default:
+            //         _status = vmData.status;
+            // }
+    
+            var status = new Option(vmData.status, vmData.status, true, true);
+            $('#status').append(status).trigger('change');
+    
+            var type = new Option(vmData.type, vmData.type, true, true);
+            $('#type').append(type).trigger('change');
+    
+            var department = new Option(vmData.description, vmData.department_id, true, true);
+            $('#department').append(department).trigger('change');
+    
+            // if($rs->priority == 'low'){
+            //     $priority = "<span class='m-badge m-badge--info m-badge--wide text-white'><strong>".$rs->priority."</strong></span>";
+            // }elseif($rs->priority == 'medium'){
+            //     $priority = "<span class='m-badge m-badge--warning m-badge--wide text-white'><strong>".$rs->priority."</strong></span>";
+            // }else{
+            //     $priority = "<span class='m-badge m-badge--danger m-badge--wide text-white'><strong>".$rs->priority."</strong></span>";
+            // }
+    
+            if(vmData.priority == 'low'){
+                vmData.priority = "<span class='m-badge m-badge--info m-badge--wide text-white'>"+vmData.priority+"</span>";
+            }else if(vmData.priority == 'medium'){
+                vmData.priority = "<span class='m-badge m-badge--warning m-badge--wide text-white'>"+vmData.priority+"</span>";
+            }else{
+                vmData.priority = "<span class='m-badge m-badge--danger m-badge--wide text-white'>"+vmData.priority+"</span>";
+            }
+    
+            if(vmData.status == 'completed'){
+                vmData.status = "<span class='m-badge m-badge--success m-badge--wide text-white'>"+vmData.status+"</span>";
+            }else if(vmData.status == 'open'){
+                vmData.status = "<span class='m-badge m-badge--brand m-badge--wide text-white'>"+vmData.status+"</span>";
+            }else{
+                vmData.status = "<span class='m-badge m-badge--metal m-badge--wide text-white'>"+vmData.status+"</span>";
+            }
+            vmTab1.vm_tab1 = Object.assign({}, data);
+            getComments();
+            getStatusLogs();
+        },
+    });
 
-        if (vmData.emp_id) {
-            var performed_by = new Option(vmData.performed_by_det, vmData.performed_by, true, true);
-            $('#performed_by').append(performed_by).trigger('change');
-        }
+}
 
-        // let _status = null;
-        // switch (vmData.status) {
-        //     case 'Closed':
-        //         _status = 'COMPLETED';
-        //         break;
-        //     case 'Confirmed':
-        //         _status = 'RESOLVED'
-        //         break;
-        //     default:
-        //         _status = vmData.status;
-        // }
 
-        var status = new Option(vmData.status, vmData.status, true, true);
-        $('#status').append(status).trigger('change');
-
-        var type = new Option(vmData.type, vmData.type, true, true);
-        $('#type').append(type).trigger('change');
-
-        var department = new Option(vmData.description, vmData.department_id, true, true);
-        $('#department').append(department).trigger('change');
-
-        // if($rs->priority == 'low'){
-        //     $priority = "<span class='m-badge m-badge--info m-badge--wide text-white'><strong>".$rs->priority."</strong></span>";
-        // }elseif($rs->priority == 'medium'){
-        //     $priority = "<span class='m-badge m-badge--warning m-badge--wide text-white'><strong>".$rs->priority."</strong></span>";
-        // }else{
-        //     $priority = "<span class='m-badge m-badge--danger m-badge--wide text-white'><strong>".$rs->priority."</strong></span>";
-        // }
-
-        if(vmData.priority == 'low'){
-            vmData.priority = "<span class='m-badge m-badge--info m-badge--wide text-white'>"+vmData.priority+"</span>";
-        }else if(vmData.priority == 'medium'){
-            vmData.priority = "<span class='m-badge m-badge--warning m-badge--wide text-white'>"+vmData.priority+"</span>";
-        }else{
-            vmData.priority = "<span class='m-badge m-badge--danger m-badge--wide text-white'>"+vmData.priority+"</span>";
-        }
-
-        if(vmData.status == 'completed'){
-            vmData.status = "<span class='m-badge m-badge--success m-badge--wide text-white'>"+vmData.status+"</span>";
-        }else if(vmData.status == 'open'){
-            vmData.status = "<span class='m-badge m-badge--brand m-badge--wide text-white'>"+vmData.status+"</span>";
-        }else{
-            vmData.status = "<span class='m-badge m-badge--metal m-badge--wide text-white'>"+vmData.status+"</span>";
-        }
-        vmTab1.vm_tab1 = Object.assign({}, data);
-    }
+$('#view-ticket-modal').on('show.bs.modal', function (e) {
+    var ticketId = $(e.relatedTarget).data('ticket-id');
+    param_id = ticketId;
+    getTicketDetails();
 });
 
 function getComments(){
@@ -287,62 +298,7 @@ var vmTabComments = new Vue({
     }
 });
 
-$.validate({
-    form: '#frm_status_new',
-    lang: 'en',
-    onSuccess: function (form) {
-        $.ajax({
-            url: baseUrl("ts/ticketing/save_ticket"),
-            type: "POST",
-            dataType: "json",
-            data: $("#frm_status_new").find("input,select,textarea,img").serialize(),
-            beforeSend: function () {
-                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-            },
-            success: function (data) {
-                if (data) {
-                    toastr.success("Service ticket was successfully updated.", "Service Ticket Updated.", 5000);
-                } else {
-                    toastr.error(data.toastr_msg, "Notification: Error", 5000);
-                }
-                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-            }
-        });
-        return false;
-    },
-});
 
-$.validate({
-    form: '#frm_status_new',
-    lang: 'en',
-    onSuccess: function (form) {
-        var disabled = $('#frm_status_new').find('input:disabled').removeAttr('disabled');
-        $.ajax({
-            url: baseUrl("ts/ticketing/update_service/") + param_id,
-            type: "POST",
-            dataType: "json",
-            data: $("#frm_status_new").find("input,select,textarea").serialize(),
-            beforeSend: function () {
-                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-            },
-            success: function (data) {
-                if (data) {
-                    toastr.success("Service ticket was successfully saved.", "Service Ticket Saved.", 5000)
-                    setTimeout(() => {
-                        window.location.assign(baseUrl("ts/ticketing/masterfile"));
-                    }, 700);
-                    disabled.attr('disabled', 'disabled');
-
-                } else {
-                    toastr.error(data.toastr_msg, "Notice: Error!", 5000);
-                    disabled.attr('disabled', 'disabled');
-                }
-                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-            }
-        });
-        return false;
-    },
-});
     
 function previewDocument(url, icon, filename) {
     let src = url;
@@ -359,30 +315,23 @@ function previewDocument(url, icon, filename) {
     modal.modal("show");
 }
 
-function removeDocument(el){
-    var _name = $(el).attr("data-name");
-    const parent = $(el).closest('.m-widget2__item');
-    images = images.filter((n) => {return n != _name});
-    $(parent).remove();
-    $("#pic").val(images);
-    toastr.success(_name,"Removed File", 5000);
-}
-
-let statuslog = new Vue({
-    el: "#status-log",
-    data: {trail: null},
-    mounted: function () {
-        $.ajax({
-            url: baseUrl("ticket/ticket/get_trail_log/") + param_id,
-            type: "GET",
-            dataType: "JSON",
-            success: function (response) {
-                if (response) {
-                    statuslog.trail =  response.data;
-                } else {
-                    statuslog.trail = null;
+function getStatusLogs(){
+    let statuslog = new Vue({
+        el: "#status-log",
+        data: {trail: null},
+        mounted: function () {
+            $.ajax({
+                url: baseUrl("ticket/ticket/get_trail_log/") + param_id,
+                type: "GET",
+                dataType: "JSON",
+                success: function (response) {
+                    if (response) {
+                        statuslog.trail =  response.data;
+                    } else {
+                        statuslog.trail = null;
+                    }
                 }
-            }
-        })
-    }
-});
+            })
+        }
+    });
+}
