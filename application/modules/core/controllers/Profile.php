@@ -48,7 +48,7 @@ class Profile extends MY_Controller {
 	   "show_payroll_payslip"=>$showPayrollPayslip));
 	   	$data->tab ='personalInfo';
 		$data->page = 'profile'; //added to display the sms notification to profile only because the 201 and profile shares the same view file
-
+		$data->questions_list = $this->employee_model->getQuestionsList();
 		$this->core_layout->addJs("js/hris/profile_view_script.js",true, $data);
 
 		$this->load->view("core/templates/header");

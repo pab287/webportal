@@ -158,19 +158,21 @@
     </tr>
     </thead>
 
-<table class="responsive mb-1" v-for="(question, key) in questions" :key="key">
-    <tbody>
-        <tr>
-            <th class="" scope="col" v-text="question">
-            </th>
-        </tr>
-        <tr>
-            <td class="questions">
-                <span v-text="hasAnswer(key)"></span>
-            </td>
-        </tr>
-    </tbody>
-</table>
+    <table class="responsive mb-1" v-for="(item, index) in questions" :key="index">
+        <thead>
+            <tr>
+                <th scope="col" v-text="item.statement == '' || item.statement == null ? item.question : item.statement">
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="questions">
+                    <span v-text="item.answer"></span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
 
 </table>
 <!-- END QUESTION TABLES -->

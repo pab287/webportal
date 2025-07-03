@@ -37,8 +37,9 @@ let dtPerformanceRating = null;
 var dtReturnToWork = null;
 var companyExceptCurrent, tempData;
 var tempDataId = 0;
+let questions_list = [];
 let clickedView = 'grid';
-
+let vmTabUpdateQuestions = null;
 var tableEmployeeGrid = $("#table-employee-grid");
 
 var modalTempContentLg = modalTempContent.clone().prop("id", "modalTempContentLg").appendTo(".m-content");
@@ -448,6 +449,7 @@ function loadEmployees(employee_status = "All") {
 
 if (typeof _tempContentData !== "undefined") {
     tempData = _tempContentData.data;
+    questions_list = _tempContentData.questions_list ? _tempContentData.questions_list : [];
     tempDataId = (typeof tempData.id !== "undefined" && tempData.id) ? tempData.id : 0;
     var tempDropdownData = _tempContentData.dropdown_data;
 
@@ -1091,20 +1093,31 @@ if (typeof _tempContentData !== "undefined") {
 
     var vmTabQuestions = new Vue({
         el: "#questions-content",
-        data: { vm_question: tempData },
-        created() {
-            var _data = this.vm_question;
-            var _tempQQ = {};
-            for (var xx = 1; xx <= 9; xx++) {
-                var tempKey = "ques" + xx;
-                var _currentQuestion = $.trim(_data[tempKey]);
-                if (typeof _currentQuestion !== "undefined" && (_currentQuestion == null || _currentQuestion == "")) {
-                    _currentQuestion = "---";
-                    _tempQQ = Object.assign({}, _tempQQ, { [tempKey]: _currentQuestion });
-                }
+        data: { vm_question: [] },
+        mounted(){
+            if (tempData.more_questions && tempData.more_questions.length > 0) {
+                this.vm_question = [...tempData.more_questions];
+                const existingIds = new Set(tempData.more_questions.map(q => q.id));
+                questions_list.forEach(q => {
+                    if (!existingIds.has(q.id)) {
+                        this.vm_question.push({
+                            ...q,
+                            answer: "N/A" 
+                        });
+                    }
+                });
             }
-            this.vm_question = Object.assign({}, _data, _tempQQ);
-        }
+            else{
+                this.vm_question = questions_list;
+                this.vm_question.forEach(q => {
+                    if( tempData[`ques${q.id}`] == null ||  tempData[`ques${q.id}`] == undefined || tempData[`ques${q.id}`] == ""){
+                        q.answer = "N/A"
+                    }else{
+                        q.answer = tempData[`ques${q.id}`];
+                    }
+                });
+            }
+        },
     });
 
     if (typeof tableDependents !== "undefined") {

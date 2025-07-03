@@ -56,6 +56,8 @@
         protected $applicationTable = "gcchris.tbapplication";
         protected $now = null;
 
+        private $user_data = array();
+
         function __construct() {
             parent::__construct();
             $this->load->model("access_control_model", "acl_model");
@@ -70,6 +72,7 @@
             
             $this->loggedinData = $this->user_data = $this->session->userdata("logged_in");
             $this->loggedInUsername = $this->loggedinData["username"];
+            $this->user_data = $this->session->userdata("logged_in");
 
         }
 
@@ -1953,6 +1956,7 @@
 
                 if ($query->num_rows() == 1) {
                     $data = $query->row();
+                    $data->more_questions = unserialize($data->more_questions);
                     $currentImage = base_url("assets/images/profile/no_image.jpg");
                     $imageFile = $data->pic_filename;
                     $imagePath = realpath("uploads/files/images/employee_files/empcode_{$id}/{$imageFile}");
@@ -5285,16 +5289,14 @@
 
         function updateEmployeeQuestionAnswers($post) {
             $id = $post->id;
+            unset($post->id, $post->csrf_token);
             $this->db->trans_begin();
             $resultSet = array();
-            $data = array();
-            foreach ($post->ques as $key => $answer) {
-                $data["ques" . ($key + 1)] = $answer;
-            }
+            $data['more_questions'] = serialize($post->questions);
             $currentData = $this->getEmpQuestionsById($id);
-            $this->db->where("id", $post->id);
+            $this->db->where("id", $id);
             $this->db->update($this->employeeTable, $data);
-            $fullname = $this->getEmployeeName($post->id);
+            $fullname = $this->getEmployeeName($id);
             if ($this->db->trans_status() === FALSE) {
                 $resultSet["success"] = "false";
                 $resultSet["message"] = $this->db->error();
@@ -5305,7 +5307,7 @@
                 $fullname =  $this->getEmployeeName($id);
                 $resultSet["success"] = "true";
                 $resultSet["message"] = "Record was successfully updated.";
-                $resultSet["data"] = $post->ques;
+                $resultSet["data"] = $post->questions;
                 $this->core_layout->setEventLog("User Updated employment questionaires details for employee: <strong>$fullname</strong> $changes","update", "success", "gcchris", "user");
                 $this->db->trans_commit();
             }
@@ -11573,7 +11575,7 @@
                         else if (strtolower($field) == 'tl_supervisory') {
                             $changesString .= " Field: TWO LEVEL SUPERVISORY from: <strong>" . ($change['old'] == 1 ? 'YES' : 'NO') . "</strong>, to: <strong>" . ($change['new'] == 1 ? 'YES' : 'NO') . "</strong>\n";
                         }
-                        else if ($field != 'work_station' && $field != 'supervisor_meta'){
+                        else if ($field != 'work_station' && $field != 'supervisor_meta' && $field != 'more_questions'){
                             $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
                         }
                     }
@@ -11826,7 +11828,7 @@
             }
     
             private function getEmpQuestionsById($id){
-                $this->db->select("ques1,ques2,ques3,ques4,ques5,ques6,ques7,ques8,ques9");
+                $this->db->select("ques1,ques2,ques3,ques4,ques5,ques6,ques7,ques8,ques9,more_questions");
                 $this->db->from($this->employeeTable);
                 $this->db->where('id', $id);
                 $query = $this->db->get(); 
@@ -12054,7 +12056,7 @@
 
         public function getEmployee($emp_id){
             $data = array();
-            $this->db->select("emp.id,emp.mot_deceased,emp.fat_deceased, emp.lastname, emp.firstname, emp.middlename, emp.suffix, emp.curr_addr, emp.prov_addr, emp.citizenship, emp.religion, emp.languages, emp.email, emp.gender, emp.civil_stat, emp.bday, emp.birthplace, emp.bloodtype, emp.height, emp.weight, emp.hair_color, emp.complexion, emp.tel_no, emp.mobile_no, 
+            $this->db->select("emp.more_questions,emp.id,emp.mot_deceased,emp.fat_deceased, emp.lastname, emp.firstname, emp.middlename, emp.suffix, emp.curr_addr, emp.prov_addr, emp.citizenship, emp.religion, emp.languages, emp.email, emp.gender, emp.civil_stat, emp.bday, emp.birthplace, emp.bloodtype, emp.height, emp.weight, emp.hair_color, emp.complexion, emp.tel_no, emp.mobile_no, 
             emp.pic_filename, emp.idno, emp.biometricno, pos.name as position ,pos.id as position_id, emp.work_status, emp.employee_status, emp.date_start, emp.date_end, com.code as company_id, emp.level, emp.date_regular, emp.date_end_prob, emp.resign_reason, pos.job_desc, emp.tl_supervisory, emp.supervisor_meta, emp.ques1, emp.ques2, emp.ques3, emp.ques4, emp.ques5, emp.ques6, emp.ques7, emp.ques8, emp.ques9,
             emp.email, emp.tax_status, emp.tin_no, emp.phealth_no, emp.pagibig_no, emp.sss_no,
             emp.fat_name, emp.mot_name, emp.partner_type, emp.spo_deceased, emp.partners_deceased, emp.spo_name, emp.partners_name, emp.fat_addr, emp.mot_addr, emp.spo_addr, emp.partners_addr, emp.fat_company, emp.mot_company, emp.spo_company, emp.partners_company, emp.fat_occupation, emp.mot_occupation, emp.spo_occupation, emp.partners_occupation, emp.fat_contact, emp.mot_contact, emp.spo_contact, emp.partners_contact, emp.emer_addr, emp.emer_contact, emp.emer_name, 
@@ -12068,6 +12070,11 @@
             $data = $this->db->get()->row();
 
             $meta = @unserialize($data->supervisor_meta);
+            $data->more_questions = @unserialize($data->more_questions);
+            if (!$data->more_questions == null){            
+                foreach ($data->more_questions as $item) {
+                $item->statement = $this->getStatementPerId($item->id);
+            }}
 
             if (is_array($meta)) {
                 $data->supervisor = $meta['supervisory'];
@@ -12163,6 +12170,185 @@
 
         }
 
+        public function getEmployeeQuestions(){
+            $data = array();
+            $rowCount = 0;
+            $rowData = array();
+            $post = $this->input->post();
+            $order_val = array(array("column"=>"0", "dir"=>"DESC"));
+            $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+            $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
+            $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+            $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+            $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
+            $archive = (isset($post["is_archived"]) && $post["is_archived"]) ? $post["is_archived"] : 0;
+            $rowData = $this->getEmployeeQuestionsData($search, $limit, $offset, $sortBy, $sortOrder,$archive);
+            $rowCount = $this->getEmployeeQuestionsDataCount($search,$archive);
+            $data["recordsTotal"] = $rowCount;
+            $data["recordsFiltered"] = $rowCount;
+            $data["data"] = $rowData;
+            return $data;
+        }
+
+        private function getEmployeeQuestionsData($search, $limit, $offset, $sortBy, $sortOrder,$archive = 0){
+            $resultset = array();
+            $filterFields = array("a.question","a.statement");
+            $this->db->select("a.question,a.id,a.statement");
+            $this->db->from('gcchris.tblquestions a');
+            $this->db->where('a.is_archive',$archive);
+
+            if ($search) {
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+            $i = $sortOrder[0]['column'];
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            if ($limit != -1) {
+                $this->db->limit($limit, $offset);
+            }
+            
+            $query = $this->db->get();
+            if ($query->num_rows() > 0) {
+                $resultset = $query->result(); 
+            } else {
+                $resultset= []; 
+            }
+            return $resultset; 
+
+        }
+
+        private function getEmployeeQuestionsDataCount($search,$archive = 0){
+            $filterFields = array("a.question","a.statement");
+            $this->db->from('gcchris.tblquestions a');
+            $this->db->where('a.is_archive',$archive);
+
+            if ($search) {
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+            $query = $this->db->get();
+            return $query->num_rows();
+        }
+
+        public function addNewQuestion(){
+            $resultArray = array();
+            $post = $this->input->post();
+            unset($post['csrf_token']);
+            $post['created_by'] = $this->user_data['emp_id'];
+            $post['created_at'] = date('Y-m-d H:i:s');
+            $insert = $this->db->insert('gcchris.tblquestions', $post);
+            if($insert){
+                $this->core_layout->setEventLog("Added New Question successfully", "insert", "success", "gcchris", "user");
+                $resultArray['status'] = true;
+                $resultArray['message'] = "New question has been added successfully.";
+            }else{
+                $this->core_layout->setEventLog("Failed to add new question", "insert", "error", "gcchris", "system");
+                $resultArray['status'] = false;
+                $resultArray['message'] = "Failed to add new question. Please try again later.";
+            }
+            return $resultArray;
+        }
+
+        public function archiveQuestion() {
+            $post = $this->input->post();
+            $id = $post['id'];
+            $modified_by = $this->user_data['emp_id']; 
+            $modified_dt = date('Y-m-d H:i:s');
+            $query = $this->db->set('is_archive', 1)->set('updated_at', $modified_dt)->set('updated_by', $modified_by)->where('id', $id)->update('gcchris.tblquestions');
+            if ($query) {
+                $this->core_layout->setEventLog("Archived Question Successfully with id: {$id}", "archive", "success", "gcchris", "user");
+                return array('status' => true, 'message' => 'Manpower request archived successfully.');
+            } else {
+                $this->core_layout->setEventLog("Failed to archive Question with ID: {$id}", "archive", "error", "gcchris", "system");
+                return array('status' => false, 'message' => 'Update failed.');
+            }
+        }
+
+        public function restoreQuestion(){
+            $post = $this->input->post();
+            $id = $post['id'];
+            $modified_by = $this->user_data['emp_id']; 
+            $modified_dt = date('Y-m-d H:i:s');
+            $query = $this->db->set('is_archive', 0)->set('updated_at', $modified_dt)->set('updated_by', $modified_by)->where('id', $id)->update('gcchris.tblquestions');
+            if ($query) {
+                $this->core_layout->setEventLog("Restored Question Successfully with id: {$id}", "restore", "success", "gcchris", "user");
+                return array('status' => true, 'message' => 'Manpower request archived successfully.');
+            } else {
+                $this->core_layout->setEventLog("Failed to restore Question with ID: {$id}", "restore", "error", "gcchris", "system");
+                return array('status' => false, 'message' => 'Update failed.');
+            }
+        }
+
+        public function updateQuestion() {
+            $post = $this->input->post();
+            $id = $post['id'];
+            $post['updated_by'] = $this->user_data['emp_id'];
+            $post['updated_at'] = date('Y-m-d H:i:s');
+            unset($post['id'],$post['csrf_token']);
+            $result = $this->db->where("id", $id)->update('gcchris.tblquestions', $post);
+            if ($result) {
+                $this->core_layout->setEventLog("Successfully updated question with ID: $id", "update", "success", "gcchris", "user");
+                return ['status' => true, 'message' => 'Update successful'];
+            } else {
+                $this->core_layout->setEventLog("Failed to update question with ID: $id", "update", "error", "gcchris", "system");
+                return ['status' => false, 'message' => 'Update failed'];
+            }
+        }
+
+        public function updateStatement(){
+            $post = $this->input->post();
+            $id = $post['id'];
+            $post['updated_by'] = $this->user_data['emp_id'];
+            $post['updated_at'] = date('Y-m-d H:i:s');
+            unset($post['id'],$post['csrf_token']);
+            $result = $this->db->where("id", $id)->update('gcchris.tblquestions', $post);
+            if ($result) {
+                $this->core_layout->setEventLog("Successfully updated question with ID: $id", "update", "success", "gcchris", "user");
+                return ['status' => true, 'message' => 'Update successful'];
+            } else {
+                $this->core_layout->setEventLog("Failed to update question with ID: $id", "update", "error", "gcchris", "system");
+                return ['status' => false, 'message' => 'Update failed'];
+            }
+        }
+
+        public function getQuestionsList(){
+            $data = array();
+            $this->db->select("id, question, statement");
+            $this->db->from('gcchris.tblquestions');
+            $this->db->where('is_archive', 0);
+            $query = $this->db->get();
+            if ($query->num_rows() > 0) {
+                $data = $query->result_array();
+            }
+            return $data;
+        }
+
+        private function getStatementPerId($id){
+            $data = array();
+            $this->db->select("statement");
+            $this->db->from('gcchris.tblquestions');
+            $this->db->where('id', $id);
+            $query = $this->db->get();
+            if ($query->num_rows() > 0) {
+                $data = $query->row_array();
+            }
+            return $data['statement'] ?? '';
+        }
+        
         public function uploadEmployeeLicenseCert(){
             $resultset = array();
             $post = $this->input->post();

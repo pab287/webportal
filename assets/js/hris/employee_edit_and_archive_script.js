@@ -982,6 +982,35 @@ $(".m-content")
                     },
                     success: function (response) {
                         initRegularEditDialog(response);
+                        vmTabUpdateQuestions = new Vue({
+                            el: "#employee-data-update-question-answers",
+                            data: { vm_question: [] },
+                            mounted(){
+                                if (tempData.more_questions && tempData.more_questions.length > 0) {
+                                    this.vm_question = tempData.more_questions;
+                                    const existingIds = new Set(tempData.more_questions.map(q => q.id));
+                                    questions_list.forEach(q => {
+                                        if (!existingIds.has(q.id)) {
+                                            this.vm_question.push({
+                                                ...q,
+                                                answer: "N/A" 
+                                            });
+                                        }
+                                    });
+                                }
+                                else{
+                                    this.vm_question = questions_list;
+                                    this.vm_question.forEach(q => {
+                                        if( tempData[`ques${q.id}`] == null ||  tempData[`ques${q.id}`] == undefined || tempData[`ques${q.id}`] == ""){
+                                            q.answer = "N/A"
+                                        }else{
+                                            q.answer = tempData[`ques${q.id}`];
+                                        }
+                                    });
+                                }
+                            },
+                        });
+
                     }
                 });
             }
@@ -1012,29 +1041,44 @@ $(".m-content")
             e.preventDefault();
             const form = $(this);
             const url = form.attr("action");
-            const formData = new FormData(this);
             const collapseQuestions = $("#collapseQuestions");
             const answers = collapseQuestions.find(".m-form-row__paragraph");
 
             if (form.isValid()) {
+                const questions = [];
+                const questionIds = [];
+                const formData = new FormData(this);
+                formData.getAll('question_id').forEach(id => {
+                    if (id && !questionIds.includes(id)) {
+                        questionIds.push(id);
+                    }
+                });
+                questionIds.forEach((id, index) => {
+                    const questionInputs = $(this).find(`input[name="question_id"][value="${id}"]`).closest('.form-group');
+                    const answer = questionInputs.find('input[name="answer"]').val();
+                    const question = questionInputs.find('input[name="question"]').val();
+                    const statement = questionInputs.find('input[name="statement"]').val();
+                    
+                    questions.push({
+                        id: parseInt(id),
+                        question: question,
+                        statement: statement,
+                        answer: answer
+                    });
+                });
+
                 $.ajax({
                     url,
                     type: "POST",
+                    global: false,
+                    data: { 
+                        csrf_token: _csrf_hash, 
+                        id:_tempContentData.data.id,
+                        questions: questions,
+                    },
                     dataType: "JSON",
-                    processData: false,
-                    contentType: false,
-                    data: formData,
                     success: function (response) {
-                        if (response.success) {
-                            const data = response.data;
-                            if (data) {
-                                data.forEach((answer, i) => {
-                                    const item = $(answers)[i];
-                                    $(item).html(answer);
-                                });
-                            }
-                        }
-
+                        vmTabQuestions.vm_question = questions;
                         _toaster(response, 'Answers Updated.', 10000);
                         closeDialog();
                     }

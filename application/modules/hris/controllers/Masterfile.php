@@ -118,6 +118,18 @@
             $this->load->view("core/templates/footer");
         }
 
+        function questions(){
+            $this->core_layout->setPageTitle("HRIS - Questions Masterfile");
+            $this->core_layout->setPrivilegeName("hris_questions");
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
+            $this->core_layout->addJs("js/hris/questions_masterfile_script.js", TRUE);
+
+            $this->load->view("core/templates/header");
+            $this->load->view("hris/masterfile/questions/index");
+            $this->load->view("core/templates/footer");
+        }
+
         function edit_personnel_request($id = null) {
             if ($id) {
                 $this->core_layout->setPageTitle("HRIS - Edit Personnel Request");
@@ -162,6 +174,7 @@
                 die();
             }
             $data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataDetails($employee_id)));
+            $data->questions_list = $this->employee_model->getQuestionsList();
             $data->tab=$tab;
             $this->core_layout->setPageTitle("HRIS - View Employee Masterfile");
             $this->core_layout->setBodyClass("hris view-employee_masterfile");
@@ -234,7 +247,8 @@
                 $arrData["for_approval_history"] = $this->employee->fieldValueApprovals("hris", $id);
                 $arrData["loans_dropdown"] = $this->employee_model->getLoanCollection($id, 0);
                 $arrData["loans_ca_reference"] = $this->employee->getCaRef($id);
-
+                $arrData["questions_list"] = $this->employee_model->getQuestionsList();
+                
                 $this->core_layout->addJs("plugins/star-rating/js/jquery.star-rating-svg.min.js", TRUE);
                 $this->core_layout->addCss("plugins/star-rating/css/star-rating-svg.css");
                 $this->core_layout->addJs("plugins/pdf/pdf.min.js", true);
@@ -1954,6 +1968,36 @@
 
         public function get_employee_allowance_count($id=null){
             $data = $this->employee_model->getEmployeeAllowanceCount($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_employee_questions(){
+            $data = $this->employee_model->getEmployeeQuestions();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function add_new_question(){
+            $data = $this->employee_model->addNewQuestion();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function archive_question(){
+            $data = $this->employee_model->archiveQuestion();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function restore_question(){
+            $data = $this->employee_model->restoreQuestion();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function update_question(){
+            $data = $this->employee_model->updateQuestion();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function update_statement(){
+            $data = $this->employee_model->updateStatement();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 

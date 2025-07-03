@@ -44,17 +44,7 @@ let employeeDataSheet = new Vue({
             path:"",
             dependents:[],
             job_desc:"",
-            questions:{
-                ques1: "HAVE YOU EVER BEEN EMPLOYED BY US BEFORE? IN WHAT BRANCH AND WHAT POSITION?",
-                ques2: "WHO REFERRED YOU TO OUR COMPANY?",
-                ques3: "NAME OF FRIENDS/RELATIVES EMPLOYED IN THIS COMPANY",
-                ques4: "WHERE DID YOU LEARN OF THE VACANCY? ADVERTISING / WALK IN / REFERRAL / SCHOOL PLACEMENT / OTHERS (PLS. SPECIFY)?",
-                ques5: "DO YOU HAVE ANY CURRENT ILLNESS OR PHYSICAL DEFECTS? IF YES, PLEASE DESCRIBE.",
-                ques6: "HAVE YOU BEEN HOSPITALIZED FOR THE PAST 12 MONTHS? IF YES, STATE WHAT ILLNESS, DATE OF CONFINEMENT AND NAME OF HOSPITAL.",
-                ques7: "HAVE YOU BEEN CHARGED OF ANY CRIMINAL, CIVIL, OR ADMINISTRATIVE OFFENSE? IF YES, PLEASE DESCRIBE.",
-                ques8: "HAVE YOU FILED ANY LABOR CASE AGAINST PREVIOUS EMPLOYERS? IF YES, WHAT TYPE DOLE,NLRC OR OTHER, PLEASE DESCRIBE.",
-                ques9: "WERE YOU INVOLVED OR HAVE PREVIOUSLY PARTICIPATED IN ANY LABOR STRIKE? IF YES, PLEASE DESCRIBE."
-            },
+            questions:[],
             educations:"",
             licensesAndCerts:{
                 licenses:"",
@@ -165,6 +155,19 @@ let employeeDataSheet = new Vue({
                 this.$data.activeSection = "personalInfo"
                 this.getPersonalInformation();
              }
+        }
+        if (this.main.more_questions && this.main.more_questions.length > 0) {
+            this.questions = this.main.more_questions;
+        }
+        else{
+            this.questions = _tempContentData.questions_list;
+            this.questions.forEach(q => {
+                if( this.main[`ques${q.id}`] == null ||  this.main[`ques${q.id}`] == undefined || this.main[`ques${q.id}`] == ""){
+                    q.answer = "N/A"
+                }else{
+                    q.answer = this.main[`ques${q.id}`];
+                }
+            });
         }
     },
 
@@ -304,14 +307,6 @@ let employeeDataSheet = new Vue({
                 day: '2-digit', 
                 year: 'numeric' 
               });
-        },
-        hasAnswer(question) {
-            const answerKey = this.main[question];
-            return answerKey != null && (typeof answerKey !== 'string' || answerKey.trim()) &&
-                   (typeof answerKey !== 'object' || Object.keys(answerKey).length) &&
-                   (Array.isArray(answerKey) ? answerKey.length : true)
-                ? answerKey
-                : "N/A";
         },
         getExpirationClass(expirationDate) {
             const today = new Date();
