@@ -1725,8 +1725,8 @@ $.validate({
     form: '#released-form',
     lang: 'en',
     onSuccess: function(form) {
-        var currentForm = form[0];
-		var formData = $(currentForm).serialize();
+        const currentForm = form[0];
+		const formData = $(currentForm).serialize();
 
         Swal.fire({
             title: 'Released',

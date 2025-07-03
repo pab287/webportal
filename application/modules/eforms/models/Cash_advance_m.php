@@ -1139,7 +1139,8 @@ class Cash_advance_m extends CI_Model {
             $this->db->where('cash_advance.id', $id);
             $query = $this->db->update('gcceforms.cash_advance', $data);
             if($query){
-                $this->core_layout->setEventLog("Cash Advance Masterfile - User has recommended the cash advance of employee `".$employeeName."` with a remarks of `".$trimmedRemarks."` and was moved to `Payroll Balance Pending` Status.","update", "success", "gcceforms", "user");
+                $messageRemarks = $trimmedRemarks ? " with a remarks of `".$trimmedRemarks."`" : "";
+                $this->core_layout->setEventLog("Cash Advance Masterfile - User has recommended the cash advance of employee `".$employeeName."`".$messageRemarks." and was moved to `Payroll Balance Pending` Status.","update", "success", "gcceforms", "user");
                 return $query;
             }else{ return false; }
         }else{ return false; }
@@ -1194,7 +1195,8 @@ class Cash_advance_m extends CI_Model {
                 $this->db->where('cash_advance.id', $id);
                 $query = $this->db->update('gcceforms.cash_advance', $data);
                 if($query){
-                    $this->core_layout->setEventLog("Cash Advance Masterfile - User has disapprove the cash advance of employee `".$employeeName."` with the reason of `".$trimmedRemarks."` and was moved to `Disapproved` Status.","update", "success", "gcceforms", "user");
+                    $messageRemarks = $trimmedRemarks ? " and with a reason of `".$trimmedRemarks."`" : "";
+                    $this->core_layout->setEventLog("Cash Advance Masterfile - User has disapprove the cash advance of employee `".$employeeName."`".$messageRemarks." and was moved to `Disapproved` Status.","update", "success", "gcceforms", "user");
                     $response = $query;
                 }
             }
@@ -1494,32 +1496,26 @@ class Cash_advance_m extends CI_Model {
         return $query->row();
     }
 
-    function undoApprovalUpdate($id){
-        $this->input->post();
-        $date = date('Y-m-d H:i:s');
-        $data = array(
-            'approved_by' => "",
-            'approved_dt' => "",
-            'amt_approved' => "",
-            'approved_remarks' => "",
-            'status' => "Awaiting Approval",
-        );
+    public function undoApprovalUpdate($id){
+        $response = false;
         if($id){
+            $caDetails = $this->getCaDetails($id);
+            $employeeName = $this->getCurrentEmployeeName($caDetails->employee);
+            $data = array(
+                'approved_by' => "",
+                'approved_dt' => "",
+                'amt_approved' => "",
+                'approved_remarks' => "",
+                'status' => "Awaiting Approval",
+            );
             $this->db->where('cash_advance.id', $id);
             $query = $this->db->update('gcceforms.cash_advance', $data);
-
-            $ca_details = $this->getCaDetails($id);
-            $loan_data = array(
-                'active' => 0,
-                'remarks' => "",
-            );
-            $this->db->where('reference', $ca_details->reference_no);
-            $this->db->update('gcchris.loans', $loan_data);
             if($query){
-                $this->core_layout->setEventLog("Cash Advance Masterfile - User undo approval of employee `".$id."`.","update", "success", "gcceforms", "user");
-                return $query;
+                $this->core_layout->setEventLog("Cash Advance Masterfile - User has updated the cash advance status into `Awaiting Approval` after ticking `Undo Approval` for the employee `".$employeeName."` with reference no `".$caDetails->reference_no."`.","update", "success", "gcceforms", "user");
+                $response = $query;
             }
         }
+        return $response;
     }
 
     function printCashAdvanceDetails($id){
@@ -2677,7 +2673,8 @@ class Cash_advance_m extends CI_Model {
             $query = $this->db->update('gcceforms.cash_advance', $data);
 
             if($query){
-                $this->core_layout->setEventLog("Cash Advance Masterfile - User has updated the cash advance status into `Undo Posting` of the employee `".$employeeName."` with reference number `".$caDetails->reference_no."` and reason `".$trimmedRemarks."`.","update", "success", "gcceforms", "user"); 
+                $messageRemarks = $trimmedRemarks ? " and with a reason of `".$trimmedRemarks."`" : "";
+                $this->core_layout->setEventLog("Cash Advance Masterfile - User has updated the cash advance status into `Awaiting Approval` after ticking `Undo Posting` for the employee `".$employeeName."` with reference number `".$caDetails->reference_no."`".$messageRemarks.".","update", "success", "gcceforms", "user"); 
                 $resultset["toastr_msg"] = "Cash Advance Undo Posted!";
                 $resultset["toastr_status"] = true;
             }else{
@@ -2709,8 +2706,8 @@ class Cash_advance_m extends CI_Model {
             $this->db->where('cash_advance.id', $id);
             $query = $this->db->update('gcceforms.cash_advance', $data);
             if($query){
-                
-                $this->core_layout->setEventLog("Cash Advance Masterfile - User has updated the cash advance status into `Posted` of the employee `".$employeeName."` with reference number `".$caDetails->reference_no."` and remarks `".$trimmedRemarks."`.","update", "success", "gcceforms", "user");
+                $messageRemarks = $trimmedRemarks ? " and with a remarks of `".$trimmedRemarks."`" : "";
+                $this->core_layout->setEventLog("Cash Advance Masterfile - User has updated the cash advance status into `Posted` of the employee `".$employeeName."` with reference number `".$caDetails->reference_no."`".$messageRemarks.".","update", "success", "gcceforms", "user");
                 $resultset["toastr_msg"] = "Cash Advance Posted!";
                 $resultset["toastr_status"] = true;
             }else{
@@ -2741,7 +2738,8 @@ class Cash_advance_m extends CI_Model {
             $this->db->where('cash_advance.id', $id);
             $query = $this->db->update('gcceforms.cash_advance', $data);
             if($query){
-                $this->core_layout->setEventLog("Cash Advance Masterfile - User has updated the cash advance status into `Undo Posted` of the employee `".$employeeName."` with reference number `".$caDetails->reference_no."` and reason `".$trimmedRemarks."`.","update", "success", "gcceforms", "user");
+                $messageRemarks = $trimmedRemarks ? " and with a reason of `".$trimmedRemarks."`" : "";
+                $this->core_layout->setEventLog("Cash Advance Masterfile - User has updated the cash advance status into `For Posting` after ticking `Undo Posted` for the employee `".$employeeName."` with reference number `".$caDetails->reference_no."`".$messageRemarks.".","update", "success", "gcceforms", "user");
                 $resultset["toastr_msg"] = "Cash Advance Undo Posted!";
                 $resultset["toastr_status"] = true;
             }else{
@@ -2773,7 +2771,8 @@ class Cash_advance_m extends CI_Model {
             $this->db->where('cash_advance.id', $id);
             $query = $this->db->update('gcceforms.cash_advance', $data);
             if($query){
-                $this->core_layout->setEventLog("Cash Advance Masterfile - User has updated the cash advance status into `For Final Approval` of the employee `".$employeeName."` with reference number `".$caDetails->reference_no."` and remarks `".$trimmedRemarks."`.","update", "success", "gcceforms", "user");
+                $messageRemarks = $trimmedRemarks ? " and with a remarks of `".$trimmedRemarks."`" : "";
+                $this->core_layout->setEventLog("Cash Advance Masterfile - User has updated the cash advance status into `For Final Approval` of the employee `".$employeeName."` with reference number `".$caDetails->reference_no."`".$messageRemarks.".","update", "success", "gcceforms", "user");
                 $resultset["toastr_msg"] = "Cash Advance For Final Approval!";
                 $resultset["toastr_status"] = true;
             }else{
@@ -2800,7 +2799,6 @@ class Cash_advance_m extends CI_Model {
             $config['allowed_types'] = '*';
             $config['max_size'] = 100000;
             $config['file_name'] = $_FILES['file']['name'];
-            $config['create_thumbnail'] = true;
 
             $this->upload->initialize($config);
 
@@ -2808,6 +2806,10 @@ class Cash_advance_m extends CI_Model {
                 $upload_data = $this->upload->data();
                 $filename = $upload_data['file_name'];
                 if($filename){
+                    /*** create thumbnail ***/
+                    $created = $this->file_upload->createThumbnailPathFolder($filePath);
+                    if($created){ $this->file_upload->resizeImage($filename, $filePath); }
+                    /*** create thumbnail ***/
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Upload file successful.";
                     $resultset["toastr_state"] = "success";
@@ -3457,31 +3459,33 @@ class Cash_advance_m extends CI_Model {
         }
 
         public function undoForFinal($id){
-            $post = $this->input->post();
-            $date = date('Y-m-d H:i:s');
             $resultset = array();
-            $data = array(
-                'final_approved_by' => $this->getDisplayName(),
-                'final_approved_dt' => $date,
-                'final_approved_remarks' => $post['approved_remarks'],
-                'status' => 'Awaiting Approval'
-            );
-    
             if($id){
-                $empId = $this->db->get_where("gcceforms.cash_advance", array('id' => $id))->row();
-    
+                $post = $this->input->post();
+                $trimmedRemarks = isset($post['approved_remarks']) ? trim($post['approved_remarks']): null;
+                $caDetails = $this->db->get_where("gcceforms.cash_advance", array('id' => $id))->row();
+                $employeeName = $this->getCurrentEmployeeName($caDetails->employee);
+                $data = array(
+                    'final_approved_by' => $this->getCurrentEmployeeName(),
+                    'final_approved_dt' => $this->dateTime,
+                    'final_approved_remarks' => $trimmedRemarks,
+                    'status' => 'Awaiting Approval'
+                );
                 $this->db->where('cash_advance.id', $id);
                 $query = $this->db->update('gcceforms.cash_advance', $data);
     
                 if($query){
-                    $this->core_layout->setEventLog("Cash Advance Masterfile - User undo For Final Approval of Cash Advance with id `".$id."` of employee `".$empId->employee."`.","update", "success", "gcceforms", "user"); 
+                    $messageRemarks = $trimmedRemarks ? " and with a reason of `".$trimmedRemarks."`" : "";
+                    $this->core_layout->setEventLog("Cash Advance Masterfile - User has updated the cash advance status into `Awaiting Approval` after ticking `Undo For Final Approval` for the employee `".$employeeName."` with reference number `".$caDetails->reference_no."`".$messageRemarks.".","update", "success", "gcceforms", "user"); 
                     $resultset["toastr_msg"] = "Cash Advance Undo For Final Approval!";
                     $resultset["toastr_status"] = true;
                 }else{
                     $resultset["toastr_msg"] = "Failed to undo For Final Approval Cash Advance";
                     $resultset["toastr_status"] = false;
                 }
-    
+            }else{
+                $resultset["toastr_msg"] = "Failed to undo For Final Approval Cash Advance, no data found!";
+                $resultset["toastr_status"] = false;
             }
             return $resultset;
         }
@@ -3593,84 +3597,107 @@ class Cash_advance_m extends CI_Model {
         }
 
         public function released($id){
-            $data = array();
-            $date = date('Y-m-d H:i:s');
-            $post = $this->input->post();
-
-            if ($post) {
+            $resultset = array();
+            if($id){
+                $post = $this->input->post();
+                $trimmedRemarks = isset($post['released_remarks']) ? trim($post['released_remarks']): null;
+                $trimmedDn = isset($post['dn_number']) ? trim($post['dn_number']): null;
+                $trimmedVoucherRef = isset($post['voucher_ref']) ? trim($post['voucher_ref']): null;
+                $caDetails = $this->getCaDetails($id);
+                $employeeName = $this->getCurrentEmployeeName($caDetails->employee);
                 $temp = array(
                     'status' => 'Released',
-                    'released_by' => $this->user_data['emp_id'],
-                    'released_dt' => date("Y-m-d H:i:s"),
-                    'dn_no' => trim($post['dn_number']),
-                    'voucher_reference_no' => trim($post['voucher_ref']),
-                    'released_remarks' => trim($post['released_remarks'])
+                    'released_by' => $this->getCurrentEmployeeName(),
+                    'released_dt' => $this->dateTime,
+                    'dn_no' => $trimmedDn,
+                    'voucher_reference_no' => $trimmedVoucherRef,
+                    'released_remarks' => $trimmedRemarks
                 );
 
                 $this->db->where('id', $id);
                 $query = $this->db->update($this->cashAdvanceTable, $temp);
-
                 if ($query) {
-
-                    $ca_details = $this->getCaDetails($id);
-                    $this->db->select('active');
-                    $this->db->from("gcchris.loans");
-                    $this->db->where("reference", $ca_details->reference_no);
-                    $q = $this->db->get();
-
-                    if ($q->num_rows() > 0) {
-                        $rows = $q->row();
-                        $status = $rows->active;
-                        $tempRemarks = "[System Generated:Updated Cash Advance form CA Module]";
-                        $approvedRemarks = $ca_details->approved_remarks;
-                        if(isset($approvedRemarks) && $approvedRemarks){
-                            $tempRemarks = "{$tempRemarks}, {$approvedRemarks}";
-                        }
-                        $loan_data = array('active' => $status, 'remarks' => $tempRemarks );
-                        $this->db->where('reference', $ca_details->reference_no);
-                        $this->db->update('gcchris.loans', $loan_data);
-                    } else {
-                        $caInterestPercentage = $ca_details->acctg_ca_interest_percentage ? floatval($ca_details->acctg_ca_interest_percentage): 0.00;
-                        $loan_data = array(
-                            'emp_id' => $ca_details->employee,
-                            'loan_id' => 1,
-                            'reference_id'=> $id,
-                            'reference' => $ca_details->reference_no,
-                            'amount' => $ca_details->amt_approved,
-                            'deduction_type' => strtolower($ca_details->deduct_type) == 'percentage' ? 0 : 1,
-                            'fixed_deduction_amt' => strtolower($ca_details->deduct_type) == 'fixed' ? $ca_details->amt_to_b_deducted : 0.00,
-                            'percentage' => strtolower($ca_details->deduct_type) == 'percentage' ? $ca_details->amt_to_b_deducted : 0.00,
-                            'interest_percentage' => $caInterestPercentage,
-                            'active' => 0,
-                            'created_by' => 0,
-                            'created_at' => $date,
-                            'is_archived' => 0,
-                            'archived_by' => 0,
-                            'remarks' => "[System Generated:New Cash Advance form CA Module], {$ca_details->approved_remarks}"
-                        );
-
-                        $for_loan = $this->db->insert('gcchris.loans', $loan_data);
-                        if($for_loan){
-                            $msg = "Cash Advance Masterfile - Cash Advance loan is automatically added to payroll deduction with the reference no: `".$ca_details->reference_no."`, employee `".$id."` and set status to `Suspended`";
-                            $this->core_layout->setEventLog($msg,"insert", "success", "gcceforms", "user");
-                        }else{
-                            $msg = "Cash Advance Masterfile - Cash Advance loan failed to add to payroll deduction with the reference no: `".$ca_details->reference_no."`, employee `".$id."` and set status to `Suspended`";
-                            $this->core_layout->setEventLog($msg,"insert", "error", "gcceforms", "system");
-                        }
-                    }
-
-                    $data['state'] = true;
-                    $data['msg'] = 'Cash Advance is succefully Released!';
+                    $messageRemarks = $trimmedRemarks ? " and with a remarks of `".$trimmedRemarks."`" : "";
+                    $this->core_layout->setEventLog("Cash Advance for the employee `".$employeeName."` with reference no `".$caDetails->reference_no."` has been `RELEASED`".$messageRemarks.".", "insert", "success", "gcceforms", "user");
+                    $this->releaseLoanCashAdvance($id);
+                    $resultset['state'] = true;
+                    $resultset['msg'] = 'Cash Advance is succefully Released!';
                 } else {
-                    $data['state'] = false;
-                    $data['msg'] = 'Failed to Released Cash Advance';
+                    $resultset['state'] = false;
+                    $resultset['msg'] = 'Failed to Released Cash Advance';
                 }
-            } else {
-                $data['state'] = false;
-                $data['msg'] = 'No Data found.';
+            }else{
+                $resultset['state'] = false;
+                $resultset['msg'] = 'No data found!';
             }
 
-            return $data;
+            return $resultset;
+        }
+
+        protected function releaseLoanCashAdvance($id=null){
+            if($id){
+                $ca_details = $this->getCaDetails($id);
+                $employeeName = $this->getCurrentEmployeeName($ca_details->employee);
+                $this->db->select('active');
+                $this->db->from("gcchris.loans");
+                $this->db->where("reference", $ca_details->reference_no);
+                $q = $this->db->get();
+                if ($q->num_rows() > 0) {
+                    $rows = $q->row();
+                    $status = $rows->active;
+                    $tempRemarks = "[System Generated:Updated Cash Advance form CA Module]";
+                    $approvedRemarks = $ca_details->approved_remarks;
+                    if(isset($approvedRemarks) && $approvedRemarks){
+                        $tempRemarks = "{$tempRemarks}, {$approvedRemarks}";
+                    }
+                    $loan_data = array('active' => $status, 'remarks' => $tempRemarks );
+                    $this->db->where('reference', $ca_details->reference_no);
+                    $loanUpdated = $this->db->update('gcchris.loans', $loan_data);
+                    if($loanUpdated){
+                        $msg = "Payroll Loan - Cash Advance loan with the reference no: `".$ca_details->reference_no."` for employee `".$employeeName."` was set to `".$status."` status.";
+                        $this->core_layout->setEventLog($msg,"update", "success", "gcceforms", "user");
+                    }else{
+                        $msg = "Failed to set Payroll Loan - Cash Advance loan with the reference no: `".$ca_details->reference_no."` for employee `".$employeeName."` to `".$status."` status.";
+                        $this->core_layout->setEventLog($msg, "update", "error", "gcceforms", "system");
+                    }
+                } else { $this->setCaLoanData($id); }
+            }else{
+                return false;
+            }
+        }
+
+        protected function setCaLoanData($id=null){
+            if($id){
+                $ca_details = $this->getCaDetails($id);
+                $employeeName = $this->getCurrentEmployeeName($ca_details->employee);
+                $caInterestPercentage = $ca_details->acctg_ca_interest_percentage ? floatval($ca_details->acctg_ca_interest_percentage): 0.00;
+                $loan_data = array(
+                    'emp_id' => $ca_details->employee,
+                    'loan_id' => 1,
+                    'reference_id'=> $id,
+                    'reference' => $ca_details->reference_no,
+                    'amount' => $ca_details->amt_approved,
+                    'deduction_type' => strtolower($ca_details->deduct_type) == 'percentage' ? 0 : 1,
+                    'fixed_deduction_amt' => strtolower($ca_details->deduct_type) == 'fixed' ? $ca_details->amt_to_b_deducted : 0.00,
+                    'percentage' => strtolower($ca_details->deduct_type) == 'percentage' ? $ca_details->amt_to_b_deducted : 0.00,
+                    'interest_percentage' => $caInterestPercentage,
+                    'active' => 0,
+                    'created_by' => 0,
+                    'created_at' => $this->dateTime,
+                    'is_archived' => 0,
+                    'archived_by' => 0,
+                    'remarks' => "[System Generated:New Cash Advance form CA Module], {$ca_details->approved_remarks}"
+                );
+
+                $forPayrollLoan = $this->db->insert('gcchris.loans', $loan_data);
+                if($forPayrollLoan){
+                    $msg = "Cash Advance Masterfile - Cash Advance loan is automatically added to payroll deduction with the reference no: `".$ca_details->reference_no."` for employee `".$employeeName."` and was set to `Suspended` status.";
+                    $this->core_layout->setEventLog($msg,"insert", "success", "gcceforms", "user");
+                }else{
+                    $msg = "Cash Advance Masterfile - Cash Advance loan failed to add to payroll deduction with the reference no: `".$ca_details->reference_no."` for employee `".$employeeName."`.";
+                    $this->core_layout->setEventLog($msg,"insert", "error", "gcceforms", "system");
+                }
+            }else{ return false; }
         }
 
         /** get employee name function **/
