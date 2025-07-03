@@ -1409,19 +1409,25 @@ class Cash_advance_m extends CI_Model {
             $query = $this->db->update('gcceforms.cash_advance', $data);
             if($query){
                 $messageRemarks = $trimmedRemarks !== "" ? " with a remarks of `".$trimmedRemarks."`" : "";
+                $this->core_layout->setEventLog("Cash Advance Masterfile - User Approved CA of employee `".$employeeName."`".$messageRemarks.".", "update", "success", "gcceforms", "user");
+                
+                $responseTelegram = $this->sendTelegram($id);
+                if($responseTelegram){
+                    $this->core_layout->setEventLog("Cash Advance Masterfile - User Approved CA Notification via Telegram has been sent to employee `".$employeeName."`.","update", "success", "gcceforms", "user");
+                }else{
+                    $this->core_layout->setEventLog("Failed to send Telegram Notification for Approved CA of employee `".$employeeName."`.", "update", "error", "gcceforms", "system");
+                }
 
-                $this->sendTelegram($id);
                 $sendMsgNotification = $this->sendSMSNotification($id, $phoneNo);
                 if($sendMsgNotification !== false){
-                    $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$employeeName."`".$messageRemarks.". message sent","update", "success", "gcceforms", "user");
+                    $this->core_layout->setEventLog("Cash Advance Masterfile - User Approved CA SMS Notification has been sent to employee `".$employeeName."`.","update", "success", "gcceforms", "user");
                 } else {
-                    $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$employeeName."`".$messageRemarks.". message not sent!!", "update", "error", "gcceforms", "system");
+                    $this->core_layout->setEventLog("Failed to send SMS Notification for Approved CA of employee `".$employeeName."`.", "update", "error", "gcceforms", "system");
                 }
-                $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$employeeName."`".$messageRemarks.".", "update", "success", "gcceforms", "user");
                 $response = $query;
             }
         }
-        
+
         return $response;
     }
 
@@ -2771,13 +2777,13 @@ class Cash_advance_m extends CI_Model {
     }
 
     protected function sendTelegram($id){
-        $msg = "";
+        $response = false;
         if($id){
             $details = $this->db->get_where("gcceforms.cash_advance", array('id' => $id))->row();
             $emp = $this->core_layout->getEmployeeData($details->employee);
 
             $amount_deducted = $details->deduct_type == 'fixed' ? number_format($details->amt_to_b_deducted, 2) : $details->amt_to_b_deducted;
-
+            $msg = "";
             $msg .= '<b>Cash Advance #</b>: '.strtoupper($details->reference_no).chr(10);
             $msg .= "<b>Employee</b>: ".strtoupper($emp['display_name_0']).chr(10);
             $msg .= "<b>Company</b>: ".strtoupper($details->company).chr(10);
@@ -2794,11 +2800,11 @@ class Cash_advance_m extends CI_Model {
             $msg .= "<b>Approved Remarks</b>: ".strtoupper($details->approved_remarks).chr(10);
 
             if($this->telegram_config_if_exist('cash_advance', 'count') > 0){
-				$this->telegram($msg);
+				$response = $this->telegram($msg);
 			}
         }
 
-        return true;
+        return $response;
     }
 
     public function telegram_config_if_exist($module, $data){
@@ -2822,8 +2828,8 @@ class Cash_advance_m extends CI_Model {
 				$url='https://api.telegram.org/bot'.$telegrambot.'/sendMessage';$data=array('chat_id'=>$telegramchatid,'text'=>$msg,'parse_mode'=>'html');
 				$options=array('http'=>array('method'=>'POST','header'=>"Content-Type:application/x-www-form-urlencoded\r\n",'content'=>http_build_query($data),'ignore_errors'=>true),);
 				$context=stream_context_create($options);
-				$result=file_get_contents($url,false,$context);
-				return $result;
+				$result = file_get_contents($url,false,$context);
+				return $result !== false;
 			}else{
 				return false;
 			}
