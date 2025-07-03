@@ -53,7 +53,7 @@ var tblCashAdvance = $("#table-cash-advance-content").DataTable({
                 let response;
                 if(row.reference != 'no reference no'){
                     if(row.active == 1){
-                        if(row.paid == 1 || row.is_paid){
+                        if(row.paid == 1 || row.is_paid || parseFloat(row.rembalance) <= 0){
                             response = '<a href="#"><span class="m-badge m-badge--wide m--font-bolder m-badge--success">Paid</span></a>';
                         }else{
                             response = '<a href="#"><span class="m-badge m-badge--wide m--font-bolder m-badge--info">Active</span></a>';
