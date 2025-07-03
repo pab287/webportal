@@ -1,6 +1,4 @@
-<?php
-defined('BASEPATH') OR exit('No direct script access allowed');
-
+<?php defined('BASEPATH') || exit('No direct script access allowed');
 class Cash_advance_m extends CI_Model {
     protected $eformsTable = "gcceforms";
     private $current_action =  array();
@@ -435,7 +433,13 @@ class Cash_advance_m extends CI_Model {
         $month = date('m');
 
         $lastRefSeries = $this->getLastRefSeries($year, $month);
-        $refSeries = $lastRefSeries ? (int)$lastRefSeries + 1 : 1;
+        $refSeries = 1;
+        if(sizeof($lastRefSeries) > 0){
+            $sizeOfLastRefSeries = sizeof($lastRefSeries);
+            $max = max($lastRefSeries);
+            $refSeries = $sizeOfLastRefSeries > intval($max->ref_series) ? $sizeOfLastRefSeries + 1 : intval($max->ref_series) + 1;
+        }
+        
         $refSeries = str_pad($refSeries, 4, '0', STR_PAD_LEFT);
 
         $x = explode("\n", $post["company"]);
@@ -3258,422 +3262,422 @@ class Cash_advance_m extends CI_Model {
     }
 
     private function logChanges($currentData, $newData) {
-            if (is_object($currentData)) {
-                $currentData = get_object_vars($currentData);
-            }
-            if (is_object($newData)) {
-                $newData = get_object_vars($newData);
-            }
-            $changes = array();
-            $changesString = '';
-            foreach ($currentData as $field => $value) {
-                if (isset($newData[$field]) && $newData[$field]!= $value) {
-                    $changes[$field] = array(
-                        'old' => $value,
-                        'new' => $newData[$field]
-                    );
-                }
-            }
-            foreach ($changes as $field => $change) {
-                if ($field != 'attachments'){
-                    $changesString.= " Field: $field, from: ". $change['old']. ", to: ". $change['new']. "\n";
-                }
-            }
-            if (isset($newData['attachments'])) {
-                sort($newData['attachments']);
-                sort($currentData['attachments']);
-                if (empty($newData['attachments'])) {
-                    $diff = array_diff($currentData['attachments'], $newData['attachments']);
-                } else {
-                    $diff = array_diff($newData['attachments'], $currentData['attachments']);
-                }
-                if (!empty($diff)) {
-                    $changesString.= " Field: attachments, from: ' ". implode(',', $currentData['attachments']). " ', to: '". implode(',', $newData['attachments']). "'\n";
-                }
-            } 
-            return $changesString;
+        if (is_object($currentData)) {
+            $currentData = get_object_vars($currentData);
         }
-
-        private function getCashAdvanceById($id){
-            $this->db->select("*");
-            $this->db->from("gcceforms.cash_advance");
-            $this->db->where('id', $id);
-            $query = $this->db->get(); 
-            $results = $query->row(); 
-            $this->db->reset_query();
-            return $results;
+        if (is_object($newData)) {
+            $newData = get_object_vars($newData);
         }
-
-        private function getAttachmentsById($id){
-            $this->db->select("*");
-            $this->db->from("gcceforms.ca_attachments");
-            $this->db->where('ca_id', $id);
-            $query = $this->db->get(); 
-            $results = $query->result();
-            $this->db->reset_query();
-            return $results;
+        $changes = array();
+        $changesString = '';
+        foreach ($currentData as $field => $value) {
+            if (isset($newData[$field]) && $newData[$field]!= $value) {
+                $changes[$field] = array(
+                    'old' => $value,
+                    'new' => $newData[$field]
+                );
+            }
         }
+        foreach ($changes as $field => $change) {
+            if ($field != 'attachments'){
+                $changesString.= " Field: $field, from: ". $change['old']. ", to: ". $change['new']. "\n";
+            }
+        }
+        if (isset($newData['attachments'])) {
+            sort($newData['attachments']);
+            sort($currentData['attachments']);
+            if (empty($newData['attachments'])) {
+                $diff = array_diff($currentData['attachments'], $newData['attachments']);
+            } else {
+                $diff = array_diff($newData['attachments'], $currentData['attachments']);
+            }
+            if (!empty($diff)) {
+                $changesString.= " Field: attachments, from: ' ". implode(',', $currentData['attachments']). " ', to: '". implode(',', $newData['attachments']). "'\n";
+            }
+        } 
+        return $changesString;
+    }
 
-        function tempUpdateUploadFiles() {
-            $post = $this->input->post();
-            $resultset = array();
-            if (isset($post['id']) && $post['id']) {
-                $imagesPath = "uploads/files/images/cash_advance/temporary/ca_{$post['id']}";
-                $createFilePath = false;
-                if (!file_exists($imagesPath)) {
-                    $mkdir = mkdir($imagesPath, 0777, true);
-                    if ($mkdir) {
-                        $createFilePath = true;
-                    }
-                } else {
+    private function getCashAdvanceById($id){
+        $this->db->select("*");
+        $this->db->from("gcceforms.cash_advance");
+        $this->db->where('id', $id);
+        $query = $this->db->get(); 
+        $results = $query->row(); 
+        $this->db->reset_query();
+        return $results;
+    }
+
+    private function getAttachmentsById($id){
+        $this->db->select("*");
+        $this->db->from("gcceforms.ca_attachments");
+        $this->db->where('ca_id', $id);
+        $query = $this->db->get(); 
+        $results = $query->result();
+        $this->db->reset_query();
+        return $results;
+    }
+
+    function tempUpdateUploadFiles() {
+        $post = $this->input->post();
+        $resultset = array();
+        if (isset($post['id']) && $post['id']) {
+            $imagesPath = "uploads/files/images/cash_advance/temporary/ca_{$post['id']}";
+            $createFilePath = false;
+            if (!file_exists($imagesPath)) {
+                $mkdir = mkdir($imagesPath, 0777, true);
+                if ($mkdir) {
                     $createFilePath = true;
                 }
-                if ($createFilePath == false) {
-                    $resultset["response"] = false;
-                    $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
-                    $resultset["toastr_state"] = "warning";
-                } else {
-                    $config = array();
-                    $config['upload_path'] = $imagesPath;
-                    $config['allowed_types'] = 'jpg|jpeg|png|pdf|PNG|JPG|JPEG|PDF';
-                    $config['max_size'] = 100000;
-                    $config['create_thumbnail'] = true;
-    
-                    $data = $this->file_upload->uploadFile($config);
-                    if ($data["response"] == true) {
-                        $thumbnailpath = "uploads/files/images/cash_advance/temporary/ca_{$post['id']}/thumbnails";
-                        if (!file_exists(realpath($thumbnailpath))) {
-                            mkdir($thumbnailpath, 0777, true);
-                        }
-                        $files = is_array($data["files"]) && count($data["files"]) > 0 ? $data["files"][0] : $data["files"];
-                        $filename = is_array($data["files"]) && count($data["files"]) > 0 ? $data["files"][0]["file_name"]: $data["files"];
-                        if ($filename) {
-                            $dirpath = $imagesPath;
-                            $s = $this->saveThumbnail($dirpath . "/" . $filename, $thumbnailpath . "/" . $filename);
-                            $resultset["response"] = true;
-                            $resultset["file_path"] = $imagesPath."/".$filename;
-                            $resultset["added_image"] = base_url("uploads/files/images/cash_advance/temporary/ca_{$post['id']}/{$filename}");
-                            $resultset["temp_image"] = "{$filename}";
-                            $resultset["file_type"] = $files["file_type"];
-                            $resultset["is_image"] = $files["is_image"];
-                            $resultset["svg_icon"] = base_url("assets/images/file_icons/pdf.svg");
-                            $resultset["thumbnail"] = base_url("{$thumbnailpath}/{$filename}");
-                            $resultset["toastr_msg"] = "Upload image successful.";
-                            $resultset["toastr_state"] = "success";
-                        } else {
-                            $resultset["response"] = false;
-                            $resultset["toastr_msg"] = "Image upload to specific path failed!";
-                            $resultset["toastr_state"] = "error";
-                        }
+            } else {
+                $createFilePath = true;
+            }
+            if ($createFilePath == false) {
+                $resultset["response"] = false;
+                $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
+                $resultset["toastr_state"] = "warning";
+            } else {
+                $config = array();
+                $config['upload_path'] = $imagesPath;
+                $config['allowed_types'] = 'jpg|jpeg|png|pdf|PNG|JPG|JPEG|PDF';
+                $config['max_size'] = 100000;
+                $config['create_thumbnail'] = true;
+
+                $data = $this->file_upload->uploadFile($config);
+                if ($data["response"] == true) {
+                    $thumbnailpath = "uploads/files/images/cash_advance/temporary/ca_{$post['id']}/thumbnails";
+                    if (!file_exists(realpath($thumbnailpath))) {
+                        mkdir($thumbnailpath, 0777, true);
+                    }
+                    $files = is_array($data["files"]) && count($data["files"]) > 0 ? $data["files"][0] : $data["files"];
+                    $filename = is_array($data["files"]) && count($data["files"]) > 0 ? $data["files"][0]["file_name"]: $data["files"];
+                    if ($filename) {
+                        $dirpath = $imagesPath;
+                        $s = $this->saveThumbnail($dirpath . "/" . $filename, $thumbnailpath . "/" . $filename);
+                        $resultset["response"] = true;
+                        $resultset["file_path"] = $imagesPath."/".$filename;
+                        $resultset["added_image"] = base_url("uploads/files/images/cash_advance/temporary/ca_{$post['id']}/{$filename}");
+                        $resultset["temp_image"] = "{$filename}";
+                        $resultset["file_type"] = $files["file_type"];
+                        $resultset["is_image"] = $files["is_image"];
+                        $resultset["svg_icon"] = base_url("assets/images/file_icons/pdf.svg");
+                        $resultset["thumbnail"] = base_url("{$thumbnailpath}/{$filename}");
+                        $resultset["toastr_msg"] = "Upload image successful.";
+                        $resultset["toastr_state"] = "success";
                     } else {
                         $resultset["response"] = false;
-                        $resultset["toastr_msg"] = "Image upload failed!";
+                        $resultset["toastr_msg"] = "Image upload to specific path failed!";
                         $resultset["toastr_state"] = "error";
                     }
+                } else {
+                    $resultset["response"] = false;
+                    $resultset["toastr_msg"] = "Image upload failed!";
+                    $resultset["toastr_state"] = "error";
                 }
-    
-            } else {
-                $resultset["response"] = false;
-                $resultset["toastr_msg"] = "Employee data not found! Select Employee first";
-                $resultset["toastr_state"] = "error";
             }
-    
-            return $resultset;
+
+        } else {
+            $resultset["response"] = false;
+            $resultset["toastr_msg"] = "Employee data not found! Select Employee first";
+            $resultset["toastr_state"] = "error";
         }
 
-        protected function sendSMSNotification($id, $phone){
-            $this->db->select("reference_no, amt_approved, employee");
-            $details = $this->db->get_where("gcceforms.cash_advance", array('id' => $id))->row();
-            $amount = '₱' . number_format($details->amt_approved, 2);
-            $name = strtoupper($this->getEmpName($details->employee));
-            $referenceNumber = $details->reference_no;
+        return $resultset;
+    }
 
-            $date = date('F j, Y');
-            $msg = "Hi $name, your cash advance request of {$amount} has been approved on {$date}.\nThe amount will be released to your account within 4-7 working days upon approval. For any questions, please contact your department in-charge in cash advance processing.\nThis is a system-generated message please do not reply to this number. Thank you!\nGC&C CARES";
+    protected function sendSMSNotification($id, $phone){
+        $this->db->select("reference_no, amt_approved, employee");
+        $details = $this->db->get_where("gcceforms.cash_advance", array('id' => $id))->row();
+        $amount = '₱' . number_format($details->amt_approved, 2);
+        $name = strtoupper($this->getEmpName($details->employee));
+        $referenceNumber = $details->reference_no;
 
-            $smsResponse = $this->contacts->sendSMS($phone, $msg);
-            $isSentResponse = isset($smsResponse["data"]) && $smsResponse["data"] !== false;
-            if($isSentResponse){
-                $this->core_layout->setEventLog("Sent SMS to `{$name}` notification for cash advance reference number `{$referenceNumber}`.","add", "success", "gcceforms", "user");
-            }else{
-                $this->core_layout->setEventLog("Failed in sending SMS to `{$name}` notification for cash advance reference number `{$referenceNumber}`.","add", "error", "gcceforms", "system");
-            }
-            return $isSentResponse;
+        $date = date('F j, Y');
+        $msg = "Hi $name, your cash advance request of {$amount} has been approved on {$date}.\nThe amount will be released to your account within 4-7 working days upon approval. For any questions, please contact your department in-charge in cash advance processing.\nThis is a system-generated message please do not reply to this number. Thank you!\nGC&C CARES";
+
+        $smsResponse = $this->contacts->sendSMS($phone, $msg);
+        $isSentResponse = isset($smsResponse["data"]) && $smsResponse["data"] !== false;
+        if($isSentResponse){
+            $this->core_layout->setEventLog("Sent SMS to `{$name}` notification for cash advance reference number `{$referenceNumber}`.","add", "success", "gcceforms", "user");
+        }else{
+            $this->core_layout->setEventLog("Failed in sending SMS to `{$name}` notification for cash advance reference number `{$referenceNumber}`.","add", "error", "gcceforms", "system");
         }
+        return $isSentResponse;
+    }
 
-        public function undoForFinal($id){
-            $resultset = array();
-            if($id){
-                $post = $this->input->post();
-                $trimmedRemarks = isset($post['approved_remarks']) ? trim($post['approved_remarks']): null;
-                $caDetails = $this->db->get_where("gcceforms.cash_advance", array('id' => $id))->row();
-                $employeeName = $this->getCurrentEmployeeName($caDetails->employee);
-                $data = array(
-                    'final_approved_by' => $this->getCurrentEmployeeName(),
-                    'final_approved_dt' => $this->dateTime,
-                    'final_approved_remarks' => $trimmedRemarks,
-                    'status' => 'Awaiting Approval'
-                );
-                $this->db->where('cash_advance.id', $id);
-                $query = $this->db->update('gcceforms.cash_advance', $data);
-    
-                if($query){
-                    $messageRemarks = $trimmedRemarks ? " and with a reason of `".$trimmedRemarks."`" : "";
-                    $this->core_layout->setEventLog("Cash Advance Masterfile - User has updated the cash advance status into `Awaiting Approval` after ticking `Undo For Final Approval` for the employee `".$employeeName."` with reference number `".$caDetails->reference_no."`".$messageRemarks.".","update", "success", "gcceforms", "user"); 
-                    $resultset["toastr_msg"] = "Cash Advance Undo For Final Approval!";
-                    $resultset["toastr_status"] = true;
-                }else{
-                    $resultset["toastr_msg"] = "Failed to undo For Final Approval Cash Advance";
-                    $resultset["toastr_status"] = false;
-                }
+    public function undoForFinal($id){
+        $resultset = array();
+        if($id){
+            $post = $this->input->post();
+            $trimmedRemarks = isset($post['approved_remarks']) ? trim($post['approved_remarks']): null;
+            $caDetails = $this->db->get_where("gcceforms.cash_advance", array('id' => $id))->row();
+            $employeeName = $this->getCurrentEmployeeName($caDetails->employee);
+            $data = array(
+                'final_approved_by' => $this->getCurrentEmployeeName(),
+                'final_approved_dt' => $this->dateTime,
+                'final_approved_remarks' => $trimmedRemarks,
+                'status' => 'Awaiting Approval'
+            );
+            $this->db->where('cash_advance.id', $id);
+            $query = $this->db->update('gcceforms.cash_advance', $data);
+
+            if($query){
+                $messageRemarks = $trimmedRemarks ? " and with a reason of `".$trimmedRemarks."`" : "";
+                $this->core_layout->setEventLog("Cash Advance Masterfile - User has updated the cash advance status into `Awaiting Approval` after ticking `Undo For Final Approval` for the employee `".$employeeName."` with reference number `".$caDetails->reference_no."`".$messageRemarks.".","update", "success", "gcceforms", "user"); 
+                $resultset["toastr_msg"] = "Cash Advance Undo For Final Approval!";
+                $resultset["toastr_status"] = true;
             }else{
-                $resultset["toastr_msg"] = "Failed to undo For Final Approval Cash Advance, no data found!";
+                $resultset["toastr_msg"] = "Failed to undo For Final Approval Cash Advance";
                 $resultset["toastr_status"] = false;
             }
+        }else{
+            $resultset["toastr_msg"] = "Failed to undo For Final Approval Cash Advance, no data found!";
+            $resultset["toastr_status"] = false;
+        }
+        return $resultset;
+    }
+
+    public function getCashAdvanceReport(){
+        $rowCount = 0;
+        $rowData = array();
+        $resultset = array();
+        $post = $this->input->post();
+        $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+        $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
+        $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+        $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+        $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
+        $dateRange = (isset($post["dateRange"]) && $post["dateRange"]) ? $post["dateRange"] : null;
+        if($dateRange == null){
+            $resultset["recordsTotal"] = 0;
+            $resultset["recordsFiltered"] =  0;
+            $resultset["data"] = [];
             return $resultset;
         }
+        $rowData = $this->getCashAdvanceReportData($search, $limit, $offset, $sortBy, $sortOrder,$dateRange);
+        $total = $this->getCashAdvanceReportDataCount($search,$dateRange);
+        $resultset["recordsTotal"] = $total;
+        $resultset["recordsFiltered"] =  $total;
+        $resultset["data"] = isset($rowData) && $rowData ? $rowData: array();
+        return $resultset;
+    }
 
-        public function getCashAdvanceReport(){
-            $rowCount = 0;
-            $rowData = array();
-            $resultset = array();
-            $post = $this->input->post();
-            $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
-            $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
-            $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
-            $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
-            $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
-            $dateRange = (isset($post["dateRange"]) && $post["dateRange"]) ? $post["dateRange"] : null;
-            if($dateRange == null){
-                $resultset["recordsTotal"] = 0;
-                $resultset["recordsFiltered"] =  0;
-                $resultset["data"] = [];
-                return $resultset;
-            }
-            $rowData = $this->getCashAdvanceReportData($search, $limit, $offset, $sortBy, $sortOrder,$dateRange);
-            $total = $this->getCashAdvanceReportDataCount($search,$dateRange);
-            $resultset["recordsTotal"] = $total;
-            $resultset["recordsFiltered"] =  $total;
-            $resultset["data"] = isset($rowData) && $rowData ? $rowData: array();
-            return $resultset;
+    private function getCashAdvanceReportData($search, $limit, $offset, $sortBy, $sortOrder,$dateRange){
+        $filterFields = array("ca.id");
+        $this->db->select("ca.id,ca.company, ca.purpose, ca.department, ca.position, ca.approved_by, ca.approved_dt, ca.acctg_sss_loan as sss_loan, ca.acctg_hdmf_loan as hdmf_loan, created_dt as date_created, ca.amt_approved, ca.acctg_outside_loan as med_loan,
+            CASE 
+                WHEN LENGTH(e.middlename) > 1 THEN CONCAT(e.firstname, ' ', SUBSTRING(e.middlename, 1, 1), '. ', e.lastname)
+                ELSE CONCAT(e.firstname, ' ', e.middlename, ' ', e.lastname)
+            END AS name,
+            e.firstname as firstname,
+            e.lastname as lastname,
+            SUM(c.amount) AS total_charges,
+        ");
+
+        $this->db->from($this->cashAdvanceTable. ' as ca');
+        $this->db->join($this->employeeTable. ' as e', 'ca.employee = e.id', 'left');
+        $this->db->join($this->chargesTable. ' as c', 'ca.id = c.ca_id', 'left');
+        $this->db->where('status', 'Approved');
+        if ($dateRange) {
+            list($startDate, $endDate) = explode('|', $dateRange);
+            $this->db->where("DATE(ca.approved_dt) BETWEEN '$startDate' AND '$endDate'");
         }
-
-        private function getCashAdvanceReportData($search, $limit, $offset, $sortBy, $sortOrder,$dateRange){
-            $filterFields = array("ca.id");
-            $this->db->select("ca.id,ca.company, ca.purpose, ca.department, ca.position, ca.approved_by, ca.approved_dt, ca.acctg_sss_loan as sss_loan, ca.acctg_hdmf_loan as hdmf_loan, created_dt as date_created, ca.amt_approved, ca.acctg_outside_loan as med_loan,
-                CASE 
-                    WHEN LENGTH(e.middlename) > 1 THEN CONCAT(e.firstname, ' ', SUBSTRING(e.middlename, 1, 1), '. ', e.lastname)
-                    ELSE CONCAT(e.firstname, ' ', e.middlename, ' ', e.lastname)
-                END AS name,
-                e.firstname as firstname,
-                e.lastname as lastname,
-                SUM(c.amount) AS total_charges,
-            ");
-
-            $this->db->from($this->cashAdvanceTable. ' as ca');
-            $this->db->join($this->employeeTable. ' as e', 'ca.employee = e.id', 'left');
-            $this->db->join($this->chargesTable. ' as c', 'ca.id = c.ca_id', 'left');
-            $this->db->where('status', 'Approved');
-            if ($dateRange) {
-                list($startDate, $endDate) = explode('|', $dateRange);
-                $this->db->where("DATE(ca.approved_dt) BETWEEN '$startDate' AND '$endDate'");
-            }
-            $this->db->group_by('ca.id');
-            if(isset($search)){
-                $this->db->group_start();
-                foreach ($filterFields as $key => $field) {
-                    if ($key == 0) {
-                        $this->db->like($field, $search, "both");
-                    } else {
-                        $this->db->or_like($field, $search, "both");
-                    }
-                }
-                $this->db->group_end();
-            }
-            // if ($limit != -1) {
-            //     $this->db->limit($limit, $offset);
-            // }
-            $i = $sortOrder[0]['column'];
-            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
-            $query = $this->db->get();
-            return $query->result_array();
-        }
-
-        private function getCashAdvanceReportDataCount($search,$dateRange){
-            $filterFields = array("ca.id");
-            $this->db->where('status', 'Approved');
-            $this->db->from($this->cashAdvanceTable. ' as ca');
-            $this->db->join($this->employeeTable. ' as e', 'ca.employee = e.id', 'left');
-            if ($dateRange) {
-                list($startDate, $endDate) = explode('|', $dateRange);
-                $this->db->where("DATE(ca.approved_dt) BETWEEN '$startDate' AND '$endDate'");
-            }
-            if(isset($search)){
-                $this->db->group_start();
-                foreach ($filterFields as $key => $field) {
-                    if ($key == 0) {
-                        $this->db->like($field, $search, "both");
-                    } else {
-                        $this->db->or_like($field, $search, "both");
-                    }
-                }
-                $this->db->group_end();
-            }
-            $query = $this->db->get();
-            return $query->num_rows();
-        }
-
-        public function exportReport($type){
-            $post = $this->input->post();
-            $filter="";
-            $dateRange = (isset($post["dateRange"]) && $post["dateRange"]) ? $post["dateRange"] : null;
-            if ($dateRange) {
-                list($startDate, $endDate) = explode('|', $dateRange);
-                $startDate = trim($startDate);
-                $endDate = trim($endDate);
-                $startTimestamp = strtotime($startDate);
-                $endTimestamp = strtotime($endDate);
-                $filter .= " with date range from: <strong>".date('M d, Y', $startTimestamp)."</strong> to <strong>".date('M d, Y', $endTimestamp)."</strong>";
-            }
-           
-            return $this->core_layout->setEventLog("Cash Advance Report exported using <strong>$type</strong>.".$filter." total result(s): ".$post['total'], "generate", "success", "gcceforms", "user");
-        }
-
-        public function released($id){
-            $resultset = array();
-            if($id){
-                $post = $this->input->post();
-                $trimmedRemarks = isset($post['released_remarks']) ? trim($post['released_remarks']): null;
-                $trimmedDn = isset($post['dn_number']) ? trim($post['dn_number']): null;
-                $trimmedVoucherRef = isset($post['voucher_ref']) ? trim($post['voucher_ref']): null;
-                $caDetails = $this->getCaDetails($id);
-                $employeeName = $this->getCurrentEmployeeName($caDetails->employee);
-                $temp = array(
-                    'status' => 'Released',
-                    'released_by' => $this->getCurrentEmployeeName(),
-                    'released_dt' => $this->dateTime,
-                    'dn_no' => $trimmedDn,
-                    'voucher_reference_no' => $trimmedVoucherRef,
-                    'released_remarks' => $trimmedRemarks
-                );
-
-                $this->db->where('id', $id);
-                $query = $this->db->update($this->cashAdvanceTable, $temp);
-                if ($query) {
-                    $messageRemarks = $trimmedRemarks ? " and with a remarks of `".$trimmedRemarks."`" : "";
-                    $this->core_layout->setEventLog("Cash Advance for the employee `".$employeeName."` with reference no `".$caDetails->reference_no."` has been `RELEASED`".$messageRemarks.".", "insert", "success", "gcceforms", "user");
-                    $this->releaseLoanCashAdvance($id);
-                    $resultset['state'] = true;
-                    $resultset['msg'] = 'Cash Advance is succefully Released!';
+        $this->db->group_by('ca.id');
+        if(isset($search)){
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
                 } else {
-                    $resultset['state'] = false;
-                    $resultset['msg'] = 'Failed to Released Cash Advance';
+                    $this->db->or_like($field, $search, "both");
                 }
-            }else{
+            }
+            $this->db->group_end();
+        }
+        // if ($limit != -1) {
+        //     $this->db->limit($limit, $offset);
+        // }
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        $query = $this->db->get();
+        return $query->result_array();
+    }
+
+    private function getCashAdvanceReportDataCount($search,$dateRange){
+        $filterFields = array("ca.id");
+        $this->db->where('status', 'Approved');
+        $this->db->from($this->cashAdvanceTable. ' as ca');
+        $this->db->join($this->employeeTable. ' as e', 'ca.employee = e.id', 'left');
+        if ($dateRange) {
+            list($startDate, $endDate) = explode('|', $dateRange);
+            $this->db->where("DATE(ca.approved_dt) BETWEEN '$startDate' AND '$endDate'");
+        }
+        if(isset($search)){
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
+    public function exportReport($type){
+        $post = $this->input->post();
+        $filter="";
+        $dateRange = (isset($post["dateRange"]) && $post["dateRange"]) ? $post["dateRange"] : null;
+        if ($dateRange) {
+            list($startDate, $endDate) = explode('|', $dateRange);
+            $startDate = trim($startDate);
+            $endDate = trim($endDate);
+            $startTimestamp = strtotime($startDate);
+            $endTimestamp = strtotime($endDate);
+            $filter .= " with date range from: <strong>".date('M d, Y', $startTimestamp)."</strong> to <strong>".date('M d, Y', $endTimestamp)."</strong>";
+        }
+        
+        return $this->core_layout->setEventLog("Cash Advance Report exported using <strong>$type</strong>.".$filter." total result(s): ".$post['total'], "generate", "success", "gcceforms", "user");
+    }
+
+    public function released($id){
+        $resultset = array();
+        if($id){
+            $post = $this->input->post();
+            $trimmedRemarks = isset($post['released_remarks']) ? trim($post['released_remarks']): null;
+            $trimmedDn = isset($post['dn_number']) ? trim($post['dn_number']): null;
+            $trimmedVoucherRef = isset($post['voucher_ref']) ? trim($post['voucher_ref']): null;
+            $caDetails = $this->getCaDetails($id);
+            $employeeName = $this->getCurrentEmployeeName($caDetails->employee);
+            $temp = array(
+                'status' => 'Released',
+                'released_by' => $this->getCurrentEmployeeName(),
+                'released_dt' => $this->dateTime,
+                'dn_no' => $trimmedDn,
+                'voucher_reference_no' => $trimmedVoucherRef,
+                'released_remarks' => $trimmedRemarks
+            );
+
+            $this->db->where('id', $id);
+            $query = $this->db->update($this->cashAdvanceTable, $temp);
+            if ($query) {
+                $messageRemarks = $trimmedRemarks ? " and with a remarks of `".$trimmedRemarks."`" : "";
+                $this->core_layout->setEventLog("Cash Advance for the employee `".$employeeName."` with reference no `".$caDetails->reference_no."` has been `RELEASED`".$messageRemarks.".", "insert", "success", "gcceforms", "user");
+                $this->releaseLoanCashAdvance($id);
+                $resultset['state'] = true;
+                $resultset['msg'] = 'Cash Advance is succefully Released!';
+            } else {
                 $resultset['state'] = false;
-                $resultset['msg'] = 'No data found!';
+                $resultset['msg'] = 'Failed to Released Cash Advance';
             }
-
-            return $resultset;
+        }else{
+            $resultset['state'] = false;
+            $resultset['msg'] = 'No data found!';
         }
 
-        protected function releaseLoanCashAdvance($id=null){
-            if($id){
-                $ca_details = $this->getCaDetails($id);
-                $employeeName = $this->getCurrentEmployeeName($ca_details->employee);
-                $this->db->select('active');
-                $this->db->from("gcchris.loans");
-                $this->db->where("reference", $ca_details->reference_no);
-                $q = $this->db->get();
-                if ($q->num_rows() > 0) {
-                    $rows = $q->row();
-                    $status = $rows->active;
-                    $tempRemarks = "[System Generated:Updated Cash Advance form CA Module]";
-                    $approvedRemarks = $ca_details->approved_remarks;
-                    if(isset($approvedRemarks) && $approvedRemarks){
-                        $tempRemarks = "{$tempRemarks}, {$approvedRemarks}";
-                    }
-                    $loan_data = array('active' => $status, 'remarks' => $tempRemarks );
-                    $this->db->where('reference', $ca_details->reference_no);
-                    $loanUpdated = $this->db->update('gcchris.loans', $loan_data);
-                    if($loanUpdated){
-                        $msg = "Payroll Loan - Cash Advance loan with the reference no: `".$ca_details->reference_no."` for employee `".$employeeName."` was set to `".$status."` status.";
-                        $this->core_layout->setEventLog($msg,"update", "success", "gcceforms", "user");
-                    }else{
-                        $msg = "Failed to set Payroll Loan - Cash Advance loan with the reference no: `".$ca_details->reference_no."` for employee `".$employeeName."` to `".$status."` status.";
-                        $this->core_layout->setEventLog($msg, "update", "error", "gcceforms", "system");
-                    }
-                } else { $this->setCaLoanData($id); }
-            }else{
-                return false;
-            }
-        }
+        return $resultset;
+    }
 
-        protected function setCaLoanData($id=null){
-            if($id){
-                $ca_details = $this->getCaDetails($id);
-                $employeeName = $this->getCurrentEmployeeName($ca_details->employee);
-                $caInterestPercentage = $ca_details->acctg_ca_interest_percentage ? floatval($ca_details->acctg_ca_interest_percentage): 0.00;
-                $loan_data = array(
-                    'emp_id' => $ca_details->employee,
-                    'loan_id' => 1,
-                    'reference_id'=> $id,
-                    'reference' => $ca_details->reference_no,
-                    'amount' => $ca_details->amt_approved,
-                    'deduction_type' => strtolower($ca_details->deduct_type) == 'percentage' ? 0 : 1,
-                    'fixed_deduction_amt' => strtolower($ca_details->deduct_type) == 'fixed' ? $ca_details->amt_to_b_deducted : 0.00,
-                    'percentage' => strtolower($ca_details->deduct_type) == 'percentage' ? $ca_details->amt_to_b_deducted : 0.00,
-                    'interest_percentage' => $caInterestPercentage,
-                    'active' => 0,
-                    'created_by' => 0,
-                    'created_at' => $this->dateTime,
-                    'is_archived' => 0,
-                    'archived_by' => 0,
-                    'remarks' => "[System Generated:New Cash Advance form CA Module], {$ca_details->approved_remarks}"
-                );
-
-                $forPayrollLoan = $this->db->insert('gcchris.loans', $loan_data);
-                if($forPayrollLoan){
-                    $msg = "Cash Advance Masterfile - Cash Advance loan is automatically added to payroll deduction with the reference no: `".$ca_details->reference_no."` for employee `".$employeeName."` and was set to `Suspended` status.";
-                    $this->core_layout->setEventLog($msg,"insert", "success", "gcceforms", "user");
-                }else{
-                    $msg = "Cash Advance Masterfile - Cash Advance loan failed to add to payroll deduction with the reference no: `".$ca_details->reference_no."` for employee `".$employeeName."`.";
-                    $this->core_layout->setEventLog($msg,"insert", "error", "gcceforms", "system");
+    protected function releaseLoanCashAdvance($id=null){
+        if($id){
+            $ca_details = $this->getCaDetails($id);
+            $employeeName = $this->getCurrentEmployeeName($ca_details->employee);
+            $this->db->select('active');
+            $this->db->from("gcchris.loans");
+            $this->db->where("reference", $ca_details->reference_no);
+            $q = $this->db->get();
+            if ($q->num_rows() > 0) {
+                $rows = $q->row();
+                $status = $rows->active;
+                $tempRemarks = "[System Generated:Updated Cash Advance form CA Module]";
+                $approvedRemarks = $ca_details->approved_remarks;
+                if(isset($approvedRemarks) && $approvedRemarks){
+                    $tempRemarks = "{$tempRemarks}, {$approvedRemarks}";
                 }
-            }else{ return false; }
+                $loan_data = array('active' => $status, 'remarks' => $tempRemarks );
+                $this->db->where('reference', $ca_details->reference_no);
+                $loanUpdated = $this->db->update('gcchris.loans', $loan_data);
+                if($loanUpdated){
+                    $msg = "Payroll Loan - Cash Advance loan with the reference no: `".$ca_details->reference_no."` for employee `".$employeeName."` was set to `".$status."` status.";
+                    $this->core_layout->setEventLog($msg,"update", "success", "gcceforms", "user");
+                }else{
+                    $msg = "Failed to set Payroll Loan - Cash Advance loan with the reference no: `".$ca_details->reference_no."` for employee `".$employeeName."` to `".$status."` status.";
+                    $this->core_layout->setEventLog($msg, "update", "error", "gcceforms", "system");
+                }
+            } else { $this->setCaLoanData($id); }
+        }else{
+            return false;
         }
+    }
 
-        /** get employee name function **/
-        protected function getCurrentEmployeeName($empId=null){
-            $tempId = $empId ? $empId : $this->core_layout->getCurrentEmployeeId();
-            if ($tempId === null) return "";
-            
-            $this->db->select("UPPER(
-                CONCAT(
-                    firstname,
-                    ' ',
-                    CASE
-                    WHEN UPPER(TRIM(middlename)) NOT IN ('N/A', 'NONE')
-                        AND TRIM(middlename) != ''
-                        AND middlename IS NOT NULL
-                    THEN CONCAT(SUBSTRING(middlename, 1, 1), '. ')
-                    ELSE ''
-                    END,
-                    lastname,
-                    CASE
-                    WHEN UPPER(TRIM(suffix)) NOT IN ('N/A', 'NONE')
-                        AND TRIM(suffix) != ''
-                        AND suffix IS NOT NULL
-                    THEN CONCAT(' ', suffix)
-                    ELSE ''
-                    END
-                )
-            ) AS employee_name", false);
-            $this->db->from("gccmaster.tblemployees");
-            $this->db->where("id", $tempId);
-            $query = $this->db->get();
-            if($query->num_rows() === 1){ return $query->row()->employee_name; }
-            else{ return ""; }
-        }
-        /** get employee name function **/
+    protected function setCaLoanData($id=null){
+        if($id){
+            $ca_details = $this->getCaDetails($id);
+            $employeeName = $this->getCurrentEmployeeName($ca_details->employee);
+            $caInterestPercentage = $ca_details->acctg_ca_interest_percentage ? floatval($ca_details->acctg_ca_interest_percentage): 0.00;
+            $loan_data = array(
+                'emp_id' => $ca_details->employee,
+                'loan_id' => 1,
+                'reference_id'=> $id,
+                'reference' => $ca_details->reference_no,
+                'amount' => $ca_details->amt_approved,
+                'deduction_type' => strtolower($ca_details->deduct_type) == 'percentage' ? 0 : 1,
+                'fixed_deduction_amt' => strtolower($ca_details->deduct_type) == 'fixed' ? $ca_details->amt_to_b_deducted : 0.00,
+                'percentage' => strtolower($ca_details->deduct_type) == 'percentage' ? $ca_details->amt_to_b_deducted : 0.00,
+                'interest_percentage' => $caInterestPercentage,
+                'active' => 0,
+                'created_by' => 0,
+                'created_at' => $this->dateTime,
+                'is_archived' => 0,
+                'archived_by' => 0,
+                'remarks' => "[System Generated:New Cash Advance form CA Module], {$ca_details->approved_remarks}"
+            );
+
+            $forPayrollLoan = $this->db->insert('gcchris.loans', $loan_data);
+            if($forPayrollLoan){
+                $msg = "Cash Advance Masterfile - Cash Advance loan is automatically added to payroll deduction with the reference no: `".$ca_details->reference_no."` for employee `".$employeeName."` and was set to `Suspended` status.";
+                $this->core_layout->setEventLog($msg,"insert", "success", "gcceforms", "user");
+            }else{
+                $msg = "Cash Advance Masterfile - Cash Advance loan failed to add to payroll deduction with the reference no: `".$ca_details->reference_no."` for employee `".$employeeName."`.";
+                $this->core_layout->setEventLog($msg,"insert", "error", "gcceforms", "system");
+            }
+        }else{ return false; }
+    }
+
+    /** get employee name function **/
+    protected function getCurrentEmployeeName($empId=null){
+        $tempId = $empId ? $empId : $this->core_layout->getCurrentEmployeeId();
+        if ($tempId === null) return "";
+        
+        $this->db->select("UPPER(
+            CONCAT(
+                firstname,
+                ' ',
+                CASE
+                WHEN UPPER(TRIM(middlename)) NOT IN ('N/A', 'NONE')
+                    AND TRIM(middlename) != ''
+                    AND middlename IS NOT NULL
+                THEN CONCAT(SUBSTRING(middlename, 1, 1), '. ')
+                ELSE ''
+                END,
+                lastname,
+                CASE
+                WHEN UPPER(TRIM(suffix)) NOT IN ('N/A', 'NONE')
+                    AND TRIM(suffix) != ''
+                    AND suffix IS NOT NULL
+                THEN CONCAT(' ', suffix)
+                ELSE ''
+                END
+            )
+        ) AS employee_name", false);
+        $this->db->from("gccmaster.tblemployees");
+        $this->db->where("id", $tempId);
+        $query = $this->db->get();
+        if($query->num_rows() === 1){ return $query->row()->employee_name; }
+        else{ return ""; }
+    }
+    /** get employee name function **/
 }
