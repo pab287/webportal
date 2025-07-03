@@ -429,62 +429,42 @@ class Cash_advance_m extends CI_Model {
         return $resultarray;
     }
 
-    function saveCashAdvance(){
+    public function saveCashAdvance(){
         $post = $this->input->post();
-        $date = date('Y-m-d H:i:s');
         $year = date('y');
         $month = date('m');
-        $employee = $this->input->post('employee');
-        $series = $this->series($year, $month);
-        if (sizeof($series) > 0) {
-	    	foreach($series as $arr) {
-	    		$x = $arr->ref_series;
-	    	}
-	    	$ref_series = intval($x) + 1;
-	    	if (strlen($ref_series) == 1) {
-	    		$ref_series = '000'.$ref_series;
-	    	} else if (strlen($ref_series) == 2) {
-	    		$ref_series = '00'.$ref_series;
-	    	} else if (strlen($ref_series) == 3) {
-	    		$ref_series = '0'.$ref_series;
-	    	} else {
-	    		$ref_series = $ref_series;
-	    	}
-	    } else {
-	    	$ref_series = '0001';
-        }
-        $x = explode("\n", $this->input->post('company'));
+
+        $lastRefSeries = $this->getLastRefSeries($year, $month);
+        $refSeries = $lastRefSeries ? (int)$lastRefSeries + 1 : 1;
+        $refSeries = str_pad($refSeries, 4, '0', STR_PAD_LEFT);
+
+        $x = explode("\n", $post["company"]);
         $company_x = rtrim($x['0']);
         $department_x = rtrim($x['1']);
         $position_x = rtrim($x['2']);
-        $reference =  'CA'.$year.'-'.$month.'-'.$ref_series;
-        //$company = $this->getCompany($company_x);
-        //$department_id = $this->getDepartment($department_x);
-        //$position = $this->getPosition($position_x);
-        $attachments = array();
-        $emp = $this->input->post('employee');
-        $purpose = ($this->input->post('purpose') == 'Others') ? $this->input->post('other_purpose') : $this->input->post('purpose');
+        $referenceCode =  'CA'.$year.'-'.$month.'-'.$refSeries;
+        $emp = $post["employee"];
+        $purpose = ($post["purpose"] == 'Others') ? trim($post["other_purpose"]): trim($post["purpose"]);
         $data = array(
                 'ref_yr' => $year,
-				'ref_series' => $ref_series,
+				'ref_series' => $refSeries,
 				'ref_month' => $month,
-				'reference_no' => 'CA'.$year.'-'.$month.'-'.$ref_series,
+				'reference_no' => $referenceCode,
 				'status' => 'HR Recommendation Pending',
-                'employee' => $this->input->post('employee'),
+                'employee' => $post["employee"],
                 'company' => $company_x,
 				'department' => $department_x,
                 'position' => $position_x,
                 'emp_status' => $this->getEmployeeStatus($this->input->post('employee')),
                 'emp_idno' => $this->getEmployeeNumber($this->input->post('employee')),
                 'date_employed' => $this->getEmployeeDateEmployed($this->input->post('employee')),
-                // 'purpose' => $this->input->post('purpose'), -> original source code
                 'purpose' => $purpose,
-                'amt_applied' => $this->input->post('amt_applied'),
+                'amt_applied' => $post["amt_applied"],
                 'amt_approved' => "0",
-                'amt_to_b_deducted' => $this->input->post('amt_deduct'),
-                'deduct_type' => $this->input->post('deduct_type'),
+                'amt_to_b_deducted' => $post["amt_deduct"],
+                'deduct_type' => $post["deduct_type"],
                 'created_by' => $this->getDisplayName(),
-                'created_dt' => $date
+                'created_dt' => $this->dateTime
         );
         $q = $this->db->insert('gcceforms.cash_advance', $data);
         $data_id = $this->db->insert_id();
@@ -495,27 +475,26 @@ class Cash_advance_m extends CI_Model {
             if (!file_exists(realpath($toPath))) { mkdir($toPath, 0777, true); }
             $moveUploaded = $this->file_upload->moveUploadedFile($fileName,$fromPath,$toPath, true);
             $thumbnailPath = "$fromPath/thumbnails/$fileName";
-            if (file_exists($thumbnailPath)) {
-                unlink($thumbnailPath);
-            }
-            if($moveUploaded){ 
-                $this->saveFile($data_id, $fileName);
-            }
+            if (file_exists($thumbnailPath)) { unlink($thumbnailPath); }
+            if($moveUploaded){ $this->saveFile($data_id, $fileName); }
+        }
+
+        $msgEmployeeName = "";
+        if($emp != $this->core_layout->getCurrentEmployeeId()){
+            $employeeName = $this->getCurrentEmployeeName($emp);
+            $msgEmployeeName = " for employee `". $employeeName."`";
         }
 
         if($q){
-            $this->core_layout->setEventLog("Cash Advance Masterfile - Added new Cash Advance with a CA. No. of ".$reference,"insert", "success", "gcceforms", "user");
+            $this->core_layout->setEventLog("Cash Advance Masterfile - Added new Cash Advance with a CA. No. of `".$referenceCode."`".$msgEmployeeName."." ,"insert", "success", "gcceforms", "user");
         }else{
-            $this->core_layout->setEventLog("Cash Advance Masterfile - Failed to add new Cash Advance with a CA. No. of ".$reference,"insert", "success", "gcceforms", "system");
+            $this->core_layout->setEventLog("Cash Advance Masterfile - Failed to add new Cash Advance with a CA. No. of ".$referenceCode."`".$msgEmployeeName."." ,"insert", "success", "gcceforms", "system");
         }
 
         if($data_id){
-            // $filedata = $this->input->post('filename');
-            // if($filedata != "" || $filedata != null){  
-            // }
-            $Empname = $this->getEmpName($this->input->post('employee'));
+            $empName = $this->getEmpName($this->input->post('employee'));
             $recipient = $this->getSupervisorEmail($department_x);
-            $this->email_send($Empname, $reference, $this->input->post('amt_applied'), $this->input->post('purpose'), $recipient);
+            $this->email_send($empName, $referenceCode, $this->input->post('amt_applied'), $this->input->post('purpose'), $recipient);
         }
         return true;
     }
@@ -726,8 +705,7 @@ class Cash_advance_m extends CI_Model {
         return $this->db->insert('gcceforms.ca_attachments', $data);
     }
 
-    function series($year, $month)
-	{
+    protected function getLastRefSeries($year, $month){
 		$this->db->select('ref_series');
 		$this->db->from('gcceforms.cash_advance');
 		$this->db->where('ref_yr',$year);
