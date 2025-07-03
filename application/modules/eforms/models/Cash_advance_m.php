@@ -488,13 +488,13 @@ class Cash_advance_m extends CI_Model {
         if($q){
             $this->core_layout->setEventLog("Cash Advance Masterfile - Added new Cash Advance with a CA. No. of `".$referenceCode."`".$msgEmployeeName."." ,"insert", "success", "gcceforms", "user");
         }else{
-            $this->core_layout->setEventLog("Cash Advance Masterfile - Failed to add new Cash Advance with a CA. No. of ".$referenceCode."`".$msgEmployeeName."." ,"insert", "success", "gcceforms", "system");
+            $this->core_layout->setEventLog("Cash Advance Masterfile - Failed to add new Cash Advance with a CA. No. of ".$referenceCode."`".$msgEmployeeName."." ,"insert", "error", "gcceforms", "system");
         }
 
         if($data_id){
-            $empName = $this->getEmpName($this->input->post('employee'));
+            $empName = $this->getEmpName($emp);
             $recipient = $this->getSupervisorEmail($department_x);
-            $this->email_send($empName, $referenceCode, $this->input->post('amt_applied'), $this->input->post('purpose'), $recipient);
+            $this->email_send($empName, $referenceCode, $post["amt_applied"], $post["purpose"], $recipient);
         }
         return true;
     }
