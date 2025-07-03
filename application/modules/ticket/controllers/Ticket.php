@@ -1,6 +1,5 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 class Ticket extends MY_Controller {
-    private $status;
     public function __construct(){
 		parent::__construct();
 		$this->authenticate->setModuleAccess("ticket");
@@ -12,7 +11,6 @@ class Ticket extends MY_Controller {
 
         $this->load->model('Ticket_m','ticket');
         date_default_timezone_set('Asia/Manila');
-        $this->status = null;
     }
 
     function dashboard(){
