@@ -11,6 +11,7 @@
 
             <input type="hidden" name="csrf_token" value="<?= $this->security->get_csrf_hash(); ?>">
             <input type="hidden" name="id" value="<?= $data->id; ?>">
+            <input type="hidden" name="current_filename" value="<?= $data->liscert_attachment ?>">
 
             <div class="modal-body">
                 <div class="form-group">
@@ -89,6 +90,19 @@
                         </span>
                         <input id="release_date" type="text" name="expiration_date" value="<?= $data->expiration_date != '0000-00-00' && $data->expiration_date ? $data->expiration_date : '' ?>" maxlength="12" size="12" autocomplete="off" data-validation="required" class="form-control m-input date" />
                     </div>
+                </div>
+                <div class="form-group">
+                    <label for="fileupload_liscert" class="form-control-label">Attachment</label>
+                    <span class="btn btn-success fileinput-button btn-sm pull-right">
+                        <i class="glyphicon glyphicon-plus"></i>
+                        <span>Select file</span>
+                        <input type="file" id="fileupload_liscert" name="files" onchange="setFilename(this, '#temp_fileupload')" accept=".jpg, .jpeg, .png, .pdf">
+                    </span>
+                    <p id="temp_fileupload" style='text-overflow: ellipsis; white-space: nowrap; overflow: hidden;' class="form-control m-input m--margin-top-10" disabled="disabled"><?= $data->liscert_attachment ?></p>
+                </div>
+                <div class="form-group">
+                    <label for="remarks" class="form-control-label">Remarks</label>
+                    <textarea id="remarks" name="remarks" class="form-control m-input"rows="3"cols="50"autocomplete="off"><?= $data->remarks ?></textarea>
                 </div>
             </div>
             <div class="modal-footer">

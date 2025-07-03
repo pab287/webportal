@@ -75,7 +75,7 @@ class Ticket extends MY_Controller {
         $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
-        $this->core_layout->addJs("js/ticket/new_ticket.js", true,$tempData);
+        $this->core_layout->addJs("js/ticket/new_ticket.js", true,$tempData,"?v=0.0.1");
 		$this->load->view('core/templates/header');
         $this->load->view('ticket/new_ticket');
         $this->load->view('core/templates/footer');
@@ -353,6 +353,16 @@ class Ticket extends MY_Controller {
 
     public function get_average_response_time(){
         $data = $this->ticket->getAveResponseTime();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_existing_ticket_per_user(){
+        $data = $this->ticket->getExistingTicketPerUser();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function close_ticket(){
+        $data = $this->ticket->closeTicket();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 

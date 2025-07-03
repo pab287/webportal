@@ -137,9 +137,6 @@
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
                         <div class="m-portlet__head-title">
-                            <!-- <span class="m-portlet__head-icon">
-                                <i class="fa fa-building"></i>
-                            </span> -->
                             <h3 class="m-portlet__head-text">
                                 Document by Type Masterfile
                             </h3>
@@ -171,25 +168,9 @@
                                                 </span>
                                             </span>
                                         </a>
-                                        <!-- <button class="btn btn-primary m-btn m-btn--icon m-btn--pill btnAdvance_search" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <span><i class="fa fa-search"></i><span>Filter</span><span class="dropdown-toggle"></span></span>
-                                        </button>
-                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 37px, 0px); top: 0px; left: 0px; will-change: transform;">
-                                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-query-builder">
-                                                Query Builder
-                                            </a>
-                                        </div> -->
                                     </div>
                                 </div>
                             </div>
-                            <!-- <div class="col-xl-4 order-1 order-xl-2 m--align-right">
-                                <div class="m-input-icon m-input-icon--left" style="border: 1px solid #c3c3c3;">
-                                    <input type="text" class="form-control m-input m-input--solid" placeholder="Search..." id="generalSearch">
-                                    <span class="m-input-icon__icon m-input-icon__icon--left">
-                                        <span> <i class="la la-search"></i> </span>
-                                    </span>
-                                </div>
-                            </div> -->
                         </div>
                     </div>
 

@@ -27,6 +27,7 @@
             $this->core_layout->addJs('js/hris/search_employee_script.js', TRUE);
             $this->core_layout->addJs('js/hris/index_script.js', TRUE);
 
+            $this->core_layout->addJs("js/dataTables.select.min.js");
             $this->core_layout->addCss('css/hris/index.css', TRUE);
 
             /*** $nextMonth = date("Y-m-d", strtotime("+1 month"));

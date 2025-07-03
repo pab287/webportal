@@ -319,29 +319,42 @@
         // }
         // new function get user session ID and Display Head Department Employees
         //for HR Display all Employees
-        function getEmployeeDatatableRequest($employee_status) {
+        public function getEmployeeDatatableRequest($employee_status) {
             $resultSet = array();
-
-            $emp_id = $this->loggedinData["emp_id"];
-            $this->db->select('dept.*');
-            $this->db->where('head_id', $emp_id);
-            $query = $this->db->get('gcchris.tbldepartments dept');
-            $res = $query->result();
-            $dep_id = array();
-            foreach($res as $row) {
-                $dep_id[] = $row->id;
-            }
-
             $post = $this->input->post();
             $companyId = 0;
-            $viewByCompany = isset($post['list_view']) ? $post["list_view"] : 'all';
-            if($viewByCompany == 'by_company') {
+            $dep_id = array();
+            
+            $isViewByCompany = false;
+            $isViewByDepartment = false;
+            $emp_id = $this->core_layout->getCurrentEmployeeId();
+
+            if(isset($post['list_view']) && is_array($post['list_view']) && in_array('by_company', $post['list_view'])) {
+                $isViewByCompany = true;
                 $this->db->select("company_id");
                 $this->db->where("id", $emp_id);
                 $this->db->where("employee_status", "active");
                 $queryCompId = $this->db->get("gccmaster.tblemployees");
                 if($queryCompId->num_rows() == 1){
                     $companyId = $queryCompId->row()->company_id;
+                }
+            }
+            if(isset($post['list_view']) && is_array($post['list_view']) && in_array('by_department', $post['list_view'])) {
+                $isViewByDepartment = true;
+                $this->db->select('id');
+                $this->db->where('head_id', $emp_id);
+                $queryDept = $this->db->get('gcchris.tbldepartments');
+                if($queryDept->num_rows() > 0){
+                    $res = $queryDept->result();
+                    foreach($res as $row) { $dep_id[] = $row->id; }
+                }else{
+                    $this->db->select('dept.id');
+                    $this->db->where('emp.id', $emp_id);
+                    $this->db->join('gcchris.tbldepartments as dept', 'dept.id = emp.department_id OR dept.code = emp.department_id', 'INNER');
+                    $queryDept = $this->db->get('gccmaster.tblemployees emp');
+                    if($queryDept->num_rows() == 1){
+                        $dep_id[] = $queryDept->row()->id;
+                    }
                 }
             }
 
@@ -416,8 +429,8 @@
                 emp.is_incomplete, emp.work_status, emp.date_start,
                 emp.gender, emp.email, emp.curr_addr as address, emp.mobile_no");
                                
-            if(!in_array(8, $dep_id) && $dep_id){ $this->db->where_in('emp.department_id', $dep_id); }
-            if($viewByCompany == 'by_company') { $this->db->where('emp.company_id', $companyId); }
+            if(is_array($dep_id) && !in_array(8, $dep_id) && !empty($dep_id) && $isViewByDepartment){ $this->db->where_in('emp.department_id', $dep_id); }
+            if($isViewByCompany && $companyId) { $this->db->where('emp.company_id', $companyId); }
             $this->db->order_by($order, $dir);
             $this->db->group_by("emp.id");
             $query = $this->db->get("gccmaster.tblemployees emp");
@@ -485,18 +498,16 @@
         }
 
         function getEmployeeCount($employee_status) {
-            $emp_id = $this->loggedinData["emp_id"];
-            $this->db->select('dept.*');
-            $this->db->where('head_id', $emp_id);
-            $query = $this->db->get('gcchris.tbldepartments dept');
-            $res = $query->result();
-            $dep_id = array();
-            foreach($res as $row) { $dep_id[] = $row->id; }
-
             $post = $this->input->post();
             $companyId = 0;
-            $viewByCompany = isset($post['list_view']) ? $post["list_view"] : 'all';
-            if($viewByCompany == 'by_company') {
+            $dep_id = array();
+
+            $isViewByCompany = false;
+            $isViewByDepartment = false;
+            $emp_id = $this->core_layout->getCurrentEmployeeId();
+
+            if(isset($post['list_view']) && is_array($post['list_view']) && in_array('by_company', $post['list_view'])) {
+                $isViewByCompany = true;
                 $this->db->select("company_id");
                 $this->db->where("id", $emp_id);
                 $this->db->where("employee_status", "active");
@@ -505,6 +516,25 @@
                     $companyId = $queryCompId->row()->company_id;
                 }
             }
+            if(isset($post['list_view']) && is_array($post['list_view']) && in_array('by_department', $post['list_view'])) {
+                $isViewByDepartment = true;
+                $this->db->select('id');
+                $this->db->where('head_id', $emp_id);
+                $queryDept = $this->db->get('gcchris.tbldepartments');
+                if($queryDept->num_rows() > 0){
+                    $res = $queryDept->result();
+                    foreach($res as $row) { $dep_id[] = $row->id; }
+                }else{
+                    $this->db->select('dept.id');
+                    $this->db->where('emp.id', $emp_id);
+                    $this->db->join('gcchris.tbldepartments as dept', 'dept.id = emp.department_id OR dept.code = emp.department_id', 'INNER');
+                    $queryDept = $this->db->get('gccmaster.tblemployees emp');
+                    if($queryDept->num_rows() == 1){
+                        $dep_id[] = $queryDept->row()->id;
+                    }
+                }
+            }
+
             $sex = isset($post['emp_sex']) ? $post["emp_sex"] : 'All';
             $orderx = (isset($post["order"]) && $post["order"]) ? $post["order"] : false;
             $dir = "DESC";
@@ -564,8 +594,8 @@
                 IF(positions.id IS NULL, emp.position, positions.name) position,
                 emp.is_incomplete, emp.work_status, emp.date_start");
                                
-            if(!in_array(8, $dep_id) && $dep_id){ $this->db->where_in('emp.department_id', $dep_id); }
-            if($viewByCompany == 'by_company') { $this->db->where('emp.company_id', $companyId); }
+            if(is_array($dep_id) && !in_array(8, $dep_id) && !empty($dep_id) && $isViewByDepartment){ $this->db->where_in('emp.department_id', $dep_id); }
+            if($isViewByCompany && $companyId) { $this->db->where('emp.company_id', $companyId); }
             $this->db->order_by($order, $dir);
             $this->db->group_by("emp.id");
             $query = $this->db->get("gccmaster.tblemployees emp");
@@ -852,7 +882,7 @@
         function getEmployeeLicensure() {
             $post = $this->input->post();
             if ($post) {
-                $columns = array("license_type", "exam_place", "rating", "release_date", "exam_date", "license_no", "expiration_date", "license_id", "id", "emp_id",'certificate_name');
+                $columns = array("license_type", "exam_place", "rating", "release_date", "exam_date", "license_no", "expiration_date", "license_id", "id", "emp_id",'certificate_name','remarks','liscert_attachment');
                 $dir = "release_date";
                 $order = "id";
                 if (isset($post["order"]) && $post["order"]) {
@@ -895,6 +925,8 @@
                         $nestedData['exam_date'] = $pst->exam_date ? $pst->exam_date : "";
                         $nestedData['license_no'] = $pst->license_no ;
                         $nestedData['certificate_name'] = $pst->certificate_name;
+                        $nestedData['remarks'] = $pst->remarks;
+                        $nestedData['liscert_attachment'] = $pst->liscert_attachment;
                         if($pst->expiration_date && $pst->expiration_date != '0000-00-00'){
                             if(date("Y-m-d") >= $pst->expiration_date){
                                 $expiration_date = "<span class='m-badge m-badge--danger m-badge--wide'>$pst->expiration_date</span>";
@@ -995,13 +1027,15 @@
         function getEmployeeWorkExperience() {
             $post = $this->input->post();
             if ($post) {
-                $columns = array("work_company", "work_from", "work_to", "work_position", "work_status", "work_reason", "id", "emp_id", "old_idno");
+                $columns = array("work_company", "work_from", "work_to", "work_position", "work_status", "work_reason", "id", "emp_id", 'add_date', "old_idno");
                 $dir = "DESC";
                 $order = "work_from";
                 if (isset($post["order"]) && $post["order"]) {
                     $dir = $post["order"][0]["dir"];
                     $order = $columns[$post["order"][0]["column"]];
-                }
+                } 
+                $orderRaw = 'work_from DESC, work_to DESC, add_date DESC';
+                //here
                 $draw = (isset($post['draw']) && $post['draw']) ? $post['draw'] : 0;
                 $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
                 $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 0;
@@ -1020,7 +1054,7 @@
                 $totalFiltered = $totalData;
 
                 if (empty($searchValue)) {
-                    $posts = $dtTable->dtAllPosts($limit, $start, $order, $dir);
+                    $posts = $dtTable->dtAllPosts($limit, $start, $order, $dir, $orderRaw);
                 } else {
                     $posts = $dtTable->dtSearch($limit, $start, $searchValue, $order, $dir);
                     $totalFiltered = $dtTable->dtPostSearchCount($searchValue);
@@ -1514,7 +1548,7 @@
                         $nestedData['offcom_date'] = $pst->offcom_date;
                         $nestedData['offcom_nature'] = $pst->offcom_nature;
                         $nestedData['offcom_action'] = $pst->offcom_action;
-                        $nestedData['filename'] = $pst->filename;
+                        $nestedData['filename'] = $pst->filename ? $pst->filename : '---';
                         $data[] = $nestedData;
                     }
                 }
@@ -3585,20 +3619,24 @@
                     $range["quarter_4"] = "October - December";
 
                 } else {
+                    $_dateStarted = date('F d, Y', strtotime($dateStarted));
                     $_3rdMonth = date('F d, Y', strtotime("+3 months", strtotime($dateStarted)));
 
                     $fifthEvaluationDate = date('Y-m-d', strtotime("+5 months", strtotime($dateStarted)));
                     $_45Month = date('F d, Y', strtotime("-15 days", strtotime($fifthEvaluationDate)));
+                    $_5thMonth = date('F d, Y', strtotime($fifthEvaluationDate));
 
-                    $dateStarted = date('F d, Y', strtotime($dateStarted));
-                    $_3rdMonth = "{$dateStarted} - {$_3rdMonth}";
-                    $_45Month = "{$dateStarted} - {$_45Month}";
+                    $_3rdMonthRange = "{$_dateStarted} - {$_3rdMonth}";
+                    $_45MonthRange = "{$_dateStarted} - {$_45Month}";
+                    $_5thMonthRange = "{$_dateStarted} - {$_5thMonth}";
 
                     $qtr["month_30"] = "3rd Month";
-                    $qtr["month_45"] = "4.5 Month";
+                    // $qtr["month_45"] = "4.5th Month";
+                    $qtr["month_50"] = "5th Month";
 
-                    $range["month_30"] = $_3rdMonth;
-                    $range["month_45"] = $_45Month;
+                    $range["month_30"] = $_3rdMonthRange;
+                    // $range["month_45"] = $_45MonthRange;
+                    $range["month_50"] = $_5thMonthRange;
                 }
 
                 $data["quarter"] = $qtr;
@@ -3726,6 +3764,7 @@
                         // END
         
                         $post = array_map('strtoupper', $post);
+                        $post['liscert_attachment'] = strtolower($post['liscert_attachment']);
                         $saved = $this->db->insert($this->employeeLicensureTable, $post);
                         $fullname = $this->getEmployeeName($post['emp_id']);
                         if ($saved) {
@@ -4563,7 +4602,7 @@
                 $document->to_replace_filename = null;
                 $document->to_replace_filepath = null;
 
-                if($fileExist == false){
+                if($fileExist == true){
                     $tempFiles = scandir("uploads/files/documents/employee_files/empcode_{$employee_id}/documents/");
                     foreach ($tempFiles as $file) {
                         if(strstr($file, $document->doc_filename)){
@@ -4660,7 +4699,7 @@
                 $training->to_replace_filename = null;
                 $training->to_replace_filepath = null;
 
-                if($fileExist == false){
+                if($fileExist == true){
                     $tempFiles = scandir("uploads/files/documents/employee_files/empcode_{$employee_id}/trainings/");
                     foreach ($tempFiles as $file) {
                         if(strstr($file, $training->doc_filename)){
@@ -4709,7 +4748,7 @@
                 $medical->to_replace_filename = null;
                 $medical->to_replace_filepath = null;
 
-                if($fileExist == false){
+                if($fileExist == true){
                     $tempFiles = scandir("uploads/files/documents/employee_files/empcode_{$employee_id}/medical/");
                     foreach ($tempFiles as $file) {
                         if(strstr($file, $medical->doc_filename)){
@@ -4759,7 +4798,7 @@
                 $offense->to_replace_filename = null;
                 $offense->to_replace_filepath = null;
 
-                if($fileExist == false){
+                if($fileExist == true){
                     $tempFiles = scandir("uploads/files/documents/employee_files/empcode_{$employee_id}/offenses_commendation/");
                     foreach ($tempFiles as $file) {
                         if(strstr($file, $offense->doc_filename)){
@@ -4774,6 +4813,58 @@
             }
             /* OFFENSE AND COMMENDATION */
 
+            $this->db->reset_query();
+            /* Licenses And Certifications */
+
+            $this->db->select("licenses.*, DATE_FORMAT(licenses.add_date, '%b %d, %Y %h:%i:%s %p') date_uploaded, 
+            licenses.license_type as doc_type, licenses.liscert_attachment doc_filename, 
+            CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+            END,' ', UPPER(TRIM(emp.lastname)),
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
+            END) as added_by_name", FALSE);
+
+        $this->db->join("gccmaster.tblemployees as emp", "emp.id = licenses.add_by", "LEFT");
+        $this->db->where("licenses.emp_id", $employee_id);
+        $this->db->where("licenses.liscert_attachment !=", "");
+        $this->db->where("licenses.liscert_attachment IS NOT NULL", NULL, FALSE);
+        $this->db->where("(licenses.is_archived=0 OR licenses.is_archived IS NULL)", NULL, FALSE);
+        $this->db->like('CONCAT(licenses.license_type, licenses.liscert_attachment, DATE(licenses.add_date), DATE(licenses.release_date), licenses.rating, licenses.exam_place)', $searchKey, 'both');
+        $this->db->order_by("licenses.id", "desc");
+        $licenses = array();
+        $_licenses = $this->db->get($this->employeeLicensureTable . " licenses")->result();
+
+        foreach ($_licenses as $license) {
+            $path = "uploads/files/documents/employee_files/empcode_" . $employee_id . "/licenses_certificates/" . $license->doc_filename;
+            $realpath = realpath($path);
+            $fileExist = file_exists($realpath);
+            $license->exists = file_exists($realpath);
+            $license->filepath = base_url($path);
+
+            $license->to_replace = false;
+            $license->to_replace_filename = null;
+            $license->to_replace_filepath = null;
+
+            if($fileExist == true){
+                $tempFiles = scandir("uploads/files/documents/employee_files/empcode_{$employee_id}/licenses_certificates/");
+                foreach ($tempFiles as $file) {
+                    if(strstr($file, $license->doc_filename)){
+                        $license->to_replace_filename = $file;
+                        $license->to_replace = true;
+                        $license->to_replace_filepath = base_url("uploads/files/documents/employee_files/empcode_{$employee_id}/licenses_certificates/{$file}");
+                    }
+                }
+            }
+
+            array_push($licenses, $license);
+        }
+
+            /* Licenses And Certifications */
+            $this->db->reset_query();
             /* PERFORMANCE EVALUATION */
             $this->db->select("performance.*, DATE_FORMAT(performance.created_at, '%b %d, %Y %h:%i:%s %p') date_uploaded, 
                 'Performance Evaluation' as doc_type, performance.filename as doc_filename, 
@@ -4806,7 +4897,7 @@
                 $p->to_replace_filename = null;
                 $p->to_replace_filepath = null;
 
-                if($fileExist == false){
+                if($fileExist == true){
                     $tempFiles = scandir("uploads/files/documents/employee_files/empcode_{$employee_id}/performance_eval/");
                     foreach ($tempFiles as $file) {
                         if(strstr($file, $p->doc_filename)){
@@ -4827,7 +4918,8 @@
                 "medical" => $medical_records,
                 "offenses" => $offenses,
                 "performance" => $performance,
-                "bgcheck" => $bgcheck
+                "bgcheck" => $bgcheck,
+                "licenses" => $licenses
             );
         }
 
@@ -5399,13 +5491,16 @@
             );
             $id = $post->id;
             $is_active = isset($post->is_active) && $post->is_active == 1 ? $post->is_active : 0;
+            $current_filename = $post->current_filename;
+
+            unset($post->current_filename);
             unset($post->id);
             $currentData = $this->getLicensureById($id);
-            if ($post->license_type != 'Certificate') {
+            if ($post->license_type != 'Certificate' && $post->license_type != '0-CERTIFICATE') {
                 $license = explode('-', $post->license_type);
                 $post->license_id = $license[0];
                 $post->license_type = $license[1];
-                $license_type = ($license[0] != 0) ? $this->getLicense($license[0])->type : null;
+                // $license_type = ($license[0] != 0) ? $this->getLicense($license[0])->type : null;
                 $post->certificate_name = null; 
             }else{
                 $post->license_type = 'CERTIFICATE';
@@ -5419,7 +5514,39 @@
                 unset($post->is_active);
             }
             $this->db->where("id", $id);
-            if ($this->db->update($this->employeeLicensureTable, $post)) {  
+            if ($this->db->update($this->employeeLicensureTable, $post)) { 
+
+                $emp_id = $this->db->where("id", $id)->get($this->employeeLicensureTable)->row("emp_id");
+                $uploadPath = './uploads/files/documents/employee_files/empcode_' . $emp_id . '/licenses_certificates';
+                $uploaded = null;
+                
+                if ($_FILES["files"]["name"]) {
+                    $current_file_path = $uploadPath . "/" . $current_filename;
+    
+                    if (!file_exists(realpath($uploadPath))) {
+                        mkdir($uploadPath, 0777, true);
+                    }
+    
+                    if ($current_filename && file_exists(realpath($current_file_path))) {
+                        unlink(realpath($current_file_path));
+                    }
+    
+                    $config = array();
+                    $config['upload_path'] = $uploadPath;
+                    $config['allowed_types'] = 'jpg|jpeg|png|PNG|JPG|JPEG|pdf|doc|docx';
+                    $config['max_size'] = 10000;
+                    $config['create_thumbnail'] = false;
+    
+                    $uploaded = $this->file_upload->uploadFile($config);
+    
+                    if ($uploaded['response']) {
+                        $this->db->where("id", $id)
+                            ->update($this->employeeLicensureTable, array("liscert_attachment" => $uploaded['files'][0]['file_name']));
+                            $post->filename = $uploaded['files'][0]['file_name'];
+                    }
+                }
+                
+
                 $changes = $this->logChanges($currentData, $post);
                 $fullname =  $this->getEmployeeName($currentData->emp_id);
                 // unset($post->license_id);
@@ -6139,19 +6266,21 @@
             $first_eval = $this->getFirstEvalCalendar();
             $second_eval = $this->getSecondEvalCalendar();
             $final_eval = $this->getFinalEvalCalendar();
-            return array_merge($first_eval, $second_eval, $final_eval);
+
+            // return array_merge($first_eval, $second_eval, $final_eval); // Original code returns all three evaluations
+            return array_merge($first_eval, $final_eval); // Modified code to return only first and final evaluations
         }
 
         private function getFirstEvalCalendar() {
             $select = "'first_eval' evaluation_stage, emp.id emp_id, emp.lastname, emp.firstname, ";
-            $select .= "calendar.id cal_id, '1st Evaluation' string_eval, ";
+            $select .= "calendar.id cal_id, '3rd Month Evaluation' string_eval, ";
             $select .= "emp.middlename, emp.suffix, ";
-            $select .= "UPPER(CONCAT('1st : ', emp.firstname, ' ', emp.middlename,' ',emp.lastname, ";
+            $select .= "UPPER(CONCAT('3rd : ', emp.firstname, ' ', emp.middlename,' ',emp.lastname, ";
             $select .= "    CASE WHEN emp.suffix = 'NONE' THEN '' ";
             $select .= "        WHEN emp.suffix = 'N/A' THEN '' ";
             $select .= "        WHEN emp.suffix IS NULL THEN '' ";
             $select .= "        ELSE CONCAT(' ', emp.suffix) END )) title, ";
-            $select .= "'1st Evaluation' description, ";
+            $select .= "'3rd Month Evaluation' description, ";
             $select .= "emp.date_start, emp.date_end_prob, DATE_ADD(emp.date_start, INTERVAL 3 MONTH) `start`, ";
             $select .= "CASE
                             WHEN calendar.`status`='discontinue' THEN '#F44336'
@@ -6182,14 +6311,14 @@
 
         private function getSecondEvalCalendar() {
             $select = "'second_eval' evaluation_stage, emp.id emp_id, emp.lastname, emp.firstname, ";
-            $select .= "calendar.id cal_id, '2nd Evaluation' string_eval, ";
+            $select .= "calendar.id cal_id, '4.5th Month Evaluation' string_eval, ";
             $select .= "emp.middlename, emp.suffix, ";
-            $select .= "UPPER(CONCAT('2nd : ', emp.firstname, ' ', emp.middlename,' ',emp.lastname, ";
+            $select .= "UPPER(CONCAT('4.5th : ', emp.firstname, ' ', emp.middlename,' ',emp.lastname, ";
             $select .= "    CASE WHEN emp.suffix = 'NONE' THEN '' ";
             $select .= "        WHEN emp.suffix = 'N/A' THEN '' ";
             $select .= "        WHEN emp.suffix IS NULL THEN '' ";
             $select .= "        ELSE CONCAT(' ', emp.suffix) END )) title, ";
-            $select .= "'Second Evaluation' description, ";
+            $select .= "'4.5th Month Evaluation' description, ";
             $select .= "emp.date_start, emp.date_end_prob, DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) `start`, ";
             $select .= "CASE
                             WHEN calendar.`status`='discontinue' THEN '#F44336'
@@ -6214,14 +6343,14 @@
 
         private function getFinalEvalCalendar() {
             $select = "'status' evaluation_stage, emp.id emp_id, emp.lastname, emp.firstname, ";
-            $select .= "calendar.id cal_id, 'Final Evaluation' string_eval, ";
+            $select .= "calendar.id cal_id, '5th Month Evaluation' string_eval, ";
             $select .= "emp.middlename, emp.suffix, ";
-            $select .= "UPPER(CONCAT('Final : ', emp.firstname, ' ', emp.middlename,' ',emp.lastname, ";
+            $select .= "UPPER(CONCAT('5th : ', emp.firstname, ' ', emp.middlename,' ',emp.lastname, ";
             $select .= "    CASE WHEN emp.suffix = 'NONE' THEN '' ";
             $select .= "        WHEN emp.suffix = 'N/A' THEN '' ";
             $select .= "        WHEN emp.suffix IS NULL THEN '' ";
             $select .= "        ELSE CONCAT(' ', emp.suffix) END )) title, ";
-            $select .= "'Final Evaluation' description, ";
+            $select .= "'5th Month Evaluation' description, ";
             $select .= "emp.date_start, emp.date_end_prob, DATE_ADD(emp.date_start, INTERVAL 5 MONTH) `start`, ";
             $select .= "CASE
                             WHEN (calendar.first_eval IS NULL OR calendar.first_eval = '') AND (calendar.second_eval OR calendar.second_eval = '') IS NULL THEN '#F44336'
@@ -6394,7 +6523,7 @@
                         "archived_table" => "gccmaster.tblemployees",
                         "archived_id" => $emp_id,
                         "archived_by" => $user["employee_id"],
-                        "archived_at" => date('Y - m - d H:i:s'),
+                        "archived_at" => date('Y-m-d H:i:s'),
                         "status" => 3
                     )
                 );
@@ -6422,7 +6551,7 @@
                 "archived_table" => $archived_table,
                 "archived_id" => $archived_id,
                 "archived_by" => $employee_id,
-                "archived_at" => date('Y - m - d H:i:s'),
+                "archived_at" => date('Y-m-d H:i:s'),
                 "status" => $status);
             $this->db->insert($this->tblArchivedItems, $archived_data);
         }
@@ -6441,6 +6570,7 @@
             $previous_date_year = date('Y', strtotime($previous_date));
 
             $id = $post->emp_id;
+            $currentData = $this->getEmployeeCurrentCompany($id);
 
             $company_history_latest = $this->db->where("emp_id", $id)
                 ->order_by("created_at", "desc")
@@ -6456,12 +6586,13 @@
                 "work_position" => $post->current_position,
                 "work_status" => $post->current_status,
                 "work_reason" => "TRANSFER COMPANY",
-                "add_date" => date('Y - m - d H:i:s'),
-                "add_by" => $employee_id
+                "add_date" => date('Y-m-d H:i:s'),
+                "add_by" => $employee_id,
+                "old_idno" => $currentData->idno ? $currentData->idno : ''
             );
             $this->db->insert($this->employeeWorkExperienceTable, $work_experience_field);
             /* END SAVE WORK EXPERIENCE */
-            $currentData = $this->getEmployeeCurrentCompany($id);
+
             /* UPDATE COMPANY & OTHERS */
             $update_data = array(
                 "company_id" => $post->company_id,
@@ -8967,6 +9098,7 @@
             $this->db->select("id, is_active");
             $this->db->where("emp_id", $post["emp_id"]);
             $this->db->where("is_archived", 0);
+            $this->db->where('id !=', $id);
             $qAllw = $this->db->get("gcchris.allowances");
             if($qAllw->num_rows() > 0){
                 $multipleAllowances = false;
@@ -8974,7 +9106,7 @@
                 $checkColumn = array_column($qAllw->result_array(), "is_active");
                 $isActiveColumn = array_count_values($checkColumn);
                 if(($recordCount > 1 && isset($isActiveColumn[1]) && $isActiveColumn[1] == $recordCount) ||
-                 ($recordCount > 1 && $postStdClass->is_active && (isset($isActiveColumn[0]) && $isActiveColumn[0] > 0) && (isset($isActiveColumn[1]) && $isActiveColumn[1] > 0))){
+                    ($recordCount > 1 && $postStdClass->is_active && (isset($isActiveColumn[0]) && $isActiveColumn[0] > 0) && (isset($isActiveColumn[1]) && $isActiveColumn[1] > 0))){
                     $multipleAllowances = true;
                 }
 
@@ -9068,6 +9200,16 @@
                 $this->db->where("id", $id);
                 $this->db->set($tempData);
                 $updated = $this->db->update("gcchris.allowances");
+
+                /** automatically inactive the active allowance when activating a different allowance */
+                if ($updated) {
+                    if (isset($post['is_active']) && $post['is_active'] == 1) {
+                        $this->db->where("id !=", $id);
+                        $this->db->where('emp_id', $employeeId);
+                        $this->db->where('is_archived', 0);
+                        $this->db->update('gcchris.allowances', array( 'is_active' => 0 ));
+                    }
+                }
             }
 
             $coreHistoryLog = $this->core_layout->coreHistoryLogs();
@@ -9109,8 +9251,8 @@
                                 $toValue = is_numeric($toValue) ? number_format($toValue, 2, ".", ","): $toValue;
                                 
                                 $logMessage = $fromValue ? 
-                                    "Employee named `$tempEmployeeName` with payroll allowance data field `$nKey` has been updated from `$fromValue` to `$toValue`.": 
-                                    "Employee named `$tempEmployeeName` with payroll allowance data field `$nKey` has been updated into `$toValue`.";
+                                    "Employee named `$tempEmployeeName` with payroll allowance data field `Allowance $nKey` has been updated from `$fromValue` to `$toValue`.": 
+                                    "Employee named `$tempEmployeeName` with payroll allowance data field `Allowance $nKey` has been updated into `$toValue`.";
                                 $coreHistoryLog->setEventLog($logMessage, $fromValue ? "update": "insert", "success", "gcchris", "user");
                                 $coreHistoryLog->saveLoggedEventHistory();
                             }
@@ -9159,8 +9301,8 @@
                     $toValue = $value;
 
                     $logMessage = $fromValue ? 
-                            "Employee named `$tempEmployeeName` with payroll allowance data field `$tempDescription` and value of from `$fromValue` to `$toValue` is for approval status.": 
-                            "Employee named `$tempEmployeeName` with payroll allowance data field `$tempDescription` and value of `$toValue` is for approval status.";
+                            "Employee named `$tempEmployeeName` with payroll allowance data field `Allowance $tempDescription` and value of from `$fromValue` to `$toValue` is for approval status.": 
+                            "Employee named `$tempEmployeeName` with payroll allowance data field `Allowance $tempDescription` and value of `$toValue` is for approval status.";
                         $coreHistoryLog->setEventLog($logMessage, $fromValue ? "update": "insert", "success", "gcchris", "user");
                         $coreHistoryLog->saveLoggedEventHistory();
                 }
@@ -9199,7 +9341,7 @@
             $type = count($forApprovalFields) > 1 ? "are": "is";
             $resultSet["for_approval"] = true;
             $resultSet["email_sent"] = $emailSent;
-            $resultSet["approval_notification"] = "The following field(s) `{$explodedApproval}` {$type} for approval status.";
+            $resultSet["approval_notification"] = "The following field(s) `Allowance {$explodedApproval}` {$type} for approval status.";
         }
 
             /*** $this->db->where("id", $id);
@@ -10565,6 +10707,15 @@
                                             array("is_approved"=>3, "approval_by"=>$this->core_layout->getCurrentEmployeeId(), "approval_at"=>$approvalDate),
                                             $cancelApprovalWhere);
                                             $this->db->reset_query();
+
+                                            /** automatically inactive the active allowance when activating a different allowance */
+                                            if ($rowData->table_field == 'is_active' && $rowData->original_value == 1) {
+                                                $this->db->where('id !=', $rowData->table_id);
+                                                $this->db->where('is_archived', 0);
+                                                $this->db->where('emp_id', $rowData->unique_id);
+                                                $this->db->where('is_active', 1);
+                                                $this->db->update($rowData->database_table, array('is_active' => 0));
+                                            }
                                         }
                                     }
                                     $coreHistoryLog = $this->core_layout->coreHistoryLogs();
@@ -10573,7 +10724,8 @@
                                     $coreHistoryLog->setHistoryLogTableFieldId($rowData->table_id);
                                     $coreHistoryLog->setHistoryLogEmployeeId($rowData->unique_id);
         
-                                    $logMessage = "Employee named `$rowData->employee_name` with payroll $payrollData data field `$rowData->field_description` has been `$approval` with a value of `$rowData->table_value`.";
+                                    $_allowance = $payrollData == 'allowance' ? 'allowance ' . $rowData->field_description : $rowData->field_description;
+                                    $logMessage = "Employee named `$rowData->employee_name` with payroll $payrollData data field `$_allowance` has been `$approval` with a value of `$rowData->table_value`.";
                                     $coreHistoryLog->setEventLog($logMessage, $approval, "success", "gcchris", "user");
                                     $coreHistoryLog->saveLoggedEventHistory();
                                     
@@ -10641,6 +10793,15 @@
                                         array("is_approved"=>3, "approval_by"=>$this->core_layout->getCurrentEmployeeId(), "approval_at"=>$approvalDate),
                                         $cancelApprovalWhere);
                                         $this->db->reset_query();
+
+                                        /** automatically inactive the active allowance when activating a different allowance */
+                                        if ($rowData->table_field == 'is_active' && $rowData->original_value == 1) {
+                                            $this->db->where('id !=', $rowData->table_id);
+                                            $this->db->where('is_archived', 0);
+                                            $this->db->where('emp_id', $rowData->unique_id);
+                                            $this->db->where('is_active', 1);
+                                            $this->db->update($rowData->database_table, array('is_active' => 0));
+                                        }
                                     }
                                 }
                                 $coreHistoryLog = $this->core_layout->coreHistoryLogs();
@@ -10649,7 +10810,8 @@
                                 $coreHistoryLog->setHistoryLogTableFieldId($rowData->table_id);
                                 $coreHistoryLog->setHistoryLogEmployeeId($rowData->unique_id);
     
-                                $logMessage = "Employee named `$rowData->employee_name` with payroll $payrollData data field `$rowData->field_description` has been `$approval` with a value of `$rowData->table_value`.";
+                                $_allowance = $payrollData == 'allowance' ? 'allowance ' . $rowData->field_description : $rowData->field_description;
+                                $logMessage = "Employee named `$rowData->employee_name` with payroll $payrollData data field `$_allowance` has been `$approval` with a value of `$rowData->table_value`.";
                                 $coreHistoryLog->setEventLog($logMessage, $approval, "success", "gcchris", "user");
                                 $coreHistoryLog->saveLoggedEventHistory();
                                 
@@ -10822,7 +10984,7 @@
                 $rate = '';
                 $rate_fr = '';
 
-                $this->db->select('b.name, a.basic_rate, a.payroll_type');
+                $this->db->select('b.id as position_id, b.name, a.basic_rate, a.payroll_type');
                 $this->db->from($this->employeeTable.' as a');
                 $this->db->join($this->positionTable.' as b', 'b.id = a.position OR b.name = a.position', 'LEFT');
                 $this->db->where('a.id', $emp_id);
@@ -10878,7 +11040,7 @@
                     'emp_id' => $emp_id,
                     'sal_date' => date('Y-m-d'),
                     'sal_rate' => number_format($basic_total, 2, '.', ''),
-                    'sal_position' => $query->name,
+                    'sal_position' => $query->position_id,
                     'sal_remarks' => $remarks,
                     'add_date' => date('Y-m-d H:i:s'),
                     'add_by' => $user_emp_id
@@ -10894,7 +11056,7 @@
                 $rate_fr = '';
                 $basic = '';
 
-                $this->db->select('b.name, a.basic_rate, a.payroll_type');
+                $this->db->select('b.id as position_id, b.name, a.basic_rate, a.payroll_type');
                 $this->db->from($this->employeeTable.' as a');
                 $this->db->join($this->positionTable.' as b', 'b.id = a.position OR b.name = a.position', 'LEFT');
                 $this->db->where('a.id', $salary->unique_id);
@@ -10967,7 +11129,7 @@
                             'emp_id' => $salary->unique_id,
                             'sal_date' => date('Y-m-d'),
                             'sal_rate' => number_format($basic_total, 2, '.', ''),
-                            'sal_position' => $query->name,
+                            'sal_position' => $query->position_id,
                             'sal_remarks' => $remarks,
                             'add_date' => date("Y-m-d H:i:s"),
                             'add_by' => $user_emp_id
@@ -10994,7 +11156,7 @@
             $historyStatus = false;
             $now = date('Y-m-d');
 
-            $this->db->select('b.name, a.basic_rate, a.payroll_type, DATE(a.date_start) as date_start');
+            $this->db->select('b.id as position_id, b.name, a.basic_rate, a.payroll_type, DATE(a.date_start) as date_start');
             $this->db->from($this->employeeTable.' as a');
             $this->db->join($this->positionTable.' as b', 'b.id = a.position OR b.name = a.position', 'LEFT');
             $this->db->where('a.id', $arr['id']);
@@ -11067,7 +11229,7 @@
                     'emp_id' => $arr['id'],
                     'sal_date' => (isset($arr['date_hired']) && $arr['date_hired']) ? $arr['date_hired'] : date('Y-m-d'),
                     'sal_rate' => number_format($basic, 2, '.', ''),
-                    'sal_position' => $query->name,
+                    'sal_position' => $query->position_id,
                     'sal_remarks' => $remarks,
                     'add_date' => date("Y-m-d H:i:s"),
                     'add_by' => $user_emp_id
@@ -11093,7 +11255,7 @@
             if(!isset($arr["is_active"])){ $arr["is_active"] = 0; }
             $isActiveState = intval($arr["is_active"]) == 1;
 
-            $this->db->select('b.name, a.basic_rate, a.payroll_type, DATE(a.date_start) as date_start');
+            $this->db->select('b.id as position_id, b.name, a.basic_rate, a.payroll_type, DATE(a.date_start) as date_start');
             $this->db->from($this->employeeTable.' as a');
             $this->db->join($this->positionTable.' as b', 'b.id = a.position OR b.name = a.position', 'LEFT');
             $this->db->where('a.id', $arr['emp_id']);
@@ -11142,7 +11304,7 @@
                     'emp_id' => $arr['emp_id'],
                     'sal_date' => $date,
                     'sal_rate' => number_format($basic_total, 2, '.', ''),
-                    'sal_position' => $query->name,
+                    'sal_position' => $query->position_id,
                     'sal_remarks' => $remarks,
                     'add_date' => date("Y-m-d H:i:s"),
                     'add_by' => $user_emp_id
@@ -11380,7 +11542,6 @@
         }
 
         private function logChanges($currentData, $newData) {
-                // var_dump($currentData, $newData);
                 if (is_object($currentData)) {
                     $currentData = get_object_vars($currentData);
                 }
@@ -11818,13 +11979,14 @@
 
         public function getEmpWorkExperience($id){
             $this->db->select("xps.id, xps.emp_id, xps.work_to,
-                               IFNULL(comp.code, xps.work_company) as work_company, xps.work_status, xps.work_reason, xps.work_from, old_idno,
-                               IF(pos.id IS NULL, xps.work_position, pos.`name`) work_position");
+                            IFNULL(comp.code, xps.work_company) as work_company, xps.work_status, xps.work_reason, xps.work_from, old_idno,
+                            IF(pos.id IS NULL, xps.work_position, pos.`name`) work_position");
             $this->db->from($this->employeeWorkExperienceTable . " xps");
             $this->db->join($this->positionTable . " pos", "pos.id = xps.work_position", "LEFT");
             $this->db->join($this->companyTable . " comp", "comp.id = xps.work_company AND (UPPER(xps.work_reason) = 'TRANSFER COMPANY' OR `xps`.`old_idno` != NULL OR `xps`.`old_idno` != '')", "LEFT");
             $this->db->where('xps.emp_id', $id);
-            $this->db->order_by("xps.work_from DESC, xps.work_to DESC");
+            $this->db->where('xps.is_archived', 0);
+            $this->db->order_by("xps.work_from DESC, xps.work_to DESC, xps.add_date DESC");
             $query = $this->db->get();
             return ['works' => $query->result()];
         }
@@ -11873,7 +12035,7 @@
 
         public function getEmploymentInformation($id){
             $post = $this->input->post();
-            $data['offenses'] =  $this->db->order_by('offcom_date', 'DESC')->get_where($this->employeeOffensesTable, array("emp_id" => $id,"is_archived" => 0))->result();
+            $data['offenses'] =  $this->db->select('*, IFNULL(filename, "---") as filename')->order_by('offcom_date', 'DESC')->get_where($this->employeeOffensesTable, array("emp_id" => $id,"is_archived" => 0))->result();
             $this->db->reset_query();
             $data['salaries'] = $this->db
                 ->select("sal.id, sal.add_date, sal.sal_date, sal.sal_rate, sal.sal_remarks, IF(pos.id IS NULL, sal.sal_position, pos.name) sal_position")
@@ -11987,9 +12149,9 @@
             $this->db->reset_query();
             return $result->loan_name;
         }
-      
+    
         public function getEmployeeCurrentCompany($id){
-            $this->db->select("company_id, position, department_id");
+            $this->db->select("company_id, position, department_id, idno");
             $this->db->from($this->employeeTable);
             $this->db->where("id", $id);
             $query = $this->db->get();
@@ -12185,6 +12347,71 @@
                 $data = $query->row_array();
             }
             return $data['statement'] ?? '';
+        }
+        
+        public function uploadEmployeeLicenseCert(){
+            $resultset = array();
+            $post = $this->input->post();
+
+            if (isset($post["employee_id"]) && $post["employee_id"]) {
+                $imagesPath = "./uploads/files/documents/employee_files/empcode_{$post["employee_id"]}/licenses_certificates/";
+
+                $createFilePath = false;
+
+                if (!file_exists(realpath($imagesPath))) {
+                    $mkdir = mkdir($imagesPath, 0777 , true);
+                    if ($mkdir) {
+                        $createFilePath = true;
+                    }
+                } else {
+                    $createFilePath = true;
+                }
+
+                if ($createFilePath) {
+
+                    $config = array();
+                    $config['upload_path'] = $imagesPath;
+                    $config['allowed_types'] = 'jpg|jpeg|png|pdf|PNG|JPG|JPEG|PDF';
+                    $config['max_size'] = 100000;
+                    $config['create_thumbnail'] = false;
+
+                    $data = $this->file_upload->uploadFile($config);
+                    if ($data["response"]) {
+                        $files = $data["files"][0];
+                        $filename = $files["file_name"];
+                        if ($filename) {
+                            $resultset["response"] = true;
+                            $resultset["toastr_msg"] = "File upload successful.";
+                            $resultset["toastr_state"] = "success";
+                            $resultset["filename"] = $filename;
+                            $this->core_layout->setEventLog("License and Certificates - File upload successful.","file upload", "success", "gcchris", "user");
+                        } else {
+                            $resultset["response"] = false;
+                            $resultset["toastr_msg"] = "File upload to specific path failed!";
+                            $resultset["toastr_state"] = "error";
+                            $this->core_layout->setEventLog("License and Certificates - File upload to specific path failed.","file upload", "error", "gcchris", "system");
+                        }
+                    } else {
+                        $resultset["response"] = false;
+                        $resultset["toastr_msg"] = "File upload failed!";
+                        $resultset["toastr_state"] = "error";
+                        $this->core_layout->setEventLog("License and Certificates - File upload failed.","file upload", "error", "gcchris", "system");
+                    }
+
+                } else {
+                    $resultset["response"] = false;
+                    $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
+                    $resultset["toastr_state"] = "warning";
+                    $this->core_layout->setEventLog("License and Certificates - Failed to create directory folder for the uploaded file.","file upload", "error", "gcchris", "system");
+                }
+            } else {
+                $resultset["response"] = false;
+                $resultset["toastr_msg"] = "Employee data not found!";
+                $resultset["toastr_state"] = "error";
+                $this->core_layout->setEventLog("License and Certificates - Employee data not found.","file upload", "error", "gcchris", "system");
+            }
+
+            return $resultset;
         }
 
     }

@@ -70,6 +70,20 @@
             <input id="expiration_date" type="text" name="expiration_date" maxlength="12" size="12" autocomplete="off" data-validation="required" class="form-control m-input" />
         </div>
 	</div>
+    <div class="form-group">
+		<label for="fileupload_liscert" class="form-control-label">Attachment</label>
+        <span class="btn btn-success fileinput-button btn-sm pull-right">
+            <i class="glyphicon glyphicon-plus"></i>
+            <span>Select file</span>
+            <input type="file" id="fileupload_liscert" name="files" accept=".jpg, .jpeg, .png, .pdf">
+            <input type="hidden" id="liscert_attachment" name="liscert_attachment" />
+        </span>
+        <p id="temp_fileupload" style='text-overflow: ellipsis; white-space: nowrap; overflow: hidden;' class="form-control m-input m--margin-top-10" disabled="disabled">&nbsp;</p>
+    </div>
+    <div class="form-group">
+		<label for="remarks" class="form-control-label">Remarks</label>
+        <textarea id="remarks" name="remarks" class="form-control m-input" maxlength="200" rows="3" cols="50" autocomplete="off"></textarea>
+	</div>
 </div>
 <div class="modal-footer">
     <button type="submit" class="btn btn-primary btnSave"><i class="la la-check mr-2"></i>Save</button>

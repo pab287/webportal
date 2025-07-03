@@ -326,53 +326,643 @@
 
             return $resultSet;
         }
-
         public function getEvaluationList($evaluation) {
-            $tableConfig = $this->input->post();
-            $tableConfigStd = $this->utilities->parseFormDataToObject($tableConfig);
-            $pageOptions = $this->utilities->getDatatablesConfigForPagination($tableConfigStd);
-            $where = null;
-            $selectMonth = null;
+            $current_date = date('Y-m-d');
+        
+            // DataTable parameters
+            $postData = $this->input->post();
+            $orderBy = array(array("column" => "1", "dir" => "desc"));
+            $search = isset($postData["search"]["value"]) && $postData["search"]["value"] ? $postData["search"]["value"] : false;
+            $limit = isset($postData["length"]) && $postData["length"] ? $postData["length"] : 10;
+            $offset = isset($postData["start"]) && $postData["start"] ? $postData["start"] : 0;
+            $sortColumn = isset($postData["columns"]) && $postData["columns"] ? $postData["columns"] : 1;
+            $sortOrder = isset($postData["order"]) && $postData["order"] ? $postData["order"] : $orderBy;
 
+            $filterFields = [
+                "emp.firstname",
+                "emp.middlename",
+                "emp.lastname",
+                "CONCAT(TRIM(emp.firstname), ' ', LEFT(TRIM(emp.middlename), 1), '.', ' ', TRIM(emp.lastname))",  
+                "CONCAT(TRIM(emp.firstname), ' ', TRIM(emp.lastname))",  
+                "CONCAT(TRIM(emp.lastname), ' ', TRIM(emp.firstname))",  
+                "CONCAT(TRIM(emp.firstname), ' ', TRIM(emp.middlename), ' ', TRIM(emp.lastname))",  
+                // This is for fullname column sort 
+                "CONCAT(
+                    TRIM(emp.firstname), 
+                    ' ',
+                    CASE
+                        WHEN LOWER(TRIM(emp.middlename)) = 'n/a' THEN ''
+                        WHEN TRIM(emp.middlename) != '' THEN CONCAT(LEFT(TRIM(emp.middlename), 1), '. ')
+                        ELSE ''
+                    END,
+                    TRIM(emp.lastname)
+                )",  
+                // This is for fullname column sort 
+                "emp.idno",
+                "emp.date_start",
+                "first_eval", // evaluation stage
+                "code",
+                "name",
+                // This is for date searching
+                "DATE_FORMAT(emp.date_start, '%b %e')", 
+                "DATE_FORMAT(emp.date_start, '%M %e')", 
+                "DATE_FORMAT(emp.date_start, '%Y-%m-%d')",
+                "DATE_FORMAT(emp.date_start, '%b %e %Y')", 
+                "DATE_FORMAT(emp.date_start, '%M %e %Y')",
+            ];                        
+        
             $select = "emp.idno,
-                       'first_eval' evaluation_stage, 
-                       `emp`.`id` `emp_id`,
-                       emp.lastname, emp.firstname, emp.middlename, emp.suffix, 
-                       UCASE(CONCAT(
+                        first_eval AS evaluation_stage, 
+                        emp.id AS emp_id,
+                        emp.lastname, emp.firstname, emp.middlename, emp.suffix, 
+                        UCASE(CONCAT(
                             emp.firstname, ' ', 
-                            IF((emp.middlename = '' OR emp.middlename IS NULL OR LCASE(emp.middlename) = 'n/a' OR LCASE(emp.middlename) = 'none'), ' ', CONCAT(SUBSTR(emp.middlename,1,1), '. ')), 
+                            IF((emp.middlename = '' OR emp.middlename IS NULL OR LCASE(emp.middlename) = 'n/a' OR LCASE(emp.middlename) = 'none'), '', CONCAT(SUBSTR(emp.middlename,1,1), '. ')), 
                             emp.lastname, ' ',
-                            IF((emp.suffix = '' OR emp.suffix IS NULL OR LCASE(emp.suffix) = 'n/a' OR LCASE(emp.suffix) = 'none'), ' ', emp.suffix)
-                         )) employee_name,
-                       `calendar`.`id` `cal_id`,
-                       `emp`.`date_start`, 
-                       `emp`.`date_end_prob`, 
-                       UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) company,
-                       UCASE(IF(positions.id IS NULL, emp.position, positions.name)) `position`";
-
+                            IF((emp.suffix = '' OR emp.suffix IS NULL OR LCASE(emp.suffix) = 'n/a' OR LCASE(emp.suffix) = 'none'), ' ', emp.suffix))) employee_name,
+                        calendar.id AS cal_id,
+                        emp.date_start,
+                        emp.date_end_prob, 
+                        UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) AS company,
+                        UCASE(IF(positions.id IS NULL, emp.position, positions.name)) AS position";
+        
             $where = "emp.work_status = 'PROBATIONARY' AND emp.employee_status = 'Active' ";
-
-            // will show all unevaluated employees on first, second or finale evaluation
+        
+            // Will show all unevaluated employees on first, second or finale evaluation
+            $evalDateExpr = "";
             switch ($evaluation) {
                 case "2nd":
-                    $select .= ", DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) `evaluation_date`";
-                    $where .= "AND DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) IS NOT NULL AND calendar.first_eval_date IS NULL";
+                    $evalDateExpr = "DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY)";
+                    $select .= ", $evalDateExpr AS evaluation_date";
+                    $where .= "AND $evalDateExpr >= '$current_date' 
+                                AND calendar.second_eval_date IS NULL
+                                AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')
+                            ";
                     break;
                 case "final":
-                    $select .= ", DATE_ADD(emp.date_start, INTERVAL 5 MONTH) `evaluation_date`";
-                    $where .= "AND calendar.date_discontinued IS NULL	AND DATE_ADD(emp.date_start, INTERVAL 5 MONTH) IS NOT NULL";
+                    $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 5 MONTH)";
+                    $select .= ", $evalDateExpr AS evaluation_date";
+                    $where .= "AND $evalDateExpr >= '$current_date' 
+                                AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
                     break;
                 default:
-                    $select .= ", date_add(emp.date_start, interval 3 month) `evaluation_date`";
-                    $where .= "AND date_add(emp.date_start, interval 3 month) IS NOT NULL AND calendar.first_eval_date IS NULL";
+                    $evalDateExpr = "DATE_ADD(emp.date_start, interval 3 month)";
+                    $select .= ", $evalDateExpr AS evaluation_date";
+                    $where .= "AND $evalDateExpr >= '$current_date' 
+                                AND (calendar.first_eval_date IS NULL OR calendar.date_discontinued = '0000-00-00')";
                     break;
             }
 
-            $searchFields = "CONCAT(emp.firstname, emp.middlename, emp.lastname, emp.date_start, IF(companies.id IS NULL, emp.company_id, companies.code),
-                                    IF(positions.id IS NULL, emp.position, positions.name))";
+            /**
+             * evaluation_date field aren't in tables
+             * this will make the evaluation_date field searchable even though evaluation_date field is not in the table
+             */
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%b %e')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%M %e')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%Y-%m-%d')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%b %e %Y')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%M %e %Y')";
+        
+            $joinArr = array(
+                array("table" => "gcchris.tblprobicalendar AS calendar", "condition" => "calendar.emp_id = emp.id", "option" => "LEFT"),
+                array("table" => $this->tblCompanies . " companies", "condition" => "companies.id = emp.company_id", "option" => "LEFT"),
+                array("table" => $this->tblPosition . " positions", "condition" => "positions.id = emp.position", "option" => "LEFT")
+            );
+        
+            $this->db->select($select);
+            foreach ($joinArr as $join) {
+                $this->db->join($join["table"], $join["condition"], $join["option"]);
+            }
+        
+            $this->db->where($where);
+        
+            // SEARCH
+            if (!empty($search)) {
+                $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+                $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
+
+                $searchTerms = [$search];
+
+                // Date filtering
+                $dateInput = date_create_from_format('M j', $search) ?: date_create_from_format('F j', $search);
+                if ($dateInput) {
+                    $currentYear = date('Y');
+                    $dateInput->setDate($currentYear, (int)$dateInput->format('m'), (int)$dateInput->format('d'));
+
+                    // Different versions of the date format searched
+                    $searchTerms[] = $dateInput->format('Y-m-d');        // 2025-01-07
+                    $searchTerms[] = $dateInput->format('M j');          // Jan 7
+                    $searchTerms[] = $dateInput->format('F j');          // January 7
+                    $searchTerms[] = $dateInput->format('M j Y');        // Jan 7 2025
+                    $searchTerms[] = $dateInput->format('F j Y');        // January 7 2025
+                }
+        
+                $this->db->group_start();
+                foreach ($filterFields as $field) {
+                    foreach ($searchTerms as $term) {
+                        $this->db->or_like($field, $term, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+        
+            // SORTING / ORDER BY
+            if (isset($sortOrder[0]['column'])) {
+                $columnIndex = $sortOrder[0]['column'];
+                $this->db->order_by($sortColumn[$columnIndex]['data'], $sortOrder[0]['dir']);
+            }
+            
+            // LIMIT
+            if ($limit > 0) {
+                $this->db->limit($limit, $offset);
+            }
+        
+            $query = $this->db->get($this->tblEmployees . " emp");
+        
+            $res_data = array();
+            
+            foreach($query->result() as $row) {
+                $res = (array) $row;
+                $res['checkbox'] = '';
+                $res_data[] = $res;
+            }
+        
+            $total = $this->getEvaluationList_count($search, $evaluation);
+        
+            $resultSet['data'] = $res_data;
+            $resultSet['recordsTotal'] = $total;
+            $resultSet['recordsFiltered'] = $total;
+            
+            return $resultSet;
+        }
+        
+        public function getEvaluationList_count($search, $evaluation) {
+            $current_date = date('Y-m-d');
+        
+            // DataTable parameters
+            $postData = $this->input->post();
+            $orderBy = array(array("column" => "1", "dir" => "desc"));
+            $search = isset($postData["search"]["value"]) && $postData["search"]["value"] ? $postData["search"]["value"] : false;
+            $limit = isset($postData["length"]) && $postData["length"] ? $postData["length"] : 10;
+            $offset = isset($postData["start"]) && $postData["start"] ? $postData["start"] : 0;
+            $sortColumn = isset($postData["columns"]) && $postData["columns"] ? $postData["columns"] : 1;
+            $sortOrder = isset($postData["order"]) && $postData["order"] ? $postData["order"] : $orderBy;
+
+            $filterFields = [
+                "emp.firstname",
+                "emp.middlename",
+                "emp.lastname",
+                "CONCAT(TRIM(emp.firstname), ' ', LEFT(TRIM(emp.middlename), 1), '.', ' ', TRIM(emp.lastname))",  
+                "CONCAT(TRIM(emp.firstname), ' ', TRIM(emp.lastname))",  
+                "CONCAT(TRIM(emp.lastname), ' ', TRIM(emp.firstname))",  
+                "CONCAT(TRIM(emp.firstname), ' ', TRIM(emp.middlename), ' ', TRIM(emp.lastname))",  
+                // This is for fullname column sort 
+                "CONCAT(
+                    TRIM(emp.firstname), 
+                    ' ',
+                    CASE
+                        WHEN LOWER(TRIM(emp.middlename)) = 'n/a' THEN ''
+                        WHEN TRIM(emp.middlename) != '' THEN CONCAT(LEFT(TRIM(emp.middlename), 1), '. ')
+                        ELSE ''
+                    END,
+                    TRIM(emp.lastname)
+                )",  
+                // This is for fullname column sort 
+                "emp.idno",
+                "emp.date_start",
+                "first_eval", // evaluation stage
+                "code",
+                "name",
+                // This is for date searching
+                "DATE_FORMAT(emp.date_start, '%b %e')", 
+                "DATE_FORMAT(emp.date_start, '%M %e')", 
+                "DATE_FORMAT(emp.date_start, '%Y-%m-%d')",
+                "DATE_FORMAT(emp.date_start, '%b %e %Y')", 
+                "DATE_FORMAT(emp.date_start, '%M %e %Y')",
+            ];    
+        
+            $select = "emp.idno,
+                        first_eval AS evaluation_stage, 
+                        emp.id AS emp_id,
+                        emp.lastname, emp.firstname, emp.middlename, emp.suffix, 
+                        UCASE(CONCAT(
+                            emp.firstname, ' ', 
+                            IF((emp.middlename = '' OR emp.middlename IS NULL OR LCASE(emp.middlename) = 'n/a' OR LCASE(emp.middlename) = 'none'), ' ', CONCAT(SUBSTR(emp.middlename,1,1), '. ')), 
+                            emp.lastname, ' ',
+                            IF((emp.suffix = '' OR emp.suffix IS NULL OR LCASE(emp.suffix) = 'n/a' OR LCASE(emp.suffix) = 'none'), ' ', emp.suffix))) employee_name,
+                        calendar.id AS cal_id,
+                        emp.date_start, 
+                        emp.date_end_prob, 
+                        UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) AS company,
+                        UCASE(IF(positions.id IS NULL, emp.position, positions.name)) AS position";
+        
+            $where = "emp.work_status = 'PROBATIONARY' AND emp.employee_status = 'Active' ";
+        
+            // will show all unevaluated employees on first, second or finale evaluation
+            $evalDateExpr = "";
+            switch ($evaluation) {
+                case "2nd":
+                    $evalDateExpr = "DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY)";
+                    $select .= ", $evalDateExpr AS evaluation_date";
+                    $where .= "AND $evalDateExpr >= '$current_date' 
+                                AND calendar.second_eval_date IS NULL
+                                AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')
+                            ";
+                    break;
+                case "final":
+                    $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 5 MONTH)";
+                    $select .= ", $evalDateExpr AS evaluation_date";
+                    $where .= "AND $evalDateExpr >= '$current_date' 
+                                AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
+                    break;
+                default:
+                    $evalDateExpr = "DATE_ADD(emp.date_start, interval 3 month)";
+                    $select .= ", $evalDateExpr AS evaluation_date";
+                    $where .= "AND $evalDateExpr >= '$current_date' 
+                                AND (calendar.first_eval_date IS NULL OR calendar.date_discontinued = '0000-00-00')";
+                    break;
+            }
+        
+            /**
+             * evaluation_date field aren't in tables
+             * this will make the evaluation_date field searchable even though evaluation_date field is not in the table
+             */
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%b %e')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%M %e')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%Y-%m-%d')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%b %e %Y')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%M %e %Y')";
+        
+            $joinArr = array(
+                array("table" => "gcchris.tblprobicalendar AS calendar", "condition" => "calendar.emp_id = emp.id", "option" => "LEFT"),
+                array("table" => $this->tblCompanies . " companies", "condition" => "companies.id = emp.company_id", "option" => "LEFT"),
+                array("table" => $this->tblPosition . " positions", "condition" => "positions.id = emp.position", "option" => "LEFT")
+            );
+        
+            $this->db->select($select);
+            foreach ($joinArr as $join) {
+                $this->db->join($join["table"], $join["condition"], $join["option"]);
+            }
+        
+            $this->db->where($where);
+        
+            // SEARCH
+            if (!empty($search)) {
+                $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+                $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
+        
+                $searchTerms = [$search];
+        
+                // Date filtering
+                $dateInput = date_create_from_format('M j', $search) ?: date_create_from_format('F j', $search);
+                if ($dateInput) {
+                    $currentYear = date('Y');
+                    $dateInput->setDate($currentYear, (int)$dateInput->format('m'), (int)$dateInput->format('d'));
+        
+                    // Different versions of the date format searched
+                    $searchTerms[] = $dateInput->format('Y-m-d');        // 2025-01-07
+                    $searchTerms[] = $dateInput->format('M j');          // Jan 7
+                    $searchTerms[] = $dateInput->format('F j');          // January 7
+                    $searchTerms[] = $dateInput->format('M j Y');        // Jan 7 2025
+                    $searchTerms[] = $dateInput->format('F j Y');        // January 7 2025
+                }
+        
+                $this->db->group_start();
+                foreach ($filterFields as $field) {
+                    foreach ($searchTerms as $term) {
+                        $this->db->or_like($field, $term, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+        
+            $query = $this->db->get($this->tblEmployees . " emp");
+            return $query->num_rows();
+        }
+
+        public function evaluation_overdue() {
+            $stage = $this->input->post('evaluation_stage');
+
+            if ($stage != 0) {
+                $res = $this->getEvaluationListOverdue($stage);
+            } else {
+                $res = $this->all_evaluation_overdue($stage);
+            }
+
+            return $res;
+        }
+
+        public function getEvaluationListOverdue($stage) {
+            $current_date = date('Y-m-d');
+        
+            // DataTable parameters
+            $postData = $this->input->post();
+            $orderBy = array(array("column" => "1", "dir" => "desc"));
+            $search = isset($postData["search"]["value"]) && $postData["search"]["value"] ? $postData["search"]["value"] : false;
+            $limit = isset($postData["length"]) && $postData["length"] ? $postData["length"] : 10;
+            $offset = isset($postData["start"]) && $postData["start"] ? $postData["start"] : 0;
+            $sortColumn = isset($postData["columns"]) && $postData["columns"] ? $postData["columns"] : 1;
+            $sortOrder = isset($postData["order"]) && $postData["order"] ? $postData["order"] : $orderBy;
+
+            $filterFields = [
+                "emp.firstname",
+                "emp.middlename",
+                "emp.lastname",
+                "CONCAT(TRIM(emp.firstname), ' ', LEFT(TRIM(emp.middlename), 1), '.', ' ', TRIM(emp.lastname))",  
+                "CONCAT(TRIM(emp.firstname), ' ', TRIM(emp.lastname))",  
+                "CONCAT(TRIM(emp.lastname), ' ', TRIM(emp.firstname))",  
+                "CONCAT(TRIM(emp.firstname), ' ', TRIM(emp.middlename), ' ', TRIM(emp.lastname))",  
+                // This is for fullname column sort 
+                "CONCAT(
+                    TRIM(emp.firstname), 
+                    ' ',
+                    CASE
+                        WHEN LOWER(TRIM(emp.middlename)) = 'n/a' THEN ''
+                        WHEN TRIM(emp.middlename) != '' THEN CONCAT(LEFT(TRIM(emp.middlename), 1), '. ')
+                        ELSE ''
+                    END,
+                    TRIM(emp.lastname)
+                )",  
+                // This is for fullname column sort 
+                "emp.idno",
+                "emp.date_start",                
+                "code",
+                "name",
+                // This is for date searching
+                "DATE_FORMAT(emp.date_start, '%b %e')", 
+                "DATE_FORMAT(emp.date_start, '%M %e')", 
+                "DATE_FORMAT(emp.date_start, '%Y-%m-%d')",
+                "DATE_FORMAT(emp.date_start, '%b %e %Y')", 
+                "DATE_FORMAT(emp.date_start, '%M %e %Y')",
+            ];  
+        
+            $select = "emp.idno,
+                        emp.id AS emp_id,
+                        emp.lastname, emp.firstname, emp.middlename, emp.suffix, 
+                        UCASE(CONCAT(
+                            emp.firstname, ' ', 
+                            IF((emp.middlename = '' OR emp.middlename IS NULL OR LCASE(emp.middlename) = 'n/a' OR LCASE(emp.middlename) = 'none'), ' ', CONCAT(SUBSTR(emp.middlename,1,1), '. ')), 
+                            emp.lastname, ' ',
+                            IF((emp.suffix = '' OR emp.suffix IS NULL OR LCASE(emp.suffix) = 'n/a' OR LCASE(emp.suffix) = 'none'), ' ', emp.suffix))) employee_name,
+                        calendar.id AS cal_id,
+                        emp.date_start, 
+                        emp.date_end_prob, 
+                        UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) AS company,
+                        UCASE(IF(positions.id IS NULL, emp.position, positions.name)) AS position,";
+        
+            $where = "emp.work_status = 'PROBATIONARY' AND emp.employee_status = 'Active' ";
+
+            $evalDateExpr = "";
+  
+            switch($stage) {
+                case 1: // 3rd month overdue
+                    $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 3 MONTH)";
+                    $select .= "$evalDateExpr AS evaluation_date";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND calendar.first_eval_date IS NULL
+                            AND (calendar.second_eval IS NULL OR calendar.second_eval = '0000-00-00')
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
+                    $eval_stage = "3rd month";
+                    break;
+
+                case 2: // 4.5th month overdue
+                    $evalDateExpr = "DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY)";
+                    $select .= "$evalDateExpr AS evaluation_date";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND calendar.second_eval_date IS NULL
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
+                    $eval_stage = "4.5th month";
+                    break;
+
+                case 3: // Final (5th month) overdue
+                    $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 5 MONTH)";
+                    $select .= "$evalDateExpr AS evaluation_date";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
+                    $eval_stage = "5th Month";
+                    break;
+
+                default: // fallback to 3rd month
+                    $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 3 MONTH)";
+                    $select .= "$evalDateExpr AS evaluation_date";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND calendar.first_eval_date IS NULL
+                            AND (calendar.second_eval IS NULL OR calendar.second_eval = '0000-00-00')
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
+                    $eval_stage = "3rd month";
+                    break;
+            }
+
+            /**
+             * evaluation_date field aren't in tables
+             * this will make the evaluation_date field searchable even though evaluation_date field is not in the table
+             */
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%b %e')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%M %e')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%Y-%m-%d')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%b %e %Y')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%M %e %Y')";
+            
+        
+            $joinArr = array(
+                array("table" => "gcchris.tblprobicalendar AS calendar", "condition" => "calendar.emp_id = emp.id", "option" => "LEFT"),
+                array("table" => $this->tblCompanies . " companies", "condition" => "companies.id = emp.company_id", "option" => "LEFT"),
+                array("table" => $this->tblPosition . " positions", "condition" => "positions.id = emp.position", "option" => "LEFT")
+            );
+        
+            $this->db->select($select);
+            foreach ($joinArr as $join) {
+                $this->db->join($join["table"], $join["condition"], $join["option"]);
+            }
+        
+            $this->db->where($where);
+        
+            // SEARCH
+            if (!empty($search)) {
+                $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+                $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
+
+                $searchTerms = [$search];
+
+                // Date filtering
+                $dateInput = date_create_from_format('M j', $search) ?: date_create_from_format('F j', $search);
+                if ($dateInput) {
+                    $currentYear = date('Y');
+                    $dateInput->setDate($currentYear, (int)$dateInput->format('m'), (int)$dateInput->format('d'));
+        
+                    // Different versions of the date format searched
+                    $searchTerms[] = $dateInput->format('Y-m-d');        // 2025-01-07
+                    $searchTerms[] = $dateInput->format('M j');          // Jan 7
+                    $searchTerms[] = $dateInput->format('F j');          // January 7
+                    $searchTerms[] = $dateInput->format('M j Y');        // Jan 7 2025
+                    $searchTerms[] = $dateInput->format('F j Y');        // January 7 2025
+                }
+        
+                $this->db->group_start();
+                foreach ($filterFields as $field) {
+                    foreach ($searchTerms as $term) {
+                        $this->db->or_like($field, $term, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+        
+            // SORTING / ORDER BY
+            if (isset($sortOrder[0]['column'])) {
+                $columnIndex = $sortOrder[0]['column'];
+                $this->db->order_by($sortColumn[$columnIndex]['data'], $sortOrder[0]['dir']);
+            }
+        
+            // LIMIT
+            if ($limit > 0) {
+                $this->db->limit($limit, $offset);
+            }
+        
+            $query = $this->db->get($this->tblEmployees . " emp");
+        
+            // List all employee first with & without overdue evaluation
+            $res_emp_data = array();
+            foreach($query->result() as $row) {   
+                $employee_data = (array) $row;
+                
+                // Evaluation stage and date START
+                $eval_stage_date = [];
+                
+                $date = date('Y-m-d', strtotime($row->evaluation_date));
+                $datediff = strtotime($current_date) - strtotime($date);
+        
+                $eval_date = array(
+                    "evaluation_stage" => $eval_stage, 
+                    "evaluation_date" => $date,
+                    "overdue_date" => round($datediff / (60 * 60 * 24))
+                );
+        
+                array_push($eval_stage_date, $eval_date);
+                // Evaluation stage and date END
+        
+                $employee_data['checkbox'] = '';
+                $employee_data['eval_stage_date'] = $eval_stage_date;
+        
+                $res_emp_data[] = $employee_data;
+            }
+
+            $total = $this->getEvaluationListOverdue_count($search, $stage);
+        
+            $resultSet['data'] = $res_emp_data;
+            $resultSet['recordsTotal'] = $total;
+            $resultSet['recordsFiltered'] = $total;
+            
+            return $resultSet;
+        }
+
+        public function getEvaluationListOverdue_count($search, $stage) {
+            $current_date = date('Y-m-d');
+
+            // DataTable parameters
+            $postData = $this->input->post();
+            $orderBy = array(array("column" => "1", "dir" => "desc"));
+            $search = isset($postData["search"]["value"]) && $postData["search"]["value"] ? $postData["search"]["value"] : false;
+            $limit = isset($postData["length"]) && $postData["length"] ? $postData["length"] : 10;
+            $offset = isset($postData["start"]) && $postData["start"] ? $postData["start"] : 0;
+            $sortColumn = isset($postData["columns"]) && $postData["columns"] ? $postData["columns"] : 1;
+            $sortOrder = isset($postData["order"]) && $postData["order"] ? $postData["order"] : $orderBy;
+
+            $filterFields = [
+                "emp.firstname",
+                "emp.middlename",
+                "emp.lastname",
+                "CONCAT(TRIM(emp.firstname), ' ', LEFT(TRIM(emp.middlename), 1), '.', ' ', TRIM(emp.lastname))",  
+                "CONCAT(TRIM(emp.firstname), ' ', TRIM(emp.lastname))",  
+                "CONCAT(TRIM(emp.lastname), ' ', TRIM(emp.firstname))",  
+                "CONCAT(TRIM(emp.firstname), ' ', TRIM(emp.middlename), ' ', TRIM(emp.lastname))",  
+                // This is for fullname column sort 
+                "CONCAT(
+                    TRIM(emp.firstname), 
+                    ' ',
+                    CASE
+                        WHEN LOWER(TRIM(emp.middlename)) = 'n/a' THEN ''
+                        WHEN TRIM(emp.middlename) != '' THEN CONCAT(LEFT(TRIM(emp.middlename), 1), '. ')
+                        ELSE ''
+                    END,
+                    TRIM(emp.lastname)
+                )",  
+                // This is for fullname column sort 
+                "emp.idno",
+                "emp.date_start",                
+                "code",
+                "name",
+                // This is for date searching
+                "DATE_FORMAT(emp.date_start, '%b %e')", 
+                "DATE_FORMAT(emp.date_start, '%M %e')", 
+                "DATE_FORMAT(emp.date_start, '%Y-%m-%d')",
+                "DATE_FORMAT(emp.date_start, '%b %e %Y')", 
+                "DATE_FORMAT(emp.date_start, '%M %e %Y')",
+            ]; 
+
+            $select = "emp.idno,
+                        emp.id AS emp_id,
+                        emp.lastname, emp.firstname, emp.middlename, emp.suffix, 
+                        UCASE(CONCAT(
+                            emp.firstname, ' ', 
+                            IF((emp.middlename = '' OR emp.middlename IS NULL OR LCASE(emp.middlename) = 'n/a' OR LCASE(emp.middlename) = 'none'), ' ', CONCAT(SUBSTR(emp.middlename,1,1), '. ')), 
+                            emp.lastname, ' ',
+                            IF((emp.suffix = '' OR emp.suffix IS NULL OR LCASE(emp.suffix) = 'n/a' OR LCASE(emp.suffix) = 'none'), ' ', emp.suffix))) employee_name,
+                        calendar.id AS cal_id,
+                        emp.date_start, 
+                        emp.date_end_prob, 
+                        UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) AS company,
+                        UCASE(IF(positions.id IS NULL, emp.position, positions.name)) AS position,";
+
+            $where = "emp.work_status = 'PROBATIONARY' AND emp.employee_status = 'Active' ";
+
+            $evalDateExpr = "";
+            switch($stage) {
+                case 1: // 3rd month overdue
+                    $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 3 MONTH)";
+                    $select .= "$evalDateExpr AS evaluation_date";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND calendar.first_eval_date IS NULL
+                            AND (calendar.second_eval IS NULL OR calendar.second_eval = '0000-00-00')
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
+                    break;
+
+                case 2: // 4.5th month overdue
+                    $evalDateExpr = "DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY)";
+                    $select .= "$evalDateExpr AS evaluation_date";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND calendar.second_eval_date IS NULL
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
+                    break;
+
+                case 3: // Final (5th month) overdue
+                    $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 5 MONTH)";
+                    $select .= "$evalDateExpr AS evaluation_date";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
+                    break;
+
+                default: // fallback to 3rd month
+                    $evalDateExpr = "DATE_ADD(emp.date_start, INTERVAL 3 MONTH)";
+                    $select .= "$evalDateExpr AS evaluation_date";
+                    $where .= "AND $evalDateExpr < '$current_date'
+                            AND calendar.first_eval_date IS NULL
+                            AND (calendar.second_eval IS NULL OR calendar.second_eval = '0000-00-00')
+                            AND (calendar.date_discontinued IS NULL OR calendar.date_discontinued = '0000-00-00')";
+                    break;
+            }
+        
+            /**
+             * evaluation_date field aren't in tables
+             * this will make the evaluation_date field searchable even though evaluation_date field is not in the table
+             */
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%b %e')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%M %e')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%Y-%m-%d')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%b %e %Y')";
+            $filterFields[] = "DATE_FORMAT($evalDateExpr, '%M %e %Y')";
 
             $joinArr = array(
-                array("table" => "`gcchris`.`tblprobicalendar` `calendar`", "condition" => "`calendar`.`emp_id` = `emp`.`id`", "option" => "LEFT"),
+                array("table" => "gcchris.tblprobicalendar AS calendar", "condition" => "calendar.emp_id = emp.id", "option" => "LEFT"),
                 array("table" => $this->tblCompanies . " companies", "condition" => "companies.id = emp.company_id", "option" => "LEFT"),
                 array("table" => $this->tblPosition . " positions", "condition" => "positions.id = emp.position", "option" => "LEFT")
             );
@@ -384,27 +974,355 @@
 
             $this->db->where($where);
 
-            $this->db->order_by($pageOptions->order_column, $pageOptions->order_direction);
-            if ($pageOptions->length > -1) {
-                $this->db->limit($pageOptions->length, $pageOptions->start);
+            // SEARCH
+            if (!empty($search)) {
+                $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+                $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
+
+                $searchTerms = [$search];
+
+                // Date filtering
+                $dateInput = date_create_from_format('M j', $search) ?: date_create_from_format('F j', $search);
+                if ($dateInput) {
+                    $currentYear = date('Y');
+                    $dateInput->setDate($currentYear, (int)$dateInput->format('m'), (int)$dateInput->format('d'));
+        
+                    // Different versions of the date format searched
+                    $searchTerms[] = $dateInput->format('Y-m-d');        // 2025-01-07
+                    $searchTerms[] = $dateInput->format('M j');          // Jan 7
+                    $searchTerms[] = $dateInput->format('F j');          // January 7
+                    $searchTerms[] = $dateInput->format('M j Y');        // Jan 7 2025
+                    $searchTerms[] = $dateInput->format('F j Y');        // January 7 2025
+                }
+
+                $this->db->group_start();
+                foreach ($filterFields as $field) {
+                    foreach ($searchTerms as $term) {
+                        $this->db->or_like($field, $term, "both");
+                    }
+                }
+                $this->db->group_end();
             }
 
-            $search = array('field' => $searchFields, 'key' => $pageOptions->search, 'option' => "both");
-            $this->db->like($search['field'], $search['key'], $search['option']);
+            $query = $this->db->get($this->tblEmployees . " emp");
+            return $query->num_rows();
+        }
+
+        public function all_evaluation_overdue($stage) {
+            $current_date = date('Y-m-d');
+        
+            // DataTable parameters
+            $postData = $this->input->post();
+            $orderBy = array(array("column" => "1", "dir" => "desc"));
+            $search = isset($postData["search"]["value"]) && $postData["search"]["value"] ? $postData["search"]["value"] : false;
+            $limit = isset($postData["length"]) && $postData["length"] ? $postData["length"] : 10;
+            $offset = isset($postData["start"]) && $postData["start"] ? $postData["start"] : 0;
+            $sortColumn = isset($postData["columns"]) && $postData["columns"] ? $postData["columns"] : 1;
+            $sortOrder = isset($postData["order"]) && $postData["order"] ? $postData["order"] : $orderBy;
+
+            $filterFields = [
+                "emp.firstname",
+                "emp.middlename",
+                "emp.lastname",
+                "CONCAT(TRIM(emp.firstname), ' ', LEFT(TRIM(emp.middlename), 1), '.', ' ', TRIM(emp.lastname))",  
+                "CONCAT(TRIM(emp.firstname), ' ', TRIM(emp.lastname))",  
+                "CONCAT(TRIM(emp.lastname), ' ', TRIM(emp.firstname))",  
+                "CONCAT(TRIM(emp.firstname), ' ', TRIM(emp.middlename), ' ', TRIM(emp.lastname))",  
+                // This is for fullname column sort 
+                "CONCAT(
+                    TRIM(emp.firstname), 
+                    ' ',
+                    CASE
+                        WHEN LOWER(TRIM(emp.middlename)) = 'n/a' THEN ''
+                        WHEN TRIM(emp.middlename) != '' THEN CONCAT(LEFT(TRIM(emp.middlename), 1), '. ')
+                        ELSE ''
+                    END,
+                    TRIM(emp.lastname)
+                )",  
+                // This is for fullname column sort 
+                "emp.idno",
+                "emp.date_start",
+                "code",
+                "name",
+                // This is for date searching
+                "DATE_FORMAT(emp.date_start, '%b %e')", 
+                "DATE_FORMAT(emp.date_start, '%M %e')", 
+                "DATE_FORMAT(emp.date_start, '%Y-%m-%d')",
+                "DATE_FORMAT(emp.date_start, '%b %e %Y')", 
+                "DATE_FORMAT(emp.date_start, '%M %e %Y')",
+            ];    
+        
+            $select = "emp.idno,
+                emp.id AS emp_id,
+                emp.lastname, emp.firstname, emp.middlename, emp.suffix, 
+                UCASE(CONCAT(
+                    emp.firstname, ' ', 
+                    IF((emp.middlename = '' OR emp.middlename IS NULL OR LCASE(emp.middlename) = 'n/a' OR LCASE(emp.middlename) = 'none'), ' ', CONCAT(SUBSTR(emp.middlename,1,1), '. ')), 
+                    emp.lastname, ' ',
+                    IF((emp.suffix = '' OR emp.suffix IS NULL OR LCASE(emp.suffix) = 'n/a' OR LCASE(emp.suffix) = 'none'), ' ', emp.suffix))) employee_name,
+                calendar.id AS cal_id,
+                emp.date_start, 
+                emp.date_end_prob, 
+                UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) company,
+                UCASE(IF(positions.id IS NULL, emp.position, positions.name)) position,
+                DATE_ADD(emp.date_start, INTERVAL 3 MONTH) evaluation_date_first,
+                DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) evaluation_date_second,
+                DATE_ADD(emp.date_start, INTERVAL 5 MONTH) evaluation_date_final,
+                calendar.first_eval,
+                calendar.first_eval_date,
+                calendar.second_eval,
+                calendar.second_eval_date,
+                calendar.date_discontinued,
+                (DATE_ADD(emp.date_start, INTERVAL 3 MONTH) < '$current_date' AND calendar.first_eval_date IS NULL) AS is_3rd_overdue,
+                (DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) < '$current_date' AND calendar.second_eval_date IS NULL) AS is_4th_overdue,
+                (DATE_ADD(emp.date_start, INTERVAL 5 MONTH) < '$current_date' AND calendar.date_discontinued IS NULL) AS is_final_overdue
+                ";
+
+            $where = "
+                    emp.work_status = 'PROBATIONARY' 
+                    AND emp.employee_status = 'Active'
+                    AND (
+                        (DATE_ADD(emp.date_start, INTERVAL 3 MONTH) < '$current_date' AND calendar.first_eval_date IS NULL)
+                        OR (DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) < '$current_date' AND calendar.second_eval_date IS NULL)
+                        OR (DATE_ADD(emp.date_start, INTERVAL 5 MONTH) < '$current_date' AND calendar.date_discontinued IS NULL)
+                    )
+                    ";
+        
+            $joinArr = array(
+                array("table" => "gcchris.tblprobicalendar AS calendar", "condition" => "calendar.emp_id = emp.id", "option" => "LEFT"),
+                array("table" => $this->tblCompanies . " companies", "condition" => "companies.id = emp.company_id", "option" => "LEFT"),
+                array("table" => $this->tblPosition . " positions", "condition" => "positions.id = emp.position", "option" => "LEFT")
+            );
+            $this->db->select($select);
+            foreach ($joinArr as $join) {
+                $this->db->join($join["table"], $join["condition"], $join["option"]);
+            }
+        
+            $this->db->where($where);
+        
+            // SEARCH
+            if (!empty($search)) {
+                $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+                $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
+
+                $searchTerms = [$search];
+
+                // Date filtering
+                $dateInput = date_create_from_format('M j', $search) ?: date_create_from_format('F j', $search);
+                if ($dateInput) {
+                    $currentYear = date('Y');
+                    $dateInput->setDate($currentYear, (int)$dateInput->format('m'), (int)$dateInput->format('d'));
+
+                    // Different versions of the date format searched
+                    $searchTerms[] = $dateInput->format('Y-m-d');        // 2025-01-07
+                    $searchTerms[] = $dateInput->format('M j');          // Jan 7
+                    $searchTerms[] = $dateInput->format('F j');          // January 7
+                    $searchTerms[] = $dateInput->format('M j Y');        // Jan 7 2025
+                    $searchTerms[] = $dateInput->format('F j Y');        // January 7 2025
+                }
+        
+                $this->db->group_start();
+                foreach ($filterFields as $field) {
+                    foreach ($searchTerms as $term) {
+                        $this->db->or_like($field, $term, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+        
+            // SORTING / ORDER BY
+            if (isset($sortOrder[0]['column'])) {
+                $columnIndex = $sortOrder[0]['column'];
+                $this->db->order_by($sortColumn[$columnIndex]['data'], $sortOrder[0]['dir']);
+            }
+        
+            // LIMIT
+            if ($limit > 0) {
+                $this->db->limit($limit, $offset);
+            }
+        
+            $query = $this->db->get($this->tblEmployees . " emp");
+        
+            // List all employee first with & without overdue evaluation
+            $res_emp_data_all = [];
+            foreach($query->result() as $row) {
+                $employee_data = (array) $row;
+                $eval_stage_date = [];
+
+                $first_eval = date('Y-m-d', strtotime($row->evaluation_date_first));
+                $sec_eval = date('Y-m-d', strtotime($row->evaluation_date_second));
+                $final_eval = date('Y-m-d', strtotime($row->evaluation_date_final));
+
+                // Return in boolean
+                $is_3rd_done   = !empty($row->first_eval_date);
+                $is_4th_done   = !empty($row->second_eval_date);
+                $is_final_done = !empty($row->date_discontinued);
+
+                // Return in boolean
+                $is_3rd_overdue   = $first_eval < $current_date && !$is_3rd_done;
+                $is_4th_overdue   = $sec_eval < $current_date && !$is_4th_done;
+                $is_final_overdue = $final_eval < $current_date && !$is_final_done;
+
+                // 3rd month overdue evaluation
+                if ($is_3rd_overdue && !$is_4th_done && !$is_final_done) {
+                    $datediff = strtotime($current_date) - strtotime($first_eval);
+
+                    $eval_stage_date[] = array(
+                        "evaluation_stage" => "3RD MONTH", 
+                        "evaluation_date" => $first_eval,
+                        "overdue_date" => round($datediff / (60 * 60 * 24))
+                    );
+                }
+                
+                // 4.5th month overdue evaluation
+                if ($is_4th_overdue && !$is_final_done) {
+                    $datediff = strtotime($current_date) - strtotime($sec_eval);
+
+                    $eval_stage_date[] = array(
+                        "evaluation_stage" => "4.5TH MONTH", 
+                        "evaluation_date" => $sec_eval,
+                        "overdue_date" => round($datediff / (60 * 60 * 24))
+                    );                
+                }
+
+                // Final overdue evaluation
+                if ($is_final_overdue) {
+                    $datediff =  strtotime($current_date) - strtotime($final_eval);
+
+                    $eval_stage_date[] = array(
+                        "evaluation_stage" => "FINAL", 
+                        "evaluation_date" => $final_eval,
+                        "overdue_date" => round($datediff / (60 * 60 * 24))
+                    );
+                }
+                
+                $employee_data['checkbox'] = '';
+                $employee_data['eval_stage_date'] = $eval_stage_date;
+
+                $res_emp_data_all[] = $employee_data;
+            }
+
+            $total = $this->all_evaluation_overdue_count($search);
+
+            $resultSet['data'] = $res_emp_data_all;
+            $resultSet['recordsTotal'] = $total;
+            $resultSet['recordsFiltered'] = $total;
+            return $resultSet;
+        }
+
+        public function all_evaluation_overdue_count($search) {
+            $current_date = date('Y-m-d');
+
+            $filterFields = [
+                "emp.firstname",
+                "emp.middlename",
+                "emp.lastname",
+                "CONCAT(TRIM(emp.firstname), ' ', LEFT(TRIM(emp.middlename), 1), '.', ' ', TRIM(emp.lastname))",  
+                "CONCAT(TRIM(emp.firstname), ' ', TRIM(emp.lastname))",  
+                "CONCAT(TRIM(emp.lastname), ' ', TRIM(emp.firstname))",  
+                "CONCAT(TRIM(emp.firstname), ' ', TRIM(emp.middlename), ' ', TRIM(emp.lastname))",  
+                // This is for fullname column sort 
+                "CONCAT(
+                    TRIM(emp.firstname), 
+                    ' ',
+                    CASE
+                        WHEN LOWER(TRIM(emp.middlename)) = 'n/a' THEN ''
+                        WHEN TRIM(emp.middlename) != '' THEN CONCAT(LEFT(TRIM(emp.middlename), 1), '. ')
+                        ELSE ''
+                    END,
+                    TRIM(emp.lastname)
+                )",  
+                // This is for fullname column sort 
+                "emp.idno",
+                "emp.date_start",
+                "code",
+                "name",
+                // This is for date searching
+                "DATE_FORMAT(emp.date_start, '%b %e')", 
+                "DATE_FORMAT(emp.date_start, '%M %e')", 
+                "DATE_FORMAT(emp.date_start, '%Y-%m-%d')",
+                "DATE_FORMAT(emp.date_start, '%b %e %Y')", 
+                "DATE_FORMAT(emp.date_start, '%M %e %Y')",
+            ];
+
+            $select = "emp.idno,
+                emp.id AS emp_id,
+                emp.lastname, emp.firstname, emp.middlename, emp.suffix, 
+                UCASE(CONCAT(
+                    emp.firstname, ' ', 
+                    IF((emp.middlename = '' OR emp.middlename IS NULL OR LCASE(emp.middlename) = 'n/a' OR LCASE(emp.middlename) = 'none'), ' ', CONCAT(SUBSTR(emp.middlename,1,1), '. ')), 
+                    emp.lastname, ' ',
+                    IF((emp.suffix = '' OR emp.suffix IS NULL OR LCASE(emp.suffix) = 'n/a' OR LCASE(emp.suffix) = 'none'), ' ', emp.suffix))) employee_name,
+                calendar.id AS cal_id,
+                emp.date_start, 
+                emp.date_end_prob, 
+                UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) company,
+                UCASE(IF(positions.id IS NULL, emp.position, positions.name)) position,
+                DATE_ADD(emp.date_start, INTERVAL 3 MONTH) evaluation_date_first,
+                DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) evaluation_date_second,
+                DATE_ADD(emp.date_start, INTERVAL 5 MONTH) evaluation_date_final,
+                calendar.first_eval,
+                calendar.first_eval_date,
+                calendar.second_eval,
+                calendar.second_eval_date,
+                calendar.date_discontinued";
+
+            $where = "
+                    emp.work_status = 'PROBATIONARY' 
+                    AND emp.employee_status = 'Active'
+                    AND (calendar.date_discontinued IS NULL)
+                    AND (
+                        (DATE_ADD(emp.date_start, INTERVAL 3 MONTH) < '$current_date' AND calendar.first_eval_date IS NULL)
+                        OR (DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) < '$current_date' AND calendar.second_eval_date IS NULL)
+                        OR (DATE_ADD(emp.date_start, INTERVAL 5 MONTH) < '$current_date')
+                    )
+                    ";
+
+            $joinArr = array(
+                array("table" => "gcchris.tblprobicalendar AS calendar", "condition" => "calendar.emp_id = emp.id", "option" => "LEFT"),
+                array("table" => $this->tblCompanies . " companies", "condition" => "companies.id = emp.company_id", "option" => "LEFT"),
+                array("table" => $this->tblPosition . " positions", "condition" => "positions.id = emp.position", "option" => "LEFT")
+            );
+        
+            $this->db->select($select);
+            foreach ($joinArr as $join) {
+                $this->db->join($join["table"], $join["condition"], $join["option"]);
+            }
+        
+            $this->db->where($where);
+        
+            // SEARCH
+            if (!empty($search)) {
+                $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+                $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
+        
+                $searchTerms = [$search];
+
+                // Date filtering
+                $dateInput = date_create_from_format('M j', $search) ?: date_create_from_format('F j', $search);
+                if ($dateInput) {
+                    $currentYear = date('Y');
+                    $dateInput->setDate($currentYear, (int)$dateInput->format('m'), (int)$dateInput->format('d'));
+
+                    // Different versions of the date format searched
+                    $searchTerms[] = $dateInput->format('Y-m-d');        // 2025-01-07
+                    $searchTerms[] = $dateInput->format('M j');          // Jan 7
+                    $searchTerms[] = $dateInput->format('F j');          // January 7
+                    $searchTerms[] = $dateInput->format('M j Y');        // Jan 7 2025
+                    $searchTerms[] = $dateInput->format('F j Y');        // January 7 2025
+                }
+
+                $this->db->group_start();
+                foreach ($filterFields as $field) {
+                    foreach ($searchTerms as $term) {
+                        $this->db->or_like($field, $term, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
 
             $query = $this->db->get($this->tblEmployees . " emp");
-
-            $resultSet['data'] = $query->result();
-            $resultSet['recordsTotal'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $search, $joinArr);
-            $resultSet['recordsFiltered'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $search, $joinArr);
-            
-            /*** remove consumes database records
-             * if($search['key'] != "" && $search['key']):
-             * $this->core_layout->logNotification("User ".$this->loggedInUsername." has searched ".$search['key']." using dashboard employee evaluation datatable.","success","hris","user");
-             * endif; 
-            remove consumes database records ***/
-            
-            return $resultSet;
+            return $query->num_rows();
         }
 
         public function getRetentionRate($ctr=0) {

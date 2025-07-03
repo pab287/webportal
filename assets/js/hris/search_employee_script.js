@@ -53,6 +53,7 @@ jQuery(document)
                 url: baseUrl('hris/dashboard/search_employee'),
                 type: 'POST',
                 dataType: 'JSON',
+                global: false,
                 data: {
                     csrf_token: _csrf_hash,
                     searchKey,
@@ -135,6 +136,7 @@ jQuery(document)
                 url: baseUrl('hris/dashboard/search_employee'),
                 type: 'POST',
                 dataType: 'JSON',
+                global: false,
                 data: {
                     csrf_token: _csrf_hash,
                     searchKey,

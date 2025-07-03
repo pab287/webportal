@@ -645,62 +645,204 @@
                 
             </div>
             <div class="m-portlet__head-tools">
-                <ul class="nav nav-pills nav-pills--brand m-nav-pills--align-right m-nav-pills--btn-pill m-nav-pills--btn-sm"
-                    role="tablist" id="evaluation_tab">
+                <ul class="nav nav-pills nav-pills--brand m-nav-pills--align-right m-nav-pills--btn-pill m-nav-pills--btn-sm" role="tablist" id="evaluation_tab">
                     <li class="nav-item m-tabs__item">
-                        <a class="nav-link m-tabs__link active"
-                           data-toggle="tab" role="tab" href="" onclick="loadEvaluationTable()">
-                            3rd Month
+                        <a class="nav-link m-tabs__link active" data-toggle="tab" role="tab" href="#evaluation_list_tab_content" onclick="loadEvaluationTable();">
+                            3RD MONTH
                         </a>
                     </li>
-                    <li class="nav-item m-tabs__item">
-                        <a class="nav-link m-tabs__link"
-                           data-toggle="tab" role="tab" href="" onclick="loadEvaluationTable('2nd')">
+                    <!-- <li class="nav-item m-tabs__item">
+                        <a class="nav-link m-tabs__link" data-toggle="tab" role="tab" href="#evaluation_list_tab_content" onclick="loadEvaluationTable('2nd');">
                             4.5TH Month
                         </a>
-                    </li>
+                    </li> -->
                     <li class="nav-item m-tabs__item">
-                        <a class="nav-link m-tabs__link"
-                           data-toggle="tab" role="tab" href="" onclick="loadEvaluationTable('final')">
-                            FINAL EVALUATION
+                        <a class="nav-link m-tabs__link" data-toggle="tab" role="tab" href="#evaluation_list_tab_content" onclick="loadEvaluationTable('final');">
+                            5TH MONTH
                         </a>
+                    </li>
+                    <li class="nav-item m-tabs__item dropdown">
+                        <a class="nav-link m-tabs__link dropdown-toggle" data-toggle="dropdown" href="javascript:void(0)">
+                            <span class="overdue_eval_stage_text">Overdue</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right mt-2" x-placement="bottom-end">
+                            <a class="dropdown-item" data-toggle="tab" role="tab" href="#overdue_list_tab_content" onclick="loadOverdueEvaluationTable(1)">3RD MONTH</a>
+                            <!-- <a class="dropdown-item" data-toggle="tab" role="tab" href="#overdue_list_tab_content" onclick="loadOverdueEvaluationTable(2)">4.5TH Month</a> -->
+                            <a class="dropdown-item" data-toggle="tab" role="tab" href="#overdue_list_tab_content" onclick="loadOverdueEvaluationTable(3)">5TH MONTH</a>
+                            <!-- <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" data-toggle="tab" role="tab" href="#overdue_list_tab_content" onclick="loadOverdueEvaluationTable(0)">All</a> -->
+                        </div>
                     </li>
                 </ul>
 
                 <div id="employee_evaluation_options">    
                     <select id="" class="employee_evaluation_options form-control" onchange="loadEvaluationTable()">
-                        <option value=" ">
-                            3rd Month
-                        </option>
-                        <option value="2nd">
-                            4.5th Month
-                        </option>
-                        <option value="final">
-                            FINAL EVALUATION
-                        </option>
+                        <option value=" ">3RD MONTH</option>
+                        <!-- <option value="2nd">4.5TH MONTH</option> -->
+                        <option value="final">5TH MONTH</option>
+                        <option value="overdue">Overdue</option>
                     </select>  
                 </div>      
             </div>
             
         </div>
-        <div class="m-portlet__body">
-            <div class="table-responsive">
-                <table class="table table-hover m-table m-table--head-no-border"
-                       id="table-employee-evaluation" width="100%">
-                    <thead>
-                    <tr>
-                        <th>ID NO.</th>
-                        <th>EMPLOYEE</th>
-                        <th>COMPANY</th>
-                        <th>POSITION</th>
-                        <th>DATE HIRED</th>
-                        <th>EVALUATION DATE</th>
-                    </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+        <div class="m-portlet__body">   
+            <div id="employee_eval_list" class="tab-content">
+                <div class="tab-pane active" aria-expanded="false" role="tabpanel" id="evaluation_list_tab_content">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="col-2">
+                            <button id="exportBtn_eval" title="Export" type="button" class="btn btnExport btn-success m-btn--pill m-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="la la-external-link"></i>
+                                <span>Export</span>
+                                <span class="dropdown-toggle"></span>
+                            </button>
+
+                            <div class="dropdown-menu mt-2" aria-labelledby="btnGroupDrop1" x-placement="bottom-start" style="position: absolute; transform: translate3d(268px, 36px, 0px); top: 0px; left: 0px; will-change: transform;">
+                                <a href="javascript:void(0);" class="dropdown-item datatable-csv" id="eval_ExportCSV">
+                                    <i class="m-nav__link-icon la la-file-o"></i>
+                                    <span class="m-nav__link-text">CSV</span>
+                                </a>
+
+                                <a href="javascript:void(0);" class="dropdown-item datatable-pdf" id="eval_ExportPDF">
+                                    <i class="m-nav__link-icon la la-file-pdf-o"></i>
+                                    <span class="m-nav__link-text">PDF</span>
+                                </a>
+
+                                <a href="javascript:void(0);" class="dropdown-item datatable-excel" id="eval_ExportExcel">
+                                    <i class="m-nav__link-icon la la-file-excel-o"></i>
+                                    <span class="m-nav__link-text">EXCEL</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="col-3">
+                            <div class="m-input-icon m-input-icon--left">
+                                <input type="text" class="form-control m-input" placeholder="Search..." id="EvalSearch" style="border: 1px solid #c3c3c3;">
+                                <span class="m-input-icon__icon m-input-icon__icon--left">
+                                    <span><i class="la la-search"></i></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="table-responsive">
+                        <table class="table table-hover m-table m-table--head-no-border" id="table-employee-evaluation" width="100%">
+                            <thead>
+                                <tr>
+                                    <th class="toggle-all notExport text-center">
+										<input type="checkbox" id="cb-select-all"> <span></span>
+									</th>
+                                    <th>ID NO.</th>
+                                    <th>EMPLOYEE</th>
+                                    <th>COMPANY</th>
+                                    <th>POSITION</th>
+                                    <th>DATE HIRED</th>
+                                    <th>EVALUATION DATE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane" aria-expanded="false" role="tabpanel" id="overdue_list_tab_content">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="col-2">
+                            <button id="exportBtn_eval_overdue" title="Export" type="button" class="btn btnExport btn-success m-btn--pill m-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="la la-external-link"></i>
+                                <span>Export</span>
+                                <span class="dropdown-toggle"></span>
+                            </button>
+
+                            <div class="dropdown-menu mt-2" aria-labelledby="btnGroupDrop1" x-placement="bottom-start" style="position: absolute; transform: translate3d(268px, 36px, 0px); top: 0px; left: 0px; will-change: transform;">
+                                <a href="javascript:void(0);" class="dropdown-item datatable-csv" id="eval_due_ExportCSV">
+                                    <i class="m-nav__link-icon la la-file-o"></i>
+                                    <span class="m-nav__link-text">CSV</span>
+                                </a>
+
+                                <a href="javascript:void(0);" class="dropdown-item datatable-pdf" id="eval_due_ExportPDF">
+                                    <i class="m-nav__link-icon la la-file-pdf-o"></i>
+                                    <span class="m-nav__link-text">PDF</span>
+                                </a>
+
+                                <a href="javascript:void(0);" class="dropdown-item datatable-excel" id="eval_due_ExportExcel">
+                                    <i class="m-nav__link-icon la la-file-excel-o"></i>
+                                    <span class="m-nav__link-text">EXCEL</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="col-3">
+                            <div class="m-input-icon m-input-icon--left">
+                                <input type="text" class="form-control m-input" placeholder="Search..." id="overdueEvalSearch" style="border: 1px solid #c3c3c3;">
+                                <span class="m-input-icon__icon m-input-icon__icon--left">
+                                    <span><i class="la la-search"></i></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover m-table m-table--head-no-border" id="table-employee-evaluation-overdue" width="100%">
+                            <thead>
+                                <tr>
+                                    <th class="toggle-all notExport text-center">
+										<input type="checkbox" id="cb-select-all"> <span></span>
+									</th>
+                                    <th>ID NO.</th>
+                                    <th>EMPLOYEE</th>
+                                    <th>COMPANY</th>
+                                    <th>POSITION</th>
+                                    <th>DATE HIRED</th>
+                                    <th>EVAL STAGE</th>
+                                    <th>EVAL DATE</th>
+                                    <th>OVERDUE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     <!-- END EVALUATION LIST -->
-</div>
+</div> 
+
+<style>
+	.v-middle {
+		vertical-align: middle!important;
+	}
+
+	#table-employee-evaluation-overdue tbody td.select-checkbox:before,
+    #table-employee-evaluation tbody td.select-checkbox:before {
+		top: 0!important;
+		bottom: 0!important;
+		left: 0!important;
+		right: 0!important;
+		margin: auto!important;
+		border: 1px solid #767676;
+		border-radius: 2px!important;
+		height: 13px!important;
+		width: 13px!important;
+	}
+
+	#table-employee-evaluation-overdue tbody td.select-checkbox:after,
+    #table-employee-evaluation tbody td.select-checkbox:after {
+		position: absolute!important;
+		top: -8px!important;
+		bottom: 0!important;
+		left: 0!important;
+		right: 0!important;
+		margin: auto!important;
+	}
+
+	#table-employee-evaluation-overdue tbody tr.selected td.select-checkbox:before,
+    #table-employee-evaluation tbody tr.selected td.select-checkbox:before {
+		border: 1px solid #ffffff !important;
+	}
+</style>

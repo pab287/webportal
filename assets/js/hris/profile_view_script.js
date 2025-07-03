@@ -790,6 +790,8 @@ function getEmploymentInformation(){
                 employeeDataSheet.$data.offenses = false;
             } else {
                 employeeDataSheet.$data.offenses = { ...employeeDataSheet.$data.offenses, ...response.offenses };
+                employeeDataSheet.$data.filteredOffenses = employeeDataSheet.$data.offenses;
+                employeeDataSheet.filterOffenses('offenses');
             }
 
             if (!response || Object.keys(response.stations).length == 0) {

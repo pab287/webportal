@@ -31,7 +31,7 @@
 		<textarea id="offcom_nature" name="offcom_nature" maxlength="200" size="200" autocomplete="off" data-validation="required" rows="7" class="form-control m-input" style="min-height: 120px; resize: vertical;"></textarea>
 	</div>
     <div class="form-group">
-		<label for="offcom_action" class="form-control-label">Sanction/Remarks <span style="color: red;">*</span></label>
+		<label for="offcom_action" class="form-control-label">Action Taken <span style="color: red;">*</span></label>
 		<textarea id="offcom_action" name="offcom_action" maxlength="200" size="200" autocomplete="off" data-validation="required" class="form-control m-input" style="min-height: 120px; resize: vertical;"></textarea>
 	</div>
     <div class="form-group">

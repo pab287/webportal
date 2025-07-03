@@ -179,7 +179,7 @@ class Timesheet_model extends CI_Model{
                                 $ctrAlteredSchedule = true;
                             }
                         }
-                        if($ctrAlteredSchedule == true && $alteredShifts->custom_shift_id !== "0"){
+                        if($ctrAlteredSchedule === true && $alteredShifts->custom_shift_id !== "0"){
                             $alteredCustomShiftId = $alteredShifts->custom_shift_id;
                         }
                     }
@@ -575,7 +575,7 @@ class Timesheet_model extends CI_Model{
                             $pm_end = !empty($schedule) ? $schedule->pm_end : null;
                             
                             $alteredCustomShiftId = 0;
-                            $alteredHasShiftSchedule = 1;
+                            $alteredHasShiftSchedule = 0;
 
                             if(isset($alteredShifts) && $alteredShifts && count(get_object_vars($alteredShifts)) > 0){
                                 if(isset($alteredShifts->has_shift)){
@@ -593,7 +593,7 @@ class Timesheet_model extends CI_Model{
                                             $ctrAlteredSchedule = true;
                                         }
                                     }
-                                    if($ctrAlteredSchedule == true && $alteredShifts->custom_shift_id !== "0"){
+                                    if($ctrAlteredSchedule === true && $alteredShifts->custom_shift_id !== "0"){
                                         $alteredCustomShiftId = $alteredShifts->custom_shift_id;
                                     }
                                 }
@@ -610,7 +610,7 @@ class Timesheet_model extends CI_Model{
                                     }
                                 }
                             }
-                            
+                            $tempRow->has_shift = $schedule !== null ? $tempRow->has_shift: 0;
                             $temp_overtime = $this->db
                             ->get_where($this->tbl_overtime,
                                 array(
@@ -670,7 +670,7 @@ class Timesheet_model extends CI_Model{
                                 $tempDatax->custom_shift_id = $alteredCustomShiftId;
                                 
                                 $tempProps = array("am_start", "am_end", "pm_start", "pm_end");
-                                foreach ($tempProps as $key => $value) {
+                                foreach ($tempProps as $value) {
                                     $tempValue = ${$value} ? ${$value}: null;
                                     $tempKey = "shift_{$value}";
                                     $tempDatax->$tempKey = $tempValue;
@@ -703,7 +703,7 @@ class Timesheet_model extends CI_Model{
                             }
 
                             if($tempComments){
-                                $updatedRow = $this->db->update($this->tbl_timesheet,
+                                $this->db->update($this->tbl_timesheet,
                                     array("comments"=>$tempComments),
                                     array("id"=>$tempRow->id)
                                 );
@@ -743,7 +743,7 @@ class Timesheet_model extends CI_Model{
                             }
 
                             if(is_array($hasOvertimeRecords) && count($hasOvertimeRecords) > 0){
-                                foreach ($hasOvertimeRecords as $otKey => $otValue) {
+                                foreach ($hasOvertimeRecords as $otValue) {
                                     $otRecord = explode("::", $otValue);
                                     if(is_array($otRecord) && count($otRecord) == 2){
                                         $tempOtRecord = explode("__", $otRecord[1]);
@@ -851,8 +851,8 @@ class Timesheet_model extends CI_Model{
                                     $isWholeDay = ($am_shift_only == false && $pm_shift_only == false && $no_shift_schedule == false);
 
                                     $tempHoliday = (object) $this->getCurrentDateIsHoliday($date);
-                                    $isHoliday = ($tempHoliday->is_holiday == true)? 1: 0;
-                                    $payRateId = ($tempHoliday->is_holiday == true && $tempHoliday->payrate_id)? $tempHoliday->payrate_id: 0;
+                                    $isHoliday = ($tempHoliday->is_holiday === true)? 1: 0;
+                                    $payRateId = ($tempHoliday->is_holiday === true && $tempHoliday->payrate_id)? $tempHoliday->payrate_id: 0;
 
                                     $employee_time_sheet = new StdClass();
                                     $employee_time_sheet->emp_id = $employee->id;

@@ -134,9 +134,18 @@ function loadEmployees(employee_status = "All") {
                         d.search['value'] = $("#generalSearch").val();
                         d.emp_status = $("#emp_status").val();
                         d.emp_sex = $("#emp_sex").val();
-                        if(typeof _currentActions !== "undefined" && Object.keys(_currentActions).length > 0 && _currentActions.includes("view_by_company")){
-                            d.list_view = 'by_company';
+                        let arrPrivileges = [];
+                        if(typeof _currentActions !== "undefined" && Object.keys(_currentActions).length > 0 && _currentActions.includes("view_by_dept")){
+                            arrPrivileges.push('by_department');
                         }
+                        if(typeof _currentActions !== "undefined" && Object.keys(_currentActions).length > 0 && _currentActions.includes("view_by_company")){
+                            arrPrivileges.push('by_company');
+                        }
+
+                        if(arrPrivileges.length > 0){
+                            d.list_view = arrPrivileges;
+                        }
+
                         return d;
                     },
                     global: false,
@@ -1503,6 +1512,24 @@ if (typeof _tempContentData !== "undefined") {
                 { data: "exam_date", title: "Exam Date", className: "text-center" },
                 { data: "license_no", title: "License Cert. No.", className: "text-center" },
                 { data: "expiration_date", title: "Expiry Date", className: "text-center" },
+                { data: "remarks", title: "Remarks", className: "text-center",
+                    render: function(data, type, row) {
+                      return data && data.trim() !== '' ? data : 'none';
+                    }
+                  },
+                  {
+                    data: "liscert_attachment", 
+                    title: "Attachment", 
+                    className: "text-center",
+                    render: function(data, type, row) {
+                      if (!data || data.trim() === '') {
+                        return 'none';
+                      }
+                      
+                      const truncated = data.length > 15 ? data.substring(0, 15) + '...' : data;
+                      return `<span style="cursor: pointer; color: #007bff; text-decoration: underline;" onclick="openCert('${data}')">${truncated}</span>`;
+                    }
+                  },
                 { data: null, title: "Action", width: "8%", className: "text-center" }
             ],
             columnDefs: [
@@ -1697,6 +1724,26 @@ if (typeof _tempContentData !== "undefined") {
                                 modalContent.find('#with-expiry').addClass('d-none');
                             }
                         });
+                        let url = baseUrl("hris/masterfile/upload_employee_liscert");
+                        $("#fileupload_liscert")
+                        .fileupload({
+                            url: url,
+                            dataType: "json",
+                            formData: { csrf_token: _csrf_hash, employee_id: tempDataId },
+                            done: function (e, data) {
+                                var result = data.result;
+                                if (result.response) {
+                                    modalContent.find("#liscert_attachment").val(result.filename);
+                                    modalContent.find("#temp_fileupload").empty().text(result.filename);
+                                    toastr.success(result.toastr_msg, "Upload License and Certificate File", 5000);
+                                } else {
+                                    toastr.error(result.toastr_msg, "Upload License and Certificate File", 5000);
+                                }
+                            }
+                        })
+                        .prop("disabled", !$.support.fileInput)
+                        .parent()
+                        .addClass($.support.fileInput ? undefined : "disabled");
 
                         $.validate({
                             form: "#form-licensure",
@@ -2970,10 +3017,11 @@ if (typeof _tempContentData !== "undefined") {
                 { data: "offcom_action", },
                 { data: "filename",className: "text-center",
                     render:  function(data, type, row, meta){
+                        const isDisabled = (row.filename == '---') ? 'disabled' : '';
                         return `
                         <span>
                             <button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill"
-                                    onclick="openFile('${tempDataId}', '${data}')">
+                                    onclick="openFile('${tempDataId}', '${data}')" ${isDisabled}>
                                 <i class="fa fa-eye"></i>
                             </button>
                         </span>`;
@@ -6550,3 +6598,39 @@ $("#company_no").inputmask({
 	mask: "(0\\9) 9999-99999",
 	alias: 'phonenumber'
 });
+
+function openCert(name) {
+    // Construct the full URL of the file
+    var fileUrl = baseUrl("uploads/files/documents/employee_files/empcode_" + tempDataId + "/licenses_certificates/" + encodeURIComponent(name));
+    // Function to check if file exists and get its MIME type
+    function checkFileExists(url, callback) {
+        $.ajax({
+            url: url,
+            type: 'HEAD',
+            success: function(response, status, xhr) {
+                var mimeType = xhr.getResponseHeader("Content-Type");
+                callback(true, mimeType);
+            },
+            error: function(xhr, status, error) {
+                callback(false, null);
+            }
+        });
+    }
+
+    // Check if file exists
+    checkFileExists(fileUrl, function(exists, mimeType) {
+        if (!exists) {
+            // Show error message if file doesn't exist
+            $('#pdfViewerModal .modal-body').html('<p class="text-danger">Error: File not found.</p>');
+            $('#pdfViewerModal').modal('show');
+        } else if (mimeType && mimeType.startsWith('application/pdf')) {
+            // Show PDF in modal
+            $('#pdfViewerModal .modal-body').html('<iframe id="pdfFrame" style="width: 100%; height: 600px;" frameborder="0"></iframe>');
+            $('#pdfViewerModal').modal('show');
+            $('#pdfFrame').attr('src', fileUrl);
+        } else {
+            // Open non-PDF files in new window
+            window.open(fileUrl, '_blank');
+        }
+    });
+}

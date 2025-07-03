@@ -322,7 +322,7 @@ class Datatable_model extends CI_Model{
         return $query->num_rows();
 	}
 	
-    function dtAllPosts($limit=5, $start=1, $col=null, $dir="ASC"){
+    function dtAllPosts($limit=5, $start=1, $col=null, $dir="ASC", $raw = null){
 		if(!$this->table) return false;
 
 		if(isset($this->fields) && $this->fields){
@@ -353,7 +353,11 @@ class Datatable_model extends CI_Model{
 		}
 		if($limit && $limit !== "-1"){ $this->db->limit($limit, $start); }
 		if(isset($this->group_by) && $this->group_by){ $this->db->group_by($this->group_by); }
-		if($col && $dir){ $this->db->order_by($col, $dir); }
+		if($col && $dir && $raw == null){ $this->db->order_by($col, $dir); }
+
+		if ($raw) { 
+			$this->db->order_by($raw);
+		}
 
 		$query = $this->db->get($this->table);
 

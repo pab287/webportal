@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 class Core_model extends CI_Model{
-    private $jsList = array(), $cssList = array(), $jsArrayData = array(), $isFooterJs = array(), $scriptAttribute = array();
+    private $jsList = array(), $cssList = array(), $jsArrayData = array(), $isFooterJs = array(), $scriptAttribute = array(), $attribute = array();
     private $jsExternalList = array(), $cssExternalList = array(), $isFooterExternalJs = array(), $scriptOrder = array();
     private $title, $headerTitle, $crumbTitle, $bodyClass, $privilegeName, $module, $table, $field_id;
 
@@ -207,11 +207,11 @@ class Core_model extends CI_Model{
     }
 
 
-    function addJs($path = null, $footer = false, $arrData = array()){
+    function addJs($path = null, $footer = false, $arrData = array(), $attribute=""){
         if ($path) {
             $this->jsList[] = $path;
             $this->scriptOrder[] = md5($path);
-
+            $this->attribute[] = $attribute;
             $this->jsArrayData[] = $arrData;
             $this->isFooterJs[] = $footer;
             return $this;
@@ -265,7 +265,8 @@ class Core_model extends CI_Model{
                             if (file_exists($filePath)) {
                                 $currentUrl = base_url("assets/{$list}");
                                 if ($this->isFooterJs[$key] == false) {
-                                    $html .= "<script src='{$currentUrl}'></script>\n\t\t";
+                                    $attribute = isset($this->attribute[$key]) ? $this->attribute[$key] : "";
+                                    $html .= "<script src='{$currentUrl}{$attribute}'></script>\n\t\t";
                                 }
                             }
                         }
@@ -315,7 +316,8 @@ class Core_model extends CI_Model{
                             if (file_exists($filePath)) {
                                 $currentUrl = base_url("assets/{$list}");
                                 if ($this->isFooterJs[$key] == true) {
-                                    $html .= "<script src='{$currentUrl}'></script>\n\t\t";
+                                    $attribute = isset($this->attribute[$key]) ? $this->attribute[$key] : "";
+                                    $html .= "<script src='{$currentUrl}{$attribute}'></script>\n\t\t";
                                 }
                             }
                         }

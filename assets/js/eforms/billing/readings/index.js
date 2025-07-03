@@ -2,42 +2,12 @@ $(document).ready(function(){
   fileUploadPhoto();
   fileUploadPhoto_();
   $("form").attr('autocomplete', 'off');
-  $('#query-builder').queryBuilder({
-    'bt-tooltip-errors': { delay: 100 },
-    filters: [
-        { id: 'r.ref_no', label: 'Reference #', type: 'string' },
-        { id: 'a.accountno', label: 'Account #', type: 'string' },
-        { id: 'a.firstname', label: 'Firstname', type: 'string' },
-        { id: 'a.middlename', label: 'Middlename', type: 'string' },
-        { id: 'a.lastname', label: 'Lastname', type: 'string' },
-        { id: 'a.suffix', label: 'Suffix', type: 'string' },
-        { id: 'r.meterno', label: 'Meter #', type: 'string' },
-        { id: 'a.model', label: 'House Model', type: 'string', operators: ['contains', 'not_contains', 'begins_with', 'not_begins_with', 'is_empty', 'is_not_empty'] },
-        {
-            id: 'r.reading_date',
-            label: 'Reading Date',
-            type: 'date',
-            plugin: 'datepicker',
-            plugin_config: { format: 'yyyy-mm-dd' },
-            operators: ['contains', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'between', 'not_between']
-        },
-        { id: 'a.block', label: 'Block #', type: 'string' },
-        { id: 'a.lot', label: 'Lot #', type: 'string' },
-        { id: 'r.reading', label: 'Reading', type: 'string' },
-
-    ],
-  });
-
-  $("#query-builder_group_0").addClass("col-12");
 });
 
 const initReadingStartDate = moment();
 const initReadingEndDate = moment();
-let selectedReadingStartDate = moment();
-let selectedReadingEndDate = moment();
-
-// var tempStartDate = initReadingStartDate;
-// var tempEndDate = initReadingEndDate;
+let selectedReadingStartDate = null;
+let selectedReadingEndDate = null;
 
 var search_val = "";
 var query_builder = "";
@@ -52,11 +22,17 @@ var tblReadings = $("#table-readings").DataTable({
         global: false,
         dataType: "json",
         data: function(d){
-          d.csrf_token = _csrf_hash,
-          d.search['value'] = search_val,
-          d.query_builder = query_builder,
-          d.startDate = moment(selectedReadingStartDate).format("YYYY-MM-DD"),
-          d.endDate = moment(selectedReadingEndDate).format("YYYY-MM-DD")
+          d.csrf_token = _csrf_hash;
+          d.search['value'] = search_val;
+          d.query_builder = query_builder;
+
+          if (selectedReadingStartDate) {
+              d.startDate = moment(selectedReadingStartDate).format("YYYY-MM-DD");
+          }
+
+          if (selectedReadingEndDate) {
+              d.endDate = moment(selectedReadingEndDate).format("YYYY-MM-DD");
+          }
        }
    },
    searching: true,
@@ -109,10 +85,6 @@ var tblReadings = $("#table-readings").DataTable({
    ],
    columnDefs: [
        { targets: [0]},
-       {
-        targets: [3],
-        orderable: false,
-       },    
        {
            data: null,
            defaultContent: "",
@@ -328,6 +300,15 @@ $("#select2_account_edit").select2({
   }
 });
 
+$('.newReadingBtn').click(function(e){
+  $('#fromCreateReading').trigger("reset");
+  $(".picInput").remove();
+  $(".dip_img").remove();
+  $("#picture_null").show();
+  $('#m_newReading #select2_account').val('').trigger("change");
+  $('.initial-reading').html('');
+});
+
 function account_details(){
   var account_id = $('[name="account_id"]').val();
   if(typeof account_id != "undefined" && account_id && account_id != 'null'){
@@ -343,7 +324,17 @@ function account_details(){
         $(".account_name").val(data.data.firstname+" "+data.data.lastname);
         $("#reading").val("");
 
-        console.log(data);
+        // Get year and month from previous reading date
+        const yearMonth = moment(data.previous_reading_date).format("YYYY-MM");
+
+        // Set the start date for the reading date picker to the first day of the month of the previous reading date
+        let previous_reading_date_startDate = moment(yearMonth + "-01").format('YYYY/MM/DD');
+        
+        // Set the reading date picker to the previous reading date plus one month to avoid selecting the same month
+        const futureDateMonth = moment(previous_reading_date_startDate).add(1, 'month').format('YYYY/MM/DD');
+
+        // Set the reading date picker to the previous reading date
+        $('#readingdate').datetimepicker("setStartDate", futureDateMonth);
 
         if (data.initial_reading === "0") {
           $('.initial-reading').html(`<small style="color: #ff0000;">This meter was replaced.</small>`);
@@ -541,7 +532,8 @@ $("#table-readings").on("click","#editReading",function(e){
         $("#m_editReading #old_reading").val(data.reading);
         $("#m_editReading .account_no").val(data.accountno);
         $("#m_editReading #old_reading_date").val(data.reading_date);
-        $('#m_editReading .readingdate').datepicker("setDate", data.reading_date);
+        // $('#m_editReading .readingdate').datepicker("setDate", data.reading_date);
+        $('#m_editReading .readingdate_readonly').html(data.reading_date);
 
         if(data.pic.length > 1){
 
@@ -593,10 +585,19 @@ $.validate({
   form : '#fromUpdateReading',
   lang: 'en',
   onSuccess : function(form) {
+      // Get the value from the p tag
+      var reading_date = $('.readingdate_readonly').text().trim();
+
+      // Serialize the form data
+      var formData = $('#fromUpdateReading').serialize();
+
+      // Append the reading_date to the payload
+      formData += '&reading_date=' + encodeURIComponent(reading_date);
+
       $.ajax({
           url : $(form).attr("action"),
           type: "POST",
-          data: $('#fromUpdateReading').serialize(),
+          data: formData,
           dataType: "JSON",
           success: function(data){
             if(data.status == true){
@@ -704,20 +705,4 @@ function getCurrentDate(){
   var mm = String(today.getMonth() + 1).padStart(2, '0');
   var yyyy = today.getFullYear();
   return yyyy+'-'+mm+'-'+dd;
-}
-
-$('#query-builder-btn').on('click', function () {
-  var result = $('#query-builder').queryBuilder('getSQL');
-
-  if (!$.isEmptyObject(result)) {
-      query_builder = result;
-      tblReadings.ajax.reload();
-      $("#modal-query-builder").modal("hide");
-  }
-});
-
-function clear_query_builder() {
-  $('#query-builder').queryBuilder('reset');
-  query_builder = null;
-  tblReadings.ajax.reload();
 }

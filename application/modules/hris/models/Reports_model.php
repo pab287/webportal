@@ -121,7 +121,8 @@ class Reports_model extends CI_Model{
                 "option" => "LEFT"),
             array(
                 'table' => 'gcchris.tblsalaries salaries',
-                'condition' => 'emp.id = salaries.emp_id AND salaries.sal_date = (SELECT MAX( sal_date) latest_date FROM gcchris.tblsalaries WHERE emp_id=emp.id)',
+                // 'condition' => 'emp.id = salaries.emp_id AND salaries.sal_date = (SELECT MAX( sal_date) latest_date FROM gcchris.tblsalaries WHERE emp_id=emp.id)',
+                'condition' => 'emp.id = salaries.emp_id AND salaries.id = (SELECT id FROM gcchris.tblsalaries WHERE emp_id = emp.id AND sal_date = ( SELECT MAX(sal_date) FROM gcchris.tblsalaries WHERE emp_id = emp.id ) ORDER BY id DESC LIMIT 1)',
                 'option' => 'LEFT'),
             array(
                 'table' => 'gcchris.tbleducations educ',

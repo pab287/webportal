@@ -524,6 +524,7 @@
                         <th class="" scope="col" style="width: 15%">RELEASE DATE</th>
                         <th class="" scope="col" style="width: 15%">EXAM DATE</th>
                         <th class="" scope="col">LICENSE NO.</th>
+                        <th class="" scope="col">ATTACHMENT</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -535,6 +536,7 @@
                                 <td data-label="RELEASE DATE">None</td>
                                 <td data-label="EXAM DATE">None</td>
                                 <td data-label="LICENSE NO.">None</td>
+                                <td data-label="ATTACHMENT">None</td>
                             </tr>
                         </template>
                         <template v-else>
@@ -545,6 +547,17 @@
                                 <td data-label="RELEASE DATE" v-text="license.release_date"></td>
                                 <td data-label="EXAM DATE" v-text="license.exam_date"></td>
                                 <td data-label="LICENSE NO." v-text="license.license_no"></td>
+                                <td data-label="ATTACHMENT" v-text="license.liscert_attachment || '---'"
+                                    :style="{
+                                        'white-space': 'nowrap',
+                                        'overflow': 'hidden',
+                                        'text-overflow': 'ellipsis',
+                                        'cursor': license.liscert_attachment ? 'pointer' : 'default',
+                                        'color': license.liscert_attachment ? '#007bff' : 'inherit',
+                                        'text-decoration': license.liscert_attachment ? 'underline' : 'none'
+                                    }"
+                                    @click="license.liscert_attachment ? openFile(license.liscert_attachment, false) : null">
+                                </td>
                             </tr>
                         </template>
                     </tbody>
@@ -619,7 +632,7 @@
                                 <td data-label="TO" v-text="experience.work_to"></td>
                                 <td data-label="POSITION" v-text="experience.work_position"></td>
                                 <td data-label="ID NO" v-text="experience.old_idno || 'N/A'"></td>
-                                <td data-label="STATUS" v-text="experience.work_status || '<br>'"></td>
+                                <td data-label="STATUS" v-text="experience.work_status || '---'"></td>
                                 <td data-label="REASON FOR LEAVING" v-text="experience.work_reason || 'N/A'"></td>
                             </tr>
                         </template>
@@ -1053,25 +1066,33 @@
         <div id="empEmploymentInfo-body" class="collapse" :class="{show :activeSection == 'empEmploymentInfo'}" aria-labelledby="empEmploymentInfo-head" data-parent="#accordionMain">
             <div class="card-body">
                 <ul class="nav nav-tabs nav-fill" id="offense-tabs">
-                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="" @click="filterOffenses('offenses')" aria-expanded="true">Offenses</a></li>
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('commendations')">Commendations</a></li>
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('notices')">Notices</a></li>
-                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('others')">Others</a></li>
+                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="" @click="filterOffenses('offenses')" aria-expanded="true">OFFENSES</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('commendations')">COMMENDATIONS</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('notices')">NOTICES</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="" @click="filterOffenses('others')">OTHERS</a></li>
                 </ul>
                 <div class="tab-content" id="offense-content">
                     <div id="offenses-tab">
                         <table class="responsive">
+                            <col width="*">
+                            <col width="*">
+                            <col width="*">
+                            <col width="*">
+                            <col width="7%">
+                            <col width="*">
                             <thead class="customsalary">
                                 <tr>
-                                    <th scope="col" colspan="4" v-text="activeTab">OFFENSE AND COMMENDATIONS</th>
+                                    <th scope="col" colspan="6" v-text="activeTab">OFFENSE AND COMMENDATIONS</th>
                                 </tr>
                             </thead>
                             <thead>
                                 <tr>
                                     <th class="" scope="col">TYPE</th>
-                                    <th class="" scope="col" style="width: 13%">DATE</th>
+                                    <th class="" scope="col">DATE</th>
                                     <th class="" scope="col">NATURE</th>
-                                    <th class="" scope="col">ACTION TAKEN</th>
+                                    <th class="" scope="col">ACTIONS TAKEN</th>
+                                    <th class="" scope="col">VIEW</th>
+                                    <th class="" scope="col">FILE</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1081,6 +1102,16 @@
                                         <td data-label="DATE" v-text="formatDate(offense.offcom_date)"></td>
                                         <td data-label="NATURE" v-text="offense.offcom_nature"></td>
                                         <td data-label="ACTION TAKEN" v-text="offense.offcom_action"></td>
+                                        <td data-label="VIEW" class="text-center">
+                                            <template v-if="offense.filename !== '---'"></template>
+                                            <span>
+                                                <button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" 
+                                                        @click="openFile(offense.filename)" :disabled="offense.filename == '---' ? 'disabled' : false">
+                                                    <i class="fa fa-eye" style="font-size: 12px;"></i>
+                                                </button>
+                                            </span>
+                                        </td>
+                                        <td data-label="FILE" v-text="offense.filename" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></td>
                                     </tr>
                                 </template>
                                 <template v-else>
@@ -1089,6 +1120,8 @@
                                         <td data-label="DATE">NONE</td>
                                         <td data-label="NATURE">NONE</td>
                                         <td data-label="ACTION TAKEN">NONE</td>
+                                        <td data-label="BUTTON">---</td>
+                                        <td data-label="FILE" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">NONE</td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -1321,6 +1354,22 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="pdfViewerModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">File Viewer</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <iframe id="pdfFrame" style="width: 100%; height: 800px;" frameborder="0"></iframe>
             </div>
         </div>
     </div>

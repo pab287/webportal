@@ -49,16 +49,16 @@
                                 <span>Memo No.</span>
                             </div>
                             <div class="colcat1 p-0">
-                                <input type="number" id="memo-ref_year" name="ref_year" value="<?=$data->ref_year ?>" class="form-control m-input" placeholder="year" data-validation="required">
+                                <input type="number" id="memo-ref_year" name="ref_year" value="<?=$data->ref_year ?>" class="form-control" placeholder="year" data-validation="required" style="padding-right: 5px !important">
                             </div>
                             <div class="colcat3 p-0">
                                 <span>-</span>
                             </div>
                             <div class="colcat4 p-0">
-                                <input type="number" id="memo-ref_series" name="ref_series" value="<?=$data->ref_series ?>" class="form-control m-input" placeholder="series" data-validation="required">
+                                <input type="number" id="memo-ref_series" name="ref_series" value="<?=$data->ref_series ?>" class="form-control" placeholder="series" data-validation="required" style="padding-right: 5px !important">
                             </div>
                             <div class="colcat4 p-0">
-                                <input type="text" id="memo-ref_department" name="ref_department" value="<?=$data->ref_department ?>" class="form-control m-input" placeholder="dept" data-validation="required">
+                                <input type="text" id="memo-ref_department" name="ref_department" value="<?=$data->ref_department ?>" class="form-control" placeholder="dept" data-validation="required">
                             </div>
                         </div>
                     </div>
@@ -93,7 +93,7 @@
         </div>
 
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="form-group">
                     <label for="policy-name" class="form-control-label required">Title</label>
                     <input type="text" name="title" id="policy-name" class="form-control" value="<?=$data->title ?>" data-validation="required">

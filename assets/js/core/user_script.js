@@ -15,9 +15,12 @@ $("#select2_group").select2({
 $("#select2_employee").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
+    dropdownParent: $('#modal_form_user'),
     ajax: {
         url: baseUrl("users/get_employee"),
+        dataType: "json",
         delay: 250,
+        global: false,
         processResults: function (data) {
             return data;
         }

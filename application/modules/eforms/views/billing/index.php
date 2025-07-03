@@ -71,13 +71,21 @@
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
                         <div class="row">
-                            <div class="m-portlet__head-title">
-                                <span class="m-portlet__head-icon cursor_pointer" id="datePicker_subdivision">
-                                    <i class="la la-calendar"></i>
-                                </span>
-                                <h3 class="m-portlet__head-text title_subdivision title_total_usage">
-                                    Total Usage
-                                </h3>
+                            <div class="m-portlet__head-title w-100">
+                                <div class="row justify-content-between align-items-center mx-0">
+                                    <div class="col-6 colmn-1">
+                                        <span class="m-portlet__head-icon">
+                                            <i class="la la-calendar"></i>
+                                        </span>
+
+                                        <h3 class="m-portlet__head-text title_subdivision title_total_usage">Total Usage</h3>
+                                    </div>
+                                    <div class="col-6 colmn-2 row mx-0 justify-content-end">
+                                        <span href="#" id="datePicker_subdivision" class="btn btn--sm m-btn--pill btn-secondary m-btn m-btn--label-brand">
+                                            <span class="selected-year">Year</span>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -92,13 +100,21 @@
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
                         <div class="row">
-                            <div class="m-portlet__head-title">
-                                <span class="m-portlet__head-icon cursor_pointer" id="datePicker_top_consumer">
-                                    <i class="la la-calendar"></i>
-                                </span>
-                                <h3 class="m-portlet__head-text title_top_consumer">
-                                    Top Consumer
-                                </h3>
+                            <div class="m-portlet__head-title w-100">
+                                <div class="row justify-content-between align-items-center mx-0">
+                                    <div class="col-10 colmn-1">
+                                        <span class="m-portlet__head-icon">
+                                            <i class="la la-calendar"></i>
+                                        </span>
+
+                                        <h3 class="m-portlet__head-text title_top_consumer">Top Consumer</h3>
+                                    </div>
+                                    <div class="col-2 colmn-2 row mx-0 justify-content-end">
+                                        <span href="#" id="datePicker_top_consumer" class="btn btn--sm m-btn--pill btn-secondary m-btn m-btn--label-brand">
+                                            <span class="selected-year">Year</span>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -145,48 +161,62 @@
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
                         <div class="row">
-                            <div class="m-portlet__head-title">
+                            <div class="m-portlet__head-title w-100">
                                 <input type="hidden" id="consumer_vs_supplier_date">
-                                <span class="m-portlet__head-icon cursor_pointer" id="datePicker_consumer_vs_supplier">
-                                    <i class="la la-calendar"></i>
-                                </span>
-                                <h3 class="m-portlet__head-text chartdiv_versus_title">
-                                    Consumer vs. Supplier
-                                </h3>
-                                <li style="margin-left: 12px;" class="m-portlet__nav-item m-dropdown m-dropdown--inline m-dropdown--arrow m-dropdown--align-right m-dropdown--align-push" data-dropdown-toggle="hover" aria-expanded="true">
-                                    <a href="#" class="m-portlet__nav-link m-dropdown__toggle btnView dropdown-toggle btn btn--sm m-btn--pill btn-secondary m-btn m-btn--label-brand">
-                                        Filter
-                                    </a>
-                                    <div class="m-dropdown__wrapper">
-                                        <span class="m-dropdown__arrow m-dropdown__arrow--right m-dropdown__arrow--adjust" style="left: auto; right: 40.5547px;"></span>
-                                        <div class="m-dropdown__inner">
-                                            <div class="m-dropdown__body">
-                                                <div class="m-dropdown__content">
-                                                    <ul class="m-nav">
-                                                        <template v-if="count > 0">
-                                                            <li class="m-nav__item">
-                                                                <a href="javascript:void(0);" class="m-nav__link btnView" @click="getUsagePerSubd('all')">
-                                                                    <span class="m-nav__link-text">
-                                                                        All
-                                                                    </span>
-                                                                </a>
-                                                            </li>
-                                                            <template v-for="(item,index) in collection">
-                                                                <li class="m-nav__item">
-                                                                    <a href="javascript:void(0);" class="m-nav__link btnView" @click="getUsagePerSubd(item.id)">
-                                                                        <span class="m-nav__link-text">
-                                                                            {{item.name}}
-                                                                        </span>
-                                                                    </a>
-                                                                </li>
-                                                            </template>
-                                                        </template>
-                                                    </ul>
+
+                                <div class="row justify-content-between align-items-center mx-0">
+                                    <div class="col-6 colmn-1">
+                                        <span class="m-portlet__head-icon">
+                                            <i class="la la-calendar"></i>
+                                        </span>
+
+                                        <h3 class="m-portlet__head-text chartdiv_versus_title">Consumer vs. Supplier</h3>
+                                    </div>
+
+                                    <div class="col-6 colmn-2 row mx-0 justify-content-end">
+                                        <div class="colmn-1 mr-3">
+                                            <div style="margin-left: 12px;" class="m-portlet__nav-item m-dropdown m-dropdown--inline m-dropdown--arrow m-dropdown--align-right m-dropdown--align-push" data-dropdown-toggle="hover" aria-expanded="true">
+                                                <a href="#" class="m-portlet__nav-link m-dropdown__toggle btnView dropdown-toggle btn btn--sm m-btn--pill btn-secondary m-btn m-btn--label-brand">Filter</a>
+
+                                                <div class="m-dropdown__wrapper">
+                                                    <span class="m-dropdown__arrow m-dropdown__arrow--right m-dropdown__arrow--adjust" style="left: auto; right: 40.5547px;"></span>
+                                                    <div class="m-dropdown__inner">
+                                                        <div class="m-dropdown__body">
+                                                            <div class="m-dropdown__content">
+                                                                <ul class="m-nav">
+                                                                    <template v-if="count > 0">
+                                                                        <li class="m-nav__item">
+                                                                            <a href="javascript:void(0);" class="m-nav__link btnView" @click="getUsagePerSubd('all')">
+                                                                                <span class="m-nav__link-text">
+                                                                                    All
+                                                                                </span>
+                                                                            </a>
+                                                                        </li>
+                                                                        <template v-for="(item,index) in collection">
+                                                                            <li class="m-nav__item">
+                                                                                <a href="javascript:void(0);" class="m-nav__link btnView" @click="getUsagePerSubd(item.id)">
+                                                                                    <span class="m-nav__link-text">
+                                                                                        {{item.name}}
+                                                                                    </span>
+                                                                                </a>
+                                                                            </li>
+                                                                        </template>
+                                                                    </template>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <div class="colmn-2">
+                                            <span href="#" id="datePicker_consumer_vs_supplier" class="btn btn--sm m-btn--pill btn-secondary m-btn m-btn--label-brand">
+                                                <span class="selected-year">Year</span>
+                                            </span>
+                                        </div>
                                     </div>
-                                </li>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -201,13 +231,21 @@
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
                         <div class="row">
-                            <div class="m-portlet__head-title">
-                                <span class="m-portlet__head-icon cursor_pointer" id="datePicker_total_payment">
-                                    <i class="la la-calendar"></i>
-                                </span>
-                                <h3 class="m-portlet__head-text title_total_payment">
-                                    Total Payment
-                                </h3>
+                            <div class="m-portlet__head-title w-100">
+                                <div class="row justify-content-between align-items-center mx-0">
+                                    <div class="col-6 colmn-1">
+                                        <span class="m-portlet__head-icon">
+                                            <i class="la la-calendar"></i>
+                                        </span>
+
+                                        <h3 class="m-portlet__head-text title_total_payment">Total Payment</h3>
+                                    </div>
+                                    <div class="col-6 colmn-2 row mx-0 justify-content-end">
+                                        <span href="#" id="datePicker_total_payment" class="btn btn--sm m-btn--pill btn-secondary m-btn m-btn--label-brand">
+                                            <span class="selected-year">Year</span>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -225,16 +263,21 @@
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
                         <div class="row">
-                            <div class="m-portlet__head-title">
-                                <!-- <span class="m-portlet__head-icon">
-                                    <i class="flaticon-line-graph"></i>
-                                </span> -->
-                                <span class="m-portlet__head-icon cursor_pointer" id="datePicker_billing_graph">
-                                    <i class="la la-calendar"></i>
-                                </span>
-                                <h3 class="m-portlet__head-text graph_title">
-                                    Analytics
-                                </h3>
+                            <div class="m-portlet__head-title w-100">
+                                <div class="row justify-content-between align-items-center mx-0">
+                                    <div class="col-6 colmn-1">
+                                        <span class="m-portlet__head-icon">
+                                            <i class="la la-calendar"></i>
+                                        </span>
+
+                                        <h3 class="m-portlet__head-text graph_title">Billing graph</h3>
+                                    </div>
+                                    <div class="col-6 colmn-2 row mx-0 justify-content-end">
+                                        <span href="#" id="datePicker_billing_graph" class="btn btn--sm m-btn--pill btn-secondary m-btn m-btn--label-brand">
+                                            <span class="selected-year">Year</span>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

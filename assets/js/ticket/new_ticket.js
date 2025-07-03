@@ -1,3 +1,5 @@
+let ticket_vue = null;
+
 jQuery(document).ready(function () {
     $("#progress").hide();
     fileUploadPhoto();
@@ -290,3 +292,60 @@ function removeDocument(el, filename) {
         }
     });
 }
+
+
+
+function checkExistingTickets(){
+    $.ajax({
+        url: baseUrl("ticket/ticket/get_existing_ticket_per_user"),
+        type: "POST",
+        dataType: "json",
+        data: {
+            csrf_token: _csrf_hash,
+        },
+        success: function (data) {
+            if (data.length > 0) {
+                $("#ticket-preview-dialog").modal("show");
+                ticket_vue.vm_tickets = data;
+            }
+        }
+    });
+}
+
+ticket_vue = new Vue({
+    el: "#ticket-preview-dialog",
+    data: {vm_tickets: []},
+    mounted: function () {
+        checkExistingTickets();
+        console.log(this.vm_tickets);
+    },
+    methods: {
+        closeTicket(ticket_id,reference_no) {
+            const self = this;
+            $.ajax({
+                url: baseUrl("ticket/ticket/close_ticket"),
+                type: "POST",
+                dataType: "json",
+                data: {
+                    csrf_token: _csrf_hash,
+                    id:ticket_id,
+                    reference_no: reference_no
+                },
+                success: function (response) {
+                    if (response.status) {
+                        toastr.success(response.message, "Ticket Closed", 5000);
+                        self.vm_tickets = response.tickets;
+                    }else{
+                        toastr.error(response.message, "Error", 5000);
+                    }
+                    if (self.vm_tickets.length === 0) {
+                        $("#ticket-preview-dialog").modal("hide");
+                    }
+                }
+            });
+        },
+        formatDate(date){
+            return moment(date).format('MMM D, YYYY hh:mm A');
+        }
+    }
+});
