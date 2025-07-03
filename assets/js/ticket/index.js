@@ -95,7 +95,11 @@ let ticketDataSheet = new Vue({
       series.dataFields.categoryY = "status";
       series.name = "Tickets";
       series.columns.template.tooltipText = "{categoryY}: [bold]{valueX}[/] tickets";
-
+      series.columns.template.events.on("hit", function (e) {
+        const data = e.target.dataItem.dataContext;
+        const key = data.status;
+        window.open(baseUrl('ticket/tickets?status=' + key), "_blank");
+      },this);
       series.columns.template.adapter.add("fill", function(fill, target) {
           switch(target.dataItem.categoryY) {
               case "Open":
@@ -177,6 +181,13 @@ let ticketDataSheet = new Vue({
                   return fill;
           }
         });
+        
+        series.columns.template.events.on("hit", function (e) {
+          const data = e.target.dataItem.dataContext;
+          const key = data.status;
+          window.open(baseUrl('ticket/tickets?category=' + key), "_blank");
+        },this);
+
     },
     getGraphDataPriority(){
       const vm = this;
@@ -230,6 +241,11 @@ let ticketDataSheet = new Vue({
       pieSeries.dataFields.category = "priority";
       pieSeries.slices.template.propertyFields.fill = "color";
       priorityChart.legend = new am4charts.Legend();
+      pieSeries.slices.template.events.on("hit", function (e) {
+        const data = e.target.dataItem.dataContext;
+        const priority = data.priority;
+        window.open(baseUrl('ticket/tickets?priority=' + encodeURIComponent(priority)), "_blank");
+      });
     },
     getGraphDataAssignee(){
       const vm = this;
@@ -410,6 +426,7 @@ const dateRangeConfig = {
       cancelLabel: 'Show All'
   },
   ranges: {
+      'All Time': [moment('1900-01-01'), moment()],
       'Today': [moment(), moment()],
       'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
       'Last 7 Days': [moment().subtract(6, 'days'), moment()],
@@ -455,7 +472,11 @@ const handleAveResolveTimeApply = (ev, picker) => {
     ticketDataSheet.aveResolveRange = "Last 30 Days";
   } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
     ticketDataSheet.aveResolveRange = "Yesterday";
-  } else {
+  }
+  else if (startDate === '1900-01-01' && endDate === moment().format('YYYY-MM-DD')) {
+    ticketDataSheet.aveResolveRange = "All Time";
+  }
+  else {
     ticketDataSheet.aveResolveRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
   }
   makeAveResolveTimeRequest({ start: startDate, end: endDate })
@@ -504,7 +525,11 @@ const handleAveResponseTimeApply = (ev, picker) => {
     ticketDataSheet.aveResponseRange = "Last 30 Days";
   } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
     ticketDataSheet.aveResponseRange = "Yesterday";
-  } else {
+  } 
+  else if (startDate === '1900-01-01' && endDate === moment().format('YYYY-MM-DD')) {
+    ticketDataSheet.aveResponseRange = "All Time";
+  }
+  else {
     ticketDataSheet.aveResponseRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
   }
   makeAveResponseTimeRequest({ start: startDate, end: endDate })
@@ -552,7 +577,11 @@ const handleOpenTicketApply = (ev, picker) => {
     ticketDataSheet.openTicketRange = "Last 30 Days";
   } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
     ticketDataSheet.openTicketRange = "Yesterday";
-  } else {
+  } 
+  else if (startDate === '1900-01-01' && endDate === moment().format('YYYY-MM-DD')) {
+    ticketDataSheet.openTicketRange = "All Time";
+  }
+  else {
     ticketDataSheet.openTicketRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
   }
   makeOpenTicketRequest({ start: startDate, end: endDate })
@@ -600,7 +629,11 @@ const handleUrgentTicketApply = (ev, picker) => {
     ticketDataSheet.urgentTicketRange = "Last 30 Days";
   } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
     ticketDataSheet.urgentTicketRange = "Yesterday";
-  } else {
+  } 
+  else if (startDate === '1900-01-01' && endDate === moment().format('YYYY-MM-DD')) {
+    ticketDataSheet.urgentTicketRange = "All Time";
+  }
+  else {
     ticketDataSheet.urgentTicketRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
   }
   
@@ -649,7 +682,11 @@ const handleTotalApply = (ev, picker) => {
     ticketDataSheet.totalTicketRange = "Last 30 Days";
   } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
     ticketDataSheet.totalTicketRange = "Yesterday";
-  } else {
+  } 
+  else if (startDate === '1900-01-01' && endDate === moment().format('YYYY-MM-DD')) {
+    ticketDataSheet.totalTicketRange = "All Time";
+  }
+  else {
     ticketDataSheet.totalTicketRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
   }
 
@@ -698,7 +735,11 @@ const makeTicketStatusRequest = (data) => {
       ticketDataSheet.totalTicketByStatusRange = "Last 30 Days";
     } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
       ticketDataSheet.totalTicketByStatusRange = "Yesterday";
-    } else {
+    } 
+    else if (startDate === '1900-01-01' && endDate === moment().format('YYYY-MM-DD')) {
+      ticketDataSheet.totalTicketByStatusRange = "All Time";
+    }
+    else {
       ticketDataSheet.totalTicketByStatusRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
     }
     
@@ -747,7 +788,11 @@ const makeTicketStatusRequest = (data) => {
       ticketDataSheet.totalTicketByCategoryRange = "Last 30 Days";
     } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
       ticketDataSheet.totalTicketByCategoryRange = "Yesterday";
-    } else {
+    } 
+    else if (startDate === '1900-01-01' && endDate === moment().format('YYYY-MM-DD')) {
+      ticketDataSheet.totalTicketByCategoryRange = "All Time";
+    }
+    else {
       ticketDataSheet.totalTicketByCategoryRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
     }
 
@@ -834,7 +879,11 @@ const handleTicketPrioritiesResponse = (data) => {
         ticketDataSheet.totalTicketByPriorityRange = "Last 30 Days";
       } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
         ticketDataSheet.totalTicketByPriorityRange = "Yesterday";
-      } else {
+      } 
+      else if (startDate === '1900-01-01' && endDate === moment().format('YYYY-MM-DD')) {
+        ticketDataSheet.totalTicketByPriorityRange = "All Time";
+      }
+      else {
         ticketDataSheet.totalTicketByPriorityRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
       }
       
@@ -882,7 +931,11 @@ const handleTicketPrioritiesResponse = (data) => {
           ticketDataSheet.totalTicketByAsigneeRange = "Last 30 Days";
         } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
           ticketDataSheet.totalTicketByAsigneeRange = "Yesterday";
-        } else {
+        }
+        else if (startDate === '1900-01-01' && endDate === moment().format('YYYY-MM-DD')) {
+          ticketDataSheet.totalTicketByAsigneeRange = "All Time";
+        } 
+        else {
           ticketDataSheet.totalTicketByAsigneeRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
         }
         
@@ -933,7 +986,11 @@ const handleTicketPrioritiesResponse = (data) => {
             ticketDataSheet.totalTicketCompletionRange = "Last 30 Days";
           } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
             ticketDataSheet.totalTicketCompletionRange = "Yesterday";
-          } else {
+          } 
+          else if (startDate === '1900-01-01' && endDate === moment().format('YYYY-MM-DD')) {
+            ticketDataSheet.totalTicketCompletionRange = "All Time";
+          } 
+          else {
             ticketDataSheet.totalTicketCompletionRange = `From: ${picker.startDate.format('MMM D, YYYY')} - To: ${picker.endDate.format('MMM D, YYYY')}`;
           }
 

@@ -19,9 +19,8 @@ class Ticket_m extends CI_Model
     }
 
     //function to display all ticketing entries
-    function ticketMasterfile()
+    function ticketMasterfile($params = null)
     {
-        
         $resultset = array();
         $post = $this->input->post();
         $order_val = array(array("column"=>"0", "dir"=>"desc"));
@@ -35,8 +34,8 @@ class Ticket_m extends CI_Model
         $rowData = array();
         $view_own_request = (in_array("view_own_request", $this->core_layout->getCurrentActions())) ? true : false;
         $payroll =  (in_array("payroll_ticket", $this->core_layout->getCurrentActions())) ? true : false;
-        $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll);
-        $rowCount = $this->get_ticket_masterfile_count($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll);
+        $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll, $params);
+        $rowCount = $this->get_ticket_masterfile_count($search, $query_builder, $view_own_request, $payroll, $params);
 
         $totalNotFiltered = $rowCount;
 
@@ -47,7 +46,7 @@ class Ticket_m extends CI_Model
         return $resultset;
     }
 
-    public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll){
+    public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll, $params){
         $resultset = array();
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id");
@@ -58,6 +57,14 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as sub" , "sub.name = a.sub_category", 'LEFT');
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
+        if($params){
+            $allowed_fields = ['priority', 'status', 'category'];
+            foreach($params as $field => $value) {
+                if(in_array($field, $allowed_fields)) {
+                    $this->db->where("LOWER(a.$field)", strtolower($value));
+                }
+            }
+        }
         $current_user_id = $this->user_data['emp_id'];
         if($payroll) {
             $this->db->where('cat.name', 'payroll');
@@ -128,7 +135,7 @@ class Ticket_m extends CI_Model
         return $resultset;
     }
     
-    private function get_ticket_masterfile_count($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll){
+    private function get_ticket_masterfile_count($search = null, $query_builder = null, $view_own_request, $payroll, $params){
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
@@ -138,6 +145,14 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->where('a.is_archived', '0');
+        if($params){
+            $allowed_fields = ['priority', 'status', 'category'];
+            foreach($params as $field => $value) {
+                if(in_array($field, $allowed_fields)) {
+                    $this->db->where("LOWER(a.$field)", strtolower($value));
+                }
+            }
+        }
         // $this->db->where("LOWER(a.status) != 'cancelled'", NULL, FALSE);
         $current_user_id = $this->user_data['emp_id']; 
         if($payroll) {

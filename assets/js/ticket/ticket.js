@@ -1,3 +1,4 @@
+let params="";
 var getUrlParameter = function getUrlParameter(sParam) {
     var sPageURL = decodeURIComponent(window.location.search.substring(1)),
         sURLVariables = sPageURL.split('&'),
@@ -11,6 +12,15 @@ var getUrlParameter = function getUrlParameter(sParam) {
     }
 };
 param_id = getUrlParameter('id');
+if(getUrlParameter('status') !== undefined){
+    params = "?status="+getUrlParameter('status');
+}else if(getUrlParameter('category') !== undefined){
+    params = "?category="+getUrlParameter('category');
+}
+else if(getUrlParameter('priority') !== undefined){
+    params = "?priority="+getUrlParameter('priority');
+}
+
 let search_val = "";
 let query_builder = "";
 
@@ -19,7 +29,7 @@ let tbl = $("#table-tickets").DataTable({
     serverSide: true,
     processing: true,
     ajax: {
-        url: baseUrl("ticket/ticket/ticket_masterfile"),
+        url: baseUrl("ticket/ticket/ticket_masterfile")+params,
         type: "post",
         global: false,
         dataType: "json",

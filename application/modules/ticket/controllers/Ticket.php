@@ -1,5 +1,6 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 class Ticket extends MY_Controller {
+    private $status;
     public function __construct(){
 		parent::__construct();
 		$this->authenticate->setModuleAccess("ticket");
@@ -10,8 +11,8 @@ class Ticket extends MY_Controller {
         $this->core_layout->setPrivilegeName("ticket_masterfile");
 
         $this->load->model('Ticket_m','ticket');
-		
         date_default_timezone_set('Asia/Manila');
+        $this->status = null;
     }
 
     function dashboard(){
@@ -130,7 +131,8 @@ class Ticket extends MY_Controller {
     }
 
     function ticket_masterfile(){
-        $data =  $this->ticket->ticketMasterfile();
+        $params = $this->input->get();
+        $data =  $this->ticket->ticketMasterfile($params);
         $this->output
         ->set_content_type('json')
         ->set_output(json_encode($data));
@@ -372,12 +374,5 @@ class Ticket extends MY_Controller {
         $data = $this->ticket->closeTicket();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
-
-    // public function serve_ticket(){
-    //     $id = $this->input->get('id');
-    //     $data = $this->ticket->serveTicket($id);
-    //     var_dump($data);
-    //     $this->view_ticket();
-    // }
 
 }
