@@ -1388,82 +1388,41 @@ class Cash_advance_m extends CI_Model {
     }
 
     public function approveUpdate($id){
-        $this->input->post();
-        $amt_approved =  str_replace('₱ ','',str_replace( ',', '', $this->input->post('amt_approved')));
-        $date = date('Y-m-d H:i:s');
-        $data = array(
-            'approved_by' => $this->getDisplayName(),
-            'approved_dt' => $date,
-            'amt_approved' => $amt_approved,
-            'approved_remarks' => $this->input->post("approved_remarks"),
-            'status' => "Approved",
-        );
+        $response = false;
         if($id){
-            $ca_details = $this->getCaDetails($id);
-            $row = $this->db->get_where('gccmaster.tblemployees', array('id' => $ca_details->employee))->row();
+            $post = $this->input->post();
+            $trimmedRemarks = trim($post['approved_remarks']);
+            $amtApproved = (float) str_replace(['₱', ','], '', $post['amt_approved']);
+            $data = array(
+                'approved_by' => $this->getCurrentEmployeeName(),
+                'approved_dt' => $this->dateTime,
+                'amt_approved' => $amtApproved,
+                'approved_remarks' => $trimmedRemarks,
+                'status' => "Approved",
+            );
+            
+            $caDetails = $this->getCaDetails($id);
+            $employeeName = $this->getCurrentEmployeeName($caDetails->employee);
+            $row = $this->db->get_where('gccmaster.tblemployees', array('id' => $caDetails->employee))->row();
             $phoneNo = $row->mobile_no;
             $this->db->where('cash_advance.id', $id);
             $query = $this->db->update('gcceforms.cash_advance', $data);
-
-            /**
-             * removed to transfer it in Released status. will not delete for future reference.
-             */
-            // $this->db->from("gcchris.loans");
-            // $this->db->where("reference", $ca_details->reference_no);
-            // $q = $this->db->get();
-            // if($q->num_rows() > 0){
-            //     $tempRemarks = "[System Generated:Updated Cash Advance form CA Module]";
-            //     $approvedRemarks = $this->input->post("approved_remarks");
-            //     if(isset($approvedRemarks) && $approvedRemarks){
-            //         $tempRemarks = "{$tempRemarks}, {$approvedRemarks}";
-            //     }
-            //     $loan_data = array('active' => 0, 'remarks' => $tempRemarks );
-            //     $this->db->where('reference', $ca_details->reference_no);
-            //     $this->db->update('gcchris.loans', $loan_data);
-            // }else{
-            //     $caInterestPercentage = $ca_details->acctg_ca_interest_percentage ? floatval($ca_details->acctg_ca_interest_percentage): 0.00;
-            //     $loan_data = array(
-            //         'emp_id' => $ca_details->employee,
-            //         'loan_id' => 1,
-            //         'reference_id'=> $id,
-            //         'reference' => $ca_details->reference_no,
-            //         'amount' => $amt_approved,
-            //         'deduction_type' => ($ca_details->deduct_type == '') ? 1 : 0,
-            //         'fixed_deduction_amt' => ($ca_details->deduct_type == '') ? $ca_details->amt_to_b_deducted : 0.00,
-            //         'percentage' => ($ca_details->deduct_type != '') ? $ca_details->amt_to_b_deducted : 0.00,
-            //         'interest_percentage' => $caInterestPercentage,
-            //         'active' => 0,
-            //         'created_by' => 0,
-            //         'created_at' => $date,
-            //         'is_archived' => 0,
-            //         'archived_by' => 0,
-            //         'remarks' => '[System Generated:New Cash Advance form CA Module]'
-            //     );
-            //     $for_loan = $this->db->insert('gcchris.loans', $loan_data);
-            //     if($for_loan){
-            //         $msg = "Cash Advance Masterfile - Cash Advance loan is automatically added to payroll deduction with the reference no: `".$ca_details->reference_no."`, employee `".$id."` and set status to `Suspended`";
-            //         $this->core_layout->setEventLog($msg,"insert", "success", "gcceforms", "user");
-            //     }else{
-            //         $msg = "Cash Advance Masterfile - Cash Advance loan failed to add to payroll deduction with the reference no: `".$ca_details->reference_no."`, employee `".$id."` and set status to `Suspended`";
-            //         $this->core_layout->setEventLog($msg,"insert", "error", "gcceforms", "system");
-            //     }
-            // }
-            /**
-             * removed to transfer it in Released status. will not delete for future reference.
-             */
-
             if($query){
+                $messageRemarks = $trimmedRemarks !== "" ? " with a remarks of `".$trimmedRemarks."`" : "";
+
                 $this->sendTelegram($id);
                 $sendMsgNotification = $this->sendSMSNotification($id, $phoneNo);
                 if($sendMsgNotification !== false){
-                    $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$id."` with a remarks of ".$data['approved_remarks']."`. message sent","update", "success", "gcceforms", "user");
+                    $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$employeeName."`".$messageRemarks.". message sent","update", "success", "gcceforms", "user");
                 } else {
-                    $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$id."` with a remarks of ".$data['approved_remarks']."`. message not sent","update", "error", "gcceforms", "system");
+                    $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$employeeName."`".$messageRemarks.". message not sent!!", "update", "error", "gcceforms", "system");
                 }
-                $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$id."` with a remarks of ".$data['approved_remarks']."`.","update", "success", "gcceforms", "user");
-                return $query;
+                $this->core_layout->setEventLog("Cash Advance Masterfile - User approved CA of employee `".$employeeName."`".$messageRemarks.".", "update", "success", "gcceforms", "user");
+                $response = $query;
             }
         }
+        
+        return $response;
     }
 
     function getCaDetails($id){
