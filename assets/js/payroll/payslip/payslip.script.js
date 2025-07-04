@@ -384,22 +384,22 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
         buttons: [{
             text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT REPORT</span>',
             className: "pull-right printPayslipAction btn-warning btnPrint m--margin-left-25",
-            action: function (e, dt, node, conf) {
-                var temp = vmPayslip.request;
-                var tempData = dt.data();
+            action: function (_e, dt, _node, _conf) {
+                const temp = vmPayslip.request;
+                const tempData = dt.data();
                 if (typeof tempData !== "undefined" && tempData.length > 0) {
-                    var ids = [];
+                    let ids = [];
                     $.each(tempData, function (i, v) { ids.push(v.id); });
                     triggerPrintableNetPay(ids, temp);
                 }
             }
         }, {
-            text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT ACKNOWLEDGeMENT</span>',
+            text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT ACKNOWLEDGEMENT</span>',
             className: "pull-right printPayslipAction btnPrint",
-            action: function (e, dt, node, conf) {
-                var tempData = dt.data();
+            action: function (_e, dt, _node, _conf) {
+                const tempData = dt.data();
                 if (typeof tempData !== "undefined" && tempData.length > 0) {
-                    var ids = [];
+                    let ids = [];
                     $.each(tempData, function (i, v) { ids.push(v.id); });
                     triggerPrintableAknowledgement(ids);
                 }
@@ -407,10 +407,10 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
         }, {
             text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT ALL</span>',
             className: "pull-right printPayslipAction btnPrint",
-            action: function (e, dt, node, conf) {
-                var tempData = dt.data();
+            action: function (_e, dt, _node, _conf) {
+                const tempData = dt.data();
                 if (typeof tempData !== "undefined" && tempData.length > 0) {
-                    var ids = [];
+                    let ids = [];
                     $.each(tempData, function (i, v) { ids.push(v.id); });
                     triggerPrintable(ids);
                 }
@@ -418,12 +418,12 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
         }, {
             text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT SELECTED</span>',
             className: "pull-right printPayslipSelectedAction btnPrint",
-            action: function (e, dt, node, conf) {
-                var tempCheckbox = $(dt.body()).find("input[type='checkbox']:checked");
+            action: function (_e, dt, _node, _conf) {
+                const tempCheckbox = $(dt.body()).find("input[type='checkbox']:checked");
                 if (typeof tempCheckbox !== "undefined" && tempCheckbox.length > 0) {
-                    var ids = [];
+                    let ids = [];
                     $.each(tempCheckbox, function (i, v) {
-                        var checkedValue = $(v).val();
+                        const checkedValue = $(v).val();
                         ids.push(checkedValue);
                     });
                     triggerPrintable(ids);
@@ -433,12 +433,12 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
             text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT OPTION</span>',
             titleAttr: 'Print Option for Retiree, Local Hires and Pavers',
             className: "pull-right printPayslipOptionAction btnPrint",
-            action: function (e, dt, node, conf) {
-                var tempCheckbox = $(dt.body()).find("input[type='checkbox']:checked");
+            action: function (_e, dt, _node, _conf) {
+                const tempCheckbox = $(dt.body()).find("input[type='checkbox']:checked");
                 if (typeof tempCheckbox !== "undefined" && tempCheckbox.length > 0) {
-                    var ids = [];
+                    let ids = [];
                     $.each(tempCheckbox, function (i, v) {
-                        var checkedValue = $(v).val();
+                        const checkedValue = $(v).val();
                         ids.push(checkedValue);
                     });
                     triggerPrintableOption(ids);
@@ -1427,7 +1427,7 @@ function triggerPrintableNetPay(ids = [], temp = {}) {
             data: { csrf_token: _csrf_hash, ids: ids, paramaters: temp },
             success: function (json) {
                 if (json.response) {
-                    var w = window.open("about:blank");
+                    const w = window.open("about:blank");
                     w.document.open();
                     w.document.write(json.html);
                     w.document.close();
@@ -1481,12 +1481,12 @@ function triggerPrintable(ids = []) {
                     w.document.open();
                     w.document.write(json.html);
                     w.document.close();
-                    setTimeout(function () {
+                    /*** setTimeout(function () {
                         w.print();
                         w.close();
-                    }, 150);
+                    }, 150); ***/
 
-                    w.onbeforeprint = function (e) {
+                   /*** w.onbeforeprint = function (e) {
                         setPrintIds = ids;
                     }
                     w.onafterprint = function () {
@@ -1544,7 +1544,7 @@ function triggerPrintable(ids = []) {
                           }
                           
                         });
-                    }
+                    } ***/
                 }
             }
         });

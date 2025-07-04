@@ -5432,7 +5432,7 @@ class Payroll_m extends CI_Model{
                 $overtime_ndiff_hours = $tempRow->ot_ndiff_minutes / 60;
                 $tempRow->ot_ndiff_hours = floatval($overtime_ndiff_hours) > 0 ?
                     is_float($overtime_ndiff_hours)? number_format($overtime_ndiff_hours, 2, ".", ","): $overtime_ndiff_hours
-                    : $overtime_ndiff_hours;  
+                    : $overtime_ndiff_hours;
 
                 $overtime_hours = $tempRow->ot_minutes / 60;
                 
@@ -5695,13 +5695,13 @@ class Payroll_m extends CI_Model{
             if(isset($post["ids"]) && is_array($post["ids"]) && count($post["ids"]) > 0){
                 $arrData = array();
                 $forPrint = $this->getEmpId($post["ids"]);
-                foreach ($forPrint as $key => $id) {
+                foreach ($forPrint as $id) {
                     $result = (object) $this->getCurrentPayrollPayslip($id);
-                    if($result->response == true){
+                    if($result->response === true){
                         $arrData[] = $result->data;
                     }
                 }
-                if(is_array($arrData) && count($arrData) > 0){
+                if(is_array($arrData) && !empty($arrData)){
                     $html = $this->load->view("core/templates/printable/header", null, true);
                     $html .= $this->load->view("payroll/payroll/printable/print_content", array("data"=>$arrData), true);
                     $html .= $this->load->view("core/templates/printable/footer", null, true);
@@ -6201,11 +6201,11 @@ class Payroll_m extends CI_Model{
                 $arrData = array();
                 foreach ($post["ids"] as $key => $id) {
                     $result = (object) $this->getCurrentPayrollPayslip($id);
-                    if($result->response == true){
+                    if($result->response === true){
                         $arrData[] = $result->data;
                     }
                 }
-                if(is_array($arrData) && count($arrData) > 0){
+                if(is_array($arrData) && !empty($arrData)){
                     $html = $this->load->view("core/templates/printable/header", null, true);
                     $html .= $this->load->view("payroll/payroll/printable/print_netpay_total_content", array("data"=>$arrData, "other_data"=>$_otherData), true);
                     $html .= $this->load->view("core/templates/printable/footer", null, true);
