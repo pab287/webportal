@@ -1452,7 +1452,7 @@ function triggerPrintableAknowledgement(ids = []) {
             data: { csrf_token: _csrf_hash, ids: ids },
             success: function (json) {
                 if (json.response) {
-                    var w = window.open("about:blank");
+                    const w = window.open("about:blank");
                     w.document.open();
                     w.document.write(json.html);
                     w.document.close();
@@ -1476,19 +1476,18 @@ function triggerPrintable(ids = []) {
             dataType: "json",
             data: { csrf_token: _csrf_hash, ids: ids },
             success: function (json) {
+                let setPrintIds = [];
                 if (json.response) {
-                    var w = window.open("about:blank");
+                    const w = window.open("about:blank");
                     w.document.open();
                     w.document.write(json.html);
                     w.document.close();
-                    /*** setTimeout(function () {
+                    setTimeout(function () {
                         w.print();
                         w.close();
-                    }, 150); ***/
+                    }, 150);
 
-                   /*** w.onbeforeprint = function (e) {
-                        setPrintIds = ids;
-                    }
+                   w.onbeforeprint = function (e) { setPrintIds = ids; }
                     w.onafterprint = function () {
                         $.ajax({ 
                             url: siteUrl("payroll/update_payrollsheet_printed_status"),
@@ -1523,16 +1522,14 @@ function triggerPrintable(ids = []) {
                                                   payslipId: json.data.printed_id,
                                               }
                                           })
-                                      ).done(function(responseTelegram, responseEmail) {
-                                  
+                                      ).done(function() {
                                           Swal.fire(
                                               'Sent!',
                                               'Payslip has been sent via Telegram and Email.',
                                               'success'
                                           );
                                       });
-                                  }
-                                   else if (result.dismiss === Swal.DismissReason.cancel) {
+                                  } else if (result.dismiss === Swal.DismissReason.cancel) {
                                           Swal.fire(
                                               'Cancelled',
                                               'Payslip sending via Telegram and Email was cancelled.',
@@ -1540,11 +1537,10 @@ function triggerPrintable(ids = []) {
                                           );
                                       }
                                   });
-                              }
-                          }
-                          
+                                }
+                            }
                         });
-                    } ***/
+                    }
                 }
             }
         });
@@ -1571,8 +1567,9 @@ function triggerPrintableOption(ids = []) {
                     dataType: "json",
                     data: { csrf_token: _csrf_hash, ids: ids },
                     success: function (json) {
+                        let setPrintIds = [];
                         if (json.response) {
-                            var w = window.open("about:blank");
+                            const w = window.open("about:blank");
                             w.document.open();
                             w.document.write(json.html);
                             w.document.close();
