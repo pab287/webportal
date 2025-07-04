@@ -6206,10 +6206,7 @@ class Payroll_m extends CI_Model{
                     }
                 }
                 if(is_array($arrData) && !empty($arrData)){
-                    $html = $this->load->view("core/templates/printable/header", null, true);
-                    $html .= $this->load->view("payroll/payroll/printable/print_netpay_total_content", array("data"=>$arrData, "other_data"=>$_otherData), true);
-                    $html .= $this->load->view("core/templates/printable/footer", null, true);
-
+                    $html = $this->load->view("payroll/payroll/printable/print_netpay_total_content", array("data"=>$arrData, "other_data"=>$_otherData), true);
                     $resultset["response"] = true;
                     $resultset["html"] = $html;
                 }else{
