@@ -53,7 +53,7 @@ var tblCashAdvance = $("#table-cash-advance-content").DataTable({
                 let response;
                 if(row.reference != 'no reference no'){
                     if(row.active == 1){
-                        if(row.paid == 1 || row.is_paid){
+                        if(row.paid == 1 || row.is_paid || parseFloat(row.rembalance) <= 0){
                             response = '<a href="#"><span class="m-badge m-badge--wide m--font-bolder m-badge--success">Paid</span></a>';
                         }else{
                             response = '<a href="#"><span class="m-badge m-badge--wide m--font-bolder m-badge--info">Active</span></a>';
@@ -221,9 +221,6 @@ $.ajax({
                     $("#buttons").append("<button type='button' class='btn btn-success btnHr_note m-btn m-btn--custom m-btn--air m-btn--box' data-toggle='modal' data-target='#set_hr_modal'><span><span>Set Payroll Balance</span></span></button>");
                     // $("#buttons").append("<a><button type='button' class='btn btn-success btnHr_note m-btn m-btn--custom m-btn--air m-btn--box' data-toggle='modal' data-target='#set_hr_modal'><span><span>Set Payroll Balance</span></span></button></a>");
                 }
-                if (jQuery.inArray("undo_recommend", _currentActions) !== -1) {
-                    $("#buttons").append("<button type='button' data-toggle='modal' data-target='#undo_recommend_modal' class='btn btn-danger btnUndo_recommend m-btn m-btn--custom m-btn--air m-btn--box'>Undo Recommend</button>");
-                }
                 if (jQuery.inArray("cancel", _currentActions) !== -1) {
                     // $("#buttons").append("<a><button type='button' class='btn btn-danger btnCancel m-btn m-btn--custom m-btn--air m-btn--box' data-toggle='modal' data-target='#cancel_modal'><span><span>Cancel</span></span></button></a>");
                     $("#buttons").append("<a class='btn btn-danger btnCancel m-btn m-btn--custom m-btn--air m-btn--box text-white' data-toggle='modal' data-target='#cancel_modal'><span><span>CANCE;</span></span></a>");
@@ -291,6 +288,9 @@ $.ajax({
                 }
                 $("#status_detail").addClass("alert alert-primary");
 
+                if (jQuery.inArray("undo_recommend", _currentActions) !== -1) {
+                    $("#buttons").append("<button type='button' data-toggle='modal' data-target='#undo_recommend_modal' class='btn btn-danger btnUndo_recommend m-btn m-btn--custom m-btn--air m-btn--box'>Undo Recommend</button>");
+                }
                 if (jQuery.inArray("acct_note", _currentActions) !== -1) {
                     $("#buttons").append("<button type='button' class='btn btn-brand btnAcct_note m-btn m-btn--custom m-btn--air m-btn--box' onClick='setCaInterestPercentage()'><span><span>Set Interest Percentage</span></span></button>");
                     $("#buttons").append("<button type='button' class='btn btn-success btnAcct_note m-btn m-btn--custom m-btn--air m-btn--box' data-toggle='modal' data-target='#set_acctg_modal'><span><span>Set Accounting Balance</span></span></button>");
@@ -1419,7 +1419,9 @@ var tblFile = $("#table-file-content").DataTable({
     },
     searching: false,
     columns: [
-        { data: "", width: "5%", orderable: false, className: "text-center", render: function (data, type, row, meta) { return fileName(row.filename, row.emp_id, row.ext); } },
+        { data: "", width: "5%", orderable: false, className: "text-center", render: function (_data, _type, row, _meta) {
+            return fileName(row.filename, row.emp_id, row.ext, row.has_thumbnail); 
+        } },
         { data: "filename" },
         { data: null, width: "8%", className: "text-center" },
     ],
@@ -1429,26 +1431,24 @@ var tblFile = $("#table-file-content").DataTable({
             defaultContent: "",
             targets: -1,
             orderable: false,
-            render: function (data, type, row, meta) { return itemDatatableActions(row.id, row.filename, row.emp_id); },
+            render: function (_data, _type, row, _meta) { return itemDatatableActions(row.id, row.filename, row.emp_id, row.has_file); },
         }
     ]
 });
 
-function fileName($name, $id, $ext) {
-    if ($ext == "jpg" || $ext == "png" || $ext == "PNG" || $ext == "JPEG" || $ext == "JPG") {
-        return "<img src=" + baseUrl("uploads/files/cash_advance/empcode_" + $id + "/thumbnails/" + $name) + "> ";
+function fileName($name, $id, $ext, $hasThumbnail = false) {
+    if (($ext == "jpg" || $ext == "png" || $ext == "PNG" || $ext == "JPEG" || $ext == "JPG") && $hasThumbnail) {
+        return "<img src=" + baseUrl("uploads/files/cash_advance/empcode_" + $id + "/thumbnails/" + $name) + " width='35' />";
     } else {
         return "<i class='flaticon-interface-1'></i>";
     }
 }
 
-function itemDatatableActions($id, $name, $employee) {
-    $name = '"' + $name + '"';
-    if ($id) {
-        var _actionButton = "";
-        _actionButton += " <button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' onclick='openFile(" + $employee + ", " + $name + ")'><i class='la la-eye'></i></button>";
-        return _actionButton;
-    } else { return false; }
+function itemDatatableActions($id, $name, $employee, $has_file = false) {
+    if ($id && $has_file) {
+        $fileName = '"' + $name + '"';
+        return "<button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' onclick='openFile(" + $employee + ", " + $fileName + ")'><i class='la la-eye'></i></button>";
+    } else { return "<i class='la la-eye-slash'></i>"; }
 }
 
 function openFile($employeeId, $name) {
@@ -1725,8 +1725,8 @@ $.validate({
     form: '#released-form',
     lang: 'en',
     onSuccess: function(form) {
-        var currentForm = form[0];
-		var formData = $(currentForm).serialize();
+        const currentForm = form[0];
+		const formData = $(currentForm).serialize();
 
         Swal.fire({
             title: 'Released',
