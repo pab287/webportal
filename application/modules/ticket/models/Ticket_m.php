@@ -810,7 +810,7 @@ class Ticket_m extends CI_Model
 
         if($result){
             $this->core_layout->setEventLog("User added ticket with Ref. No. `".$reference_no."` on category datatable.","insert", "success", "gccticket", "user");
-            $this->addTrailLog($last_id,"new");
+            $this->addTrailLog($last_id,"new",$data);
             $resultArray['result'] = true;
             $resultArray['toastr_msg'] = "Ticket with Ref. No. `".$reference_no."` has been successfully added.";
         }else{
@@ -905,6 +905,7 @@ class Ticket_m extends CI_Model
             $this->db->where('id', $id);
             $update = $this->db->update('gccticket.ticket', $data);
             if($update){
+                $data['reference_no'] = $currentTicketData->reference_no;
                 $changes = $this->logChanges($currentTicketData, $data);
                 $this->core_layout->setEventLog("User updated ticket $changes","update", "success", "gccticket", "user");
             }else{
@@ -1184,13 +1185,14 @@ class Ticket_m extends CI_Model
             $requestor = $this->core_layout->getEmployeeData($data['requestor']);
             $sub_category = $data['sub_category'] || $data['sub_category'] != 0 ? ' - '.$this->getCategoryLabel($data['sub_category']) : "";
             $category = $this->getCategoryLabel($data['category']) . $sub_category;
-
+            $department = $this->getDepartmentName($data['department_id']);
             $telegram_msg .= '<b>Reference #</b>: '.strtoupper($data['reference_no']).chr(10);
             $telegram_msg .= '<b>Priority</b>: '.strtoupper($data['priority']).chr(10);
             $telegram_msg .= '<b>Category</b>: '.strtoupper($category).chr(10);
             $telegram_msg .= '<b>Department Responsible</b>: '.strtoupper($data['responsibility']).chr(10);
             $telegram_msg .= '<b>Issue</b>: '.strtoupper($data['message']).chr(10);
             $telegram_msg .= '<b>Requested By</b>: '.strtoupper($requestor['display_name_1']).chr(10);
+            $telegram_msg .= '<b>Requesting Department</b>: '.strtoupper($department).chr(10);
             $telegram_msg .= '<b>Date Needed</b>: '.strtoupper($data['requested_date']).chr(10);
         }
 
@@ -1206,13 +1208,13 @@ class Ticket_m extends CI_Model
                     [
                         "text" => "View Ticket",
                         "url" => ($_ENV["URL_TELEGRAM"] === 'dev')
-                            ? 'http://58.69.100.66/portaldev/ticket/ticket/edit_ticket?id=' . $id
+                            ? 'http://58.69.100.66/web/ticket/ticket/edit_ticket?id=' . $id
                             : site_url('ticket/ticket/edit_ticket?id=') . $id
                     ],
                     [
                         "text" => "Serve Ticket",
                         "url" => ($_ENV["URL_TELEGRAM"] === 'dev')
-                            ? 'http://58.69.100.66/portaldev/ticket/ticket/view_ticket?id=' . $id . '&serve=true'
+                            ? 'http://58.69.100.66/web/ticket/ticket/view_ticket?id=' . $id . '&serve=true'
                             : site_url('ticket/ticket/view_ticket?id=') . $id . '&serve=true'
                     ]
                 ]
@@ -1341,13 +1343,15 @@ class Ticket_m extends CI_Model
         return $query->row()->department_id;
     }
 
-    public function addTrailLog($id,$type){
+    public function addTrailLog($id,$type,$data=null){
         if($type == "new"){
             $message = "Ticket created";
         }elseif($type == "in progress"){
             $message = "Ticket set to in progress";
+            $this->sendTelegramNotif($this->user_data['emp_id'],$id,$data,$type);
         }elseif($type == "completed"){
             $message = "Ticket set to Completed";
+            $this->sendTelegramNotif($this->user_data['emp_id'],$id,$data,$type);
         }elseif($type == "Cancelled"){
             $message = "Ticket cancelled";
         }elseif($type == "open"){
@@ -1821,7 +1825,7 @@ class Ticket_m extends CI_Model
         ]);
         
         if ($update) {
-            $this->addTrailLog($id, 'in progress');
+            $this->addTrailLog($id, 'in progress',$ticket);
             $this->core_layout->setEventLog("User served the ticket with reference no {$ticket->reference_no}", 'update', 'success', 'gccticket', 'user');
         } else {
             $this->core_layout->setEventLog("User failed to serve the ticket with reference no {$ticket->reference_no}", 'update', 'error', 'gccticket', 'system');
@@ -1831,6 +1835,60 @@ class Ticket_m extends CI_Model
             'status' => $update,
             'message' => $update ? 'Ticket served successfully.' : 'Failed to serve the ticket.'
         ];
+    }
+
+    private function sendTelegramNotif($emp_id,$ticket_id,$data,$type){
+        $telegram_id = $this->getTelegramId($emp_id)->telegram_chat_id;
+        if($type == "in progress"){
+            $message = "We've started working on your ticket — abc-123 is now In Progress. For more information, click the link below.";
+            $inline_keyboard = [
+                [
+                    [
+                        "text" => "View Ticket",
+                        "url" => ($_ENV["URL_TELEGRAM"] === 'dev')
+                            ? 'http://58.69.100.66/web/ticket/ticket/view_ticket?id=' . $ticket_id
+                            : site_url('ticket/ticket/view_ticket?id=') . $ticket_id
+                    ]
+                ]
+            ];
+        }elseif($type == "completed"){
+            $message = "Great news! Your ticket — abc-123 has been successfully completed. To better serve you, please rate your experience with us.";
+            $inline_keyboard = [
+                [
+                    [
+                        "text" => "Rate Ticket",
+                        "url" => ($_ENV["URL_TELEGRAM"] === 'dev')
+                            ? 'http://58.69.100.66/web/ticket/ticket/view_ticket?id=' . $ticket_id . '&rate=true'
+                            : site_url('ticket/ticket/view_ticket?id=') . $ticket_id. '&rate=true'
+                    ]
+                ]
+            ];
+        }
+        if(!$telegram_id){
+            return false;
+        }
+        if (!isset($_ENV["GCC_NOTIFICATION_BOT"]) || !$_ENV["GCC_NOTIFICATION_BOT"]) {
+            return false;
+        }
+        $bot_token = $_ENV["GCC_NOTIFICATION_BOT"];
+        $reply_markup = [
+            "inline_keyboard" => $inline_keyboard
+        ];
+       
+        $url='https://api.telegram.org/bot'.$bot_token.'/sendMessage';
+        $data=array('chat_id'=>$telegram_id,'text'=>$message, 'reply_markup' => json_encode($reply_markup), 'parse_mode'=>'HTML'); // replay_markup send external links
+        $options=array('http'=>array('method'=>'POST','header'=>"Content-Type:application/x-www-form-urlencoded\r\n",'content'=>http_build_query($data),'ignore_errors'=>true),);
+        $context=stream_context_create($options);
+        $result=file_get_contents($url,false,$context);
+        return $result;
+    }
+
+    private function getTelegramId($id){
+        $this->db->select('telegram_chat_id');
+        $this->db->from('gccmaster.tblusers');
+        $this->db->where('emp_id', $id);
+        $query = $this->db->get();
+        return $query->row();
     }
 
 

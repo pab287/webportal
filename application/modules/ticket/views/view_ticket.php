@@ -34,6 +34,11 @@
         width: 100%;
         height: 100%;
     }
+    
+    .star {
+        cursor: pointer;
+    }
+
 </style>
 <div class="m-content">
     <div class="row">

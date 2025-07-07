@@ -35,6 +35,62 @@ jQuery(document).ready(function () {
             window.location.replace(currentUrl.toString());
         });
     }
+    else if(typeof _tempContentData !== 'undefined' && _tempContentData && _tempContentData.rate && _tempContentData.rate == 1) {
+        Swal.fire({
+            title: 'HOW WOULD YOU RATE OUR SERVICE?',
+            html: `<div style="margin: 20px 0; text-align: center;">
+                        <div id="stars" style="font-size: 30px; margin-bottom: 20px;">
+                            <span class="star" data-rating="1" title="Terrible">☆</span>
+                            <span class="star" data-rating="2" title="Poor">☆</span>
+                            <span class="star" data-rating="3" title="Average">☆</span>
+                            <span class="star" data-rating="4" title="Good">☆</span>
+                            <span class="star" data-rating="5" title="Excellent">☆</span>
+                        </div>
+                        <textarea id="feedback" placeholder="FEEDBACK..." style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solidrgb(0, 0, 0);"></textarea>
+                    </div>`,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            allowEnterKey: false,
+            showCloseButton: false,
+            confirmButtonText: 'Submit Rating',
+            preConfirm: () => {
+                const rating = document.querySelector('.star.active') ? 
+                document.querySelector('.star.active').getAttribute('data-rating') : null;
+                if (!rating) {
+                    Swal.showValidationMessage('Please select a rating');
+                    return false;
+                }
+                return {rating: rating};
+            },
+        }).then((result) => {
+            const ratingData = result.value;
+            console.log('Rating submitted:', ratingData);
+        });
+
+        const stars = document.querySelectorAll('.star');
+        stars.forEach(star => {
+            star.addEventListener('click', function() {
+                const rating = parseInt(this.getAttribute('data-rating'));
+                highlightStars(rating);
+            });
+        });
+
+    }
+
+    function highlightStars(rating) {
+        const stars = document.querySelectorAll('.star');
+        stars.forEach(star => {
+            star.style.color = '#FFC000';
+            star.textContent = '☆';
+            star.classList.remove('active');
+            if (parseInt(star.getAttribute('data-rating')) <= rating) {
+                star.textContent = '★';
+                if (parseInt(star.getAttribute('data-rating')) === rating) {
+                    star.classList.add('active');
+                }
+            }
+        });
+    }
 
     $("#progress").hide();
     $("#reopen_field").hide();
@@ -193,6 +249,7 @@ function getTicketDetails(){
             vmTab1.vm_tab1 = Object.assign({}, data);
             getComments();
             getStatusLogs();
+            getRating();
         },
     });
 
