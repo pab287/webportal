@@ -1205,13 +1205,15 @@ class Ticket_m extends CI_Model
                 [
                     [
                         "text" => "View Ticket",
-                        "url" => 'http://58.69.100.66/portaldev/ticket/ticket/edit_ticket?id='.$id //doesnt send message when in development or in local
-                        // "url" => site_url('ticket/ticket/edit_ticket?id=') . $id
+                        "url" => ($_ENV["URL_TELEGRAM"] === 'dev')
+                            ? 'http://58.69.100.66/portaldev/ticket/ticket/edit_ticket?id=' . $id
+                            : site_url('ticket/ticket/edit_ticket?id=') . $id
                     ],
                     [
                         "text" => "Serve Ticket",
-                        "url" => 'http://58.69.100.66/portaldev/ticket/ticket/view_ticket?id='.$id.'&serve=true',
-                        // "url" => site_url('ticket/ticket/view_ticket?id=') . $id.'&serve=true' 
+                        "url" => ($_ENV["URL_TELEGRAM"] === 'dev')
+                            ? 'http://58.69.100.66/portaldev/ticket/ticket/view_ticket?id=' . $id . '&serve=true'
+                            : site_url('ticket/ticket/view_ticket?id=') . $id . '&serve=true'
                     ]
                 ]
             ];
