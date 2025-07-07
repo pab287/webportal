@@ -8,7 +8,7 @@
                     <span aria-hidden="true">×</span>
                 </button>
             </div>
-            <input type="hidden" name="id" value="<?= $data->id; ?>"/>
+            <input type="hidden" name="id" :value="emp_id"/>
             <input type="hidden" name="csrf_token" value="<?= $this->security->get_csrf_hash(); ?>">
             <div class="modal-body">
                 <template v-for="(item, index) in vm_question" :key="index">

@@ -4961,6 +4961,7 @@
             $id = $form['id'];
             $where = array("id" => $id);
             $query = $this->db->get_where($this->employeeTable, $where)->row();
+            $query->more_questions = @unserialize($query->more_questions);
             return array("data" => $query);
         }
 
