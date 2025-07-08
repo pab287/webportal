@@ -976,19 +976,20 @@ $(".m-content")
                     data: {
                         csrf_token: _csrf_hash,
                         path: "hris/masterfile/employee/modals/questions",
-                        function_name: "getQuestionAnswers",
+                        // function_name: "getQuestionAnswers",
                         model: "Employee_model",
-                        formData: {id}
+                        formData: {id},
+                        init_modal_data_function: 'getQuestionAnswers'
                     },
                     success: function (response) {
                         initRegularEditDialog(response);
                         vmTabUpdateQuestions = new Vue({
                             el: "#employee-data-update-question-answers",
-                            data: { vm_question: [] },
+                            data: { emp_id: {id},vm_question: [] },
                             mounted(){
-                                if (tempData.more_questions && tempData.more_questions.length > 0) {
-                                    this.vm_question = tempData.more_questions;
-                                    const existingIds = new Set(tempData.more_questions.map(q => q.id));
+                                if (response.info.data.more_questions && response.info.data.more_questions.length > 0) {
+                                    this.vm_question = response.info.data.more_questions;
+                                    const existingIds = new Set(response.info.data.more_questions.map(q => q.id));
                                     questions_list.forEach(q => {
                                         if (!existingIds.has(q.id)) {
                                             this.vm_question.push({
