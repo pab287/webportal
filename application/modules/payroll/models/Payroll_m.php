@@ -5702,9 +5702,7 @@ class Payroll_m extends CI_Model{
                     }
                 }
                 if(is_array($arrData) && !empty($arrData)){
-                    $html = $this->load->view("core/templates/printable/header", null, true);
-                    $html .= $this->load->view("payroll/payroll/printable/print_content", array("data"=>$arrData), true);
-                    $html .= $this->load->view("core/templates/printable/footer", null, true);
+                    $html = $this->load->view("payroll/payroll/printable/print_content", array("data"=>$arrData), true);
                     $resultset["response"] = true;
                     $resultset["html"] = $html;
                 }else{
@@ -6030,13 +6028,13 @@ class Payroll_m extends CI_Model{
       $post = $this->input->post();
       $resultset = array();
     
-      foreach ($post["payslipId"] as $key => $id) {
+      foreach ($post["payslipId"] as $id) {
         $arrData = array();
         $psData = $this->getSelectedTelegram($id);
         if (!empty($psData) && isset($psData[0])) {
           $result = (object) $this->getCurrentPayrollPayslip($psData[0]->payslip_id);
     
-          if ($result->response == true) {
+          if ($result->response === true) {
             $arrData[] = $result->data;
             $data = $this->telegram_config_if_exist('payroll_payslip', 'data');
     
@@ -6155,17 +6153,14 @@ class Payroll_m extends CI_Model{
         if(isset($post) && $post){
             if(isset($post["ids"]) && is_array($post["ids"]) && count($post["ids"]) > 0){
                 $arrData = array();
-                foreach ($post["ids"] as $key => $id) {
+                foreach ($post["ids"] as $id) {
                     $result = (object) $this->getCurrentPayrollPayslip($id);
-                    if($result->response == true){
+                    if($result->response === true){
                         $arrData[] = $result->data;
                     }
                 }
-                if(is_array($arrData) && count($arrData) > 0){
-                    $html = $this->load->view("core/templates/printable/header", null, true);
-                    $html .= $this->load->view("payroll/payroll/printable/print_aknowledgement_content", array("data"=>$arrData), true);
-                    $html .= $this->load->view("core/templates/printable/footer", null, true);
-
+                if(is_array($arrData) && !empty($arrData)){
+                    $html = $this->load->view("payroll/payroll/printable/print_aknowledgement_content", array("data"=>$arrData), true);
                     $resultset["response"] = true;
                     $resultset["html"] = $html;
                 }else{

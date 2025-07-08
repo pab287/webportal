@@ -116,6 +116,7 @@ class Payroll extends MY_Controller {
         $result = array_values($filter)[0] ?? null;
         $tempData["company"] = $result;
         $tempData["dropdown_company"] = $this->payroll->select2CompanyData();
+            $tempData["dropdown_company"] = $this->payroll->select2CompanyData();
 
         $this->core_layout->setPageTitle("Payroll - Payslip");
         $this->core_layout->setPrivilegeName("payroll_payslip");

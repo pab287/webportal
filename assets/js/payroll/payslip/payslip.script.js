@@ -65,9 +65,11 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
 
         if (jQuery.inArray("view_by_company", _currentActions) !== -1) {
             if (_company) {
-                let option = new Option(_company.text, _company.id, true, true);
-                modalGeneratePayslip.find("#company").append(option).trigger('change');
-                modalGeneratePayslip.find("#company").next().prop("hidden", true);
+                const companySelect2 = modalGeneratePayslip.find("#company");
+                if(typeof companySelect2 !== "undefined" && companySelect2.length == 1) {
+                    companySelect2.val(_company.id).trigger("change");
+                    companySelect2.next().prop("hidden", true);
+                }
                 modalGeneratePayslip.find("#has_privi_company-text").text(_company.text);
             }
         } else {
@@ -1437,7 +1439,7 @@ function triggerPrintableNetPay(ids = [], temp = {}) {
                             setTimeout(() => {
                                 printWindow.print();
                                 printWindow.close();
-                            }, 200);
+                            }, 250);
                         } else {
                             toastr.info('Print detail(s) is still in progress!', 'Payroll / Payslip Neypay');
                             printWindow.close();
@@ -1460,14 +1462,22 @@ function triggerPrintableAknowledgement(ids = []) {
             data: { csrf_token: _csrf_hash, ids: ids },
             success: function (json) {
                 if (json.response) {
-                    const w = window.open("about:blank");
-                    w.document.open();
-                    w.document.write(json.html);
-                    w.document.close();
-                    setTimeout(function () {
-                        w.print();
-                        w.close();
-                    }, 150);
+                    const tempHtml = json.html;
+                    const printWindow = window.open(siteUrl('payroll/reports/printable_form'), '_blank');
+                    printWindow.focus();
+                    printWindow.onload = function(){
+                        const printableContainer = printWindow.document.getElementById('append_printable-container');
+                        if (printableContainer) {
+                            printableContainer.innerHTML = tempHtml;
+                            setTimeout(() => {
+                                printWindow.print();
+                                printWindow.close();
+                            }, 250);
+                        } else {
+                            toastr.info('Print detail(s) is still in progress!', 'Payroll / Payslip Aknowledgement');
+                            printWindow.close();
+                        }
+                    }
                 }
             }
         });
@@ -1486,17 +1496,25 @@ function triggerPrintable(ids = []) {
             success: function (json) {
                 let setPrintIds = [];
                 if (json.response) {
-                    const w = window.open("about:blank");
-                    w.document.open();
-                    w.document.write(json.html);
-                    w.document.close();
-                    setTimeout(function () {
-                        w.print();
-                        w.close();
-                    }, 250);
+                    const tempHtml = json.html;
+                    const printWindow = window.open(siteUrl('payroll/reports/printable_form'), '_blank');
+                    printWindow.focus();
+                    printWindow.onload = function(){
+                        const printableContainer = printWindow.document.getElementById('append_printable-container');
+                        if (printableContainer) {
+                            printableContainer.innerHTML = tempHtml;
+                            setTimeout(() => {
+                                printWindow.print();
+                                printWindow.close();
+                            }, 250);
+                        } else {
+                            toastr.info('Print detail(s) is still in progress!', 'Payroll / Payslip');
+                            printWindow.close();
+                        }
+                    }
 
-                   w.onbeforeprint = function (e) { setPrintIds = ids; }
-                    w.onafterprint = function () {
+                   printWindow.onbeforeprint = function (e) { setPrintIds = ids; }
+                    printWindow.onafterprint = function () {
                         $.ajax({ 
                             url: siteUrl("payroll/update_payrollsheet_printed_status"),
                             type: "post",
@@ -1504,47 +1522,8 @@ function triggerPrintable(ids = []) {
                             data: { csrf_token: _csrf_hash, printed_id: setPrintIds },
                             success: function (json) {
                               if (json.response) {
-                                  Swal.fire({
-                                      title: 'Send Payslip via Telegram/Email?',
-                                      text: 'Do you want to send the payslip via Telegram/Email?',
-                                      icon: 'question',
-                                      showCancelButton: true,
-                                      confirmButtonText: 'Yes, send it!',
-                                      cancelButtonText: 'No, cancel',
-                                  }).then((result) => {
-                                    if (result.isConfirmed) {
-                                      $.when(
-                                          $.ajax({
-                                              url: siteUrl("payroll/send_telegram"),
-                                              type: 'post',
-                                              data: {
-                                                  csrf_token: _csrf_hash,
-                                                  payslipId: json.data.printed_id,
-                                              }
-                                          }),
-                                          $.ajax({
-                                              url: siteUrl("payroll/send_email"),
-                                              type: 'post',
-                                              data: {
-                                                  csrf_token: _csrf_hash,
-                                                  payslipId: json.data.printed_id,
-                                              }
-                                          })
-                                      ).done(function() {
-                                          Swal.fire(
-                                              'Sent!',
-                                              'Payslip has been sent via Telegram and Email.',
-                                              'success'
-                                          );
-                                      });
-                                  } else if (result.dismiss === Swal.DismissReason.cancel) {
-                                          Swal.fire(
-                                              'Cancelled',
-                                              'Payslip sending via Telegram and Email was cancelled.',
-                                              'error'
-                                          );
-                                      }
-                                  });
+                                    const { printed_id } = json.data;
+                                    swalAlertNotification(printed_id);
                                 }
                             }
                         });
@@ -1554,6 +1533,53 @@ function triggerPrintable(ids = []) {
         });
     } else {
         return false;
+    }
+}
+
+
+const swalAlertNotification = function (printIds = []) {
+    if(printIds.length > 0){
+        Swal.fire({
+            title: 'Send Payslip via Telegram/Email?',
+            text: 'Do you want to send the payslip via Telegram/Email?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, send it!',
+            cancelButtonText: 'No, cancel',
+        }).then((result) => {
+        if (result.isConfirmed) {
+            $.when(
+                $.ajax({
+                    url: siteUrl("payroll/send_telegram"),
+                    type: 'post',
+                    data: {
+                        csrf_token: _csrf_hash,
+                        payslipId: printIds,
+                    }
+                }),
+                $.ajax({
+                    url: siteUrl("payroll/send_email"),
+                    type: 'post',
+                    data: {
+                        csrf_token: _csrf_hash,
+                        payslipId: printIds,
+                    }
+                })
+            ).done(function() {
+                Swal.fire(
+                    'Sent!',
+                    'Payslip has been sent via Telegram and Email.',
+                    'success'
+                );
+            });
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                Swal.fire(
+                    'Cancelled',
+                    'Payslip sending via Telegram and Email was cancelled.',
+                    'error'
+                );
+            }
+        });
     }
 }
 
@@ -1602,47 +1628,10 @@ function triggerPrintableOption(ids = []) {
                                     data: { csrf_token: _csrf_hash, printed_id: setPrintIds },
                                     success: function (json) {
                                         if (json.response) {
-                                            Swal.fire({
-                                                title: 'Send Payslip via Telegram/Email?',
-                                                text: 'Do you want to send the payslip via Telegram/Email?',
-                                                icon: 'question',
-                                                showCancelButton: true,
-                                                confirmButtonText: 'Yes, send it!',
-                                                cancelButtonText: 'No, cancel',
-                                            }).then((result) => {
-                                                if (result.isConfirmed) {
-                                                    $.when(
-                                                        $.ajax({
-                                                            url: siteUrl("payroll/send_telegram"),
-                                                            type: 'post',
-                                                            data: {
-                                                                csrf_token: _csrf_hash,
-                                                                payslipId: json.data.printed_id,
-                                                            }
-                                                        }),
-                                                        $.ajax({
-                                                            url: siteUrl("payroll/send_email"),
-                                                            type: 'post',
-                                                            data: {
-                                                                csrf_token: _csrf_hash,
-                                                                payslipId: json.data.printed_id,
-                                                            }
-                                                        })
-                                                    ).done(function() {
-                                                        Swal.fire(
-                                                            'Sent!',
-                                                            'Payslip has been sent via Telegram and Email.',
-                                                            'success'
-                                                        );
-                                                    });
-                                                } else if (result.dismiss === Swal.DismissReason.cancel) {
-                                                    Swal.fire(
-                                                        'Cancelled',
-                                                        'Payslip sending via Telegram and Email was cancelled.',
-                                                        'error'
-                                                    );
-                                                }
-                                            });
+                                            const { printed_id } = json.data;
+                                            swalAlertNotification(printed_id);
+                                        }else{
+                                            toastr.warning(json.toastr_msg, 'Payroll / Payslip Option');
                                         }
                                     }
                                 });
