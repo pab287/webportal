@@ -159,6 +159,22 @@
                                         <span v-html="vm_tab1.status"></span>
                                     </div>
                                 </div>
+                                <div v-if="vm_tab1.rating" class="form-group m-form__group row">
+                                    <label class="col-lg-4 col-md-6 col-sm-4">
+                                        Rating:
+                                    </label>
+                                    <div class="col-lg-8 col-md-6 col-sm-8">
+                                        <span v-html="vm_tab1.rating"></span>
+                                    </div>
+                                </div>
+                                <div v-show="vm_tab1.rating_feedback" class="form-group m-form__group row">
+                                    <label class="col-lg-4 col-md-6 col-sm-4">
+                                        Feedback:
+                                    </label>
+                                    <div class="col-lg-8 col-md-6 col-sm-8">
+                                        <span v-html="vm_tab1.rating_feedback"></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="m-separator m-separator--solid d-xl-12"></div>  

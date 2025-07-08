@@ -1364,6 +1364,8 @@ class Ticket_m extends CI_Model
         }
         elseif($type == "resolved"){
             $message = "Ticket resolved";
+        }else{
+            $message = $type;
         }
         $post = array(
             'log_message' => $message,
@@ -1891,5 +1893,21 @@ class Ticket_m extends CI_Model
         return $query->row();
     }
 
+    public function updateRating(){
+        $post = $this->input->post();
+        $id = $post['id'];
+        unset($post['id'],$post['csrf_token']);
+        $post['date_rated'] = date('Y-m-d H:i:s');
+        $this->db->where('id', $id);
+        $update = $this->db->update('gccticket.ticket', $post);
+        $ticket = $this->getTicketByid($id);
+        if ($update) {
+            $this->addTrailLog($id, 'ticket rated',$ticket);
+            $this->core_layout->setEventLog("Ticket rated successfully with reference no {$ticket->reference_no}", 'update', 'success', 'gccticket', 'user');
+        } else {
+            $this->core_layout->setEventLog("Ticket rated failed with reference no {$ticket->reference_no}", 'update', 'error', 'gccticket', 'system');
+        }
+        return $update;
+    }
 
 }

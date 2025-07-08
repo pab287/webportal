@@ -377,4 +377,9 @@ class Ticket extends MY_Controller {
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
+    public function update_rating(){
+        $data = $this->ticket->updateRating();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }
