@@ -272,32 +272,34 @@
                     </div>
                 
                     <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded tbl-responsive-sm m-datatable--scroll">
-                        <table class="table table-striped table-bordered" id="tbl-neypay_report" width="100%" style="font-family: roboto;">
+                        <table class="table table-striped table-bordered" id="tbl-neypay_report" style="font-family: roboto; width: 100% !important">
                             <thead>
                                 <tr>
-                                    <th>#</th>
-                                    <th>Employee</th>
-                                    <th>Company</th>
-                                    <th>Department</th>
-                                    <th>Position</th>
-                                    <th>Work Status</th>
-                                    <th>Payroll Group</th>
-                                    <th>Rate</th>
-                                    <th>Days</th>
-                                    <th>Basic Pay</th>
-                                    <th>UT</th>
-                                    <th>OT</th>
-                                    <th>OT.ND</th>
-                                    <th>HOL</th>
-                                    <th>Allowance</th>
-                                    <th class="text-right">Gross Pay</th>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Employee</th>
+                                    <th scope="col">Company</th>
+                                    <th scope="col">Department</th>
+                                    <th scope="col">Position</th>
+                                    <th scope="col">Work Status</th>
+                                    <th scope="col">Payroll Group</th>
+                                    <th scope="col">Rate</th>
+                                    <th scope="col">Days</th>
+                                    <th scope="col">Basic Pay</th>
+                                    <th scope="col">UT</th>
+                                    <th scope="col">OT</th>
+                                    <th scope="col">OT.ND</th>
+                                    <th scope="col">HOL</th>
+                                    <th scope="col" class="text-right">Allowance</th>
+                                    <th scope="col" class="text-right">Gross Pay</th>
+                                    <th scope="col" class="text-right">Net Pay</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="15" style="text-align:right; font-weight: 600;">GRAND TOTAL</th>
-                                    <th class="text-right" style="font-weight: 600;">0.00</th>
+                                    <th scope="col" colspan="15" style="text-align:right; font-weight: 600;">GRAND TOTAL</th>
+                                    <th scope="col" class="text-right" style="font-weight: 600;">0.00</th>
+                                    <th scope="col" class="text-right" style="font-weight: 600;">0.00</th>
                                 </tr>
                             </tfoot>
                         </table>

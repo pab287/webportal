@@ -8,6 +8,7 @@ let _years = [];
 let _companies = [];
 let _payoutSchedule = [];
 let _globalNetPay = 0;
+let _globalGrossPay = 0;
 let filteredCompany = '';
 let filteredGroup = '';
 let filtered = [];
@@ -211,6 +212,7 @@ $.validate({
                 filtered = Object.assign({}, { 
                     'payroll_group' : payrollGroup, 
                     'company': json.filter.company_description ? removeSpecials(json.filter.company_description) : 'All Company', 
+                    'gross': json.gross_total_decimal,
                     'total': json.grand_total_decimal,
                     'generated': filteredDate
                 });
@@ -285,45 +287,44 @@ const dtNetPayReport = tableNetpay.DataTable({
         title: function(){
             return ``;
         },
-        footer: false,
         exportOptions: { 
             stripHtml: false,
             columns: ':visible:not(:eq(0)):not(.actions)'
         },
         customize: function (xlsx) {
-            var sheet = xlsx.xl.worksheets['sheet1.xml'];
-            var sheetData = sheet.getElementsByTagName('sheetData')[0];
-            var downrows = filtered.payroll_group != '' ? 3 : 2;
+            const sheet = xlsx.xl.worksheets['sheet1.xml'];
+            const sheetData = sheet.getElementsByTagName('sheetData')[0];
+            const downrows = filtered.payroll_group != '' ? 3 : 2;
             let mergeCells = $('mergeCells', sheet);
-            var columnCount = tableNetpay.DataTable().columns(':visible').count();
+            const columnCount = tableNetpay.DataTable().columns(':visible').count();
 
             // footer
             let numrows = $('row', sheet).length;
-            var tempRowIndex = numrows > 0 ? numrows + 1 : numrows;
+            const tempRowIndex = numrows > 0 ? numrows + 1 : numrows;
 
-            // let tempRowx = addRowFooter(tempRowIndex, [{ key: 'A', value: 'GRAND TOTAL' }, { key: 'B', value: filtered.total }, { key: 'C', value: '' }, { key: 'D', value: '' }]);
-            // sheetData.appendChild(tempRowx);
-            var lastColIndex = columnCount; // already 1-based
-            var lastColLetter = getExcelColumnLetter(lastColIndex - 1);
-            var secondLastColLetter = getExcelColumnLetter(lastColIndex - 2); //for grand total
+            const lastColIndex = columnCount; // already 1-based
+            const lastColLetter = getExcelColumnLetter(lastColIndex - 1);
+            const nextColLetter = getExcelColumnLetter(lastColIndex - 2);
+            const secondLastColLetter = getExcelColumnLetter(lastColIndex - 3); //for grand total
             let tempRowx = addRowFooter(tempRowIndex, [
                 { key: secondLastColLetter, value: 'GRAND TOTAL' },
+                { key: nextColLetter, value: filtered.gross },
                 { key: lastColLetter, value: filtered.total }
             ]);
             sheetData.appendChild(tempRowx);
             // footer
 
             $('row', sheet).each(function () {
-                var attr = $(this).attr('r');
-                var ind = parseInt(attr);
+                const attr = $(this).attr('r');
+                let ind = parseInt(attr);
                 ind = ind + downrows;
-                $(this).attr("r",ind);
+                $(this).attr("r", ind);
             });
 
             $('row c ', sheet).each(function () {
-                var attr = $(this).attr('r');
-                var pre = attr.substring(0, 1);
-                var ind = parseInt(attr.substring(1, attr.length));
+                const attr = $(this).attr('r');
+                const pre = attr.substring(0, 1);
+                let ind = parseInt(attr.substring(1, attr.length));
                 ind = ind + downrows;
 
                 if(pre == 'B' || pre == 'C'){
@@ -353,9 +354,9 @@ const dtNetPayReport = tableNetpay.DataTable({
                 }));
             }
 
-            var r1 = addRowTitle(1, [{ k: 'A', v: ' CUSTOM PAYROLL SHEET REPORT ' + filtered.generated }, { k: 'B', v: '' }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
-            var r2 = addRowMessage(2, [{ k: 'A', v: 'COMPANY: ' }, { k: 'B', v: filtered.company }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
-            var r3 = addRowMessage(3, [{ k: 'A', v: 'PAYROLL GROUP: ' }, { k: 'B', v: filtered.payroll_group }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
+            const r1 = addRowTitle(1, [{ k: 'A', v: ' CUSTOM PAYROLL SHEET REPORT ' + filtered.generated }, { k: 'B', v: '' }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
+            const r2 = addRowMessage(2, [{ k: 'A', v: 'COMPANY: ' }, { k: 'B', v: filtered.company }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
+            const r3 = addRowMessage(3, [{ k: 'A', v: 'PAYROLL GROUP: ' }, { k: 'B', v: filtered.payroll_group }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
 
             if(filtered.payroll_group){
                 sheetData.insertBefore(r3, sheetData.childNodes[0]);
@@ -365,11 +366,11 @@ const dtNetPayReport = tableNetpay.DataTable({
             sheetData.insertBefore(r1, sheetData.childNodes[0]);
 
             function _createNode(doc, nodeName, opts) {
-                var tempNode = doc.createElement(nodeName);
+                const tempNode = doc.createElement(nodeName);
                 if (opts) {
                     if (opts.attr) { $(tempNode).attr(opts.attr); }
                     if (opts.children) {
-                        $.each(opts.children, function (key, value) {
+                        $.each(opts.children, function (_key, value) {
                             tempNode.appendChild(value);
                         });
                     }
@@ -379,26 +380,24 @@ const dtNetPayReport = tableNetpay.DataTable({
             }
 
             function addRowTitle(index, data){
-                var row = sheet.createElement('row');
-
-                row.setAttribute("r", index);              
+                const row = sheet.createElement('row');
+                row.setAttribute("r", index);
+                let i;             
                 for (i = 0; i < data.length; i++) {
-                    var key = data[i].k;
-                    var value = data[i].v;
+                    const key = data[i].k;
+                    const value = data[i].v;
 
-                    var c  = sheet.createElement('c');
+                    const c  = sheet.createElement('c');
                     c.setAttribute("t", "inlineStr");
                     c.setAttribute("s", '51');
                     c.setAttribute("r", key + index);
 
-                    var is = sheet.createElement('is');
-                    var t = sheet.createElement('t');
-                    var text = sheet.createTextNode(value)
-
+                    const is = sheet.createElement('is');
+                    const t = sheet.createElement('t');
+                    const text = sheet.createTextNode(value)
                     t.appendChild(text);                                      
                     is.appendChild(t);
                     c.appendChild(is);
-
                     row.appendChild(c);                                                                                                                         
                 }
 
@@ -406,26 +405,24 @@ const dtNetPayReport = tableNetpay.DataTable({
             }
             
             function addRowMessage(index, data){
-                var row = sheet.createElement('row');
-
-                row.setAttribute("r", index);              
+                const row = sheet.createElement('row');
+                row.setAttribute("r", index);
+                let i;              
                 for (i = 0; i < data.length; i++) {
-                    var key = data[i].k;
-                    var value = data[i].v;
+                    const key = data[i].k;
+                    const value = data[i].v;
 
-                    var c  = sheet.createElement('c');
+                    const c  = sheet.createElement('c');
                     c.setAttribute("t", "inlineStr");
                     c.setAttribute("s", '50');
                     c.setAttribute("r", key + index);
 
-                    var is = sheet.createElement('is');
-                    var t = sheet.createElement('t');
-                    var text = sheet.createTextNode(value)
-
+                    const is = sheet.createElement('is');
+                    const t = sheet.createElement('t');
+                    const text = sheet.createTextNode(value)
                     t.appendChild(text);                                      
                     is.appendChild(t);
                     c.appendChild(is);
-
                     row.appendChild(c);                                                                                                                         
                 }
 
@@ -433,21 +430,21 @@ const dtNetPayReport = tableNetpay.DataTable({
             }
 
             function addRowFooter(index, data) {
-                var row = sheet.createElement('row');
+                const row = sheet.createElement('row');
                 row.setAttribute("r", index);
+                let i;
                 for (i = 0; i < data.length; i++) {
-                    var key = data[i].key;
-                    var value = data[i].value;
+                    const key = data[i].key;
+                    const value = data[i].value;
 
-                    var c = sheet.createElement('c');
+                    const c = sheet.createElement('c');
                     c.setAttribute("t", "inlineStr");
                     c.setAttribute("s", "2");
                     c.setAttribute("r", key + index);
 
-                    var is = sheet.createElement('is');
-                    var t = sheet.createElement('t');
-                    var text = sheet.createTextNode(value)
-
+                    const is = sheet.createElement('is');
+                    const t = sheet.createElement('t');
+                    const text = sheet.createTextNode(value)
                     t.appendChild(text);
                     is.appendChild(t);
                     c.appendChild(is);
@@ -480,7 +477,7 @@ const dtNetPayReport = tableNetpay.DataTable({
         { data: "work_status", visible: false },
         { data: "payroll_group", width: '14%',
             render: function (data) {
-                return data ? data : ' No group assigned ';
+                return data != null ? data : ' No group assigned ';
             }
         },
         { data: "rate", width: "*", visible: false,
@@ -503,12 +500,12 @@ const dtNetPayReport = tableNetpay.DataTable({
                 return numberFormat(data);
             }
         },
-        { data: "ot_amount", width: "7%",
+        { data: "ot_amount", width: "5%",
             render: function (data) {
                 return numberFormat(data);
             }
         },
-        { data: "total_ndiff_amount", width: "9%",
+        { data: "total_ndiff_amount", width: "5%",
             render: function (data, type, row, meta) {
                 const total_ndiff = parseFloat(row.total_ndiff_amount) + parseFloat(row.ot_ndiff_amount);
                 return numberFormat(total_ndiff);
@@ -519,7 +516,12 @@ const dtNetPayReport = tableNetpay.DataTable({
                 return numberFormat(data);
             }
         },
-        { data: "total_allowances", width: "10%",
+        { data: "total_allowances", className:'text-right', width: "10%",
+            render: function (data) {
+                return numberFormat(data);
+            }
+        },
+        { data: "gross_pay", className:'text-right', width: "10%",
             render: function (data) {
                 return numberFormat(data);
             }
@@ -531,30 +533,31 @@ const dtNetPayReport = tableNetpay.DataTable({
         },
         
     ],
-    // rowGroup: {
-    //     dataSrc: ['payroll_group'],
-    //     startRender: function ( rows, group ) {
-    //         var comp = rows.data().pluck('payroll_group');
-    //         return group;
-    //     }
-    // },
     footerCallback: function (row, data, start, end, display) {
         _globalNetPay = 0;
-        var api = this.api();
+        _globalGrossPay = 0;
+        const api = this.api();
+        const intVal = function (i) { return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0; };
 
-        var intVal = function (i) {
-            return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
-        };
-
-        totalNetPay = api
+        const totalGrossPay = api
             .column(15)
             .data()
             .reduce(function (a, b) {
                 return intVal(a) + intVal(b);
             }, 0);
 
+        const totalNetPay = api
+            .column(16)
+            .data()
+            .reduce(function (a, b) {
+                return intVal(a) + intVal(b);
+            }, 0);
+        
+
         _globalNetPay = numberFormat(totalNetPay);
-        $(api.column(15).footer()).html("<span class='m--font-boldest'>" + _globalNetPay + "</span>");
+        _globalGrossPay = numberFormat(totalGrossPay);
+        $(api.column(15).footer()).html("<span class='m--font-boldest'>" + _globalGrossPay + "</span>");
+        $(api.column(16).footer()).html("<span class='m--font-boldest'>" + _globalNetPay + "</span>");
     }
 });
 
@@ -563,7 +566,7 @@ function showOrHideColumn(index, el) {
     column.visible($(el)[0].checked);
 }
 
-var vmNavigation = new Vue({
+const vmNavigation = new Vue({
     el: "#tempActions",
     data: { set_printable: false, printable_content: null },
     methods: {
