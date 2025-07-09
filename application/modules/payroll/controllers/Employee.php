@@ -492,7 +492,7 @@
                 ->set_output(json_encode($data));
         }
 
-        public get_employee_nightdiff_list(){
+        public function get_employee_nightdiff_list(){
             $data = $this->employee->getEmployeeNightDiffList();
             $this->output
                 ->set_content_type('json')

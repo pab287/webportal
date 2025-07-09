@@ -48,6 +48,7 @@
                             <tr>
                                 <th scope="col">Id Number</th>
                                 <th scope="col">Employee Name</th>
+                                <th scope="col">Company</th>
                                 <th scope="col">Allow Night Diff.</th>
                                 <th scope="col">Last Updated By</th>
                                 <th scope="col">Action</th>

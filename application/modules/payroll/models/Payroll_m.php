@@ -41,6 +41,7 @@ class Payroll_m extends CI_Model
     protected $tbl_ps_incentive_type = "payroll.payroll_type_incentive";
     protected $tbl_ps_remittance_parameters = "payroll.remittance_parameters";
     protected $tbl_ps_payout_schedule = "payroll.payout_schedule";
+    protected $tbl_ps_regular_ndiff = "payroll.employee_regular_ndiff";
 
     protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
 

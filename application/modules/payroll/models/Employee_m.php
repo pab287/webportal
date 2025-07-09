@@ -12,6 +12,7 @@
 
         protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
         protected $tbl_payroll_fixed_taxable = "payroll.fixed_taxable_deduction";
+        protected $tbl_ps_regular_ndiff = "payroll.employee_regular_ndiff";
 
         private $db_debug;
 
@@ -2180,21 +2181,91 @@
             return $result->loan_name;
         }
 
-        public function getEmployeeNightDiffList(){
-            $this->db->select("ps_ndiff.*, CONCAT(UPPER(TRIM(emp.firstname)), '',
-            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
-                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
-                THEN CONCAT(' ', SUBSTR(emp.middlename, 1, 1), '. ') ELSE ' '
-            END,'', UPPER(TRIM(emp.lastname)),
-            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
-                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
-                emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
-            END) as employee_name", false);
-            $this->db->from("gccmaster.tblemployees emp");
-            $this->db->left("payroll.employee_regular_ndiff as ps_ndiff", "emp.id = ps_ndiff.emp_id", "LEFT");
-            $this->db->where("emp.employee_status", "Active");
-            $data = $this->db->get()->result();
-            
-            return array("data" => $data);
-        }
+public function getEmployeeNightDiffList(){
+        $rowCount = 0;
+        $rowData = array();
+        $resultset = array();
+        $post = $this->input->post();
+
+        $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+        $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
+        $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+        $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+        $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
+
+        $rowData = $this->employeeNdiff($search, $limit, $offset, $sortBy, $sortOrder);
+        $rowCount = $this->employeeNdiffCount($search);
+
+        $totalNotFiltered = $rowCount;
+
+        $resultset["recordsTotal"] = $rowCount;
+        $resultset["recordsFiltered"] = $rowCount;
+        $resultset["data"] = $rowData;
+
+        return $resultset;
     }
+
+    public function employeeNdiff($search = null, $limit = 10, $offset = 0, $sortBy=[], $sortOrder=[]){
+        $filterFields = array("emp.firstname", "emp.lastname", "emp.idno");
+        $this->db->select("emp.idno, UPPER(CONCAT(lastname,
+            CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND
+                UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND
+                suffix IS NOT NULL THEN CONCAT(' ', suffix) ELSE ''
+            END, ', ', firstname, ' ',
+            CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND
+                    TRIM(middlename) !='' AND middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(middlename, 1, 1), '.') ELSE ''
+            END)) as employee_name, cmp.code as company_code,
+            regndiff.allow_ndiff, regndiff.id, IFNULL(regndiff.allow_ndiff, '0') as allow_ndiff,
+            IFNULL(regndiff.last_updated_at, regndiff.created_at) as last_updated_at");
+        $this->db->from($this->employeeTable . " emp");
+        $this->db->join($this->companyTable . " cmp", "cmp.id = emp.company_id", "left");
+        $this->db->join($this->tbl_ps_regular_ndiff . " regndiff", "regndiff.employee_id = emp.id", "left");
+        $this->db->where("emp.employee_status", "Active");
+        if (isset($search)) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                ($key == 0) ? $this->db->like($field, $search, "both") : $this->db->or_like($field, $search, "both");
+            }
+            $this->db->group_end();
+        }
+
+        if ($limit != -1) { $this->db->limit($limit, $offset); }
+        if (isset($sortOrder)) {
+            $i = $sortOrder[0]['column'];
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        } else { $this->db->order_by('emp.lastname, emp.firstname', 'asc'); }
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) { return $query->result(); }
+        else { return array(); }
+    }
+
+    public function employeeNdiffCount($search = null){
+        $filterFields = array("emp.firstname", "emp.lastname", "emp.idno");
+        $this->db->select("emp.idno, UPPER(CONCAT(lastname,
+            CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND
+                UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND
+                suffix IS NOT NULL THEN CONCAT(' ', suffix) ELSE ''
+            END, ', ', firstname, ' ',
+            CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND
+                    TRIM(middlename) !='' AND middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(middlename, 1, 1), '.') ELSE ''
+            END)) as employee_name, cmp.code as company_code,
+            regndiff.allow_ndiff, regndiff.id, IFNULL(regndiff.allow_ndiff, '0') as allow_ndiff,
+            IFNULL(regndiff.last_updated_at, regndiff.created_at) as last_updated_at");
+        $this->db->from($this->employeeTable . " emp");
+        $this->db->join($this->companyTable . " cmp", "cmp.id = emp.company_id", "left");
+        $this->db->join($this->tbl_ps_regular_ndiff . " regndiff", "regndiff.employee_id = emp.id", "left");
+        $this->db->where("emp.employee_status", "Active");
+        if (isset($search)) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                ($key == 0) ? $this->db->like($field, $search, "both") : $this->db->or_like($field, $search, "both");
+            }
+            $this->db->group_end();
+        }
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+}
