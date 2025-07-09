@@ -42,7 +42,7 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
 
 $(document).ready(function () {
     $("input[name=group]").change(function () {
-        var value = $('input[name=group]:checked').val();
+        const value = $('input[name=group]:checked').val();
         if (value == 1) {
             $("#paydate-filter").removeClass('m--hide');
             $("#filter-by-month-year").addClass('m--hide');
@@ -96,9 +96,6 @@ $("#company").select2({
     placeholder: 'Select an option',
     allowClear: true,
 }).on('select2:select', function(e){
-    var self = $(e.target);
-    // self.validate();
-
     $("#payroll_group").empty();
     $("#employees").empty().attr('disabled', false);
 }).on('select2:unselect', function(){
@@ -120,7 +117,6 @@ $('#pay-date').datepicker({
     const currentDate = e.date;
     if (typeof currentDate !== "undefined" && currentDate) {
         const currentDay = moment(currentDate).format("DD");
-        const cMomentDate = moment(currentDate, 'YYYY-MM-DD');
         if (typeof currentDay !== "undefined") {
             if (parseInt(currentDay) > 15) {
                 let dateFrom = moment(currentDate)
@@ -149,7 +145,7 @@ $('#pay-date').datepicker({
     currentTarget.find("input").validate();
 });
 
-var generateDateTimePicker = function (min = null, max = null) {
+const generateDateTimePicker = function (min = null, max = null) {
     $("#date-range").val("");
     $("#date-picker")
         .daterangepicker({
@@ -175,17 +171,17 @@ $.validate({
     lang: 'en',
     scrollToTopOnError: false,
     onSuccess: function (form) {
-        var currentForm = form[0];
-        var formMethod = currentForm.method;
-        var formUrl = currentForm.action;
-        var formData = $(currentForm).serialize();
+        const currentForm = form[0];
+        const formMethod = currentForm.method;
+        const formUrl = currentForm.action;
+        let formData = $(currentForm).serialize();
 
         /** added for payroll group */
-        var emptyEmployeeList = $(currentForm).find("#employees").serialize() ? true : false;
-        if (emptyEmployeeList == false && $(currentForm).find("#employees").val().length > 0) {
+        const emptyEmployeeList = $(currentForm).find("#employees").serialize() !== "";
+        if (emptyEmployeeList === false && $(currentForm).find("#employees").val().length > 0) {
             formData += '&serialized_employees=' + $(currentForm).find("#employees").val().toString();
         }
-        var payrollGroup = $(currentForm).find("#payroll_group").text();
+        const payrollGroup = $(currentForm).find("#payroll_group").text();
         if(payrollGroup){ formData += '&payroll_group='+payrollGroup; }
         /** added for payroll group */
 
@@ -219,7 +215,6 @@ $.validate({
 
                 if (json.response) {
                     vmNavigation.set_printable = true;
-                    // vmNavigation.printable_content = json.printable_content;
                 }
                 $(form[0])
                     .find(".btn-submit")
@@ -244,7 +239,7 @@ const dtNetPayReport = tableNetpay.DataTable({
         },
         exportOptions: { stripHtml: false, columns: ':visible:not(:eq(0)):not(.actions)' },
         customize: function (win) {
-            var css = `@page { size: portrait; margin: 0.5cm; } 
+            const css = `@page { size: portrait; margin: 0.5cm; } 
                 .print-size-25{ width: 25% }
                 .dt-print-view table { font-size: 12px; } 
                 .dt-print-view table.dataTable tfoot tr:first-child th{ border-top: 1px solid #000000; }
@@ -266,7 +261,7 @@ const dtNetPayReport = tableNetpay.DataTable({
             head.appendChild(style);
             win.document.title = "Netpay Report Printable Page";
 
-            var tempTable = win.document.getElementsByClassName('dataTable')[0];
+            const tempTable = win.document.getElementsByClassName('dataTable')[0];
             $(tempTable).removeClass("table-bordered");
 
             tempDiv2.innerHTML = `<div class="row mt-5 printable-row_content">
