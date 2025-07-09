@@ -1018,10 +1018,10 @@ class Reports extends MY_Controller {
         $this->load->view("core/templates/footer");
     }
 
-    function generate_custom_posted_netpay_records(){
+    public function generate_custom_posted_netpay_records(){
         $data = $this->reports->generateCustomPostedNetpayRecords();
         $this->output
-                ->set_content_type('json')
-                ->set_output(json_encode($data));
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
     }
 }

@@ -5277,7 +5277,6 @@ class Reports_m extends CI_Model{
         if(isset($post) && $post){
             $tempFilter = array();
             $tempFilter["is_bonus"] = isset($post['is_bonus']) ? intval($post['is_bonus']) : 0;
-            $payrollGroup = isset($post["payroll_group"]) && $post["payroll_group"] ? strtoupper($post["payroll_group"]): null;
             $tempRange = "";
             if(isset($post["group"]) && intval($post["group"]) === 1){
                 $tempPayDate = date("Y-m-d", strtotime($post["pay_date"]));
@@ -5303,9 +5302,9 @@ class Reports_m extends CI_Model{
                 $tempFilter["payroll_sched"] = $post['payroll_sched'];
             }
 
-            if(is_array($tempFilter) && count($tempFilter) > 0){
-                $filter = array();
+            if(is_array($tempFilter) && !empty($tempFilter)){
                 $arrData = array();
+                $grossTotal = 0;
                 $grandTotal = 0;
 
                 $filteredCompany = null;
@@ -5315,27 +5314,27 @@ class Reports_m extends CI_Model{
                         $filteredCompany = trim($tempCompany->row()->code);
                     }
                 }
-                $sqlSelect = "a.*, SUM(a.basic_rate) as basic_rate, SUM(a.no_of_days) as no_of_days, SUM(a.total_undertime_amount) as total_undertime_amount, SUM(a.ot_amount) as ot_amount, SUM(a.total_ndiff_amount) as total_ndiff_amount, SUM(a.ot_ndiff_amount) as ot_ndiff_amount, SUM(a.total_holiday_amount) as total_holiday_amount, SUM(a.total_allowances) as total_allowances, SUM(a.net_pay) as net_pay, b.lastname, b.firstname, b.middlename, b.suffix, UPPER(c.code) as company_description, IF(d.name IS NULL, b.position, d.name) as position, UPPER(b.work_status) as work_status, b.date_start, UPPER(e.code) as department_description";
+                $sqlSelect = "a.*, SUM(a.basic_rate) as basic_rate, SUM(a.no_of_days) as no_of_days, SUM(a.total_undertime_amount) as total_undertime_amount,
+                SUM(a.ot_amount) as ot_amount, SUM(a.total_ndiff_amount) as total_ndiff_amount, SUM(a.ot_ndiff_amount) as ot_ndiff_amount, SUM(a.total_holiday_amount) as total_holiday_amount,
+                SUM(a.total_allowances) as total_allowances, SUM(a.gross_pay) as gross_pay, SUM(a.net_pay) as net_pay, b.lastname, b.firstname, b.middlename, b.suffix,
+                UPPER(c.code) as company_description, IF(d.name IS NULL, b.position, d.name) as position, UPPER(b.work_status) as work_status, b.date_start,
+                UPPER(e.code) as department_description";
 
-                //GROUP_CONCAT(DISTINCT f.description SEPARATOR ',') as payroll_group
                 $this->db->select($sqlSelect);
                 $this->db->from($this->tbl_payroll_sheet." a");
                 $this->db->join($this->tbl_employees." b", "b.id = a.emp_id");
                 $this->db->join($this->tbl_tblcompanies." c", "c.id = a.company_id");
                 $this->db->join($this->tbl_tblposition." d", "d.id = b.position", "left");
                 $this->db->join($this->tbl_tbldepartment.' e', 'e.id = b.department_id OR e.code = b.department_id', 'LEFT');
-                // $this->db->join($this->tbl_payroll_group.' f', 'f.employee_id LIKE CONCAT("%s:", LENGTH(b.id), ' . $this->db->escape(':"') . ', b.id, ' . $this->db->escape('";%') . ')', 'INNER');
                 $this->db->where("a.posted", 1);
-                foreach ($tempFilter as $key => $value) { 
-                    if($key == 'date_start' OR $key == 'date_end'){
-
-                    }else{
-                        $this->db->where("a.{$key}", $value); 
-                    }
+                foreach ($tempFilter as $key => $value) {
+                    $this->db->where("a.{$key}", $value);
                 }
                 if(count((array)$tempRange) === 2){
-                    $this->db->where("a.date_start >=", $tempDateStart); 
-                    $this->db->where("a.date_end <=", $tempDateEnd); 
+                    $this->db->group_start();
+                    $this->db->where("a.date_start >=", $tempDateStart);
+                    $this->db->where("a.date_end <=", $tempDateEnd);
+                    $this->db->group_end();
                 }
 
                 /** added for payroll_group */
@@ -5343,14 +5342,11 @@ class Reports_m extends CI_Model{
 
                 if(isset($post["employees"]) && $post["employees"]){
                     $this->db->where_in("b.id", $post["employees"]);
-                }else if(isset($post["serialized_employees"]) && $post["serialized_employees"]){
+                } elseif (isset($post["serialized_employees"]) && $post["serialized_employees"]){
                     $this->db->where_in("b.id", explode(",",$post["serialized_employees"]));
                 }
                 /** added for payroll_group */
 
-                // $this->db->where('f.is_archived', 0);
-
-                // $this->db->order_by("f.description", "ASC");
                 $this->db->order_by("b.lastname", "ASC");
                 $this->db->group_by("a.emp_id, a.company_id");
                 $queryNetpay = $this->db->get();
@@ -5363,29 +5359,27 @@ class Reports_m extends CI_Model{
                         $value->employee_name = $tempName;
                         $value->net_pay_decimal = number_format($value->net_pay, 2, ".", ",");
                         $arrData[$key] = $value;
+                        $grossTotal+= floatval($value->gross_pay);
                         $grandTotal+= floatval($value->net_pay);
-
                         $value->payroll_group = $this->get_payroll_group($value->emp_id);
-
                     }
                 }
+
                 $payout_schedule = null;
                 $qTemp = $this->db->get_where($this->tbl_payout_schedule, array("id"=>$post["payroll_sched"]));
                 if($qTemp->num_rows() == 1){ $payout_schedule = $qTemp->row()->name; }
-                $tempFilter["payout_schedule"] = $payout_schedule; 
-                $tempFilter["group"] = $post["group"]; 
+                $tempFilter["payout_schedule"] = $payout_schedule;
+                $tempFilter["group"] = $post["group"];
                 
                 if($filteredCompany){ $tempFilter["company_description"] = $filteredCompany; }
-
-                // $tempHtml = $this->load->view("payroll/reports/printable/netpay_print_content", array("filter"=>$tempFilter, "data"=>$arrData, "grand_total"=>$grandTotal), true);
                 $resultset["data"] = $arrData;
-                // $resultset["printable_content"] = $tempHtml;
+                $resultset["gross_total"] = $grossTotal;
+                $resultset["gross_total_decimal"] = number_format($grossTotal, 2, ".", ",");
                 $resultset["grand_total"] = $grandTotal;
                 $resultset["grand_total_decimal"] = number_format($grandTotal, 2, ".", ",");
             }
-
             $resultset["filter"] = $tempFilter;
-            if(is_array($arrData) && count($arrData) > 0){ $resultset["response"] = true;
+            if(is_array($arrData) && !empty($arrData)){ $resultset["response"] = true;
             }else{ $resultset["response"] = false; }
         }else{
             $resultset["response"] = false;
@@ -5393,7 +5387,7 @@ class Reports_m extends CI_Model{
         return $resultset;
     }
 
-    function get_payroll_group($id) { 
+    function get_payroll_group($id) {
         $result = ' --- ';
 
         $this->db->select('GROUP_CONCAT(DISTINCT f.description SEPARATOR ", ") as payroll_group');
