@@ -1,5 +1,142 @@
+let searchRequest = '';
+let _companies = [];
+let globalRequest = {};
+
+if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
+    if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){
+        _companies = _tempContentData.company;
+    }
+}
+
+$("#company").select2({
+    width: '100%',
+    data: _companies,
+    placeholder: 'Select an option',
+    allowClear: true,
+}).on('select2:select', function(e){
+    $("#payroll_group").empty();
+    $("#employees").empty().attr('disabled', false);
+}).on('select2:unselect', function(){
+    $("#payroll_group").empty();
+    $("#employees").empty().attr('disabled', false);
+});
+
+$("#employees").select2({
+    placeholder: 'Select',
+    width: '100%',
+    ajax: {
+        url: baseUrl("payroll/reports/select_employee"),
+        dataType: "json",
+        delay: 250,
+        global: false,
+        processResults: function (data) {
+            return data;
+        }
+    }
+});
+
+$("#payroll_group").select2({
+    placeholder: 'Select',
+    width: '100%',
+    ajax: {
+        url: baseUrl("payroll/select_payroll_group"),
+        dataType: "json",
+        type: 'get',
+        delay: 250,
+        global: false,
+        data: function (params) {
+            params.company_id = $("form#frm-filter-payroll-regular_ndiff select#company").val();
+            return params;
+        },
+        processResults: function (data) {
+            return data;
+        }
+    }
+}).on("select2:select", function (e) {
+    const _this = this;
+    const tempVal = $(_this).val();
+    const data = e.params.data;
+    let employees = [];
+    if (typeof data.employees == "object" && typeof data.employees !== "undefined") { employees = data.employees; }
+    if (tempVal.length > 1) {
+        $.ajax({
+            url: baseUrl("payroll/get_payroll_group_multiple"),
+            type: "post",
+            dataType: "json",
+            data: { group_id: tempVal, [_csrf_token]: _csrf_hash },
+            success: function (json) {
+                if (json.response) {
+                    const tempData = json.data;
+                    if (typeof tempData == "object" && typeof tempData !== "undefined") {
+                        const tempEmployeeSelector = $("form#frm-filter-payroll-regular_ndiff select#employees");
+                        if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
+                            tempEmployeeSelector.empty();
+                            $.each(tempData, function (_ii, vv) {
+                                const tempOption = new Option(vv.text, vv.id, true, true);
+                                tempEmployeeSelector.append(tempOption);
+                            });
+                            tempEmployeeSelector.prop("disabled", true);
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        if (typeof employees == "object" && typeof employees !== "undefined") {
+            const tempEmployeeSelector = $("form#frm-filter-payroll-regular_ndiff select#employees");
+            if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
+                tempEmployeeSelector.empty();
+                $.each(employees, function (_ii, vv) {
+                    const tempOption = new Option(vv.text, vv.id, true, true);
+                    tempEmployeeSelector.append(tempOption);
+                });
+                tempEmployeeSelector.prop("disabled", true);
+            }
+        }
+    }
+}).on("select2:unselect", function (e) {
+    const _this = this;
+    const tempValUnselected = $(_this).val();
+    if (tempValUnselected.length == 0) {
+        const tempEmployeeSelector = $("form#frm-filter-payroll-regular_ndiff select#employees");
+        if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
+            tempEmployeeSelector.prop("disabled", false);
+        }
+    } else {
+        $.ajax({
+            url: baseUrl("payroll/get_payroll_group_multiple"),
+            type: "post",
+            dataType: "json",
+            data: { group_id: tempValUnselected, [_csrf_token]: _csrf_hash },
+            success: function (json) {
+                if (json.response) {
+                    const tempData = json.data;
+                    if (typeof tempData == "object" && typeof tempData !== "undefined") {
+                        const tempEmployeeSelector = $("form#frm-filter-payroll-regular_ndiff select#employees");
+                        if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
+                            tempEmployeeSelector.empty();
+                            $.each(tempData, function (_ii, vv) {
+                                const tempOption = new Option(vv.text, vv.id, true, true);
+                                tempEmployeeSelector.append(tempOption);
+                            });
+                            tempEmployeeSelector.prop("disabled", true);
+                        }
+                    }
+                }
+            }
+        });
+
+    }
+
+});
+
+$('#generalSearch').donetyping(function (_callback) {
+    searchRequest = $(this).val();
+    dtTable.ajax.reload();
+});
+
 const dtTable = $('#tbl-payroll-night-differential').DataTable({
-    dom: '<"toolbar">frtlip',
+    dom: '<"toolbar">rtlip',
     processing: true,
     serverSide: true,
     ordering: false,
@@ -7,20 +144,136 @@ const dtTable = $('#tbl-payroll-night-differential').DataTable({
         url: baseUrl('payroll/employee/get_employee_nightdiff_list'),
         type: 'POST',
         dataType: 'JSON',
-        data: function (d) { d.csrf_token = _csrf_hash; }
+        data: function (d) { 
+            d.csrf_token = _csrf_hash;
+            d.search['value'] = searchRequest;
+            d.params = globalRequest;
+            return d;
+        }
     },
     columns: [
         { data: 'idno', title: "ID No" },
-        { data: 'employee_name', title: "Employee Name" },
-        { data: 'company_code', title: "Company" },
-        { data: 'allow_ndiff', title: "Allow NDiff." },
-        { data: 'last_updated_at', title: "Last Updated At", 
-            render: function (data) {
-            return data != null ? data : '---';
-        }},
-        { data: null, title: 'Action',
-            render: function (data, type, row) {
-            return '---';
+        { data: 'employee_name', title: "Employee Name",
+            render: function (data, _type, row) { 
+                return `<p class="mb-0">${data}</p>
+                <p class="mb-0"><small class="m--font-bolder">${row.position}</small></p>`; 
+            }
+        },
+        { data: 'company_code', title: "Company", width: '15%' },
+        { data: 'last_updated_at', title: "Last Updated By", 
+            render: function (data, _type, row) {
+                const recordDate = data ? moment(data).format("LLL") : "";
+                const _html = recordDate ? `<p class="m--font-bolder mb-0">${row.updated_by}</p><p class=" mb-0"><small>${recordDate}</small></p>` : `---`;
+                return _html;
+        }}, { data: 'allow_ndiff', title: "Reg. Ndiff.", className: 'text-center', width: '10%',
+            render: function (data) { return parseInt(data) === 1 ? "<i class='fa fa-check-circle text-success m--icon-font-size-lg3'></i>" : "<i class='fa fa-times-circle text-danger m--icon-font-size-lg3'></i>" } 
+        }, { data: null, title: 'Action', className: 'text-center', width: '7%',
+            render: function (_data, _type, row) {
+                let actionCtr = 0;
+                let _actionButton = "";
+                const tempIcon = parseInt(row.allow_ndiff) === 1 ? "fa-toggle-on" : "fa-toggle-off";
+                const tempTooltip = parseInt(row.allow_ndiff) === 1 ? "Deactivate Regular Night Differential" : "Activate Regular Night Differential";
+                const tempState = parseInt(row.allow_ndiff) === 1 ? "danger" : "success";
+
+                const rawData = JSON.stringify(row);
+                if (typeof _currentActions != "undefined" && _currentActions.length > 0 && jQuery.inArray("edit", _currentActions) !== -1) {
+                    _actionButton = `<button type='button' 
+                    class='btn btn-default m-btn m-btn--hover-${tempState} m-btn--icon m-btn--icon-only m-btn--pill btnEdit btnUpdateEmployeeNightDifferential' 
+                    data-placement='bottom' data-toggle='m-tooltip' title='' 
+                    data-original-title='${tempTooltip}' data-row='${rawData}'>
+                        <i class='fa ${tempIcon}'></i>
+                    </button>`;
+                    actionCtr++;
+                }
+                if(actionCtr == 0) { _actionButton = '---'; }
+                return _actionButton;
         }}
     ]
+});
+
+$(document).on("click", ".btnUpdateEmployeeNightDifferential", function () {
+    const rowData = $(this).data("row");
+    const { id, allow_ndiff, employee_name, employee_id } = rowData;
+    const state = parseInt(allow_ndiff) === 1 ? 'Deactivate' : 'Activate';
+    const tempState = parseInt(allow_ndiff) === 1 ? 'danger' : 'success';
+    Swal.fire({
+        title: state + ' Regular Night Differential?',
+        html: "Are you sure you want to <strong class='text-"+ tempState +"'>`"+ state.toUpperCase() +"`</strong> this regualar night differential of <strong class='text-primary'>`"+ employee_name.toUpperCase() +"`</strong>?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes '+ state + ' it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: siteUrl("payroll/employee/update_regular_ndiff_status"),
+                type: "post",
+                dataType: "json",
+                data: {
+                    csrf_token: _csrf_hash,
+                    id: id,
+                    allow_ndiff: allow_ndiff,
+                    employee_id: employee_id
+                },
+                success: function (json) {
+                    if (json.response) {
+                        toastr.success(json.toastr_msg, "Employee Regular Night Differential", 5000);
+                        dtTable.ajax.reload(null, false);
+                    }
+                }
+            });
+        }
+    });
+});
+
+const resetFilter = function (event) {
+    const form = $(event).closest("form");
+    if (typeof form !== "undefined" && form.length == 1) {
+        const select2 = form.find("#employees, #payroll_group, #company");
+        if (typeof select2 !== "undefined" && select2.length > 0) {
+            $.each(select2, function (i, v) {
+                const multi = $(v)[0].multiple;
+                if (multi) {
+                    $(v).val([]).trigger("change").prop("disabled", false);
+                } else {
+                    $(v).val("").trigger("change");
+                }
+            });
+        }
+    }
+}
+
+$.validate({
+    form: "#frm-filter-payroll-regular_ndiff",
+    lang: "en",
+    scrollToTopOnError: false,
+    onSuccess: function (form) {
+        const currentForm = form[0];
+        let formData = $(currentForm).serialize();
+        const empSerialized = $(currentForm).find("#employees").serialize();
+        
+        const emptyEmployeeList = empSerialized != "";
+        if (emptyEmployeeList === false && $(currentForm).find("#employees").val().length > 0) {
+            formData += '&serialized_employees=' + $(currentForm).find("#employees").val().toString();
+        }
+
+        console.log(formData);
+        let nData = {};
+        formData.split('&').forEach(function(item) {
+            const part = item.split('=');
+            const key = decodeURIComponent(part[0]);
+            const value = decodeURIComponent(part[1] || '');
+
+            if(key.endsWith("[]")) {
+                const cleanKey = key.slice(0, -2);
+                if(typeof nData[cleanKey] !== "undefined") { nData[cleanKey].push(value); } 
+                else { nData[cleanKey] = [value]; }
+            }else{ nData[key] = value; }
+        });
+
+        globalRequest = { ...nData };
+        dtTable.ajax.reload(null, false);
+        return false;
+    }
 });

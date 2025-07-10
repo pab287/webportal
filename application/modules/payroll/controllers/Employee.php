@@ -77,12 +77,15 @@
         }
 
         public function night_differential(){
+            $this->load->model("Payroll_m", "payroll");
             $this->core_layout->setPageTitle("Payroll - Employee Night Differential");
             $this->core_layout->setPrivilegeName("payroll_night_differential");
-
+            
+            $tempData = array();
+            $tempData["company"] = $this->payroll->select2CompanyData();
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
-            $this->core_layout->addJs("js/payroll/employee/night_differential.js", true);
+            $this->core_layout->addJs("js/payroll/employee/night_differential.js", true, $tempData);
 
             $this->load->view('core/templates/header');
             $this->load->view('payroll/payroll/night_differential');
@@ -494,6 +497,13 @@
 
         public function get_employee_nightdiff_list(){
             $data = $this->employee->getEmployeeNightDiffList();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function update_regular_ndiff_status(){
+            $data = $this->employee->updateRegularNdiffStatus();
             $this->output
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
