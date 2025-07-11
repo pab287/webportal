@@ -5065,6 +5065,105 @@ class Timesheet_model extends CI_Model{
         return $resultSet;
     }
 
+    protected function getTimeAdjustmentRequestData($employee_id, $timesheet_id) {
+        if($employee_id && $timesheet_id) {
+            $this->db->select("timesheet.emp_id AS t_empID, timesheet.id AS tID,
+            mn.id time_adjustment_id,
+            mn.timesheet_id,
+            mn.entry_type,
+            mn.with_shift_adjustment,
+            mn.`status`,
+            mn.remarks,
+            mn.confirmed_at,
+            mn.created_at,
+            (SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='am_in' AND time_adjustments_id = mn.id) as adj_am_in,
+            (SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='am_out' AND time_adjustments_id = mn.id) as adj_am_out,
+            (SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='pm_in' AND time_adjustments_id = mn.id) as adj_pm_in,
+            (SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='pm_out' AND time_adjustments_id = mn.id) as adj_pm_out,
+            (SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='am_in' AND time_adjustments_id = mn.id) as test_am_in,
+            COALESCE(
+            IFNULL((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='am_in' AND time_adjustments_id = mn.id),
+                IF((SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='am_in' AND time_adjustments_id = mn.id) = '1', 'empty', timesheet.am_in)),
+            timesheet.am_in) am_in,
+            (SELECT `prev_value` FROM $this->tbl_time_adjustments_meta WHERE field='am_in' AND time_adjustments_id = mn.id) am_in_prev,
+            IF((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='am_in' AND time_adjustments_id = mn.id) IS NULL, 0, 1) am_in_is_requested,
+            COALESCE(
+            IFNULL((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='am_out' AND time_adjustments_id = mn.id),
+                IF((SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='am_out' AND time_adjustments_id = mn.id) = '1', 'empty', timesheet.am_out)),
+            timesheet.am_out) am_out,
+            (SELECT `prev_value` FROM $this->tbl_time_adjustments_meta WHERE field='am_out' AND time_adjustments_id = mn.id) am_out_prev,
+            IF((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='am_out' AND time_adjustments_id = mn.id) IS NULL, 0, 1) am_out_is_requested,
+            COALESCE(
+            IFNULL((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='pm_in' AND time_adjustments_id = mn.id),
+                IF((SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='pm_in' AND time_adjustments_id = mn.id) = '1', 'empty', timesheet.pm_in)),
+            timesheet.pm_in) pm_in,
+            (SELECT `prev_value` FROM $this->tbl_time_adjustments_meta WHERE field='pm_in' AND time_adjustments_id = mn.id) pm_in_prev,
+            IF((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='pm_in' AND time_adjustments_id = mn.id) IS NULL, 0, 1) pm_in_is_requested,
+            COALESCE(
+            IFNULL((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='pm_out' AND time_adjustments_id = mn.id),
+            IF((SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='pm_out' AND time_adjustments_id = mn.id) = '1', 'empty', timesheet.pm_out)),
+            timesheet.pm_out) pm_out,
+            (SELECT `prev_value` FROM $this->tbl_time_adjustments_meta WHERE field='pm_out' AND time_adjustments_id = mn.id) pm_out_prev,
+            IF((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='pm_out' AND time_adjustments_id = mn.id) IS NULL, 0, 1) pm_out_is_requested,
+            IF(timesheet.has_shift = 1, timesheet.shift_am_start, shift.am_start) am_start,
+            IF(timesheet.has_shift = 1, timesheet.shift_am_end, shift.am_end) am_end,
+            IF(timesheet.has_shift = 1, timesheet.shift_pm_start, shift.pm_start) pm_start,
+            IF(timesheet.has_shift = 1, timesheet.shift_pm_end, shift.pm_end) pm_end,
+            CONCAT(emp.lastname,
+                CASE
+                    WHEN emp.suffix != 'N/A' AND emp.suffix != 'NONE' AND emp.suffix != '' AND emp.suffix IS NOT NULL
+                        THEN CONCAT(' ', emp.suffix)
+                    ELSE '' END, ', ',
+                emp.firstname, ' ', CASE
+                    WHEN emp.middlename != 'N/A' AND emp.middlename != 'NONE'
+                        AND emp.middlename != '' AND emp.middlename IS NOT NULL
+                        THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.')
+                    ELSE '' END) `employee_name`,
+            CONCAT(emp2.lastname,
+                CASE
+                    WHEN emp2.suffix != 'N/A' AND emp2.suffix != 'NONE' AND emp2.suffix != '' AND emp2.suffix IS NOT NULL
+                        THEN CONCAT(' ', emp2.suffix)
+                    ELSE '' END, ', ',
+                emp2.firstname, ' ', CASE
+                    WHEN emp2.middlename != 'N/A' AND emp2.middlename != 'NONE'
+                        AND emp2.middlename != '' AND emp2.middlename IS NOT NULL
+                        THEN CONCAT(SUBSTR(emp2.middlename, 1, 1), '.')
+                    ELSE '' END) `_created_by`,
+            CONCAT(emp3.lastname,
+                CASE
+                    WHEN emp3.suffix != 'N/A' AND emp3.suffix != 'NONE' AND emp3.suffix != '' AND emp3.suffix IS NOT NULL
+                        THEN CONCAT(' ', emp3.suffix)
+                    ELSE '' END, ', ',
+                emp3.firstname, ' ', CASE
+                    WHEN emp3.middlename != 'N/A' AND emp3.middlename != 'NONE'
+                        AND emp3.middlename != '' AND emp3.middlename IS NOT NULL
+                        THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.')
+                    ELSE '' END) `_confirmed_by`,
+            emp.id,
+            timesheet.date,
+            timesheet.weekday,
+            timesheet.has_shift,
+            time_adj_m_ot.overtime_in,
+            time_adj_m_ot.overtime_out,
+            time_adj_m_ot.regular_hrs as mn_ot_reg_hrs,
+            time_adj_m_ot.ndiff_hrs as mn_ot_ndiff_hrs,
+            time_adj_m_ot.requested_by");
+            $this->db->join($this->tbl_time_adjustments_shift_schedule . " shift", "shift.time_adjustments_id = mn.id", "LEFT");
+            $this->db->join($this->tbl_timesheet . " timesheet", "timesheet.id = mn.timesheet_id", "INNER");
+            $this->db->join($this->tbl_employees . " emp", "emp.id = timesheet.emp_id", "INNER");
+            $this->db->join($this->tbl_employees . " emp2", "emp2.id = mn.created_by", "LEFT");
+            $this->db->join($this->tbl_employees . " emp3", "emp3.id = mn.confirmed_by", "LEFT");
+            $this->db->join($this->tbl_tblcompanies . " companies", "companies.id = emp.company_id", "LEFT");
+            $this->db->join($this->tbl_time_adjustments_manual_overtime . " time_adj_m_ot", "time_adj_m_ot.time_adjustments_id = mn.id", "LEFT");
+            $this->db->where("emp.id", $employee_id);
+            $this->db->where("mn.timesheet_id", $timesheet_id);
+            $query = $this->db->get($this->tbl_time_adjustments . " mn");
+            return $query->result();
+        }else{
+            return array();
+        }
+    }
+
     public function getTimeAdjustmentRequests($employee_id, $timesheet_id)
     {
         $post = $this->arrayToStdClass($this->input->post());
@@ -6605,7 +6704,8 @@ class Timesheet_model extends CI_Model{
             ->get_where($this->tbl_employees . " emp", array("emp.id" => $employee_id))
             ->row();
 
-        $resultSet["modal"] = $this->load->view('gcctime/timesheet/master/modals/time_adjustments_list_modal', $resultSet, TRUE);
+        $resultSet["data"] = $this->getTimeAdjustmentRequestData($employee_id, $timesheet_id);
+        $resultSet["modal"] = $this->load->view('gcctime/timesheet/master/modals/time_adjustments_list_modal', $resultSet, true);
         return $resultSet;
     }
 
