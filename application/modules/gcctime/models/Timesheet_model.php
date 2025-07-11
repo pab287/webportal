@@ -4265,7 +4265,7 @@ class Timesheet_model extends CI_Model{
                                 DATE_FORMAT(ts.date, '%a') _weekday,
                                 lcase(DATE_FORMAT(ts.date, '%W')) _weekday_full,
                                 $id _emp_id,
-                                ts.*, '$biometricno' biometricno", FALSE)
+                                ts.*, '$biometricno' biometricno", false)
                     ->get_where($this->tbl_timesheet . " ts", array("ts.id" => $timesheet_id))
                     ->row();
 
@@ -4287,6 +4287,7 @@ class Timesheet_model extends CI_Model{
                 if($qTempEmployee->num_rows() == 1){
                     $timesheet->payroll_type = strtolower($qTempEmployee->row()->payroll_type);
                 }
+                $timesheet->has_pending_adjustment = false;
                 $timesheet->allow_paid_holiday = false;
                 $timesheet->has_TO = 0;
                 $timesheet->has_LOA = 0;
@@ -4306,6 +4307,13 @@ class Timesheet_model extends CI_Model{
                 if (!empty($schedule_list)) {
                     $timesheet->has_shift = ($schedule_list->am_start === null && $schedule_list->am_end === null
                         && $schedule_list->pm_start === null && $schedule_list->pm_end === null) ? 0 : 1;
+                }
+
+                if (intval($timesheet->with_adjustment) === 1) {
+                    $adjustmentTemp = $this->db->get_where($this->tbl_time_adjustments, array("timesheet_id"=>$timesheet->id, "status"=>0));
+                    if($adjustmentTemp->num_rows() > 0){
+                        $timesheet->has_pending_adjustment = true;
+                    }
                 }
 
                 if ((is_null($timesheet->scrub_status) || intval($timesheet->scrub_status) === 1) || (intval($timesheet->scrub_status) === 0 && $timesheet->has_shift === 1)) {

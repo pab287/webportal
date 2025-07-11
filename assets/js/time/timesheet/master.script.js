@@ -660,7 +660,7 @@ $(document)
                                     ctrNullData++;
                                 }
                             });
-                            if (hasPunches && nullData && propChecker.length == ctrNullData) { regenerateRow = true; }
+                            if (hasPunches && nullData && propChecker.length == ctrNullData && pendingAdjustment === false) { regenerateRow = true; }
 
                             if (verified === 1 || isMonthlyPaid) {
                                 return `<i class="fa fa-check m--font-success m--regular-font-size-lg3"
@@ -684,7 +684,7 @@ $(document)
                                         id="cb${row.id}" class="cb-emp-${row._emp_id}"><span></span>
                                 </label>`;
 
-                                if (regenerateRow === true || ctrAttendanceEntries == 1) {
+                                if (regenerateRow === true || (pendingAdjustment === false && ctrAttendanceEntries == 1)) {
                                     tempHtml = `<i class="fa fa-refresh m--font-warning m--regular-font-size-lg3"
                                         data-toggle="m-tooltip" data-original-title="Re-generate Row"
                                         data-skin="dark"
@@ -722,9 +722,9 @@ $(document)
                             const icon_list = ["fa-car", "fa-calendar", "fa-clock-o"];
 
                             if (typeof row.datelist !== "undefined") {
-                                var i1 = row.datelist[0] + '', i2 = row.datelist[1] + '', i3 = row.datelist[2] + '';
-                                var f1 = "", f2 = "", f3 = "";
-                                var t1 = "", t2 = "", t3 = "";
+                                const i1 = row.datelist[0] + '', i2 = row.datelist[1] + '', i3 = row.datelist[2] + '';
+                                let f1 = "", f2 = "", f3 = "";
+                                let t1 = "", t2 = "", t3 = "";
                                 if (i1.split(",")[1] != "0") {
                                     if (i1.split(",")[0] == "TO") { f1 = icon_list[0]; t1 = "TO"; }
                                     else if (i1.split(",")[0] == "LOA") { f1 = icon_list[1]; t1 = "LOA"; }
@@ -955,8 +955,9 @@ $(document)
                         className: 'text-center',
                         render: function (data, type, row, meta) {
                             const allowPaidHoliday = row.allow_paid_holiday;
-                            const hasOvertime = typeof row.has_overtime !== "undefined" && parseInt(row.has_overtime) === 1 ? true : false;
-                            const scrub_status = parseInt(row.scrub_status);
+                            /*** const hasOvertime = typeof row.has_overtime !== "undefined" && parseInt(row.has_overtime) === 1 ? true : false;
+                            const scrub_status = parseInt(row.scrub_status); ***/
+                            const pendingAdjustment = row.has_pending_adjustment;
                             const widthAdjustment = parseInt(row.with_adjustment);
                             const id = row.id ? parseInt(row.id) : null;
 
@@ -970,23 +971,10 @@ $(document)
                             let hideTimeAdjustmentClass = false;
                             hideTimeAdjustmentClass = parseInt(row.verified) === 1;
 
-                            let template = ``;
-
-                            let hideOptions = '';
                             let undoVerification = ``,
                                 createTimeAdjustment = ``,
                                 regenerateRecord = ``,
                                 timeAdjustmentDetails = ``;
-
-                            if (!row.id && parseInt(row.has_LOA) <= 0 && (row.has_TO) <= 0) {
-                                hideOptions = 'm--hide';
-                            } else {
-                                if (parseInt(row.has_LOA) >= 1 && parseInt(row.has_whole_day_LOA) >= 1) {
-                                    hideOptions = 'm--hide';
-                                } else {
-                                    hideOptions = '';
-                                }
-                            }
 
                             let isHolidayAction = ``;
                             /*** if (allowPaidHoliday && hasOvertime == false) { ***/
@@ -1024,6 +1012,7 @@ $(document)
                                 hideTimeAdjustmentClass = true;
                             }
 
+                            let tempTemplate = ``;
                             if (row.is_posted === false) {
                                 if (hideTimeAdjustmentClass === false) {
                                     createTimeAdjustment = `<li class="m-nav__item create-time-adjustment-link ${hideTimeAdjustmentClass == true ? 'm--hide' : ''}">
@@ -1049,7 +1038,9 @@ $(document)
                                     </li>`;
                                 }
 
-                                if (regenHiddenClass === false) {
+                                console.log(regenHiddenClass, pendingAdjustment);
+                                
+                                if (regenHiddenClass === false && pendingAdjustment === false) {
                                     regenerateRecord = `<li class="m-nav__item re-generate-button">
                                         <a href="javascript:void(0)" class="m-nav__link"
                                             onclick="confirmRegenerateRow('${row._date}', ${row._emp_id}, '${row.employee_name}', ${meta.row}, ${row.id})">
@@ -1071,7 +1062,7 @@ $(document)
                                     </li>`;
                                 }
 
-                                template = `
+                                tempTemplate = `
                                     <div class="m-dropdown m-dropdown--inline m-dropdown--align-right m-dropdown--large"
                                         data-dropdown-toggle="click" aria-expanded="true">
                                         <a href="#" class="m-dropdown__toggle btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill"
@@ -1108,7 +1099,7 @@ $(document)
                                     </div>`;
 
                             } else {
-                                template = `<a href="javascript:void(0)" 
+                                tempTemplate = `<a href="javascript:void(0)" 
                                     class="m-portlet__nav-link m-btn--icon m-btn--icon-only btn-sm m-btn--pill" 
                                     data-toggle="m-tooltip" data-original-title="More Details" data-skin="dark" data-delay="{&quot;show&quot;: 500}" 
                                     onclick="openMoreDetailsModal(${row.id}, ${row._emp_id}, '${row._date}')">
@@ -1116,7 +1107,7 @@ $(document)
                                 </a>`;
                             }
 
-                            return isMonthlyPaid === false ? template: ``;
+                            return isMonthlyPaid === false ? tempTemplate: ``;
                         }
                     }
                 ],
