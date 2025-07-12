@@ -224,25 +224,38 @@
 				</div>
 				<div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
 					<table class="table table-striped table-bordered table-responsive m--hide" id="table-reports_soa" width="100%" style="display: table; width: 100%;">
-					<col width="15%" />
-					<col width="15%" />
-					<col width="*" />
-					<col width="15%" />
-					<col width="15%" />
-					<col width="15%" />
+						<col width="13%" />
+						<col width="13%" />
+						<col width="13%" />
+						<col width="*" />
+						<col width="10%" />
+						<col width="10%" />
+						<col width="13%" />
+						<col width="12%" />
 						<thead>
-							<tr><th class="text-center" colspan="6"><h6>PAYMENT</h6></th></tr>
+							<tr><th class="text-center" colspan="8"><h6>PAYMENT</h6></th></tr>
 							<tr>
 								<th>Reference no.</th>
+								<th>Bill</th>
 								<th>Date</th>
 								<th>Payment Type</th>
+								<th>Bill Amount</th>
 								<th>Net Payment</th>
 								<th>Balance Covered</th>
 								<th>Payment Amount</th>
 							</tr>
 						</thead>
 						<tfoot align="right">
-							<tr><th></th><th></th><th style="text-align: right;"></th><th></th><th></th><th style="font-weight: bold; color: #525252;"></th></tr>
+							<tr>
+								<th></th>
+								<th></th>
+								<th></th>
+								<th></th>
+								<th style="text-align: right;"></th>
+								<th></th>
+								<th></th>
+								<th style="font-weight: bold; color: #525252;"></th>
+							</tr>
 						</tfoot>
 					</table>
 

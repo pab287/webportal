@@ -148,7 +148,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="m-form col-md-6 form__group row">
+                        <div class="m-form col-md-6 form__group row penalty_layout" style="display: none;">
                             <div class="col-md-12 m--margin-bottom">
                             <div class="m-form__heading">
                                 <h3 class="m-form__heading-title">
