@@ -337,12 +337,8 @@ function getStatusLogs(){
         }
     });
 }
-function getRating(status,rating = null){
-    console.log(status,rating);
-    if(!rating){
-        return 0;
-    }
-    else if(typeof _tempContentData !== 'undefined' && _tempContentData && _tempContentData.rate && _tempContentData.rate == 1 && status == 'completed') {
+function getRating(status,ticket_rating = null){
+    if(typeof _tempContentData !== 'undefined' && _tempContentData && _tempContentData.rate && _tempContentData.rate == 1 && status == 'completed' && ticket_rating == null){ 
         Swal.fire({
             title: 'HOW WOULD YOU RATE OUR SERVICE?',
             html: `<div style="margin: 20px 0; text-align: center;">
@@ -371,6 +367,7 @@ function getRating(status,rating = null){
             },
         }).then((result) => {
             const ratingData = result.value;
+            ratingData.rating_feedback = $('#feedback').val();
             $.ajax({
                 url: baseUrl("ticket/ticket/update_rating") ,
                 dataType: "json",
@@ -382,12 +379,13 @@ function getRating(status,rating = null){
                     rating_feedback: $('#feedback').val(),
                 },
                 success: function (response) {
-                    console.log(response);
-                    // if (response) {
-                    //     statuslog.trail =  response.data;
-                    // } else {
-                    //     statuslog.trail = null;
-                    // }
+                    if (response) {
+                        toastr.success("Thank you!", "Your rating has been submitted successfully.", 5000);
+                        vmTab1.vm_tab1.rating = ratingData.rating;
+                        vmTab1.vm_tab1.rating_feedback = ratingData.rating_feedback;
+                    } else {
+                        toastr.error("Error","Failed to submit rating.", 5000);
+                    }
                 }
             })
         });

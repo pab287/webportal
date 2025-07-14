@@ -34,6 +34,15 @@
         width: 100%;
         height: 100%;
     }
+
+    .star-rating {
+        color: #ccc;
+        font-size: 20px;
+    }
+
+    .star-rating .filled {
+        color: #ffc107; /* or any color you prefer for filled stars */
+    }
 </style>
 
 <div class="m-content">
@@ -377,6 +386,25 @@
                                                 </label>
                                                 <div class="col-lg-8 col-md-6 col-sm-8">
                                                     <span v-html="vm_tab1.status"></span>
+                                                </div>
+                                            </div>
+                                            <div v-if="vm_tab1.rating" class="form-group m-form__group row">
+                                                <label class="col-lg-4 col-md-6 col-sm-4">
+                                                    Rating:
+                                                </label>
+                                                <div class="col-lg-8 col-md-6 col-sm-8">
+                                                    <div class="star-rating">
+                                                        <span v-for="i in 5" :key="i" 
+                                                            :class="{'filled': i <= vm_tab1.rating}">★</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div v-show="vm_tab1.rating_feedback" class="form-group m-form__group row">
+                                                <label class="col-lg-4 col-md-6 col-sm-4">
+                                                    Feedback:
+                                                </label>
+                                                <div class="col-lg-8 col-md-6 col-sm-8">
+                                                    <span v-text="vm_tab1.rating_feedback"></span>
                                                 </div>
                                             </div>
                                         </div>

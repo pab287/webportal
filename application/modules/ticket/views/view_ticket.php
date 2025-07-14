@@ -39,6 +39,15 @@
         cursor: pointer;
     }
 
+    .star-rating {
+        color: #ccc;
+        font-size: 20px;
+    }
+
+    .star-rating .filled {
+        color: #ffc107; /* or any color you prefer for filled stars */
+    }
+
 </style>
 <div class="m-content">
     <div class="row">
@@ -164,7 +173,10 @@
                                         Rating:
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-8">
-                                        <span v-html="vm_tab1.rating"></span>
+                                        <div class="star-rating">
+                                            <span v-for="i in 5" :key="i" 
+                                                :class="{'filled': i <= vm_tab1.rating}">★</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div v-show="vm_tab1.rating_feedback" class="form-group m-form__group row">
@@ -172,7 +184,7 @@
                                         Feedback:
                                     </label>
                                     <div class="col-lg-8 col-md-6 col-sm-8">
-                                        <span v-html="vm_tab1.rating_feedback"></span>
+                                        <span v-text="vm_tab1.rating_feedback"></span>
                                     </div>
                                 </div>
                             </div>
