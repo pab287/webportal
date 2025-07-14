@@ -4031,13 +4031,13 @@ class Reports_m extends CI_Model{
         if (is_array($filteredIds) && count($filteredIds) > 0) {
             $select = "a.id, a.emp_id, b.firstname, b.lastname, b.middlename, b.suffix, b.company_id, b.idno,
             a.total_accredited_ot_hrs as ot_hrs, a.total_accredited_ndiff_ot_hrs as ot_ndiff_hrs,
-            IFNULL(DATE(a.overtime_in), DATE(a.date)) as overtime_in,
+            IF(DATE(a.overtime_in) != NULL AND DATE(a.overtime_in) != '0000-00-00', DATE(a.overtime_in), DATE(a.date)) as overtime_in,
             ROUND(IF(LOWER(b.payroll_type) = 'monthly', ROUND( IFNULL(b.basic_rate, 0), 2) * 12 / ROUND( IFNULL(comp.work_days_in_year, 314), 2),
             IFNULL(b.basic_rate, 0)), 2) as basic_rate,
             ROUND(IF(LOWER(allw.frequency) = 'month', ROUND( IFNULL(allw.rate, 0), 2) * 12 / ROUND( IFNULL(comp.work_days_in_year, 314), 2),
             IFNULL(allw.rate, 0)), 2) as allowance_rate,
             a.has_overtime, a.has_shift, IF((a.shift_am_start && a.shift_am_end) || (a.shift_pm_start && a.shift_pm_end), '1', '0') as ampm_shift,
-            IF(a.is_holiday = 1 && a.paid_holiday = 1, '1', '0') as is_paid_holiday, a.payrate_id";
+            IF(a.is_holiday = 1 && a.paid_holiday = 1, '1', '0') as is_paid_holiday, a.payrate_id, DATE(a.date) as tsDate";
 
             $this->db->select($select);
             $this->db->from('gcctimeutility.timesheet a');
