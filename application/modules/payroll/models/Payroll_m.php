@@ -929,7 +929,8 @@ class Payroll_m extends CI_Model
             foreach ($employees["data"] as $employee) {
                 $isMonthlyPaidEmployee = in_array($employee->id, $arrMonthlyEmployeeIds);
                 $employee->is_monthly_paid = $isMonthlyPaidEmployee;
-                $atemp = new stdClass();
+                /*** $atemp = new stdClass(); ***/
+                $otTemp = [];
                 $tempDateStarted = $employee->date_start ? date("Y-m-d", strtotime($employee->date_start)): null;
 
                 $contAcctNumber = $this->getContributionDeductionAccountNumber($employee->id);
@@ -1175,7 +1176,8 @@ class Payroll_m extends CI_Model
                     $tempIsPaidHoliday = array();
                     foreach ($timesheet as $index => $ts) {
                         $tempTs = new stdClass();
-    
+                        $tempOT = new stdClass();
+
                         $ts->minutes_daily = 0;
                         $ts->is_rest_day = 0;
                         $ts->total_late_amount = 0;
@@ -1352,7 +1354,24 @@ class Payroll_m extends CI_Model
                         $total_actual_minutes += $tempTs->actual_minutes;
                         $total_actual_hours += $tempTs->actual_hours;
                         $total_actual_hours_decimal += floatval($tempTs->actual_hours_decimal);
-    
+                        
+                        $tempOT->id = $ts->id;
+                        $tempOT->date = $ts->date;
+                        $tempOT->weekday = $ts->weekday;
+
+                        $tempOT->shift_record = array();
+                        $tempOT->shift_record["custom_shift_id"] = $ts->custom_shift_id;
+                        $tempOT->shift_record["has_shift"] = $ts->has_shift;
+                        $tempOT->shift_record["is_rest_day"] = $ts->is_rest_day;
+                        $tempOT->shift_record["is_holiday"] = $ts->is_holiday;
+                        $tempOT->ot_minutely = $ts->ot_minutely;
+                        $tempOT->ot_ndiff_minutely = $ts->ot_ndiff_minutely;
+                        $tempOT->total_accredited_ot_hrs = $ts->total_accredited_ot_hrs;
+                        $tempOT->total_accredited_ndiff_ot_hrs = $ts->total_accredited_ndiff_ot_hrs;
+                        $tempOT->total_accredited_ot_hrs_amount = $ts->total_accredited_ot_hrs_amount;
+                        $tempOT->total_accredited_ndiff_ot_hrs_amount = $ts->total_accredited_ndiff_ot_hrs_amount;
+                        $otTemp[$ts->id] = $tempOT;
+
                         /*** $atemp->time_sheet[] = $tempTs;
                         $atemp->total_minutes = $total_minutes;
                         $atemp->total_actual_minutes = $total_actual_minutes;
@@ -2622,6 +2641,7 @@ class Payroll_m extends CI_Model
                     }
                 }
                 /*** $employee->temp_computation = $atemp; ***/
+                $employee->overtime = $otTemp;
                 $employee->contributions = $currentPayrollContributions;
 
                 $this->db->reset_query();
