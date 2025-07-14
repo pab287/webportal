@@ -260,14 +260,15 @@ class Reports_model extends CI_Model{
         $select .= "DATE_ADD(emp.date_start, INTERVAL 5 MONTH) finalEvaluation,";
         $select .= "emp.date_end_prob end_of_contract,";
         $select .= "DATEDIFF(emp.date_end_prob, CURDATE()) daysBeforeEvaluation,";
-        $select .= "emp.idno,";
+        $select .= "CAST(emp.idno AS DECIMAL(10)) AS idno,";
         $select .= "UCASE(CONCAT(emp.firstname, ' ', emp.middlename, ' ', emp.lastname, ";
         $select .= "    CASE";
         $select .= "        WHEN emp.suffix IS NOT NULL AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)";
         $select .= "    ELSE '' END)) `name`,";
         $select .= "UCASE(IF(company.code IS NULL, emp.company_id ,company.code)) company,";
         $select .= "UCASE(IF(dep.description IS NULL, emp.department_id, dep.description)) department,";
-        $select .= "UCASE(IF(pos.name IS NULL, emp.position, pos.name)) `position`";
+        // $select .= "UCASE(IF(pos.name IS NULL, emp.position, pos.name)) `position`";
+        $select .= "UCASE(IF(pos.name IS NULL, emp.position, TRIM(pos.name))) `position`";
 
         $joinArr = array(
             array('table' => 'gcchris.tblcompanies company', 'condition' => 'emp.company_id = company.id', 'option' => 'LEFT'),
