@@ -699,8 +699,6 @@ class Timesheet_model extends CI_Model{
                                 $toArray = (array) $timesheetHourlyPartimer;
                                 if(is_array($toArray) && count($toArray) > 0){ $tempDatax->is_tagged_hourly = true; }
 
-                                var_dump($tempDatax->has_shift);
-
                                 $updatedRow = $this->updateTimesheetShiftComputation($tempDatax);
                                 $updatedTimesheet = (array) $updatedRow;
                                 if(is_array($toArray) && count($toArray) > 0){
