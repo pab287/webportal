@@ -568,6 +568,16 @@ class Timesheet_model extends CI_Model{
                                 }, $tempResource);
                             }
 
+                            $_shiftSchedule = $this->generateShiftScheduleResource($tempRow->emp_id, $tempRow->weekday);
+                            if(isset($_shiftSchedule) && $_shiftSchedule && count($_shiftSchedule) > 0){
+                                $_shiftSchedule = $this->arrayToStdClass($_shiftSchedule);
+                                $tempRow->has_shift = 1;
+                                $tempRow->shift_am_start = $_shiftSchedule->shift_am_start;
+                                $tempRow->shift_am_end = $_shiftSchedule->shift_am_end;
+                                $tempRow->shift_pm_start = $_shiftSchedule->shift_pm_start;
+                                $tempRow->shift_pm_end = $_shiftSchedule->shift_pm_end;
+                            }
+
                             $schedule = $this->getScheduleList($weekday, $shift_resource_array);
                             $am_start = !empty($schedule) ? $schedule->am_start : null;
                             $am_end = !empty($schedule) ? $schedule->am_end : null;
@@ -575,7 +585,7 @@ class Timesheet_model extends CI_Model{
                             $pm_end = !empty($schedule) ? $schedule->pm_end : null;
                             
                             $alteredCustomShiftId = 0;
-                            $alteredHasShiftSchedule = 0;
+                            $alteredHasShiftSchedule = $tempRow->has_shift == 1 ? 1 : 0;
 
                             if(isset($alteredShifts) && $alteredShifts && count(get_object_vars($alteredShifts)) > 0){
                                 if(isset($alteredShifts->has_shift)){
@@ -688,6 +698,8 @@ class Timesheet_model extends CI_Model{
                                 $timesheetHourlyPartimer = $this->generatePerHourSlashPartimer($tempRowId);
                                 $toArray = (array) $timesheetHourlyPartimer;
                                 if(is_array($toArray) && count($toArray) > 0){ $tempDatax->is_tagged_hourly = true; }
+
+                                var_dump($tempDatax->has_shift);
 
                                 $updatedRow = $this->updateTimesheetShiftComputation($tempDatax);
                                 $updatedTimesheet = (array) $updatedRow;
@@ -9073,7 +9085,7 @@ class Timesheet_model extends CI_Model{
                     ->where_in("id", unserialize($shift_resource))
                     ->where("weekday", $weekday)
                     ->get($this->tbl_shift_schedule_list)
-                    ->row();
+                    ->row_array();
             }
         }
 
