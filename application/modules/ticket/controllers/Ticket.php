@@ -118,7 +118,7 @@ class Ticket extends MY_Controller {
             $data['rate']= true;
         }
         $this->core_layout->setPrivilegeName("ticket_masterfile");
-        $this->core_layout->setPageTitle("TICKET - View TicketSS");
+        $this->core_layout->setPageTitle("TICKET - View Ticket");
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
         $this->core_layout->addJs("js/ticket/view_ticket.js",true,$data);
