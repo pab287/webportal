@@ -1144,6 +1144,9 @@ class Payroll_m extends CI_Model
                 $undertime_minutes = 0;
                 $undertime = 0;
 
+                $reg_ndiff_minutes = 0;
+                $reg_ndiff_amount = 0;
+
                 $ot_minutes = 0;
                 $ot_amount = 0;
                 $ot_ndiff_minutes = 0;
@@ -1279,7 +1282,11 @@ class Payroll_m extends CI_Model
                                 $ts = (object)array_merge((array)$ts, (array)$tempOvertime);
                             }
                             // END OVERTIME CALCULATION HERE
-    
+                            $tempRegularNdiff = $this->getRegularNightDiffAmountDaily($ts, $tempPayrateSettings);
+                            if($tempRegularNdiff && count(get_object_vars($tempRegularNdiff)) > 0){
+                                $ts = (object)array_merge((array)$ts, (array)$tempRegularNdiff);
+                            }
+
                             if(intval($ts->is_holiday) !== 0){
                                 $tempHolidayTimesheet = $this->getHolidayAmountDaily($ts);
                                 if($tempHolidayTimesheet && count(get_object_vars($tempHolidayTimesheet)) > 0){
@@ -1323,7 +1330,11 @@ class Payroll_m extends CI_Model
                                 $ts = (object)array_merge((array)$ts, (array)$tempOvertime);
                             }
                             // END OVERTIME CALCULATION HERE
-    
+                            $tempRegularNdiff = $this->getRegularNightDiffAmountDaily($ts, $tempPayrateSettings);
+                            if($tempRegularNdiff && count(get_object_vars($tempRegularNdiff)) > 0){
+                                $ts = (object)array_merge((array)$ts, (array)$tempRegularNdiff);
+                            }
+
                             if(intval($ts->is_holiday) !== 0){
                                 $tempHolidayTimesheet = $this->getHolidayAmountDaily($ts);
                                 if($tempHolidayTimesheet && count(get_object_vars($tempHolidayTimesheet)) > 0){
@@ -3008,6 +3019,19 @@ class Payroll_m extends CI_Model
 
             $timesheet->ot_ndiff_minutely = floatval($timesheet->total_accredited_ndiff_ot_hrs) > 0 ? $timesheet->total_accredited_ndiff_ot_hrs * $ot_ndiff_minutely: 0;
             $timesheet->total_accredited_ndiff_ot_hrs_amount = ($timesheet->total_accredited_ndiff_ot_hrs * 60) * $ot_ndiff_minutely; ***/
+        }
+        return $timesheet;
+    }
+
+    protected function getRegularNightDiffAmountDaily($timesheet=array(), $payrate_setting=array()){
+        if(($timesheet && count(get_object_vars($timesheet)) > 0) && ($payrate_setting && count(get_object_vars($payrate_setting)) > 0)){
+            $night_diff_minutely = $timesheet->per_minute * (isset($payrate_setting) ? $payrate_setting->night_diff_rate : 1);
+
+            $totalRegularNightDiffHours = floatval($timesheet->total_ndiff_rendered) > 0 ? floatval($timesheet->total_ndiff_rendered) / 60 : 0;
+            $timesheet->night_diff_minutely = floatval($totalRegularNightDiffHours) > 0 ? floatval($totalRegularNightDiffHours) * $night_diff_minutely: 0;
+            $timesheet->total_ndiff_hrs = $totalRegularNightDiffHours;
+            $timesheet->total_ndiff_amount = ($totalRegularNightDiffHours * 60) * $night_diff_minutely;
+            var_dump($timesheet);
         }
         return $timesheet;
     }
