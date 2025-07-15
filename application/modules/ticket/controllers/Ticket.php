@@ -30,6 +30,8 @@ class Ticket extends MY_Controller {
 
     function tickets(){
         $this->core_layout->setPrivilegeName("ticket_masterfile");
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
         $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', TRUE);
         $this->core_layout->addJs('js/querybuilder/query-builder.standalone.min.js', TRUE);
         $this->core_layout->setPageTitle("TICKET - Masterfile");
@@ -379,6 +381,11 @@ class Ticket extends MY_Controller {
 
     public function update_rating(){
         $data = $this->ticket->updateRating();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_completed_ticket_per_user(){
+        $data = $this->ticket->getCompletedTicketPerUser();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 

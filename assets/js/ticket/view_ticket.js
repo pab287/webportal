@@ -349,7 +349,7 @@ function getRating(status,ticket_rating = null){
                             <span class="star" data-rating="4" title="Good">☆</span>
                             <span class="star" data-rating="5" title="Excellent">☆</span>
                         </div>
-                        <textarea id="feedback" placeholder="FEEDBACK..." style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solidrgb(0, 0, 0);"></textarea>
+                        <textarea id="feedback" placeholder="FEEDBACK..." style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid rgb(0, 0, 0);"></textarea>
                     </div>`,
             allowOutsideClick: false,
             allowEscapeKey: false,

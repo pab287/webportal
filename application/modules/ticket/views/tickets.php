@@ -35,6 +35,10 @@
         height: 100%;
     }
 
+    .star {
+        cursor: pointer;
+    }
+
     .star-rating {
         color: #ccc;
         font-size: 20px;
@@ -537,6 +541,49 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" tabindex="-1" role="dialog" id="completed-ticket-preview-dialog">
+    <div class="modal-dialog modal-extra-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Completed Tickets</h5>
+            </div>
+            <div class="modal-body">
+            <p style="color: red;">
+                You have {{vm_tickets.length}} completed tickets that haven't been rated yet. We'd appreciate it if you could take a moment to rate our service!
+            </p>
+                <div style="max-height: 500px; overflow-y: scroll;">
+                    <table class="table table-striped table-bordered table-hover responsive" id="completed-ticket-preview-table">
+                        <thead>
+                            <tr>
+                                <th width="20%">Ticket ID</th>
+                                <th width="*">Description</th>
+                                <th width="20%">Completed at</th>
+                                <th width="15%" class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template v-for="ticket in vm_tickets" :key="ticket.id">
+                                <tr>
+                                    <td data-label="reference_no" v-text="ticket.reference_no"></td>
+                                    <td data-label="message" v-text="ticket.message"></td>
+                                    <td data-label="created_at" v-text="formatDate(ticket.created_at)"></td>
+                                    <td data-label="action" class="text-center">
+                                        <button class="btn btn-success btn-sm" @click="rateTicket(ticket.id,ticket.reference_no)" title="Resolve Ticket">
+                                             Rate
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger btnBack" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

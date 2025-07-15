@@ -1910,4 +1910,19 @@ class Ticket_m extends CI_Model
         return $update;
     }
 
+    public function getCompletedTicketPerUser(){
+        $this->db->select("a.id,a.reference_no,b.created_at,a.message");
+        $this->db->from('gccticket.ticket a');
+        $this->db->join('gccticket.trail_logs_event b', 'a.id = b.ticket_id', 'left');
+        $this->db->where('b.created_at >=', date('Y-m-d', strtotime('-7 days')));
+        $this->db->where('lower(b.type)', 'completed');
+        $this->db->where('is_archived', 0);
+        $this->db->where('requestor', $this->user_data['emp_id']);
+        $this->db->where(strtolower('status'), 'completed');
+        $this->db->where('(a.rating IS NULL OR a.rating = 0)', null, false);
+        $this->db->order_by('id', 'desc');
+        $query = $this->db->get();
+        return $query->result_array();
+    }
+
 }
