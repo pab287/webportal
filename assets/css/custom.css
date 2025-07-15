@@ -1133,3 +1133,15 @@ body.dt-print-view.custom--dt-print-view {
 .cursor_pointer {
     cursor: pointer;
 }
+
+.row.swal--custom-list {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 1.5rem 0;
+}
+
+.row.swal--custom-list span { line-height: 20px; }
+.swal2-fade-out {
+    opacity: 0 !important;
+    transition: opacity 0.5s ease-out !important;
+}

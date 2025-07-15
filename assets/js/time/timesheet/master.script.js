@@ -1146,22 +1146,53 @@ $(document)
                         if(arrEmpRecord.length > 0){
                             let _arrIds = [];
                             const ctr = arrEmpRecord.length;
-                            let tempHtml = `<ul class='mt-2'>`;
+                            /*** let tempHtml = `<ul class='mt-2'>`;
                             arrEmpRecord.forEach((row, _index) => {
                                 tempHtml += `<li class='m--font-bolder text-left ml-1'>${row.employee_name}</li>`;
                                 _arrIds.push(row.emp_id);
                             });
-                            tempHtml += `</ul>`;
+                            tempHtml += `</ul>`; ***/
+                            let timerInterval;
+
+                            let tempHtml = `<div class='row swal--custom-list'>`;
+                            arrEmpRecord.forEach((row, _index) => {
+                                tempHtml += `<div class='col-6 col-md-6 col-lg-6 col-sm-12'><span class='m--font-bolder text-left ml-1'>${row.employee_name}</span></div>`;
+                                _arrIds.push(row.emp_id);
+                            });
+                            tempHtml += `</div>`;
                             Swal.fire({
                                 title: 'Default Shift Record/s?',
                                 html: `A TOTAL OF <b>${ctr}</b> DEFAULT SHIFT RECORD/s FOUND!<br>${tempHtml}<br>WOULD YOU LIKE TO GENERATE TIMESHEET RECORD/s?`,
                                 icon: 'question',
+                                width: '800px',
+                                showCloseButton: true,
                                 showCancelButton: true,
                                 confirmButtonColor: '#3085d6',
                                 cancelButtonColor: '#d33',
-                                confirmButtonText: 'Yes, Generate it!'
+                                confirmButtonText: 'Yes, Generate it!',
+                                timer: 10000,
+                                timerProgressBar: true,
+                                didOpen: () => {
+                                    setTimeout(() => {
+                                        const popup = Swal.getPopup();
+                                        popup.classList.add('swal2-fade-out');
+                                    }, 9500);
+
+                                    const confirmBtn = Swal.getConfirmButton();
+                                    confirmBtn.addEventListener('click', () => {
+                                    const popup = Swal.getPopup();
+                                    popup.classList.add('swal2-fade-out');
+                                        setTimeout(Swal.close(), 500);
+                                    });
+                                }, willClose: () => {
+                                    return new Promise((resolve) => {
+                                    setTimeout(resolve, 500);
+                                    });
+                                }
                             }).then((result) => {
-                                if (result.isConfirmed) {
+                                if (result.dismiss === Swal.DismissReason.timer) {
+                                    toastr.info("Default shift record/s automatic generation has closed.", "Default Shift Record/s");
+                                } else if (result.isConfirmed) {
                                     $.ajax({
                                         url: siteUrl("gcctime/timesheet/generate_default_timesheet"),
                                         type: "POST",
