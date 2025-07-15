@@ -255,7 +255,11 @@ function get_travel_for_analytics() {
             series.columns.template.tooltipText = "{valueX}";
             series.columns.template.column3D.stroke = am4core.color("#fff");
             series.columns.template.column3D.strokeOpacity = 0.2;
-
+            series.columns.template.events.on("hit", function (e) {
+                const data = e.target.dataItem.dataContext;
+                const key = data.status;
+                window.open(baseUrl('eforms/travel_order/masterfile?status=' + key), "_blank");
+            }, this);
             chart.data = result;
         }
     });

@@ -92,7 +92,11 @@
                 $this->db->where("a.status !=", "Cancelled");
                 $this->db->where("DATE(a.created_dt) >=", $check);
                 $this->db->group_by("a.id");
-            } else {
+            } 
+            else if ($status) {
+                $this->db->where('a.status', $status);
+            }
+            else {
                 $this->db->group_start();
                 $this->db->where("a.status !=", "Cancelled");
                 $this->db->where("DATE(a.created_dt) >=", $check);
@@ -102,10 +106,7 @@
             if (isset($query_builder) && $query_builder) {
                 $this->db->where($query_builder);
             }
-        
-            if ($status) {
-                $this->db->where('a.status', $status);
-            }
+
 
             $view_own_request = (in_array("view_own_request", $privilege)) ? true : false;
             if($view_own_request && ($this->user_data['emp_id']!=1)){
@@ -293,7 +294,11 @@
                 $this->db->where("a.status !=", "Cancelled");
                 $this->db->where("DATE(a.created_dt) >=", $check);
                 $this->db->group_by("a.id");
-            }else{
+            }
+            else if($status){
+                $this->db->where('a.status', $status);
+            }
+            else{
                 $this->db->group_start();
                 $this->db->where("a.status !=", "Cancelled");
                 $this->db->where("DATE(a.created_dt) >=", $check);
@@ -304,9 +309,6 @@
                 $this->db->where($query_builder);
             }
         
-            if($status){
-                $this->db->where('a.status', $status);
-            }
         
             $view_own_request = (in_array("view_own_request", $privilege)) ? true : false;
             if($view_own_request && ($this->user_data['emp_id']!=1)){
@@ -366,7 +368,8 @@
                 $this->db->where("a.status !=", "Cancelled");
                 $this->db->where("a.created_dt >=", $check);
                 $this->db->group_by("a.id");
-            }else{
+            }
+            else{
                 $this->db->where("a.status !=", "Cancelled");
                 $this->db->where("a.created_dt >=", $check);
             }
@@ -374,9 +377,7 @@
                 $this->db->where($query_builder);
             }
 
-            if($status){
-                $this->db->where('a.status', $status);
-            }
+
 
             $view_own_request = (in_array("view_own_request", $privilege)) ? true : false;
             if($view_own_request && ($this->user_data['emp_id']!=1)){

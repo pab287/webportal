@@ -31,7 +31,8 @@ class Travel_order extends MY_Controller
     {
         $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', TRUE);
         $this->core_layout->addJs('js/querybuilder/query-builder.standalone.min.js', TRUE);
-        
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
         
@@ -1360,7 +1361,7 @@ class Travel_order extends MY_Controller
     public function get_travel_analytics_for_dashboard()
     {
         $data = $this->travel_order->m_get_travel_analytics_for_dashboard();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function confirm_travel_destination(){
