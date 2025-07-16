@@ -339,7 +339,7 @@
                                 <thead>
                                 <tr>
                                     <th scope="col" class="no-sort align-middle" rowspan="2">
-                                        <label for="cb-select-all" class="m-checkbox m-checkbox--bold m-checkbox--state-brand table-cb">
+                                        <label for="" class="m-checkbox m-checkbox--bold m-checkbox--state-brand table-cb">
                                             <input type="checkbox" id="cb-select-all"><span></span>
                                         </label>
                                     </th>
@@ -499,7 +499,8 @@
                                             data-original-title="HDMF LOANS"
                                             data-skin="dark">
                                             HDMF
-                                        </span></th>
+                                        </span>
+                                    </th>
                                 </tr>
                                 </thead>
                                 <tbody>

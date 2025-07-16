@@ -1,4 +1,4 @@
-var search_val = "";
+let search_val = "";
 let company = [];
 
 let _companies = [];
@@ -48,20 +48,20 @@ const _tblPortletPS = $("#m_portlet_tools-payroll_sheet").mPortlet();
 
 let dtEmployeeTimesheet = null;
 let selectedCompany = null;
-var dtCreatedAdjustments;
-var _globalFooterHtml = null;
-var _globalFooterAdjustments = { sss: 0, sss_prov: 0, phic: 0, hdmf: 0, tax: 0, total_loans: 0 };
-var _dtRowSSS = [], _dtRowSSS_PROV = [], _dtRowPHIC = [], _dtRowHDMF = [], _dtRowTAX = [], _dtRowLOAN = [];
+let dtCreatedAdjustments;
+let _globalFooterHtml = null;
+let _globalFooterAdjustments = { sss: 0, sss_prov: 0, phic: 0, hdmf: 0, tax: 0, total_loans: 0 };
+let _dtRowSSS = [], _dtRowSSS_PROV = [], _dtRowPHIC = [], _dtRowHDMF = [], _dtRowTAX = [], _dtRowLOAN = [];
 let _tempLastRow = [];
 
-var globalGrandTotal = {};
+let globalGrandTotal = {};
 const exportOptions = {
-    columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
+    columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
 };
 
 let globalFilterOptions = {};
 
-var vmPsFilterHistory = new Vue({
+const vmPsFilterHistory = new Vue({
     el: "#tempFilterHistory",
     data: { count: 0, rows: [] },
     methods: {
@@ -127,7 +127,7 @@ $("#reload_dtTbl").on("click", function () {
     tblPayrollSheet.ajax.reload();
 });
 
-var select2Employees = function () {
+const select2Employees = function () {
     $("#employees")
         .select2({
             placeholder: 'Select an option',
@@ -144,7 +144,7 @@ var select2Employees = function () {
         });
 }
 
-var resetFilter = function (event) {
+const resetFilter = function (event) {
     const form = $(event).closest("form");
     if (typeof form !== "undefined" && form.length == 1) {
         const select2 = form.find("#employees, #payroll_group");
@@ -203,7 +203,7 @@ $("#payroll_group").select2({
                         if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
                             tempEmployeeSelector.empty();
                             $.each(tempData, function (ii, vv) {
-                                var tempOption = new Option(vv.text, vv.id, true, true);
+                                const tempOption = new Option(vv.text, vv.id, true, true);
                                 tempEmployeeSelector.append(tempOption);
                             });
                             tempEmployeeSelector.prop("disabled", true);
@@ -218,7 +218,7 @@ $("#payroll_group").select2({
             if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
                 tempEmployeeSelector.empty();
                 $.each(employees, function (ii, vv) {
-                    var tempOption = new Option(vv.text, vv.id, true, true);
+                    const tempOption = new Option(vv.text, vv.id, true, true);
                     tempEmployeeSelector.append(tempOption);
                 });
                 tempEmployeeSelector.prop("disabled", true);
@@ -256,7 +256,7 @@ $("#payroll_group").select2({
                         if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
                             tempEmployeeSelector.empty();
                             $.each(tempData, function (ii, vv) {
-                                var tempOption = new Option(vv.text, vv.id, true, true);
+                                const tempOption = new Option(vv.text, vv.id, true, true);
                                 tempEmployeeSelector.append(tempOption);
                             });
                             tempEmployeeSelector.prop("disabled", true);
@@ -290,7 +290,7 @@ $("#company")
         $(data.target).validate();
     });
 
-var setPayDate = function (tempStartDate = null) {
+const setPayDate = function (tempStartDate = null) {
     $('#pay-date').find("input").val("");
     $('#pay-date')
         .datepicker("destroy")
@@ -340,7 +340,7 @@ var setPayDate = function (tempStartDate = null) {
 }
 setPayDate();
 
-var generateDateTimePicker = function (min = null, max = null, start=null, end=null) {
+const generateDateTimePicker = function (min = null, max = null, start=null, end=null) {
     let options = {
         minDate: min,
         maxDate: max,
@@ -449,7 +449,7 @@ let dtAbsenteeReport = _tblAbsenteeReport.DataTable({
         },
         customize: function (win) {
             win.document.title = "Payroll Sheet Printable Page";
-            var css = `@page { size: portrait; margin: 0.5cm; } table { font-size: 12px; }`,
+            const css = `@page { size: portrait; margin: 0.5cm; } table { font-size: 12px; }`,
                 head = win.document.head || win.document.getElementsByTagName('head')[0],
                 style = win.document.createElement('style');
 
@@ -490,9 +490,9 @@ const tempContributionTable = function(columns = [], fieldCount = 0, dtInstance)
         order: [[groupColumn, 'asc']],
         data: [],
         drawCallback: function () {
-            var api = this.api();
-            var rows = api.rows({ page: 'current' }).nodes();
-            var last = null;
+            const api = this.api();
+            const rows = api.rows({ page: 'current' }).nodes();
+            let last = null;
     
             api.column(groupColumn, { page: 'current' }).data().each(function (group, i) {
                 if (last !== group) {
@@ -601,7 +601,7 @@ let dtPayrollSheet = _tblPayrollSheet
                             let tempValue = v.value;
                             tempValue = tempValue ? tempValue.toUpperCase() : tempValue;
 
-                            if (tempLabel && v.is_active == true) {
+                            if (tempLabel && v.is_active === true) {
                                 let tempCell = `<div style='display: inline-block; position: relative; width: 20%; margin-top: 30px;'>
                                 <p style='font-weight: bold; margin-left: 10px;'>${tempLabel}:</p>
                                 <p style='font-weight: 600; margin-left: 10px; margin-right: 50px; margin-top: 50px; padding-top: 10px; border-top: 1px solid #000000;'>${tempValue}</p>
@@ -634,7 +634,7 @@ let dtPayrollSheet = _tblPayrollSheet
                     const sheet = xlsx.xl.worksheets['sheet1.xml'];
                     const sheetData = sheet.getElementsByTagName('sheetData')[0];
                     let lastRow = $('row:nth-last-child(2) c', sheet);
-
+                    
                     let tempPre = [];
                     let tempDatax = [];
                     let tempData = [];
@@ -668,6 +668,7 @@ let dtPayrollSheet = _tblPayrollSheet
                         $(this).attr("r", pre + ind);
                     });
 
+                    console.log(tempPre);
                     let tempRowCols = [];
                     $.each(lastRowCols, function (i, v) {
                         let textContent = v.textContent;
@@ -679,6 +680,7 @@ let dtPayrollSheet = _tblPayrollSheet
                     let tempx = 0;
                     $.each(tempPre, function (i, v) {
                         let _value = "";
+                        console.log("index: "+i+" value:"+tempRowCols[i]);
                         if (i > 2 && i !== 10) {
                             _value = tempRowCols[tempx];
                             _value = $.trim(_value);
@@ -962,7 +964,7 @@ let dtPayrollSheet = _tblPayrollSheet
                         if (typeof _globalFooterAdjustments.sss !== "undefined" && _globalFooterAdjustments.sss !== null) {
                             approvedAmount = parseFloat(_globalFooterAdjustments.sss) + approvedAmount;
                         }
-                        _globalFooterAdjustments = { ...{ sss: approvedAmount }};
+                        _globalFooterAdjustments.sss = approvedAmount;
                         //_globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { sss: approvedAmount });
                         _dtRowSSS.push(parseInt(row.id));
                     }
@@ -1008,7 +1010,7 @@ let dtPayrollSheet = _tblPayrollSheet
                         if (typeof _globalFooterAdjustments.sss_prov !== "undefined" && _globalFooterAdjustments.sss_prov !== null) {
                             approvedAmount = parseFloat(_globalFooterAdjustments.sss_prov) + approvedAmount;
                         }
-                        _globalFooterAdjustments = { ...{ sss_prov: approvedAmount }};
+                        _globalFooterAdjustments.sss_prov = approvedAmount;
                         //_globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { sss_prov: approvedAmount });
                         _dtRowSSS_PROV.push(parseInt(row.id));
                     }
@@ -1053,7 +1055,7 @@ let dtPayrollSheet = _tblPayrollSheet
                         if (typeof _globalFooterAdjustments.phic !== "undefined" && _globalFooterAdjustments.phic !== null) {
                             approvedAmount = parseFloat(_globalFooterAdjustments.phic) + approvedAmount;
                         }
-                        _globalFooterAdjustments = { ...{ phic: approvedAmount }};
+                        _globalFooterAdjustments.phic = approvedAmount;
                         //_globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { phic: approvedAmount });
                         _dtRowPHIC.push(parseInt(row.id));
                     }
@@ -1099,7 +1101,7 @@ let dtPayrollSheet = _tblPayrollSheet
                         if (typeof _globalFooterAdjustments.hdmf !== "undefined" && _globalFooterAdjustments.hdmf !== null) {
                             approvedAmount = parseFloat(_globalFooterAdjustments.hdmf) + approvedAmount;
                         }
-                        _globalFooterAdjustments = { ...{ hdmf: approvedAmount }};
+                        _globalFooterAdjustments.hdmf = approvedAmount;
                         // _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { hdmf: approvedAmount });
                         _dtRowHDMF.push(parseInt(row.id));
                     }
@@ -1145,7 +1147,7 @@ let dtPayrollSheet = _tblPayrollSheet
                         if (typeof _globalFooterAdjustments.tax !== "undefined" && _globalFooterAdjustments.tax !== null) {
                             approvedAmount = parseFloat(_globalFooterAdjustments.tax) + approvedAmount;
                         }
-                        _globalFooterAdjustments = { ...{ tax: approvedAmount }};
+                        _globalFooterAdjustments.tax = approvedAmount;
                         // _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { tax: approvedAmount });
                         _dtRowTAX.push(parseInt(row.id));
                     }
@@ -1223,7 +1225,7 @@ let dtPayrollSheet = _tblPayrollSheet
                         if (typeof _globalFooterAdjustments.total_loans !== "undefined" && _globalFooterAdjustments.total_loans !== null) {
                             approvedAmount = parseFloat(_globalFooterAdjustments.total_loans) + approvedAmount;
                         }
-                        _globalFooterAdjustments = { ...{ total_loans: approvedAmount }};
+                        _globalFooterAdjustments.total_loans = approvedAmount;
                         //_globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { total_loans: approvedAmount });
                         _dtRowLOAN.push(parseInt(row.id));
                     }
@@ -1417,7 +1419,6 @@ let dtPayrollSheet = _tblPayrollSheet
                     </div>`;
 
                     if (lockPosting) {
-                        btnUndoPosting = ``; btnAdjustments = ``;
                         if (parseInt(row.is_bonus) === 0 && isMonthlyPaidEmployee === false) {
                             _tempAction = `<a href="javascript:void(0)" 
                                 class="m-portlet__nav-link btn m-btn--icon m-btn--icon-only btn-sm" 
@@ -1443,117 +1444,33 @@ let dtPayrollSheet = _tblPayrollSheet
             }
         },
         drawCallback: function (settings) {
-            var api = this.api();
-            var tempFooter = $(settings.nTableWrapper).find("tfoot");
+            let tempFooter = $(settings.nTableWrapper).find("tfoot");
             if (typeof tempFooter !== "undefined") { _globalFooterHtml = tempFooter[0].innerHTML; }
         },
         footerCallback: function (row, data, start, end, display) {
-            globalGrandTotal = Object.assign({});
-
-            var api = this.api(), data;
+            globalGrandTotal = {};
+            const api = this.api();
             // Remove the formatting to get integer data for summation
-            var intVal = function (i) {
-                return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
-            };
+            const intVal = function (value) {
+                return typeof value === 'string'
+                ? parseFloat(value.replace(/[^\d.-]/g, ''), 10)
+                : typeof value === 'number' ? value : 0;
+            }
 
+            const totalOT = api.column(6).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const totalNDOT = api.column(7).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const totalHoliday = api.column(8).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const totalRegND = api.column(9).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const totalBasic = api.column(10).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const totalAllowance = api.column(11).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const totalGross = api.column(13).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
 
-            /*** totalUT = api
-                .column(5)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0); ***/
-
-            totalOT = api
-                .column(6)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            totalNDOT = api
-                .column(7)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            totalHoliday = api
-                .column(8)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            totalBasic = api
-                .column(9)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            totalAllowance = api
-                .column(10)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            totalGross = api
-                .column(12)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            totalSSS = api
-                .column(13)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            totalSSS_PROV = api
-                .column(14)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            totalPH = api
-                .column(15)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            totalHDMF = api
-                .column(16)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            totalTAX = api
-                .column(17)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            totalLoans = api
-                .column(18)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-            
-            totalCharges = api
-                .column(19)
+            const totalCharges = api
+                .column(20)
                 .data()
                 .reduce(function (a, b) {
                     const tempDeduction = b.sss_hdmf_loan_deduction;
-                    var totalChargeDeduction = 0;
+                    let totalChargeDeduction = 0;
 
                     if (typeof tempDeduction !== "undefined" && tempDeduction) {
                         const deductions = tempDeduction.split(",");
@@ -1572,27 +1489,17 @@ let dtPayrollSheet = _tblPayrollSheet
                     return intVal(a) + intVal(totalChargeDeduction);
                 }, 0);
 
-            totalSSSLoans = api
-                .column(20)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            totalHDMFLoans = api
-                .column(21)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
-            totalNetpay = api
-                .column(22)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
-
+            const totalSSSLoans = api.column(21).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const totalHDMFLoans = api.column(22).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const totalNetpay = api.column(23).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            
+            let totalSSS = api.column(14).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let totalSSS_PROV = api.column(15).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let totalPH = api.column(16).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let totalHDMF = api.column(17).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let totalTAX = api.column(18).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let totalLoans = api.column(19).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            
             totalSSS = _globalFooterAdjustments.sss;
             totalSSS_PROV = _globalFooterAdjustments.sss_prov;
             totalPH = _globalFooterAdjustments.phic;
@@ -1620,25 +1527,27 @@ let dtPayrollSheet = _tblPayrollSheet
                 net: numberFormat(totalNetpay),
             }
 
-            globalGrandTotal = Object.assign({}, _tempFooterData);
+            globalGrandTotal = { ..._tempFooterData }
 
             /*** $(api.column(6).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalUT) + "</span>"); ***/
             $(api.column(6).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalOT) + "</span>");
             $(api.column(7).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalNDOT) + "</span>");
             $(api.column(8).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalHoliday) + "</span>");
-            $(api.column(9).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalBasic) + "</span>");
-            $(api.column(10).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalAllowance) + "</span>");
-            $(api.column(12).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalGross) + "</span>");
-            $(api.column(13).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalSSS) + "</span>");
-            $(api.column(14).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalSSS_PROV) + "</span>");
-            $(api.column(15).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalPH) + "</span>");
-            $(api.column(16).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalHDMF) + "</span>");
-            $(api.column(17).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalTAX) + "</span>");
-            $(api.column(18).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalLoans) + "</span>");
-            $(api.column(19).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalCharges) + "</span>");
-            $(api.column(20).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalSSSLoans) + "</span>");
-            $(api.column(21).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalHDMFLoans) + "</span>");
-            $(api.column(22).footer()).html("<span class='m--font-boldest'>&#8369;&nbsp;&nbsp;" + numberFormat(totalNetpay) + "</span>");
+            $(api.column(9).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalRegND) + "</span>");
+
+            $(api.column(10).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalBasic) + "</span>");
+            $(api.column(11).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalAllowance) + "</span>");
+            $(api.column(13).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalGross) + "</span>");
+            $(api.column(14).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalSSS) + "</span>");
+            $(api.column(15).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalSSS_PROV) + "</span>");
+            $(api.column(16).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalPH) + "</span>");
+            $(api.column(17).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalHDMF) + "</span>");
+            $(api.column(18).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalTAX) + "</span>");
+            $(api.column(19).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalLoans) + "</span>");
+            $(api.column(20).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalCharges) + "</span>");
+            $(api.column(21).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalSSSLoans) + "</span>");
+            $(api.column(22).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalHDMFLoans) + "</span>");
+            $(api.column(23).footer()).html("<span class='m--font-boldest'>&#8369;&nbsp;&nbsp;" + numberFormat(totalNetpay) + "</span>");
         }
     });
 
