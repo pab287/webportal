@@ -505,10 +505,6 @@ const tempContributionTable = function(columns = [], fieldCount = 0, dtInstance)
     });
 }
 
-const tempSiteLocationTable = function(columns = [], dtInstance){
-    
-}
-
 let dtPayrollSheet = _tblPayrollSheet
     .DataTable({
         dom: 'rtlp',
@@ -555,7 +551,7 @@ let dtPayrollSheet = _tblPayrollSheet
                     columns: exportOptions.columns,
                 },
                 customize: function (win) {
-                    var css = `@page { size: landscape; margin: 0.5cm; } 
+                    const css = `@page { size: landscape; margin: 0.5cm; } 
                         .dt-print-view table { font-size: 12px; } 
                         .dt-print-view table.dataTable tfoot tr:first-child th{ border-top: 1px solid #000000; }
                         .dt-print-view table.dataTable tfoot tr:first-child th{ border-bottom: 4px double #000000; }`,
@@ -576,24 +572,24 @@ let dtPayrollSheet = _tblPayrollSheet
                     head.appendChild(style);
                     win.document.title = "Payroll Sheet Printable Page";
 
-                    var tempTable = win.document.getElementsByClassName('dataTable')[0];
+                    const tempTable = win.document.getElementsByClassName('dataTable')[0];
 
                     $(tempTable).removeClass("table-bordered");
-                    var tempHeader = dtPayrollSheet.table().header();
+                    const tempHeader = dtPayrollSheet.table().header();
                     $(tempHeader).find("tr:first-child th:last-child").remove();
                     $(tempTable).find("thead").empty().append(tempHeader.innerHTML);
                     $(tempTable).find("thead tr:first-child > th:first-child").empty().text("#");
-                    var tempTHead = $(tempTable).find("thead th:not(:first-child)");
+                    const tempTHead = $(tempTable).find("thead th:not(:first-child)");
                     tempTHead
                         .removeClass("text-right")
                         .addClass("text-center");
 
                     $(tempTable).find("tfoot th:first-child").addClass("m--font-boldest");
-                    var tempTableTfoot = win.document.getElementsByTagName('tfoot')[0];
+                    const tempTableTfoot = win.document.getElementsByTagName('tfoot')[0];
                     tempTableTfoot.innerHTML = _globalFooterHtml;
                     $(tempTableTfoot).find("tr th:first-child").removeClass("text-center");
 
-                    var tempTable2 = win.document.getElementsByClassName('dataTable')[0];
+                    const tempTable2 = win.document.getElementsByClassName('dataTable')[0];
                     $(tempTable2).find("thead th.last-child").remove();
 
                     let signatoryCells = ``;
@@ -788,8 +784,7 @@ let dtPayrollSheet = _tblPayrollSheet
                     }
                     return `<i class="fa fa-check m--font-primary"></i>`;
                 }
-            },
-            {
+            }, {
                 data: 'id',
                 width: "3%",
                 orderable: false,
@@ -798,90 +793,69 @@ let dtPayrollSheet = _tblPayrollSheet
                 render: function (data, type, row, meta) {
                     return meta.row + meta.settings._iDisplayStart + 1;
                 }
-            },
-            {
+            }, {
                 data: "lastname",
                 render: function (data, type, row) {
                     const mi = row.middlename.toLowerCase() !== "n/a" && row.middlename !== "" && row.middlename.toLowerCase() !== "none" ? row.middlename.substring(0, 1) + ". " : "";
                     const suffix = row.suffix.toLowerCase() !== "n/a" && row.suffix !== "" && row.suffix.toLowerCase() !== "none" ? row.suffix : "";
-                    // const complete_name = data + ", " + row.firstname + " " + suffix + " " + mi;
                     let complete_name = data + ", " + row.firstname + " " + suffix + " " + mi;
                     let position = row.position.toUpperCase();
 
                     complete_name = complete_name.toUpperCase();
                     return `<span class="m--font-bolder">${complete_name}</span><br><small>` + position + `</small>`;
-                    // return `<span class="m--font-bolder">${complete_name}</span><br><small>` + row.position + `</small>`;
                 }
-            },
-            {
+            }, {
                 data: "rate", // rate
                 width: "5%",
                 className: "text-right",
                 render: function (data) {
                     return numberFormat(data);
                 }
-            },
-            {
+            }, {
                 data: "allowance_rate", // allowance rate
                 width: "5%",
                 className: "text-right",
                 render: function (data) {
                     return numberFormat(data);
                 }
-            },
-            {
+            }, {
                 data: "no_of_days",
                 className: "text-center",
                 render: function (data) {
                     return numberFormat(data);
                 }
-            },
-            /*** {
-                data: "total_minutes_worked",
-                className: "text-right",
-                render: function (data) {
-                    data = data / 60;
-                    return formatNumber(data);
-                }
-            }, ****/
-            /*** data: "total_undertime_amount", // undertime, // unrendered 
-            {
-                data: "total_unrendered_amount", 
-                className: "text-right",
-                render: function (data) {
-                    return numberFormat(data);
-                }
-            }, ***/
-            {
+            }, {
                 data: "ot_amount", // OT
                 className: "text-right",
                 render: function (data, type, row) {
                     return numberFormat(data);
                 }
-            },
-            {
+            }, {
                 data: "ot_ndiff_amount", // n_diff
                 className: "text-right",
                 render: function (data, type, row) {
                     return numberFormat(data);
                 }
-            },
-            {
+            }, {
                 data: "total_holiday_amount", // holidays
                 className: "text-right",
                 render: function (data) {
                     return numberFormat(data);
                 }
-            },
-            {
+            }, {
+                data: "total_ndiff_amount", // regular night diff
+                className: "text-right",
+                render: function (data) {
+                    return numberFormat(data);
+                }
+            }, {
                 data: "basic_rate",
                 width: "5%",
                 className: "text-right",
                 render: function (data) {
                     return numberFormat(data);
                 }
-            },
-            {
+            }, {
                 data: "total_allowances", // allowances
                 width: "5%",
                 className: "text-right",
@@ -896,13 +870,10 @@ let dtPayrollSheet = _tblPayrollSheet
                             const temp_adjustment = row.split("||");
                             const adj_type = parseInt(temp_adjustment[2]);
                             const temp_status = parseInt(temp_adjustment[3]);
-                            let temp_amount = parseFloat(data);
-                            if (adj_type == 1) {
-                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
-                            } else {
-                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
-                            }
-                            temp_amount = numberFormat(temp_amount);
+                            let allowanceAmount = parseFloat(data);
+                            if (adj_type === 1) { allowanceAmount += parseFloat(temp_adjustment[1]); } 
+                            else { allowanceAmount -= parseFloat(temp_adjustment[1]); }
+                            const formattedAllowanceAmount = numberFormat(allowanceAmount);
 
                             if (temp_adjustment[0] == "ALLOWANCE" && temp_status === 0) {
                                 template = `<div class="mb-0 m--font-bolder m--font-accent">
@@ -912,7 +883,7 @@ let dtPayrollSheet = _tblPayrollSheet
                             }
                             if (temp_adjustment[0] == "ALLOWANCE" && temp_status === 1) {
                                 template = `<div class="mb-0 m--font-bolder m--font-primary">
-                                    <span class="m--font-boldest">${temp_amount}</span>
+                                    <span class="m--font-boldest">${formattedAllowanceAmount}</span>
                                 </div>`;
                             }
                         });
@@ -920,8 +891,7 @@ let dtPayrollSheet = _tblPayrollSheet
 
                     return template;
                 }
-            },
-            {
+            }, {
                 data: "custom_adjustments", // adjustment
                 width: "6%",
                 orderable: false,
@@ -945,16 +915,14 @@ let dtPayrollSheet = _tblPayrollSheet
 
                     return template;
                 }
-            },
-            {
+            }, {
                 data: "gross_pay", // gross pay
                 width: "5%",
                 className: "text-right",
                 render: function (data) {
                     return numberFormat(data);
                 }
-            },
-            {
+            }, {
                 data: "sss", // sss
                 className: "text-right",
                 render: function (data, type, row) {
@@ -964,20 +932,17 @@ let dtPayrollSheet = _tblPayrollSheet
                     template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
                     if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
-                        var tempAdj = 0;
+                        let tempAdj = 0;
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
                             const adj_type = parseInt(temp_adjustment[2]);
                             const temp_status = parseInt(temp_adjustment[3]);
-                            let temp_amount = parseFloat(data);
-                            if (adj_type == 1) {
-                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
-                            } else {
-                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
-                            }
-                            tempAdj = temp_amount;
-                            temp_amount = numberFormat(temp_amount);
+                            let adjustedAmount = parseFloat(data);
+                            if (adj_type === 1) { adjustedAmount += parseFloat(temp_adjustment[1]); } 
+                            else { adjustedAmount -= parseFloat(temp_adjustment[1]); }
+                            tempAdj = adjustedAmount;
+                            const formattedAdjustedAmount = numberFormat(adjustedAmount);
                             if (temp_adjustment[0] == "SSS" && temp_status === 0) {
                                 template = `<div class="mb-0 m--font-bolder m--font-accent">
                                     <span class='fa fa-exclamation-circle'></span>
@@ -987,23 +952,23 @@ let dtPayrollSheet = _tblPayrollSheet
                             if (temp_adjustment[0] == "SSS" && temp_status === 1) {
                                 approvedAmount = tempAdj;
                                 template = `<div class="mb-0 m--font-bolder m--font-primary">
-                                    <span class="m--font-boldest">${temp_amount}</span>
+                                    <span class="m--font-boldest">${formattedAdjustedAmount}</span>
                                 </div>`;
 
                             }
                         });
                     }
                     if ($.inArray(parseInt(row.id), _dtRowSSS) == -1) {
-                        if (typeof _globalFooterAdjustments.sss !== undefined) {
+                        if (typeof _globalFooterAdjustments.sss !== "undefined" && _globalFooterAdjustments.sss !== null) {
                             approvedAmount = parseFloat(_globalFooterAdjustments.sss) + approvedAmount;
                         }
-                        _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { sss: approvedAmount });
+                        _globalFooterAdjustments = { ...{ sss: approvedAmount }};
+                        //_globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { sss: approvedAmount });
                         _dtRowSSS.push(parseInt(row.id));
                     }
                     return template;
                 }
-            },
-            {
+            }, {
                 data: "sss_prov", // sss
                 className: "text-right",
                 render: function (data, type, row) {
@@ -1013,20 +978,17 @@ let dtPayrollSheet = _tblPayrollSheet
                     template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
                     if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
-                        var tempAdj = 0;
+                        let tempAdj = 0;
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
                             const adj_type = parseInt(temp_adjustment[2]);
                             const temp_status = parseInt(temp_adjustment[3]);
-                            let temp_amount = parseFloat(data);
-                            if (adj_type == 1) {
-                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
-                            } else {
-                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
-                            }
-                            tempAdj = temp_amount;
-                            temp_amount = numberFormat(temp_amount);
+                            let adjustedAmount = parseFloat(data);
+                            if (adj_type === 1) { adjustedAmount += parseFloat(temp_adjustment[1]); } 
+                            else { adjustedAmount -= parseFloat(temp_adjustment[1]); }
+                            tempAdj = adjustedAmount;
+                            const formattedAdjustedAmount = numberFormat(adjustedAmount);
                             if (temp_adjustment[0] == "SSS_PROV" && temp_status === 0) {
                                 template = `<div class="mb-0 m--font-bolder m--font-accent">
                                     <span class='fa fa-exclamation-circle'></span>
@@ -1036,23 +998,23 @@ let dtPayrollSheet = _tblPayrollSheet
                             if (temp_adjustment[0] == "SSS_PROV" && temp_status === 1) {
                                 approvedAmount = tempAdj;
                                 template = `<div class="mb-0 m--font-bolder m--font-primary">
-                                    <span class="m--font-boldest">${temp_amount}</span>
+                                    <span class="m--font-boldest">${formattedAdjustedAmount}</span>
                                 </div>`;
 
                             }
                         });
                     }
                     if ($.inArray(parseInt(row.id), _dtRowSSS_PROV) == -1) {
-                        if (typeof _globalFooterAdjustments.sss_prov !== undefined) {
+                        if (typeof _globalFooterAdjustments.sss_prov !== "undefined" && _globalFooterAdjustments.sss_prov !== null) {
                             approvedAmount = parseFloat(_globalFooterAdjustments.sss_prov) + approvedAmount;
                         }
-                        _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { sss_prov: approvedAmount });
+                        _globalFooterAdjustments = { ...{ sss_prov: approvedAmount }};
+                        //_globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { sss_prov: approvedAmount });
                         _dtRowSSS_PROV.push(parseInt(row.id));
                     }
                     return template;
                 }
-            },
-            {
+            }, {
                 data: "ph", // phic
                 className: "text-right",
                 render: function (data, type, row) {
@@ -1062,21 +1024,17 @@ let dtPayrollSheet = _tblPayrollSheet
                     template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
                     if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
-                        var tempAdj = 0;
+                        let tempAdj = 0;
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
                             const adj_type = parseInt(temp_adjustment[2]);
                             const temp_status = parseInt(temp_adjustment[3]);
-                            let temp_amount = parseFloat(data);
-                            if (adj_type == 1) {
-                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
-                            } else {
-                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
-                            }
-                            tempAdj = temp_amount;
-                            temp_amount = numberFormat(temp_amount);
-
+                            let adjustedAmount = parseFloat(data);
+                            if (adj_type === 1) { adjustedAmount += parseFloat(temp_adjustment[1]); } 
+                            else { adjustedAmount -= parseFloat(temp_adjustment[1]); }
+                            tempAdj = adjustedAmount;
+                            const formattedAdjustedAmount = numberFormat(adjustedAmount);
                             if (temp_adjustment[0] == "PHIC" && temp_status === 0) {
                                 template = `<div class="mb-0 m--font-bolder m--font-accent">
                                     <span class='fa fa-exclamation-circle'></span>
@@ -1086,22 +1044,22 @@ let dtPayrollSheet = _tblPayrollSheet
                             if (temp_adjustment[0] == "PHIC" && temp_status === 1) {
                                 approvedAmount = tempAdj;
                                 template = `<div class="mb-0 m--font-bolder m--font-primary">
-                                    <span class="m--font-boldest">${temp_amount}</span>
+                                    <span class="m--font-boldest">${formattedAdjustedAmount}</span>
                                 </div>`;
                             }
                         });
                     }
                     if ($.inArray(parseInt(row.id), _dtRowPHIC) == -1) {
-                        if (typeof _globalFooterAdjustments.phic !== undefined) {
+                        if (typeof _globalFooterAdjustments.phic !== "undefined" && _globalFooterAdjustments.phic !== null) {
                             approvedAmount = parseFloat(_globalFooterAdjustments.phic) + approvedAmount;
                         }
-                        _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { phic: approvedAmount });
+                        _globalFooterAdjustments = { ...{ phic: approvedAmount }};
+                        //_globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { phic: approvedAmount });
                         _dtRowPHIC.push(parseInt(row.id));
                     }
                     return template;
                 }
-            },
-            {
+            }, {
                 data: "hdmf", // hdmf
                 className: "text-right",
                 render: function (data, type, row) {
@@ -1111,20 +1069,17 @@ let dtPayrollSheet = _tblPayrollSheet
                     template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
                     if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
-                        var tempAdj = 0;
+                        let tempAdj = 0;
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
                             const adj_type = parseInt(temp_adjustment[2]);
                             const temp_status = parseInt(temp_adjustment[3]);
-                            let temp_amount = parseFloat(data);
-                            if (adj_type == 1) {
-                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
-                            } else {
-                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
-                            }
-                            tempAdj = temp_amount;
-                            temp_amount = numberFormat(temp_amount);
+                            let adjustedAmount = parseFloat(data);
+                            if (adj_type === 1) { adjustedAmount += parseFloat(temp_adjustment[1]); } 
+                            else { adjustedAmount -= parseFloat(temp_adjustment[1]); }
+                            tempAdj = adjustedAmount;
+                            const formattedAdjustedAmount = numberFormat(adjustedAmount);
 
                             if (temp_adjustment[0] == "HDMF" && temp_status === 0) {
                                 template = `<div class="mb-0 m--font-bolder m--font-accent">
@@ -1135,22 +1090,22 @@ let dtPayrollSheet = _tblPayrollSheet
                             if (temp_adjustment[0] == "HDMF" && temp_status === 1) {
                                 approvedAmount = tempAdj;
                                 template = `<div class="mb-0 m--font-bolder m--font-primary">
-                                    <span class="m--font-boldest">${temp_amount}</span>
+                                    <span class="m--font-boldest">${formattedAdjustedAmount}</span>
                                 </div>`;
                             }
                         });
                     }
                     if ($.inArray(parseInt(row.id), _dtRowHDMF) == -1) {
-                        if (typeof _globalFooterAdjustments.hdmf !== undefined) {
+                        if (typeof _globalFooterAdjustments.hdmf !== "undefined" && _globalFooterAdjustments.hdmf !== null) {
                             approvedAmount = parseFloat(_globalFooterAdjustments.hdmf) + approvedAmount;
                         }
-                        _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { hdmf: approvedAmount });
+                        _globalFooterAdjustments = { ...{ hdmf: approvedAmount }};
+                        // _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { hdmf: approvedAmount });
                         _dtRowHDMF.push(parseInt(row.id));
                     }
                     return template;
                 }
-            },
-            {
+            }, {
                 data: "tax", // tax
                 className: "text-right",
                 render: function (data, type, row) {
@@ -1160,20 +1115,17 @@ let dtPayrollSheet = _tblPayrollSheet
                     template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
                     if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
-                        var tempAdj = 0;
+                        let tempAdj = 0;
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
                             const adj_type = parseInt(temp_adjustment[2]);
                             const temp_status = parseInt(temp_adjustment[3]);
-                            let temp_amount = parseFloat(data);
-                            if (adj_type == 1) {
-                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
-                            } else {
-                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
-                            }
-                            tempAdj = temp_amount;
-                            temp_amount = numberFormat(temp_amount);
+                            let adjustedAmount = parseFloat(data);
+                            if (adj_type === 1) { adjustedAmount += parseFloat(temp_adjustment[1]); } 
+                            else { adjustedAmount -= parseFloat(temp_adjustment[1]); }
+                            tempAdj = adjustedAmount;
+                            const formattedAdjustedAmount = numberFormat(adjustedAmount);
 
                             if (temp_adjustment[0] == "TAX" && temp_status === 0) {
                                 template = `<div class="mb-0 m--font-bolder m--font-accent">
@@ -1184,22 +1136,22 @@ let dtPayrollSheet = _tblPayrollSheet
                             if (temp_adjustment[0] == "TAX" && temp_status === 1) {
                                 approvedAmount = tempAdj;
                                 template = `<div class="mb-0 m--font-bolder m--font-primary">
-                                    <span class="m--font-boldest">${temp_amount}</span>
+                                    <span class="m--font-boldest">${formattedAdjustedAmount}</span>
                                 </div>`;
                             }
                         });
                     }
                     if ($.inArray(parseInt(row.id), _dtRowTAX) == -1) {
-                        if (typeof _globalFooterAdjustments.tax !== undefined) {
+                        if (typeof _globalFooterAdjustments.tax !== "undefined" && _globalFooterAdjustments.tax !== null) {
                             approvedAmount = parseFloat(_globalFooterAdjustments.tax) + approvedAmount;
                         }
-                        _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { tax: approvedAmount });
+                        _globalFooterAdjustments = { ...{ tax: approvedAmount }};
+                        // _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { tax: approvedAmount });
                         _dtRowTAX.push(parseInt(row.id));
                     }
                     return template;
                 }
-            },
-            {
+            }, {
                 data: "total_loans", // loans
                 className: "text-right",
                 render: function (data, _type, row) {
@@ -1268,19 +1220,19 @@ let dtPayrollSheet = _tblPayrollSheet
                     // deducted charges to total loans
 
                     if ($.inArray(parseInt(row.id), _dtRowLOAN) == -1) {
-                        if (typeof _globalFooterAdjustments.total_loans !== "undefined") {
+                        if (typeof _globalFooterAdjustments.total_loans !== "undefined" && _globalFooterAdjustments.total_loans !== null) {
                             approvedAmount = parseFloat(_globalFooterAdjustments.total_loans) + approvedAmount;
                         }
-                        _globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { total_loans: approvedAmount });
+                        _globalFooterAdjustments = { ...{ total_loans: approvedAmount }};
+                        //_globalFooterAdjustments = Object.assign({}, _globalFooterAdjustments, { total_loans: approvedAmount });
                         _dtRowLOAN.push(parseInt(row.id));
                     }
 
-                    return $.isNumeric(template) === true ? numberFormat(template): template;
+                    const _template = template === "" || template === null || template === " " ? 0.00 : template;
+                    return $.isNumeric(_template) === true ? numberFormat(_template): _template;
                 }
-            },
-            // charges
-            { 
-                data: null, 
+            }, { 
+                data: null, // charges
                 width: '5%',
                 orderable: false,
                 className: 'text-right',
@@ -1297,7 +1249,6 @@ let dtPayrollSheet = _tblPayrollSheet
                             const _adj_details = custom_deduction[0];
 
                             if ((adj_type === 0 && _adj_details.toLowerCase() == 'chrge') || (adj_type === 0 && _adj_details.toLowerCase() == 'ud')) {
-                                const deductionDetails = custom_deduction[0].toUpperCase();
                                 template += `<div class="mb-0 m--regular-font-size-sm1 m--font-bolder ${marginClass}">
                                     <span class="m--font-boldest">${numberFormat(custom_deduction[1])}</span>
                                 </div>`;
@@ -1307,12 +1258,9 @@ let dtPayrollSheet = _tblPayrollSheet
                     }
 
                     return numberFormat(charge);
-                    // return charge == 0 ? numberFormat(0) : template;
                 }
-            },
-            // charges
-            {
-                data: "sss_loan",
+            }, {
+                data: "sss_loan", // charges
                 width: "5%",
                 orderable: false,
                 className: "text-right",
@@ -1333,19 +1281,14 @@ let dtPayrollSheet = _tblPayrollSheet
                                     <span> - </span>
                                     <span class="m--font-boldest">${numberFormat(custom_deduction[1])}</span>
                                 </div>`;
-                                // template += `<div class="mb-0 m--regular-font-size-sm1 m--font-bolder ${marginClass}"> --> commented out to backup for adding toUpperCase
-                                //     <span>${custom_deduction[0]}</span>
-                                //     <span> - </span>
-                                //     <span class="m--font-boldest">${numberFormat(custom_deduction[1])}</span>
-                                // </div>`;
                             }
                         });
                     }
 
-                    return template ? template : numberFormat(data);
+                    const _template = template === "" || template === null || template === " " ? 0.00 : template;
+                    return $.isNumeric(_template) === true ? numberFormat(_template): _template;
                 }
-            },
-            {
+            }, {
                 data: "hdmf_loan",
                 width: "5%",
                 orderable: false,
@@ -1354,7 +1297,6 @@ let dtPayrollSheet = _tblPayrollSheet
                     let template = ``;
                     const tempDeduction = row.sss_hdmf_loan_deduction;
                     if (typeof tempDeduction !== "undefined" && tempDeduction) {
-                        var tempAdj = 0;
                         const deductions = tempDeduction.split(",");
                         deductions.forEach((row, i) => {
                             const custom_deduction = row.split("||");
@@ -1368,16 +1310,12 @@ let dtPayrollSheet = _tblPayrollSheet
                                     <span> - </span>
                                     <span class="m--font-boldest">${numberFormat(custom_deduction[1])}</span>
                                 </div>`;
-                                // template += `<div class="mb-0 m--regular-font-size-sm1 m--font-bolder ${marginClass}">
-                                //     <span>${custom_deduction[0]}</span>
-                                //     <span> - </span>
-                                //     <span class="m--font-boldest">${numberFormat(custom_deduction[1])}</span>
-                                // </div>`;
                             }
                         });
                     }
 
-                    return template ? template : numberFormat(data);
+                    const _template = template === "" || template === null || template === " " ? 0.00 : template;
+                    return $.isNumeric(_template) === true ? numberFormat(_template): _template;
                 }
             },
             {

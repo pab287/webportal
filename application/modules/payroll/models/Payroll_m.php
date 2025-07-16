@@ -1114,6 +1114,11 @@ class Payroll_m extends CI_Model
                         }
                     }
                 }
+                
+                /** night diff switch here **/
+                $allowRegularNightDiff = false;
+                /** night diff switch here **/
+
                 /* CALCULATION */
                 $total_actual_minutes = 0;
                 $total_actual_hours = 0;
@@ -1152,6 +1157,9 @@ class Payroll_m extends CI_Model
                 $ot_ndiff_minutes = 0;
                 $ot_ndiff_amount = 0;
 
+                $total_ndiff_minutes = 0;
+                $total_ndiff_amount = 0;
+
                 $holiday_minutes = 0;
                 $holiday = 0;
 
@@ -1188,6 +1196,9 @@ class Payroll_m extends CI_Model
                         $ts->total_ut_minutes = 0;
                         $ts->total_accredited_ot_hrs_amount = 0;
                         $ts->total_accredited_ndiff_ot_hrs_amount = 0;
+
+                        $ts->regular_ndiff_minutes = 0;
+                        $ts->regular_ndiff_amount = 0;
     
                         $ts->holiday_minutely = 0;
                         $ts->holiday_amount = 0;
@@ -1195,10 +1206,8 @@ class Payroll_m extends CI_Model
                         $ts->holiday_gross_amount = 0;
     
                         $ts->schedule = null;
-                        if(in_array($ts->date, $tempDates)){
-                            if(!in_array($ts->date, $tempExistingDates)){
-                                $tempExistingDates[] = $ts->date;
-                            }
+                        if(in_array($ts->date, $tempDates) && !in_array($ts->date, $tempExistingDates)){
+                            $tempExistingDates[] = $ts->date;
                         }
     
                         if (isset($schedules_obj[$ts->weekday])) {
@@ -1208,7 +1217,7 @@ class Payroll_m extends CI_Model
                             $md5Date = md5($ts->date);
                             if(isset($tempAlteredDates->$md5Date) && $tempAlteredDates->$md5Date){
                                 $propShift = $_schedule->props;
-                                if($tempAlteredDates->$md5Date->altered_shift == true){
+                                if($tempAlteredDates->$md5Date->altered_shift === true){
                                     $alteredShift = $tempAlteredDates->$md5Date->shift_schedule;
                                     foreach ($propShift as $kkx => $vvx) {
                                         $_temp_current_schedule->$vvx = $_schedule->$vvx;
@@ -1282,10 +1291,13 @@ class Payroll_m extends CI_Model
                                 $ts = (object)array_merge((array)$ts, (array)$tempOvertime);
                             }
                             // END OVERTIME CALCULATION HERE
+                            // START REGULAR NIGHTDIFF CALCULATION
                             $tempRegularNdiff = $this->getRegularNightDiffAmountDaily($ts, $tempPayrateSettings);
                             if($tempRegularNdiff && count(get_object_vars($tempRegularNdiff)) > 0){
-                                $ts = (object)array_merge((array)$ts, (array)$tempRegularNdiff);
+                                $ts = (object) array_merge((array) $ts, (array) $tempRegularNdiff);
+                               
                             }
+                            // END REGULAR NIGHTDIFF CALCULATION
 
                             if(intval($ts->is_holiday) !== 0){
                                 $tempHolidayTimesheet = $this->getHolidayAmountDaily($ts);
@@ -1330,11 +1342,12 @@ class Payroll_m extends CI_Model
                                 $ts = (object)array_merge((array)$ts, (array)$tempOvertime);
                             }
                             // END OVERTIME CALCULATION HERE
+                            // START REGULAR NIGHTDIFF CALCULATION
                             $tempRegularNdiff = $this->getRegularNightDiffAmountDaily($ts, $tempPayrateSettings);
                             if($tempRegularNdiff && count(get_object_vars($tempRegularNdiff)) > 0){
-                                $ts = (object)array_merge((array)$ts, (array)$tempRegularNdiff);
+                                $ts = (object) array_merge((array) $ts, (array) $tempRegularNdiff);
                             }
-
+                            // END REGULAR NIGHTDIFF CALCULATION
                             if(intval($ts->is_holiday) !== 0){
                                 $tempHolidayTimesheet = $this->getHolidayAmountDaily($ts);
                                 if($tempHolidayTimesheet && count(get_object_vars($tempHolidayTimesheet)) > 0){
@@ -1350,24 +1363,10 @@ class Payroll_m extends CI_Model
                         }
     
                         $total_minutes += $ts->total_time_rendered;
-    
-                        /*** custom atemp display ***/
-                        $tempTs->per_minute = $ts->minutely;
-                        $tempTs->per_hour = $ts->minutely_amount;
-                        $tempTs->date = $ts->date;
-                        $tempTs->weekday = $ts->weekday;
-                        $tempTs->am_time_rendered = $ts->am_time_rendered;
-                        $tempTs->pm_time_rendered = $ts->pm_time_rendered;
-                        $tempTs->total_time_rendered = $ts->total_time_rendered;
-    
-                        $total_actual_minutes += $tempTs->actual_minutes;
-                        $total_actual_hours += $tempTs->actual_hours;
-                        $total_actual_hours_decimal += floatval($tempTs->actual_hours_decimal);
-                        
+        
                         $tempOT->id = $ts->id;
                         $tempOT->date = $ts->date;
                         $tempOT->weekday = $ts->weekday;
-
                         $tempOT->shift_record = array();
                         $tempOT->shift_record["custom_shift_id"] = $ts->custom_shift_id;
                         $tempOT->shift_record["has_shift"] = $ts->has_shift;
@@ -1380,12 +1379,6 @@ class Payroll_m extends CI_Model
                         $tempOT->total_accredited_ot_hrs_amount = $ts->total_accredited_ot_hrs_amount;
                         $tempOT->total_accredited_ndiff_ot_hrs_amount = $ts->total_accredited_ndiff_ot_hrs_amount;
                         $otTemp[$ts->id] = $tempOT;
-
-                        /*** $atemp->time_sheet[] = $tempTs;
-                        $atemp->total_minutes = $total_minutes;
-                        $atemp->total_actual_minutes = $total_actual_minutes;
-                        $atemp->total_actual_hours = $total_actual_hours; ***/
-                        /*** custom atemp display ***/
     
                         $timesheet[$index] = $ts;
                     }
@@ -1396,37 +1389,26 @@ class Payroll_m extends CI_Model
                     $timesheetRenderedDates = explode(",", $existingTsDates);
                     
                     $hasShiftDates = array();
-                    if(is_array($tempShiftRecords) && count($tempShiftRecords) > 0){
+                    if(is_array($tempShiftRecords) && !empty($tempShiftRecords)){
                         foreach ($tempShiftRecords as $shiftDate) {
-                            if(is_array($timesheetRenderedDates) && count($timesheetRenderedDates) > 0){
-                                if(!in_array($shiftDate, $timesheetRenderedDates)){
-                                    $hasShiftDates[] = $shiftDate;
-                                }
+                            if(is_array($timesheetRenderedDates) && !empty($timesheetRenderedDates) && !in_array($shiftDate, $timesheetRenderedDates)){
+                                $hasShiftDates[] = $shiftDate;
                             }
                         }
                     }
-    
-                    /*** $atemp->total_actual_hours_decimal = $total_actual_hours_decimal;
-                    $atemp->total_basic_pay = $atemp->per_hour * $atemp->total_actual_hours_decimal; ***/
                     
-                    if(is_array($tempExistingDates) && count($tempExistingDates) > 0){
+                    if(is_array($tempExistingDates) && !empty($tempExistingDates)){
                         foreach ($tempExistingDates as $value) {
                             $tempMd5Date = md5($value);
                             $isPaidHolidayDate = isset($tempIsPaidHoliday[$tempMd5Date]) ? $tempIsPaidHoliday[$tempMd5Date]: false;
     
                             $holidayResponse = (object) $this->ts_model->getCurrentDateIsHoliday($value);
-                            if(isset($holidayResponse->is_holiday) && $holidayResponse->is_holiday){
-                                if(isset($holidayResponse->classification) && strtolower($holidayResponse->classification) == "regular holiday"){
-                                    if(strtolower($employee->payroll_type) !== "monthly" && $isPaidHolidayDate){
-                                        $employee->deduct_allowance_days += 1;
-                                    }
-                                }
+                            if ($holidayResponse->is_holiday && $holidayResponse->classification === 'Regular Holiday' && ($employee->payroll_type !== 'Monthly' && $isPaidHolidayDate)) {
+                                $employee->deduct_allowance_days++;
                             }
     
                             $index = array_search($value, $tempDates);
-                            if($index !== false){
-                                unset($tempDates[$index]);
-                            }
+                            if($index !== false){ unset($tempDates[$index]); }
                         }
                     }
                     
@@ -1517,6 +1499,14 @@ class Payroll_m extends CI_Model
                     $ot_ndiff_amount = array_reduce($timesheet, function ($carry, $item) {
                         return $carry + $item->total_accredited_ndiff_ot_hrs_amount;
                     }, 0);
+
+                    $total_ndiff_minutes = array_reduce($timesheet, function ($carry, $item) {
+                        return $carry + $item->regular_ndiff_minutes;
+                    }, 0);
+
+                    $total_ndiff_amount = array_reduce($timesheet, function ($carry, $item) {
+                        return $carry + $item->regular_ndiff_amount;
+                    }, 0);
                     
                 } // end of is monthly paid FALSE
 
@@ -1600,7 +1590,8 @@ class Payroll_m extends CI_Model
                 $tempBasicRate = floatval($basic_rate);
                 $tempAllowance = floatval($temp_total_allowance);
                 $tempOtndiff = floatval($ot_amount) + floatval($ot_ndiff_amount);
-                $earnings = $tempBasicRate + $tempAllowance + $tempOtndiff;
+                $totalNightDifferential = floatval($total_ndiff_amount);
+                $earnings = $tempBasicRate + $tempAllowance + $tempOtndiff + $totalNightDifferential;
 
                 $employee->earnings = $earnings;
                 $gross_pay = $earnings;
@@ -1671,7 +1662,7 @@ class Payroll_m extends CI_Model
                     "contribution_basis" => $sss_contribution_basis,
                 ), $company->sss_class);
 
-                if($alteredTaxableIncome == false){
+                if($alteredTaxableIncome === false){
                     $parameters = array(
                         "switch"=>$remittance_parameters->tax->status,
                         "gross_pay"=> $gross_pay,
@@ -1749,14 +1740,6 @@ class Payroll_m extends CI_Model
                 
 
                 $tempSSSContribution = 0;
-                /*** $providentEE = isset($employee->sss->provident->ee) && $employee->sss->provident->ee ?
-                    $employee->sss->provident->ee: 0;
-                $providentER = isset($employee->sss->provident->ee) && $employee->sss->provident->ee ?
-                    $employee->sss->provident->er: 0;
-
-                $tempSSSContribution = $employee->sss->ee + $providentEE;
-                $employee->total_govt_remittances = ($employee->hdmf->ee + $employee->phic->ee + $tempSSSContribution + $employee->tax->ee); ***/
-
                 $providentEE = isset($remittancesRecord->sss_prov_ee) && $remittancesRecord->sss_prov_ee ?
                     $remittancesRecord->sss_prov_ee: 0;
                 $providentER = isset($remittancesRecord->sss_prov_ee) && $remittancesRecord->sss_prov_ee ?
@@ -1768,9 +1751,7 @@ class Payroll_m extends CI_Model
                 $employee->gross_pay = number_format($gross_pay, 2, '.', '');
 
                 $loans = $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
-
                 $employee->loans = $loans;
-                $tempExternalLoans = 0;
 
                 $postedPayrollSheetRecord = isset($payroll_sheet_row) && !empty($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1;
                 $employee->total_loans = $postedPayrollSheetRecord ? $payroll_sheet_row->total_loans : 0;
@@ -1778,20 +1759,20 @@ class Payroll_m extends CI_Model
                 $employee->sss_loan = $postedPayrollSheetRecord ? $payroll_sheet_row->sss_loan : 0;
                 $employee->hdmf_loan = $postedPayrollSheetRecord ? $payroll_sheet_row->hdmf_loan : 0;
 
-                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord == false){
+                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false){
                     foreach ($loans as $loan) {
                         if($loan->active == 1 && $loan->loan_type == 0){
                             /*** loan internal ***/
-                            if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0){ 
+                            if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0){
                                 $employee->total_loans += $loan->amount_due;
-                                $_gross_pay = $_gross_pay - $loan->amount_due; 
+                                $_gross_pay = $_gross_pay - $loan->amount_due;
                             }
                             /*** loan internal ***/
 
                             /*** loan interest ***/
-                            if(floatval($loan->interest_amount) > 0 && $_gross_pay >= $loan->interest_amount && intval($loan->zero_netpay) == 0){ 
+                            if(floatval($loan->interest_amount) > 0 && $_gross_pay >= $loan->interest_amount && intval($loan->zero_netpay) == 0){
                                 $employee->total_loans_interest += $loan->interest_amount;
-                                $_gross_pay = $_gross_pay - $loan->interest_amount; 
+                                $_gross_pay = $_gross_pay - $loan->interest_amount;
                             }
                             /*** loan interest ***/
                         }
@@ -1800,74 +1781,24 @@ class Payroll_m extends CI_Model
                     /*** loans external ***/
                     /*** loans sss ***/
                     foreach ($loans as $loan) {
-                        if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 1) && intval($loan->zero_netpay) == 0){
-                            if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due){ 
-                                $employee->sss_loan += $loan->amount_due;
-                                $_gross_pay = $_gross_pay - $loan->amount_due; 
-                            }
+                        if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 1) && intval($loan->zero_netpay) == 0 &&
+                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due)){
+                            $employee->sss_loan += $loan->amount_due;
+                            $_gross_pay = $_gross_pay - $loan->amount_due;
                         }
                     }
                     /*** loans sss ***/
                     /*** loans hdmf ***/
                     foreach ($loans as $loan) {
-                        if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 2) && intval($loan->zero_netpay) == 0){
-                            if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due){ 
-                                $employee->hdmf_loan += $loan->amount_due;
-                                $_gross_pay = $_gross_pay - $loan->amount_due; 
-                            }
+                        if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 2) && intval($loan->zero_netpay) == 0 &&
+                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due)){
+                            $employee->hdmf_loan += $loan->amount_due;
+                            $_gross_pay = $_gross_pay - $loan->amount_due;
                         }
                     }
                     /*** loans hdmf
                     /*** loans external ***/
                 }
-
-                /*** $tempTotalLoans = isset($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1 ?
-                (isset($payroll_sheet_row) && !empty($payroll_sheet_row) ?
-                $payroll_sheet_row->total_loans : 0) : array_reduce($loans, function ($carry, $next) {
-                    $tempLoans = $carry + (intval($next->active) !== 1 ? 0 : ((intval($next->loan_type == 0)) ? $next->amount_due: 0));
-                    return $tempLoans > 0 ? $tempLoans: 0;
-                }, 0); ***/
-
-                /*** if($_gross_pay >= $tempTotalLoans){
-                    $employee->total_loans = $tempTotalLoans;
-                    $_gross_pay = $_gross_pay - $tempTotalLoans;
-                } ***/
-
-                /*** $tempTotalLoansInterest = isset($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1 ?
-                (isset($payroll_sheet_row) && !empty($payroll_sheet_row) ?
-                    $payroll_sheet_row->total_loans_interest : 0) : array_reduce($loans, function ($carry, $next) {
-                        $tempLoansInterest = $carry + (intval($next->active) !== 1 ? 0 : ((intval($next->loan_type == 0)) ? $next->interest_amount ? $next->interest_amount: 0: 0));
-                        return $tempLoansInterest;
-                    }, 0); ***/
-                
-                /*** if($_gross_pay >= $tempTotalLoansInterest){
-                    $employee->total_loans_interest = $tempTotalLoansInterest;
-                    $_gross_pay = $_gross_pay - $tempTotalLoansInterest;
-                } ***/
-
-                /*** $sssLoans = isset($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1 ?
-                    (isset($payroll_sheet_row) && !empty($payroll_sheet_row) ?
-                        $payroll_sheet_row->sss_loan : 0) : array_reduce($loans, function ($carry, $next) {
-                            $tempLoans = $carry + (intval($next->active) !== 1 ? 0 : ((intval($next->loan_type == 1) && intval($next->loan_class) == 1) ? $next->amount_due: 0));
-                            return $tempLoans > 0 ? $tempLoans: 0;
-                        }, 0); ***/
-
-                /*** if($_gross_pay >= $sssLoans){
-                    $employee->sss_loan = $sssLoans;
-                    $_gross_pay = $_gross_pay - $sssLoans;
-                } ***/
-
-                /*** $hdmfLoans = isset($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1 ?
-                    (isset($payroll_sheet_row) && !empty($payroll_sheet_row) ?
-                        $payroll_sheet_row->hdmf_loan : 0) : array_reduce($loans, function ($carry, $next) {
-                            $tempLoans = $carry + (intval($next->active) !== 1 ? 0 : ((intval($next->loan_type == 1) && intval($next->loan_class) == 2) ? $next->amount_due: 0));
-                            return $tempLoans > 0 ? $tempLoans: 0;
-                        }, 0); ***/
-
-                /*** if($_gross_pay >= $hdmfLoans){
-                    $employee->hdmf_loan = $hdmfLoans;
-                    $_gross_pay = $_gross_pay - $hdmfLoans;
-                } ***/
                 
                 $toDeductLoans = 0;
                 $toDeductLoans = ($employee->total_loans + $employee->total_loans_interest) + $employee->sss_loan + $employee->hdmf_loan;
@@ -1878,9 +1809,6 @@ class Payroll_m extends CI_Model
                 $employee->net_pay = number_format($net_pay, 2, '.', '');
 
                 $days_worked = $excude_holiday_days_worked > 0 ? $excude_holiday_days_worked: $days_worked;
-                
-                $temp_undertime_records = array();
-
                 if($days_worked > 0){
                     $displayName = (object) $this->core_layout->getDisplayName((array) $employee);
                     if(count(get_object_vars($displayName)) > 0){
@@ -1913,7 +1841,6 @@ class Payroll_m extends CI_Model
                             }else{
                                 $tempLate = "";
                                 $hrs = "hr";
-                                $mins = "min";
                                 if(isset($temp[0]) && intval($temp[0]) > 0){
                                     if(intval($temp[0]) > 1){ $hrs = "hrs"; }
                                     $tempLate .= "{$temp[0]} {$hrs} ";
@@ -1960,7 +1887,6 @@ class Payroll_m extends CI_Model
                             }else{
                                 $tempUndertime = "";
                                 $hrs = "hr";
-                                $mins = "min";
                                 if(isset($temp[0]) && intval($temp[0]) > 0){
                                     if(intval($temp[0]) > 1){ $hrs = "hrs"; }
                                     $tempUndertime .= "{$temp[0]} {$hrs} ";
@@ -2034,6 +1960,8 @@ class Payroll_m extends CI_Model
                     "ot_amount" => $ot_amount,
                     "ot_ndiff_minutes" => $ot_ndiff_minutes,
                     "ot_ndiff_amount" => $ot_ndiff_amount,
+                    "total_ndiff_minutes" => $total_ndiff_minutes,
+                    "total_ndiff_amount" => $total_ndiff_amount,
                     "gross_pay" => $gross_pay,
                     "sss" => $remittancesRecord->sss_ee,
                     "sss_er" => $remittancesRecord->sss_er,
@@ -2059,7 +1987,7 @@ class Payroll_m extends CI_Model
                     }
                     $payroll_sheet_id = $payroll_sheet_row->id;
                 } else {
-                    if(is_array($data) && count($data) > 0){
+                    if(is_array($data) && !empty($data)){
                         $data["created_at"] = date("Y-m-d H:i:s");
                         $data["created_by"] = $this->core_layout->getCurrentEmployeeId();
                     }
@@ -2073,7 +2001,8 @@ class Payroll_m extends CI_Model
                 $_total_basic_rate = $payroll_sheet->basic_rate;
                 $_total_allowances = $payroll_sheet->total_allowances;
                 $_total_ot_ndiff = $payroll_sheet->ot_amount + $payroll_sheet->ot_ndiff_amount;
-                $gross_pay = $_total_basic_rate + $_total_allowances + $_total_ot_ndiff;
+                $_total_night_diff = $payroll_sheet->total_ndiff_amount;
+                $gross_pay = $_total_basic_rate + $_total_allowances + $_total_ot_ndiff + $_total_night_diff;
 
                 $custom_adjustments = $this->db->where("payroll_sheet_id", $payroll_sheet_id)
                     ->get("payroll.payroll_sheet_custom_adjustments");
@@ -2093,7 +2022,6 @@ class Payroll_m extends CI_Model
                 $sssContributionBasis = ${$tempParameter};
                 $sssContributionBasis = $sssContributionBasis ? $sssContributionBasis: $gross_pay;
 
-                /*** $tempCurrentSSSDeduction = $employee->sss->ee; ***/
                 $tempCurrentSSSDeduction = $remittancesRecord->sss_ee;
                 $tempCurrentHDMFDeduction = $remittancesRecord->hdmf_ee;
                 $tempCurrentPHICDeduction = $remittancesRecord->phic_ee;
@@ -2118,7 +2046,7 @@ class Payroll_m extends CI_Model
                     "contribution_basis"=>$sss_contribution_basis,
                 ), $company->sss_class);
 
-                if($alteredTaxableIncome == false){
+                if($alteredTaxableIncome === false){
                     $parameters = array(
                         "switch"=>$remittance_parameters->tax->status,
                         "gross_pay"=> $gross_pay,
@@ -2242,10 +2170,6 @@ class Payroll_m extends CI_Model
                     }
                 }
 
-                /*** updated loans section ***/
-                /*** $UpdatedLoans = $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay);
-                $loans = $UpdatedLoans; ***/
-
                 $loans = $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
 
                 $postedPayrollSheetRecord = isset($payroll_sheet_row) && !empty($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1;
@@ -2254,20 +2178,20 @@ class Payroll_m extends CI_Model
                 $updatedSSSLoans = $postedPayrollSheetRecord ? $payroll_sheet_row->sss_loan : 0;
                 $updatedHDMFLoans = $postedPayrollSheetRecord ? $payroll_sheet_row->hdmf_loan : 0;
 
-                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord == false){
+                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false){
                     foreach ($loans as $loan) {
                         if($loan->active == 1 && $loan->loan_type == 0){
                             /*** loan internal ***/
-                            if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0){ 
+                            if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0){
                                 $updatedTotalLoans += $loan->amount_due;
-                                $_gross_pay = $_gross_pay - $loan->amount_due; 
+                                $_gross_pay = $_gross_pay - $loan->amount_due;
                             }
                             /*** loan internal ***/
 
                             /*** loan interest ***/
-                            if(floatval($loan->interest_amount) > 0 && $_gross_pay >= $loan->interest_amount && intval($loan->zero_netpay) == 0){ 
+                            if(floatval($loan->interest_amount) > 0 && $_gross_pay >= $loan->interest_amount && intval($loan->zero_netpay) == 0){
                                 $updatedTotalLoansInterest += $loan->interest_amount;
-                                $_gross_pay = $_gross_pay - $loan->interest_amount; 
+                                $_gross_pay = $_gross_pay - $loan->interest_amount;
                             }
                             /*** loan interest ***/
                         }
@@ -2276,83 +2200,30 @@ class Payroll_m extends CI_Model
                     /*** loans external ***/
                     /*** loans sss ***/
                     foreach ($loans as $loan) {
-                        if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 1)){
-                            if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0){ 
-                                $updatedSSSLoans += $loan->amount_due;
-                                $_gross_pay = $_gross_pay - $loan->amount_due; 
-                            }
+                        if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 1) &&
+                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0)){
+                            $updatedSSSLoans += $loan->amount_due;
+                            $_gross_pay = $_gross_pay - $loan->amount_due;
                         }
                     }
                     /*** loans sss ***/
                     /*** loans hdmf ***/
                     foreach ($loans as $loan) {
-                        if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 2)){
-                            if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0){ 
-                                $updatedHDMFLoans += $loan->amount_due;
-                                $_gross_pay = $_gross_pay - $loan->amount_due; 
-                            }
+                        if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 2) &&
+                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0)){
+                            $updatedHDMFLoans += $loan->amount_due;
+                            $_gross_pay = $_gross_pay - $loan->amount_due;
                         }
                     }
                     /*** loans hdmf
                     /*** loans external ***/
                 }
 
-                /*** $tempTotalLoans = isset($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1 ?
-                    (isset($payroll_sheet_row) && !empty($payroll_sheet_row) ?
-                        $payroll_sheet_row->total_loans : 0) : array_reduce($loans, function ($carry, $next) {
-                            $tempLoans = $carry + (intval($next->active) !== 1 ? 0 : ((intval($next->loan_type == 0)) ? $next->amount_due: 0));
-                            return $tempLoans > 0 ? $tempLoans: 0;
-                        }, 0); ***/
-                
-                /*** if($_gross_pay >= $tempTotalLoans){
-                    $updatedTotalLoans = $tempTotalLoans;
-                    $_gross_pay = $_gross_pay - $tempTotalLoans;
-                } ***/
-                
-                /*** $tempTotalLoansInterest = isset($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1 ?
-                (isset($payroll_sheet_row) && !empty($payroll_sheet_row) ?
-                    $payroll_sheet_row->total_loans_interest : 0) : array_reduce($loans, function ($carry, $next) {
-                        $tempLoansInterest = $carry + (intval($next->active) !== 1 ? 0 : ((intval($next->loan_type == 0)) ? $next->interest_amount ? $next->interest_amount: 0: 0));
-                        return $tempLoansInterest;
-                    }, 0); ***/
-
-                /*** if($_gross_pay >= $tempTotalLoansInterest){
-                    $updatedTotalLoansInterest = $tempTotalLoansInterest;
-                    $_gross_pay = $_gross_pay - $tempTotalLoansInterest;
-                } ***/
-
-                /*** $tempSSSLoans = isset($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1 ?
-                    (isset($payroll_sheet_row) && !empty($payroll_sheet_row) ?
-                        $payroll_sheet_row->sss_loan : 0) : array_reduce($loans, function ($carry, $next) {
-                            $tempLoans = $carry + (intval($next->active) !== 1 ? 0 : ((intval($next->loan_type == 1) && intval($next->loan_class) == 1) ? $next->amount_due: 0));
-                            return $tempLoans > 0 ? $tempLoans: 0;
-                        }, 0); ***/
-                
-                /*** if($_gross_pay >= $tempSSSLoans){
-                    $updatedSSSLoans = $tempSSSLoans;
-                    $_gross_pay = $_gross_pay - $tempSSSLoans;
-                } ***/
-
-                /*** $tempHDMFLoans = isset($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1 ?
-                (isset($payroll_sheet_row) && !empty($payroll_sheet_row) ?
-                $payroll_sheet_row->hdmf_loan : 0) : array_reduce($loans, function ($carry, $next) {
-                    $tempLoans = $carry + (intval($next->active) !== 1 ? 0 : ((intval($next->loan_type == 1) && intval($next->loan_class) == 2) ? $next->amount_due: 0));
-                    return $tempLoans > 0 ? $tempLoans: 0;
-                }, 0); ***/
-
-                /*** if($_gross_pay >= $tempHDMFLoans){
-                    $updatedHDMFLoans = $tempHDMFLoans;
-                    $_gross_pay = $_gross_pay - $tempHDMFLoans;
-                } ***/
-
                 $updatedToDeductLoans = 0;
                 $updatedToDeductLoans = ($updatedTotalLoans + $updatedTotalLoansInterest) + $updatedSSSLoans + $updatedHDMFLoans;
                 /*** updated loans section ***/
 
                 if (!isset($payroll_sheet_row) || intval($payroll_sheet_row->posted) === 0) {
-                    $tempGovt = round($employee->total_govt_remittances, 1);
-                    $tempDedu = round($tempDeductions, 1);
-
                     $tempDeductions = $employee->total_govt_remittances + ($tempDeductions);
                     $tempGrossDeduction = $gross_pay - $tempGrossDeduction;
                     $net_pay = $tempGrossDeduction - ($tempDeductions + $updatedToDeductLoans);
@@ -2364,8 +2235,8 @@ class Payroll_m extends CI_Model
                         "net_pay" => $net_pay,
                         "sss"=>$_remittancesRecord->sss_ee,
                         "sss_er"=>$_remittancesRecord->sss_er,
-                        "sss_prov"=>$_remittancesRecord->sss_prov_ee,
-                        "sss_prov_er"=>$_remittancesRecord->sss_prov_er,
+                        "sss_prov"=>$updatedProvidentEE,
+                        "sss_prov_er"=>$updatedProvidentER,
                         "ph" => $_remittancesRecord->phic_ee,
                         "hdmf" => $_remittancesRecord->hdmf_ee,
                         "tax" => $_remittancesRecord->tax_ee,
@@ -2464,17 +2335,15 @@ class Payroll_m extends CI_Model
                                     $getCurrentLoansInterests = $this->db->get_where("payroll.payroll_sheet_loan_interest_payments", 
                                     array("loan_id" => $loan->id, "is_active"=>2, "interest_id"=>$tempRowInt->id));
 
-                                    if($getCurrentLoansInterests->num_rows() === 1){
-                                        if($getCurrentLoansInterests->row()->int_id !== null){
-                                            $hasUnpaidLoanInterest = $getCurrentLoansInterests->num_rows() === 1;
-                                            $unpaidLoansInterest = $getCurrentLoansInterests;
-                                        }
+                                    if($getCurrentLoansInterests->num_rows() === 1 && $getCurrentLoansInterests->row()->int_id !== null){
+                                        $hasUnpaidLoanInterest = $getCurrentLoansInterests->num_rows() === 1;
+                                        $unpaidLoansInterest = $getCurrentLoansInterests;
                                     }
 
                                     if($hasUnpaidLoanInterest){
                                         $unpaidRowInt = $unpaidLoansInterest->row();
-                                        $triggerUnpaidState = ($lastInterestCharge == false && $isFinalPayment == false) 
-                                        || ($lastInterestCharge == true && $isFinalPayment == true) ? true: false;
+                                        $triggerUnpaidState = ($lastInterestCharge === false && $isFinalPayment === false)
+                                        || ($lastInterestCharge === true && $isFinalPayment === true) ? true: false;
 
                                         if($lastInterestCharge){
                                             $rowIds = explode(",", $unpaidRowInt->int_id);
@@ -2486,8 +2355,8 @@ class Payroll_m extends CI_Model
 
                                         if($triggerUnpaidState){
                                             $totalInterestAmount = floatval($unpaidRowInt->total_amount_due) + floatval($tempRowInt->amount_due);
-                                            $updatedRowInt = $this->db->update("payroll.payroll_sheet_loan_interest_payments", 
-                                                array("total_interest_amount"=>$totalInterestAmount), 
+                                            $updatedRowInt = $this->db->update("payroll.payroll_sheet_loan_interest_payments",
+                                                array("total_interest_amount"=>$totalInterestAmount),
                                                 array("id"=>$tempRowInt->id));
     
                                             if($updatedRowInt && $this->db->affected_rows() === 1){
@@ -2541,16 +2410,16 @@ class Payroll_m extends CI_Model
                     }
                     /*** check zero balance loans and update ***/
                     /*** check paid balance loans and update ***/
-                    $Paidloans = $this->getEmployeeLoans($employee->id, $gross_pay, 1);
-                    if($Paidloans > 0){
-                        foreach ($Paidloans as $loan) {
+                    $paidLoans = $this->getEmployeeLoans($employee->id, $gross_pay, 1);
+                    if($paidLoans > 0){
+                        foreach ($paidLoans as $loan) {
                             $qLoans = $this->db
                                 ->where("loan_id", $loan->id)
                                 ->get("payroll.payroll_sheet_loan_payments");
                             if($qLoans->num_rows() > 0){
                                 $amount_paid = 0;
                                 foreach ($qLoans->result() as $key => $value) { $amount_paid += $value->amount_due; }
-                                if(floatval($loan->amount) !== $amount_paid 
+                                if(floatval($loan->amount) !== $amount_paid
                                     || (floatval($loan->total_amount_paid) == 0 || floatval($loan->amount_due) > 0)){
                                     $paidState = array("paid"=>0);
                                     if(intval($loan->active) == 2){ $paidState["active"] = 0; }
@@ -2998,7 +2867,7 @@ class Payroll_m extends CI_Model
         return $tempTax;
     }
 
-    function getOvertimeAmountDaily($timesheet=array(), $payrate_setting=array()){
+    protected function getOvertimeAmountDaily($timesheet=array(), $payrate_setting=array()){
         if(($timesheet && count(get_object_vars($timesheet)) > 0) && ($payrate_setting && count(get_object_vars($payrate_setting)) > 0)){
             $ot_minutely = $timesheet->per_minute * (isset($payrate_setting) ? $payrate_setting->ot_rate : 1);
 
@@ -3008,30 +2877,20 @@ class Payroll_m extends CI_Model
             $timesheet->ot_minutely = floatval($tempTotalOvertimeHours) > 0 ? floatval($tempTotalOvertimeHours) * $ot_minutely: 0;
             $timesheet->total_accredited_ot_hrs_amount = ($tempTotalOvertimeHours * 60) * $ot_minutely;
             
-            $ot_ndiff_minutely = $timesheet->per_minute * (isset($payrate_setting) ? $payrate_setting->ot_night_diff_rate : 1);
+            $ot_ndiff_minutely = $timesheet->per_minute * (isset($payrate_setting) ? $payrate_setting->ot_night_diff_rate : 0.1);
             $timesheet->ot_ndiff_minutely = floatval($tempNightDiffHours) > 0 ? floatval($tempNightDiffHours) * $ot_ndiff_minutely: 0;
             $timesheet->total_accredited_ndiff_ot_hrs_amount = ($tempNightDiffHours * 60) * $ot_ndiff_minutely;
-
-            /*** $timesheet->ot_minutely = floatval($timesheet->total_accredited_ot_hrs) > 0 ? $timesheet->total_accredited_ot_hrs * $ot_minutely: 0;
-            $timesheet->total_accredited_ot_hrs_amount = ($timesheet->total_accredited_ot_hrs * 60) * $ot_minutely;
-
-            $ot_ndiff_minutely = $timesheet->per_minute * (isset($payrate_setting) ? $payrate_setting->ot_night_diff_rate : 1);
-
-            $timesheet->ot_ndiff_minutely = floatval($timesheet->total_accredited_ndiff_ot_hrs) > 0 ? $timesheet->total_accredited_ndiff_ot_hrs * $ot_ndiff_minutely: 0;
-            $timesheet->total_accredited_ndiff_ot_hrs_amount = ($timesheet->total_accredited_ndiff_ot_hrs * 60) * $ot_ndiff_minutely; ***/
         }
         return $timesheet;
     }
 
     protected function getRegularNightDiffAmountDaily($timesheet=array(), $payrate_setting=array()){
         if(($timesheet && count(get_object_vars($timesheet)) > 0) && ($payrate_setting && count(get_object_vars($payrate_setting)) > 0)){
-            $night_diff_minutely = $timesheet->per_minute * (isset($payrate_setting) ? $payrate_setting->night_diff_rate : 1);
-
-            $totalRegularNightDiffHours = floatval($timesheet->total_ndiff_rendered) > 0 ? floatval($timesheet->total_ndiff_rendered) / 60 : 0;
-            $timesheet->night_diff_minutely = floatval($totalRegularNightDiffHours) > 0 ? floatval($totalRegularNightDiffHours) * $night_diff_minutely: 0;
-            $timesheet->total_ndiff_hrs = $totalRegularNightDiffHours;
-            $timesheet->total_ndiff_amount = ($totalRegularNightDiffHours * 60) * $night_diff_minutely;
-            var_dump($timesheet);
+            $night_diff_minutely = $timesheet->per_minute * (isset($payrate_setting) ? $payrate_setting->night_diff_rate : 0.1);
+            $timesheet->night_diff_minutely = $night_diff_minutely;
+            $totalRegularNightDiffMinutes = floatval($timesheet->total_ndiff_rendered);
+            $timesheet->regular_ndiff_minutes = $totalRegularNightDiffMinutes;
+            $timesheet->regular_ndiff_amount = $totalRegularNightDiffMinutes * $night_diff_minutely;
         }
         return $timesheet;
     }
