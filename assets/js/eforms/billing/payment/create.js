@@ -286,8 +286,10 @@ function checkOverdue() {
         } else { // no balance
             amnt = data.net_payment;
         }
+
         $(".net_payment").val(Math.abs(amnt));
-        $("#sub_total").val(data.net_payment);
+        // $("#sub_total").val(data.net_payment);
+        $("#sub_total").val(Math.abs(amnt));
         $("#receivedAmount").val(0);
 
         handleValueChange(billing_amount);

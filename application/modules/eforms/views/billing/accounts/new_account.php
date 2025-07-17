@@ -35,7 +35,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            Account No.* :
+                                            Account No.: <span class="text-danger">*</span>
                                         </label>
                                         <div class="col-8">
                                             <input oninput="this.value = this.value.replace(/[^0-9-]/g, '');" maxlength="11" autocomplete="off" type="text" name="accountno" class="form-control m-input" data-validation="required">
@@ -45,7 +45,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            Meter No.* :
+                                            Meter No.: <span class="text-danger">*</span>
                                         </label>
                                         <div class="col-8">
                                             <input oninput="this.value = this.value.replace(/[^0-9-]/g, '').replace(/(\..*)\./g, '$1');" maxlength="20" autocomplete="off" type="text" name="meterno" class="form-control m-input" data-validation="required">
@@ -58,7 +58,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            Firstname* :
+                                            Firstname: <span class="text-danger">*</span>
                                         </label>
                                         <div class="col-8">
                                             <input autocomplete="off" maxlength="20" type="text" name="firstname" class="form-control m-input" data-validation="required">
@@ -68,7 +68,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            Middlename* :
+                                            Middlename: <span class="text-danger">*</span>
                                         </label>
                                         <div class="col-8">
                                             <input autocomplete="off" maxlength="20" type="text" name="middlename" class="form-control m-input" data-validation="required">
@@ -78,7 +78,7 @@
                                 <div class="col-md-3">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            Lastname* :
+                                            Lastname: <span class="text-danger">*</span>
                                         </label>
                                         <div class="col-8">
                                             <input autocomplete="off" maxlength="20" type="text" name="lastname" class="form-control m-input" data-validation="required">
@@ -91,7 +91,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            Occupation* :
+                                            Occupation: <span class="text-danger">*</span>
                                         </label>
                                         <div class="col-8">
                                             <input autocomplete="off" type="text" name="occupation" class="form-control m-input" >
@@ -101,7 +101,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            Subdivision* :
+                                            Subdivision: <span class="text-danger">*</span>
                                         </label>
                                         <div class="col-8">
                                             <select name="subdivision_id" class="form-control m-input" id="subdivisionSelect" data-validation="required">
@@ -116,7 +116,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            House Model.* :
+                                            House Model.: <span class="text-danger">*</span>
                                         </label>
                                         <div class="col-8">
                                             <input autocomplete="off" type="text" name="model" class="form-control m-input" data-validation="required">
@@ -126,7 +126,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            Block no.* :
+                                            Block no.: <span class="text-danger">*</span>
                                         </label>
                                         <div class="col-8">
                                             <input oninput="this.value = this.value.replace(/[^0-9-]/g, '');" maxlength="11" autocomplete="off" type="text" name="block" class="form-control m-input" data-validation="required">
@@ -136,7 +136,7 @@
                                 <div class="col-md-3">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            Lot no.* :
+                                            Lot no.: <span class="text-danger">*</span>
                                         </label>
                                         <div class="col-8">
                                             <input oninput="this.value = this.value.replace(/[^0-9-]/g, '');" maxlength="11" autocomplete="off" type="text" name="lot" class="form-control m-input" data-validation="required">
@@ -149,17 +149,17 @@
                                 <div class="col-md-4">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            Phone Number* :
+                                            Phone Number: <span class="text-danger">*</span>
                                         </label>
                                         <div class="col-8">
-                                            <input oninput="this.value = this.value.replace(/[^0-9]/g, '');" autocomplete="off" type="text" name="phonenumber" class="form-control m-input" data-validation="required">
+                                            <input oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,11);" autocomplete="off" type="text" name="phonenumber" id="phonenumber" class="form-control m-input" data-validation="required">
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            email address* :
+                                            email address: <span class="text-danger">*</span>
                                         </label>
                                         <div class="col-8">
                                             <input autocomplete="off" type="text" name="email" class="form-control m-input" data-validation="required email" >
@@ -172,7 +172,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            Application Date* :
+                                            Application Date: <span class="text-danger">*</span>
                                         </label>
                                         <div class="col-8">
                                             <input autocomplete="off" readonly type="text" id="applicationdate" name="applicationdate" class="form-control m-input" data-validation="required">
@@ -182,7 +182,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            Activation Date* :
+                                            Activation Date: <span class="text-danger">*</span>
                                         </label>
                                         <div class="col-8">
                                             <input autocomplete="off" readonly type="text" id="activationdate" name="activationdate" class="form-control m-input" data-validation="required">
@@ -203,7 +203,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group m-form__group row">
                                             <label class="col-4 col-form-label">
-                                                Street* :
+                                                Street: <span class="text-danger">*</span>
                                             </label>
                                             <div class="col-8">
                                                 <input autocomplete="off" type="text" name="street" class="form-control m-input" data-validation="required">
@@ -213,7 +213,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group m-form__group row">
                                             <label class="col-4 col-form-label">
-                                                Barangay* :
+                                                Barangay: <span class="text-danger">*</span>
                                             </label>
                                             <div class="col-8">
                                                 <input autocomplete="off" type="text" name="brgy" class="form-control m-input" data-validation="required">
@@ -223,7 +223,7 @@
                                     <div class="col-md-3">
                                         <div class="form-group m-form__group row">
                                             <label class="col-4 col-form-label">
-                                                City* :
+                                                City: <span class="text-danger">*</span>
                                             </label>
                                             <div class="col-8">
                                                 <input autocomplete="off" type="text" name="city" class="form-control m-input" data-validation="required">
@@ -236,7 +236,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group m-form__group row">
                                             <label class="col-4 col-form-label">
-                                                Province* :
+                                                Province: <span class="text-danger">*</span>
                                             </label>
                                             <div class="col-8">
                                                 <input autocomplete="off" type="text" name="province" class="form-control m-input" >
@@ -252,7 +252,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            Customer Status :
+                                            Customer Status:
                                         </label>
                                         <div class="col-9">
                                             <div class="m-checkbox-inline">
@@ -265,7 +265,7 @@
                                 <div class="col-md-5">
                                     <div class="form-group m-form__group row">
                                         <label class="col-4 col-form-label">
-                                            Water Connection :
+                                            Water Connection:
                                         </label>
                                         <div class="col-9">
                                             <div class="m-checkbox-inline">
