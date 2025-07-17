@@ -34,16 +34,13 @@
                     </div>
                     <div class="m-form m-form--label-align-right m--margin-top-10 m--margin-bottom-10">
                         <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll mt-3">
-                            <table class="table table-striped table-bordered" id="table-locked-users" width="100%">
+                            <table class="table table-striped table-bordered" id="table-locked-users" style="width: 100%">
                                 <thead>
                                 <tr>
-                                    <th></th>
-                                    <th>Email</th>
-                                    <th>Username</th>
-                                    <th>Lastname</th>
-                                    <th>Firstname</th>
-                                    <th>Middlename</th>
+                                    <th>Locked Date</th>
                                     <th>Date Locked</th>
+                                    <th>Account Name</th>
+                                    <th>User Account</th>
                                     <th>Action</th>
                                 </tr>
                                 </thead>

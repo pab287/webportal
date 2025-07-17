@@ -169,7 +169,7 @@ class User_model extends CI_Model
         $tableConfigStd = $this->utilities->parseFormDataToObject($tableConfig);
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($tableConfigStd);
         $table = "gccmaster.tblusers users";
-        $searchFields = "CONCAT(users.email, employees.firstname, employees.lastname, employees.middlename)";
+        $searchFields = "CONCAT(users.email, users.username, employees.firstname, employees.lastname, employees.middlename)";
 
         $joinArr = array(
             array("table" => "gccmaster.tblemployees employees", "condition" => "users.emp_id = employees.id", "option" => "INNER"),
@@ -498,12 +498,17 @@ class User_model extends CI_Model
     private function getDatatableRequest($search, $limit, $offset, $sortBy, $sortOrder){
         $filterFields = array('employees.firstname', 'employees.lastname', 'employees.middlename', 'users.email', 'users.username');
         $this->db->select("
-            users.id, 
-            users.email, 
-            employees.firstname, 
-            employees.lastname,
-            employees.middlename, 
-            users.username, 
+            users.id,
+            users.email, UPPER(CONCAT(employees.lastname,
+                CASE WHEN UPPER(TRIM(employees.suffix)) != 'N/A' AND
+                    UPPER(TRIM(employees.suffix !='NONE')) AND employees.suffix !='' AND
+                    employees.suffix IS NOT NULL THEN CONCAT(' ', employees.suffix) ELSE ''
+                END, ', ', employees.firstname, ' ',
+                CASE WHEN UPPER(TRIM(employees.middlename)) != 'N/A' AND UPPER(TRIM(employees.middlename)) != 'NONE' AND
+                        TRIM(employees.middlename) !='' AND employees.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(employees.middlename, 1, 1), '.') ELSE ''
+                END)) as employee_name,
+            users.username,
             DATE_FORMAT(users.lockout_dt, '%b %d, %Y %h:%i %p') as lockout_dt
         ")
         ->from('gccmaster.tblusers as users')
@@ -525,8 +530,7 @@ class User_model extends CI_Model
         $i = $sortOrder[0]['column'];
         $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
         $query = $this->db->get();
-        $results = $query->result();
-        return $results;
+        return $query->result();
     }
     private function getDatatableRequestCount($search){
         $filterFields = array('employees.firstname', 'employees.lastname', 'employees.middlename', 'users.email', 'users.username');

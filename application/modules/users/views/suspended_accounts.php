@@ -34,7 +34,7 @@
                 </div>
             </div>
             <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll mt-3">
-                <table class="table table-striped table-bordered" id="table-suspended-users" width="100%">
+                <table class="table table-striped table-bordered" id="table-suspended-users" style="width: 100%">
                     <thead>
                     <tr>
                         <th>Suspended Date</th>
@@ -52,8 +52,8 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modal-confirm-remove-suspension" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" id="modal-confirm-remove-suspension" tabindex="-1">
+        <div class="modal-dialog">
             <form onsubmit="event.preventDefault(); process_unsuspend_account(this);">
                 <div class="modal-content">
                     <div class="modal-header">

@@ -35,8 +35,8 @@ let tblSuspendedUsers = $("#table-suspended-users")
                     return tempHtml;
                 }
             },{
-                data: "lastname", width: "18%", render: function (_data, _type, row) {
-                    return row.employee_name != null ? row.employee_name : "No Suspended Employee Name";
+                data: "employees.lastname", width: "18%", render: function (_data, _type, row) {
+                    return row.employee_name != null ? row.employee_name : "No Account Name";
                 }
             },{
                 data: "suspended_by", width: "18%",
