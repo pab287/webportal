@@ -194,11 +194,11 @@
                                 <th class="notExport"></th>
                                 <th>Reference #</th>
                                 <th>Category</th>
-                                <th>Sub Category</th>
+                                <!-- <th>Sub Category</th> -->
                                 <th>Priority</th>
                                 <th>Status</th>
                                 <th>Date Needed</th>
-                                <th>Days Overdue</th>
+                                <th>Created At</th>
                                 <th>Requested by</th>
                                 <th>Performed by</th>
                                 <th class="notExport">Action</th>

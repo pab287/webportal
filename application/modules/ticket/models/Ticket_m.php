@@ -49,7 +49,7 @@ class Ticket_m extends CI_Model
     public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll, $params){
         $resultset = array();
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
-        $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id");
+        $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id, d.code as department, a.created_at");
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
         $this->db->join("gccmaster.tblemployees as c", "c.id = a.performed_by", 'LEFT');
@@ -57,6 +57,7 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as sub" , "sub.name = a.sub_category", 'LEFT');
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
+        $this->db->join("gcchris.tbldepartments as d" , "d.id = a.department_id", 'LEFT');
         if($params){
             $allowed_fields = ['priority', 'status', 'category'];
             foreach($params as $field => $value) {
@@ -144,6 +145,7 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as sub" , "sub.name = a.sub_category", 'LEFT');
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
+        $this->db->join("gcchris.tbldepartments as d" , "d.id = a.department_id", 'LEFT');
         $this->db->where('a.is_archived', '0');
         if($params){
             $allowed_fields = ['priority', 'status', 'category'];
@@ -216,7 +218,7 @@ class Ticket_m extends CI_Model
     public function get_ticket_archive_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request){
         $resultset = array();
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
-        $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id");
+        $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id, d.code as department, a.created_at");
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
         $this->db->join("gccmaster.tblemployees as c", "c.id = a.performed_by", 'LEFT');
@@ -224,6 +226,7 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as sub" , "sub.name = a.sub_category", 'LEFT');
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
+        $this->db->join("gcchris.tbldepartments as d" , "d.id = a.department_id", 'LEFT');
         $this->db->where('a.is_archived', '1');
         // $this->db->or_where('a.status', "cancelled");
         if($view_own_request){
