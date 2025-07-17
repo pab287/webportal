@@ -87,12 +87,12 @@ tblExpiringProbees = $('#table-expiring-probees')
                     return moment(data).format('MMM DD, YYYY')
                 }
             },
-            {
-                data: 'secondEvaluation',
-                render: function (data) {
-                    return moment(data).format('MMM DD, YYYY')
-                }
-            },
+            // {
+            //     data: 'secondEvaluation',
+            //     render: function (data) {
+            //         return moment(data).format('MMM DD, YYYY')
+            //     }
+            // },
             {
                 data: 'finalEvaluation',
                 render: function (data) {

@@ -20,9 +20,9 @@
                         <th>ID #</th>
                         <th>Name</th>
                         <th>Date Hired</th>
-                        <th>3 Months</th>
-                        <th>4.5 Months</th>
-                        <th>Final Evaluation</th>
+                        <th>3rd Month</th>
+                        <!-- <th>4.5 Months</th> -->
+                        <th>5th Month</th>
                         <th>End Contract</th>
                         <th>Days `til Eval.</th>
                     </tr>
