@@ -7,7 +7,7 @@ let tblSuspendedUsers = $("#table-suspended-users")
         serverSide: true,
         processing: true,
         autoWidth: false,
-        order: [1, "asc"],
+        order: [0, "desc"],
         ajax: {
             url: baseUrl("users/get_suspended_users_list"),
             type: "post",
@@ -23,42 +23,35 @@ let tblSuspendedUsers = $("#table-suspended-users")
             }, global: false,
         },
         searching: false,
-        columns: [
+        columns: [{ data: "suspended_dt", visible: false, searchable: false },
             {
-                data: "email",
+                data: "suspended_dt", width: "12%",
                 render: function (data) {
-                    return data ? data : "NO EMAIL ADDRESS";
-                }
-            },
-            {
-                data: "lastname",
-            },
-            {
-                data: "firstname",
-            },
-            {
-                data: "middlename",
-            },
-            {
-                data: "suspended_by",
-                render: function (data) {
-                    return data ? data : "--";
-                }
-            },
-            {
-                data: "suspended_dt",
-                render: function (data) {
+                    let tempHtml = "---";
                     if (data) {
-                        const date = new Date(data);
-                        return months[date.getMonth()] + " " + date.getDate() + ", " + date.getFullYear();
+                        tempHtml = moment(new Date(data), "YYYY-MM-DD").format("LL");
                     }
 
-                    return "--";
+                    return tempHtml;
                 }
-            },
-            {
+            },{
+                data: "lastname", width: "18%", render: function (_data, _type, row) {
+                    return row.employee_name != null ? row.employee_name : "No Suspended Employee Name";
+                }
+            },{
+                data: "suspended_by", width: "18%",
+                render: function (data) {
+                    return data != null ? data : "---";
+                }
+            },{
+                data: "username", render: function (data, _type, row) {
+                    const trimmedEmail = $.trim(row.email);
+                    const tempEmail = trimmedEmail !== "" && trimmedEmail !== null ? trimmedEmail : "NO EMAIL";
+                    return `<p class='mb-0'>${data}</p><p><small class='m--font-bolder'>${tempEmail}</small></p>`;
+                }
+            },{
                 data: "",
-                width: "5%",
+                width: "6%",
                 orderable: false,
                 render: function (data, type, row) {
                     return "<button onclick='openRemoveSuspensionConfirmation(" + row.id + ")' " +
@@ -69,7 +62,7 @@ let tblSuspendedUsers = $("#table-suspended-users")
                 },
                 className: 'text-center'
             }
-        ]
+        ], columnDefs: [{ targets: "_all", defaultContent: "---" }]
     });
 
 $("#generalSearch")

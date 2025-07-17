@@ -178,9 +178,24 @@ class User_model extends CI_Model
         $where = array("users.is_suspended" => 1);
 
         $resultSet = array();
-        $this->db->select("users.id, users.email, employees.firstname, employees.lastname,
-                               employees.middlename, users.suspended_dt, 
-                               CONCAT(employees2.firstname, ' ', employees2.lastname) suspended_by");
+        $this->db->select("users.id, users.username, users.email, UPPER(CONCAT(employees.lastname,
+                CASE WHEN UPPER(TRIM(employees.suffix)) != 'N/A' AND
+                    UPPER(TRIM(employees.suffix !='NONE')) AND employees.suffix !='' AND
+                    employees.suffix IS NOT NULL THEN CONCAT(' ', employees.suffix) ELSE ''
+                END, ', ', employees.firstname, ' ',
+                CASE WHEN UPPER(TRIM(employees.middlename)) != 'N/A' AND UPPER(TRIM(employees.middlename)) != 'NONE' AND
+                        TRIM(employees.middlename) !='' AND employees.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(employees.middlename, 1, 1), '.') ELSE ''
+                END)) as employee_name,
+                UPPER(CONCAT(employees2.lastname,
+                CASE WHEN UPPER(TRIM(employees2.suffix)) != 'N/A' AND
+                    UPPER(TRIM(employees2.suffix !='NONE')) AND employees2.suffix !='' AND
+                    employees2.suffix IS NOT NULL THEN CONCAT(' ', employees2.suffix) ELSE ''
+                END, ', ', employees2.firstname, ' ',
+                CASE WHEN UPPER(TRIM(employees2.middlename)) != 'N/A' AND UPPER(TRIM(employees2.middlename)) != 'NONE' AND
+                        TRIM(employees2.middlename) !='' AND employees2.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(employees2.middlename, 1, 1), '.') ELSE ''
+                END)) as suspended_by, users.suspended_dt");
         $this->db->where($where);
         $this->db->like($searchFields, $pageOptions->search, "both");
         foreach ($joinArr as $join) {

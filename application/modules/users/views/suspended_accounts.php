@@ -37,12 +37,11 @@
                 <table class="table table-striped table-bordered" id="table-suspended-users" width="100%">
                     <thead>
                     <tr>
-                        <th>Email</th>
-                        <th>Lastname</th>
-                        <th>Firstname</th>
-                        <th>Middlename</th>
-                        <th>Suspended By</th>
+                        <th>Suspended Date</th>
                         <th>Date Suspended</th>
+                        <th>Account Name</th>
+                        <th>Suspended By</th>
+                        <th>User Account</th>
                         <th>Action</th>
                     </tr>
                     </thead>
