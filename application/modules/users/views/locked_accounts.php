@@ -37,7 +37,6 @@
                             <table class="table table-striped table-bordered" id="table-locked-users" style="width: 100%">
                                 <thead>
                                 <tr>
-                                    <th>Locked Date</th>
                                     <th>Date Locked</th>
                                     <th>Account Name</th>
                                     <th>User Account</th>

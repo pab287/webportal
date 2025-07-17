@@ -26,17 +26,17 @@ let tblLockedUsers = $("#table-locked-users").DataTable({
     },
     order: [0, "desc"],
     columns: [
-        { data: "lockout_dt", visible: false, searchable: false },
-        { data: "lockout_dt", width: "12%" },
+        { data: "lockout_dt", width: "12%", render: function (_data, _type, row) {
+            return row.formatted_lockedout_date != null ? row.formatted_lockedout_date : "No Lockout Date";
+        }},
         { data: "lastname", width: "18%", render: function (_data, _type, row) {
             return row.employee_name != null ? row.employee_name : "No Account Name";
         }},
         { data: "username", render: function (data, _type, row) {
-                const trimmedEmail = $.trim(row.email);
-                const tempEmail = trimmedEmail !== "" && trimmedEmail !== null ? trimmedEmail : "NO EMAIL";
-                return `<p class='mb-0'>${data}</p><p><small class='m--font-bolder'>${tempEmail}</small></p>`;
-            }
-        },
+            const trimmedEmail = $.trim(row.email);
+            const tempEmail = trimmedEmail !== "" && trimmedEmail !== null ? trimmedEmail : "NO EMAIL";
+            return `<p class='mb-0'>${data}</p><p><small class='m--font-bolder'>${tempEmail}</small></p>`;
+        }},
         { data: "null", width: "6%", className: "text-center", orderable: false },
     ],
     columnDefs: [{

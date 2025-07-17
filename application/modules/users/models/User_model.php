@@ -169,13 +169,13 @@ class User_model extends CI_Model
         $tableConfigStd = $this->utilities->parseFormDataToObject($tableConfig);
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($tableConfigStd);
         $table = "gccmaster.tblusers users";
-        $searchFields = "CONCAT(users.email, users.username, employees.firstname, employees.lastname, employees.middlename)";
+        $searchFields = "CONCAT(users.email, users.username, employees.firstname, employees.lastname, employees.middlename, employees2.firstname, employees2.lastname, employees2.middlename)";
 
         $joinArr = array(
             array("table" => "gccmaster.tblemployees employees", "condition" => "users.emp_id = employees.id", "option" => "INNER"),
             array("table" => "gccmaster.tblemployees employees2", "condition" => "users.suspended_by = employees2.id", "option" => "LEFT")
         );
-        $where = array("users.is_suspended" => 1);
+        $where = array("users.is_suspended" => 1, "employees.employee_status" => "Active");
 
         $resultSet = array();
         $this->db->select("users.id, users.username, users.email, UPPER(CONCAT(employees.lastname,
@@ -209,10 +209,12 @@ class User_model extends CI_Model
         $this->db->order_by($pageOptions->order_column, $pageOptions->order_direction);
         $data = $this->db->get($table)->result();
 
+        $lastQ = $this->db->last_query();
         $search = array('field' => $searchFields, 'key' => $pageOptions->search, 'option' => "both");
         $resultSet["recordsTotal"] = $this->utilities->getTableCount($table, $where, $search, $joinArr);
         $resultSet["recordsFiltered"] = $this->utilities->getTableCount($table, $where, $search, $joinArr);
         $resultSet["data"] = $data;
+        $resultSet["_q"] = $lastQ;
         return $resultSet;
     }
 
@@ -508,12 +510,14 @@ class User_model extends CI_Model
                         TRIM(employees.middlename) !='' AND employees.middlename IS NOT NULL
                     THEN CONCAT(SUBSTR(employees.middlename, 1, 1), '.') ELSE ''
                 END)) as employee_name,
-            users.username,
-            DATE_FORMAT(users.lockout_dt, '%b %d, %Y %h:%i %p') as lockout_dt
+            users.username, users.lockout_dt,
+            DATE_FORMAT(users.lockout_dt, '%b %d, %Y %h:%i %p') as formatted_lockedout_date
         ")
         ->from('gccmaster.tblusers as users')
         ->join('gccmaster.tblemployees as employees','users.emp_id = employees.id')
-        ->where('users.lockout', 1);
+        ->where('users.lockout', 1)
+        ->where('users.is_suspended', 0)
+        ->where('employees.employee_status', 'Active');
 
         if ($search) {
             $this->db->group_start();
