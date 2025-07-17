@@ -169,7 +169,7 @@ class User_model extends CI_Model
         $tableConfigStd = $this->utilities->parseFormDataToObject($tableConfig);
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($tableConfigStd);
         $table = "gccmaster.tblusers users";
-        $searchFields = "CONCAT(users.email, users.username, employees.firstname, employees.lastname, employees.middlename, employees2.firstname, employees2.lastname, employees2.middlename)";
+        $searchFields = "CONCAT(users.email, users.username, employees.firstname, employees.lastname, employees.middlename, employees2.firstname, employees2.lastname, employees2.middlename, DATE_FORMAT(users.suspended_dt, '%M %e, %Y'))";
 
         $joinArr = array(
             array("table" => "gccmaster.tblemployees employees", "condition" => "users.emp_id = employees.id", "option" => "INNER"),
@@ -498,7 +498,7 @@ class User_model extends CI_Model
     }
 
     private function getDatatableRequest($search, $limit, $offset, $sortBy, $sortOrder){
-        $filterFields = array('employees.firstname', 'employees.lastname', 'employees.middlename', 'users.email', 'users.username');
+        $filterFields = array('employees.firstname', 'employees.lastname', 'employees.middlename', 'users.email', 'users.username', 'DATE_FORMAT(users.lockout_dt, "%b %d, %Y %h:%i %p")');
         $this->db->select("
             users.id,
             users.email, UPPER(CONCAT(employees.lastname,
@@ -537,11 +537,13 @@ class User_model extends CI_Model
         return $query->result();
     }
     private function getDatatableRequestCount($search){
-        $filterFields = array('employees.firstname', 'employees.lastname', 'employees.middlename', 'users.email', 'users.username');
+        $filterFields = array('employees.firstname', 'employees.lastname', 'employees.middlename', 'users.email', 'users.username', 'DATE_FORMAT(users.lockout_dt, "%b %d, %Y %h:%i %p")');
         $this->db->select("users.id, users.email, employees.firstname, employees.lastname,employees.middlename, users.username, users.lockout_dt")
         ->from('gccmaster.tblusers as users')
         ->join('gccmaster.tblemployees as employees','users.emp_id = employees.id')
-        ->where('users.lockout', 1);
+        ->where('users.lockout', 1)
+        ->where('users.is_suspended', 0)
+        ->where('employees.employee_status', 'Active');
         if ($search) {
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
