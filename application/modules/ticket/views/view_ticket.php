@@ -168,7 +168,7 @@
                                         <span v-html="vm_tab1.status"></span>
                                     </div>
                                 </div>
-                                <div v-if="vm_tab1.rating" class="form-group m-form__group row">
+                                <div v-if="vm_tab1.rating > 0" class="form-group m-form__group row">
                                     <label class="col-lg-4 col-md-6 col-sm-4">
                                         Rating:
                                     </label>
