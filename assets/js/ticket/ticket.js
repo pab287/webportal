@@ -47,7 +47,7 @@ let tbl = $("#table-tickets").DataTable({
         {data: "id", visible: false},
         {data: "reference_no"},
         {
-            data: null,
+            data: 'category',
             render: function (data, type, row) {
                 return `
                     <div>
@@ -144,7 +144,7 @@ let tbl = $("#table-tickets").DataTable({
             }
         },      
         {
-            data: null,
+            data: 'requestor',
             render: function (data, type, row) {
                 return `
                     <div>
