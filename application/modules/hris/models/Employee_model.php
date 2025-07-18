@@ -7177,7 +7177,7 @@
             $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 0;
             $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
 
-            $this->db->select("`acct_body`.asset_id,
+            $this->db->select("`acct_body`.asset_id, `acct`.released_dt,
                                `acct`.`reference_no`, `acct_body`.`asset_code`,
                                `acct_body`.`description`, `acct_body`.`amount`, `acct_body`.`is_returned`,`acct_body`.`remarks_returned`,
                                `acct_body`.`date_returned`, `acct`.`status`,
