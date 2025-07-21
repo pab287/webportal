@@ -18,8 +18,7 @@ class Users extends MY_Controller {
 	}
 	
 	function get_user_list(){
-		$data = $this->users->getUserList();
-		
+		$data = $this->users->getCurrentUsersList();
 		$this->output
         ->set_content_type('json')
         ->set_output(json_encode($data));

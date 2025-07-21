@@ -63,27 +63,26 @@ class Users extends MY_Controller{
         $this->load->view('core/templates/footer');
     }
 
-    function accounts()
-    {
-        $this->core_layout->addJs("js/core/user_script.js", true);
-        $arrData = array();
+    public function accounts(){
         $this->core_layout->setHeaderTitle("User - <small>Accounts</small>");
+        $userRole = $this->user->getUserRoleSelectData();
+        $arrData = array("user_role" => $userRole);
+        $this->core_layout->addJs("js/core/user_script.js", true, $arrData);
         $this->load->view('core/templates/header');
         $this->load->view('core/users/index', $arrData);
         $this->load->view('core/templates/footer');
     }
 
     public function locked_accounts(){
-        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
-        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
         $this->core_layout->addJs("js/users/locked_accounts.js", true);
         $this->load->view('core/templates/header');
         $this->load->view('locked_accounts');
         $this->load->view('core/templates/footer');
     }
 
-    function get_group()
-    {
+    function get_group(){
         $data = $this->user->getGroup();
         $this->output
             ->set_content_type('json')
@@ -99,59 +98,54 @@ class Users extends MY_Controller{
     }
 
     public function add_user(){
-        $data = array(
-            'emp_id' => $this->input->post('emp_id'),
-            'email' => $this->input->post('email'),
-            'username' => $this->input->post('username'),
-            'password' => MD5($this->input->post('password')),
-            'group_id' => $this->input->post('group_id'),
-            'force_update'=> 1,
-            'is_important' => ($this->input->post('is_important') == 'on') ? 1 : 0
-        );
-        $insert = $this->user->save_user($data);
+        $post = $this->input->post();
+        unset($post["id"], $post["csrf_token"]);
+
+        $post["password"] = MD5(TRIM($post["password"]));
+        $post["is_important"] = isset($post["is_important"]) && $post["is_important"] == "on" ? 1 : 0;
+        $post["force_update"] = 1;
+        $post["added_by"] = $this->core_layout->getCurrentEmployeeId();
+        $post["added_date"] = date("Y-m-d H:i:s");
+
+        $insert = $this->user->save_user($post);
         $tempData = $this->core_layout->getUserData($insert);
         $tempName = (object) $tempData;
         $tempName = (isset($tempName->display_name_1) && $tempName->display_name_1)? $tempName->display_name_1: "No assigned name";
         $tempStatus = ($insert > 0)? "success": "error";
         $tempMessage = ($insert > 0)? "New user account for `{$tempName}` has been added.": "Failed to add new user account!";
 		$this->core_layout->logNotification($tempMessage, $tempStatus, "users");
-        echo json_encode(array("status" => TRUE));
+        echo json_encode(array("status" => true));
     }
 
-    public function edit_user($id)
-    {
+    public function edit_user($id){
         $data = $this->user->edit_user($id);
         echo json_encode($data);
     }
 
-    public function update_user()
-    {
-        $old_password = $this->db->get_where("gccmaster.tblusers", array("id"=>$this->input->post('id')))->row('password');
-        $new_password = $this->input->post('password');
-
-        $data = array(
-            'email' => $this->input->post('email'),
-            'username' => $this->input->post('username'),
-            'group_id' => $this->input->post('group_id'),
-            'telegram_chat_id' => $this->input->post('telegram_chat_id')
-        );
-        
-        if($old_password != $new_password){
-            $data['password'] = md5($this->input->post('password'));
+    public function update_user(){
+        $post = $this->input->post();
+        $resultset = array();
+        if (isset($post["id"]) && $post["id"]){
+            $userId = $post["id"];
+            $updatePassword = trim($post["password"]);
+            unset($post["id"], $post["csrf_token"]);
+            $currentPassword = $this->db->get_where("gccmaster.tblusers", array("id"=>$userId))->row('password');
+            if($currentPassword == $updatePassword){ unset($post["password"]); }
+            else{ $post["password"] = md5($updatePassword); }
+            $post["is_important"] = isset($post["is_important"]) && $post["is_important"] == "on" ? 1 : 0;
+            $updated = $this->user->update_user(array('id' => $userId), $post);
+            $tempData = $this->core_layout->getUserData($userId);
+            $tempName = (object) $tempData;
+            $tempName = (isset($tempName->display_name_1) && $tempName->display_name_1)? $tempName->display_name_1: "No assigned name";
+            
+            $tempStatus = ($updated > 0)? "success": "error";
+            $tempMessage = ($updated > 0)? "User account of `{$tempName}` has been updated.": "Failed to update the user account of `{$tempName}`!";
+            $this->core_layout->logNotification($tempMessage, $tempStatus, "users");
+            $resultset["status"] = true;
+        } else {
+            $resultset["status"] = false;
         }
-        
-
-        
-        $updated = $this->user->update_user(array('id' => $this->input->post('id')), $data);
-
-        $tempData = $this->core_layout->getUserData($this->input->post('id'));
-        $tempName = (object) $tempData;
-        $tempName = (isset($tempName->display_name_1) && $tempName->display_name_1)? $tempName->display_name_1: "No assigned name";
-        
-        $tempStatus = ($updated > 0)? "success": "error";
-        $tempMessage = ($updated > 0)? "User account of `{$tempName}` has been updated.": "Failed to update the user account of `{$tempName}`!";
-		$this->core_layout->logNotification($tempMessage, $tempStatus, "users");
-        echo json_encode(array("status" => TRUE));
+        echo json_encode($resultset);
     }
 
     public function suspended_accounts()
@@ -170,37 +164,37 @@ class Users extends MY_Controller{
         $this->load->view('core/templates/footer');
     }
 
-    function process_suspend_account($id = null)
+    public function process_suspend_account($id = null)
     {
         $data = $this->user->processSuspendAccount($id);
         echo json_encode($data);
     }
 
-    function process_unsuspend_account($id = null)
+    public function process_unsuspend_account($id = null)
     {
         $data = $this->user->processUnsuspendAccount($id);
         echo json_encode($data);
     }
 
-    function get_suspended_users_list()
+    public function get_suspended_users_list()
     {
         $data = $this->user->getSuspendedUsersList();
         echo json_encode($data);
     }
 
-    function get_active_user_list()
+    public function get_active_user_list()
     {
         $data = $this->user->getActiveUserList();
         echo json_encode($data);
     }
 
-    function open_modal()
+    public function open_modal()
     {
         $data = $this->utilities->openModal();
         echo $data;
     }
 
-    function reset_selected_user_password()
+    public function reset_selected_user_password()
     {
         $user_id = isset($_GET['id']) ? $_GET['id'] : "";
         if (!empty($user_id)) {
@@ -209,21 +203,21 @@ class Users extends MY_Controller{
         }
     }
 
-    function process_change_password()
+    public function process_change_password()
     {
         $post = $this->utilities->parseFormDataToObject($this->input->post());
         $data = $this->user->processChangePassword($post);
         echo json_encode($data);
     }
 
-    function process_change_pin()
+    public function process_change_pin()
     {
         $post = $this->utilities->parseFormDataToObject($this->input->post());
         $data = $this->user->processChangePin($post);
         echo json_encode($data);
     }
 
-    function verify_pin()
+    public function verify_pin()
     {
         $post = $this->utilities->parseFormDataToObject($this->input->post());
         $data = $this->user->verifyPin($post);
@@ -232,19 +226,18 @@ class Users extends MY_Controller{
     // controller for notification on borrowing overdue
 	public function get_all_notif(){
 		$notifData = $this->Auth->display_data();
-		// return json_encode($notifData);
 		$this->output
 			->set_content_type('json')
 			->set_output(json_encode($notifData));
 	}
 
-    function forget_pin(){
+    public function forget_pin(){
         $post = $this->utilities->parseFormDataToObject($this->input->post());
         $data = $this->user->forgetPin($post);
-        echo json_encode($data);       
+        echo json_encode($data);
     }
 
-    function get_session_status(){
+    public function get_session_status(){
         $data = $this->core_layout->getSessionStatus();
         echo json_encode($data);
     }
@@ -268,5 +261,4 @@ class Users extends MY_Controller{
         $data = $this->user->changePasswordLater();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
-
 }

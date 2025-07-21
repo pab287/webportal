@@ -1,11 +1,8 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed');
-
-class User_model extends CI_Model
-{
+<?php defined('BASEPATH') || exit('No direct script access allowed');
+class User_model extends CI_Model{
     private $timestamp = null;
 
-    function __construct()
-    {
+    public function __construct(){
         parent::__construct();
         $this->load->model("access_control_model", "acl_model");
         $this->load->model("datatable_model", "dt_model");
@@ -14,13 +11,11 @@ class User_model extends CI_Model
         $this->timestamp = new DateTime(null, new DateTimeZone('Asia/Manila'));
     }
 
-    private function getUserData()
-    {
+    private function getUserData(){
         return $this->core_layout->getUserLoggedIn();
     }
 
-    function getGroup()
-    {
+    function getGroup(){
         $get = $this->input->get();
         $resultarray = array();
         if (isset($get['q'])) {
@@ -40,44 +35,33 @@ class User_model extends CI_Model
         return array("results" => $resultarray);
     }
 
-    function getEmployee()
-    {
+    public function getEmployee(){
         $get = $this->input->get();
-        $resultarray = array();
+        $sqlSelect = "CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(UPPER(SUBSTR(emp.middlename, 1, 1)), '.') ELSE ''
+            END,' ', UPPER(TRIM(emp.lastname)),
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
+            END) as text, emp.id as id";
+        $this->db->select($sqlSelect);
+        $this->db->from('gccmaster.tblemployees as emp');
+        $this->db->join('gccmaster.tblusers as user', 'user.emp_id = emp.id', 'left');
         if (isset($get['q'])) {
-            $this->db->from('gccmaster.tblemployees');
-            $this->db->where('gccmaster.tblemployees.employee_status', 'Active');
-            $this->db->order_by('firstname', 'asc');
-            $this->db->like('firstname', $get['q']);
-            $this->db->or_like('middlename', $get['q']);
-            $this->db->or_like('lastname', $get['q']);
-            $query = $this->db->get();
-            if ($query->num_rows() > 0) {
-                foreach ($query->result_array() as $_query) {
-                    $data = array();
-                    $data["id"] = $_query["id"];
-                    $data["text"] = $_query["firstname"] . " " . $_query["middlename"] . " " . $_query["lastname"];
-                    $resultarray[] = $data;
-                }
-            }
-            return array("results" => $resultarray);
-
-
-        } else {
-            $this->db->from('gccmaster.tblemployees');
-            $this->db->where('gccmaster.tblemployees.employee_status', 'Active');
-            $this->db->order_by('firstname', 'asc');
-            $query = $this->db->get();
-            if ($query->num_rows() > 0) {
-                foreach ($query->result_array() as $_query) {
-                    $data = array();
-                    $data["id"] = $_query["id"];
-                    $data["text"] = $_query["firstname"] . " " . $_query["middlename"] . " " . $_query["lastname"];
-                    $resultarray[] = $data;
-                }
-            }
-            return array("results" => $resultarray);
+            $this->db->group_start();
+            $this->db->like('emp.firstname', $get['q'], "BOTH");
+            $this->db->or_like('emp.middlename', $get['q'], "BOTH");
+            $this->db->or_like('emp.lastname', $get['q'], "BOTH");
+            $this->db->group_end();
         }
+        $this->db->where('emp.employee_status', 'Active');
+        $this->db->where("user.id IS NULL");
+        $this->db->order_by('emp.firstname', 'ASC');
+        $query =$this->db->get();
+
+        return array("results" => $query->result_array(), "_query" => $this->db->last_query());
     }
 
     public function save_user($data)
@@ -86,16 +70,13 @@ class User_model extends CI_Model
         return $this->db->insert_id();
     }
 
-    public function edit_user($id)
-    {
-        $sql = "a.id, a.email, a.username, a.password, a.group_id, b.group_name, a.telegram_chat_id";
-
+    public function edit_user($id){
+        $sql = "a.id, a.email, a.username, a.password, a.role_id, TRIM(UPPER(b.description)) as role_name, a.telegram_chat_id, a.is_important";
         $this->db->select($sql);
         $this->db->from("gccmaster.tblusers a");
-        $this->db->join("gccmaster.tblgroups b", "a.group_id = b.id", "LEFT");
+        $this->db->join("gccmaster.user_role b", "b.id = a.role_id", "LEFT");
         $this->db->where('a.id', $id);
         $query = $this->db->get();
-
         return $query->row();
     }
 
@@ -679,4 +660,11 @@ class User_model extends CI_Model
         }
     }
 
+    public function getUserRoleSelectData(){
+        $this->db->select('id, TRIM(UPPER(description)) as text');
+        $this->db->from('gccmaster.user_role');
+        $this->db->where('is_active', 1);
+        $this->db->where('status', 1);
+        return $this->db->get()->result();
+    }
 }
