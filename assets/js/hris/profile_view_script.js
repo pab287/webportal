@@ -1057,3 +1057,39 @@ $('#offense-tabs .nav-link').on('click', function(e) {
     var targetId = $(this).attr('href');
     $(targetId).addClass('active show');
  });
+
+ function openFile(employeeId, name) {
+    // Construct the full URL of the file
+    var fileUrl = baseUrl("uploads/files/documents/employee_files/empcode_" + employeeId + "/offenses_commendation/" + encodeURIComponent(name));
+    // Function to check if file exists and get its MIME type
+    function checkFileExists(url, callback) {
+        $.ajax({
+            url: url,
+            type: 'HEAD',
+            success: function(response, status, xhr) {
+                var mimeType = xhr.getResponseHeader("Content-Type");
+                callback(true, mimeType);
+            },
+            error: function(xhr, status, error) {
+                callback(false, null);
+            }
+        });
+    }
+
+    // Check if file exists
+    checkFileExists(fileUrl, function(exists, mimeType) {
+        if (!exists) {
+            // Show error message if file doesn't exist
+            $('#pdfViewerModal .modal-body').html('<p class="text-danger">Error: File not found.</p>');
+            $('#pdfViewerModal').modal('show');
+        } else if (mimeType && mimeType.startsWith('application/pdf')) {
+            // Show PDF in modal
+            $('#pdfViewerModal .modal-body').html('<iframe id="pdfFrame" style="width: 100%; height: 600px;" frameborder="0"></iframe>');
+            $('#pdfViewerModal').modal('show');
+            $('#pdfFrame').attr('src', fileUrl);
+        } else {
+            // Open non-PDF files in new window
+            window.open(fileUrl, '_blank');
+        }
+    });
+}
