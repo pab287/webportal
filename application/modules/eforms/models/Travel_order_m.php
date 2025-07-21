@@ -92,9 +92,13 @@
                 $this->db->where("a.status !=", "Cancelled");
                 $this->db->where("DATE(a.created_dt) >=", $check);
                 $this->db->group_by("a.id");
-            } 
+            }
+            else if ($status == 'Accomplished') {
+                $this->db->where('a.accomplished', 1);
+            }
             else if ($status) {
                 $this->db->where('a.status', $status);
+                $this->db->where('a.accomplished', 0);
             }
             else {
                 $this->db->group_start();
@@ -295,8 +299,12 @@
                 $this->db->where("DATE(a.created_dt) >=", $check);
                 $this->db->group_by("a.id");
             }
-            else if($status){
+            else if ($status == 'Accomplished') {
+                $this->db->where('a.accomplished', 1);
+            }
+            else if ($status) {
                 $this->db->where('a.status', $status);
+                $this->db->where('a.accomplished', 0);
             }
             else{
                 $this->db->group_start();
