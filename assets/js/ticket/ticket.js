@@ -163,7 +163,7 @@ let tbl = $("#table-tickets").DataTable({
         },
         {
             targets: [7],
-            orderable: false
+            // orderable: false
         },
         {
             data: null,

@@ -109,6 +109,9 @@ class Ticket_m extends CI_Model
         else if($sortBy[$i]['data'] == "performed_by"){
             $this->db->order_by("c.firstname", $sortOrder[0]['dir']);
         }
+        else if($sortBy[$i]['data'] == "requestor"){
+            $this->db->order_by("b.firstname", $sortOrder[0]['dir']);
+        }
         else{
             $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
         }
