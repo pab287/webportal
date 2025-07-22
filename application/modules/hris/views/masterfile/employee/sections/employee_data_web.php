@@ -1004,8 +1004,9 @@
                             <th class="" scope="col">ASSET NAME</th>
                             <th class="text-right" scope="col" width="10%">AMOUNT</th>
                             <th class="text-center" scope="col" width="10%">RETURNED</th>
-                            <th class="text-center" scope="col" width="13%">REMARKS</th>
                             <th class="" scope="col" width="13%">DATE RETURNED</th>
+                            <th class="text-center" scope="col" width="13%">REMARKS</th>
+
                         </tr>
                     </thead>
                     <tbody>
@@ -1040,13 +1041,14 @@
                                 No
                             </span>
                             </td>
+                            <td data-label="DATE" v-text="formatDate(acct.date_returned || 'N/A')"></td>
                             <td class="text-center" data-label="REMARKS">
                             <template v-if="hasRemarks(acct)">
                                 <a href="javascript:void(0)" @click="showRemarks(acct.remarks_returned)">View Remarks</a>
                             </template>
                             <template v-else>NO REMARKS</template>
                             </td>
-                            <td data-label="DATE" v-text="formatDate(acct.date_returned || 'N/A')"></td>
+
                         </tr>
                     </template>
                     </tbody>
