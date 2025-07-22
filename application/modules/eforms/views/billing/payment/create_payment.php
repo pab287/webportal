@@ -91,7 +91,7 @@
                                     <div class="col-md-6">
                                         <div class="form-group form__group">   
                                             <label>Bill Amount</label>
-                                            <input class="form-control m-input text-right billing_amount" step="0.01" id="billing_amount" readonly autocomplete="off">
+                                            <input name="billing_amount" class="form-control m-input text-right billing_amount" step="0.01" id="billing_amount" readonly autocomplete="off">
                                         </div>             
                                     </div>
                                 </div>
@@ -107,7 +107,7 @@
                                     <div class="col-md-12">
                                         <div class="form-group form__group">
                                             <label>Total</label>
-                                            <input class="form-control m-input text-right total_balance" step="0.01" readonly type="text">
+                                            <input name="overpayment" class="form-control m-input text-right overpayment" step="0.01" readonly type="text">
                                         </div>
                                     </div>
                                 </div>

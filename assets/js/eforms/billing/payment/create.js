@@ -98,7 +98,7 @@ Inputmask.extendAliases({
 
 $("#sub_total").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
 $("#balance_covered").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
-$(".total_balance").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
+$(".overpayment").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
 $(".remaining_balance").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
 $("#billing_amount").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
 $("#receivedAmount").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
@@ -125,34 +125,17 @@ $('#billSelect').on('select2:select', function (e) {
 
 function handleValueChange(billing_amount) {
   var receivedAmount = document.getElementById('receivedAmount').value.replace(/[^0-9a-zA-Z.]/g, "");
-  var netPaymnt = document.getElementById('net_payment').value.replace(/[^0-9a-zA-Z.]/g, "");
-  // var received_amount = $('#receivedAmount').val();
-
-  // if(parseFloat(receivedAmount) > 0){
-  //   $("#btnSave").prop("disabled", "");
-  // }else{
-  //   $("#btnSave").prop("disabled", "disabled");
-  // }
-
-  // if(parseFloat(receivedAmount) >= parseFloat(netPaymnt)){
-  //   $("#help-block").text("");
-  //   $('#btnSave').prop('disabled', false);
-  // } else{
-  //   $("#help-block").text("Amount must not less than to net payment.");
-  //   $('#btnSave').prop('disabled', true);
-  // }
-
   var balance_covered = $('#balance_covered').val().replace(/[^0-9a-zA-Z.]/g, "");
-  var total_balance = $('.total_balance').val().replace(/[^0-9a-zA-Z.]/g, "");
-  var parseTotal_balance = parseFloat(total_balance);
+  var overpayment = $('.overpayment').val().replace(/[^0-9a-zA-Z.]/g, "");
+  var parseOverpayment = parseFloat(overpayment);
   var parseBilling_amount = parseFloat(billing_amount);
 
   var bill_amount = document.getElementById('billing_amount').value.replace(/[^0-9a-zA-Z.]/g, "");
   
-  // IF total balance has value
-  if (total_balance > 0) {
+  // IF overpayment has value
+  if (overpayment > 0) {
     // Has overpayment OR the overpayment is greater than bill amount
-    if(parseTotal_balance > parseFloat(bill_amount)) {
+    if(parseOverpayment > parseFloat(bill_amount)) {
         submitToggle(false);
     } else {
         if(parseFloat(receivedAmount) > 0 || Math.floor(balance_covered) > 0) {
@@ -347,7 +330,7 @@ function populate_customer_name(customer_id) {
       
       accnt_balance = data.balance;
       $(".customer_name").val(data.data.firstname + " " + data.data.lastname);
-      $(".total_balance").val(accnt_balance);
+      $(".overpayment").val(accnt_balance);
 
       if(accnt_balance > 0){
         $(".balance_layout").show();
