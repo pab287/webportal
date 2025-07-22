@@ -117,11 +117,32 @@
                         <select id="select2_employee" name="emp_id" data-validation="required"></select>
                     </div>
                 </div>
-                <div class="form-group row">
-                    <label for="email" class="control-label col-md-2 required">Email</label>
-                    <div class="col-md-12">
-                        <input type="text" name="email" class="form-control" data-validation="required" autocomplete="off" />
+                <div id="email-container">
+                    <div class="form-group row" v-if="is_editable === true">
+                        <label for="emp_id" class="control-label col-md-2">Employee</label>
+                        <div class="col-md-12">
+                            <p class="form-control mb-0" disabled v-text="account_name">&nbsp;</p>
+                        </div>
                     </div>
+                    <div class="form-group row">
+                        <label for="" class="col-5 col-form-label">Has Email Address ?</label>
+                        <div class="col-3">
+                            <span class="m-switch m-switch--sm m-switch--icon">
+                                <label>
+                                <input type="checkbox" @change="updateHasEmailState($event)" :checked="has_email">
+                                <span></span>
+                                </label>
+                            </span>
+                        </div>
+                    </div>
+                    <template v-if="has_email === true">
+                        <div class="form-group row">
+                            <label for="email" class="control-label col-md-6 required">Email Address</label>
+                            <div class="col-md-12">
+                                <input type="email" name="email" class="form-control" data-validation="required" autocomplete="off" />
+                            </div>
+                        </div>
+                    </template>
                 </div>
                 <div class="form-group row">
                     <label for="username" class="control-label col-md-4 required">Username</label>
@@ -141,7 +162,9 @@
                     <div class="col-md-12">
                         <select id="user_role" name="role_id" data-validation="required"></select>
                     </div>
-                    <div class="col-md-12 mt-2">
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
                         <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-brand alert-dismissible fade show" role="alert">
                             <div class="m-alert__icon">
                                 <i class="flaticon-exclamation-1"></i>
@@ -154,9 +177,9 @@
                     </div>
                 </div>
                 <div class="form-group row">
-                    <label for="telegram_chat_id" class="control-label col-md-4">Telegram ID <small>(Optional)</small></label>
+                    <label for="telegram_chat_id" class="control-label col-md-6">Telegram ID <small>(Optional)</small></label>
                     <div class="col-md-12">
-                        <input type="text" name="telegram_chat_id" class="form-control" />
+                        <input type="text" name="telegram_chat_id" class="form-control" autocomplete="off" />
                     </div>
                 </div>
                 <div class="row">

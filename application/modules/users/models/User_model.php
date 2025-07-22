@@ -71,10 +71,23 @@ class User_model extends CI_Model{
     }
 
     public function edit_user($id){
-        $sql = "a.id, a.email, a.username, a.password, a.role_id, TRIM(UPPER(b.description)) as role_name, a.telegram_chat_id, a.is_important";
+        $sql = "a.id, a.email, a.username, a.password, a.role_id, TRIM(UPPER(b.description)) as role_name, a.telegram_chat_id, a.is_important,
+            CASE 
+                WHEN a.email LIKE '%@%.%' AND a.email NOT LIKE '%..%' AND a.email NOT LIKE '@%' 
+            THEN '1' ELSE '0' END AS has_email,
+            CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(UPPER(SUBSTR(emp.middlename, 1, 1)), '.') ELSE ''
+            END,' ', UPPER(TRIM(emp.lastname)),
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix)) != 'NONE' AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
+            END) as account_name";
         $this->db->select($sql);
         $this->db->from("gccmaster.tblusers a");
         $this->db->join("gccmaster.user_role b", "b.id = a.role_id", "LEFT");
+        $this->db->join("gccmaster.tblemployees emp", "a.emp_id = emp.id", "INNER");
         $this->db->where('a.id', $id);
         $query = $this->db->get();
         return $query->row();

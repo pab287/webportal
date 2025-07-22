@@ -101,20 +101,82 @@ class Users extends MY_Controller{
         $post = $this->input->post();
         unset($post["id"], $post["csrf_token"]);
 
-        $post["password"] = MD5(TRIM($post["password"]));
-        $post["is_important"] = isset($post["is_important"]) && $post["is_important"] == "on" ? 1 : 0;
-        $post["force_update"] = 1;
-        $post["added_by"] = $this->core_layout->getCurrentEmployeeId();
-        $post["added_date"] = date("Y-m-d H:i:s");
+        $resultset = array();
+        $arrResponse = $this->userAccountChecker($post);
+        if(is_array($arrResponse) && !empty($arrResponse)){
+            $resultset["status"] = false;
+            $resultset["toastr_msg"] = implode("<br>", $arrResponse);
+        }else{
+            $post["password"] = MD5(TRIM($post["password"]));
+            $post["is_important"] = isset($post["is_important"]) && $post["is_important"] == "on" ? 1 : 0;
+            $post["force_update"] = 1;
+            $post["added_by"] = $this->core_layout->getCurrentEmployeeId();
+            $post["added_date"] = date("Y-m-d H:i:s");
+    
+            $insert = $this->user->save_user($post);
+            $tempData = $this->core_layout->getUserData($insert);
+            $tempName = (object) $tempData;
+            $tempName = (isset($tempName->display_name_1) && $tempName->display_name_1)? $tempName->display_name_1: "No assigned name";
+            $tempStatus = ($insert > 0)? "success": "error";
+            $tempMessage = ($insert > 0)? "New user account for `{$tempName}` has been added.": "Failed to add new user account!";
+            $this->core_layout->logNotification($tempMessage, $tempStatus, "users");
+            $resultset["status"] = true;
+            $resultset["toastr_msg"] = $tempMessage;
+        }
 
-        $insert = $this->user->save_user($post);
-        $tempData = $this->core_layout->getUserData($insert);
-        $tempName = (object) $tempData;
-        $tempName = (isset($tempName->display_name_1) && $tempName->display_name_1)? $tempName->display_name_1: "No assigned name";
-        $tempStatus = ($insert > 0)? "success": "error";
-        $tempMessage = ($insert > 0)? "New user account for `{$tempName}` has been added.": "Failed to add new user account!";
-		$this->core_layout->logNotification($tempMessage, $tempStatus, "users");
-        echo json_encode(array("status" => true));
+        echo json_encode($resultset);
+    }
+
+    protected function userAccountChecker($post=array()){
+        $responseError = [];
+        if(isset($post["username"]) && $post["username"]){
+            $this->db->select("username, email, telegram_chat_id");
+            $this->db->where("username", trim($post["username"]));
+            if(isset($post["email"]) && $post["email"]){ $this->db->or_where("email", trim($post["email"])); }
+            if(isset($post["telegram_chat_id"]) && $post["telegram_chat_id"]){ $this->db->or_where("telegram_chat_id", trim($post["telegram_chat_id"])); }
+            $qUser = $this->db->get_where("gccmaster.tblusers");
+            if($qUser->num_rows() > 0){
+                foreach ($qUser->result() as $usr) {
+                    $tempResponses = $this->accountCheckerResponses($usr, $post);
+                    $responseError = array_merge($responseError, $tempResponses);
+                }
+            }
+        }else{ $responseError[] = "Username is required!"; }
+        return $responseError;
+    }
+
+    protected function existingUserAccountChecker($post=array()){
+        $responseError = [];
+        if(is_array($post) && !empty($post)){
+            $this->db->select("username, email, telegram_chat_id");
+            $ctr = 0;
+            foreach ($post as $key => $value) {
+                if($ctr == 0){ $this->db->where($key, $value); }
+                else{ $this->db->or_where($key, $value); }
+            }
+            $qUser = $this->db->get_where("gccmaster.tblusers");
+            if($qUser->num_rows() > 0){
+                foreach ($qUser->result() as $usr) {
+                    $tempResponses = $this->accountCheckerResponses($usr, $post);
+                    $responseError = array_merge($responseError, $tempResponses);
+                }
+            }
+        }
+        return $responseError;
+    }
+
+    protected function accountCheckerResponses($result, $post=array()){
+        $responseError = [];
+        if(isset($post["username"]) && $post["username"] && $result->username == $post["username"]){
+            $responseError[] = "- Username <strong>`".$result->username."`</strong> already exists!";
+        }
+        if(isset($post["email"]) && $post["email"] && $result->email == $post["email"]){
+            $responseError[] = "- Email <strong>`".$result->email."`</strong> already exists!";
+        }
+        if(isset($post["telegram_chat_id"]) && $post["telegram_chat_id"] && $result->telegram_chat_id == $post["telegram_chat_id"]){
+            $responseError[] = "- Telegram ID <strong>`".$result->telegram_chat_id."`</strong> already exists!";
+        }
+        return $responseError;
     }
 
     public function edit_user($id){
@@ -129,21 +191,48 @@ class Users extends MY_Controller{
             $userId = $post["id"];
             $updatePassword = trim($post["password"]);
             unset($post["id"], $post["csrf_token"]);
+            $post["email"] = isset($post["email"]) && $post["email"]? trim($post["email"]): "NO EMAIL ADDRESS";
             $currentPassword = $this->db->get_where("gccmaster.tblusers", array("id"=>$userId))->row('password');
             if($currentPassword == $updatePassword){ unset($post["password"]); }
             else{ $post["password"] = md5($updatePassword); }
             $post["is_important"] = isset($post["is_important"]) && $post["is_important"] == "on" ? 1 : 0;
-            $updated = $this->user->update_user(array('id' => $userId), $post);
-            $tempData = $this->core_layout->getUserData($userId);
-            $tempName = (object) $tempData;
-            $tempName = (isset($tempName->display_name_1) && $tempName->display_name_1)? $tempName->display_name_1: "No assigned name";
             
-            $tempStatus = ($updated > 0)? "success": "error";
-            $tempMessage = ($updated > 0)? "User account of `{$tempName}` has been updated.": "Failed to update the user account of `{$tempName}`!";
-            $this->core_layout->logNotification($tempMessage, $tempStatus, "users");
-            $resultset["status"] = true;
+            $arrResponse = [];
+            $getUser = $this->db->get_where("gccmaster.tblusers", array("id"=>$userId, "is_suspended"=>0));
+            if($getUser->num_rows() === 1){
+                $row = $getUser->row();
+                $tempData = array();
+                if($row->email != $post["email"]){
+                    $tempData["email"] = $post["email"];
+                }
+                if($row->username != $post["username"]){
+                    var_dump($row->username, $post["username"]);
+                    $tempData["username"] = $post["username"];
+                }
+                if($row->telegram_chat_id != $post["telegram_chat_id"]){
+                    $tempData["telegram_chat_id"] = $post["telegram_chat_id"];
+                }
+                if(is_array($tempData) && !empty($tempData)){ $arrResponse = $this->existingUserAccountChecker($tempData); }
+            }else{ $arrResponse[] = "User account not found!"; }
+
+            if(is_array($arrResponse) && !empty($arrResponse)){
+                $resultset["status"] = false;
+                $resultset["message"] = implode("<br>", $arrResponse);
+            }else{
+                $updated = $this->user->update_user(array('id' => $userId), $post);
+                $tempData = $this->core_layout->getUserData($userId);
+                $tempName = (object) $tempData;
+                $tempName = (isset($tempName->display_name_1) && $tempName->display_name_1)? $tempName->display_name_1: "No assigned name";
+                
+                $tempStatus = ($updated > 0)? "success": "error";
+                $tempMessage = ($updated > 0)? "User account of `{$tempName}` has been updated.": "Failed to update the user account of `{$tempName}`!";
+                $this->core_layout->logNotification($tempMessage, $tempStatus, "users");
+                $resultset["status"] = true;
+                $resultset["message"] = $tempMessage;
+            }
         } else {
             $resultset["status"] = false;
+            $resultset["message"] = "User account not found!";
         }
         echo json_encode($resultset);
     }

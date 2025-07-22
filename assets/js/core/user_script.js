@@ -13,7 +13,8 @@ $("select#user_role").select2({
     width: '100%',
     data: userRoles,
     dropdownParent: $('#modal_form_user')
-});
+}).on('change', function (e) { $(e.target).validate(); });
+
 $("#select2_employee").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
@@ -27,7 +28,8 @@ $("#select2_employee").select2({
             return data;
         }
     }
-});
+}).on('change', function (e) { $(e.target).validate(); });
+
 const _modalAssignRole = $("#modal-user_role-assign");
 const _dtUsers = $("#table-users").DataTable({
     dom: '<"toolbar">frtlip',
@@ -174,6 +176,9 @@ function open_user() {
     document.getElementById('employee').style.removeProperty('display');
     $('#form_user')[0].reset();
     $('#form_user').find("select#user_role").val("").trigger("change");
+    vmEmail.has_email = false;
+    vmEmail.is_editable = false;
+    vmEmail.account_name = null;
     $('#modal_form_user').modal('show'); // show bootstrap modal
     $('.modal-title').text('New User'); // Set Title to Bootstrap modal title
 
@@ -208,16 +213,25 @@ function edit_user(id) {
     document.getElementById('employee').style.display = 'none';
     save_method = 'update';
     $('#form_user')[0].reset();
+
+    vmEmail.has_email = false;
+    vmEmail.is_editable = true;
+    vmEmail.account_name = null;
+
     $.ajax({
         url: baseUrl("users/edit_user/") + id,
         type: "GET",
         dataType: "JSON",
         success: function (data) {
+            setTimeout(function () {
+                vmEmail.has_email = parseInt(data.has_email) === 1;
+                setTimeout(function () { $('[name="email"]').val(data.email); }, 250);
+            }, 250);
+            vmEmail.account_name = data.account_name;
             $('[name="id"]').val(data.id);
             $('select#user_role').val(data.role_id).trigger('change');
             $('[name="username"]').val(data.username);
             $('[name="password"]').val(data.password);
-            $('[name="email"]').val(data.email);
             $('[name="telegram_chat_id"]').val(data.telegram_chat_id);
             const propChecked = parseInt(data.is_important) === 1;
             $('[name="is_important"]').prop('checked', propChecked);
@@ -247,16 +261,28 @@ $.validate({
             type: "POST",
             data: formData,
             dataType: "JSON",
-            success: function (data) {
-                if (data.status) {
+            success: function (json) {
+                const toastrMsg = json.toastr_msg;
+                const titleSuccess = save_method == 'add' ? "User data added!" : "User data updated!";
+                const titleError = save_method == 'add' ? "Failed adding data!" : "Failed updating data!";
+                if (json.status) {
                     _dtUsers.ajax.reload(null, false);
                     $("#modal_form_user").modal("hide");
-                    toastr.success("User data updated!", "Success", 10000);
-                } else {
-                    toastr.error("Failed updating data!", "Failed", 10000);
-                }
+                    toastr.success(toastrMsg, titleSuccess, 10000);
+                } else { toastr.error(toastrMsg, titleError, 10000); }
             }
         });
         return false;
     },
+});
+
+const vmEmail = new Vue({
+    el: "#email-container",
+    data: { has_email: false, is_editable: false, account_name: null },
+    methods: {
+        updateHasEmailState: function (e) {
+            const currentTarget = $(e.target);
+            this.has_email = currentTarget.prop("checked");
+        }
+    }
 });
