@@ -82,7 +82,7 @@ if(typeof _tempContentData.payout_schedule !== "undefined" && _tempContentData.p
         const tempKey = vv.id;
         const occurrence = vv.occurrence;
         let nOccurrance = [];
-        for(var i=1; i <= occurrence; i++){
+        for(let i=1; i <= occurrence; i++){
             const _tempOrdinal = moment.localeData().ordinal(i);
             const _tempRange = { id: i, text: _tempOrdinal };
             nOccurrance.push(_tempRange);
@@ -668,7 +668,6 @@ let dtPayrollSheet = _tblPayrollSheet
                         $(this).attr("r", pre + ind);
                     });
 
-                    console.log(tempPre);
                     let tempRowCols = [];
                     $.each(lastRowCols, function (i, v) {
                         let textContent = v.textContent;
@@ -678,9 +677,29 @@ let dtPayrollSheet = _tblPayrollSheet
                     });
 
                     let tempx = 0;
+
+                    /*** reference 
+                     * console.log(tempRowCols, lastRowCols, tempPre);
+                    console.log(lastRowCols.length, tempPre.length); 
+                    * reference
+                    */
+                    
                     $.each(tempPre, function (i, v) {
+                        let cval = "";
+                        if(i == 0) {
+                            cval = "GRAND TOTAL";
+                        }else if (i > 1 && i !== 11) {
+                            cval = tempRowCols[tempx];
+                            cval = $.trim(cval);
+                            tempx++;
+                        }
+                        let tempCell = { key: v, value: cval };
+                        tempData.push(tempCell);
+                    });
+
+                    /*** old code 
+                     * $.each(tempPre, function (i, v) {
                         let _value = "";
-                        console.log("index: "+i+" value:"+tempRowCols[i]);
                         if (i > 2 && i !== 10) {
                             _value = tempRowCols[tempx];
                             _value = $.trim(_value);
@@ -691,7 +710,9 @@ let dtPayrollSheet = _tblPayrollSheet
 
                         let tempCell = { key: v, value: _value };
                         tempData.push(tempCell);
-                    });
+                    }); 
+                    * old code
+                    ***/
 
                     numrows = $('row', sheet).length;
                     tempRowIndex = numrows > 0 ? numrows + 1 : numrows;
@@ -709,33 +730,66 @@ let dtPayrollSheet = _tblPayrollSheet
                     $('row:last c', sheet).attr("s", "2");
 
                     function Addrow(index, data) {
-                        var row = sheet.createElement('row');
+                        const row = sheet.createElement('row');
                         row.setAttribute("r", index);
+                        
+                        let i;
                         for (i = 0; i < data.length; i++) {
-                            var key = data[i].key;
-                            var value = data[i].value;
+                            const key = data[i].key;
+                            let value = data[i].value;
 
-                            var c = sheet.createElement('c');
-                            c.setAttribute("t", "inlineStr");
+                            const isNumber = $.isNumeric(value);
+                            const tempType = isNumber ? 'n' : 'inlineStr';
+                            
+                            const c = sheet.createElement('c');
+                            c.setAttribute("t", tempType);
+                            c.setAttribute("s", "2"); // style index
+                            c.setAttribute("r", key + index); // e.g., "A1", "B2"
+
+                            if (isNumber) {
+                                value = parseFloat(value.toString().replace(/,/g, '')); // Clean thousands separators if present
+                                const v = sheet.createElement('v');
+                                v.textContent = value;
+                                c.appendChild(v);
+                            } else {
+                                const is = sheet.createElement('is');
+                                const t = sheet.createElement('t');
+                                const text = sheet.createTextNode(value);
+                                t.appendChild(text);
+                                is.appendChild(t);
+                                c.appendChild(is);
+                            }
+
+                            row.appendChild(c);
+                        }
+
+                        /*** let i;
+                        for (i = 0; i < data.length; i++) {
+                            const key = data[i].key;
+                            const value = data[i].value;
+
+                            const tempType = $.isNumeric(value) ? 'n' : 'inlineStr';
+                            const c = sheet.createElement('c');
+                            c.setAttribute("t", tempType);
                             c.setAttribute("s", "2");
                             c.setAttribute("r", key + index);
 
-                            var is = sheet.createElement('is');
-                            var t = sheet.createElement('t');
-                            var text = sheet.createTextNode(value)
+                            const is = sheet.createElement('is');
+                            const t = sheet.createElement('t');
+                            const text = sheet.createTextNode(value);
 
                             t.appendChild(text);
                             is.appendChild(t);
                             c.appendChild(is);
 
                             row.appendChild(c);
-                        }
+                        } ***/
 
                         return row;
                     }
 
                     function _createNode(doc, nodeName, opts) {
-                        var tempNode = doc.createElement(nodeName);
+                        const tempNode = doc.createElement(nodeName);
                         if (opts) {
                             if (opts.attr) { $(tempNode).attr(opts.attr); }
                             if (opts.children) {
