@@ -105,7 +105,8 @@ class Users extends MY_Controller{
         $arrResponse = $this->userAccountChecker($post);
         if(is_array($arrResponse) && !empty($arrResponse)){
             $resultset["status"] = false;
-            $resultset["toastr_msg"] = implode("<br>", $arrResponse);
+            $resultset["toastr_error"] = $arrResponse;
+            $resultset["toastr_msg"] = "Error adding new user account!";
         }else{
             $post["password"] = MD5(TRIM($post["password"]));
             $post["is_important"] = isset($post["is_important"]) && $post["is_important"] == "on" ? 1 : 0;
@@ -130,15 +131,18 @@ class Users extends MY_Controller{
     protected function userAccountChecker($post=array()){
         $responseError = [];
         if(isset($post["username"]) && $post["username"]){
-            $this->db->select("username, email, telegram_chat_id");
-            $this->db->where("username", trim($post["username"]));
-            if(isset($post["email"]) && $post["email"]){ $this->db->or_where("email", trim($post["email"])); }
-            if(isset($post["telegram_chat_id"]) && $post["telegram_chat_id"]){ $this->db->or_where("telegram_chat_id", trim($post["telegram_chat_id"])); }
-            $qUser = $this->db->get_where("gccmaster.tblusers");
+            $this->db->select("users.username, users.email, users.telegram_chat_id, users.is_suspended, UPPER(emp.employee_status) as employee_status");
+            $this->db->select("CASE WHEN users.email LIKE '%@%.%' AND users.email NOT LIKE '%..%' AND users.email NOT LIKE '@%' THEN '1' ELSE '0' END AS has_email");
+            $this->db->where("users.username", trim($post["username"]));
+            if(isset($post["email"]) && $post["email"]){ $this->db->or_where("users.email", trim($post["email"])); }
+            if(isset($post["telegram_chat_id"]) && $post["telegram_chat_id"]){ $this->db->or_where("users.telegram_chat_id", trim($post["telegram_chat_id"])); }
+            $this->db->join("gccmaster.tblemployees emp", "emp.id = gccmaster.users.emp_id", "INNER");
+            $qUser = $this->db->get_where("gccmaster.tblusers users");
             if($qUser->num_rows() > 0){
                 foreach ($qUser->result() as $usr) {
-                    $tempResponses = $this->accountCheckerResponses($usr, $post);
-                    $responseError = array_merge($responseError, $tempResponses);
+                    $hasEmail = intval($usr->has_email) === 1;
+                    $tempResponses = $this->accountCheckerResponses($usr, $post, $hasEmail);
+                    $responseError = array_unique(array_merge($responseError, $tempResponses));
                 }
             }
         }else{ $responseError[] = "Username is required!"; }
@@ -148,33 +152,42 @@ class Users extends MY_Controller{
     protected function existingUserAccountChecker($post=array()){
         $responseError = [];
         if(is_array($post) && !empty($post)){
-            $this->db->select("username, email, telegram_chat_id");
+            $tempKeys = array("username"=>"users.username", "email"=>"users.email", "telegram_chat_id"=>"users.telegram_chat_id");
+            $this->db->select("users.username, users.email, users.telegram_chat_id, users.is_suspended, UPPER(emp.employee_status) as employee_status");
+            $this->db->select("CASE WHEN users.email LIKE '%@%.%' AND users.email NOT LIKE '%..%' AND users.email NOT LIKE '@%' THEN '1' ELSE '0' END AS has_email");
             $ctr = 0;
             foreach ($post as $key => $value) {
-                if($ctr == 0){ $this->db->where($key, $value); }
-                else{ $this->db->or_where($key, $value); }
+                if(isset($tempKeys[$key]) && $tempKeys[$key]){
+                    $nKey = isset($tempKeys[$key])? $tempKeys[$key]: $key;
+                    if($ctr == 0){ $this->db->where($nKey, trim($value)); }
+                    else{ $this->db->or_where($nKey, trim($value)); }
+                    $ctr++;
+                }
             }
-            $qUser = $this->db->get_where("gccmaster.tblusers");
+            $this->db->join("gccmaster.tblemployees emp", "emp.id = gccmaster.users.emp_id", "INNER");
+            $qUser = $this->db->get_where("gccmaster.tblusers users");
             if($qUser->num_rows() > 0){
                 foreach ($qUser->result() as $usr) {
-                    $tempResponses = $this->accountCheckerResponses($usr, $post);
-                    $responseError = array_merge($responseError, $tempResponses);
+                    $hasEmail = intval($usr->has_email) === 1;
+                    $tempResponses = $this->accountCheckerResponses($usr, $post, $hasEmail);
+                    $responseError = array_unique(array_merge($responseError, $tempResponses));
                 }
             }
         }
         return $responseError;
     }
 
-    protected function accountCheckerResponses($result, $post=array()){
+    protected function accountCheckerResponses($result, $post=array(), $hasEmail=false){
         $responseError = [];
+        $isSuspended = intval($result->is_suspended) === 1? ", and is currently <strong>`".$result->employee_status."`</strong> Employee Status with <strong>SUSPENDED ACCOUNT!</strong>": "!";
         if(isset($post["username"]) && $post["username"] && $result->username == $post["username"]){
-            $responseError[] = "- Username <strong>`".$result->username."`</strong> already exists!";
+            $responseError[] = "Username <strong>`".$result->username."`</strong> already exists".$isSuspended;
         }
-        if(isset($post["email"]) && $post["email"] && $result->email == $post["email"]){
-            $responseError[] = "- Email <strong>`".$result->email."`</strong> already exists!";
+        if(isset($post["email"]) && $post["email"] && $result->email == $post["email"] && $hasEmail){
+            $responseError[] = "Email <strong>`".$result->email."`</strong> already exists".$isSuspended;
         }
         if(isset($post["telegram_chat_id"]) && $post["telegram_chat_id"] && $result->telegram_chat_id == $post["telegram_chat_id"]){
-            $responseError[] = "- Telegram ID <strong>`".$result->telegram_chat_id."`</strong> already exists!";
+            $responseError[] = "Telegram ID <strong>`".$result->telegram_chat_id."`</strong> already exists and was used by <strong>`".$result->username."`</strong>".$isSuspended;
         }
         return $responseError;
     }
@@ -198,16 +211,16 @@ class Users extends MY_Controller{
             $post["is_important"] = isset($post["is_important"]) && $post["is_important"] == "on" ? 1 : 0;
             
             $arrResponse = [];
+            $this->db->select("email, username, telegram_chat_id");
             $getUser = $this->db->get_where("gccmaster.tblusers", array("id"=>$userId, "is_suspended"=>0));
             if($getUser->num_rows() === 1){
                 $row = $getUser->row();
                 $tempData = array();
+                if($row->username != $post["username"]){
+                    $tempData["username"] = $post["username"];
+                }
                 if($row->email != $post["email"]){
                     $tempData["email"] = $post["email"];
-                }
-                if($row->username != $post["username"]){
-                    var_dump($row->username, $post["username"]);
-                    $tempData["username"] = $post["username"];
                 }
                 if($row->telegram_chat_id != $post["telegram_chat_id"]){
                     $tempData["telegram_chat_id"] = $post["telegram_chat_id"];
@@ -217,7 +230,8 @@ class Users extends MY_Controller{
 
             if(is_array($arrResponse) && !empty($arrResponse)){
                 $resultset["status"] = false;
-                $resultset["message"] = implode("<br>", $arrResponse);
+                $resultset["toastr_msg"] = "Error in updating user account!";
+                $resultset["toastr_error"] = $arrResponse;
             }else{
                 $updated = $this->user->update_user(array('id' => $userId), $post);
                 $tempData = $this->core_layout->getUserData($userId);
@@ -228,11 +242,11 @@ class Users extends MY_Controller{
                 $tempMessage = ($updated > 0)? "User account of `{$tempName}` has been updated.": "Failed to update the user account of `{$tempName}`!";
                 $this->core_layout->logNotification($tempMessage, $tempStatus, "users");
                 $resultset["status"] = true;
-                $resultset["message"] = $tempMessage;
+                $resultset["toastr_msg"] = $tempMessage;
             }
         } else {
             $resultset["status"] = false;
-            $resultset["message"] = "User account not found!";
+            $resultset["toastr_msg"] = "User account not found!";
         }
         echo json_encode($resultset);
     }

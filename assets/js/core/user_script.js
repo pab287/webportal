@@ -175,6 +175,7 @@ function open_user() {
     save_method = 'add';
     document.getElementById('employee').style.removeProperty('display');
     $('#form_user')[0].reset();
+    $('#form_user').find("select#select2_employee").val("").trigger("change");
     $('#form_user').find("select#user_role").val("").trigger("change");
     vmEmail.has_email = false;
     vmEmail.is_editable = false;
@@ -263,13 +264,19 @@ $.validate({
             dataType: "JSON",
             success: function (json) {
                 const toastrMsg = json.toastr_msg;
+                const toastrError = json.toastr_error;
                 const titleSuccess = save_method == 'add' ? "User data added!" : "User data updated!";
                 const titleError = save_method == 'add' ? "Failed adding data!" : "Failed updating data!";
                 if (json.status) {
                     _dtUsers.ajax.reload(null, false);
                     $("#modal_form_user").modal("hide");
                     toastr.success(toastrMsg, titleSuccess, 10000);
-                } else { toastr.error(toastrMsg, titleError, 10000); }
+                } else { 
+                    if(toastrError.length > 0){
+                        toastrError.forEach(error => { toastr.warning(error, titleError, 10000); });
+                    }
+                    toastr.error(toastrMsg, titleError, 10000);
+                }
             }
         });
         return false;
