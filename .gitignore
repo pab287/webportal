@@ -26,7 +26,6 @@ androidapp/storage/mass_attendance_storage/*
 !androidapp/storage/mass_attendance_storage
 
 androidapp/index.php
-androidapp/core/Dbase.php
 
 sql
 sql/*
