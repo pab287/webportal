@@ -1,4 +1,4 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed');
+<?php defined('BASEPATH') || exit('No direct script access allowed');
 class Timesheet_model extends CI_Model{
     protected $tbl_employees = "gccmaster.tblemployees";
     protected $tbl_tblcompanies = "gcchris.tblcompanies";
@@ -57,7 +57,6 @@ class Timesheet_model extends CI_Model{
         // $is_custom = identifier if attendance record is direct from device or manual e.g. imported
         $employees = $this->getEmployeesWithAttendance($date, $is_custom, $emp);
         $weekday = strtolower(date("l", strtotime($date)));
-        $time_sheet = array();
         $resultSet = array();
         $hasOT = 0;
         $updatedTimesheets = array();
@@ -94,6 +93,9 @@ class Timesheet_model extends CI_Model{
                     }
                 }
 
+                $updatedSchedule = $this->getCurrentShiftSchedule($date, $employee);
+                $schedule = $updatedSchedule->schedule;
+
                 $payrollType = $employee->payroll_type;
                 $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $employee->id);
 
@@ -119,7 +121,6 @@ class Timesheet_model extends CI_Model{
 
                 $flexible = intval($employee->is_flexi) !== 0;
                 $flexibleEmployee = intval($employee->is_flexi) === 1;
-                $flexibleOneInOut = intval($employee->is_flexi) === 4;
                 $shift_id = $employee->shift_id;
 
                 /* CONCATENATE DATE + START TIME OF TIME PARAMS start_time ex. [2020-07-24 06:01] AS START DATE PARAMETER TO DETERMINE ATTENDANCES
@@ -137,7 +138,7 @@ class Timesheet_model extends CI_Model{
 
                 $attendance = array_values(array_unique($attendance));
 
-                $attendance_log_ctr = sizeof($attendance);
+                /*** $attendance_log_ctr = sizeof($attendance);
 
                 $tempResource = array();
                 $shift_resource_array = array();
@@ -150,40 +151,38 @@ class Timesheet_model extends CI_Model{
                     $shift_resource_array = array_map(function ($item) {
                         return intval($item);
                     }, $tempResource);
-                }
+                } ***/
 
                 /*** $shift_resource = $this->getShiftResource($shift_id);
                 $shift_resource_array = array_map(function ($item) {
                     return intval($item);
                 }, unserialize($shift_resource->shift_resource)); ***/
 
-                $schedule = $this->getScheduleList($weekday, $shift_resource_array);
+                /*** $schedule = $this->getScheduleList($weekday, $shift_resource_array); ***/
                 /*** altered shift schedule from custom shift `start` ***/
                 /*** $tempAlteredIndexId = "shift-id_{$shift_id}"; ***/
-                $alteredCustomShiftId = 0;
+                /*** $alteredCustomShiftId = 0;
                 $alteredHasShiftSchedule = 1;
 
-                if(isset($alteredShifts) && $alteredShifts && count(get_object_vars($alteredShifts)) > 0){
-                    if(isset($alteredShifts->has_shift)){
-                        $ctrAlteredSchedule = false;
-                        $tempHasShift = $alteredShifts->has_shift;
-                        $alteredHasShiftSchedule = intval($tempHasShift);
+                if(isset($alteredShifts, $alteredShifts->has_shift) && $alteredShifts && count(get_object_vars($alteredShifts)) > 0){
+                    $ctrAlteredSchedule = false;
+                    $tempHasShift = $alteredShifts->has_shift;
+                    $alteredHasShiftSchedule = intval($tempHasShift);
 
-                        foreach ($alteredShifts->schedule as $kkx => $vvx) {
-                            if(isset($schedule->{$kkx}) && $schedule->{$kkx} && $schedule->{$kkx} !== $vvx && $vvx !== null && intval($tempHasShift) == 1){
-                                $schedule->{$kkx} = $vvx;
-                                $ctrAlteredSchedule = true;
-                            }
-                            if(intval($tempHasShift) == 0){
-                                $schedule->{$kkx} = null;
-                                $ctrAlteredSchedule = true;
-                            }
+                    foreach ($alteredShifts->schedule as $kkx => $vvx) {
+                        if(isset($schedule->{$kkx}) && $schedule->{$kkx} && $schedule->{$kkx} !== $vvx && $vvx !== null && intval($tempHasShift) == 1){
+                            $schedule->{$kkx} = $vvx;
+                            $ctrAlteredSchedule = true;
                         }
-                        if($ctrAlteredSchedule === true && $alteredShifts->custom_shift_id !== "0"){
-                            $alteredCustomShiftId = $alteredShifts->custom_shift_id;
+                        if(intval($tempHasShift) == 0){
+                            $schedule->{$kkx} = null;
+                            $ctrAlteredSchedule = true;
                         }
                     }
-                }
+                    if($ctrAlteredSchedule === true && $alteredShifts->custom_shift_id !== "0"){
+                        $alteredCustomShiftId = $alteredShifts->custom_shift_id;
+                    }
+                } ***/
                 /*** altered shift schedule from custom shift `end` ***/
 
                 $am_start = !empty($schedule) ? $schedule->am_start : null;
@@ -210,7 +209,7 @@ class Timesheet_model extends CI_Model{
                 $employee_time_sheet->weekday = $weekday;
                 $employee_time_sheet->is_holiday = $isHoliday;
                 $employee_time_sheet->payrate_id = $payRateId;
-                $employee_time_sheet->custom_shift_id = $alteredCustomShiftId;
+                $employee_time_sheet->custom_shift_id = $updatedSchedule->custom_shift_id;
 
                 $employee_time_sheet->am_in = null;
                 $employee_time_sheet->am_out = null;
@@ -232,9 +231,10 @@ class Timesheet_model extends CI_Model{
                 $employee_time_sheet->scrub_status = 0;
                 $employee_time_sheet->comments = null;
 
-                $_has_shift = $alteredCustomShiftId !== 0? intval($alteredHasShiftSchedule): 1;
-
-                $employee_time_sheet->has_shift = $_has_shift;
+                /*** $_has_shift = $alteredCustomShiftId !== 0? intval($alteredHasShiftSchedule): 1; 
+                $employee_time_sheet->has_shift = $_has_shift; ***/
+                
+                $employee_time_sheet->has_shift = $updatedSchedule->has_shift;
                 $employee_time_sheet->shift_am_start = null;
                 $employee_time_sheet->shift_am_end = null;
                 $employee_time_sheet->shift_pm_start = null;
@@ -274,8 +274,8 @@ class Timesheet_model extends CI_Model{
                     }
 
                     if($hasShiftUpdate && intval($timesheet_exist->verified) !== 1){
-                        $timesheet_exist->has_shift = $_has_shift;
-                        foreach($tempShiftProps as $kk => $vv){
+                        $timesheet_exist->has_shift = $updatedSchedule->has_shift;
+                        foreach($tempShiftProps as $vv){
                             $shiftRecord = ${$vv};
                             $tempShiftKey = "shift_{$vv}";
                             if(isset($timesheet_exist->$tempShiftKey) && $timesheet_exist->$tempShiftKey){
@@ -361,7 +361,7 @@ class Timesheet_model extends CI_Model{
                     if (intval($timesheet_exist->verified) === 1) { continue; }
                 } /*** end timesheet_exist ***/
 
-                if (intval($shift_id) === 0) continue;
+                if (intval($shift_id) === 0) { continue; }
                 /*** insert timesheet record start ***/
                 if(sizeof((array) $timesheet_exist) == 0){
                     $timesheetUpdate = $this->generateTimesheetComputation($timesheet_exist, $employee_time_sheet, $updatedTimesheets, $attendance, $date,
@@ -943,6 +943,63 @@ class Timesheet_model extends CI_Model{
 
         $resultSet["updatedTimesheets"] = $updatedTimesheets;
         return $resultSet;
+    }
+
+    protected function getCurrentShiftSchedule($date=null, $employee=null){
+        $updatedSchedule = new StdClass();
+        $updatedSchedule->schedule = array();
+        $updatedSchedule->custom_shift_id = 0;
+        $updatedSchedule->shift_id = $employee->shift_id;
+        $updatedSchedule->has_shift = $employee->shift_id ? 1 : 0;
+
+        if($date && $employee->id && $employee->shift_id){
+            $currentDate = date("Y-m-d", strtotime($date));
+            $weekday = strtolower(date("l", strtotime($currentDate)));
+            $shift_resource_array = $this->getShiftResources($employee->shift_id);
+            $schedule = $this->getScheduleList($weekday, $shift_resource_array);
+            $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $employee->id);
+            $updatedSchedule->schedule = $schedule;
+            $updatedSchedule = $this->getAlteredShiftSchedule($updatedSchedule, $schedule, $alteredShifts);
+        }
+        return $updatedSchedule;
+    }
+
+    protected function getShiftResources($shift_id){
+        $shift_resource_array = array();
+        $shift_resource = $this->getShiftResource($shift_id);
+        if(isset($shift_resource->shift_resource) && $shift_resource->shift_resource){
+            $tempResource = $shift_resource->shift_resource;
+            $tempResource = unserialize($tempResource);
+
+            $shift_resource_array = array_map(function ($item) {
+                return intval($item);
+            }, $tempResource);
+        }
+        return $shift_resource_array;
+    }
+    
+    protected function getAlteredShiftSchedule($updatedSchedule=null, $schedule=null, $alteredShifts=null){
+        if(isset($schedule, $alteredShifts, $alteredShifts->has_shift) && $schedule && $alteredShifts && count(get_object_vars($alteredShifts)) > 0){
+            $alteredCustomShiftId = 0;
+            $ctrAlteredSchedule = false;
+            $alteredHasShiftSchedule = intval($alteredShifts->has_shift);
+            foreach ($alteredShifts->schedule as $kkx => $vvx) {
+                if(isset($schedule->{$kkx}) && $schedule->{$kkx} && $schedule->{$kkx} !== $vvx && $vvx !== null && $alteredHasShiftSchedule === 1){
+                    $schedule->{$kkx} = $vvx;
+                    $ctrAlteredSchedule = true;
+                }
+                if($alteredHasShiftSchedule === 0){
+                    $schedule->{$kkx} = null;
+                    $ctrAlteredSchedule = true;
+                }
+            }
+            if($ctrAlteredSchedule === true && $alteredShifts->custom_shift_id !== "0"){ $alteredCustomShiftId = $alteredShifts->custom_shift_id; }
+
+            $updatedSchedule->schedule = $schedule;
+            $updatedSchedule->has_shift = $alteredHasShiftSchedule;
+            $updatedSchedule->custom_shift_id = $alteredCustomShiftId;
+        }
+        return $updatedSchedule;
     }
 
     public function generateTimesheetRecords($tempRow, $date, $weekday){
@@ -8948,7 +9005,7 @@ class Timesheet_model extends CI_Model{
 
             $qTemp = $this->db->get_where($this->tbl_timesheet_customized_shift_schedule, array("scheduled_date"=>$date));
             if($qTemp->num_rows() > 0){
-                foreach ($qTemp->result() as $index => $row) {
+                foreach ($qTemp->result() as $row) {
                     $shiftIndexes = array("shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end");
                     $alterShiftIndexes = array("am_start", "am_end", "pm_start", "pm_end");
                     $tempRow = $row;
@@ -9627,5 +9684,3 @@ class Timesheet_model extends CI_Model{
         return $resultset;
     }
 }
-
-/* End of file .php */
