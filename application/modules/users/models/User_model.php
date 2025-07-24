@@ -1,11 +1,8 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed');
-
-class User_model extends CI_Model
-{
+<?php defined('BASEPATH') || exit('No direct script access allowed');
+class User_model extends CI_Model{
     private $timestamp = null;
 
-    function __construct()
-    {
+    public function __construct(){
         parent::__construct();
         $this->load->model("access_control_model", "acl_model");
         $this->load->model("datatable_model", "dt_model");
@@ -14,13 +11,11 @@ class User_model extends CI_Model
         $this->timestamp = new DateTime(null, new DateTimeZone('Asia/Manila'));
     }
 
-    private function getUserData()
-    {
+    private function getUserData(){
         return $this->core_layout->getUserLoggedIn();
     }
 
-    function getGroup()
-    {
+    function getGroup(){
         $get = $this->input->get();
         $resultarray = array();
         if (isset($get['q'])) {
@@ -40,44 +35,33 @@ class User_model extends CI_Model
         return array("results" => $resultarray);
     }
 
-    function getEmployee()
-    {
+    public function getEmployee(){
         $get = $this->input->get();
-        $resultarray = array();
+        $sqlSelect = "CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(UPPER(SUBSTR(emp.middlename, 1, 1)), '.') ELSE ''
+            END,' ', UPPER(TRIM(emp.lastname)),
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
+            END) as text, emp.id as id";
+        $this->db->select($sqlSelect);
+        $this->db->from('gccmaster.tblemployees as emp');
+        $this->db->join('gccmaster.tblusers as user', 'user.emp_id = emp.id', 'left');
         if (isset($get['q'])) {
-            $this->db->from('gccmaster.tblemployees');
-            $this->db->where('gccmaster.tblemployees.employee_status', 'Active');
-            $this->db->order_by('firstname', 'asc');
-            $this->db->like('firstname', $get['q']);
-            $this->db->or_like('middlename', $get['q']);
-            $this->db->or_like('lastname', $get['q']);
-            $query = $this->db->get();
-            if ($query->num_rows() > 0) {
-                foreach ($query->result_array() as $_query) {
-                    $data = array();
-                    $data["id"] = $_query["id"];
-                    $data["text"] = $_query["firstname"] . " " . $_query["middlename"] . " " . $_query["lastname"];
-                    $resultarray[] = $data;
-                }
-            }
-            return array("results" => $resultarray);
-
-
-        } else {
-            $this->db->from('gccmaster.tblemployees');
-            $this->db->where('gccmaster.tblemployees.employee_status', 'Active');
-            $this->db->order_by('firstname', 'asc');
-            $query = $this->db->get();
-            if ($query->num_rows() > 0) {
-                foreach ($query->result_array() as $_query) {
-                    $data = array();
-                    $data["id"] = $_query["id"];
-                    $data["text"] = $_query["firstname"] . " " . $_query["middlename"] . " " . $_query["lastname"];
-                    $resultarray[] = $data;
-                }
-            }
-            return array("results" => $resultarray);
+            $this->db->group_start();
+            $this->db->like('emp.firstname', $get['q'], "BOTH");
+            $this->db->or_like('emp.middlename', $get['q'], "BOTH");
+            $this->db->or_like('emp.lastname', $get['q'], "BOTH");
+            $this->db->group_end();
         }
+        $this->db->where('emp.employee_status', 'Active');
+        $this->db->where("user.id IS NULL");
+        $this->db->order_by('emp.firstname', 'ASC');
+        $query =$this->db->get();
+
+        return array("results" => $query->result_array(), "_query" => $this->db->last_query());
     }
 
     public function save_user($data)
@@ -86,16 +70,26 @@ class User_model extends CI_Model
         return $this->db->insert_id();
     }
 
-    public function edit_user($id)
-    {
-        $sql = "a.id, a.email, a.username, a.password, a.group_id, b.group_name, a.telegram_chat_id";
-
+    public function edit_user($id){
+        $sql = "a.id, a.email, a.username, a.password, a.role_id, TRIM(UPPER(b.description)) as role_name, a.telegram_chat_id, a.is_important,
+            CASE 
+                WHEN a.email LIKE '%@%.%' AND a.email NOT LIKE '%..%' AND a.email NOT LIKE '@%' 
+            THEN '1' ELSE '0' END AS has_email,
+            CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(UPPER(SUBSTR(emp.middlename, 1, 1)), '.') ELSE ''
+            END,' ', UPPER(TRIM(emp.lastname)),
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix)) != 'NONE' AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
+            END) as account_name";
         $this->db->select($sql);
         $this->db->from("gccmaster.tblusers a");
-        $this->db->join("gccmaster.tblgroups b", "a.group_id = b.id", "LEFT");
+        $this->db->join("gccmaster.user_role b", "b.id = a.role_id", "LEFT");
+        $this->db->join("gccmaster.tblemployees emp", "a.emp_id = emp.id", "INNER");
         $this->db->where('a.id', $id);
         $query = $this->db->get();
-
         return $query->row();
     }
 
@@ -169,18 +163,33 @@ class User_model extends CI_Model
         $tableConfigStd = $this->utilities->parseFormDataToObject($tableConfig);
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($tableConfigStd);
         $table = "gccmaster.tblusers users";
-        $searchFields = "CONCAT(users.email, employees.firstname, employees.lastname, employees.middlename)";
+        $searchFields = "CONCAT(users.email, users.username, employees.firstname, employees.lastname, employees.middlename, employees2.firstname, employees2.lastname, employees2.middlename, DATE_FORMAT(users.suspended_dt, '%M %e, %Y'))";
 
         $joinArr = array(
             array("table" => "gccmaster.tblemployees employees", "condition" => "users.emp_id = employees.id", "option" => "INNER"),
             array("table" => "gccmaster.tblemployees employees2", "condition" => "users.suspended_by = employees2.id", "option" => "LEFT")
         );
-        $where = array("users.is_suspended" => 1);
+        $where = array("users.is_suspended" => 1, "employees.employee_status" => "Active");
 
         $resultSet = array();
-        $this->db->select("users.id, users.email, employees.firstname, employees.lastname,
-                               employees.middlename, users.suspended_dt, 
-                               CONCAT(employees2.firstname, ' ', employees2.lastname) suspended_by");
+        $this->db->select("users.id, users.username, users.email, UPPER(CONCAT(employees.lastname,
+                CASE WHEN UPPER(TRIM(employees.suffix)) != 'N/A' AND
+                    UPPER(TRIM(employees.suffix !='NONE')) AND employees.suffix !='' AND
+                    employees.suffix IS NOT NULL THEN CONCAT(' ', employees.suffix) ELSE ''
+                END, ', ', employees.firstname, ' ',
+                CASE WHEN UPPER(TRIM(employees.middlename)) != 'N/A' AND UPPER(TRIM(employees.middlename)) != 'NONE' AND
+                        TRIM(employees.middlename) !='' AND employees.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(employees.middlename, 1, 1), '.') ELSE ''
+                END)) as employee_name,
+                UPPER(CONCAT(employees2.lastname,
+                CASE WHEN UPPER(TRIM(employees2.suffix)) != 'N/A' AND
+                    UPPER(TRIM(employees2.suffix !='NONE')) AND employees2.suffix !='' AND
+                    employees2.suffix IS NOT NULL THEN CONCAT(' ', employees2.suffix) ELSE ''
+                END, ', ', employees2.firstname, ' ',
+                CASE WHEN UPPER(TRIM(employees2.middlename)) != 'N/A' AND UPPER(TRIM(employees2.middlename)) != 'NONE' AND
+                        TRIM(employees2.middlename) !='' AND employees2.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(employees2.middlename, 1, 1), '.') ELSE ''
+                END)) as suspended_by, users.suspended_dt");
         $this->db->where($where);
         $this->db->like($searchFields, $pageOptions->search, "both");
         foreach ($joinArr as $join) {
@@ -194,10 +203,12 @@ class User_model extends CI_Model
         $this->db->order_by($pageOptions->order_column, $pageOptions->order_direction);
         $data = $this->db->get($table)->result();
 
+        $lastQ = $this->db->last_query();
         $search = array('field' => $searchFields, 'key' => $pageOptions->search, 'option' => "both");
         $resultSet["recordsTotal"] = $this->utilities->getTableCount($table, $where, $search, $joinArr);
         $resultSet["recordsFiltered"] = $this->utilities->getTableCount($table, $where, $search, $joinArr);
         $resultSet["data"] = $data;
+        $resultSet["_q"] = $lastQ;
         return $resultSet;
     }
 
@@ -481,19 +492,26 @@ class User_model extends CI_Model
     }
 
     private function getDatatableRequest($search, $limit, $offset, $sortBy, $sortOrder){
-        $filterFields = array('employees.firstname', 'employees.lastname', 'employees.middlename', 'users.email', 'users.username');
+        $filterFields = array('employees.firstname', 'employees.lastname', 'employees.middlename', 'users.email', 'users.username', 'DATE_FORMAT(users.lockout_dt, "%b %d, %Y %h:%i %p")');
         $this->db->select("
-            users.id, 
-            users.email, 
-            employees.firstname, 
-            employees.lastname,
-            employees.middlename, 
-            users.username, 
-            DATE_FORMAT(users.lockout_dt, '%b %d, %Y %h:%i %p') as lockout_dt
+            users.id,
+            users.email, UPPER(CONCAT(employees.lastname,
+                CASE WHEN UPPER(TRIM(employees.suffix)) != 'N/A' AND
+                    UPPER(TRIM(employees.suffix !='NONE')) AND employees.suffix !='' AND
+                    employees.suffix IS NOT NULL THEN CONCAT(' ', employees.suffix) ELSE ''
+                END, ', ', employees.firstname, ' ',
+                CASE WHEN UPPER(TRIM(employees.middlename)) != 'N/A' AND UPPER(TRIM(employees.middlename)) != 'NONE' AND
+                        TRIM(employees.middlename) !='' AND employees.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(employees.middlename, 1, 1), '.') ELSE ''
+                END)) as employee_name,
+            users.username, users.lockout_dt,
+            DATE_FORMAT(users.lockout_dt, '%b %d, %Y %h:%i %p') as formatted_lockedout_date
         ")
         ->from('gccmaster.tblusers as users')
         ->join('gccmaster.tblemployees as employees','users.emp_id = employees.id')
-        ->where('users.lockout', 1);
+        ->where('users.lockout', 1)
+        ->where('users.is_suspended', 0)
+        ->where('employees.employee_status', 'Active');
 
         if ($search) {
             $this->db->group_start();
@@ -510,15 +528,16 @@ class User_model extends CI_Model
         $i = $sortOrder[0]['column'];
         $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
         $query = $this->db->get();
-        $results = $query->result();
-        return $results;
+        return $query->result();
     }
     private function getDatatableRequestCount($search){
-        $filterFields = array('employees.firstname', 'employees.lastname', 'employees.middlename', 'users.email', 'users.username');
+        $filterFields = array('employees.firstname', 'employees.lastname', 'employees.middlename', 'users.email', 'users.username', 'DATE_FORMAT(users.lockout_dt, "%b %d, %Y %h:%i %p")');
         $this->db->select("users.id, users.email, employees.firstname, employees.lastname,employees.middlename, users.username, users.lockout_dt")
         ->from('gccmaster.tblusers as users')
         ->join('gccmaster.tblemployees as employees','users.emp_id = employees.id')
-        ->where('users.lockout', 1);
+        ->where('users.lockout', 1)
+        ->where('users.is_suspended', 0)
+        ->where('employees.employee_status', 'Active');
         if ($search) {
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
@@ -654,4 +673,11 @@ class User_model extends CI_Model
         }
     }
 
+    public function getUserRoleSelectData(){
+        $this->db->select('id, TRIM(UPPER(description)) as text');
+        $this->db->from('gccmaster.user_role');
+        $this->db->where('is_active', 1);
+        $this->db->where('status', 1);
+        return $this->db->get()->result();
+    }
 }

@@ -6,25 +6,16 @@
     </div>
     <div class="modal-body">
         <div class="form-group">
-            <label class="form-control-label">Biometric No</label>
-            <p class="form-control"><?php echo (isset($row["biometricno"]) && $row["biometricno"]) ? $row["biometricno"] : "---"; ?></p>
+            <label for="" class="form-control-label">Biometric No</label>
+            <p class="form-control" disabled><?php echo (isset($row["biometricno"]) && $row["biometricno"]) ? $row["biometricno"] : "---"; ?></p>
         </div>
         <div class="form-group">
-            <label class="form-control-label">Lastname</label>
-            <p class="form-control"><?php echo (isset($row["lastname"]) && $row["lastname"]) ? ucwords(strtolower($row["lastname"])) : ""; ?></p>
+            <label for="" class="form-control-label">Account Name</label>
+            <p class="form-control" disabled><?php echo (isset($row["employee_name"]) && $row["employee_name"]) ? ucwords(strtolower($row["employee_name"])) : ""; ?></p>
         </div>
         <div class="form-group">
-            <label class="form-control-label">Firstname</label>
-            <p class="form-control"><?php echo (isset($row["firstname"]) && $row["firstname"]) ? ucwords(strtolower($row["firstname"])) : ""; ?></p>
-        </div>
-        <div class="form-group">
-            <label class="form-control-label">Middlename</label>
-            <p class="form-control"><?php echo (isset($row["middlename"]) && $row["middlename"]) ? ucwords(strtolower($row["middlename"])) : ""; ?></p>
-        </div>
-        <div class="form-group">
-            <label class="form-control-label">User Role</label>
-            <select id="role_id" name="role_id" class="form-control">
-                <!--<option value="0" disabled selected>Select an option</option>-->
+            <label for="" class="form-control-label">User Role</label>
+            <select id="assign--role_id" name="role_id" class="form-control">
                 <?php if ($roles): ?>
                     <?php foreach ($roles as $role): ?>
                         <?php if (isset($row["role_id"]) && $row["role_id"] && $role["id"] == $row["role_id"]): ?>
@@ -36,31 +27,18 @@
                 <?php endif; ?>
             </select>
         </div>
-        <div class="row">
-            <div class="col-md-12" style="margin-left: 15px;">
-                <div class="form-group">
-                    <div class="m-checkbox-inline">
-                        <label class="m-checkbox">
-                            <input type="checkbox" name="is_important" <?php echo $row["is_important"] ? "checked" : ""; ?>>
-                                Has sensitive data
-                            <span></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
     <div class="modal-footer">
-        <button class="btn btn-danger" data-dismiss="modal">Cancel</button>
         <?php $actions = $this->core_layout->getCurrentActions(); ?>
         <?php if (in_array("update", $actions)): ?>
             <button type="button" class="btn btn-primary btn-submit">Save</button>
         <?php endif; ?>
+        <button class="btn btn-danger" data-dismiss="modal">Cancel</button>
     </div>
 </form>
 
 <script type="text/javascript">
-    $("select[name='role_id']")
+    $("select#assign--role_id")
         .select2({
             placeholder: "Select Role",
             width: "100%",

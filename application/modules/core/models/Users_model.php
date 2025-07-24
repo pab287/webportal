@@ -9,13 +9,22 @@ class Users_model extends CI_Model{
 		$this->load->model("datatable_model","dt_model");
 	}
 	
-	function getUserData(){
+	public function getUserData(){
 		$post = $this->input->post();
 		$resultset = array();
 		
 		if(isset($post["id"]) && $post["id"]){
 			$resultset["post"] = $post;
-			$select = "users.id, employees.lastname, employees.firstname, employees.middlename, employees.biometricno, employees.employee_status, users.role_id, users.is_important";
+			$select = "users.id, CONCAT(UPPER(TRIM(employees.firstname)), ' ',
+            CASE WHEN UPPER(TRIM(employees.middlename)) != 'N/A' AND UPPER(TRIM(employees.middlename)) != 'NONE' AND
+                    TRIM(employees.middlename) !='' AND employees.middlename IS NOT NULL
+                THEN CONCAT(UPPER(SUBSTR(employees.middlename, 1, 1)), '.') ELSE ''
+            END,' ', UPPER(TRIM(employees.lastname)),
+            CASE WHEN UPPER(TRIM(employees.suffix)) != 'N/A' AND
+                UPPER(TRIM(employees.suffix !='NONE')) AND employees.suffix !='' AND
+                employees.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(employees.suffix))) ELSE ''
+            END) as employee_name,
+			employees.biometricno, employees.employee_status, users.role_id, users.is_important";
 			$this->db->select($select);
 			$this->db->from("{$this->usersTable} as users");
 			$this->db->join("{$this->employeesTable} as employees", "employees.id=users.emp_id");
@@ -60,7 +69,7 @@ class Users_model extends CI_Model{
 			
 			$data = array();
 			$data["role_id"] = $post["role_id"];
-			$data["is_important"] = isset($post["is_important"]) && $post["is_important"] == 'on'? 1: 0;
+			/*** $data["is_important"] = isset($post["is_important"]) && $post["is_important"] == 'on'? 1: 0; ***/
 			$tempData = $this->core_layout->getUserData($post["id"]);
 			$tempName = (object) $tempData;
 			$tempName = (isset($tempName->display_name_1) && $tempName->display_name_1)? $tempName->display_name_1: "No assigned name";
@@ -74,7 +83,7 @@ class Users_model extends CI_Model{
 				$resultset["message"] = "Failed to update user account role of `{$tempName}`!";
 			}
 		}else{
-			$resultset["response"] = false;			
+			$resultset["response"] = false;
 			$resultset["message"] = "Error, nothing to update!";
 		}
 		
@@ -82,7 +91,74 @@ class Users_model extends CI_Model{
 		$this->core_layout->logNotification($resultset["message"], $tempStatus, "users");
 		return $resultset;
 	}
-	function getUserList(){
+	public function getCurrentUsersList(){
+        $resultset = array();
+        $post = $this->input->post();
+		$tempLimit = -1;
+        $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+        $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : $tempLimit;
+        $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+        $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+        $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
+		
+        $rowData = $this->currentUsersList($search, $limit, $offset, $sortBy, $sortOrder);
+        $rowCount = $this->currentUsersListCount($search);
+
+        $resultset["recordsTotal"] = $rowCount;
+        $resultset["recordsFiltered"] = $rowCount;
+        $resultset["data"] = $rowData;
+
+        return $resultset;
+	}
+
+	protected function currentUsersList($search, $limit, $offset, $sortBy, $sortOrder){
+		$queryDB = $this->getCurrentUserListQuery($search);
+		if ($limit != -1) { $queryDB->limit($limit, $offset); }
+		$queryDB->group_by("user.emp_id");
+		if (isset($sortOrder)) {
+			$i = $sortOrder[0]['column'];
+			$queryDB->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+		} else { $queryDB->order_by('user.id', 'DESC'); }
+		$query = $queryDB->get();
+		//var_dump($this->db->last_query());
+		return $query->result_array();
+	}
+
+	protected function currentUsersListCount($search){
+		$queryDB = $this->getCurrentUserListQuery($search);
+		return $queryDB->get()->num_rows();
+	}
+
+	protected function getCurrentUserListQuery($search=null){
+		$filterFields = array("user.username", "user.email", "emp.lastname", "emp.firstname", "emp.middlename","emp.biometricno", "role.description",
+		"user.telegram_chat_id", "CONCAT(emp.firstname, ' ', emp.lastname)");
+
+		$sqlSelect = "user.id, user.username, user.email, TRIM(UPPER(role.description)) as user_role, TRIM(emp.biometricno) as biometricno,
+			CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(UPPER(SUBSTR(emp.middlename, 1, 1)), '.') ELSE ''
+            END,' ', UPPER(TRIM(emp.lastname)),
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
+            END) as employee_name, emp.employee_status, user.is_important, user.telegram_chat_id";
+		$this->db->select($sqlSelect);
+		$this->db->from($this->usersTable . " as user");
+		$this->db->join($this->employeesTable . " as emp", "emp.id = user.emp_id", "INNER");
+		$this->db->join($this->rolesTable . " as role", "role.id = user.role_id", "LEFT");
+		$this->db->where("user.is_suspended", 0);
+		if (isset($search)) {
+			$this->db->group_start();
+			foreach ($filterFields as $key => $field) {
+				($key == 0) ? $this->db->like($field, $search, "both") : $this->db->or_like($field, $search, "both");
+			}
+			$this->db->group_end();
+		}
+		return $this->db;
+	}
+
+	public function getUserList(){
 		$post = $this->input->post();
 		if($post){
 			$columns = array("users.id", "employees.biometricno", "employees.lastname", "employees.firstname", "employees.middlename", "users.email", "employees.employee_status", "roles.description");
@@ -91,7 +167,7 @@ class Users_model extends CI_Model{
 			$order = $columns[$post["order"][0]["column"]];
 			$draw = (isset($post['draw']) && $post['draw'])? $post['draw']: 0;
 			$start = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
-			$limit = (isset($post["length"]) && $post["length"])? $post["length"]: 0;
+			/*** $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 0; ***/
 			$searchValue = (isset($post["search"]["value"]) && $post["search"]["value"])? $post["search"]["value"]: "";
 			$usersTable = $this->dt_model->dataTable();
 			$usersTable->setTable($this->usersTable);
@@ -121,7 +197,7 @@ class Users_model extends CI_Model{
 			$limit = 0;
 			/*** no pagination infinite scroll ***/
 			
-			if(empty($searchValue)){            
+			if(empty($searchValue)){
 				$posts = $usersTable->dtAllPosts($limit, $start, $order, $dir);
 			}else {
 				$posts = $usersTable->dtSearch($limit, $start, $searchValue, $order, $dir);
@@ -145,11 +221,11 @@ class Users_model extends CI_Model{
 				}
 			}
 			$json_data = array(
-                    "draw" => intval($draw),  
-                    "recordsTotal" => intval($totalData),  
-                    "recordsFiltered" => intval($totalFiltered), 
-                    "data"            => $data,   
-                    );
+				"draw" => intval($draw),
+				"recordsTotal" => intval($totalData),
+				"recordsFiltered" => intval($totalFiltered),
+				"data" => $data,
+			);
             
 			return $json_data;
 		}else{

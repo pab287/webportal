@@ -1,17 +1,20 @@
-var search_val = "";
+let search_val = "";
+let save_method = "add";
 
-$("#select2_group").select2({
+let userRoles = [];
+if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
+    if(typeof _tempContentData.user_role !== "undefined" && _tempContentData.user_role.length > 0){
+        userRoles = _tempContentData.user_role;
+    }
+}
+
+$("select#user_role").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
-    ajax: {
-        url: baseUrl("users/get_group"),
-        delay: 250,
-        processResults: function (data) {
-            return data;
-        }
+    data: userRoles,
+    dropdownParent: $('#modal_form_user')
+}).on('change', function (e) { $(e.target).validate(); });
 
-    }
-});
 $("#select2_employee").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
@@ -25,14 +28,16 @@ $("#select2_employee").select2({
             return data;
         }
     }
-});
-var _modalAssignRole = $("#modal-user_role-assign");
-var _dtUsers = $("#table-users").DataTable({
+}).on('change', function (e) { $(e.target).validate(); });
+
+const _modalAssignRole = $("#modal-user_role-assign");
+const _dtUsers = $("#table-users").DataTable({
     dom: '<"toolbar">frtlip',
     paging: false,
     serverSide: true,
     processing: true,
     searching: false,
+    order: [0, "desc"],
     ajax: {
         url: baseUrl("core/users/get_user_list"),
         type: "POST",
@@ -49,82 +54,56 @@ var _dtUsers = $("#table-users").DataTable({
         }, global: false,
     },
     columns: [
-        { data: "biometricno", width: "10%" },
-        { data: "lastname", width: "15%" },
-        { data: "firstname", width: "15%" },
-        { data: "middlename", width: "15%" },
-        { data: "email", width: "15%" },
-        { data: "description", width: "17%" },
-        { data: "employee_status", width: "5%" },
-        { data: null, width: "8%" }
+        { data: "id", visible: false, searchable: false },
+        { data: "biometricno", width: "8%", defaultContent: "",
+            render: function (data, type, row, meta) {
+                return (typeof data !== "undefined" && data !== null && data !== "") ? data : "---";
+            }
+        }, { data: "firstname", width: "18%", render: function (_data, _type, row) {
+            return row.employee_name;
+        }},
+        { data: "username", width: "18%",
+            render: function (data, type, row, meta) {
+                let tempHtml = `<p class='mb-0'>${data}</p>`;
+                tempHtml += `<p><small class='m--font-bolder'>${row.email ? row.email : "NO EMAIL ADDRESS"}</small></p>`;
+                return tempHtml;
+        }},
+        { data: "user_role", width: "*", render: function (data, _type, row) {
+            let tempHtml = `<p class='mb-0'>${data}</p>`;
+            tempHtml += `<p><small class='m--font-bolder'>PS.ID: ${row.telegram_chat_id ? row.telegram_chat_id : "---"}</small></p>`;
+            return tempHtml;
+        }},
+        { data: "is_important", width: "10%", orderable: false, className: "text-center",
+            render: function (data) {
+                return parseInt(data) === 1 ? "<span class='m-badge m-badge--success m-badge--wide m--font-boldest'>YES</span>"
+                : "<span class='m-badge m-badge--danger m-badge--wide m--font-boldest'>NO</span>";
+        }},
+        { data: "employee_status", width: "5%", orderable: false, className: "text-center",
+            render: function (data, type, row, meta) {
+                return userDatatableStatus(row.employee_status);
+        }},
+        { data: null, width: "8%", orderable: false, className: "text-center",
+            render: function (data, type, row, meta) {
+                return userDatatableActions(row.id);
+        }}
     ],
-    columnDefs: [{
-        data: "biometricno",
-        defaultContent: "---",
-        targets: 0,
-        render: function (data, type, row, meta) {
-            return (typeof data !== "undefined" && data !== null && data !== "") ? data : "---";
-        }
-    }, {
-        data: "middlename",
-        defaultContent: "N/A",
-        targets: 3,
-        render: function (data, type, row, meta) {
-            return (typeof data !== "undefined" && data !== null && data !== "") ? data : "N/A";
-        }
-    }, {
-        data: "email",
-        defaultContent: "none",
-        targets: 4,
-        render: function (data, type, row, meta) {
-            return (typeof data !== "undefined" && data !== null && data !== "") ? data : "NO EMAIL ADDRESS";
-        }
-    }, {
-        data: null,
-        defaultContent: "",
-        targets: -1,
-        orderable: false,
-        render: function (data, type, row, meta) {
-            return userDatatableActions(row.id);
-        }
-    }, {
-        data: "employee_status",
-        defaultContent: "",
-        targets: 6,
-        orderable: false,
-        className: "dt-column-center",
-        render: function (data, type, row, meta) {
-            return userDatatableStatus(row.employee_status);
-        }
-    }, {
-        targets: "_all",
-        defaultContent: ""
-    }
-    ],
+    columnDefs: [{defaultContent: "---", targets: "_all"}],
     scrollY: "55vh",
-    scrollCollapse: true,
-    initComplete: function (settings, json) {
-        if (typeof aclActionUpdate == "function") {
-            aclActionUpdate();
-        }
-    }
+    scrollCollapse: true
 });
 
 function userDatatableActions($id) {
     if ($id) {
-        var _actionButton = "";
-        if (
-            typeof _currentActions !== "undefined" &&
-            jQuery.inArray("edit", _currentActions) !== -1
-        ) {
+        let _actionButton = "";
+        if (typeof _currentActions !== "undefined" && jQuery.inArray("edit", _currentActions) !== -1) {
             _actionButton +=
                 "<button type='button' title='Click to Assign User Role' class='btn btn-default m-btn m-btn--hover-accent btn-sm m-btn--icon m-btn--icon-only m-btn--pill btnAssignUser btnAssign' data-id='" +
                 $id +
                 "'><i class='la la-edit'></i></button>";
             _actionButton += " <button type='button' title='Click to Edit User' class='btn btn-default m-btn m-btn--hover-accent btn-sm m-btn--icon m-btn--icon-only m-btn--pill btnEditItem btnEdit' onclick='edit_user(" + $id + ")'><i class='la la-eyedropper'></i></button>";
             _actionButton += " <button type='button' title='Click to Suspend User'" +
-                "                      class='btn btn-default m-btn m-btn--hover-warning btn-sm m-btn--icon m-btn--icon-only m-btn--pill btnSuspend_action' " +
-                "                      onclick='open_suspend_user_confirmation(" + $id + ")'><i class='la la-warning'></i></button>";
+                " class='btn btn-default m-btn m-btn--hover-warning btn-sm m-btn--icon m-btn--icon-only m-btn--pill btnSuspend_action' " +
+                " onclick='open_suspend_user_confirmation(" + $id + ")'><i class='la la-warning'></i></button>";
         }
         return _actionButton;
     } else {
@@ -133,7 +112,7 @@ function userDatatableActions($id) {
 }
 
 function userDatatableStatus($status) {
-    var _html = "";
+    let _html = "";
     if ($status == "Active") {
         _html =
             "<span class='btn btn-success m-btn m-btn--icon m-btn--icon-only btn-sm' title='ACTIVE'><i class='la la-user'></i></span>";
@@ -148,7 +127,7 @@ function userDatatableStatus($status) {
 }
 
 jQuery(document).on("click", "#table-users .btnAssignUser", function () {
-    var dataId = $(this).data("id");
+    const dataId = $(this).data("id");
     $.ajax({
         url: baseUrl("core/users/get_user_data"),
         type: "POST",
@@ -156,7 +135,7 @@ jQuery(document).on("click", "#table-users .btnAssignUser", function () {
         data: { id: dataId, csrf_token: _csrf_hash },
         success: function (json) {
             if (json.response) {
-                var _modalContent = _modalAssignRole.find(".modal-content");
+                const _modalContent = _modalAssignRole.find(".modal-content");
                 if (typeof _modalContent !== "undefined") {
                     _modalContent.empty().append(json.html);
                     $(_modalAssignRole).modal("show");
@@ -170,8 +149,8 @@ jQuery(document).on(
     "click",
     "#modal-user_role-assign #form-users-assign .btn-submit",
     function () {
-        var _self = $(this);
-        var _form = _self.parent(".modal-footer").parent("#form-users-assign");
+        const _self = $(this);
+        const _form = _self.parent(".modal-footer").parent("#form-users-assign");
         if (typeof _form !== "undefined") {
             $.ajax({
                 url: _form.attr("action"),
@@ -196,6 +175,11 @@ function open_user() {
     save_method = 'add';
     document.getElementById('employee').style.removeProperty('display');
     $('#form_user')[0].reset();
+    $('#form_user').find("select#select2_employee").val("").trigger("change");
+    $('#form_user').find("select#user_role").val("").trigger("change");
+    vmEmail.has_email = false;
+    vmEmail.is_editable = false;
+    vmEmail.account_name = null;
     $('#modal_form_user').modal('show'); // show bootstrap modal
     $('.modal-title').text('New User'); // Set Title to Bootstrap modal title
 
@@ -230,18 +214,28 @@ function edit_user(id) {
     document.getElementById('employee').style.display = 'none';
     save_method = 'update';
     $('#form_user')[0].reset();
+
+    vmEmail.has_email = false;
+    vmEmail.is_editable = true;
+    vmEmail.account_name = null;
+
     $.ajax({
         url: baseUrl("users/edit_user/") + id,
         type: "GET",
         dataType: "JSON",
         success: function (data) {
+            setTimeout(function () {
+                vmEmail.has_email = parseInt(data.has_email) === 1;
+                setTimeout(function () { $('[name="email"]').val(data.email); }, 250);
+            }, 250);
+            vmEmail.account_name = data.account_name;
             $('[name="id"]').val(data.id);
-            var newOption = new Option(data.group_name, data.group_id, true, true);
-            $('#select2_group').append(newOption).trigger('change');
+            $('select#user_role').val(data.role_id).trigger('change');
             $('[name="username"]').val(data.username);
             $('[name="password"]').val(data.password);
-            $('[name="email"]').val(data.email);
             $('[name="telegram_chat_id"]').val(data.telegram_chat_id);
+            const propChecked = parseInt(data.is_important) === 1;
+            $('[name="is_important"]').prop('checked', propChecked);
             $('#modal_form_user').modal('show'); // show bootstrap modal
             $('.modal-title').text('Edit User'); // Set Title to Bootstrap modal title
         },
@@ -251,44 +245,51 @@ function edit_user(id) {
     });
 }
 
-function save_user() {
-    var url;
-
-    if (save_method == 'add') {
-        url = baseUrl("users/add_user/");
-    } else {
-        url = baseUrl("users/update_user/");
-    }
-
-
-    $.validate({
-        form: '#form_user',
-        lang: 'en',
-        onSuccess: function (form) {
-            $.ajax({
-                url: url,
-                type: "POST",
-                data: $('#form_user').serialize(),
-                dataType: "JSON",
-
-                success: function (data) {
-                    if (data.status) {
-
-                        _dtUsers.ajax.reload();
-                        $("#modal_form_user").modal("hide");
-                        toastr.success("User data updated!", "Success", 10000);
-                    } else {
-                        toastr.error("Failed updating data!", "Failed", 10000);
-                    }
-
-                }
-            });
-            return false;
-        },
-    });
-}
-
 $('#generalSearch').donetyping(function (callback) {
     search_val = $(this).val();
     _dtUsers.ajax.reload();
+});
+
+$.validate({
+    form: '#form_user',
+    lang: 'en',
+    onSuccess: function (form) {
+        const url = save_method == 'add' ? siteUrl("users/add_user") : siteUrl("users/update_user");
+        const currentForm = $(form);
+        const formData = currentForm.serialize();
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: formData,
+            dataType: "JSON",
+            success: function (json) {
+                const toastrMsg = json.toastr_msg;
+                const toastrError = json.toastr_error;
+                const titleSuccess = save_method == 'add' ? "User data added!" : "User data updated!";
+                const titleError = save_method == 'add' ? "Failed adding data!" : "Failed updating data!";
+                if (json.status) {
+                    _dtUsers.ajax.reload(null, false);
+                    $("#modal_form_user").modal("hide");
+                    toastr.success(toastrMsg, titleSuccess, 10000);
+                } else { 
+                    if(toastrError.length > 0){
+                        toastrError.forEach(error => { toastr.warning(error, titleError, 10000); });
+                    }
+                    toastr.error(toastrMsg, titleError, 10000);
+                }
+            }
+        });
+        return false;
+    },
+});
+
+const vmEmail = new Vue({
+    el: "#email-container",
+    data: { has_email: false, is_editable: false, account_name: null },
+    methods: {
+        updateHasEmailState: function (e) {
+            const currentTarget = $(e.target);
+            this.has_email = currentTarget.prop("checked");
+        }
+    }
 });

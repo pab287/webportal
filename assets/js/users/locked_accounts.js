@@ -17,18 +17,27 @@ let tblLockedUsers = $("#table-locked-users").DataTable({
             d.csrf_token = _csrf_hash;
             d.search['value'] = search_val;
             return d;
-        }
+        }, error: function (xhr, error, code) {
+                if (error == "parsererror") { 
+                    tblLockedUsers.ajax.reload(null, false); 
+                    toastr.warning("Re-loading, error in rendering list data!", "LOCKED ACCOUNTS LIST");
+                }
+            }, global: false,
     },
-    order: [6, "desc"],
+    order: [0, "desc"],
     columns: [
-        { data: "id", visible: false },
-        { data: "email"},
-        { data: "username"},
-        { data: "lastname"},
-        { data: "firstname"},
-        { data: "middlename"},
-        { data: "lockout_dt"},
-        { data: "null",orderable: false},
+        { data: "lockout_dt", width: "12%", render: function (_data, _type, row) {
+            return row.formatted_lockedout_date != null ? row.formatted_lockedout_date : "No Lockout Date";
+        }},
+        { data: "lastname", width: "18%", render: function (_data, _type, row) {
+            return row.employee_name != null ? row.employee_name : "No Account Name";
+        }},
+        { data: "username", render: function (data, _type, row) {
+            const trimmedEmail = $.trim(row.email);
+            const tempEmail = trimmedEmail !== "" && trimmedEmail !== null ? trimmedEmail : "NO EMAIL";
+            return `<p class='mb-0'>${data}</p><p><small class='m--font-bolder'>${tempEmail}</small></p>`;
+        }},
+        { data: "null", width: "6%", className: "text-center", orderable: false },
     ],
     columnDefs: [{
         data: null,

@@ -21,15 +21,16 @@
                             <div class="col-xl-8 order-2 order-xl-1">
                                 <div class="form-group m-form__group row align-items-center">
                                     <div class="col-md-12">
-                                        <a id="user-new" href="javascript:void(0);"
-                                            class="btn btn-success m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill btnNew btnNewUser" onclick="open_user()">
+                                        <button id="user-new"
+                                            class="btn btn-success m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill btnNew btnNewUser"
+                                            onclick="open_user()">
                                             <span>
                                                 <i class="la la-plus"></i>
                                                 <span>
                                                     New
                                                 </span>
                                             </span>
-                                        </a>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -47,21 +48,20 @@
                     </div>
                     <!--begin: Datatable -->
                     <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
-                        <table class="table table-striped table-bordered" id="table-users" width="100%">
+                        <table class="table table-striped table-bordered" id="table-users" style="width: 100%">
                             <thead>
                             <tr>
-                                <th>Biometric No</th>
-                                <th>Lastname</th>
-                                <th>Firstname</th>
-                                <th>Middlename</th>
-                                <th>Email</th>
+                                <th>&nbsp;</th>
+                                <th>Biometric #</th>
+                                <th>Account Name</th>
+                                <th>User Account</th>
                                 <th>Assigned Role</th>
+                                <th>Sensitive Data</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
                             </thead>
-                            <tbody>
-                            </tbody>
+                            <tbody></tbody>
                         </table>
                     </div>
                     <!--end: Datatable -->
@@ -73,14 +73,14 @@
 </div>
 
 <!--begin::Modal-->
-<div class="modal fade" id="modal-user_role-assign" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-m" role="document">
+<div class="modal fade" id="modal-user_role-assign" tabindex="-1">
+    <div class="modal-dialog modal-m">
         <div class="modal-content"></div>
     </div>
 </div>
 
-<div class="modal fade" id="modal-confirm-suspend-user" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+<div class="modal fade" id="modal-confirm-suspend-user" tabindex="-1">
+    <div class="modal-dialog">
         <form onsubmit="event.preventDefault(); process_suspend_account(this);">
             <div class="modal-content">
                 <div class="modal-header">
@@ -99,88 +99,108 @@
     </div>
 </div>
 
-<div class="modal fade" id="modal_form_user" role="dialog">
+<div class="modal fade" id="modal_form_user">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title"></h3>
+                <h3 class="modal-title">&nbsp;</h3>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-
             </div>
-            <div class="modal-body form">
-                <form action="#" id="form_user" class="form-horizontal">
-                    <input type="hidden" value="" name="id"/>
-                    <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <form id="form_user">
+            <div class="modal-body form-horizontal">
+                <input type="hidden" value="" name="id" />
+                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 
-                    <div class="form-group" id="employee">
-                        <label class="control-label col-md-2">Employee</label>
+                <div class="form-group row" id="employee">
+                    <label for="emp_id" class="control-label col-md-2 required">Employee</label>
+                    <div class="col-md-12">
+                        <select id="select2_employee" name="emp_id" data-validation="required"></select>
+                    </div>
+                </div>
+                <div id="email-container">
+                    <div class="form-group row" v-if="is_editable === true">
+                        <label for="emp_id" class="control-label col-md-2">Employee</label>
                         <div class="col-md-12">
-                            <select id="select2_employee" name="emp_id" data-validation="required">
+                            <p class="form-control mb-0" disabled v-text="account_name">&nbsp;</p>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="" class="col-5 col-form-label">Has Email Address ?</label>
+                        <div class="col-3">
+                            <span class="m-switch m-switch--sm m-switch--icon">
+                                <label>
+                                <input type="checkbox" @change="updateHasEmailState($event)" :checked="has_email">
+                                <span></span>
+                                </label>
+                            </span>
+                        </div>
+                    </div>
+                    <template v-if="has_email === true">
+                        <div class="form-group row">
+                            <label for="email" class="control-label col-md-6 required">Email Address</label>
+                            <div class="col-md-12">
+                                <input type="email" name="email" class="form-control" data-validation="required" autocomplete="off" />
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <div class="form-group row">
+                    <label for="username" class="control-label col-md-4 required">Username</label>
+                    <div class="col-md-12">
+                        <input type="text" name="username" class="form-control" data-validation="required" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="password" class="control-label col-md-4 required">Password</label>
+                    <div class="col-md-12">
+                        <input type="password" name="password" class="form-control" data-validation="required" autocomplete="off" />
+                    </div>
+                </div>
 
-                            </select>
-                        </div>
+                <div class="form-group row">
+                    <label for="user_role" class="control-label col-md-4">User Role</label>
+                    <div class="col-md-12">
+                        <select id="user_role" name="role_id" data-validation="required"></select>
                     </div>
-                    <div class="form-group">
-                        <label class="control-label col-md-2">Email</label>
-                        <div class="col-md-12">
-                            <input type="text" name="email" class="form-control" data-validation="required">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label col-md-2">Username</label>
-                        <div class="col-md-12">
-                            <input type="text" name="username" class="form-control" data-validation="required">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label col-md-2">Password</label>
-                        <div class="col-md-12">
-                            <input type="password" name="password" class="form-control" data-validation="required">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="control-label col-md-2">Group</label>
-                        <div class="col-md-12">
-                            <select id="select2_group" name="group_id" data-validation="required">
-
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label col-md-4">Telegram ID</label>
-                        <div class="col-md-12">
-                            <input type="text" name="telegram_chat_id" class="form-control">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12" style="margin-left: 15px;">
-                            <div class="form-group">
-                                <div class="m-checkbox-inline">
-                                    <label class="m-checkbox">
-                                        <input type="checkbox" name="is_important"> Has sensitive data
-                                        <span></span>
-                                    </label>
-                                </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-brand alert-dismissible fade show" role="alert">
+                            <div class="m-alert__icon">
+                                <i class="flaticon-exclamation-1"></i>
+                                <span></span>
+                            </div>
+                            <div class="m-alert__text">
+                                <strong>Note!</strong> For employee that needs payslip viewing as default user, select <strong>`Default User with Payslip`</strong>.
                             </div>
                         </div>
                     </div>
-
-
+                </div>
+                <div class="form-group row">
+                    <label for="telegram_chat_id" class="control-label col-md-6">Telegram ID <small>(Optional)</small></label>
+                    <div class="col-md-12">
+                        <input type="text" name="telegram_chat_id" class="form-control" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12" style="margin-left: 15px;">
+                        <div class="form-group">
+                            <div class="m-checkbox-inline">
+                                <label class="m-checkbox">
+                                    <input type="checkbox" name="is_important" /> Has sensitive data
+                                    <span></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
-
-                <button type="submit" id="btnSave" onclick="save_user()" class="btn btn-success m-btn m-btn--custom m-btn--icon  btnNew">Save</button>
-                <button type="button" class="btn btn-danger m-btn m-btn--custom m-btn--icon  btnNew" data-dismiss="modal">Cancel</button>
+                <button type="submit" id="btnSave" class="btn btn-success m-btn m-btn--custom m-btn--icon btnNew btnEdit">Save</button>
+                <button type="button" class="btn btn-danger m-btn m-btn--custom m-btn--icon btnClose" data-dismiss="modal">Cancel</button>
             </div>
+            </form>
         </div><!-- /.modal-content -->
     </div>
-
-    <script>
-
-        var _currentActions = "<?php echo isset($actions) ? json_encode($actions) : ""; ?>";
-        var _csrf_token = "<?php echo $this->security->get_csrf_token_name(); ?>";
-        var _csrf_hash = "<?php echo $this->security->get_csrf_hash(); ?>";
-
-    </script>
-    <!--end::Modal-->
+</div>
+<!--end::Modal-->
