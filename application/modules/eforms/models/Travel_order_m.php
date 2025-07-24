@@ -5370,4 +5370,46 @@
             return $arrData;
         }
 
+        public function getApprovedChartData() {
+            $post = $this->input->post();
+            
+            // Extract date range from daterangepicker
+            $start_date = isset($post['date']['start']) ? $post['date']['start'] : null;
+            $end_date = isset($post['date']['end']) ? $post['date']['end'] : null;
+        
+            $current_date = date('Y-m-d');
+            $escaped_current_date = $this->db->escape($current_date);
+            
+            $this->db->select("
+                COUNT(td.id) as total_approved,
+                COUNT(DISTINCT CASE WHEN td.accomplished = 1 THEN td.id END) as accomplished,
+                COUNT(DISTINCT CASE WHEN td.accomplished = 0 AND td.date_to < $escaped_current_date THEN td.id END) as Overdue,
+                COUNT(DISTINCT CASE WHEN td.accomplished = 0 AND td.date_to >= $escaped_current_date THEN td.id END) as Ongoing
+            ");
+        
+            $this->db->from('gcceforms.travel_destination td');
+            $this->db->join('gcceforms.travel_order to', 'to.id = td.travel_order_id', 'left');
+            $this->db->where('to.status', 'Approved');
+            
+            // Apply date range filter if both dates are provided
+            if ($start_date && $end_date) {
+                // Simple approach: travels that fall within the selected date range
+                $this->db->where('td.date_from >=', $start_date);
+                $this->db->where('td.date_to <=', $end_date);
+            }
+            // If no date range provided, show all time data (no additional WHERE clause)
+            
+            $single_query = $this->db->get();
+            $single_result = $single_query->row();
+            
+            $data['approved'] = array(
+                'Accomplished' => (int)$single_result->accomplished,
+                'Overdue' => (int)$single_result->Overdue,
+                'Ongoing' => (int)$single_result->Ongoing
+            );
+            $data['total'] = (int)$single_result->total_approved;
+            
+            return $data;
+        }
+
     }

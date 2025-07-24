@@ -203,4 +203,38 @@
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12">
+            <div class="m-portlet">
+                <div class="m-portlet__head">
+                    <div class="m-portlet__head-caption">
+                        <div class="m-portlet__head-title">
+                            <span class="m-portlet__head-icon">
+                                <i class="flaticon-truck"></i>
+                            </span>
+                            <h3 class="m-portlet__head-text">
+                                Total Aproved Travel Orders
+                            </h3>
+                        </div>
+                    </div>
+                    <div class="m-portlet__head-tools">
+                        <a href="javascript:void(0);" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg btnView" id="approveToPicker"><i class="fa fa-calendar"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="m-portlet__body">
+                    <span class="m--font-bolder" id="approvedLabel">
+                        ALL TIME
+                    </span>
+                    <div id="approvedPieChart" style="width: 100%;height: 500px;">
+                        <div class="d-flex justify-content-center align-items-center w-100 h-100">
+                            <div class="text-center">
+                            <div class="mt-2 text-muted">Loading chart...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

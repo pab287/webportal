@@ -12,7 +12,7 @@ const colors = [
     '#607d8b',
 ];
 const formatted = moment().format('MMMM D, YYYY dddd');
-
+let approvedChart = null;
 let analyticsChart = null;
 let analyticsLabel= $('#analyticsLabel');
 
@@ -33,7 +33,7 @@ var tblTravel = $("#table-travel-today").DataTable({
 	serverSide: true,
     processing: true,
     ajax: {
-		url: baseUrl("eforms/travel_order/get_created/"),
+		url: baseUrl("eforms/travel_order/get_created"),
 		type: "post",
         dataType: "json",
         global: false,
@@ -133,7 +133,7 @@ var tblTravel2 = $("#table-travel-weekly").DataTable({
 	serverSide: true,
     processing: true,
     ajax: {
-		url: baseUrl("eforms/travel_order/get_departing/"),
+		url: baseUrl("eforms/travel_order/get_departing"),
 		type: "post",
         dataType: "json",
         global: false,
@@ -231,6 +231,7 @@ var tblTravel2 = $("#table-travel-weekly").DataTable({
 });
 am4core.ready(function () {
     get_travel_for_analytics();
+    get_approved_travel_order();
 });
 
 function get_travel_for_analytics(date = null) {
@@ -244,11 +245,11 @@ function get_travel_for_analytics(date = null) {
             date: date,
           },
         success: function (result) {
+            if (analyticsChart != null) {
+                analyticsChart.dispose();
+            }
 
             if(result.length == 0){
-                if (analyticsChart != null) {
-                    analyticsChart.dispose();
-                }
                 $("#chartdiv").html(`
                     <div class="form-control-label d-flex justify-content-center align-items-center h-100">
                       <h3>No matching records found</h3>
@@ -256,10 +257,6 @@ function get_travel_for_analytics(date = null) {
                   `);
                 return;
             }
-
-            if (analyticsChart != null) {
-                analyticsChart.dispose();
-              }
 
             result.map((item) => {
                 item.color = getColor(item.status);
@@ -469,3 +466,91 @@ $.ajax({
   $('#departingTablePicker').daterangepicker(tableDateRangeConfig)
   .on('cancel.daterangepicker', handleDepartTableCancel)
   .on('apply.daterangepicker', HandleDepartTableApply);
+
+  function get_approved_travel_order(date = null) {
+    $.ajax({
+        url : baseUrl("eforms/travel_order/get_approved_chart/"),
+        type: "POST",
+        dataType: "JSON",
+        global: false,
+        data: {
+            csrf_token: _csrf_hash,
+            date: date,
+          },
+        success: function(data)
+        {   
+            if(!data){
+                return;
+            }
+            if (approvedChart != null) {
+                approvedChart.dispose();
+              }
+              let approvedData = Object.entries(data.approved).map(([key, value]) => ({
+                priority: key.charAt(0).toUpperCase() + key.slice(1),
+                value: parseInt(value),
+                color: am4core.color(
+                  key === 'Accomplished' ? '#34BFA3' : 
+                  key === 'Overdue' ? '#F4516C' : 
+                  key === 'Ongoing' ? '#FAC35D' : '#36A3F7')
+              }));
+        
+              approvedChart = am4core.create("approvedPieChart", am4charts.PieChart);
+        
+              const totalValue = approvedData.reduce((sum, item) => sum + item.value, 0);
+              if (totalValue === 0) {
+                  approvedChart.data = [{
+                      priority: "No Data",
+                      value: 1000,
+                      disabled: true,
+                      color: am4core.color("#dadada"),
+                      opacity: 0.3,
+                      strokeDasharray: "4,4",
+                      tooltip: ""
+                  }];
+              } else {
+                  approvedChart.data = approvedData;
+              }
+              
+              let pieSeries = approvedChart.series.push(new am4charts.PieSeries());
+              pieSeries.dataFields.value = "value";
+              pieSeries.dataFields.category = "priority";
+              pieSeries.slices.template.propertyFields.fill = "color";
+              approvedChart.legend = new am4charts.Legend();
+        }
+    });
+  };
+
+
+
+  const handleApproveApply = (ev, picker) => {
+    const startDate = picker.startDate.format('YYYY-MM-DD');
+    const endDate = picker.endDate.format('YYYY-MM-DD');
+    
+    if (startDate === moment().format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        departingToLabel.text(formatted); 
+    } else if (startDate === moment().subtract(6, 'days').format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        departingToLabel.text("LAST 7 DAYS"); 
+    } else if (startDate === moment().subtract(29, 'days').format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        departingToLabel.text("LAST 30 DAYS");  
+    } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
+        departingToLabel.text("YESTERDAY"); 
+    } 
+    else if (startDate === moment("2016-01-01").format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        departingToLabel.text("ALL TIME");
+    }
+    else {
+        departingToLabel.text(`FROM: ${picker.startDate.format('MMM D, YYYY')} - TO: ${picker.endDate.format('MMM D, YYYY')}`);
+    }
+    tableDate = {start: startDate, end: endDate};
+    get_approved_travel_order(tableDate);
+  };
+
+  const handleApproveCancel  = () => {
+    // analyticsLabel.text("ALL TIME");
+    // tableDate = {start:moment("2016-01-01").format('YYYY-MM-DD'), end : moment().format('YYYY-MM-DD')};
+    // tblTravel2.ajax.reload();
+  };
+
+  $('#approveToPicker').daterangepicker(tableDateRangeConfig)
+  .on('cancel.daterangepicker', handleApproveCancel)
+  .on('apply.daterangepicker', handleApproveApply);

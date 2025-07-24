@@ -1487,4 +1487,10 @@ class Travel_order extends MY_Controller
         ->set_content_type('json')
         ->set_output(json_encode($data));
     }
+
+    public function get_approved_chart(){
+        $data = $this->travel_order->getApprovedChartData();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }
