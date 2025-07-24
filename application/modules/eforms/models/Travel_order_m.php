@@ -2803,7 +2803,7 @@
             return $query->row();
         }
 
-        function getDaily() {
+        function getCreated() {
             $post = $this->input->post();
             if ($post) {
                 $columns = array("a.status", "a.reference_no", "a.company");
@@ -2818,10 +2818,8 @@
                 $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
                 $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 0;
                 $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
-
-
-                $posts = $this->get_all_post_daily($limit, $start, $order, $dir);
-
+                $date = (isset($post["date"]) && $post["date"]) ? $post["date"] : null;
+                $posts = $this->get_created_to($limit, $start, $order, $dir, $date);
 
                 $data = array();
                 if (!empty($posts)) {
@@ -2860,16 +2858,24 @@
             }
         }
 
-        private function get_all_post_daily($limit = 10, $start = 0, $order = "a.id", $dir = "DESC") {
-            $check = date('Y-m-d');
+        private function get_created_to($limit = 10, $start = 0, $order = "a.id", $dir = "DESC", $date) {
             $arrData = array();
             $this->db->select("a.id, a.reference_no, a.company, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt");
             $this->db->from("gcceforms.travel_order a");
-            $this->db->like('DATE(a.created_dt)', $check);
+            if (!empty($date['start']) && !empty($date['end'])) {
+                $s = date('Y-m-d H:i:s', strtotime($date['start'] . ' 00:00:00'));
+                $e = date('Y-m-d H:i:s', strtotime($date['end'] . ' 23:59:59'));
+                $this->db->where("a.created_dt >=", $s);
+                $this->db->where("a.created_dt <=", $e);
+            }else{
+                $todayStart = date('Y-m-d 00:00:00');
+                $todayEnd = date('Y-m-d 23:59:59');
+                $this->db->where("a.created_dt >=", $todayStart);
+                $this->db->where("a.created_dt <=", $todayEnd);
+            }
             $this->db->limit($limit, $start);
             $this->db->order_by($order, $dir);
             $query = $this->db->get();
-
             if ($query->num_rows() > 0) {
                 foreach ($query->result() as $rs) {
                     $rowId = $rs->id;
@@ -2957,7 +2963,7 @@
 
         }
 
-        function getWeekly() {
+        function getDeparting() {
             $post = $this->input->post();
             if ($post) {
                 $columns = array("a.status", "a.reference_no", "a.company");
@@ -2972,9 +2978,9 @@
                 $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
                 $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 0;
                 $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
+                $date = (isset($post["date"]) && $post["date"]) ? $post["date"] : null;
 
-
-                $posts = $this->get_all_post_weekly($limit, $start, $order, $dir);
+                $posts = $this->get_departing_to($limit, $start, $order, $dir, $date);
 
 
                 $data = array();
@@ -3014,16 +3020,27 @@
             }
         }
 
-        private function get_all_post_weekly($limit = 10, $start = 0, $order = "a.id", $dir = "DESC") {
+        private function get_departing_to($limit = 10, $start = 0, $order = "a.id", $dir = "DESC", $date) {
             $check = date('Y-m-d', strtotime("-7 days"));
             $arrData = array();
             $this->db->select("a.id, a.reference_no, a.company, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt");
             $this->db->from("gcceforms.travel_order a");
-            $this->db->where('DATE(a.created_dt) >= ', $check);
+            $this->db->join("gcceforms.travel_destination td", "td.travel_order_id = a.id", "left");
+            if (!empty($date['start']) && !empty($date['end'])) {
+                $startDate = date('Y-m-d H:i:s', strtotime($date['start'] . ' 00:00:00'));
+                $endDate = date('Y-m-d H:i:s', strtotime($date['end'] . ' 23:59:59'));
+            } else {
+                $startDate = date('Y-m-d 00:00:00');
+                $endDate = date('Y-m-d 23:59:59');
+            }
+            $this->db->where("(
+                (td.date_from <= '$endDate' AND td.date_to >= '$startDate')
+            )");
+            $this->db->where("a.status", "Approved");
             $this->db->limit($limit, $start);
             $this->db->order_by($order, $dir);
+            $this->db->group_by("a.id");
             $query = $this->db->get();
-
             if ($query->num_rows() > 0) {
                 foreach ($query->result() as $rs) {
                     $rowId = $rs->id;
@@ -3112,12 +3129,20 @@
         }
 
         function m_get_travel_analytics_for_dashboard() {
+            $post = $this->input->post();
+            $this->db->reset_query();
             $this->db->select("a.status, COUNT(a.id) AS count, (select count(status) from gcceforms.travel_order where status='Approved' AND accomplishment_dt != '0000-00-00 00:00:00') as accom");
             $this->db->from("gcceforms.travel_order a");
+            if (!empty($post['date']['start']) && !empty($post['date']['end'])) {
+                $start = date('Y-m-d H:i:s', strtotime($post['date']['start'] . ' 00:00:00'));
+                $end = date('Y-m-d H:i:s', strtotime($post['date']['end'] . ' 23:59:59'));
+                $this->db->where("DATE(a.created_dt) >=", $start);
+                $this->db->where("DATE(a.created_dt) <=", $end);
+            }
             $this->db->group_by("a.status");
             $this->db->order_by("FIELD(a.status, 'Pending', 'Approved', 'Hr Noted', 'Disapproved', 'Cancelled')");
-            $query = $this->db->get();
 
+            $query = $this->db->get();
             if ($query->num_rows() > 0) {
                 $arrData = array();
                 foreach ($query->result() as $key => $rs) {

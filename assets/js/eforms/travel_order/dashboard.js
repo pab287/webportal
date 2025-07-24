@@ -11,6 +11,16 @@ const colors = [
     '#795548',
     '#607d8b',
 ];
+const formatted = moment().format('MMMM D, YYYY dddd');
+
+let analyticsChart = null;
+let analyticsLabel= $('#analyticsLabel');
+
+let tableDate = null;
+let createdToLabel = $('#createdToLabel');
+createdToLabel.text(formatted);
+let departingToLabel = $('#departingToLabel');
+departingToLabel.text(formatted);
 function getColor(status) {
     if ((status === null || status === '')) {
         return '#ffffff';
@@ -23,12 +33,14 @@ var tblTravel = $("#table-travel-today").DataTable({
 	serverSide: true,
     processing: true,
     ajax: {
-		url: baseUrl("eforms/travel_order/get_daily/"),
+		url: baseUrl("eforms/travel_order/get_created/"),
 		type: "post",
         dataType: "json",
+        global: false,
        data: function(d){
             d.csrf_token = _csrf_hash,
             d.search['value'] = search_val
+            d.date = tableDate;
         }
     },
     searching: true,
@@ -121,12 +133,14 @@ var tblTravel2 = $("#table-travel-weekly").DataTable({
 	serverSide: true,
     processing: true,
     ajax: {
-		url: baseUrl("eforms/travel_order/get_weekly/"),
+		url: baseUrl("eforms/travel_order/get_departing/"),
 		type: "post",
         dataType: "json",
-       data: function(d){
+        global: false,
+        data: function(d){
             d.csrf_token = _csrf_hash,
-            d.search['value'] = search_val
+            d.search['value'] = search_val,
+            d.date = tableDate;
         }
     },
     searching: true,
@@ -219,34 +233,45 @@ am4core.ready(function () {
     get_travel_for_analytics();
 });
 
-function get_travel_for_analytics() {
-    am4core.useTheme(am4themes_animated);
-
+function get_travel_for_analytics(date = null) {
     $.ajax({
-        type: "GET",
+        type: "POST",
         url: baseUrl('eforms/travel_order/get_travel_analytics_for_dashboard'),
         dataType: "JSON",
+        global: false,
+        data: {
+            csrf_token: _csrf_hash,
+            date: date,
+          },
         success: function (result) {
+
+            if(result.length == 0){
+                if (analyticsChart != null) {
+                    analyticsChart.dispose();
+                }
+                $("#chartdiv").html(`
+                    <div class="form-control-label d-flex justify-content-center align-items-center h-100">
+                      <h3>No matching records found</h3>
+                    </div>
+                  `);
+                return;
+            }
+
+            if (analyticsChart != null) {
+                analyticsChart.dispose();
+              }
 
             result.map((item) => {
                 item.color = getColor(item.status);
             });
 
-            // Themes begin
             am4core.useTheme(am4themes_animated);
-            // Themes end
-
-            // Create chart instance
             var chart = am4core.create("chartdiv", am4charts.XYChart3D);
-
-            // Create axes
             var categoryAxis = chart.yAxes.push(new am4charts.CategoryAxis());
             categoryAxis.dataFields.category = "status";
             categoryAxis.renderer.inversed = true;
-
             var valueAxis = chart.xAxes.push(new am4charts.ValueAxis());
 
-            // Create series
             var series = chart.series.push(new am4charts.ColumnSeries3D());
             series.dataFields.valueX = "count";
             series.dataFields.categoryY = "status";
@@ -269,6 +294,7 @@ $.ajax({
     url : baseUrl("eforms/travel_order/most_traveled_person/"),
     type: "GET",
     dataType: "JSON",
+    global: false,
     success: function(data)
     {
         $("#shipp").append(data.display_name);
@@ -282,6 +308,7 @@ $.ajax({
     url : baseUrl("eforms/travel_order/most_traveled_vehicle/"),
     type: "GET",
     dataType: "JSON",
+    global: false,
     success: function(data)
     {
         $("#shipv").append(data.vehicle_name + " ("+data.vehicle+")");
@@ -295,6 +322,7 @@ $.ajax({
     url : baseUrl("eforms/travel_order/most_traveled_destination/"),
     type: "GET",
     dataType: "JSON",
+    global: false,
     success: function(data)
     {
         $("#shipd").append(data.destination);
@@ -303,3 +331,141 @@ $.ajax({
         $("#p3").css("width", ave);
     }
   });
+
+  const dateRangeConfig = {
+    startDate: moment("2016-01-01"),           // set to match All Time
+    endDate: moment(), 
+    singleDatePicker: false,
+    showDropdowns: true,
+    autoUpdateInput: false,
+    opens: 'left', 
+    minDate: moment("2016-01-01"),
+    maxDate: moment(),
+    locale: {
+        format: 'YYYY-MM-DD',
+        cancelLabel: 'Show All'
+    },
+    ranges: {
+        'All Time': [moment("2016-01-01"), moment()],
+        'Today': [moment(), moment()],
+        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+        'Last 30 Days': [moment().subtract(29, 'days'), moment()]
+    }
+  };
+
+  const tableDateRangeConfig = {
+    singleDatePicker: false,
+    showDropdowns: true,
+    autoUpdateInput: false,
+    opens: 'left', 
+    maxDate: moment(),
+    locale: {
+        format: 'YYYY-MM-DD',
+        cancelLabel: 'Show All'
+    },
+    ranges: {
+        'All Time': [moment("2016-01-01"), moment()],
+        'Today': [moment(), moment()],
+        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+        'Last 30 Days': [moment().subtract(29, 'days'), moment()]
+    }
+  };
+
+  const HandleAnalyticsApply = (ev, picker) => {
+    const startDate = picker.startDate.format('YYYY-MM-DD');
+    const endDate = picker.endDate.format('YYYY-MM-DD');
+    
+    if (startDate === moment().format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        analyticsLabel.text("TODAY"); 
+    } else if (startDate === moment().subtract(6, 'days').format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        analyticsLabel.text("LAST 7 DAYS"); 
+    } else if (startDate === moment().subtract(29, 'days').format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        analyticsLabel.text("LAST 30 DAYS");  
+    } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
+        analyticsLabel.text("YESTERDAY"); 
+    } else if (startDate === moment("2016-01-01").format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        analyticsLabel.text("ALL TIME");
+    }
+    else {
+        analyticsLabel.text(`FROM: ${picker.startDate.format('MMM D, YYYY')} - TO: ${picker.endDate.format('MMM D, YYYY')}`);
+    }
+    get_travel_for_analytics({ start: startDate, end: endDate });
+  };
+
+  const handleAnalyticsCancel  = () => {
+    analyticsLabel.text("ALL TIME");
+    get_travel_for_analytics({  start: moment("2016-01-01").format('YYYY-MM-DD'), end: moment().format('YYYY-MM-DD') });
+  };
+
+  $('#toAnalyticsPicker').daterangepicker(dateRangeConfig)
+  .on('cancel.daterangepicker', handleAnalyticsCancel)
+  .on('apply.daterangepicker', HandleAnalyticsApply);
+
+
+  const HandleTableApply = (ev, picker) => {
+    const startDate = picker.startDate.format('YYYY-MM-DD');
+    const endDate = picker.endDate.format('YYYY-MM-DD');
+    
+    if (startDate === moment().format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        createdToLabel.text(formatted); 
+    } else if (startDate === moment().subtract(6, 'days').format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        createdToLabel.text("LAST 7 DAYS"); 
+    } else if (startDate === moment().subtract(29, 'days').format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        createdToLabel.text("LAST 30 DAYS");  
+    } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
+        createdToLabel.text("YESTERDAY"); 
+    } 
+    else if (startDate === moment("2016-01-01").format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        createdToLabel.text("ALL TIME");
+    }
+    else {
+        createdToLabel.text(`FROM: ${picker.startDate.format('MMM D, YYYY')} - TO: ${picker.endDate.format('MMM D, YYYY')}`);
+    }
+    tableDate = {start: startDate, end: endDate};
+    tblTravel.ajax.reload();
+  };
+
+  const handleTableCancel  = () => {
+    analyticsLabel.text("ALL TIME");
+    tableDate = {start:moment("2016-01-01").format('YYYY-MM-DD'), end : moment().format('YYYY-MM-DD')};
+    tblTravel.ajax.reload();
+  };
+
+  $('#createdTablePicker').daterangepicker(tableDateRangeConfig)
+  .on('cancel.daterangepicker', handleTableCancel)
+  .on('apply.daterangepicker', HandleTableApply);
+
+  const HandleDepartTableApply = (ev, picker) => {
+    const startDate = picker.startDate.format('YYYY-MM-DD');
+    const endDate = picker.endDate.format('YYYY-MM-DD');
+    
+    if (startDate === moment().format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        departingToLabel.text(formatted); 
+    } else if (startDate === moment().subtract(6, 'days').format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        departingToLabel.text("LAST 7 DAYS"); 
+    } else if (startDate === moment().subtract(29, 'days').format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        departingToLabel.text("LAST 30 DAYS");  
+    } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
+        departingToLabel.text("YESTERDAY"); 
+    } 
+    else if (startDate === moment("2016-01-01").format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
+        departingToLabel.text("ALL TIME");
+    }
+    else {
+        departingToLabel.text(`FROM: ${picker.startDate.format('MMM D, YYYY')} - TO: ${picker.endDate.format('MMM D, YYYY')}`);
+    }
+    tableDate = {start: startDate, end: endDate};
+    tblTravel2.ajax.reload();
+  };
+
+  const handleDepartTableCancel  = () => {
+    analyticsLabel.text("ALL TIME");
+    tableDate = {start:moment("2016-01-01").format('YYYY-MM-DD'), end : moment().format('YYYY-MM-DD')};
+    tblTravel2.ajax.reload();
+  };
+
+  $('#departingTablePicker').daterangepicker(tableDateRangeConfig)
+  .on('cancel.daterangepicker', handleDepartTableCancel)
+  .on('apply.daterangepicker', HandleDepartTableApply);

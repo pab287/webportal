@@ -17,6 +17,8 @@ class Travel_order extends MY_Controller
     public function index()
     {
         $this->core_layout->setPrivilegeName("eforms_travel_order");
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
         $this->core_layout->addJs("global/js/amcharts4/core.js", true);
         $this->core_layout->addJs("global/js/amcharts4/charts.js", true);
         $this->core_layout->addJs("global/js/amcharts4/maps.js", true);
@@ -262,15 +264,13 @@ class Travel_order extends MY_Controller
             ->set_output(json_encode($data));
     }
 
-    function get_daily(){
-        $data = $this->travel_order->getDaily();
-        $this->output
-            ->set_content_type('json')
-            ->set_output(json_encode($data));
+    function get_created(){
+        $data = $this->travel_order->getCreated();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
-    function get_weekly(){
-        $data = $this->travel_order->getWeekly();
+    function get_departing(){
+        $data = $this->travel_order->getDeparting();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));

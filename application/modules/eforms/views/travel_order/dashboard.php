@@ -94,17 +94,30 @@
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
                         <div class="m-portlet__head-title">
-                    <span class="m-portlet__head-icon">
-                        <i class="flaticon-line-graph"></i>
-                    </span>
+                            <span class="m-portlet__head-icon">
+                                <i class="flaticon-line-graph"></i>
+                            </span>
                             <h3 class="m-portlet__head-text">
                                 Analytics
                             </h3>
                         </div>
                     </div>
+                    <div class="m-portlet__head-tools">
+                        <a href="javascript:void(0);" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg btnView" id="toAnalyticsPicker"><i class="fa fa-calendar"></i>
+                        </a>
+                    </div>
                 </div>
                 <div class="m-portlet__body">
-                    <div id="chartdiv" style="width: 100%;height: 500px;"></div>
+                    <span class="m--font-bolder" id="analyticsLabel">
+                        ALL TIME
+                    </span>
+                    <div id="chartdiv" style="width: 100%;height: 500px;">
+                        <div class="d-flex justify-content-center align-items-center w-100 h-100">
+                            <div class="text-center">
+                            <div class="mt-2 text-muted">Loading chart...</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -116,16 +129,22 @@
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
                         <div class="m-portlet__head-title">
-                    <span class="m-portlet__head-icon">
-                        <i class="flaticon-calendar-2"></i>
-                    </span>
+                            <span class="m-portlet__head-icon">
+                                <i class="flaticon-calendar-2"></i>
+                            </span>
                             <h3 class="m-portlet__head-text">
-                                Today
+                                CREATED TRAVEL ORDER &nbsp;
+                            </h3>
+                            <h3 class="m-portlet__head-text" id="createdToLabel">
                             </h3>
                         </div>
                     </div>
+                    <div class="m-portlet__head-tools">
+                        <a href="javascript:void(0);" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg btnView" id="createdTablePicker"><i class="fa fa-calendar"></i>
+                        </a>
+                    </div>
                 </div>
-                <div class="m-portlet__body table-responsive-sm">
+                <div class="m-portlet__body table-responsive-sm" style="min-height: 400px;">
                     <table class="table table-striped table-bordered"
                            id="table-travel-today"
                            width="100%">
@@ -144,22 +163,27 @@
                 </div>
             </div>
         </div>
-
         <div class="col-xl-6 col-lg-6 col-md-6">
             <div class="m-portlet">
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
                         <div class="m-portlet__head-title">
-                    <span class="m-portlet__head-icon">
-                        <i class="flaticon-calendar-2"></i>
-                    </span>
+                            <span class="m-portlet__head-icon">
+                                <i class="flaticon-calendar-2"></i>
+                            </span>
                             <h3 class="m-portlet__head-text">
-                                THIS WEEK
+                                DEPARTING TRAVEL ORDER &nbsp;
+                            </h3>
+                            <h3 class="m-portlet__head-text" id="departingToLabel">
                             </h3>
                         </div>
                     </div>
+                    <div class="m-portlet__head-tools">
+                        <a href="javascript:void(0);" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg btnView" id="departingTablePicker"><i class="fa fa-calendar"></i>
+                        </a>
+                    </div>
                 </div>
-                <div class="m-portlet__body table-responsive-sm">
+                <div class="m-portlet__body table-responsive-sm" style="min-height: 400px;">
                     <table class="table table-striped table-bordered"
                            id="table-travel-weekly"
                            width="100%">
