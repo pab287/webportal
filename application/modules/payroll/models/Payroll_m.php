@@ -1547,7 +1547,6 @@ class Payroll_m extends CI_Model
                     $employee->target_minutes_worked = $target_minutes_worked;
                     $target_hours_worked = $target_minutes_worked / 60;
                     $employee->target_hours_worked = $target_hours_worked;
-                    
                 }
 
                 $days_worked = $total_minutes / $minutes_per_day;
