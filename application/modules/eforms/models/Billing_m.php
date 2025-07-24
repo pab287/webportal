@@ -2309,6 +2309,7 @@ class Billing_m extends CI_Model {
         $charges = $query["total_charges"];
         $due_date = $query["due_date"];
         $balanceLastBill = $this->computeBalanceLastBill($query["customer_id"], $id, $due_date);
+        $balanceLastBill_unaccumulate = $this->computeBalanceLastBill_unaccumulative($query["customer_id"], $id);
 
         if($query["is_paid"] == 0){ // not paid
             $ar = '';
@@ -2377,7 +2378,8 @@ class Billing_m extends CI_Model {
         $data["due_date"] = $query["due_date"];
         $data["reading_refno"] = $query["reading_refno"];
         $data["balance"] = $balance;
-        $data["balanceLastBill"] = $balanceLastBill;
+        // $data["balanceLastBill"] = $balanceLastBill;
+        $data["balanceLastBill"] = $balanceLastBill_unaccumulate;
         $data["current_due"] = $charges;
         $data["total_charges"] = $net_payment;
         $data["overdue"] = $overdue;
@@ -5129,6 +5131,42 @@ class Billing_m extends CI_Model {
         $array['total_payments'] = $totalPayments;
         $array['bill_id'] = $b_id;
         return $array;
+    }
+
+    public function computeBalanceLastBill_unaccumulative($account_id, $bill_id){
+        $charges = 0;
+        $overdue = 0;
+        $current_date = date("Y-m-d");
+
+        $this->db->select("id, total_charges, due_date");
+        $this->db->from("hydra_billing.bills");
+        $this->db->where("id <", $bill_id);
+        $this->db->where("is_paid", 0);
+        $this->db->where("status", 1);
+        $this->db->where("account_id", $account_id);
+        $this->db->order_by("id", "DESC");
+        $this->db->limit(1);
+
+        $query = $this->db->get();
+
+        if($query->num_rows() > 0){
+            $row = $query->result_array();
+            $r = $row[0];
+        
+            $penalties = $this->getPenalties();
+
+            if ($current_date > $r['due_date']) {
+                if($penalties['type'] == 'percentage'){
+                    $overdue = ($penalties['amount'] / 100) * $r['total_charges'];
+                } else {
+                    $overdue = $penalties['amount'];
+                }
+            }
+
+            $charges = $r['total_charges'] + $overdue;
+        }
+
+        return $charges;
     }
 
     public function totalPayments($bill_id){
