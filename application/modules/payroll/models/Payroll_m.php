@@ -1538,16 +1538,22 @@ class Payroll_m extends CI_Model
                     $excude_holiday_days_worked = $total_holiday_minutes / $minutes_per_day;
                     $temp_holiday_days_worked = floor($excude_holiday_days_worked * 100) / 100;
                     $isFloatHoliday = is_float($excude_holiday_days_worked);
-                    $excude_holiday_days_worked = ($isFloatHoliday == true)? $temp_holiday_days_worked: $excude_holiday_days_worked;
+                    $excude_holiday_days_worked = ($isFloatHoliday === true)? $temp_holiday_days_worked: $excude_holiday_days_worked;
                 }
 
-                if($isMonthlyPaidEmployee && $total_minutes === 0){ $total_minutes = $ewd * 480; }
+                if($isMonthlyPaidEmployee && $total_minutes === 0){
+                    $total_minutes = $ewd * 480;
+                    $target_minutes_worked = $total_minutes + $total_unrendered_minutes;
+                    $employee->target_minutes_worked = $target_minutes_worked;
+                    $target_hours_worked = $target_minutes_worked / 60;
+                    $employee->target_hours_worked = $target_hours_worked;
+                }
 
                 $days_worked = $total_minutes / $minutes_per_day;
                 $temp_days_worked = floor($days_worked * 100) / 100;
 
                 $isFloat = is_float($days_worked);
-                $days_worked = ($isFloat == true)? $temp_days_worked: $days_worked;
+                $days_worked = ($isFloat === true)? $temp_days_worked: $days_worked;
                 
                 $employee->days_worked = $days_worked;
 
@@ -1565,7 +1571,6 @@ class Payroll_m extends CI_Model
                 $employee->total_unrendered_amount = $total_unrendered_amount;
 
                 $employee->ewd = $ewd;
-
                 $allowances = $this->getEmployeeAllowances($employee, $working_days_in_a_month, $minutes_per_day, $target_minutes_worked, $total_unrendered_minutes, 1);
 
                 $employee_allowance = array_reduce($allowances, function ($carry, $item) {
