@@ -461,8 +461,7 @@ class Timesheet_model extends CI_Model{
                         if($tempTblTimesheet->num_rows() == 1){
                             $tempComments = "";
                             $tempRow = $tempTblTimesheet->row();
-                            $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $tempRow->emp_id);
-
+                            /*** $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $tempRow->emp_id); ***/
                             /*** $shift_id = 0; ***/
 
                             $this->db->select("a.id, b.shift_id");
