@@ -890,7 +890,6 @@ $(document)
                         data: 'total_time_rendered',
                         className: 'text-center',
                         render: function (data, type, row, meta) {
-                            let tempHtml = ``;
                             let attCount = 0;
                             const arrInOut = ['am_in', 'am_out', 'pm_in', 'pm_out', 'total_accredited_ot_hrs'];
                             $.each(arrInOut, function (ii, vv) {
@@ -904,8 +903,22 @@ $(document)
                             const tempData = (typeof data !== "undefined" && data !== null) ? parseFloat(data) : 0;
                             const focusClass = (tempLate > 0 || tempUt > 0) ? 'm--font-boldest2 m--font-danger' : 'm--font-bolder';
                             const hrs = (tempData / 60).toFixed(2);
-                            tempHtml = data ? `<span class="${focusClass}" style="cursor: pointer;" data-toggle="m-tooltip" data-html="true"
-                                                 data-original-title="<strong>${hrs}</strong> hours" data-delay='{"show": 150}'>${hrs}</span>` : ``;
+
+                            const totalNdiffMinutes = row.total_ndiff_rendered ? row.total_ndiff_rendered : 0;
+                            const totalNdiffHours = (totalNdiffMinutes / 60).toFixed(2);
+                            const tooltip = parseFloat(totalNdiffHours) > 0 ? `<div>
+                                <div class='text-left'>
+                                    <span>Reg. Hrs.: </span>
+                                    <span class='m--font-boldest'>${hrs}</span>
+                                </div>
+                                <div class='text-left'>
+                                    <span>Night Diff. Hrs.: </span>
+                                    <span class='m--font-boldest'>${totalNdiffHours}</span>
+                                </div>
+                            </div>` : `<strong>${hrs}</strong> hours`;
+
+                            let tempHtml = data ? `<span class="${focusClass}" style="cursor: pointer;" data-toggle="m-tooltip" data-html="true"
+                                                 data-original-title="${tooltip}" data-delay='{"show": 150}'>${hrs}</span>` : ``;
                             if (attCount > 0 && parseInt(row.verified) == 0 && tempHtml == '') { tempHtml = '0.00'; }
                             if (parseInt(row.verified) == 1 && tempHtml == '') { tempHtml = '0.00'; }
                             return tempHtml;
@@ -915,8 +928,8 @@ $(document)
                         width: '8%',
                         data: 'total_accredited_ot_hrs',
                         className: 'text-center',
-                        render: function (data, type, row, meta) {
-                            const hasShift = parseInt(row.has_shift) == 1 && parseFloat(row.total_time_rendered) > 0 ? true : false;
+                        render: function (data, _type, row, _meta) {
+                            const hasShift = parseInt(row.has_shift) == 1 && parseFloat(row.total_time_rendered) > 0;
                             const totalOTHrs = data && row.id ? parseFloat(data) + parseFloat(row.total_accredited_ndiff_ot_hrs) : 0;
                             const diff = Math.ceil(totalOTHrs) - Math.floor(totalOTHrs);
                             const totalOTHrsFormmatted = parseFloat(diff) >= 1 ? totalOTHrs.toFixed(2) : totalOTHrs;
@@ -928,7 +941,7 @@ $(document)
                             const nDiffOTHrs = data && row.id ? parseFloat(row.total_accredited_ndiff_ot_hrs) : 0;
                             const diffNDiffOTHrs = Math.ceil(nDiffOTHrs) - Math.floor(nDiffOTHrs);
                             const nDiffOTHrsFormmatted = parseFloat(diffNDiffOTHrs) >= 1 ? nDiffOTHrs.toFixed(2) : nDiffOTHrs;
-
+                            const hasShiftValue = hasShift === true ? '0' : '';
                             const tooltip = parseFloat(totalOTHrs) > 0 ? `<div>
                                 <div class='text-left'>
                                     <span>Reg. Hrs.: </span>
@@ -938,10 +951,10 @@ $(document)
                                     <span>Night Diff. Hrs.: </span>
                                     <span class='m--font-boldest'>${nDiffOTHrsFormmatted}</span>
                                 </div>
-                            </div>` : (hasShift === true) ? `0` : ``;
+                            </div>` : hasShiftValue;
 
                             return data ? `<span class="" style="cursor: pointer;" data-toggle="m-tooltip" data-html="true"
-                                                 data-original-title="${tooltip}" data-delay='{"show": 150}'>${totalOTHrsFormmatted}</span>` : (hasShift === true) ? `0` : ``;
+                                                 data-original-title="${tooltip}" data-delay='{"show": 150}'>${totalOTHrsFormmatted}</span>` : hasShiftValue;
                         }
                     },
                     {
@@ -1037,8 +1050,6 @@ $(document)
                                         </a>
                                     </li>`;
                                 }
-
-                                console.log(regenHiddenClass, pendingAdjustment);
                                 
                                 if (regenHiddenClass === false && pendingAdjustment === false) {
                                     regenerateRecord = `<li class="m-nav__item re-generate-button">

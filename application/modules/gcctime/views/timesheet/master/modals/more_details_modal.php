@@ -99,7 +99,7 @@
                                 <?php
                                     if (intval($loa->type) === 1 || intval($loa->type) === 2) {
                                         echo date("M d,Y h:i A", strtotime($loa->date_from)) . " - " . date("h:i A", strtotime($loa->date_to));
-                                    } else if (intval($loa->type) === 3) {
+                                    } elseif (intval($loa->type) === 3) {
                                         echo date("F d,Y", strtotime($loa->date_from));
                                     } else {
                                         echo date("M d,Y h:i A", strtotime($loa->date_from)) . " - " . date("M d,Y h:i A", strtotime($loa->date_to));
@@ -492,11 +492,29 @@
         <div class="total-rendered_time">
             <hr class="mt-4">
             <div class="row">
-                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 m--regular-font-size-lg1">
+                <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 m--regular-font-size-lg1">
                     <span class="m--font-bolder text-muted mr-2">TOTAL LATE</span>
                     <span class="m--font-boldest"
                         style="text-transform: none;"><?= empty($timesheet) ? 0 : $timesheet->total_late ?> mins.</span>
                 </div>
+                <?php if (floatval($timesheet->total_ndiff_rendered) > 0): ?>
+                <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 m--regular-font-size-lg1">
+                    <span class="m--font-bolder text-muted mr-2">TOTAL REG.NDIFF HRS. WORKED</span>
+                    <span class="m--font-boldest" style="text-transform: none;">
+                        <?php
+                            if (empty($timesheet)) {
+                                echo 0;
+                            } else {
+                                $total_ndiff_hrs = $timesheet->total_ndiff_rendered / 60;
+                                $diff2 = $total_ndiff_hrs - floor($total_ndiff_hrs);
+                                $decimals2 = $diff2 > 0 ? 2 : 0;
+                                $total_ndiff_hrs = number_format($total_ndiff_hrs, $decimals2, '.', ',');
+                                echo $total_ndiff_hrs;
+                            }
+                        ?> hrs.
+                    </span>
+                </div>
+                <?php endif; ?>
             </div>
             <div class="row">
                 <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 m--regular-font-size-lg1">
@@ -521,6 +539,35 @@
                     </span>
                 </div>
             </div>
+            <?php if($timesheet->last_updated_by_name || $timesheet->verified_by_name): ?>
+                <hr class="mt-4">
+                <div class="row">
+                    <?php if($timesheet->verified_by_name): ?>
+                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 m--regular-font-size-lg1">
+                        <div>
+                            <span class="m--font-bolder text-muted mr-2">VERIFIED BY: </span>
+                            <span class="m--font-boldest" style="text-transform: none;"><?= $timesheet->verified_by_name; ?></span>
+                        </div>
+                        <div>
+                            <span class="m--font-bolder text-muted mr-2">VERIFIED DATE: </span>
+                            <span class="m--font-bolder" style="text-transform: none;"><?= strtoupper(date('F d, Y h:i A', strtotime($timesheet->verified_at))); ?></span>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    <?php if($timesheet->last_updated_by_name): ?>
+                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 m--regular-font-size-lg1">
+                        <div>
+                            <span class="m--font-bolder text-muted mr-2">LAST UPDATED BY: </span>
+                            <span class="m--font-boldest" style="text-transform: none;"><?= $timesheet->last_updated_by_name; ?></span>
+                        </div>
+                        <div>
+                            <span class="m--font-bolder text-muted mr-2">LAST UPDATED DATE: </span>
+                            <span class="m--font-bolder" style="text-transform: none;"><?= strtoupper(date('F d, Y h:i A', strtotime($timesheet->last_updated_at))); ?></span>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 

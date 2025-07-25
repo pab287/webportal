@@ -34,6 +34,7 @@ class Timesheet_model extends CI_Model{
 
     protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
     protected $tbl_payroll_sheet = "payroll.payroll_sheet";
+    protected $tbl_ps_employee_regular_ndiff = "payroll.employee_regular_ndiff";
 
     private $db_debug;
     private $logged_in_user;
@@ -1990,10 +1991,10 @@ class Timesheet_model extends CI_Model{
                     $tempPmInx = ($pm_in < $_pm_start) ? $_pm_start : $pm_in;
                     $tempPmOutx = ($pm_out > $_pm_end) ? $_pm_end : $pm_out;
 
-                    if($flexibleEmployee && $hasHalfDayDeduction == false){ $tempPmInx = $_pm_start; }
+                    if($flexibleEmployee && $hasHalfDayDeduction === false){ $tempPmInx = $_pm_start; }
 
                     /*** super flexible employee ***/
-                    if($superFlexibleEmployee){ 
+                    if($superFlexibleEmployee){
                         $tempPmInx = $_pm_start;
                         $tempPmOutx = $_pm_end;
                     }
@@ -2265,7 +2266,7 @@ class Timesheet_model extends CI_Model{
     }
 
     public function updateTimesheetShiftComputation($employee_time_sheet, $allow_late_adjustment=false, $night_diff_cfg=null){
-        /*** reset late, undertime and time rendered ***/
+        /*** reset late, undertime and time rendered also nightdiff rendered ***/
         $employee_time_sheet->am_ut = 0;
         $employee_time_sheet->pm_ut = 0;
         $employee_time_sheet->total_ut = 0;
@@ -2276,7 +2277,11 @@ class Timesheet_model extends CI_Model{
         $employee_time_sheet->am_time_rendered = 0;
         $employee_time_sheet->pm_time_rendered = 0;
         $employee_time_sheet->total_time_rendered = 0;
-        /*** reset late, undertime and time rendered ***/
+
+        $employee_time_sheet->am_ndiff_rendered = 0;
+        $employee_time_sheet->pm_ndiff_rendered = 0;
+        $employee_time_sheet->total_ndiff_rendered = 0;
+        /*** reset late, undertime and time rendered also nightdiff rendered ***/
 
         $isFlexibleEmployee = false;
         $this->db->select("per.is_flexi");
@@ -2311,8 +2316,13 @@ class Timesheet_model extends CI_Model{
         }
         $this->db->reset_query();
 
+        /** night diff switch here **/
+        $allowNdiff = $this->db->get_where($this->tbl_ps_employee_regular_ndiff, array("employee_id"=>$employee_time_sheet->emp_id, "allow_ndiff"=>1));
+        $allowRegularNightDiff = $allowNdiff->num_rows() === 1;
+        $this->db->reset_query();
+        /** night diff switch here **/
+
         /*** altered section allowedPaidHoliday ***/
-        
         $tempPayrollType = null;
         $allowedPaidHoliday = false;
         
@@ -2518,25 +2528,27 @@ class Timesheet_model extends CI_Model{
                 $employee_time_sheet->am_time_rendered = round(($am_time_rendered) / 60, 2);
 
                 /*** regular ndiff am rendered computation ***/
-                $currentAmDate = date("Y-m-d", strtotime($employee_time_sheet->date));
-                $amNdiffStart = date("Y-m-d H:i", strtotime($currentAmDate." 22:00:00"));
-                $amNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentAmDate." 05:00:00")));
-
-                if(isset($night_diff_cfg->start_time) && $night_diff_cfg->start_time){
-                    $amNdiffStart = date("Y-m-d H:i", strtotime($currentAmDate." ".$night_diff_cfg->start_time));
+                if($allowRegularNightDiff){
+                    $currentAmDate = date("Y-m-d", strtotime($employee_time_sheet->date));
+                    $amNdiffStart = date("Y-m-d H:i", strtotime($currentAmDate." 22:00:00"));
+                    $amNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentAmDate." 05:00:00")));
+    
+                    if(isset($night_diff_cfg->start_time) && $night_diff_cfg->start_time){
+                        $amNdiffStart = date("Y-m-d H:i", strtotime($currentAmDate." ".$night_diff_cfg->start_time));
+                    }
+                    if(isset($night_diff_cfg->end_time) && $night_diff_cfg->end_time){
+                        $amNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentAmDate." ".$night_diff_cfg->end_time)));
+                    }
+    
+                    $_amNdiffStart = strtotime($amNdiffStart);
+                    $_amNdiffEnd = strtotime($amNdiffStart) <= $_am_end && strtotime($amNdiffEnd) >= $_am_end ? $_am_end : strtotime($amNdiffEnd);
+    
+                    $tempAmNdiffStart = $tempAmInx >= $_amNdiffStart && $tempAmInx <= $_amNdiffEnd ? $tempAmInx : $_amNdiffStart;
+                    $tempAmNdiffEnd = $tempAmOutx >= $_amNdiffStart && $tempAmOutx <= $_amNdiffEnd ? $tempAmOutx : $_amNdiffEnd;
+    
+                    $am_ndiff_rendered = $tempAmNdiffEnd - $tempAmNdiffStart;
+                    $employee_time_sheet->am_ndiff_rendered = round(($am_ndiff_rendered) / 60, 2);
                 }
-                if(isset($night_diff_cfg->end_time) && $night_diff_cfg->end_time){
-                    $amNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentAmDate." ".$night_diff_cfg->end_time)));
-                }
-
-                $_amNdiffStart = strtotime($amNdiffStart);
-                $_amNdiffEnd = strtotime($amNdiffStart) <= $_am_end && strtotime($amNdiffEnd) >= $_am_end ? $_am_end : strtotime($amNdiffEnd);
-
-                $tempAmNdiffStart = $tempAmInx >= $_amNdiffStart && $tempAmInx <= $_amNdiffEnd ? $tempAmInx : $_amNdiffStart;
-                $tempAmNdiffEnd = $tempAmOutx >= $_amNdiffStart && $tempAmOutx <= $_amNdiffEnd ? $tempAmOutx : $_amNdiffEnd;
-
-                $am_ndiff_rendered = $tempAmNdiffEnd - $tempAmNdiffStart;
-                $employee_time_sheet->am_ndiff_rendered = round(($am_ndiff_rendered) / 60, 2);
                 /*** regular ndiff am rendered computation ***/
             }
 
@@ -2603,24 +2615,26 @@ class Timesheet_model extends CI_Model{
                 $employee_time_sheet->pm_time_rendered = round(($pm_time_rendered) / 60, 2);
 
                 /*** regular ndiff pm rendered computation ***/
-                $currentPmDate = date("Y-m-d", strtotime($employee_time_sheet->date));
-                $pmNdiffStart = date("Y-m-d H:i", strtotime($currentPmDate." 22:00:00"));
-                $pmNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentPmDate." 05:00:00")));
-
-                if(isset($night_diff_cfg->start_time) && $night_diff_cfg->start_time){
-                    $pmNdiffStart = date("Y-m-d H:i", strtotime($currentPmDate." ".$night_diff_cfg->start_time));
+                if($allowRegularNightDiff){
+                    $currentPmDate = date("Y-m-d", strtotime($employee_time_sheet->date));
+                    $pmNdiffStart = date("Y-m-d H:i", strtotime($currentPmDate." 22:00:00"));
+                    $pmNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentPmDate." 05:00:00")));
+    
+                    if(isset($night_diff_cfg->start_time) && $night_diff_cfg->start_time){
+                        $pmNdiffStart = date("Y-m-d H:i", strtotime($currentPmDate." ".$night_diff_cfg->start_time));
+                    }
+                    if(isset($night_diff_cfg->end_time) && $night_diff_cfg->end_time){
+                        $pmNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentPmDate." ".$night_diff_cfg->end_time)));
+                    }
+    
+                    $_pmNdiffStart = $_pm_start >= strtotime($pmNdiffStart) && $_pm_start <= strtotime($pmNdiffEnd) ? $_pm_start : strtotime($pmNdiffStart);
+                    $_pmNdiffEnd = $_pm_end >= strtotime($pmNdiffStart) && $_pm_end <= strtotime($pmNdiffEnd) ? $_pm_end : strtotime($pmNdiffEnd);
+    
+                    $tempPmNdiffStart = $tempPmInx >= $_pmNdiffStart && $tempPmInx <= $_pmNdiffEnd ? $tempPmInx : $_pmNdiffStart;
+                    $tempPmNdiffEnd = $tempPmOutx >= $_pmNdiffStart && $tempPmOutx <= $_pmNdiffEnd ? $tempPmOutx : $_pmNdiffEnd;
+                    $pm_ndiff_rendered = $tempPmNdiffEnd - $tempPmNdiffStart;
+                    $employee_time_sheet->pm_ndiff_rendered = round(($pm_ndiff_rendered) / 60, 2);
                 }
-                if(isset($night_diff_cfg->end_time) && $night_diff_cfg->end_time){
-                    $pmNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentPmDate." ".$night_diff_cfg->end_time)));
-                }
-
-                $_pmNdiffStart = $_pm_start >= strtotime($pmNdiffStart) && $_pm_start <= strtotime($pmNdiffEnd) ? $_pm_start : strtotime($pmNdiffStart);
-                $_pmNdiffEnd = $_pm_end >= strtotime($pmNdiffStart) && $_pm_end <= strtotime($pmNdiffEnd) ? $_pm_end : strtotime($pmNdiffEnd);
-
-                $tempPmNdiffStart = $tempPmInx >= $_pmNdiffStart && $tempPmInx <= $_pmNdiffEnd ? $tempPmInx : $_pmNdiffStart;
-                $tempPmNdiffEnd = $tempPmOutx >= $_pmNdiffStart && $tempPmOutx <= $_pmNdiffEnd ? $tempPmOutx : $_pmNdiffEnd;
-                $pm_ndiff_rendered = $tempPmNdiffEnd - $tempPmNdiffStart;
-                $employee_time_sheet->pm_ndiff_rendered = round(($pm_ndiff_rendered) / 60, 2);
                 /*** regular ndiff pm rendered computation ***/
             }
             if(($pm_in == null || $pm_out == null) && ($_pm_start && $_pm_end)){
@@ -6705,8 +6719,28 @@ class Timesheet_model extends CI_Model{
         $resultSet["shift_count"] = 0;
         $resultSet["shift_schedule"] = array();
 
-        $resultSet["timesheet"] = $this->db->get_where($this->tbl_timesheet, array("id" => $timesheet_id))->row();
-        $resultSet["employee"] = $this->db->select("emp.*, CONCAT(emp.lastname,
+        $this->db->select("ts.*, CONCAT(cemp.lastname,
+            CASE WHEN cemp.suffix != 'N/A' AND cemp.suffix != 'NONE' AND cemp.suffix != ''
+            AND cemp.suffix IS NOT NULL THEN CONCAT(' ', cemp.suffix) ELSE '' END, ', ',
+            cemp.firstname, ' ', CASE
+            WHEN cemp.middlename != 'N/A' AND cemp.middlename != 'NONE'
+            AND cemp.middlename != '' AND cemp.middlename IS NOT NULL
+            THEN CONCAT(SUBSTR(cemp.middlename, 1, 1), '.')
+            ELSE '' END) as last_updated_by_name, CONCAT(vemp.lastname,
+            CASE WHEN vemp.suffix != 'N/A' AND vemp.suffix != 'NONE' AND vemp.suffix != ''
+            AND vemp.suffix IS NOT NULL THEN CONCAT(' ', vemp.suffix) ELSE '' END, ', ',
+            vemp.firstname, ' ', CASE
+            WHEN vemp.middlename != 'N/A' AND vemp.middlename != 'NONE'
+            AND vemp.middlename != '' AND vemp.middlename IS NOT NULL
+            THEN CONCAT(SUBSTR(vemp.middlename, 1, 1), '.')
+            ELSE '' END) as verified_by_name");
+        $this->db->from($this->tbl_timesheet . " ts");
+        $this->db->join($this->tbl_employees . " cemp", "cemp.id = ts.last_updated_by", "left");
+        $this->db->join($this->tbl_employees . " vemp", "vemp.id = ts.verified_by", "left");
+        $this->db->where("ts.id", $timesheet_id);
+        $timesheetRow = $this->db->get();
+        $resultSet["timesheet"] = $timesheetRow->row();
+        $resultSet["employee"] = $this->db->select("CONCAT(emp.lastname,
             CASE WHEN emp.suffix != 'N/A' AND emp.suffix != 'NONE' AND emp.suffix != ''
             AND emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE '' END, ', ',
             emp.firstname, ' ', CASE
@@ -6728,17 +6762,6 @@ class Timesheet_model extends CI_Model{
         $this->db->group_end();
         $tempLoaReference = $this->db->get();
         $resultSet["loa_references"] = $tempLoaReference->result();
-
-        /*** $resultSet["loa_references"] = $this->db
-            ->where(array(
-                "employee" => $employee_id,
-                "DATE(date_from) <=" => $date,
-                "DATE(date_to) >=" => $date,
-                "status" => "Approved"
-            ))
-            ->get($this->tbl_loa)
-            ->result(); ***/
-
         $resultSet["to_references"] = $this->db
             ->select("travel_order.reference_no, GROUP_CONCAT(TRIM(destination.destination) SEPARATOR '||') `destination`, GROUP_CONCAT(TRIM(destination.purpose) SEPARATOR '||') purpose, GROUP_CONCAT(CONCAT(DATE_FORMAT(destination.date_from, '%m/%d/%Y %h:%i%p'), ' - ', DATE_FORMAT(destination.date_to, '%m/%d/%Y %h:%i%p')) SEPARATOR '||') as to_dates")
             ->join("gcceforms.travel_destination destination", "destination.travel_order_id = travel_order.id")
@@ -6752,10 +6775,8 @@ class Timesheet_model extends CI_Model{
             ->group_by("travel_order.id")
             ->get($this->tbl_TO . " travel_order")
             ->result();
-        
         $resultSet["date"] = $date;
         $resultSet["overtime"] = array();
-
         if($timesheet_id && $timesheet_id > 0){
             $resultSet["overtime"] = $this->db
             ->select("ts_ot.*,
