@@ -15,7 +15,7 @@ const formatted = moment().format('MMMM D, YYYY dddd');
 let approvedChart = null;
 let analyticsChart = null;
 let analyticsLabel= $('#analyticsLabel');
-
+let pieChartLabel = $('#approvedLabel');
 let tableDate = null;
 let createdToLabel = $('#createdToLabel');
 createdToLabel.text(formatted);
@@ -477,22 +477,25 @@ $.ajax({
             csrf_token: _csrf_hash,
             date: date,
           },
-        success: function(data)
-        {   
+        success: function(data){   
             if(!data){
                 return;
             }
             if (approvedChart != null) {
                 approvedChart.dispose();
-              }
-              let approvedData = Object.entries(data.approved).map(([key, value]) => ({
+            }
+            let approvedData = Object.entries(data.approved).map(([key, value]) => ({
                 priority: key.charAt(0).toUpperCase() + key.slice(1),
                 value: parseInt(value),
                 color: am4core.color(
-                  key === 'Accomplished' ? '#34BFA3' : 
-                  key === 'Overdue' ? '#F4516C' : 
-                  key === 'Ongoing' ? '#FAC35D' : '#36A3F7')
-              }));
+                    key == 'Accomplished' ? '#34BFA3' : 
+                    key == 'Overdue' ? '#F4516C' : 
+                    key == 'Ongoing' ? '#FAC35D' : '#36A3F7'
+                ),
+                url: key == 'Accomplished' ? '&accomplished=1' : 
+                     key == 'Overdue' ? '&overdue=1' : 
+                     key == 'Ongoing' ? '&ongoing=1' : ''
+            }));
         
               approvedChart = am4core.create("approvedPieChart", am4charts.PieChart);
         
@@ -505,7 +508,8 @@ $.ajax({
                       color: am4core.color("#dadada"),
                       opacity: 0.3,
                       strokeDasharray: "4,4",
-                      tooltip: ""
+                      tooltip: "",
+                      url: ""
                   }];
               } else {
                   approvedChart.data = approvedData;
@@ -515,42 +519,47 @@ $.ajax({
               pieSeries.dataFields.value = "value";
               pieSeries.dataFields.category = "priority";
               pieSeries.slices.template.propertyFields.fill = "color";
+              pieSeries.slices.template.events.on("hit", function(ev) {
+                const dataItem = ev.target.dataItem;
+                const url = dataItem.dataContext.url;
+                if (url && !dataItem.dataContext.disabled) {
+                    window.open(baseUrl('eforms/travel_order/masterfile?' + url), "_blank");
+                }
+            });
               approvedChart.legend = new am4charts.Legend();
         }
     });
   };
-
-
 
   const handleApproveApply = (ev, picker) => {
     const startDate = picker.startDate.format('YYYY-MM-DD');
     const endDate = picker.endDate.format('YYYY-MM-DD');
     
     if (startDate === moment().format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
-        departingToLabel.text(formatted); 
+        pieChartLabel.text(formatted); 
     } else if (startDate === moment().subtract(6, 'days').format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
-        departingToLabel.text("LAST 7 DAYS"); 
+        pieChartLabel.text("LAST 7 DAYS"); 
     } else if (startDate === moment().subtract(29, 'days').format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
-        departingToLabel.text("LAST 30 DAYS");  
+        pieChartLabel.text("LAST 30 DAYS");  
     } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
-        departingToLabel.text("YESTERDAY"); 
+        pieChartLabel.text("YESTERDAY"); 
     } 
     else if (startDate === moment("2016-01-01").format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
-        departingToLabel.text("ALL TIME");
+        pieChartLabel.text("ALL TIME");
     }
     else {
-        departingToLabel.text(`FROM: ${picker.startDate.format('MMM D, YYYY')} - TO: ${picker.endDate.format('MMM D, YYYY')}`);
+        pieChartLabel.text(`FROM: ${picker.startDate.format('MMM D, YYYY')} - TO: ${picker.endDate.format('MMM D, YYYY')}`);
     }
     tableDate = {start: startDate, end: endDate};
     get_approved_travel_order(tableDate);
   };
 
   const handleApproveCancel  = () => {
-    // analyticsLabel.text("ALL TIME");
-    // tableDate = {start:moment("2016-01-01").format('YYYY-MM-DD'), end : moment().format('YYYY-MM-DD')};
-    // tblTravel2.ajax.reload();
+    pieChartLabel.text("ALL TIME");
+    tableDate = {start:moment("2016-01-01").format('YYYY-MM-DD'), end : moment().format('YYYY-MM-DD')};
+    get_approved_travel_order(tableDate);
   };
 
-  $('#approveToPicker').daterangepicker(tableDateRangeConfig)
+  $('#approveToPicker').daterangepicker(dateRangeConfig)
   .on('cancel.daterangepicker', handleApproveCancel)
   .on('apply.daterangepicker', handleApproveApply);

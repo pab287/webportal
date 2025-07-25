@@ -1,5 +1,8 @@
 var recordsTotal = 0;
 var param_status = "";
+let param_accomplished = "";
+let param_overdue = "";
+let param_ongoing = "";
 
 var getUrlParameter = function getUrlParameter(sParam) {
     var sPageURL = decodeURIComponent(window.location.search.substring(1)),
@@ -16,6 +19,15 @@ var getUrlParameter = function getUrlParameter(sParam) {
 
 if(typeof getUrlParameter('status') !== 'undefined'){
     param_status = getUrlParameter('status');
+}
+if(typeof getUrlParameter('accomplished') !== 'undefined'){
+    param_accomplished = getUrlParameter('accomplished');
+}
+if(typeof getUrlParameter('overdue') !== 'undefined'){
+    param_overdue = getUrlParameter('overdue');
+}
+if(typeof getUrlParameter('ongoing') !== 'undefined'){
+    param_ongoing = getUrlParameter('ongoing');
 }
 
 $(document).ready(function(){
@@ -189,6 +201,9 @@ var tblTravelOrder = $("#table-travel_order").DataTable({
             d.end_date = end_date,
             d.query_builder = query_builder,
             d.status = param_status
+            d.accomplished = param_accomplished
+            d.overdue = param_overdue
+            d.ongoing = param_ongoing
         },
         error: function (xhr, error, code){
             tblTravelOrder.ajax.reload(null, false);

@@ -29,8 +29,10 @@
             $start = (isset($post["start_date"]) && $post["start_date"]) ? $post["start_date"] : false;
             $end = (isset($post["end_date"]) && $post["end_date"]) ? $post["end_date"] : false;
             $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
-            $status = (isset($post['status']) && $post['status']) ? ucwords($post['status']) : null; //clicked in portal dashboard
-            
+            $status = (isset($post['status']) && $post['status']) ? ucwords($post['status']) : null; 
+            $accomplished = (isset($post['accomplished']) && $post['accomplished']) ? $post['accomplished'] : null; 
+            $overDue = (isset($post['overdue']) && $post['overdue']) ? $post['overdue'] : null; 
+            $onGoing = (isset($post['ongoing']) && $post['ongoing']) ? $post['ongoing'] : null; 
             $privilege = $this->core_layout->getCurrentActions();
 
             $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
@@ -40,8 +42,8 @@
                 $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
             }
             
-            $rowData = $this->get_all_item($privilege, $start, $end, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_by_company, $companyDescription);
-            $rowCount = $this->get_all_item_count($privilege, $start, $end, $query_builder, $search, $status, $view_by_company, $companyDescription);
+            $rowData = $this->get_all_item($privilege, $start, $end, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_by_company, $companyDescription,$accomplished,$overDue,$onGoing);
+            $rowCount = $this->get_all_item_count($privilege, $start, $end, $query_builder, $search, $status, $view_by_company, $companyDescription,$accomplished,$overDue,$onGoing);
             // if (!$search) {
             //     $rowData = $this->get_all_post($privilege, $start, $end, $query_builder, $limit, $offset, $sortBy, $sortOrder, $status);
             //     $rowCount = $this->get_all_post_count($privilege, $start, $end, $query_builder, $status);
@@ -63,7 +65,7 @@
             return $resultset;
         }
 
-        public function get_all_item($privilege, $start, $end, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_by_company = false, $companyDescription = null) {
+        public function get_all_item($privilege, $start, $end, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_by_company = false, $companyDescription = null,$accomplished,$overDue,$onGoing) {
             $filterFields1 = array("a.id", "a.status", "a.reference_no", "a.company", "a.driver", "a.others_remarks","te.lastname","te.firstname","td.des_to", 'tod.destination', 'toe.firstname', 'toe.lastname');
             $date = date("Y-m-d", strtotime("-1 year", time()));
             $check = date("Y-m-d", strtotime("-1 year", time()));
@@ -106,7 +108,23 @@
                 $this->db->where("DATE(a.created_dt) >=", $check);
                 $this->db->group_end();
             }
-
+            
+            if($accomplished == '1'){
+                $this->db->where('a.status', 'Approved');
+                $this->db->where("td.accomplished", 1);
+            }
+            if($overDue == '1'){
+                $today = date('Y-m-d');
+                $this->db->where('a.status', 'Approved');
+                $this->db->where("td.accomplished", 0);
+                $this->db->where("td.date_to <", $today);
+            }
+            if($onGoing == '1'){
+                $today = date('Y-m-d');
+                $this->db->where('a.status', 'Approved');
+                $this->db->where("td.accomplished", 0);
+                $this->db->where("td.date_to >", $today);
+            }     
             if (isset($query_builder) && $query_builder) {
                 $this->db->where($query_builder);
             }
@@ -210,6 +228,17 @@
         
                     $this->db->select("td.destination, td.date_from, td.date_to");
                     $this->db->from("gcceforms.travel_destination td");
+                    
+                    if($overDue == '1'){
+                        $today = date('Y-m-d');
+                        $this->db->where("td.accomplished", 0);
+                        $this->db->where("td.date_to <", $today);
+                    }
+                    if($onGoing == '1'){
+                        $today = date('Y-m-d');
+                        $this->db->where("td.accomplished", 0);
+                        $this->db->where("td.date_to >", $today);
+                    }  
                     if ($start && $end) {
                         $this->db->group_start();
                         $this->db->where("DATE(td.date_from) >=", $start);
@@ -219,10 +248,14 @@
                     } else {
                         $this->db->where("td.travel_order_id", $rowId);
                     }
+                    if($accomplished){
+                        $this->db->where("td.accomplished", 1);
+                    }
+                
                     $destination = $this->db->get();
                     $destinationDateTime = array();
                     $tempDates = array();
-        
+                    
                     if ($destination->num_rows() > 0) {
                         $des_num = 0;
                         foreach ($destination->result() as $key => $vx) {
@@ -249,9 +282,10 @@
                             array_push($tempDates, $vx->date_to);
                         }
                     } else {
-                        return array();
+                        // array_push($destinationDateTime, "");
+                        // array_push($tempDates, "");
                     }
-
+                    $rs->countDes = count($query->result() );
                     $rs->personnels = $rowPersonnel;
                     $rs->driver = $rowDriver;
                     $rs->vehicle_plate = $rowVehiclePlate;
@@ -269,7 +303,7 @@
             return $arrData;
         }
 
-        public function get_all_item_count($privilege, $start, $end, $query_builder=null, $search = null, $status = null, $view_by_company = false, $companyDescription = null){
+        public function get_all_item_count($privilege, $start, $end, $query_builder=null, $search = null, $status = null, $view_by_company = false, $companyDescription = null, $accomplished,$overDue,$onGoing ){
             $role_id = $this->authenticate->getRoleId();
             $current_date = date("Y-m-d");
 
@@ -312,6 +346,25 @@
                 $this->db->where("DATE(a.created_dt) >=", $check);
                 $this->db->group_end();
             }
+
+            if($accomplished == '1'){
+                $this->db->where('a.status', 'Approved');
+                $this->db->where("td.accomplished", 1);
+            }
+
+            if($overDue == '1'){
+                $today = date('Y-m-d');
+                $this->db->where('a.status', 'Approved');
+                $this->db->where("td.accomplished", 0);
+                $this->db->where("td.date_to <", $today);
+            }
+
+            if($onGoing == '1'){
+                $today = date('Y-m-d');
+                $this->db->where('a.status', 'Approved');
+                $this->db->where("td.accomplished", 0);
+                $this->db->where("td.date_to >", $today);
+            }  
 
             if(isset($query_builder) && $query_builder){
                 $this->db->where($query_builder);
@@ -3085,6 +3138,7 @@
 
                     $this->db->select("td.destination, td.date_from, td.date_to");
                     $this->db->from("gcceforms.travel_destination td");
+                    $this->db->where("td.accomplished",0);
                     $this->db->where("td.travel_order_id", $rowId);
                     $destination = $this->db->get();
 
@@ -5391,13 +5445,10 @@
             $this->db->join('gcceforms.travel_order to', 'to.id = td.travel_order_id', 'left');
             $this->db->where('to.status', 'Approved');
             
-            // Apply date range filter if both dates are provided
             if ($start_date && $end_date) {
-                // Simple approach: travels that fall within the selected date range
                 $this->db->where('td.date_from >=', $start_date);
                 $this->db->where('td.date_to <=', $end_date);
             }
-            // If no date range provided, show all time data (no additional WHERE clause)
             
             $single_query = $this->db->get();
             $single_result = $single_query->row();
