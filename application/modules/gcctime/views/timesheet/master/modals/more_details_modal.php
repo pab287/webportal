@@ -497,7 +497,7 @@
                     <span class="m--font-boldest"
                         style="text-transform: none;"><?= empty($timesheet) ? 0 : $timesheet->total_late ?> mins.</span>
                 </div>
-                <?php if (floatval($timesheet->total_ndiff_rendered) > 0): ?>
+                <?php if (isset($timesheet->total_ndiff_rendered) && floatval($timesheet->total_ndiff_rendered) > 0): ?>
                 <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 m--regular-font-size-lg1">
                     <span class="m--font-bolder text-muted mr-2">TOTAL REG.NDIFF HRS. WORKED</span>
                     <span class="m--font-boldest" style="text-transform: none;">
@@ -539,7 +539,7 @@
                     </span>
                 </div>
             </div>
-            <?php if($timesheet->last_updated_by_name || $timesheet->verified_by_name): ?>
+            <?php if((isset($timesheet->last_updated_by_name) && $timesheet->last_updated_by_name) || (isset($timesheet->verified_by_name) && $timesheet->verified_by_name)): ?>
                 <hr class="mt-4">
                 <div class="row">
                     <?php if($timesheet->verified_by_name): ?>
