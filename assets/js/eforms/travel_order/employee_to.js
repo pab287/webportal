@@ -793,6 +793,10 @@ var isAccomplishModalOpen = false;
 
 function loadTravelOrder() {
     if(!isAccomplishModalOpen){
+        param_status = "";
+        param_accomplished = "";
+        param_overdue = "";
+        param_ongoing = "";
         tblTravelOrder.ajax.reload(null, false);
     }
 }
