@@ -485,7 +485,6 @@ class Timesheet_model extends CI_Model{
                                 }
 
                                 $tempRow->has_shift = $updatedSchedule->has_shift;
-                                $tempRow->shift_id = $updatedSchedule->shift_id;
                                 $tempRow->custom_shift_id = $updatedSchedule->custom_shift_id;
                             }
                             /***
@@ -625,14 +624,12 @@ class Timesheet_model extends CI_Model{
                                 $timesheetHourlyPartimer = $this->generatePerHourSlashPartimer($tempRowId);
                                 $toArray = (array) $timesheetHourlyPartimer;
                                 if(is_array($toArray) && count($toArray) > 0){ $tempDatax->is_tagged_hourly = true; }
-
                                 $updatedRow = $this->updateTimesheetShiftComputation($tempDatax, false, $night_diff_cfg);
                                 $updatedTimesheet = (array) $updatedRow;
                                 if(is_array($toArray) && count($toArray) > 0){
                                     $updatedTimesheet = array_merge($updatedTimesheet, $toArray);
                                 }
-
-                                $this->db->update($this->tbl_timesheet, $updatedTimesheet, array("id" => $tempRowId));
+                                $updated = $this->db->update($this->tbl_timesheet, $updatedTimesheet, array("id" => $tempRowId));
                             }
 
                             if(!$tempRow->has_shift && !$tempRow->has_overtime){
@@ -2539,7 +2536,7 @@ class Timesheet_model extends CI_Model{
                     if(isset($night_diff_cfg->end_time) && $night_diff_cfg->end_time){
                         $amNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentAmDate." ".$night_diff_cfg->end_time)));
                     }
-    
+                    
                     $_amNdiffStart = strtotime($amNdiffStart);
                     $_amNdiffEnd = strtotime($amNdiffStart) <= $_am_end && strtotime($amNdiffEnd) >= $_am_end ? $_am_end : strtotime($amNdiffEnd);
     
@@ -7453,7 +7450,7 @@ class Timesheet_model extends CI_Model{
 
     protected function getExistingEmployeeePersonnel($biometric_id=null){
         if($biometric_id){
-            $employee = $this->db
+            return $this->db
             ->select("personnel.biometric_id, personnel.shift_id, personnel.is_flexi, emp.id emp_id, emp.lastname, emp.firstname,
                 UCASE(CONCAT(emp.lastname,
                     CASE WHEN emp.suffix != 'N/A' AND emp.suffix !='NONE' AND emp.suffix !='' AND emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''  END, ', ',
@@ -7462,7 +7459,6 @@ class Timesheet_model extends CI_Model{
             ->where("personnel.biometric_id", $biometric_id)
             ->join($this->tbl_personnel . " personnel", "emp.biometricno = personnel.biometric_id", "LEFT")
             ->get($this->tbl_employees . " emp");
-            return $employee;
         }else{ return false; }
     }
 
