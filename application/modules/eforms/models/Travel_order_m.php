@@ -108,7 +108,7 @@
                 $this->db->where("DATE(a.created_dt) >=", $check);
                 $this->db->group_end();
             }
-            
+
             if($accomplished == '1'){
                 $this->db->where('a.status', 'Approved');
                 $this->db->where("td.accomplished", 1);
@@ -285,7 +285,6 @@
                         // array_push($destinationDateTime, "");
                         // array_push($tempDates, "");
                     }
-                    $rs->countDes = count($query->result() );
                     $rs->personnels = $rowPersonnel;
                     $rs->driver = $rowDriver;
                     $rs->vehicle_plate = $rowVehiclePlate;
