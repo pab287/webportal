@@ -186,7 +186,7 @@
                     </div>
                 </div>
                 <div class="pb-3">
-                    <div class="m-portlet__body table-responsive-sm pb-0" style="min-height: 450px; max-height: 600px; overflow-y: auto;">
+                    <div class="m-portlet__body table-responsive-sm pb-0" style="min-height: 200px; max-height: 600px; overflow-y: auto;">
                     <table class="table table-striped table-bordered" 
                            id="table-travel-weekly"
                            width="100%">
