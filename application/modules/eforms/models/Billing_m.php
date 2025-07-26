@@ -1996,7 +1996,8 @@ class Billing_m extends CI_Model {
                 // $total_charges = ($_query['total_charges'] + $balanceLastBill["total_balance"] + $disconnectionFee + $data["overdue"]) - $balance - $balanceCovered - $totalPayments; // OLD
 
                 // I removed the balanceLastBill["total_balance"] from the total_charges calculation to focus only on the current bill and its associated fees.
-                $total_charges = ($_query['total_charges'] + $disconnectionFee + $data["overdue"]) - $balance - $balanceCovered - $totalPayments; 
+                // $total_charges = ($_query['total_charges'] + $disconnectionFee + $data["overdue"]) - $balance - $_query['balance_covered'] - $totalPayments;  // OLD
+                $total_charges = ($_query['total_charges'] + $disconnectionFee + $data["overdue"]);
 
                 $t = [
                     'total_charges' => $_query['total_charges'],
