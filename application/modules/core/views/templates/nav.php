@@ -17,7 +17,7 @@
     <!-- begin:: Page -->
     <div class="m-grid m-grid--hor m-grid--root m-page">
     <!-- BEGIN: Header -->
-    <header class="m-grid__item    m-header " data-minimize-offset="200" data-minimize-mobile-offset="200">
+    <header class="m-grid__item m-header " data-minimize-offset="200" data-minimize-mobile-offset="200">
         <div class="m-container m-container--fluid m-container--full-height">
             <div class="m-stack m-stack--ver m-stack--desktop">
                 <!-- BEGIN: Brand -->
@@ -51,7 +51,9 @@
                     </div>
                 </div>
                 <!-- END: Brand -->
-                <div id="m_header_nav" class="m-topbar m-stack m-stack--ver m-stack--general">
+                <div class="m-stack__item m-stack__item--fluid" id="m_header_nav">
+                    <?php $this->load->view("core/templates/module_navigation"); ?>
+                    <div id="m_header_topbar" class="m-topbar m-stack m-stack--ver m-stack--general">
                     <div class="m-stack__item m-topbar__nav-wrapper">
                         <ul class="m-topbar__nav m-nav m-nav--inline">
                             <?php
@@ -96,6 +98,7 @@
                             <?php /*** $this->load->view("core/templates/more_actions"); ***/ ?>
                         </ul>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
