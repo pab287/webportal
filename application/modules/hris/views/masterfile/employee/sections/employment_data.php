@@ -602,18 +602,20 @@
     <thead>
         <tr>
             <th class="" scope="col" width="12%">STATUS</th>
+            <th class="" scope="col" width="12%">DATE RELEASED</th>
             <th class="" scope="col" width="12%">REF. NO</th>
             <th class="" scope="col" width="12%">ASSET CODE</th>
             <th class="" scope="col">ASSET NAME</th>
             <th class="text-right" scope="col" width="10%">AMOUNT</th>
             <th class="text-center" scope="col" width="10%">RETURNED</th>
-            <th class="" scope="col" width="13%">DATE</th>
+            <th class="" scope="col" width="13%">DATE RETURNED</th>
         </tr>
     </thead>
     <tbody>
     <template v-if="printData.accountability == false">
         <tr>
             <td data-label="STATUS">NONE</td>
+            <td data-label="RELEASED_DT">NONE</td>
             <td data-label="REF. NO">NONE</td>
             <td data-label="ASSET CODE">NONE</td>
             <td data-label="ASSET NAME">NONE</td>
@@ -625,6 +627,9 @@
     <template v-else>
         <tr v-for="acct in printData.accountability" :key="acct.id">
             <td data-label="STATUS" v-text="acct.status"></td>
+            <td data-label="DATE RELEASED">
+                {{ acct.status.toLowerCase() === 'released' ? formatDate(acct.released_dt) : 'N/A' }}
+            </td>
             <td data-label="REF. NO" v-text="acct.reference_no"></td>
             <td data-label="ASSET CODE" v-text="acct.asset_code"></td>
             <td data-label="ASSET NAME" v-text="acct.aname"></td>

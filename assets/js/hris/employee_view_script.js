@@ -800,12 +800,18 @@ function getAccountability(){
                                     <div style="font-size: 0.8em">
                                         <p style="margin-bottom: 0.3rem"><b>Ref. No:</b> <span>${row.reference_no}</span></p>
                                         <p style="margin-bottom: 0.3rem"><b>Asset Code:</b> <span>${row.asset_code}</span></p>
+                                        ${row.status.toLowerCase() == 'released' ? `
+                                            <p style="margin-bottom: 0.3rem"><b>Date Released:</b> <span>${new Date(row.date_returned).toLocaleDateString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric'
+                                            })}</span></p>` : ''}
                                         <p style="margin-bottom: 0.3rem"><b>Asset Name:</b> <span>${row.aname}</span></p>
                                         <p style="margin-bottom: 0.3rem"><b>Amount:</b> <span>${formattedAmount}</span></p>
                                         <p style="margin-bottom: 0.3rem">
                                             <b>Returned:</b> ${returnStatus}
                                         </p>
-                                        <p style="margin-bottom: 0.3rem"><b>Date:</b> <span>${formattedDate}</span></p>
+                                        <p style="margin-bottom: 0.3rem"><b>Date Returned:</b> <span>${formattedDate}</span></p>
                                     </div>
                                 `;
                             }
