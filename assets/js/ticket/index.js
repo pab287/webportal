@@ -417,6 +417,8 @@ let ticketDataSheet = new Vue({
 });
 
 const dateRangeConfig = {
+  startDate: moment("2016-01-01"),           // set to match All Time
+  endDate: moment(), 
   singleDatePicker: false,
   showDropdowns: true,
   autoUpdateInput: false,
@@ -426,7 +428,7 @@ const dateRangeConfig = {
       cancelLabel: 'Show All'
   },
   ranges: {
-      'All Time': [moment('1900-01-01'), moment()],
+      'All Time': [moment("2016-01-01"), moment()],
       'Today': [moment(), moment()],
       'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
       'Last 7 Days': [moment().subtract(6, 'days'), moment()],
