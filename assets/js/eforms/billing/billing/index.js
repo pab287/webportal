@@ -258,47 +258,71 @@ $('#billing-date-picker').daterangepicker({
 });
 
 // =============== Billing Date Range Picker ===============
-
-function itemDatatableActions(row){
-	if(row){
+function itemDatatableActions(row) {
+	if (row) {
     var tempHtml = "---";
-    var tempActions = [];
-    var currentActions = ["edit", "delete"];
-    $.each(currentActions, function(index, value){
-        tempActions.push(value);
-    });
 
     tempHtml = `<div class="dropdown">
-            <a href="#" class="btn m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" data-toggle="dropdown"> 
-                <i class="la la-ellipsis-h"></i>
-            </a>
-            <div class="dropdown-menu dropdown-menu-right">`;
-        $.each(tempActions, function(ii, vv){
-          
-            switch(vv){
-                case "edit":
-                  var action_name = "", icon_name = "";
-                  if(row.status!='Paid' && row.status!='Archive'){
-                    action_name = "Edit";
-                    icon_name = "la	la-edit";
-                  } else {
-                    action_name = "View";
-                    icon_name = "la	la-eye";
-                  }
-                  tempHtml += `<a class="dropdown-item " data-toggle='modal' data-target='#m_viewBill' href="javascript:void(0);" id='viewBill' data-id='`+row.id+`'><i class="`+icon_name+`"></i> `+action_name+`</a>`;
-                  tempHtml += `<a class="dropdown-item" id="tbl-print" onclick="tblprint(`+row.id+`);" href="javascript:void(0);" data-id=''><i class="la la-print"></i> Print</a>`;
-                break;
-                case "delete":
-                  if(row.status!='Paid' && row.status!='Archive'){
+                  <a href="#" class="btn m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" data-toggle="dropdown"> 
+                      <i class="la la-ellipsis-h"></i>
+                  </a>
+
+                  <div class="dropdown-menu dropdown-menu-right">
+                    <a class="dropdown-item " data-toggle='modal' data-target='#m_viewBill' href="javascript:void(0);" id='viewBill' data-id='`+row.id+`'><i class="la la-eye"></i>View</a>
+                    <a class="dropdown-item" id="tbl-print" onclick="tblprint(`+row.id+`);" href="javascript:void(0);" data-id=''><i class="la la-print"></i> Print</a>
+                  `;
+                  
+                  if (row.status != 'Paid') {
                     tempHtml += `<a class="dropdown-item " style="color: #FF8383;" href="javascript:void(0);" onclick='modalArchive(`+ row.id +`,`+ row.reading_id +`,`+`\"` + row.ref_no + `\")'><i class="la la-trash" style="color: #FF8383;"></i> Archive</a>`;
                   }
-                break;
-            }
-        });
-    tempHtml += `</div></div>`;
+    tempHtml += ` </div>
+                </div>`;
     return tempHtml;
-	}else{ return false; }
+	} else { 
+    return false; 
+  }
 }
+
+// function itemDatatableActions(row){
+// 	if(row){
+//     var tempHtml = "---";
+//     var tempActions = [];
+//     var currentActions = ["edit", "delete"];
+//     $.each(currentActions, function(index, value){
+//         tempActions.push(value);
+//     });
+
+//     tempHtml = `<div class="dropdown">
+//             <a href="#" class="btn m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" data-toggle="dropdown"> 
+//                 <i class="la la-ellipsis-h"></i>
+//             </a>
+//             <div class="dropdown-menu dropdown-menu-right">`;
+//         $.each(tempActions, function(ii, vv){
+          
+//             switch(vv){
+//                 case "edit":
+//                   var action_name = "", icon_name = "";
+//                   if(row.status!='Paid' && row.status!='Archive'){
+//                     action_name = "Edit";
+//                     icon_name = "la	la-edit";
+//                   } else {
+//                     action_name = "View";
+//                     icon_name = "la	la-eye";
+//                   }
+//                   tempHtml += `<a class="dropdown-item " data-toggle='modal' data-target='#m_viewBill' href="javascript:void(0);" id='viewBill' data-id='`+row.id+`'><i class="`+icon_name+`"></i> `+action_name+`</a>`;
+//                   tempHtml += `<a class="dropdown-item" id="tbl-print" onclick="tblprint(`+row.id+`);" href="javascript:void(0);" data-id=''><i class="la la-print"></i> Print</a>`;
+//                 break;
+//                 case "delete":
+//                   if(row.status!='Paid' && row.status!='Archive'){
+//                     tempHtml += `<a class="dropdown-item " style="color: #FF8383;" href="javascript:void(0);" onclick='modalArchive(`+ row.id +`,`+ row.reading_id +`,`+`\"` + row.ref_no + `\")'><i class="la la-trash" style="color: #FF8383;"></i> Archive</a>`;
+//                   }
+//                 break;
+//             }
+//         });
+//     tempHtml += `</div></div>`;
+//     return tempHtml;
+// 	}else{ return false; }
+// }
 
 Inputmask.extendAliases({
   pesos: {
@@ -346,6 +370,10 @@ function saveExportLogs(export_){
   });
 }
 
+$('#m_viewBill').on('hidden.bs.modal', function () {
+  $('.payment-section').hide();
+});
+
 $('#table-billing').on("click","#viewBill",function(){
   $('#frmUpdateBill').trigger("reset");
   var selectedBill_id = $(this).attr("data-id");
@@ -354,8 +382,56 @@ $('#table-billing').on("click","#viewBill",function(){
   $.ajax({
       url: baseUrl("eforms/billing/get_bill_data"),
       type: 'post',
-      data: {csrf_token: _csrf_hash, id: selectedBill_id},
-      success: function(response){ 
+      data: { 
+        csrf_token: _csrf_hash, 
+        id: selectedBill_id
+      },
+      success: function(response) {
+          const payment_history = response.payment_history || [];
+
+          let total_received_amount = 0;
+
+          if (Array.isArray(payment_history) && payment_history.length > 0) {
+              $('.payment-section').show();
+
+              // Generate payment history table rows and sum balance_covered and received_amount
+              let paymentRows = '';
+              let totalBalanceCovered = 0;
+              let totalReceivedAmount = 0;
+
+              payment_history.forEach(item => {
+                const balanceCovered = parseFloat(item.balance_covered) || 0;
+                const receivedAmount = parseFloat(item.received_amount) || 0;
+                totalBalanceCovered += balanceCovered;
+                totalReceivedAmount += receivedAmount;
+
+                paymentRows += `
+                  <tr>
+                    <td>${item.ref_no || '0.00'}</td>
+                    <td>${item.balance_covered || '0.00'}</td>
+                    <td>${item.net_payment || '0.00'}</td>
+                    <td class="text-right">
+                      <span style="font-size: 12px;">
+                        ${item.received_amount ? numberWithCommas(item.received_amount) : '0.00'}
+                      </span>
+                    </td>
+                  </tr>
+                `;
+              });
+
+              // Optionally, you can display the totals somewhere, for example:
+              $("#m_viewBill .total-balance-covered").text(numberWithCommas(totalBalanceCovered));
+              $("#m_viewBill .total-received-amount").text(numberWithCommas(totalReceivedAmount));
+
+              total_received_amount = totalReceivedAmount + totalBalanceCovered;
+
+              // Insert rows into the payment history table body
+              $("#m_viewBill tbody.payment_info_body").html(paymentRows);
+          } else {
+            $('.payment-section').hide();
+          }
+
+          // ========================================================
 
           if(response.billdata.print_count >= response.limit){
             $(".btnPrint").hide();
@@ -364,12 +440,12 @@ $('#table-billing').on("click","#viewBill",function(){
           }
 
           if(response.billdata.is_paid == '1' || response.billdata.status != '1'){
-            $(".btnUpdate").hide();
+            // $(".btnUpdate").hide();
             $('.billing_from').css('pointer-events', 'none');
             $('.billing_to').css('pointer-events', 'none');
             $('.due_date').css('pointer-events', 'none');
           }else{
-            $(".btnUpdate").show();
+            // $(".btnUpdate").show();
             $('.billing_from').css("pointer-events", "");
             $('.billing_to').css("pointer-events", "");
             $('.due_date').css("pointer-events", "");
@@ -381,24 +457,36 @@ $('#table-billing').on("click","#viewBill",function(){
           // }else{
           //   final_charge = "0.00";
           // }
-          $("#m_viewBill .account_id").val(response.billdata.accountno);
-          $("#m_viewBill .reading_id").val(response.billdata.reading_refno);
-          $("#m_viewBill .customer_name").val(response.billdata.firstname +" "+response.billdata.lastname);
-          $("#m_viewBill .meter_no").val(response.billdata.meterno);
-          $("#m_viewBill .block_no").val(response.billdata.block);
-          $("#m_viewBill .lot_no").val(response.billdata.lot);
-          $("#m_viewBill .billing_address").val(response.billdata.street+", "+response.billdata.brgy+", "+response.billdata.city+", "+response.billdata.province);
-          $("#m_viewBill .previous").val(response.billdata.previous);
-          $("#m_viewBill .current").val(response.billdata.current);
-          $("#m_viewBill .usage").val(response.billdata.usage);
-          $("#m_viewBill .rate").val(response.billdata.rate);
+          $("#m_viewBill .account_id").text(response.billdata.accountno);
+          $("#m_viewBill .reading_id").text(response.billdata.reading_refno);
+          $("#m_viewBill .customer_name").text(response.billdata.firstname +" "+response.billdata.lastname);
+          $("#m_viewBill .meter_no").text(response.billdata.meterno);
+          $("#m_viewBill .block_no").text(response.billdata.block);
+          $("#m_viewBill .lot_no").text(response.billdata.lot);
+          $("#m_viewBill .billing_address").text(response.billdata.street+", "+response.billdata.brgy+", "+response.billdata.city+", "+response.billdata.province);
+          $("#m_viewBill .previous").text(response.billdata.previous);
+          $("#m_viewBill .current").text(response.billdata.current);
+          $("#m_viewBill .usage").text(response.billdata.usage);
+          $("#m_viewBill .rate").text(response.billdata.rate);
           $("#m_viewBill .total_charges").val(data_row[0].total_charges);
           $("#m_viewBill .btnPrint").attr("data-id",response.billdata.id);
           $("#m_viewBill input[name=id]").val(response.billdata.id);
           $("#m_viewBill #ref_no").val(response.billdata.ref_no);
-          $('#m_viewBill .billing_from').datepicker("setDate", response.billdata.billing_from);
-          $('#m_viewBill .billing_to').datepicker("setDate", response.billdata.billing_to);
-          $('#m_viewBill .due_date').datepicker("setDate", response.billdata.due_date);
+          $('#m_viewBill .billing_from').text(response.billdata.billing_from);
+          $('#m_viewBill .billing_to').text(response.billdata.billing_to);
+          $('#m_viewBill .due_date').text(response.billdata.due_date);
+
+          let bill_amount = 0;
+          let remaining_balance = 0;
+
+          const totalCharges = parseFloat(response.billdata.total_charges) || 0;
+          const overdue = parseFloat(response.billdata.overdue) || 0;
+
+          bill_amount = totalCharges + overdue;
+          remaining_balance = bill_amount - total_received_amount;
+
+          $('#m_viewBill .bill_amount').text(numberWithCommas(bill_amount));
+          $('#m_viewBill .remaining-balance').text(numberWithCommas(remaining_balance < 0 ? 0 : remaining_balance));
       },
       error: function(data){
         $('#m_viewBill').modal('hide');

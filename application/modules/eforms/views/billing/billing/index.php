@@ -157,6 +157,178 @@
 </div>
 
 <div class="modal fade" id="m_viewBill" tabindex="-1" role="dialog">
+	<div class="modal-dialog modal-dialog-centered" role="document" style="min-width: 750px;">
+		<div class="modal-content">
+			<div class="modal-header">
+				<div class="row m-0 w-100 justify-content-between align-items-center">
+					<div class="col-6 p-0">
+						<h5 class="modal-title" id="exampleModalLabel">View Bill</h5>
+					</div>
+
+					<div class="col-6">
+						<div class="row w-100 justify-content-end ml-auto" style="max-width: max-content;">
+							<div class="info-group">
+								<p class="info-label">Due Date: </p>
+								<p class="info-val due_date"></p>
+							</div>
+
+							<button type="button" class="close ml-5" data-dismiss="modal">
+								<span aria-hidden="true">×</span>
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="modal-body">
+				<div class="section-area">
+					<div class="row m-0 justify-content-between">
+						<div class="col-6 bg-card">
+							<h4 class="info-label mb-4">Account Information</h4>
+
+							<div class="group">
+								<div class="info-group">
+									<p class="info-label">Acc No.:</p>
+									<p class="info-val account_id"></p>
+								</div>
+
+								<div class="info-group">
+									<p class="info-label">Name:</p>
+									<p class="info-val customer_name"></p>
+								</div>
+
+								<div class="info-group">
+									<p class="info-label">Meter No.:</p>
+									<p class="info-val meter_no"></p>
+								</div>
+
+								<div class="info-group">
+									<p class="info-label">Block No.:</p>
+									<p class="info-val block_no"></p>
+								</div>
+
+								<div class="info-group">
+									<p class="info-label">Lot No.:</p>
+									<p class="info-val lot_no"></p>
+								</div>
+							</div>
+						</div>
+						
+						<div class="col-6 bg-card">
+							<h4 class="info-label mb-4">Reading Information</h4>
+
+							<div class="group">
+								<div class="info-group">
+									<p class="info-label">Previous:</p>
+									<p class="info-val reading_id"></p>
+								</div>
+
+								<div class="info-group">
+									<p class="info-label">Previous:</p>
+									<p class="info-val previous"></p>
+								</div>
+
+								<div class="info-group">
+									<p class="info-label">Current:</p>
+									<p class="info-val current"></p>
+								</div>
+
+								<div class="info-group">
+									<p class="info-label">Usage:</p>
+									<p class="info-val usage"></p>
+								</div>
+
+								<div class="info-group">
+									<p class="info-label">Rate:</p>
+									<p class="info-val rate"></p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="section-area">
+					<div class="bg-card">
+						<h4 class="info-label mb-4">Billing Information</h4>
+
+						<div class="group">
+							<div class="info-group">
+								<p class="info-label">Billing Address:</p>
+								<p class="info-val billing_address"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">Billing From:</p>
+								<p class="info-val billing_from"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">Billing To:</p>
+								<p class="info-val billing_to"></p>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="section-area payment-section" style="display: none;">
+					<div class="bg-card pb-0"  style="background: #fff;">
+						<div class="title-area">
+							<h4 class="info-label mb-4">Payment History</h4>
+						</div>
+
+						<table class="table table-striped sm-table" width="100%">
+							<thead>	
+								<tr>
+									<th>Reference No.</th>
+									<th>Balance Cov.</th>
+									<th>Net Pay</th>
+									<th class="text-right">Received Amount</th>
+								</tr>
+							</thead>
+
+							<tbody class="payment_info_body"></tbody>
+						</table>
+
+						<hr>
+						<div class="info-group row m-0 justify-content-between w-100">
+							<h4 class="info-label m-0">Balance Cover</h4>
+							<h4 class="info-label m-0 f-600 total-balance-covered"></h4>
+						</div>
+						<hr>
+						<div class="info-group row m-0 justify-content-between w-100">
+							<h4 class="info-label m-0">Received Amount</h4>
+							<h4 class="info-label m-0 f-600 total-received-amount"></h4>
+						</div>
+						<hr>
+					</div>
+				</div>
+
+				<div class="section-area mt-5">
+					<div class="row mx-0">
+						<div class="col-6"></div>
+						<div class="col-6 p-0">
+							<div class="info-group mb-3">
+								<h4 class="info-label m-0">Bill Amount</h4>
+								<h4 class="info-label m-0 f-600 text-right bill_amount"></h4>
+							</div>
+
+							<div class="info-group">
+								<h4 class="info-label m-0">Remaining Balance</h4>
+								<h4 class="info-label m-0 f-600 text-right remaining-balance"></h4>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- <div class="modal fade" id="m_viewBill" tabindex="-1" role="dialog">
 	<div class="modal-dialog modal-dialog-centered" role="document" style="min-width: 80%">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -310,10 +482,6 @@
 				</div>
 
 				<div class="modal-footer">
-					<button type="submit" class="btn btn-accent btnUpdate" data-id="">
-						<span class="la la-edit"></span> Update
-					</button>
-
 					<button type="button" class="btn btn-success btnPrint" id="singlePrint" data-id="">
 						<span class="la la-print"></span> Print
 					</button>
@@ -321,15 +489,11 @@
 					<button type="button" class="btn btn-danger" data-dismiss="modal">
 						<span class="la la-times"></span> Close
 					</button>
-					
-					<!-- <button type="button" class="btn btn-primary btnPrint" data-id="">
-						Print
-					</button> -->
 				</div>
 			</form>
 		</div>
 	</div>
-</div>
+</div> -->
 
 <div class="modal fade" id="m_archived" tabindex="-1">
 	<div class="modal-dialog modal-dialog-centered">
@@ -404,5 +568,45 @@
 
 	#table-billing tbody tr.selected td.select-checkbox:before {
 		border: 1px solid #ffffff !important;
+	}
+
+	#m_viewBill label {
+		margin: 0;
+	}	
+	#m_viewBill .info-label {
+		color: #71737b;
+	}
+	#m_viewBill .info-val, .f-600 {
+		font-weight: 600;
+	}
+	#m_viewBill h4.info-label {
+		font-size: 15px;
+	}
+	#m_viewBill .info-val {
+		font-size: 12px;
+	}
+
+	#m_viewBill .info-val, #m_viewBill .info-label {
+		display: inline-block;
+		margin: 0;
+	}
+
+	#m_viewBill tbody .info_label {
+		display: unset!important;
+	}
+
+	#m_viewBill .group .info-group:not(:last-child) {
+		margin-bottom: 10px;
+	}
+	#m_viewBill .section-area:not(:last-child) {
+		margin-bottom: 15px;
+	}
+	#m_viewBill .section-area .bg-card {
+		border-radius: 5px;
+		padding: 20px;
+		background: #f2f3f8;
+	}
+	#m_viewBill .section-area .col-6 {
+		max-width: 49%;
 	}
 </style>

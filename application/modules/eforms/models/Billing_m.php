@@ -2285,15 +2285,51 @@ class Billing_m extends CI_Model {
     }
 
     function getBillData(){
+        $current_date = date("Y-m-d");
+        $penalties = $this->getPenalties();
+
         $post = $this->input->post();
+
         $this->db->select("b.id, a.accountno, a.meterno, a.firstname, a.lastname, a.block, a.lot, a.street, a.brgy, a.city, a.province, b.ref_no, b.billing_from, b.billing_to, b.previous, b.current, b.usage, b.rate, b.total_charges, b.status, b.due_date, r.ref_no as reading_refno, b.print_count, b.is_paid");
         $this->db->from("hydra_billing.bills b");
         $this->db->join("hydra_billing.accounts a","a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.readings r","r.id = b.reading_id", "LEFT");
-        $this->db->where("b.id",$post["id"]);
+        $this->db->where("b.id", $post["id"]);
         $this->db->where("r.is_archived", "0");
         $query = $this->db->get();
-        return array("billdata"=>$query->row_array(),'limit'=>$this->getAppliedLimit()['limit']);
+        $row = $query->row_array();
+
+        $total_amount = $row['total_charges'];
+
+        if ($current_date > $row['due_date']) {
+            if ($penalties['type'] == 'percentage') {
+                $overdue = ($penalties['amount'] / 100) * $total_amount;
+                $total_amount = $overdue + $total_amount;
+            } else {
+                $overdue = $penalties['amount'];
+                $total_amount = $penalties['amount'] + $total_amount;
+            }
+        } else {
+            $overdue = 0.00;
+        }
+
+        $row['overdue'] = (float)number_format($overdue, 2, '.', ',');
+
+        return array(
+            "billdata" => $row,
+            "payment_history" => $this->getPaymentHistory($post["id"]),
+            'limit' => $this->getAppliedLimit()['limit']
+        );
+    }
+
+    public function getPaymentHistory($bill_id){
+        $this->db->select("ref_no, received_amount, balance_covered, net_payment");
+        $this->db->from("hydra_billing.payments");
+        $this->db->where("bill_id", $bill_id);
+        $this->db->where("is_archive", 0);
+        $this->db->order_by("payment_date", "ASC");
+        $query = $this->db->get();
+        return $query->result_array();
     }
     
     // fetch the data of bill details for print
