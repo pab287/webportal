@@ -2300,19 +2300,20 @@ class Billing_m extends CI_Model {
         $row = $query->row_array();
 
         $total_amount = $row['total_charges'];
+        $overdue = 0.00;
 
         // Overdue calculation
-        if ($current_date > $row['due_date']) {
-            if ($penalties['type'] == 'percentage') {
-                $overdue = ($penalties['amount'] / 100) * $total_amount;
-                $total_amount = $overdue + $total_amount;
-            } else {
-                $overdue = $penalties['amount'];
-                $total_amount = $penalties['amount'] + $total_amount;
+        if ($row['is_paid'] == 0) {
+            if ($current_date > $row['due_date']) {
+                if ($penalties['type'] == 'percentage') {
+                    $overdue = ($penalties['amount'] / 100) * $total_amount;
+                    $total_amount = $overdue + $total_amount;
+                } else {
+                    $overdue = $penalties['amount'];
+                    $total_amount = $penalties['amount'] + $total_amount;
+                }
             }
-        } else {
-            $overdue = 0.00;
-        }
+        } 
 
         // Check if the bill is paid or not
         if ($row["is_paid"] == 1) {
@@ -2336,13 +2337,19 @@ class Billing_m extends CI_Model {
     }
 
     public function getPaymentHistory($bill_id){
-        $this->db->select("ref_no, received_amount, balance_covered, net_payment, reconnection_fee");
+        $res = [];
+        $this->db->select("ref_no, received_amount, balance_covered, net_payment, reconnection_fee, penalties");
         $this->db->from("hydra_billing.payments");
         $this->db->where("bill_id", $bill_id);
         $this->db->where("is_archive", 0);
         $this->db->order_by("payment_date", "ASC");
         $query = $this->db->get();
-        return $query->result_array();
+
+        foreach ($query->result_array() as $row) {
+            $row['penalties'] = unserialize($row['penalties'])[0]['overdue'] ?? 0.00; // Ensure penalties is set to 0 if not available
+            $res[] = $row;
+        }
+        return $res;
     }
     
     // fetch the data of bill details for print

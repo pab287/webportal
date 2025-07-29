@@ -220,7 +220,7 @@
 
 							<div class="group">
 								<div class="info-group">
-									<p class="info-label">Previous:</p>
+									<p class="info-label">Ref no:</p>
 									<p class="info-val reading_id"></p>
 								</div>
 
@@ -254,6 +254,11 @@
 
 						<div class="group">
 							<div class="info-group">
+								<p class="info-label">Ref No:</p>
+								<p class="info-val bill_ref_no"></p>
+							</div>
+
+							<div class="info-group">
 								<p class="info-label">Billing Address:</p>
 								<p class="info-val billing_address"></p>
 							</div>
@@ -271,45 +276,66 @@
 					</div>
 				</div>
 
-				<div class="section-area payment-section" style="display: none;">
+				<div class="section-area">
 					<div class="bg-card pb-0"  style="background: #fff;">
-						<div class="title-area">
-							<h4 class="info-label mb-4">Payment History</h4>
+						<div class="payment-section">
+							<div class="title-area">
+								<h4 class="info-label mb-4">Payment History</h4>
+							</div>
+
+							<table class="table table-striped sm-table" width="100%">
+								<thead>	
+									<tr>
+										<th>Ref No.</th>
+										<th>Balance Cov.</th>
+										<th>Rec. Fee</th>
+										<th>Overdue</th>
+										<th>Net Pay</th>
+										<th class="text-right">Received Amount</th>
+									</tr>
+								</thead>
+
+								<tbody class="payment_info_body"></tbody>
+							</table>
+
+							<hr>
 						</div>
 
-						<table class="table table-striped sm-table" width="100%">
-							<thead>	
-								<tr>
-									<th>Ref No.</th>
-									<th>Rec. Fee</th>
-									<th>Balance Cov.</th>
-									<th>Net Pay</th>
-									<th class="text-right">Received Amount</th>
-								</tr>
-							</thead>
+						<div class="bill-section">
+							<div class="info-group row m-0 justify-content-between w-100">
+								<p class="info-label m-0">Bill Amount</p>
+								<p class="info-label m-0 f-600 bill_amount"></p>
+							</div>
+							<hr>
+						</div>
 
-							<tbody class="payment_info_body"></tbody>
-						</table>
+						<div class="overdue-sec" style="display: none;">
+							<div class="info-group row m-0 justify-content-between w-100">
+								<p class="info-label m-0">Overdue</p>
+								<p class="info-label m-0 f-600 overdue_fee"></p>
+							</div>
+							<hr>
+						</div>
 
-						<hr>
-						<div class="info-group row m-0 justify-content-between w-100">
-							<p class="info-label m-0">Bill Amount</p>
-							<p class="info-label m-0 f-600 bill_amount"></p>
+						<div class="payment-section" style="display: none;">
+							<div class="info-group row m-0 justify-content-between w-100">
+								<p class="info-label m-0">Balance Cover</p>
+								<p class="info-label m-0 f-600 total-balance-covered"></p>
+							</div>
+							<hr>
+
+							<div class="info-group row m-0 justify-content-between w-100">
+								<p class="info-label m-0">Received Amount</p>
+								<p class="info-label m-0 f-600 total-received-amount"></p>
+							</div>
+							<hr>
 						</div>
-						<hr>
-						<div class="info-group row m-0 justify-content-between w-100">
-							<p class="info-label m-0">Balance Cover</p>
-							<p class="info-label m-0 f-600 total-balance-covered"></p>
-						</div>
-						<hr>
-						<div class="info-group row m-0 justify-content-between w-100">
-							<p class="info-label m-0">Received Amount</p>
-							<p class="info-label m-0 f-600 total-received-amount"></p>
-						</div>
-						<hr>
-						<div class="info-group row m-0 justify-content-between w-100">
-							<p class="info-label m-0">Remaining Balance</p>
-							<p class="info-label m-0 f-600 remaining-balance"></p>
+
+						<div class="bill-section">
+							<div class="info-group row m-0 justify-content-between w-100">
+								<p class="info-label m-0">Remaining Balance</p>
+								<p class="info-label m-0 f-600 remaining-balance"></p>
+							</div>
 						</div>
 					</div>
 				</div>

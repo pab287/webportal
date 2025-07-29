@@ -373,6 +373,8 @@ function saveExportLogs(export_){
 $('#m_viewBill').on('hidden.bs.modal', function () {
   $('.payment-section').hide();
   $("#m_viewBill .bill-status").html('');
+  $("#m_viewBill .bill_amount, #m_viewBill .overdue_fee, #m_viewBill .total-balance-covered, #m_viewBill total-received-amount, #m_viewBill .remaining-balance").text('0.00');
+  $("#m_viewBill .overdue_fee").text('0.00');
 });
 
 $('#table-billing').on("click","#viewBill",function(){
@@ -409,8 +411,9 @@ $('#table-billing').on("click","#viewBill",function(){
                 paymentRows += `
                   <tr>
                     <td>${item.ref_no || '0.00'}</td>
-                    <td>${numberWithCommas(item.reconnection_fee) || '0.00'}</td>
                     <td>${numberWithCommas(item.balance_covered) || '0.00'}</td>
+                    <td>${numberWithCommas(item.reconnection_fee) || '0.00'}</td>
+                    <td>${numberWithCommas(item.penalties) || '0.00'}</td>
                     <td>${numberWithCommas(item.net_payment) || '0.00'}</td>
                     <td class="text-right">
                       <span style="font-size: 12px;">
@@ -446,17 +449,6 @@ $('#table-billing').on("click","#viewBill",function(){
            * This code is for edit billing from - billing to which is not being used
            * commented out for now
            */
-          // if(response.billdata.is_paid == '1' || response.billdata.status != '1'){
-          //   // $(".btnUpdate").hide();
-          //   $('.billing_from').css('pointer-events', 'none');
-          //   $('.billing_to').css('pointer-events', 'none');
-          //   $('.due_date').css('pointer-events', 'none');
-          // }else{
-          //   // $(".btnUpdate").show();
-          //   $('.billing_from').css("pointer-events", "");
-          //   $('.billing_to').css("pointer-events", "");
-          //   $('.due_date').css("pointer-events", "");
-          // }
           // var final_charge = response.billdata.total_charges;
           // var final_charge = 0;
           // if(response.billdata.is_paid == '1'){
@@ -465,7 +457,7 @@ $('#table-billing').on("click","#viewBill",function(){
           //   final_charge = "0.00";
           // }
           // =========================================================
-          
+
           $("#m_viewBill .bill-status").html(renderStatusDue(response.billdata.status));
           $("#m_viewBill .account_id").text(response.billdata.accountno);
           $("#m_viewBill .reading_id").text(response.billdata.reading_refno);
@@ -485,17 +477,26 @@ $('#table-billing').on("click","#viewBill",function(){
           $('#m_viewBill .billing_from').text(response.billdata.billing_from);
           $('#m_viewBill .billing_to').text(response.billdata.billing_to);
           $('#m_viewBill .due_date').text(response.billdata.due_date);
+          $('#m_viewBill .bill_ref_no').text(response.billdata.ref_no);
 
           let bill_amount = 0;
           let remaining_balance = 0;
+          let overdue = parseFloat(response.billdata.overdue) || 0;
 
           const totalCharges = parseFloat(response.billdata.total_charges) || 0;
-          const overdue = parseFloat(response.billdata.overdue) || 0;
 
           bill_amount = totalCharges + overdue;
           remaining_balance = bill_amount - total_received_amount;
 
-          $('#m_viewBill .bill_amount').text(numberWithCommas(bill_amount));
+          $('#m_viewBill .bill_amount').text(numberWithCommas(totalCharges));
+
+          if (Number(response.billdata.is_paid) != 1) {
+            $('#m_viewBill .overdue-sec').show();
+            $('#m_viewBill .overdue_fee').text(numberWithCommas(overdue));
+          } else {
+            $('#m_viewBill .overdue-sec').hide();
+          }
+          
           $('#m_viewBill .remaining-balance').text(numberWithCommas(remaining_balance < 0 ? 0 : remaining_balance));
       },
       error: function(data){
