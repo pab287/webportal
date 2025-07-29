@@ -912,6 +912,7 @@ class Ticket_m extends CI_Model
             $update = $this->db->update('gccticket.ticket', $data);
             if($update){
                 $data['reference_no'] = $currentTicketData->reference_no;
+                $data['requestor'] = $currentTicketData->requestor;
                 $changes = $this->logChanges($currentTicketData, $data);
                 $this->core_layout->setEventLog("User updated ticket $changes","update", "success", "gccticket", "user");
             }else{
