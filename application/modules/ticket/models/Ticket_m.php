@@ -1354,10 +1354,10 @@ class Ticket_m extends CI_Model
             $message = "Ticket created";
         }elseif($type == "in progress"){
             $message = "Ticket set to in progress";
-            $this->sendTelegramNotif($this->user_data['emp_id'],$id,$data,$type);
+            $this->sendTelegramNotif($data->requestor,$id,$data,$type);
         }elseif($type == "completed"){
             $message = "Ticket set to Completed";
-            $this->sendTelegramNotif($this->user_data['emp_id'],$id,$data,$type);
+            $this->sendTelegramNotif($data->requestor,$id,$data,$type);
         }elseif($type == "Cancelled"){
             $message = "Ticket cancelled";
         }elseif($type == "open"){
@@ -1847,8 +1847,9 @@ class Ticket_m extends CI_Model
 
     private function sendTelegramNotif($emp_id,$ticket_id,$ticket_data,$type){
         $telegram_id = $this->getTelegramId($emp_id)->telegram_chat_id;
+        $ref = $ticket_data['reference_no'];
         if($type == "in progress"){
-            $message = "We've started working on your ticket {$ticket_data->reference_no} is now In Progress. For more information, click the link below.";
+            $message = "We've started working on your ticket {$ref} is now In Progress. For more information, click the link below.";
             $inline_keyboard = [
                 [
                     [
@@ -1860,7 +1861,7 @@ class Ticket_m extends CI_Model
                 ]
             ];
         }elseif($type == "completed"){
-            $message = "Great news! Your ticket {$ticket_data->reference_no} has been successfully completed. To better serve you, please rate your experience with us.";
+            $message = "Great news! Your ticket {$ref} has been successfully completed. To better serve you, please rate your experience with us.";
             $inline_keyboard = [
                 [
                     [
