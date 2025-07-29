@@ -83,8 +83,10 @@ if(isset($loggedSession->module_id) && $loggedSession->module_id){
                             if(isset($nRoles[$childKey]) && is_array($nRoles[$childKey]) && !empty($nRoles[$childKey])){
                             $this->db->select("UPPER(TRIM(label)) label, url, id");
                                 $this->db->where("is_active", 1);
+                                $this->db->where("parent_id !=", 0);
                                 $this->db->where_in("id", $nRoles[$childKey]);
                                 $this->db->where("LOWER(label) !=", "back");
+                                $this->db->order_by("TRIM(label)", "asc");
                                 $this->db->order_by("sort", "asc");
                                 $pages = $this->db->get("gccmaster.access_control_list");
                                 $child["has_pages"] = $pages->num_rows() > 0;
@@ -125,7 +127,7 @@ if(isset($loggedSession->module_id) && $loggedSession->module_id){
                 <ul class="m-menu__subnav">
                     <?php foreach ($activeModules as $id => $module): ?>
                     <?php if($module["has_children"] === false && $module["has_pages"] === true): ?>
-                    <li class="m-menu__item m-menu__item--submenu">
+                    <li class="m-menu__item m-menu__item--submenu" data-menu-submenu-toggle="hover">
                         <a href="javascript:;" class="m-menu__link m-menu__toggle">
                             <i class="m-menu__link-icon <?php echo $module["icon"] ? $module["icon"] : "la la-link"; ?>"></i>
                             <span class="m-menu__link-text"><?php echo $module["label"]; ?></span>
@@ -196,7 +198,7 @@ if(isset($loggedSession->module_id) && $loggedSession->module_id){
                                 if(isset($child["icon"]) && $child["icon"]) { $tempIcon = $child["icon"]; }
                                 elseif (isset($module["icon"]) && $module["icon"]) { $tempIcon = $module["icon"]; }
                                 ?>
-                                <li class="m-menu__item m-menu__item--submenu">
+                                <li class="m-menu__item m-menu__item--submenu" data-menu-submenu-toggle="hover">
                                     <a href="javascript:;" class="m-menu__link m-menu__toggle">
                                         <i class="m-menu__link-icon <?php echo $child["icon"] ? $child["icon"] : "la la-link"; ?>"></i>
                                         <span class="m-menu__link-text"><?php echo $child["label"]; ?></span>
