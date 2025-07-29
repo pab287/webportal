@@ -4,7 +4,7 @@ $loggedSession = (object) $this->session->userdata("logged_in");
 $activeModuleHasChildren = false;
 $ctrModules = 0;
 $ctrChildModules = 0;
-if($loggedSession->module_id){
+if(isset($loggedSession->module_id) && $loggedSession->module_id){
     $roleId = $this->authenticate->getRoleId();
     $this->db->select("module_resource, role_resource");
     $this->db->where(array("role_id" => $roleId));
