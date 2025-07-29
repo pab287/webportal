@@ -161,8 +161,9 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<div class="row m-0 w-100 justify-content-between align-items-center">
-					<div class="col-6 p-0">
-						<h5 class="modal-title" id="exampleModalLabel">View Bill</h5>
+					<div class="col-6 p-0 d-flex align-items-center">
+						<h5 class="modal-title mr-2" id="exampleModalLabel">View Bill</h5>
+						<div class="bill-status"></div>
 					</div>
 
 					<div class="col-6">
@@ -279,7 +280,8 @@
 						<table class="table table-striped sm-table" width="100%">
 							<thead>	
 								<tr>
-									<th>Reference No.</th>
+									<th>Ref No.</th>
+									<th>Rec. Fee</th>
 									<th>Balance Cov.</th>
 									<th>Net Pay</th>
 									<th class="text-right">Received Amount</th>
@@ -291,31 +293,23 @@
 
 						<hr>
 						<div class="info-group row m-0 justify-content-between w-100">
-							<h4 class="info-label m-0">Balance Cover</h4>
-							<h4 class="info-label m-0 f-600 total-balance-covered"></h4>
+							<p class="info-label m-0">Bill Amount</p>
+							<p class="info-label m-0 f-600 bill_amount"></p>
 						</div>
 						<hr>
 						<div class="info-group row m-0 justify-content-between w-100">
-							<h4 class="info-label m-0">Received Amount</h4>
-							<h4 class="info-label m-0 f-600 total-received-amount"></h4>
+							<p class="info-label m-0">Balance Cover</p>
+							<p class="info-label m-0 f-600 total-balance-covered"></p>
 						</div>
 						<hr>
-					</div>
-				</div>
-
-				<div class="section-area mt-5">
-					<div class="row mx-0">
-						<div class="col-6"></div>
-						<div class="col-6 p-0">
-							<div class="info-group mb-3">
-								<h4 class="info-label m-0">Bill Amount</h4>
-								<h4 class="info-label m-0 f-600 text-right bill_amount"></h4>
-							</div>
-
-							<div class="info-group">
-								<h4 class="info-label m-0">Remaining Balance</h4>
-								<h4 class="info-label m-0 f-600 text-right remaining-balance"></h4>
-							</div>
+						<div class="info-group row m-0 justify-content-between w-100">
+							<p class="info-label m-0">Received Amount</p>
+							<p class="info-label m-0 f-600 total-received-amount"></p>
+						</div>
+						<hr>
+						<div class="info-group row m-0 justify-content-between w-100">
+							<p class="info-label m-0">Remaining Balance</p>
+							<p class="info-label m-0 f-600 remaining-balance"></p>
 						</div>
 					</div>
 				</div>

@@ -372,6 +372,7 @@ function saveExportLogs(export_){
 
 $('#m_viewBill').on('hidden.bs.modal', function () {
   $('.payment-section').hide();
+  $("#m_viewBill .bill-status").html('');
 });
 
 $('#table-billing').on("click","#viewBill",function(){
@@ -408,8 +409,9 @@ $('#table-billing').on("click","#viewBill",function(){
                 paymentRows += `
                   <tr>
                     <td>${item.ref_no || '0.00'}</td>
-                    <td>${item.balance_covered || '0.00'}</td>
-                    <td>${item.net_payment || '0.00'}</td>
+                    <td>${numberWithCommas(item.reconnection_fee) || '0.00'}</td>
+                    <td>${numberWithCommas(item.balance_covered) || '0.00'}</td>
+                    <td>${numberWithCommas(item.net_payment) || '0.00'}</td>
                     <td class="text-right">
                       <span style="font-size: 12px;">
                         ${item.received_amount ? numberWithCommas(item.received_amount) : '0.00'}
@@ -439,24 +441,32 @@ $('#table-billing').on("click","#viewBill",function(){
             $(".btnPrint").show();
           }
 
-          if(response.billdata.is_paid == '1' || response.billdata.status != '1'){
-            // $(".btnUpdate").hide();
-            $('.billing_from').css('pointer-events', 'none');
-            $('.billing_to').css('pointer-events', 'none');
-            $('.due_date').css('pointer-events', 'none');
-          }else{
-            // $(".btnUpdate").show();
-            $('.billing_from').css("pointer-events", "");
-            $('.billing_to').css("pointer-events", "");
-            $('.due_date').css("pointer-events", "");
-          }
-          var final_charge = response.billdata.total_charges;
+          // =========================================================
+          /**
+           * This code is for edit billing from - billing to which is not being used
+           * commented out for now
+           */
+          // if(response.billdata.is_paid == '1' || response.billdata.status != '1'){
+          //   // $(".btnUpdate").hide();
+          //   $('.billing_from').css('pointer-events', 'none');
+          //   $('.billing_to').css('pointer-events', 'none');
+          //   $('.due_date').css('pointer-events', 'none');
+          // }else{
+          //   // $(".btnUpdate").show();
+          //   $('.billing_from').css("pointer-events", "");
+          //   $('.billing_to').css("pointer-events", "");
+          //   $('.due_date').css("pointer-events", "");
+          // }
+          // var final_charge = response.billdata.total_charges;
           // var final_charge = 0;
           // if(response.billdata.is_paid == '1'){
           //   final_charge = response.billdata.total_charges;
           // }else{
           //   final_charge = "0.00";
           // }
+          // =========================================================
+          
+          $("#m_viewBill .bill-status").html(renderStatusDue(response.billdata.status));
           $("#m_viewBill .account_id").text(response.billdata.accountno);
           $("#m_viewBill .reading_id").text(response.billdata.reading_refno);
           $("#m_viewBill .customer_name").text(response.billdata.firstname +" "+response.billdata.lastname);

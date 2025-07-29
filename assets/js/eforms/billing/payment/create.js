@@ -103,6 +103,7 @@ $(".remaining_balance").inputmask({ alias : "pesos", removeMaskOnSubmit: true })
 $("#billing_amount").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
 $("#receivedAmount").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
 $("#net_payment").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
+$("#default_billing_amount").inputmask({ alias : "pesos", removeMaskOnSubmit: true });
 $(".penalty_layout").hide();
 $('.details_layout').hide();
 $(".balance_layout").hide();
@@ -236,6 +237,7 @@ function checkOverdue() {
         document.getElementById("is_penalty").value = (data.isPenalty ? 1 : 0);
         document.getElementById("serialize_penalties").value = data.serialize_penalties;
         document.getElementById("reconnection_fee").value = data.reconnectionFee.amount;
+        document.getElementById("default_billing_amount").value = data.default_bill_amount;
 
         var billing_amount = data.billing_amount;
         
