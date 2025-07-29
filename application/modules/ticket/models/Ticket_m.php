@@ -841,7 +841,6 @@ class Ticket_m extends CI_Model
         $post = $this->input->post();
 
         $currentTicketData = $this->getTicketByid($id);
-
         $performed_by = (isset($post["performed_by"]) && $post["performed_by"]) ? $post["performed_by"] : 0;
         if(isset($post['category']) && $post['category'] == "webportal"){
             if(isset($post['sub_category'])){
@@ -1395,7 +1394,7 @@ class Ticket_m extends CI_Model
     }
 
     private function getTicketByid($id){
-        $this->db->select('a.id,a.requested_date,a.priority,a.category,a.sub_category,a.department_id,a.category,a.status,a.message,a.attachment,a.performed_by,a.reference_no');
+        $this->db->select('a.requestor,a.id,a.requested_date,a.priority,a.category,a.sub_category,a.department_id,a.category,a.status,a.message,a.attachment,a.performed_by,a.reference_no');
         $this->db->from('gccticket.ticket as a');
         $this->db->where('a.id', $id);
         $query = $this->db->get();
