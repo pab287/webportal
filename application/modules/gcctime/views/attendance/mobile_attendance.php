@@ -93,9 +93,7 @@
 						</div>
 						<div class="m-form m-form--label-align-right m--margin-top-10 m--margin-bottom-10">	
 							<div class="row align-items-center">
-								<div class="col-xl-8 order-2 order-xl-1">
-									
-								</div>
+								<div class="col-xl-8 order-2 order-xl-1"></div>
 							</div>
 						</div>
 					</div>
@@ -104,14 +102,13 @@
 							<thead>
 								<tr>
 									<th>App User</th>
-									<th>Date Time</th>
-									<th>Device ID</th>
+									<th>Date</th>
+									<th>Time</th>
 									<th>Status</th>
 									<th>Actions</th>
 								</tr>
 							</thead>
-							<tbody>	
-							</tbody>
+							<tbody></tbody>
 						</table>
 					</div>
 				</div>
