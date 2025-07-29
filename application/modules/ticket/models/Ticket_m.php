@@ -19,9 +19,8 @@ class Ticket_m extends CI_Model
     }
 
     //function to display all ticketing entries
-    function ticketMasterfile()
+    function ticketMasterfile($params = null)
     {
-        
         $resultset = array();
         $post = $this->input->post();
         $order_val = array(array("column"=>"0", "dir"=>"desc"));
@@ -35,8 +34,8 @@ class Ticket_m extends CI_Model
         $rowData = array();
         $view_own_request = (in_array("view_own_request", $this->core_layout->getCurrentActions())) ? true : false;
         $payroll =  (in_array("payroll_ticket", $this->core_layout->getCurrentActions())) ? true : false;
-        $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll);
-        $rowCount = $this->get_ticket_masterfile_count($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll);
+        $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll, $params);
+        $rowCount = $this->get_ticket_masterfile_count($search, $query_builder, $view_own_request, $payroll, $params);
 
         $totalNotFiltered = $rowCount;
 
@@ -47,10 +46,10 @@ class Ticket_m extends CI_Model
         return $resultset;
     }
 
-    public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll){
+    public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll, $params){
         $resultset = array();
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
-        $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id");
+        $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id, d.code as department, a.created_at");
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
         $this->db->join("gccmaster.tblemployees as c", "c.id = a.performed_by", 'LEFT');
@@ -58,6 +57,15 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as sub" , "sub.name = a.sub_category", 'LEFT');
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
+        $this->db->join("gcchris.tbldepartments as d" , "d.id = a.department_id", 'LEFT');
+        if($params){
+            $allowed_fields = ['priority', 'status', 'category'];
+            foreach($params as $field => $value) {
+                if(in_array($field, $allowed_fields)) {
+                    $this->db->where("LOWER(a.$field)", strtolower($value));
+                }
+            }
+        }
         $current_user_id = $this->user_data['emp_id'];
         if($payroll) {
             $this->db->where('cat.name', 'payroll');
@@ -101,6 +109,9 @@ class Ticket_m extends CI_Model
         else if($sortBy[$i]['data'] == "performed_by"){
             $this->db->order_by("c.firstname", $sortOrder[0]['dir']);
         }
+        else if($sortBy[$i]['data'] == "requestor"){
+            $this->db->order_by("b.firstname", $sortOrder[0]['dir']);
+        }
         else{
             $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
         }
@@ -128,7 +139,7 @@ class Ticket_m extends CI_Model
         return $resultset;
     }
     
-    private function get_ticket_masterfile_count($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll){
+    private function get_ticket_masterfile_count($search = null, $query_builder = null, $view_own_request, $payroll, $params){
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
@@ -137,7 +148,16 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as sub" , "sub.name = a.sub_category", 'LEFT');
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
+        $this->db->join("gcchris.tbldepartments as d" , "d.id = a.department_id", 'LEFT');
         $this->db->where('a.is_archived', '0');
+        if($params){
+            $allowed_fields = ['priority', 'status', 'category'];
+            foreach($params as $field => $value) {
+                if(in_array($field, $allowed_fields)) {
+                    $this->db->where("LOWER(a.$field)", strtolower($value));
+                }
+            }
+        }
         // $this->db->where("LOWER(a.status) != 'cancelled'", NULL, FALSE);
         $current_user_id = $this->user_data['emp_id']; 
         if($payroll) {
@@ -201,7 +221,7 @@ class Ticket_m extends CI_Model
     public function get_ticket_archive_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request){
         $resultset = array();
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
-        $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id");
+        $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id, d.code as department, a.created_at");
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
         $this->db->join("gccmaster.tblemployees as c", "c.id = a.performed_by", 'LEFT');
@@ -209,6 +229,7 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as sub" , "sub.name = a.sub_category", 'LEFT');
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
+        $this->db->join("gcchris.tbldepartments as d" , "d.id = a.department_id", 'LEFT');
         $this->db->where('a.is_archived', '1');
         // $this->db->or_where('a.status', "cancelled");
         if($view_own_request){
@@ -691,7 +712,14 @@ class Ticket_m extends CI_Model
     }
 
     function saveTicket(){
+        $resultArray = array();
         $post = $this->input->post();
+        $check = $this->getExistingTicketPerUser();
+
+        if(count($check) >= 5){
+            return array("result" => false, "toastr_msg" => "You currently have ". count($check). " pending request(s). Please resolve them or reach out to the IT department for assistance before submitting a new one.");
+        }
+
         if(isset($post['category']) && $post['category'] == "webportal"){
             if(isset($post['sub_category'])){
                 $sub_category = $post['sub_category'];
@@ -788,11 +816,15 @@ class Ticket_m extends CI_Model
 
         if($result){
             $this->core_layout->setEventLog("User added ticket with Ref. No. `".$reference_no."` on category datatable.","insert", "success", "gccticket", "user");
-            $this->addTrailLog($last_id,"new");
+            $this->addTrailLog($last_id,"new",$data);
+            $resultArray['result'] = true;
+            $resultArray['toastr_msg'] = "Ticket with Ref. No. `".$reference_no."` has been successfully added.";
         }else{
-            $this->core_layout->setEventLog("User failed to add ticket with Ref. No. `".$reference_no."` on category datatable.","insert", "failed", "gccticket", "system");
+            $this->core_layout->setEventLog("User failed to add new ticket.","insert", "failed", "gccticket", "system");
+            $resultArray['result'] = false;
+            $resultArray['toastr_msg'] = "User failed to add new ticket";
         }
-        return $result;
+        return $resultArray;
     }
 
     public function series($year, $month){
@@ -879,6 +911,7 @@ class Ticket_m extends CI_Model
             $this->db->where('id', $id);
             $update = $this->db->update('gccticket.ticket', $data);
             if($update){
+                $data['reference_no'] = $currentTicketData->reference_no;
                 $changes = $this->logChanges($currentTicketData, $data);
                 $this->core_layout->setEventLog("User updated ticket $changes","update", "success", "gccticket", "user");
             }else{
@@ -1158,13 +1191,14 @@ class Ticket_m extends CI_Model
             $requestor = $this->core_layout->getEmployeeData($data['requestor']);
             $sub_category = $data['sub_category'] || $data['sub_category'] != 0 ? ' - '.$this->getCategoryLabel($data['sub_category']) : "";
             $category = $this->getCategoryLabel($data['category']) . $sub_category;
-
+            $department = $this->getDepartmentName($data['department_id']);
             $telegram_msg .= '<b>Reference #</b>: '.strtoupper($data['reference_no']).chr(10);
             $telegram_msg .= '<b>Priority</b>: '.strtoupper($data['priority']).chr(10);
             $telegram_msg .= '<b>Category</b>: '.strtoupper($category).chr(10);
             $telegram_msg .= '<b>Department Responsible</b>: '.strtoupper($data['responsibility']).chr(10);
             $telegram_msg .= '<b>Issue</b>: '.strtoupper($data['message']).chr(10);
             $telegram_msg .= '<b>Requested By</b>: '.strtoupper($requestor['display_name_1']).chr(10);
+            $telegram_msg .= '<b>Requesting Department</b>: '.strtoupper($department).chr(10);
             $telegram_msg .= '<b>Date Needed</b>: '.strtoupper($data['requested_date']).chr(10);
         }
 
@@ -1179,8 +1213,15 @@ class Ticket_m extends CI_Model
                 [
                     [
                         "text" => "View Ticket",
-                        // "url" => 'http://58.69.100.66/portaldev/ticket/ticket/edit_ticket?id='.$id //doesnt send message when in development or in local
-                        "url" => site_url('ticket/ticket/edit_ticket?id=') . $id
+                        "url" => ($_ENV["URL_TELEGRAM"] === 'dev')
+                            ? 'http://58.69.100.66/web/ticket/ticket/edit_ticket?id=' . $id
+                            : site_url('ticket/ticket/edit_ticket?id=') . $id
+                    ],
+                    [
+                        "text" => "Serve Ticket",
+                        "url" => ($_ENV["URL_TELEGRAM"] === 'dev')
+                            ? 'http://58.69.100.66/web/ticket/ticket/view_ticket?id=' . $id . '&serve=true'
+                            : site_url('ticket/ticket/view_ticket?id=') . $id . '&serve=true'
                     ]
                 ]
             ];
@@ -1308,13 +1349,15 @@ class Ticket_m extends CI_Model
         return $query->row()->department_id;
     }
 
-    public function addTrailLog($id,$type){
+    public function addTrailLog($id,$type,$data=null){
         if($type == "new"){
             $message = "Ticket created";
         }elseif($type == "in progress"){
             $message = "Ticket set to in progress";
+            $this->sendTelegramNotif($this->user_data['emp_id'],$id,$data,$type);
         }elseif($type == "completed"){
             $message = "Ticket set to Completed";
+            $this->sendTelegramNotif($this->user_data['emp_id'],$id,$data,$type);
         }elseif($type == "Cancelled"){
             $message = "Ticket cancelled";
         }elseif($type == "open"){
@@ -1327,6 +1370,8 @@ class Ticket_m extends CI_Model
         }
         elseif($type == "resolved"){
             $message = "Ticket resolved";
+        }else{
+            $message = $type;
         }
         $post = array(
             'log_message' => $message,
@@ -1349,7 +1394,7 @@ class Ticket_m extends CI_Model
     }
 
     private function getTicketByid($id){
-        $this->db->select('a.id,a.requested_date,a.priority,a.category,a.sub_category,a.department_id,a.category,a.status,a.message,a.attachment,a.performed_by');
+        $this->db->select('a.id,a.requested_date,a.priority,a.category,a.sub_category,a.department_id,a.category,a.status,a.message,a.attachment,a.performed_by,a.reference_no');
         $this->db->from('gccticket.ticket as a');
         $this->db->where('a.id', $id);
         $query = $this->db->get();
@@ -1400,7 +1445,7 @@ class Ticket_m extends CI_Model
         }
         foreach ($changes as $field => $change) {
             if($field == 'status'){
-                $this->addTrailLog($currentData['id'],$change['new']);
+                $this->addTrailLog($currentData['id'],$change['new'],$newData);
             }
             if (strtolower($field) == 'department_id'){
                 $changesString.= " Field: $field, from: <strong>". $this->getDepartmentById($change['old']). "</strong>, to: <strong>". $this->getDepartmentById($change['new']). "</strong>\n";
@@ -1762,5 +1807,128 @@ class Ticket_m extends CI_Model
         );
     }
 
+    public function serveTicket($id) {
+        $ticket = $this->getTicketByid($id);
+        
+        if (!$ticket) {
+            return ['status' => false, 'message' => 'Ticket not found.'];
+        }
+        
+        $status = strtolower($ticket->status);
+        $statusMessages = [
+            'in progress' => 'Ticket is already in progress',
+            'completed' => 'Ticket is already completed',
+            'resolved' => 'Ticket is already completed',
+            'cancelled' => 'Ticket is cancelled'
+        ];
+        
+        if (isset($statusMessages[$status])) {
+            return ['status' => false, 'message' => $statusMessages[$status]];
+        }
+        
+        $this->db->where('id', $id);
+        $update = $this->db->update('gccticket.ticket', [
+            'status' => 'in progress',
+            'performed_by' => $this->user_data['emp_id']
+        ]);
+        
+        if ($update) {
+            $this->addTrailLog($id, 'in progress',$ticket);
+            $this->core_layout->setEventLog("User served the ticket with reference no {$ticket->reference_no}", 'update', 'success', 'gccticket', 'user');
+        } else {
+            $this->core_layout->setEventLog("User failed to serve the ticket with reference no {$ticket->reference_no}", 'update', 'error', 'gccticket', 'system');
+        }
+        
+        return [
+            'status' => $update,
+            'message' => $update ? 'Ticket served successfully.' : 'Failed to serve the ticket.'
+        ];
+    }
+
+    private function sendTelegramNotif($emp_id,$ticket_id,$ticket_data,$type){
+        $telegram_id = $this->getTelegramId($emp_id)->telegram_chat_id;
+        if($type == "in progress"){
+            $message = "We've started working on your ticket {$ticket_data->reference_no} is now In Progress. For more information, click the link below.";
+            $inline_keyboard = [
+                [
+                    [
+                        "text" => "View Ticket",
+                        "url" => ($_ENV["URL_TELEGRAM"] === 'dev')
+                            ? 'http://58.69.100.66/web/ticket/ticket/view_ticket?id=' . $ticket_id
+                            : site_url('ticket/ticket/view_ticket?id=') . $ticket_id
+                    ]
+                ]
+            ];
+        }elseif($type == "completed"){
+            $message = "Great news! Your ticket {$ticket_data->reference_no} has been successfully completed. To better serve you, please rate your experience with us.";
+            $inline_keyboard = [
+                [
+                    [
+                        "text" => "Rate Ticket",
+                        "url" => ($_ENV["URL_TELEGRAM"] === 'dev')
+                            ? 'http://58.69.100.66/web/ticket/ticket/view_ticket?id=' . $ticket_id . '&rate=true'
+                            : site_url('ticket/ticket/view_ticket?id=') . $ticket_id. '&rate=true'
+                    ]
+                ]
+            ];
+        }
+        if(!$telegram_id){
+            return false;
+        }
+        if (!isset($_ENV["GCC_NOTIFICATION_BOT"]) || !$_ENV["GCC_NOTIFICATION_BOT"]) {
+            return false;
+        }
+        $bot_token = $_ENV["GCC_NOTIFICATION_BOT"];
+        $reply_markup = [
+            "inline_keyboard" => $inline_keyboard
+        ];
+       
+        $url='https://api.telegram.org/bot'.$bot_token.'/sendMessage';
+        $data=array('chat_id'=>$telegram_id,'text'=>$message, 'reply_markup' => json_encode($reply_markup), 'parse_mode'=>'HTML'); // replay_markup send external links
+        $options=array('http'=>array('method'=>'POST','header'=>"Content-Type:application/x-www-form-urlencoded\r\n",'content'=>http_build_query($data),'ignore_errors'=>true),);
+        $context=stream_context_create($options);
+        $result=file_get_contents($url,false,$context);
+        return $result;
+    }
+
+    private function getTelegramId($id){
+        $this->db->select('telegram_chat_id');
+        $this->db->from('gccmaster.tblusers');
+        $this->db->where('emp_id', $id);
+        $query = $this->db->get();
+        return $query->row();
+    }
+
+    public function updateRating(){
+        $post = $this->input->post();
+        $id = $post['id'];
+        unset($post['id'],$post['csrf_token']);
+        $post['date_rated'] = date('Y-m-d H:i:s');
+        $this->db->where('id', $id);
+        $update = $this->db->update('gccticket.ticket', $post);
+        $ticket = $this->getTicketByid($id);
+        if ($update) {
+            $this->addTrailLog($id, 'ticket rated',$ticket);
+            $this->core_layout->setEventLog("Ticket rated successfully with reference no {$ticket->reference_no}", 'update', 'success', 'gccticket', 'user');
+        } else {
+            $this->core_layout->setEventLog("Ticket rated failed with reference no {$ticket->reference_no}", 'update', 'error', 'gccticket', 'system');
+        }
+        return $update;
+    }
+
+    public function getCompletedTicketPerUser(){
+        $this->db->select("a.id,a.reference_no,b.created_at,a.message");
+        $this->db->from('gccticket.ticket a');
+        $this->db->join('gccticket.trail_logs_event b', 'a.id = b.ticket_id', 'left');
+        $this->db->where('b.created_at >=', date('Y-m-d', strtotime('-7 days')));
+        $this->db->where('lower(b.type)', 'completed');
+        $this->db->where('is_archived', 0);
+        $this->db->where('requestor', $this->user_data['emp_id']);
+        $this->db->where(strtolower('status'), 'completed');
+        $this->db->where('(a.rating IS NULL OR a.rating = 0)', null, false);
+        $this->db->order_by('id', 'desc');
+        $query = $this->db->get();
+        return $query->result_array();
+    }
 
 }
