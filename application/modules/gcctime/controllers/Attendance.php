@@ -41,6 +41,13 @@
             $this->load->view('core/templates/footer');
         }
 
+        public function mobile_attendance() {
+            $this->core_layout->setPrivilegeName("gcctime_attendance_mobile");
+            $this->load->view('core/templates/header');
+            $this->load->view('attendance/mobile_attendance');
+            $this->load->view('core/templates/footer');
+        }
+
         function upload_attendance_file() {
             $resultset = array();
 
