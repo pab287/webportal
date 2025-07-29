@@ -53,6 +53,7 @@ if(isset($loggedSession->module_id) && $loggedSession->module_id){
                         $this->db->where("is_active", 1);
                         $this->db->where("parent_id !=", 0);
                         $this->db->where_in("id", $nRoles[$tempKey]);
+                        $this->db->order_by("TRIM(label)", "asc");
                         $this->db->order_by("sort", "asc");
                         $pages = $this->db->get("gccmaster.access_control_list");
                         $value["has_pages"] = $pages->num_rows() > 0;
