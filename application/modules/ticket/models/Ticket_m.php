@@ -1847,7 +1847,7 @@ class Ticket_m extends CI_Model
 
     private function sendTelegramNotif($emp_id,$ticket_id,$ticket_data,$type){
         $telegram_id = $this->getTelegramId($emp_id)->telegram_chat_id;
-        $ref = $ticket_data['reference_no'];
+        $ref = $ticket_data->reference_no;
         if($type == "in progress"){
             $message = "We've started working on your ticket {$ref} is now In Progress. For more information, click the link below.";
             $inline_keyboard = [
