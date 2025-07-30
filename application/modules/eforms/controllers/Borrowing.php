@@ -5,8 +5,8 @@ class Borrowing extends MY_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->authenticate->doRedirect();
         $this->authenticate->setModuleAccess("eforms-borrowing");
+        $this->authenticate->doRedirect();
         $this->core_layout->setPrivilegeName("eforms_borrowing");
         $this->user_data = $this->session->userdata("logged_in");
         $this->load->model("Borrowing_m", "borrowing");
