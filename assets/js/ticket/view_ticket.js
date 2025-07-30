@@ -338,8 +338,7 @@ function getStatusLogs(){
     });
 }
 function getRating(status,ticket_rating = null){
-    if(typeof _tempContentData !== 'undefined' && _tempContentData && _tempContentData.rate && _tempContentData.rate == 1 && status == 'completed' && ticket_rating == 0 || ticket_rating == null){
-         
+    if(typeof _tempContentData !== 'undefined' && _tempContentData && _tempContentData.rate == 1 && status === 'completed' &&(ticket_rating === 0 || ticket_rating === null)){
         Swal.fire({
             title: 'HOW WOULD YOU RATE OUR SERVICE?',
             html: `<div style="margin: 20px 0; text-align: center;">

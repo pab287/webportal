@@ -1354,10 +1354,20 @@ class Ticket_m extends CI_Model
             $message = "Ticket created";
         }elseif($type == "in progress"){
             $message = "Ticket set to in progress";
-            $this->sendTelegramNotif($data['requestor'],$id,$data,$type);
+            if(is_array($data)){
+                $requestor = $data['requestor'];
+            }else{
+                $requestor = $data->requestor;
+            }
+            $this->sendTelegramNotif($requestor,$id,$data,$type);
         }elseif($type == "completed"){
             $message = "Ticket set to Completed";
-            $this->sendTelegramNotif($data['requestor'],$id,$data,$type);
+            if(is_array($data)){
+                $requestor = $data['requestor'];
+            }else{
+                $requestor = $data->requestor;
+            }
+            $this->sendTelegramNotif($requestor,$id,$data,$type);
         }elseif($type == "Cancelled"){
             $message = "Ticket cancelled";
         }elseif($type == "open"){
