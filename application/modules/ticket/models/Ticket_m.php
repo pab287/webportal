@@ -1257,7 +1257,7 @@ class Ticket_m extends CI_Model
                 $data=array('chat_id'=>$telegramchatid,'text'=>$msg, 'reply_markup' => json_encode($reply_markup), 'parse_mode'=>'HTML'); // replay_markup send external links
 				$options=array('http'=>array('method'=>'POST','header'=>"Content-Type:application/x-www-form-urlencoded\r\n",'content'=>http_build_query($data),'ignore_errors'=>true),);
 				$context=stream_context_create($options);
-				$result=file_get_contents($url,false,$context);
+				$result = @file_get_contents($url,false,$context);
 				return $result;
 			}else{
 				return false;
