@@ -267,6 +267,9 @@ function get_travel_for_analytics(date = null) {
             var categoryAxis = chart.yAxes.push(new am4charts.CategoryAxis());
             categoryAxis.dataFields.category = "status";
             categoryAxis.renderer.inversed = true;
+            categoryAxis.renderer.labels.template.adapter.add("textOutput", function(text) {
+                return text.replace(/_/g, " ").toUpperCase();
+            });
             var valueAxis = chart.xAxes.push(new am4charts.ValueAxis());
 
             var series = chart.series.push(new am4charts.ColumnSeries3D());
