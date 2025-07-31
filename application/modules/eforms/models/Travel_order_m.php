@@ -96,7 +96,7 @@
                 $this->db->group_by("a.id");
             }
             else if ($status == 'Accomplished') {
-                $this->db->where('td.accomplished', 1);
+                $this->db->where('a.accomplished', 1);
             }
             else if ($status) {
                 $this->db->where('a.status', $status);
@@ -3184,7 +3184,7 @@
         function m_get_travel_analytics_for_dashboard() {
             $post = $this->input->post();
             $this->db->reset_query();
-            $this->db->select("a.status, COUNT(a.id) AS count, (select count(status) from gcceforms.travel_order where status='Approved' AND accomplishment_dt != '0000-00-00 00:00:00') as accom");
+            $this->db->select("a.status, COUNT(a.id) AS count, (select count(status) from gcceforms.travel_order where status='Approved' AND Accomplished = 1) as accom");
             $this->db->from("gcceforms.travel_order a");
             if (!empty($post['date']['start']) && !empty($post['date']['end'])) {
                 $start = date('Y-m-d H:i:s', strtotime($post['date']['start'] . ' 00:00:00'));
