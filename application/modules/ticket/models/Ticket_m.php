@@ -1863,7 +1863,7 @@ class Ticket_m extends CI_Model
             $ref = $ticket_data->reference_no;
         }
         if($type == "in progress"){
-            $message = "We've started working on your ticket {$ref} is now In Progress. For more information, click the link below.";
+            $message = "We're now working on your ticket $ref. You can view more details by clicking the link below.";
             $inline_keyboard = [
                 [
                     [
