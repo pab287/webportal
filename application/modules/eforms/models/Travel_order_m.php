@@ -96,7 +96,7 @@
                 $this->db->group_by("a.id");
             }
             else if ($status == 'Accomplished') {
-                $this->db->where('a.accomplished', 1);
+                $this->db->where('td.accomplished', 1);
             }
             else if ($status) {
                 $this->db->where('a.status', $status);
@@ -248,7 +248,7 @@
                     } else {
                         $this->db->where("td.travel_order_id", $rowId);
                     }
-                    if($accomplished){
+                    if($accomplished || $status == 'Accomplished'){
                         $this->db->where("td.accomplished", 1);
                     }
                 
@@ -3192,6 +3192,7 @@
                 $this->db->where("DATE(a.created_dt) >=", $start);
                 $this->db->where("DATE(a.created_dt) <=", $end);
             }
+            // $this->db->where("a.status" != "Cancelled");
             $this->db->group_by("a.status");
             $this->db->order_by("FIELD(a.status, 'Pending', 'Approved', 'Hr Noted', 'Disapproved', 'Cancelled')");
 
