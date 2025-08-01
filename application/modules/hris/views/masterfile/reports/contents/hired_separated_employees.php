@@ -161,7 +161,7 @@
             <div id="filteredContent" class="m-portlet__body">
                 <template v-if="count == 0">
                 <div class="alert alert-danger m-alert m-alert--air m-alert--outline" role="alert">
-                    <strong>Hired / Separated Employees Report</strong> No data / record(s) found.				  	
+                    <strong>Hired / Separated Employees Report</strong> No data / record(s) found.
                 </div>
                 </template>
                 <template v-else>

@@ -19,6 +19,15 @@ class Reports extends MY_Controller{
         date_default_timezone_set('Asia/Manila');
     }
 
+    public function sss_premium_contribution(){
+        $this->core_layout->setPrivilegeName("hris_reports_sss_premium_contribution");
+        $arrData = array('company' => $this->report->getSelect2Companies());
+
+        $this->core_layout->addJs('js/hris/reports/sss_premium_contribution_script.js', true, $arrData);
+        $this->load->view("core/templates/header");
+        $this->load->view("masterfile/reports/sss_premium_contribution");
+        $this->load->view("core/templates/footer");
+    }
     public function creator()
     {
         $this->core_layout->setPrivilegeName("hris_report_creator");
