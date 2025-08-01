@@ -71,10 +71,10 @@
                             ?> <!-- notification for borrowing -->
 
                             <!-- notification for cash advance -->
-                            <?php 
+                            <?php
                                 //$has_previ = (isset($this->core_layout->generateNotifPrivilegeAction()['ca_masterfile'])) ? $this->core_layout->generateNotifPrivilegeAction()['ca_masterfile'] : $this->core_layout->generateNotifPrivilegeAction()
                                 // $has_previ = $this->core_layout->personal_roles_for_notif();
-                                // $target = array('ca_acctg_notif', 'ca_approval_notif', 'ca_acctg_fo_notif', 'ca_payroll_notif'); 
+                                // $target = array('ca_acctg_notif', 'ca_approval_notif', 'ca_acctg_fo_notif', 'ca_payroll_notif');
                             ?>
                             <?php //if(count(array_intersect($has_previ, $target)) > 0): ?>
                                 <?php //$this->load->view('core/templates/ca_notif/notif_client') ?>
@@ -93,7 +93,7 @@
                                 </a>
                                 <!-- DROPDOWN -->
                                 <?php $this->load->view("core/templates/user_profile/dropdown_info",
-                                    array("avatar" => $avatar, "user" => $user), FALSE); ?>
+                                    array("avatar" => $avatar, "user" => $user), false); ?>
                             </li>
                             <?php /*** $this->load->view("core/templates/more_actions"); ***/ ?>
                         </ul>
