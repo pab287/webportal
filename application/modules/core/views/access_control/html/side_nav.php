@@ -1,8 +1,9 @@
 <?php
 $currentPage = $this->core_layout->getBodyClass();
 $hasBodyClass = $this->core_layout->hasBodyClass();
+$navClass = isset($isChildNav) && $isChildNav? "m-menu__subnav": "m-menu__nav m-menu__nav--dropdown-submenu-arrow";
 ?>
-<ul class="m-menu__nav  m-menu__nav--dropdown-submenu-arrow ">
+<ul class="<?php echo $navClass; ?>">
 <?php if(isset($aclMenu, $roleResource) && ($aclMenu && $roleResource)): ?>
 <?php foreach($aclMenu as $menu): ?>
 <?php
@@ -30,12 +31,26 @@ $hasBodyClass = $this->core_layout->hasBodyClass();
 		$hideIdentifier = count($explodeIdentifier) > 0 && in_array("hidden", $explodeIdentifier)? true: false;
 		$isHidden = $hideMenu || $hideIdentifier;
 	}
+
+	$nextMenu = array();
+	if(isset($menu["children"]) && !empty($menu["children"])){
+		foreach($menu["children"] as $key => $child){
+			if(in_array($child["id"], $roleResource) && $child["icon"] !== "m-menu__item--hidden" && $key >= 5){
+				$nextMenu[] = $child;
+				if(isset($menu["children"][$key])){
+					unset($menu["children"][$key]);
+				}
+			}
+		}
+	}
 ?>
 <?php if(isset($menu["id"]) && ($menu["id"] && in_array(intval($menu["id"]), $roleResource)) && $isHidden === false): ?>
 	<li class="m-menu__item<?php echo "{$subMenu}{$activeMenu}"; ?>" <?php echo $toggleMenu; ?>>
 		<a  href="<?php echo $menuUrl; ?>" class="m-menu__link<?php echo $menuToogle; ?>">
 			<span class="m-menu__item-here"></span>
+			<?php if(!isset($isChildNav)): ?>
 			<i class="m-menu__link-icon <?php echo $menuIcon; ?>"></i>
+			<?php endif; ?>
 			<span class="m-menu__link-text"><?php echo $menuLabel; ?></span>
 		<?php if(isset($menu["children"]) && $menu["children"]): ?>
 			<i class="m-menu__ver-arrow la la-angle-right"></i>
@@ -45,18 +60,38 @@ $hasBodyClass = $this->core_layout->hasBodyClass();
 		<div class="m-menu__submenu">
 			<span class="m-menu__arrow"></span>
 			<ul class="m-menu__subnav">
-		<?php foreach($menu["children"] as $child):
-			$menuIconChild = (isset($child["icon"]) && $child["icon"])? $child["icon"]: "";
-			if (in_array($child["id"], $roleResource) && $menuIconChild !== "m-menu__item--hidden"){
-			$childUrl = (isset($child["url"]) && $child["url"])? base_url($child["url"]): "javascript:void(0);";
-			$childLabel = (isset($child["label"]) && $child["label"])? $child["label"]: ""; ?>
-				<li class="m-menu__item  m-menu__item--parent">
-					<a  href="<?php echo $childUrl; ?>" class="m-menu__link ">
-						<span class="m-menu__item-here"></span>
-						<span class="m-menu__link-text"><?php echo $childLabel; ?></span>
+			<!-- next nav here -->
+			<?php if(is_array($nextMenu) && !empty($nextMenu)): ?>
+				<li class="m-menu__item m-menu__item--submenu m-menu__item--submenu--next-nav" data-menu-submenu-toggle="hover">
+					<a href="#" class="m-menu__link m-menu__toggle">
+						<i class="m-menu__link-bullet m-menu__link-bullet--dot">
+							<span></span>
+						</i>
+						<span class="m-menu__link-text">
+							More
+						</span>
+						<i class="m-menu__ver-arrow la la-angle-right"></i>
 					</a>
+					<div class="m-menu__submenu">
+						<span class="m-menu__arrow"></span>
+						<?php echo $this->load->view("core/access_control/html/side_nav", array("aclMenu" => $nextMenu, "roleResource" => $roleResource, "isChildNav" => true), true); ?>
+					</div>
 				</li>
-		<?php }
+			<?php endif; ?>
+			<!-- next nav here -->
+
+			<?php foreach($menu["children"] as $child):
+				$menuIconChild = (isset($child["icon"]) && $child["icon"])? $child["icon"]: "";
+				if (in_array($child["id"], $roleResource) && $menuIconChild !== "m-menu__item--hidden"){
+				$childUrl = (isset($child["url"]) && $child["url"])? base_url($child["url"]): "javascript:void(0);";
+				$childLabel = (isset($child["label"]) && $child["label"])? $child["label"]: ""; ?>
+					<li class="m-menu__item  m-menu__item--parent">
+						<a  href="<?php echo $childUrl; ?>" class="m-menu__link ">
+							<span class="m-menu__item-here"></span>
+							<span class="m-menu__link-text"><?php echo $childLabel; ?></span>
+						</a>
+					</li>
+			<?php }
 			endforeach; ?>
 			</ul>
 		</div>
@@ -64,6 +99,7 @@ $hasBodyClass = $this->core_layout->hasBodyClass();
 	</li>
 <?php endif; ?>
 <?php endforeach; ?>
+<?php if(!isset($isChildNav)): ?>
 <li class="m-menu__item">
 	<a  href="<?php echo base_url("portal/index"); ?>" class="m-menu__link ">
 		<span class="m-menu__item-here"></span>
@@ -71,6 +107,7 @@ $hasBodyClass = $this->core_layout->hasBodyClass();
 		<span class="m-menu__link-text">Portal</span>
 	</a>
 </li>
+<?php endif; ?>
 <?php else: ?>
 <li class="m-menu__item">
 	<a  href="<?php echo base_url("portal/index"); ?>" class="m-menu__link ">
