@@ -841,7 +841,6 @@ class Ticket_m extends CI_Model
         $post = $this->input->post();
 
         $currentTicketData = $this->getTicketByid($id);
-
         $performed_by = (isset($post["performed_by"]) && $post["performed_by"]) ? $post["performed_by"] : 0;
         if(isset($post['category']) && $post['category'] == "webportal"){
             if(isset($post['sub_category'])){
@@ -912,6 +911,7 @@ class Ticket_m extends CI_Model
             $update = $this->db->update('gccticket.ticket', $data);
             if($update){
                 $data['reference_no'] = $currentTicketData->reference_no;
+                $data['requestor'] = $currentTicketData->requestor;
                 $changes = $this->logChanges($currentTicketData, $data);
                 $this->core_layout->setEventLog("User updated ticket $changes","update", "success", "gccticket", "user");
             }else{
@@ -1257,7 +1257,7 @@ class Ticket_m extends CI_Model
                 $data=array('chat_id'=>$telegramchatid,'text'=>$msg, 'reply_markup' => json_encode($reply_markup), 'parse_mode'=>'HTML'); // replay_markup send external links
 				$options=array('http'=>array('method'=>'POST','header'=>"Content-Type:application/x-www-form-urlencoded\r\n",'content'=>http_build_query($data),'ignore_errors'=>true),);
 				$context=stream_context_create($options);
-				$result=file_get_contents($url,false,$context);
+				$result = @file_get_contents($url,false,$context);
 				return $result;
 			}else{
 				return false;
@@ -1354,10 +1354,20 @@ class Ticket_m extends CI_Model
             $message = "Ticket created";
         }elseif($type == "in progress"){
             $message = "Ticket set to in progress";
-            $this->sendTelegramNotif($this->user_data['emp_id'],$id,$data,$type);
+            if(is_array($data)){
+                $requestor = $data['requestor'];
+            }else{
+                $requestor = $data->requestor;
+            }
+            $this->sendTelegramNotif($requestor,$id,$data,$type);
         }elseif($type == "completed"){
             $message = "Ticket set to Completed";
-            $this->sendTelegramNotif($this->user_data['emp_id'],$id,$data,$type);
+            if(is_array($data)){
+                $requestor = $data['requestor'];
+            }else{
+                $requestor = $data->requestor;
+            }
+            $this->sendTelegramNotif($requestor,$id,$data,$type);
         }elseif($type == "Cancelled"){
             $message = "Ticket cancelled";
         }elseif($type == "open"){
@@ -1394,7 +1404,7 @@ class Ticket_m extends CI_Model
     }
 
     private function getTicketByid($id){
-        $this->db->select('a.id,a.requested_date,a.priority,a.category,a.sub_category,a.department_id,a.category,a.status,a.message,a.attachment,a.performed_by,a.reference_no');
+        $this->db->select('a.requestor,a.id,a.requested_date,a.priority,a.category,a.sub_category,a.department_id,a.category,a.status,a.message,a.attachment,a.performed_by,a.reference_no');
         $this->db->from('gccticket.ticket as a');
         $this->db->where('a.id', $id);
         $query = $this->db->get();
@@ -1847,8 +1857,13 @@ class Ticket_m extends CI_Model
 
     private function sendTelegramNotif($emp_id,$ticket_id,$ticket_data,$type){
         $telegram_id = $this->getTelegramId($emp_id)->telegram_chat_id;
+        if(is_array($ticket_data)){
+            $ref = $ticket_data['reference_no'];
+        }else{
+            $ref = $ticket_data->reference_no;
+        }
         if($type == "in progress"){
-            $message = "We've started working on your ticket {$ticket_data->reference_no} is now In Progress. For more information, click the link below.";
+            $message = "We're now working on your ticket $ref. You can view more details by clicking the link below.";
             $inline_keyboard = [
                 [
                     [
@@ -1860,7 +1875,7 @@ class Ticket_m extends CI_Model
                 ]
             ];
         }elseif($type == "completed"){
-            $message = "Great news! Your ticket {$ticket_data->reference_no} has been successfully completed. To better serve you, please rate your experience with us.";
+            $message = "Great news! Your ticket {$ref} has been successfully completed. To better serve you, please rate your experience with us.";
             $inline_keyboard = [
                 [
                     [
