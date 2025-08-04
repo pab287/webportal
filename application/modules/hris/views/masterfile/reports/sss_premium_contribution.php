@@ -1,3 +1,8 @@
+<style>
+span.help-block.form-error {
+    text-transform: uppercase;
+}
+</style>
 <div class="m-content">
     <div class="row">
         <div class="col-xl-3 col-lg-3 col-md-3 col-sm-12">
@@ -13,6 +18,8 @@
                     </div>
                     <div class="m-portlet__head-tools">&nbsp;</div>
                 </div>
+                <form id="formFilter" class="m-form m-form--label-align-right">
+                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                 <div id="tempFilter" class="m-portlet__body">
                     <div  id="tempFilterBy" class="row">
                         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
@@ -20,7 +27,7 @@
                                 <label for="filter_by" class="m--font-bolder">FILTER BY</label>
                                 <div class="m-checkbox-inline">
                                     <label class="m-checkbox">
-                                        <input type="radio" id="all_employees" name="filter_by" value="all" data-validation="required" v-model="all_filter" checked/>
+                                        <input type="radio" id="all_employees" name="filter_by" value="all" data-validation="required" v-model="all_filter" checked />
                                         ALL<span></span>
                                     </label>
                                     <label class="m-checkbox">
@@ -73,6 +80,7 @@
                     </button>
                     <button type="submit" class="m-btn btn btn-success btnAdvance_search btn-submit">Search</button>
                 </div>
+                </form>
             </div>
         </div>
         <div class="col">
@@ -89,9 +97,39 @@
                     <div class="m-portlet__head-tools">&nbsp;</div>
                 </div>
                 <div id="filteredContent" class="m-portlet__body">
-                    <div class="alert alert-danger m-alert m-alert--air m-alert--outline" role="alert">
-                        <strong>SSS Premium Contribution Report</strong> No data / record(s) found.
-                    </div>
+                    <template v-if="count == 0">
+                        <div class="alert alert-danger m-alert m-alert--air m-alert--outline" role="alert">
+                            <strong>SSS Premium Contribution Report</strong> No data / record(s) found.
+                        </div>
+                    </template>
+                    <template v-else>
+                        <div>
+                            <div class="row">
+                                <div class="col-12 col-md-12 col-lg-12 col-xl-12">
+                                    <table class="table" style="width: 100%;">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center">Year</th>
+                                                <th>Month</th>
+                                                <th class="text-center">SSS Premium</th>
+                                                <th class="text-center">SBR#</th>
+                                                <th class="text-center">Date Paid</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="row in rows">
+                                                <td class="text-center" v-text="row.year"></td>
+                                                <td v-text="row.month_name"></td>
+                                                <td class="text-center" v-text="row.sss_premium"></td>
+                                                <td class="text-center" v-text="row.id"></td>
+                                                <td class="text-center" v-text="row.pay_date"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>

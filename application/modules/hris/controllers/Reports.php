@@ -21,15 +21,16 @@ class Reports extends MY_Controller{
 
     public function sss_premium_contribution(){
         $this->core_layout->setPrivilegeName("hris_reports_sss_premium_contribution");
-        $arrData = array('company' => $this->report->getSelect2Companies());
+        $arrData = array('company' => $this->report->getSelect2Companies(),
+        "entry_date" => $this->report->getPayrollSheetFirstEntryDate());
 
         $this->core_layout->addJs('js/hris/reports/sss_premium_contribution_script.js', true, $arrData);
         $this->load->view("core/templates/header");
         $this->load->view("masterfile/reports/sss_premium_contribution");
         $this->load->view("core/templates/footer");
     }
-    public function creator()
-    {
+
+    public function creator(){
         $this->core_layout->setPrivilegeName("hris_report_creator");
         $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', true);
         $this->core_layout->addJs('js/querybuilder/query-builder.standalone.min.js', true);
@@ -514,8 +515,22 @@ class Reports extends MY_Controller{
             ->set_output(json_encode($data));
     }
 
+    public function get_reports_select2_employee_data(){
+        $data = $this->report->getReportsSelect2EmployeeData();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
     public function no_earners_report_filtered_data() {
         $data = $this->report->noEarnerReportFilteredData();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function sss_premium_contribution_report_data(){
+        $data = $this->report->sssPremiumContributionReportData();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));

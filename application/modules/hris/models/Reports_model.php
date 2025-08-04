@@ -1088,6 +1088,28 @@ class Reports_model extends CI_Model{
         return $results;
     }
 
+    public function getReportsSelect2EmployeeData(){
+        $get = $this->input->get();
+        $this->db->select("id, CONCAT(UPPER(TRIM(firstname)), ' ', CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND TRIM(middlename) !='' AND middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(middlename, 1, 1), '.') ELSE '' END,' ', UPPER(TRIM(lastname)), CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND
+                suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(suffix))) ELSE '' END) as text");
+        $this->db->from("gccmaster.tblemployees");
+        if(isset($get["company_id"]) && $get["company_id"]){
+            $this->db->where("company_id", $get["company_id"]);
+        }
+        if (isset($get['q']) && $get['q']) {
+            $this->db->group_start();
+            $this->db->like("firstname", $get['q'], "both");
+            $this->db->or_like("lastname", $get['q'], "both");
+            $this->db->or_like("CONCAT(firstname, ' ', lastname)", $get['q'], "both");
+            $this->db->group_end();
+        }
+        $this->db->limit(25);
+        $this->db->order_by("lastname", "ASC");
+        $query = $this->db->get();
+        return array("results" => $query->result_array());
+    }
+
     public function getSelect2EmployeeData(){
         $get = $this->input->get();
         $resultarray = array();
@@ -1122,8 +1144,7 @@ class Reports_model extends CI_Model{
                 }
             }
         }
-        
-        
+
         return array("results" => $resultarray);
     }
 
@@ -3060,5 +3081,54 @@ class Reports_model extends CI_Model{
         return $resultset;
     }
 
+    public function getPayrollSheetFirstEntryDate(){
+        $this->db->select("pay_date");
+        $this->db->from("payroll.payroll_sheet");
+        $this->db->where("posted", 1);
+        $this->db->order_by("pay_date", "ASC");
+        $this->db->limit(1);
+        return $this->db->get()->row()->pay_date;
+    }
 
+    public function sssPremiumContributionReportData(){
+        $post = $this->input->post();
+        $resultset = array();
+        if(isset($post["employee"]) && $post["employee"]){
+            $isDateRange = isset($post["filter_by"]) && $post["filter_by"] == "date_range" ? true : false;
+            $this->db->select("ps.id, ps.emp_id, SUM(ps.sss) as sss, SUM(ps.sss_prov) as sss_prov, SUM(ps.sss + ps.sss_prov) as sss_premium, ps.pay_date, ps.month_name, ps.year");
+            $this->db->from("payroll.payroll_sheet as ps");
+            $this->db->where("ps.emp_id", $post["employee"]);
+            if(isset($post["company"]) && $post["company"]){ $this->db->where("ps.company_id", $post["company"]); }
+            if($isDateRange){
+                $dates = explode("-", $post["date_range"]);
+                $startDate = date('Y-m-d', strtotime(trim($dates[0])));
+                $endDate = date('Y-m-d', strtotime(trim($dates[1])));
+                $this->db->group_start();
+                $this->db->where("ps.pay_date >= ", $startDate);
+                $this->db->where("ps.pay_date <= ", $endDate);
+                $this->db->group_end();
+            }
+            $this->db->where("ps.posted", 1);
+            $this->db->where("ps.is_bonus", 0);
+            $this->db->group_by(["ps.emp_id", "ps.month_name", "ps.year"]);
+            $this->db->order_by("ps.year", "ASC");
+            $this->db->order_by("FIELD(ps.month_name, 'January','February','March','April','May','June','July','August','September','October','November','December')", null, false);
+            $q = $this->db->get();
+            $resultset["q"] = $this->db->last_query();
+            if($q->num_rows() > 0){
+                $resultset["response"] = true;
+                $resultset["data"] = $q->result();
+                $resultset["count"] = $q->num_rows();
+            }else{
+                $resultset["response"] = false;
+                $resultset["data"] = array();
+                $resultset["count"] = 0;
+            }
+        }else{
+            $resultset["response"] = false;
+            $resultset["data"] = array();
+            $resultset["count"] = 0;
+        }
+        return $resultset;
+    }
 }

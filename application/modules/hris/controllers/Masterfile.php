@@ -278,6 +278,22 @@
             }
         }
 
+        public function sss_premium() {
+            $this->core_layout->setBodyClass("hris transaction sss_premium");
+            $this->core_layout->setPageTitle("HRIS - Transactrion SSS Premium");
+            $this->core_layout->setPrivilegeName("hris_sss_premium");
+
+            $this->load->model("payroll/payroll_m", "payroll");
+            $tempData = array();
+            $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
+            $tempData["company"] = $this->payroll->select2CompanyData();
+
+            $this->core_layout->addJs("js/hris/sss_sbr_payments_script.js", true, $tempData);
+            $this->load->view("core/templates/header");
+            $this->load->view("hris/transaction/sss_sbr_payments");
+            $this->load->view("core/templates/footer");
+        }
+
         function get_employee_datatable_request($employee_status = "Active") {
             $data = $this->employee_model->getEmployeeDatatableRequest($this->input->post('emp_status'));
             $this->output
