@@ -57,3 +57,27 @@ $("#table-sbr_payments").DataTable({
     "lengthMenu": [ 10, 25, 50, 100 ],
     "pageLength": 10
 });
+
+$.validate({
+    form: "#form-sbr_payment",
+    lang: "en",
+    onSuccess: function (form) {
+        const currentForm = $(form);
+        $.ajax({
+            url: siteUrl("hris/masterfile/save_sbr_payment"),
+            type: "POST",
+            dataType: "JSON",
+            data: currentForm.serialize(),
+            success: function (json) {
+                if(json.response){
+                    toastr.success(json.toastr_msg, "Save SBR Payment", 5000);
+                    $("#modal-sbr_payment").modal("hide");
+                    $("#table-sbr_payments").DataTable().ajax.reload();
+                }else{
+                    toastr.error(json.toastr_msg, "Save SBR Payment", 5000);
+                }
+            }
+        });
+        return false;
+    }
+});

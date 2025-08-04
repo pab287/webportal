@@ -38,6 +38,7 @@
         protected $tblChecklist = 'gcchris.tblchecklist_documents';
         protected $offCom = 'gcchris.offenses_commendation_history';
         protected $tblUsers = 'gccmaster.tblusers';
+        protected $sbrPayment = "gcchris.sss_sbr_payments";
         
         protected $defaultStationTable = "gcchris.default_station_location";
 
@@ -12415,4 +12416,37 @@
             return $resultset;
         }
 
+        public function saveSbrPayment() {
+            $post = $this->input->post();
+            $resultset = array();
+            if(isset($post["sbr_no"], $post["payment_date"], $post["company_id"]) && ($post["sbr_no"] && $post["payment_date"] && $post["company_id"])){
+                if(isset($post["company_id"]) && $post["company_id"]){
+                    $qComp = $this->db->get_where($this->companyTable, array("id" => $post["company_id"], "is_archived" => 0));
+                    if($qComp->num_rows() == 1){ $post["company_code"] = $qComp->row()->description; }
+                }
+                $monthName = date("F", mktime(0, 0, 0, $post['month_name'], 1));
+                $post["month_name"] = strtolower($monthName);
+
+                $post["created_by"] = $this->core_layout->getCurrentEmployeeId();
+                $post["created_at"] = date("Y-m-d H:i:s");
+                $added = $this->db->insert('gcchris.sss_sbr_payments', $post);
+                if($added){
+                    $resultset["response"] = true;
+                    $resultset["toastr_msg"] = "SBR payment has been added successfully.";
+                    $resultset["toastr_state"] = "success";
+                    $this->core_layout->setEventLog("SBR Payment - SBR payment has been added successfully.","insert", "success", "gcchris", "user");
+                }else{
+                    $resultset["response"] = false;
+                    $resultset["toastr_msg"] = "Failed to save SBR payment!";
+                    $resultset["toastr_state"] = "error";
+                    $this->core_layout->setEventLog("SBR Payment - Failed to save SBR payment!","insert", "error", "gcchris", "system");
+                }
+            }else{
+                $resultset["response"] = false;
+                $resultset["toastr_msg"] = "SBR payment data not found!";
+                $resultset["toastr_state"] = "error";
+                $this->core_layout->setEventLog("SBR Payment - SBR payment data not found!","insert", "error", "gcchris", "system");
+            }
+            return $resultset;
+        }
     }

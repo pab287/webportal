@@ -71,57 +71,57 @@
                     </button>
                 </div>
                 <form id="form-sbr_payment" method="post">
-                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>" />
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
-                            <div class="form-group m-form__group">
-                                <label for="sbr_number" class="col-form-label">SBR #</label>
-                                <input type="text" class="form-control" id="sbr_number" name="sbr_no" autocomplete="off" />
+                    <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>" />
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
+                                <div class="form-group m-form__group">
+                                    <label for="sbr_number" class="col-form-label">SBR #</label>
+                                    <input type="text" class="form-control" id="sbr_number" name="sbr_no" autocomplete="off" maxlength="22" />
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
-                            <div class="form-group m-form__group">
-                                <label for="payment_date" class="col-form-label">Payment Date</label>
-                                <div class="input-group" id="date-picker">
-                                    <input type="text" class="form-control" id="payment_date" name="payment_date" autocomplete="off" />
-                                    <span class="input-group-addon">
-                                        <i class="la la-calendar-check-o"></i>
-                                    </span>
+                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
+                                <div class="form-group m-form__group">
+                                    <label for="payment_date" class="col-form-label">Payment Date</label>
+                                    <div class="input-group" id="date-picker">
+                                        <input type="text" class="form-control" id="payment_date" name="payment_date" autocomplete="off" />
+                                        <span class="input-group-addon">
+                                            <i class="la la-calendar-check-o"></i>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
-                            <div class="form-group m-form__group">
-                                <label for="month" class="col-form-label">Month</label>
-                                <select name="month" id="month" class="form-control">
-                                    <option value=""></option>
-                                </select>
+                        <div class="row">
+                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
+                                <div class="form-group m-form__group">
+                                    <label for="month" class="col-form-label">Month</label>
+                                    <select name="month_name" id="month" class="form-control">
+                                        <option value=""></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
+                                <div class="form-group m-form__group">
+                                    <label for="year" class="col-form-label">Year</label>
+                                    <select name="year" id="year" class="form-control">
+                                        <option value=""></option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
-                            <div class="form-group m-form__group">
-                                <label for="year" class="col-form-label">Year</label>
-                                <select name="year" id="year" class="form-control">
-                                    <option value=""></option>
-                                </select>
-                            </div>
+                        
+                        <div class="form-group m-form__group">
+                            <label for="company" class="col-form-label">Company</label>
+                            <select name="company_id" id="company" class="form-control">
+                                <option value=""></option>
+                            </select>
                         </div>
                     </div>
-                    
-                    <div class="form-group m-form__group">
-                        <label for="company" class="col-form-label">Company</label>
-                        <select name="company" id="company" class="form-control">
-                            <option value=""></option>
-                        </select>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary btnSave" id="btn-save-sbr_payment">Save</button>
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary btnSave" id="btn-save-sbr_payment">Save</button>
-                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-                </div>
                 </form>
             </div>
         </div>
