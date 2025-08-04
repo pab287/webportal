@@ -168,24 +168,20 @@ var tbl_reports_dialog = $("#table-reports_soa").DataTable({
     },
     searching: true,
     columns: [
-        { data: "ref_no", width: "10%", render: function (data) {
-                 return "<strong style='color: #525252;'>"+data+"</strong>";
-             }
-         },
-        { data: "created_date", width: "15%", render: function (data) {
-                 return data;
-             }
-         },
-        { data: "payment_type", width: "*"},
-        { data: "net_payment", className: "text-right", width: "10%", render: function (data) {
+        { data: "ref_no", render: function (data) { return "<strong style='color: #525252;'>"+data+"</strong>"; } },
+        { data: "bill_ref", render: function (data) { return "<strong style='color: #525252;'>"+data+"</strong>";} },
+        { data: "created_date", width: "20%", render: function (data) { return data; } },
+        { data: "payment_type" },
+        { data: "total_charges" },
+        { data: "net_payment", className: "text-right", render: function (data) {
             return numberWithCommas(parseFloat(data).toFixed(2));
             }
         },
-        { data: "balance_covered", className: "text-right", width: "10%", render: function (data) {
+        { data: "balance_covered", className: "text-right", render: function (data) {
                 return data > 0 ? '-'+numberWithCommas(parseFloat(data).toFixed(2)) : '';
             }
         },
-        { data: "received_amount", className: "text-right", width: "10%", render: function (data) {
+        { data: "received_amount", className: "text-right", render: function (data) {
                 return "<strong style='color: #525252;'>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
             }
         },
@@ -216,33 +212,35 @@ var tbl_reports_dialog = $("#table-reports_soa").DataTable({
         var api = this.api(), data;
 
         var totalNetPayment = api
-            .column( 3 )
+            .column(5)
             .data()
-            .reduce( function (a, b) {
+            .reduce(function (a, b) {
                 return parseFloat(a) + parseFloat(b);
-            }, 0 );
+            }, 0);
 
         var totalBalance = api
-            .column( 4 )
+            .column(6)
             .data()
-            .reduce( function (a, b) {
+            .reduce(function (a, b) {
                 return parseFloat(a) + parseFloat(b);
-            }, 0 );
+            }, 0);
         
         var totalPayment = api
-            .column( 5 )
+            .column(7)
             .data()
-            .reduce( function (a, b) {
+            .reduce(function (a, b) {
                 return parseFloat(a) + parseFloat(b);
-            }, 0 );
+            }, 0);
 
         // Update footer by showing the total with the reference of the column index 
-        $( api.column( 0 ).footer() ).html();
-        $( api.column( 1 ).footer() ).html();
-        $( api.column( 2 ).footer() ).html('Total');
-        $( api.column( 3 ).footer() ).html('₱ '+numberWithCommas(totalNetPayment.toFixed(2)));
-        $( api.column( 4 ).footer() ).html('₱ -'+numberWithCommas(totalBalance.toFixed(2)));
-        $( api.column( 5 ).footer() ).html('₱ '+numberWithCommas(totalPayment.toFixed(2)));
+        $(api.column(0).footer()).html();
+        $(api.column(1).footer()).html();
+        $(api.column(2).footer()).html();
+        $(api.column(3).footer()).html();
+        $(api.column(4).footer()).html('Total');
+        $(api.column(5).footer()).html('₱ '+numberWithCommas(totalNetPayment.toFixed(2)));
+        $(api.column(6).footer()).html('₱ -'+numberWithCommas(totalBalance.toFixed(2)));
+        $(api.column(7).footer()).html('₱ '+numberWithCommas(totalPayment.toFixed(2)));
     },
 });
 
