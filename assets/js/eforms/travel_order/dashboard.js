@@ -268,6 +268,9 @@ function get_travel_for_analytics(date = null) {
             categoryAxis.dataFields.category = "status";
             categoryAxis.renderer.inversed = true;
             categoryAxis.renderer.labels.template.adapter.add("textOutput", function(text) {
+                if (text === "Recommend_Approved") {
+                    return "PENDING APPROVAL";
+                }
                 if (typeof text === 'string') {
                     return text.replace(/_/g, " ").toUpperCase();
                 }
