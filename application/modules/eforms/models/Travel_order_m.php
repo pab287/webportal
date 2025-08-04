@@ -3192,7 +3192,7 @@
                 $this->db->where("DATE(a.created_dt) >=", $start);
                 $this->db->where("DATE(a.created_dt) <=", $end);
             }
-            $this->db->where("a.Accomplished", 0);
+            $this->db->where("a.accomplished", 0);
             $this->db->group_by("a.status");
             $this->db->order_by("FIELD(a.status, 'Pending', 'Approved', 'Hr Noted', 'Disapproved', 'Cancelled')");
 
