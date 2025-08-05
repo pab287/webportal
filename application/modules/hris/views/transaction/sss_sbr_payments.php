@@ -49,8 +49,9 @@
                             <th>Company</th>
                             <th>SBR #</th>
                             <th>Payment Date</th>
-                            <th>Month</th>
                             <th>Year</th>
+                            <th>Month</th>
+                            <th>Employee Count</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -123,6 +124,53 @@
                         <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal-sbr_employee_details" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">SBR Employee Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="contribution_content" class="row">
+                        <div class="col-12 col-md-6 col-lg-12 col-xl-12 col-sm-12">
+                            <table class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>SSS #</th>
+                                        <th>Employee Name</th>
+                                        <th class="text-right">Total Contribution</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template v-if="count > 0">
+                                    <tr v-for="(row, index) in rows" :key="index">
+                                        <td v-text="index + 1"></td>
+                                        <td v-text="row.employee_name"></td>
+                                        <td v-text="row.sss_no"></td>
+                                        <td class="text-right" v-text="row.sss_total"></td>
+                                    </tr>
+                                    </template>
+                                    <template v-else>
+                                        <tr>
+                                            <td colspan="3" class="text-center">No data found.</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
