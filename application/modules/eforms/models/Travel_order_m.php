@@ -3241,24 +3241,32 @@
             return $arrData[0];
         }
 
-        function mostTraveledVehicle() {
-            $this->db->select("*,count(vehicle) c");
-            $this->db->from("gcceforms.travel_order");
-            $this->db->where("vehicle !=", "");
-            $this->db->group_by("vehicle");
+        public function mostTraveledVehicle() {
+            $this->db->select("b.name as vehicle_name, COUNT(a.id) as c");
+            $this->db->from("gccasset.vehicles b");
+            $this->db->join("gcceforms.travel_order a", "a.vehicle_id = b.id", "inner");
+            $this->db->where("a.vehicle_id !=", "");
+            $this->db->where("a.vehicle_id IS NOT NULL");
+            $this->db->group_by("b.id, b.name");
             $this->db->order_by("c", "DESC");
             $this->db->limit(1);
-            $query = $this->db->get();
-            if ($query->num_rows() > 0) {
-                $arrData = array();
-                foreach ($query->result() as $key => $rs) {
-                    $rs->sum = $this->sumDetails("travel_order", "vehicle");
-                    $arrData[] = $rs;
-                }
-                return $arrData[0];
-            } else {
-                return array();
-            }
+            
+            $result = $this->db->get()->row();
+            $this->db->reset_query();
+            $this->db->select("COUNT(*) as sum");
+            $this->db->from("gcceforms.travel_order");
+            $this->db->where("vehicle_id !=", "");
+            $this->db->where("status", "Approved");
+            $this->db->or_where("status", "Accomplised");
+            // $this->db->where("vehicle_id IS NOT NULL");
+            
+            $total = $this->db->get()->row();
+            
+            return [
+                'vehicle_name' => $result->vehicle_name ?? '',
+                'c' => $result->c ?? 0,
+                'sum' => $total->sum ?? 0
+            ];
         }
 
         function mostTraveledDestination() {
