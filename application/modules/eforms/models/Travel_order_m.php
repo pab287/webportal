@@ -3242,7 +3242,7 @@
         }
 
         public function mostTraveledVehicle() {
-            $this->db->select("b.name as vehicle_name, COUNT(a.id) as c");
+            $this->db->select("b.name as vehicle_name,b.plateno, COUNT(a.id) as c");
             $this->db->from("gccasset.vehicles b");
             $this->db->join("gcceforms.travel_order a", "a.vehicle_id = b.id", "inner");
             $this->db->where("a.vehicle_id !=", "");
@@ -3265,6 +3265,7 @@
             return [
                 'vehicle_name' => $result->vehicle_name ?? '',
                 'c' => $result->c ?? 0,
+                'vehicle' => $result->plateno ?? 'NO PLATENO',
                 'sum' => $total->sum ?? 0
             ];
         }
