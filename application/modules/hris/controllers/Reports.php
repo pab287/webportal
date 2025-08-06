@@ -22,8 +22,9 @@ class Reports extends MY_Controller{
     public function sss_premium_contribution(){
         $this->core_layout->setPrivilegeName("hris_reports_sss_premium_contribution");
         $arrData = array('company' => $this->report->getSelect2Companies(),
-        "entry_date" => $this->report->getPayrollSheetFirstEntryDate());
+        "years" => $this->report->getSssPremiumContributionYears());
 
+        $this->core_layout->addJs("js/buttons.print.min.js", true);
         $this->core_layout->addJs('js/hris/reports/sss_premium_contribution_script.js', true, $arrData);
         $this->load->view("core/templates/header");
         $this->load->view("masterfile/reports/sss_premium_contribution");

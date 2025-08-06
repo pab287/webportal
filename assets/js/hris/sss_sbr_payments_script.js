@@ -1,5 +1,6 @@
 let _companies = [];
 let _years = [];
+let entryDate = null;
 const months = [
     { id: 1, text: "January" },
     { id: 2, text: "February" },
@@ -22,6 +23,10 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){
         _companies = _tempContentData.company;
     }
+
+    if(typeof _tempContentData.entry_date !== "undefined" && _tempContentData.entry_date){
+        entryDate = _tempContentData.entry_date;
+    }
 }
 
 $("#modal-sbr_payment #company").select2({ 
@@ -34,6 +39,7 @@ $("#modal-sbr_payment #company").select2({
 $("#modal-sbr_payment #payment_date").datepicker({
     format: 'yyyy-mm-dd',
     autoclose: true,
+    startDate: moment(entryDate).format('YYYY-MM-DD'),
     endDate: moment().format('YYYY-MM-DD'),
 });
 $("#modal-sbr_payment #month")

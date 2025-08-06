@@ -31,23 +31,29 @@ span.help-block.form-error {
                                         ALL<span></span>
                                     </label>
                                     <label class="m-checkbox">
-                                        <input type="radio" id="ranged_employees" name="filter_by" value="date_range" data-validation="required" v-model="all_filter" />
-                                        DATE RANGE<span></span>
+                                        <input type="radio" id="monthly_employees" name="filter_by" value="month" data-validation="required" v-model="all_filter" />
+                                        MONTH <span></span>
+                                    </label>
+                                    <label class="m-checkbox">
+                                        <input type="radio" id="yearly_employees" name="filter_by" value="year" data-validation="required" v-model="all_filter" />
+                                        YEAR <span></span>
                                     </label>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12" v-if="all_filter === 'date_range'">
-                            <div class="form-group" id="filter-by-date-range">
-                                <label class="m--font-bolder" for="date-range">SELECT DATE RANGE *</label>
-                                <div class="input-group" id="date-picker">
-                                    <input type="text" class="form-control m-input" readonly=""
-                                        placeholder="MMM DD, YYYY - MMM DD, YYYY"
-                                        id="date-range"
-                                        name="date_range" data-validation="required" />
-                                    <span class="input-group-addon">
-                                        <i class="la la-calendar-check-o"></i>
-                                    </span>
+                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12" v-if="all_filter === 'month' || all_filter === 'year'">
+                            <div class="row">
+                                <div class="form-group m-form-group col-xl-6 col-lg-6 col-md-6 col-sm-12 m-animate-fade-in" v-if="all_filter === 'month'">
+                                    <label class="required" for="filter_month">MONTH</label>
+                                    <select class="form-control" name="filter_month" id="filter_month" data-validation="required">
+                                        <option></option>
+                                    </select>
+                                </div>
+                                <div class="form-group m-form-group col-xl-6 col-lg-6 col-md-6 col-sm-12 m-animate-fade-in" v-if="all_filter === 'month' || all_filter === 'year'">
+                                    <label class="required" for="filter_year">YEAR</label>
+                                    <select class="form-control" name="filter_year" id="filter_year" data-validation="required">
+                                        <option></option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -102,34 +108,22 @@ span.help-block.form-error {
                             <strong>SSS Premium Contribution Report</strong> No data / record(s) found.
                         </div>
                     </template>
-                    <template v-else>
-                        <div>
-                            <div class="row">
-                                <div class="col-12 col-md-12 col-lg-12 col-xl-12">
-                                    <table class="table" style="width: 100%;">
-                                        <thead>
-                                            <tr>
-                                                <th class="text-center">Year</th>
-                                                <th>Month</th>
-                                                <th class="text-center">SSS Premium</th>
-                                                <th class="text-center">SBR#</th>
-                                                <th class="text-center">Date Paid</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-for="row in rows">
-                                                <td class="text-center" v-text="row.year"></td>
-                                                <td v-text="row.month_name"></td>
-                                                <td class="text-center" v-text="row.sss_premium"></td>
-                                                <td class="text-center" v-text="row.id"></td>
-                                                <td class="text-center" v-text="row.pay_date"></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                    <div class="row">
+                        <div class="col-12 col-md-12 col-lg-12 col-xl-12">
+                            <table id="table-sss_premium_contribution" class="table table-striped table-bordered" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">Year</th>
+                                        <th>Month</th>
+                                        <th class="text-center">SSS Premium</th>
+                                        <th class="text-center">SBR #</th>
+                                        <th class="text-center">Date Paid</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
                         </div>
-                    </template>
+                    </div>
                 </div>
             </div>
         </div>

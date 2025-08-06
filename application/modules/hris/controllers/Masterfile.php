@@ -277,12 +277,14 @@
         public function sss_premium() {
             $this->core_layout->setBodyClass("hris transaction sss_premium");
             $this->core_layout->setPageTitle("HRIS - Transactrion SSS Premium");
-            $this->core_layout->setPrivilegeName("hris_sss_premium");
+            $this->core_layout->setPrivilegeName("hris_masterfile_sss_premium");
 
             $this->load->model("payroll/payroll_m", "payroll");
             $tempData = array();
             $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
             $tempData["company"] = $this->payroll->select2CompanyData();
+            $tempData["entry_date"] = $this->employee_model->getPayrollSheetFirstEntryDate();
+            
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
             $this->core_layout->addJs("js/hris/sss_sbr_payments_script.js", true, $tempData);

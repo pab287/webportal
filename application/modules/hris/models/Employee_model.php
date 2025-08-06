@@ -12598,4 +12598,13 @@ class Employee_model extends CI_Model {
 
         return $resultset;
     }
+
+        public function getPayrollSheetFirstEntryDate(){
+        $this->db->select("pay_date");
+        $this->db->from("payroll.payroll_sheet");
+        $this->db->where("posted", 1);
+        $this->db->order_by("pay_date", "ASC");
+        $this->db->limit(1);
+        return $this->db->get()->row()->pay_date;
+    }
 }
