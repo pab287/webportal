@@ -3089,6 +3089,7 @@
                 (td.date_from <= '$endDate' AND td.date_to >= '$startDate')
             )");
             $this->db->where("a.status", "Approved");
+            $this->db->where("a.accomplished",0);
             $this->db->limit($limit, $start);
             $this->db->order_by($order, $dir);
             $this->db->group_by("a.id");
@@ -5446,8 +5447,8 @@
             $this->db->where('to.status', 'Approved');
             
             if ($start_date && $end_date) {
-                $this->db->where('td.date_from >=', $start_date);
-                $this->db->where('td.date_to <=', $end_date);
+                $this->db->where('to.approved_dt >=', $start_date);
+                $this->db->where('to.approved_dt <=', $end_date . ' 23:59:59');
             }
             
             $single_query = $this->db->get();

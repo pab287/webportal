@@ -271,6 +271,9 @@ function get_travel_for_analytics(date = null) {
                 if (text === "Recommend_Approved") {
                     return "PENDING APPROVAL";
                 }
+                if (text === "Pending") {
+                    return "FOR RECOMMENDATION";
+                }
                 if (typeof text === 'string') {
                     return text.replace(/_/g, " ").toUpperCase();
                 }
