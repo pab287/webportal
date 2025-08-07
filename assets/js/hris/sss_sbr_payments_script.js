@@ -107,7 +107,7 @@ const dtSbrPayments = $("#table-sbr_payments").DataTable({
             data-row='${rawData}'
             data-placement="top"
             data-toggle="m-tooltip"
-            title="Edit SBR Payment Details"><i class="la la-edit"></i></button>`;
+            title="Edit SBR Payment Details"><i class="la la-edit"></i></button> `;
 
             if (contribution_count > 0){
                 html += `<button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit btnPreviewSbr" data-id="${id}"
@@ -116,7 +116,7 @@ const dtSbrPayments = $("#table-sbr_payments").DataTable({
                 title="Preview SBR Payment List">
                 <i class="la la-list"></i></button>`;
             } else {
-                html += `<button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit" disabled>
+                html += `<button class="btn btn-default m-btn m-btn--hover-default m-btn--icon m-btn--icon-only m-btn--pill btnEdit" disabled>
                 <i class="la la-list"></i></button>`;
             }
             return html;
@@ -134,9 +134,11 @@ $(document).on("click", ".btnPreviewSbr", function (e) {
         success: function (json) {
             vmContribution.rows = [];
             vmContribution.count = 0;
+            vmContribution.info = {};
             if(json.response){
                 vmContribution.rows = json.data;
                 vmContribution.count = json.count;
+                vmContribution.info = { ...json.payment_info };
                 $("#modal-sbr_employee_details").modal("show");
             }else{
                 toastr.error(json.toastr_msg, "Preview SBR Payment", 5000);
@@ -151,8 +153,10 @@ $(document).on("click", ".btnEditSbrPayment", function (e) {
     const monthNum = moment().month(month_name).format("M");
     rawData.month = monthNum;
     vmSbrPayment.row = { ...rawData };
-    vmSbrPayment.setSelect2Containers();
-    vmSbrPayment.setDatePicker();
+    setTimeout(function () {
+        vmSbrPayment.setDatePicker();
+        vmSbrPayment.setSelect2Containers();
+    }, 250);
     $("#modal-edit_sbr_payment").modal("show");
 });
 
@@ -190,7 +194,12 @@ $(document).on("click", ".btnRegenerateSbr", function (e) {
 
 const vmContribution = new Vue({
     el: "#contribution_content",
-    data: { rows: [], count: 0 }
+    data: { rows: [], count: 0, info: {} },
+    watch: {
+        'info.created_at'(val) {
+            this.info.created_at = moment(val).format('LLL');
+        },
+    }
 });
 
 const vmSbrPayment = new Vue({
@@ -268,6 +277,31 @@ $.validate({
         return false;
     }
 });
+
+$.validate({
+    form: "#form-edit_sbr_payment",
+    lang: "en",
+    onSuccess: function (form) {
+        const currentForm = $(form);
+        $.ajax({
+            url: siteUrl("hris/masterfile/update_sbr_payment"),
+            type: "POST",
+            dataType: "JSON",
+            data: currentForm.serialize(),
+            success: function (json) {
+                if(json.response){
+                    toastr.success(json.toastr_msg, "Update SBR Payment", 5000);
+                    $("#modal-edit_sbr_payment").modal("hide");
+                    dtSbrPayments.ajax.reload(null, false);
+                    resetForm(currentForm);
+                }else{
+                    toastr.error(json.toastr_msg, "Update SBR Payment", 5000);
+                }
+            }
+        });
+        return false;
+    }
+})
 
 const resetForm = (currentForm) => {
     currentForm[0].reset();

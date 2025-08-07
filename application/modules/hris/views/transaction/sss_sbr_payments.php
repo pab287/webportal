@@ -140,6 +140,7 @@
                 <form id="form-edit_sbr_payment" method="post">
                     <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>" />
                     <div id="sbr_payment-content" class="modal-body">
+                        <input type="hidden" name="id" v-model="row.id" />
                         <div class="row">
                             <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
                                 <div class="form-group m-form__group">
@@ -163,26 +164,41 @@
                             <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
                                 <div class="form-group m-form__group">
                                     <label for="edit_month" class="col-form-label">Month</label>
+                                    <template v-if="row.contribution_count == '0'">
                                     <select name="month_name" id="edit_month" class="form-control">
                                         <option value=""></option>
                                     </select>
+                                    </template>
+                                    <template v-else>
+                                    <p class="form-control mb-0" disabled v-text="row.month_name.toUpperCase()">&nbsp;</p>
+                                    </template>
                                 </div>
                             </div>
                             <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
                                 <div class="form-group m-form__group">
                                     <label for="edit_year" class="col-form-label">Year</label>
+                                    <template v-if="row.contribution_count == '0'">
                                     <select name="year" id="edit_year" class="form-control">
                                         <option value=""></option>
                                     </select>
+                                    </template>
+                                    <template v-else>
+                                    <p class="form-control mb-0" disabled v-text="row.year">&nbsp;</p>
+                                    </template>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="form-group m-form__group">
                             <label for="edit_company" class="col-form-label">Company</label>
+                            <template v-if="row.contribution_count == '0'">
                             <select name="company_id" id="edit_company" class="form-control">
                                 <option value=""></option>
                             </select>
+                            </template>
+                            <template v-else>
+                            <p class="form-control mb-0" disabled v-text="row.company_code">&nbsp;</p>
+                            </template>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -205,6 +221,70 @@
                 </div>
                 <div class="modal-body">
                     <div id="contribution_content" class="row">
+                        <div class="col-12 col-md-12 col-lg-12 col-xl-12 col-sm-12 mb-5">
+                            <div class="m-widget12">
+                                <div class="m-widget12__item">
+                                    <span class="m-widget12__text1">
+                                        <label for="" class="m--font-bolder mb-0">SBR #</label><br>
+                                        <span v-text="info.sbr_no">&nbsp;</span>
+                                    </span>
+                                    <span class="m-widget12__text2">
+                                        <label for="" class="m--font-bolder mb-0">Payment Date</label><br>
+                                        <span v-text="info.payment_date">&nbsp;</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <table class="table table-striped table-bordered">
+                                <colgroup>
+                                    <col style="width: *">
+                                    <col style="width: 25%">
+                                    <col style="width: 25%">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th>Company</th>
+                                        <th>Month</th>
+                                        <th>Year</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td v-text="info.company_code"></td>
+                                        <td v-text="info.month_name"></td>
+                                        <td v-text="info.year"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <table class="table table-striped table-bordered">
+                                <colgroup>
+                                    <col style="width: 50%">
+                                    <col style="width: 50%">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th>Created By</th>
+                                        <th>Last Updated By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><p class="mb-0">
+                                            <span v-text="info.created_by_name"></span><br>
+                                            <small v-text="info.created_at"></small>
+                                        </p></td>
+                                        <td>
+                                            <p class="mb-0">
+                                                <template v-if="info.last_updated_by != 0">
+                                                <span v-text="info.updated_by_name"></span><br>
+                                                <small v-text="info.last_updated_at"></small>
+                                                </template>
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                         <div class="col-12 col-md-6 col-lg-12 col-xl-12 col-sm-12">
                             <table class="table table-striped table-bordered">
                                 <thead>

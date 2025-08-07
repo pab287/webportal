@@ -12584,28 +12584,87 @@ class Employee_model extends CI_Model {
             $this->db->order_by("emp.lastname", "asc");
             $qContribution = $this->db->get_where($this->sbrContributionTable." as sc", array("sbr_id"=>$post["id"]));
             if($qContribution->num_rows() > 0){
+                $this->db->select("sb.*, IFNULL(CONCAT(UPPER(TRIM(cb.firstname)), ' ',
+                CASE WHEN UPPER(TRIM(cb.middlename)) != 'N/A' AND UPPER(TRIM(cb.middlename)) != 'NONE' AND
+                        TRIM(cb.middlename) !='' AND cb.middlename IS NOT NULL
+                    THEN CONCAT(UPPER(SUBSTR(cb.middlename, 1, 1)), '.') ELSE ''
+                END,' ', UPPER(TRIM(cb.lastname)),
+                CASE WHEN UPPER(TRIM(cb.suffix)) != 'N/A' AND
+                    UPPER(TRIM(cb.suffix !='NONE')) AND cb.suffix !='' AND
+                    cb.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(cb.suffix))) ELSE ''
+                END), 'N/A') as created_by_name,
+                IFNULL(CONCAT(UPPER(TRIM(ub.firstname)), ' ',
+                CASE WHEN UPPER(TRIM(ub.middlename)) != 'N/A' AND UPPER(TRIM(ub.middlename)) != 'NONE' AND
+                        TRIM(ub.middlename) !='' AND ub.middlename IS NOT NULL
+                    THEN CONCAT(UPPER(SUBSTR(ub.middlename, 1, 1)), '.') ELSE ''
+                END,' ', UPPER(TRIM(ub.lastname)),
+                CASE WHEN UPPER(TRIM(ub.suffix)) != 'N/A' AND
+                    UPPER(TRIM(ub.suffix !='NONE')) AND ub.suffix !='' AND
+                    ub.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(ub.suffix))) ELSE ''
+                END), 'N/A') as updated_by_name");
+                $this->db->join($this->employeeTable." as cb", "cb.id = sb.created_by", "left");
+                $this->db->join($this->employeeTable." as ub", "ub.id = sb.last_updated_by", "left");
+                $payment = $this->db->get_where($this->sbrPaymentTable." as sb", array("sb.id" => $post["id"]));
                 $resultset["response"] = true;
+                $resultset["payment_info"] = $payment->row();
                 $resultset["data"] = $qContribution->result();
                 $resultset["count"] = $qContribution->num_rows();
-                $resultset["message"] = "Success!";
+                $resultset["toastr_msg"] = "Success!";
             }else{
                 $resultset["response"] = false;
-                $resultset["message"] = "SBR contribution data not found!";
+                $resultset["toastr_msg"] = "SBR contribution data not found!";
             }
         }else{
             $resultset["response"] = false;
-            $resultset["message"] = "No data found!";
+            $resultset["toastr_msg"] = "No data found!";
         }
 
         return $resultset;
     }
 
-        public function getPayrollSheetFirstEntryDate(){
+    public function getPayrollSheetFirstEntryDate(){
         $this->db->select("pay_date");
         $this->db->from("payroll.payroll_sheet");
         $this->db->where("posted", 1);
         $this->db->order_by("pay_date", "ASC");
         $this->db->limit(1);
         return $this->db->get()->row()->pay_date;
+    }
+
+    public function updateSbrPayment(){
+        $post = $this->input->post();
+        $resultset = array();
+        if(isset($post["id"] ,$post["sbr_no"], $post["payment_date"]) && ($post["id"] && $post["sbr_no"] && $post["payment_date"])){
+            $id = $post["id"];
+            unset($post["id"]);
+            $post["sbr_no"] = strtoupper(trim($post["sbr_no"]));
+            if(isset($post["company_id"]) && $post["company_id"]){
+                $qComp = $this->db->get_where($this->companyTable, array("id" => $post["company_id"], "is_archived" => 0));
+                if($qComp->num_rows() == 1){ $post["company_code"] = $qComp->row()->description; }
+            }
+            if(isset($post['month_name']) && $post['month_name']){
+                $monthName = date("F", mktime(0, 0, 0, $post['month_name'], 1));
+                $post["month_name"] = strtolower($monthName);
+            }
+
+            $post["last_updated_by"] = $this->core_layout->getCurrentEmployeeId();
+            $post["last_updated_at"] = date("Y-m-d H:i:s");
+            $updated = $this->db->update($this->sbrPaymentTable, $post, array("id"=>$id));
+            if($updated && $this->db->affected_rows() > 0){
+                $resultset["response"] = true;
+                $resultset["toastr_msg"] = "SBR payment has been updated successfully.";
+                $this->core_layout->setEventLog("SBR Payment - SBR payment has been updated successfully.", "update", "success", "gcchris", "user");
+            }else{
+                $resultset["response"] = false;
+                $resultset["toastr_msg"] = "Failed to update SBR payment.";
+                $this->core_layout->setEventLog("SBR Payment - Failed to update SBR payment.", "update", "error", "gcchris", "system");
+            }
+        }else{
+            $resultset["response"] = false;
+            $resultset["toastr_msg"] = "No data found.";
+            $this->core_layout->setEventLog("SBR Payment - No data found.", "update", "error", "gcchris", "system");
+        }
+
+        return $resultset;
     }
 }
