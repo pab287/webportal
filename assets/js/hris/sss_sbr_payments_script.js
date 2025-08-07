@@ -1,3 +1,4 @@
+let searchValue = "";
 let _companies = [];
 let _years = [];
 let entryDate = null;
@@ -29,6 +30,11 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     }
 }
 
+$("#generalSearch").donetyping(function () {
+    searchValue = $(this).val();
+    dtSbrPayments.ajax.reload();
+});
+
 $("#modal-sbr_payment #company").select2({ 
     data: _companies, 
     width: '100%',
@@ -36,33 +42,35 @@ $("#modal-sbr_payment #company").select2({
     placeholder: 'Select Company',
     dropdownParent: $("#modal-sbr_payment")
 });
+
 $("#modal-sbr_payment #payment_date").datepicker({
     format: 'yyyy-mm-dd',
     autoclose: true,
     startDate: moment(entryDate).format('YYYY-MM-DD'),
     endDate: moment().format('YYYY-MM-DD'),
 });
-$("#modal-sbr_payment #month")
-    .select2({
-        width: '100%',
-        data: months,
-        placeholder: "SELECT MONTH",
-        allowClear: true,
-        dropdownParent: $("#modal-sbr_payment")
-    });
 
-$("#modal-sbr_payment #year")
-    .select2({
-        width: '100%',
-        data: _years,
-        placeholder: "SELECT YEAR",
-        allowClear: true,
-        dropdownParent: $("#modal-sbr_payment")
-    });
+$("#modal-sbr_payment #month").select2({
+    width: '100%',
+    data: months,
+    placeholder: "SELECT MONTH",
+    allowClear: true,
+    dropdownParent: $("#modal-sbr_payment")
+});
+
+$("#modal-sbr_payment #year").select2({
+    width: '100%',
+    data: _years,
+    placeholder: "SELECT YEAR",
+    allowClear: true,
+    dropdownParent: $("#modal-sbr_payment")
+});
+
 
 const dtSbrPayments = $("#table-sbr_payments").DataTable({
     "dom": 'frtlip',
-    "processing": false,
+    "serverSide": true,
+    "processing": true,   
     "searching": false,
     "ordering": false,
     "lengthMenu": [ 10, 25, 50, 100 ],
@@ -74,6 +82,7 @@ const dtSbrPayments = $("#table-sbr_payments").DataTable({
         "global": false,
         "data": function (d) {
             d.csrf_token = _csrf_hash;
+            d.search['value'] = searchValue;
             return d;
         }
     },
@@ -87,10 +96,29 @@ const dtSbrPayments = $("#table-sbr_payments").DataTable({
         { "data": "month_name", className: "text-center", width: "12%" },
         { "data": "contribution_count", width: "12%", className: "text-center" },
         { "data": null, width: "10%", className: "text-center", render: function (data, type, row) {
-            const html = `<button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit btnRegenerateSbr"
-            data-id="${row.id}"><i class="la la-refresh"></i></button>
-            <button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit btnPreviewSbr" data-id="${row.id}">
-            <i class="la la-list"></i></button>`;
+            const { id, contribution_count } = row;
+            const rawData = JSON.stringify(row);
+            let html = `<button class="btn btn-default m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill btnEdit btnRegenerateSbr"
+                data-id="${id}"
+                data-placement="top"
+                data-toggle="m-tooltip"
+                title="Generate SBR Payment Employee(s)"><i class="la la-refresh"></i></button> `;
+            html += `<button class="btn btn-default m-btn m-btn--hover-success m-btn--icon m-btn--icon-only m-btn--pill btnEdit btnEditSbrPayment"
+            data-row='${rawData}'
+            data-placement="top"
+            data-toggle="m-tooltip"
+            title="Edit SBR Payment Details"><i class="la la-edit"></i></button>`;
+
+            if (contribution_count > 0){
+                html += `<button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit btnPreviewSbr" data-id="${id}"
+                data-placement="top"
+                data-toggle="m-tooltip"
+                title="Preview SBR Payment List">
+                <i class="la la-list"></i></button>`;
+            } else {
+                html += `<button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit" disabled>
+                <i class="la la-list"></i></button>`;
+            }
             return html;
         }}
     ]
@@ -115,6 +143,17 @@ $(document).on("click", ".btnPreviewSbr", function (e) {
             }
         }
     })
+});
+
+$(document).on("click", ".btnEditSbrPayment", function (e) {
+    const rawData = $(this).data("row");
+    const { month_name } = rawData;
+    const monthNum = moment().month(month_name).format("M");
+    rawData.month = monthNum;
+    vmSbrPayment.row = { ...rawData };
+    vmSbrPayment.setSelect2Containers();
+    vmSbrPayment.setDatePicker();
+    $("#modal-edit_sbr_payment").modal("show");
 });
 
 $(document).on("click", ".btnRegenerateSbr", function (e) {
@@ -154,6 +193,57 @@ const vmContribution = new Vue({
     data: { rows: [], count: 0 }
 });
 
+const vmSbrPayment = new Vue({
+    el: "#sbr_payment-content",
+    data: { row: {} },
+    methods: {
+        setSelect2Containers: function () {
+            const { company_id, month, year }= this.row;
+            const currentElement = this.$el;
+            $("#edit_company", currentElement).select2({
+                data: _companies,
+                width: '100%',
+                allowClear: true,
+                placeholder: 'Select Company',
+                dropdownParent: $(currentElement)
+            });
+
+            $("#edit_month", currentElement).select2({
+                data: months,
+                width: '100%',
+                allowClear: true,
+                placeholder: 'Select Month',
+                dropdownParent: $(currentElement)
+            });
+
+            $("#edit_year", currentElement).select2({
+                data: _years,
+                width: '100%',
+                allowClear: true,
+                placeholder: 'Select Year',
+                dropdownParent: $(currentElement)
+            });
+
+            $("#edit_company", currentElement).val(company_id).trigger("change");
+            $("#edit_month", currentElement).val(month).trigger("change");
+            $("#edit_year", currentElement).val(year).trigger("change");
+
+            return this;
+        }, setDatePicker: function () {
+            const { payment_date }= this.row;
+            const currentElement = this.$el;
+            $("#edit_payment_date", currentElement).datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+                startDate: moment(entryDate).format('YYYY-MM-DD'),
+                endDate: moment().format('YYYY-MM-DD'),
+            });
+            $("#edit_payment_date", currentElement).datepicker("setDate", payment_date);
+            return this;
+        }
+    }
+});
+
 $.validate({
     form: "#form-sbr_payment",
     lang: "en",
@@ -169,6 +259,7 @@ $.validate({
                     toastr.success(json.toastr_msg, "Save SBR Payment", 5000);
                     $("#modal-sbr_payment").modal("hide");
                     dtSbrPayments.ajax.reload(null, false);
+                    resetForm(currentForm);
                 }else{
                     toastr.error(json.toastr_msg, "Save SBR Payment", 5000);
                 }
@@ -177,3 +268,8 @@ $.validate({
         return false;
     }
 });
+
+const resetForm = (currentForm) => {
+    currentForm[0].reset();
+    currentForm.find("select").val("").trigger("change");
+};

@@ -128,6 +128,72 @@
         </div>
     </div>
 
+    <div class="modal fade" id="modal-edit_sbr_payment" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit - SBR Payment</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <form id="form-edit_sbr_payment" method="post">
+                    <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>" />
+                    <div id="sbr_payment-content" class="modal-body">
+                        <div class="row">
+                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
+                                <div class="form-group m-form__group">
+                                    <label for="edit_sbr_number" class="col-form-label">SBR #</label>
+                                    <input type="text" class="form-control" id="edit_sbr_number" name="sbr_no" autocomplete="off" maxlength="22" v-model="row.sbr_no" />
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
+                                <div class="form-group m-form__group">
+                                    <label for="edit_payment_date" class="col-form-label">Payment Date</label>
+                                    <div class="input-group" id="date-picker">
+                                        <input type="text" class="form-control" id="edit_payment_date" name="payment_date" autocomplete="off" v-model="row.payment_date" />
+                                        <span class="input-group-addon">
+                                            <i class="la la-calendar-check-o"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
+                                <div class="form-group m-form__group">
+                                    <label for="edit_month" class="col-form-label">Month</label>
+                                    <select name="month_name" id="edit_month" class="form-control">
+                                        <option value=""></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
+                                <div class="form-group m-form__group">
+                                    <label for="edit_year" class="col-form-label">Year</label>
+                                    <select name="year" id="edit_year" class="form-control">
+                                        <option value=""></option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group m-form__group">
+                            <label for="edit_company" class="col-form-label">Company</label>
+                            <select name="company_id" id="edit_company" class="form-control">
+                                <option value=""></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary btnSave" id="btn-update-sbr_payment">Save</button>
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="modal-sbr_employee_details" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">

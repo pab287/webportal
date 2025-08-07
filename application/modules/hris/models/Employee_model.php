@@ -12472,12 +12472,13 @@ class Employee_model extends CI_Model {
 
     protected function sbrPaymentsDataQuery($search=null) {
         $filterFields = array("sb.sbr_no", "sb.payment_date", "sb.company_code", "sb.month_name", "sb.year");
-        $this->db->select('sb.id, sb.sbr_no, sb.payment_date, sb.company_code, sb.month_name, sb.year, IFNULL(COUNT(sc.id), 0) as contribution_count');
+        $this->db->select('sb.id, sb.sbr_no, sb.company_id, sb.payment_date, sb.company_code, sb.month_name, sb.year, IFNULL(COUNT(sc.id), 0) as contribution_count');
         $this->db->from($this->sbrPaymentTable." sb");
         $this->db->join($this->sbrContributionTable." as sc", 'sc.sbr_id = sb.id', 'left');
         if (isset($search)) {
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
+                if($field == "sb.payment_date"){ $search = date("Y-m-d", strtotime($search)); }
                 ($key == 0) ? $this->db->like($field, $search, "both") : $this->db->or_like($field, $search, "both");
             }
             $this->db->group_end();
@@ -12492,7 +12493,7 @@ class Employee_model extends CI_Model {
         if (isset($sortOrder)) {
             $i = $sortOrder[0]['column'];
             $dbQuery->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
-        } else { $dbQuery->order_by('sb.payment_date', 'asc'); }
+        } else { $dbQuery->order_by('sb.id', 'desc'); }
         return $dbQuery->get()->result();
     }
 

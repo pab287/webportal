@@ -282,7 +282,7 @@
             $this->load->model("payroll/payroll_m", "payroll");
             $tempData = array();
             $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
-            $tempData["company"] = $this->payroll->select2CompanyData();
+            $tempData["company"] = $this->payroll->select2CompanyData("description");
             $tempData["entry_date"] = $this->employee_model->getPayrollSheetFirstEntryDate();
             
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);

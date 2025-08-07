@@ -214,11 +214,10 @@ class Payroll_m extends CI_Model
         return array("results" => $results, "sql" => $this->db->last_query());
     }
 
-    function select2CompanyData(){
-        $this->db->select("companies.id, companies.`code` `text`, companies.*");
-        $this->db->order_by("`code`", "ASC");
-        $results = $this->db->get("gcchris.tblcompanies companies")->result();
-        return $results;
+    public function select2CompanyData($companyColumn='code'){
+        $this->db->select("companies.id, companies.`{$companyColumn}` `text`, companies.*");
+        $this->db->order_by("`{$companyColumn}`", "ASC");
+        return $this->db->get("gcchris.tblcompanies companies")->result();
 
     }
 
