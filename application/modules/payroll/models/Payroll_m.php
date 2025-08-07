@@ -2404,6 +2404,20 @@ class Payroll_m extends CI_Model
                                         $this->db->insert("payroll.payroll_sheet_loan_payments", $loan_data);
                                     }
                                 }
+                            }else{
+                                /*** for zero amount due ***/
+                                if(floatval($loan->amount_due) <= 0){
+                                    $getZeroLoan = $this->db
+                                    ->where("loan_id", $loan->id)
+                                    ->where("payroll_sheet_id", $payroll_sheet_id)
+                                    ->get("payroll.payroll_sheet_loan_payments");
+                                    if($getZeroLoan->num_rows() > 0){
+                                        foreach ($getZeroLoan->result() as $zeroLoan) {
+                                            $this->db->where("id", $zeroLoan->id)->delete("payroll.payroll_sheet_loan_payments");
+                                        }
+                                    }
+                                }
+                                /*** for zero amount due ***/
                             }
 
                             $tempBalance = floatval($loan->amount) - floatval($loan->total_amount_paid);
