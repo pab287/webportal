@@ -20,7 +20,7 @@ if(typeof getUrlParameter('status') !== 'undefined'){
     param_status = getUrlParameter('status');
 }
 
-var tblBorrowing = $("#table-borrowing").DataTable({
+const tblBorrowing = $("#table-borrowing").DataTable({
     dom: '<"toolbar">rtlip',
 	serverSide: true,
     processing: true,
@@ -35,6 +35,11 @@ var tblBorrowing = $("#table-borrowing").DataTable({
             d.search['value'] = search_val,
             d.query_builder = query_builder,
             d.status = param_status
+        }, error: function (xhr, error, code) {
+            if (error == "parsererror") { 
+                tblBorrowing.ajax.reload(null, false); 
+                toastr.warning("Re-loading, error in rendering list data!", "Borrowing Masterfile");
+            }
         }
     },
     searching: true,
@@ -44,13 +49,11 @@ var tblBorrowing = $("#table-borrowing").DataTable({
         { data: "company", width: "10%"},
         { data: "firstname",
             render: function (data, type, row, meta) {
-                var html = ``;
-
+                let html = ``;
                 if(data){
                     html += `<b>${ row.display_name }</b>`;
                     html += `<p class="m-0">${ row.position }</p>`;
                 }
-
                 return html;
             }
         },
@@ -142,36 +145,33 @@ function displayName($displayName){
 }
 
 function renderStatusHtml(data){
+    let tempHtml = '';
     switch(data){
         case "Pending":
-            return '<div class="m-badge text-white m-badge--warning m-badge--wide" role="alert"><strong>Pending</strong></div>';
+            tempHtml = '<div class="m-badge text-white m-badge--warning m-badge--wide" role="alert"><strong>Pending</strong></div>';
         break;
         case "Approved":
-            return '<div class="m-badge m-badge--success m-badge--wide" role="alert"><strong>Approved</strong></div>';
+            tempHtml = '<div class="m-badge m-badge--success m-badge--wide" role="alert"><strong>Approved</strong></div>';
         break;
         case "Released":
-            return '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>Released</strong></div>';
+            tempHtml = '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>Released</strong></div>';
         break;
         default:
-            return '<div class="m-badge m-badge--metal text-white m-badge--wide" role="alert"><strong>Cancelled</strong></div>';
+            tempHtml = '<div class="m-badge m-badge--metal text-white m-badge--wide" role="alert"><strong>Cancelled</strong></div>';
         break;
     }
+    return tempHtml;
 }
 
 function formatCalendarDate(data){
-    if(data=="0000-00-00 00:00:00"){
-        return "";
-    }
-    else{
-        return moment(data).format("lll");
-    }
+    return data != null && data != "0000-00-00 00:00:00" ? moment(data).format("lll") : "";
 }
 
 function itemDatatableActions($id){
 	if($id){
-		var _actionButton ="";
-			_actionButton += " <a class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' href='"+baseUrl('eforms/borrowing/view_borrowing?id=')+$id+"' target='__blank'><i class='la la-pencil-square'></i></a>";				
-		return _actionButton;
+        const url = siteUrl('eforms/borrowing/view_borrowing?id='+$id);
+		return `<a class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' 
+        href='${url}' target='__blank'><i class='la la-pencil-square'></i></a>`;				
 	}else{ return false; }
 }
 //custom global search init
@@ -185,17 +185,20 @@ $("#reload_dtTbl").on("click",function(){
     tblBorrowing.ajax.reload();
 });
 
-$.ajax({
-    url: baseUrl('eforms/borrowing/overdue_count/'),
-    type: "POST",
-    dataType: "JSON",
-    data:  { csrf_token: _csrf_hash },
-    success: function(data){
-        $('#overdue').append(data);
-    }, error: function (jqXHR, textStatus, errorThrown){
-        alert('Error: "count"');
-    }
-});
+const overdueContainer = $('#overdue');
+if(typeof overdueContainer != "undefined" && overdueContainer.length > 0){
+    $.ajax({
+        url: baseUrl('eforms/borrowing/overdue_count/'),
+        type: "POST",
+        dataType: "JSON",
+        data:  { csrf_token: _csrf_hash },
+        success: function(data){
+            $('#overdue').append(data);
+        }, error: function (jqXHR, textStatus, errorThrown){
+            alert('Error: "count"');
+        }
+    });
+}
 
 $(document).ready(function () {
     $('#query-builder').queryBuilder({
@@ -255,8 +258,7 @@ $(document).ready(function () {
 });
 
 $('#query-builder-btn').on('click', function() {
-    var result = $('#query-builder').queryBuilder('getSQL');
-
+    const result = $('#query-builder').queryBuilder('getSQL');
     if (!$.isEmptyObject(result)) {
         query_builder = result;
         tblBorrowing.ajax.reload();
@@ -271,10 +273,10 @@ function clear_query_builder(){
 }
 
 function save_telegram_config(){
-    var chat_id = $("#chat_id").val();
-    var telegram_bot_token = $("#telegram_bot_token").val();
-    var module = $("#module").val();
-    var id = $("#config_id").val();
+    const chat_id = $("#chat_id").val();
+    const telegram_bot_token = $("#telegram_bot_token").val();
+    const module = $("#module").val();
+    const id = $("#config_id").val();
     $.ajax({
         url : baseUrl("eforms/borrowing/add_telegram_config"),
         type: "POST",
@@ -294,7 +296,7 @@ function save_telegram_config(){
 };
 
 function load_telegram_config(){
-    var module = "borrowing";
+    const module = "borrowing";
     $.ajax({
         url : baseUrl("eforms/loa/load_telegram_config"),
         type: "POST",
