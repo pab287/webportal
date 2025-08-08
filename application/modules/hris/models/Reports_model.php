@@ -1093,9 +1093,11 @@ class Reports_model extends CI_Model{
 
     public function getReportsSelect2EmployeeData(){
         $get = $this->input->get();
-        $this->db->select("id, CONCAT(UPPER(TRIM(firstname)), ' ', CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND TRIM(middlename) !='' AND middlename IS NOT NULL
-                THEN CONCAT(SUBSTR(middlename, 1, 1), '.') ELSE '' END,' ', UPPER(TRIM(lastname)), CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND
-                suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(suffix))) ELSE '' END) as text");
+        $this->db->select("id, CONCAT(UPPER(TRIM(firstname)), ' ',
+        CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND TRIM(middlename) !='' AND middlename IS NOT NULL
+            THEN CONCAT(SUBSTR(middlename, 1, 1), '.') ELSE '' END,' ', UPPER(TRIM(lastname)),
+        CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND suffix IS NOT NULL
+            THEN CONCAT(' ', UPPER(TRIM(suffix))) ELSE '' END) as text");
         $this->db->from("gccmaster.tblemployees");
         if(isset($get["company_id"]) && $get["company_id"]){
             $this->db->where("company_id", $get["company_id"]);

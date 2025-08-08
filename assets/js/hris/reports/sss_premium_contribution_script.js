@@ -53,7 +53,6 @@ if(typeof filterHired !== "undefined" && filterHired.length == 1){
             global: false,
             data: function (params) {
                 return {
-                    company_id: $("#company").val(),
                     q: params.term
                 };
             },
@@ -470,7 +469,7 @@ const vmResetSignatories = new Vue({
                             dataType: "json",
                             data: formData,
                             beforeSend: function () {
-                                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                                $(".btn-submit", tempForm).addClass("m-btn--custom m-loader m-loader--light m-loader--right");
                             },
                             success: function (json) {
                                 let tempRow = {};
@@ -492,7 +491,7 @@ const vmResetSignatories = new Vue({
                                 const currentModal = $(currentElement).closest(".modal");
                                 currentModal.modal("hide");
 
-                                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                                $(".btn-submit", tempForm).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
                             }
                         });
                         return false;
@@ -512,6 +511,7 @@ const getCurrentSignatories = function(companyId){
         $.ajax({
             url: siteUrl("hris/reports/get_current_signatory_by_company_and_type/" + companyId + "/2"),
             dataType: "json",
+            global: false,
             success: function (json) {
                 let tempRow = {};
                 let ctr = 0;
