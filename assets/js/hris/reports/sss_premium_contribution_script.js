@@ -1,4 +1,9 @@
+const psSignatoryModal = $("#modal-ps--signatory");
+const psResetSignatoryModal = $("#modal-ps--reset-signatory");
+let globalPrintableSignatory = [];
+
 const filterHired = $("#tempFilter");
+let selectedCompanyId = null;
 let company = [];
 let employee = [];
 let _years = [];
@@ -29,6 +34,11 @@ if(typeof filterHired !== "undefined" && filterHired.length == 1){
         data: company,
         allowClear: true
     }).on("select2:select", function (e) {
+        const { id } = e.params.data;
+        selectedCompanyId = id;
+        $("#employee").val("").trigger("change");
+    }).on("select2:unselect", function (e) {
+        selectedCompanyId = null;
         $("#employee").val("").trigger("change");
     });
 
@@ -165,7 +175,8 @@ const dtTable = $("#table-sss_premium_contribution").DataTable({
                     head = win.document.head || win.document.getElementsByTagName('head')[0],
                     body = win.document.body || win.document.getElementsByTagName('body')[0],
                     style = win.document.createElement('style'),
-                    footerDiv = win.document.createElement('div');
+                    footerDiv = win.document.createElement('div'),
+                    signatoryDiv = win.document.createElement('div');
 
                 style.type = 'text/css';
                 style.media = 'print';
@@ -187,6 +198,35 @@ const dtTable = $("#table-sss_premium_contribution").DataTable({
                     </div>
                 <div>`;
                 body.appendChild(footerDiv);
+
+                let signatoryCells = ``;
+                if (globalPrintableSignatory.length > 0) {
+                    $.each(globalPrintableSignatory, function (i, v) {
+                        let tempLabel = v.label;
+                        tempLabel = tempLabel.toUpperCase();
+
+                        let tempValue = v.value;
+                        tempValue = tempValue ? tempValue.toUpperCase() : tempValue;
+
+                        if (tempLabel && v.is_active == true) {
+                            let tempCell = `<div style='display: inline-block; position: relative; width: 30%; margin-top: 30px;'>
+                                <p style='font-weight: bold;'>${tempLabel}:</p>
+                                <p style='font-weight: 600; margin-left: 40px; margin-right: 40px; margin-top: 50px; padding-top: 10px; border-top: 1px solid #000000;'>${tempValue}</p>
+                                </div>`;
+                            signatoryCells += tempCell;
+                        }
+                    });
+                }
+                if (signatoryCells) {
+                    signatoryDiv.innerHTML = `<table width='100%' style='margin-top: 60px; page-break-inside: avoid; text-align: center; font-size: 10px;'>
+                        <tbody>
+                            <tr>
+                                <td width='100%'>${signatoryCells}</td>
+                            </tr>
+                        </tbody>
+                        </table>`;
+                    body.appendChild(signatoryDiv);
+                }
             }
         }
     ], drawCallback: function (settings) {
@@ -203,6 +243,10 @@ const dtTable = $("#table-sss_premium_contribution").DataTable({
                 if (dtActions.hasClass("m--hide") === false) { dtActions.addClass("m--hide"); }
                 if (btnPrint.hasClass("m--hide") === false) { btnPrint.addClass("m--hide"); }
             }
+        }
+        const tempData = api.data();
+        if(tempData.length > 0){
+            getCurrentSignatories(selectedCompanyId);
         }
     }
 });
@@ -258,3 +302,233 @@ $.validate({
         return false;
     }
 });
+
+const vmPortletSignatories = new Vue({
+    el: "#portlet--signatories",
+    data: { row: {}, count: 0 },
+    methods: {
+        openModalSignatory: function () {
+            return psSignatoryModal.modal("show");
+        },
+        resetModalSignatory: function () {
+            return psResetSignatoryModal.modal("show");
+        }
+    }
+});
+
+const vmTempSignatory = new Vue({
+    el: "#signatory--content",
+    data: { row: {}, count: 0 },
+    methods: {
+        setGlobalSignatories: function () {
+            const _this = this;
+            const currentRow = _this.row;
+            globalPrintableSignatory = [];
+            if (typeof currentRow.meta_field !== "undefined" && typeof currentRow.meta_field == "object") {
+                $.each(currentRow.meta_field, function (i, v) {
+                    const tempData = { label: v.label, value: v.value, is_active: v.is_active };
+                    globalPrintableSignatory.push(tempData);
+                });
+            }
+            return globalPrintableSignatory;
+        },
+        activeSignatory: function (e) {
+            const currentTarget = e.target;
+            const formGroup = $(currentTarget).closest(".form-group.m-form__group.row");
+            if (typeof formGroup !== "undefined" && formGroup.length == 1) {
+                let isChecked = $(currentTarget).is(":checked");
+                const select2Container = formGroup.find(".select2--value");
+                console.log(isChecked);
+                console.log(select2Container);
+
+                if (typeof select2Container !== "undefined" && select2Container.length == 1) {
+                    if (isChecked && select2Container.is(":disabled") === true) {
+                        select2Container.prop("disabled", false);
+                    } else if(isChecked === false && select2Container.is(":disabled") === false){
+                        select2Container.prop("disabled", true);
+                    }
+                }
+            }
+        }, setModalSelect2: function () {
+            const _this = this;
+            const _currentElement = _this.$el;
+            const psModalSignatory = $(_currentElement)
+                .closest("#modal-ps--signatory");
+            if (typeof psModalSignatory !== "undefined" && psModalSignatory.length == 1) {
+                initSelect2Employee(psModalSignatory);
+            }
+        }, validateFields: function () {
+            const _this = this;
+            const currentElement = _this.$el;
+            const tempForm = $(currentElement).find("form#updatePrintableSignatories");
+            if (typeof tempForm !== "undefined") {
+                $.validate({
+                    form: tempForm,
+                    lang: 'en',
+                    onSuccess: function (form) {
+                        const tempUrl = form[0].action;
+                        const tempType = form[0].method;
+                        const formData = $(form[0]).serialize();
+
+                        $.ajax({
+                            url: tempUrl,
+                            type: tempType,
+                            dataType: "json",
+                            data: formData,
+                            beforeSend: function () {
+                                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            },
+                            success: function (json) {
+                                const currentModal = $(currentElement).closest(".modal");
+                                if (json.response) {
+                                    const currentData = json.data;
+                                    if (Object.keys(currentData).length > 0) {
+                                        const metaFields = currentData.meta_field;
+                                        const ctr = metaFields.length;
+
+                                        _this.row = { ...currentData };
+                                        _this.count = ctr;
+                                        _this.setGlobalSignatories();
+
+                                        vmPortletSignatories.row = { ...currentData };
+                                        vmPortletSignatories.count = ctr;
+
+                                        vmResetSignatories.row = { ...currentData };
+                                        vmResetSignatories.count = ctr;
+
+                                        if (typeof currentModal !== "undefined" && currentModal.length == 1) {
+                                            currentModal.modal("hide");
+                                        }
+                                    }
+                                } else {
+                                    toastr.error("Payroll Signatory", json.toastr_msg);
+                                }
+                                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            }
+                        });
+                        return false;
+                    },
+
+                });
+            }
+        }
+    }, mounted: function () {
+        const _this = this;
+        setTimeout(function () {
+            _this.setModalSelect2();
+            _this.setGlobalSignatories();
+            _this.validateFields();
+        }, 500);
+    }
+});
+
+const initSelect2Employee = function (tempModal, portlet) {
+    if (typeof tempModal !== "undefined" && tempModal.length == 1) {
+        let tempSelector = tempModal.find("select.select2--value");
+        if (typeof portlet !== "undefined") { tempSelector = portlet.find("select.select2--value"); }
+        if (typeof tempSelector !== "undefined") {
+            tempSelector.select2({
+                tags: true,
+                allowClear: true,
+                placeholder: 'Select an option',
+                width: '100%',
+                dropdownParent: tempModal,
+                ajax: {
+                    url: baseUrl("hris/reports/get_reports_select2_employee_data"),
+                    dataType: "json",
+                    delay: 250,
+                    global: false,
+                    processResults: function (data) {
+                        return data;
+                    }
+                }, minimumInputLength: 3
+            });
+        }
+    }
+}
+
+const vmResetSignatories = new Vue({
+    el: "#reset-signatory--content",
+    data: { row: {}, count: 0 },
+    methods: {
+        validateFields: function () {
+            const _this = this;
+            const currentElement = _this.$el;
+            const tempForm = $(currentElement).find("form#resetPrintableSignatories");
+            if (typeof tempForm !== "undefined") {
+                $.validate({
+                    form: tempForm,
+                    lang: 'en',
+                    onSuccess: function (form) {
+                        const tempUrl = form[0].action;
+                        const tempType = form[0].method;
+                        const formData = $(form[0]).serialize();
+
+                        $.ajax({
+                            url: tempUrl,
+                            type: tempType,
+                            dataType: "json",
+                            data: formData,
+                            beforeSend: function () {
+                                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            },
+                            success: function (json) {
+                                let tempRow = {};
+                                let ctr = 0;
+
+                                if (json.response) {
+                                    tempRow = { ...json.data };
+                                    ctr = json.count;
+                                }
+                                vmTempSignatory.row = { ...tempRow };
+                                vmTempSignatory.count = ctr;
+                                vmTempSignatory.$mount();
+
+                                vmPortletSignatories.row = { ...tempRow };
+                                vmPortletSignatories.count = ctr;
+
+                                _this.row = { ...tempRow };
+                                _this.count = ctr;
+                                const currentModal = $(currentElement).closest(".modal");
+                                currentModal.modal("hide");
+
+                                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            }
+                        });
+                        return false;
+                    },
+
+                });
+            }
+        }
+    }, mounted: function () {
+        const _this = this;
+        _this.validateFields();
+    }
+});
+
+const getCurrentSignatories = function(companyId){
+    if(companyId){
+        $.ajax({
+            url: siteUrl("hris/reports/get_current_signatory_by_company_and_type/" + companyId + "/2"),
+            dataType: "json",
+            success: function (json) {
+                let tempRow = {};
+                let ctr = 0;
+                if (json.response) {
+                    tempRow = { ...json.data };
+                    ctr = json.count;
+                }
+                vmTempSignatory.row = { ...tempRow };
+                vmTempSignatory.count = ctr;
+                vmTempSignatory.$mount();
+
+                vmPortletSignatories.row = { ...tempRow };
+                vmPortletSignatories.count = ctr;
+
+                vmResetSignatories.row = { ...tempRow };
+                vmResetSignatories.count = ctr;
+            }
+        });
+    }
+}

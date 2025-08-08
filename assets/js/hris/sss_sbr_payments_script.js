@@ -199,6 +199,18 @@ const vmContribution = new Vue({
         'info.created_at'(val) {
             this.info.created_at = moment(val).format('LLL');
         },
+    }, methods: {
+        getGrandTotal: function () {
+            let total = 0;
+            this.rows.forEach(function (row) {
+                total += parseFloat(row.sss_total);
+            });
+            const tempTotal = total.toFixed(2);
+            return numberFormat(tempTotal);
+        },
+        numberFormatter: function (num) {
+            return numberFormat(num);
+        }
     }
 });
 

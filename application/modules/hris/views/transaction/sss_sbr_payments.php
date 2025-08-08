@@ -301,7 +301,7 @@
                                         <td v-text="index + 1"></td>
                                         <td v-text="row.employee_name"></td>
                                         <td v-text="row.sss_no"></td>
-                                        <td class="text-right" v-text="row.sss_total"></td>
+                                        <td class="text-right" v-text="numberFormatter(row.sss_total)">0.00</td>
                                     </tr>
                                     </template>
                                     <template v-else>
@@ -310,6 +310,12 @@
                                         </tr>
                                     </template>
                                 </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="text-right"><strong>TOTAL</strong></td>
+                                        <td class="text-right"><strong v-text="getGrandTotal()">0.00</strong></td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>

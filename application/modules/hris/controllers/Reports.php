@@ -536,4 +536,28 @@ class Reports extends MY_Controller{
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
+
+    public function update_printable_signatories(){
+        $this->load->model("payroll/payroll_m", "payroll");
+        $data = $this->payroll->updatePrintableSignatories();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function reset_printable_signatories(){
+        $this->load->model("payroll/payroll_m", "payroll");
+        $data = $this->payroll->resetPrintableSignatories();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function get_current_signatory_by_company_and_type($id=null, $type=null){
+        $this->load->model("payroll/payroll_m", "payroll");
+        $data = $this->payroll->getCurrentSignatoryByCompanyAndType($id, $type);
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 }
