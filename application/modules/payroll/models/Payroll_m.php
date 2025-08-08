@@ -2920,7 +2920,7 @@ class Payroll_m extends CI_Model
         $has_pagibig_no = (isset($_contAcctNumber->pagibig_no) && $_contAcctNumber->pagibig_no)? true: false;
         $has_tin_no = (isset($_contAcctNumber->tin_no) && $_contAcctNumber->tin_no)? true: false;
 
-        if($temp_taxable_income > 0){
+        if($temp_taxable_income > 0 && $parameters->switch == "1"){
             $alteredTaxableDeduction = $this->getFixedTaxableDeduction($parameters->emp_id);
             
             $hasPreviousDeduction = new stdClass();

@@ -7290,7 +7290,7 @@ class Timesheet_model extends CI_Model{
 
     protected function getExistingEmployeeePersonnel($biometric_id=null){
         if($biometric_id){
-            $employee = $this->db
+            return $this->db
             ->select("personnel.biometric_id, personnel.shift_id, personnel.is_flexi, emp.id emp_id, emp.lastname, emp.firstname,
                 UCASE(CONCAT(emp.lastname,
                     CASE WHEN emp.suffix != 'N/A' AND emp.suffix !='NONE' AND emp.suffix !='' AND emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''  END, ', ',
@@ -7299,7 +7299,6 @@ class Timesheet_model extends CI_Model{
             ->where("personnel.biometric_id", $biometric_id)
             ->join($this->tbl_personnel . " personnel", "emp.biometricno = personnel.biometric_id", "LEFT")
             ->get($this->tbl_employees . " emp");
-            return $employee;
         }else{ return false; }
     }
 
@@ -7319,7 +7318,7 @@ class Timesheet_model extends CI_Model{
                 $attendanceExist = $this->db
                     ->where('biometric_id', $empRow->biometric_id)
                     ->where('DATE(datetime)', $parameters['date'])
-                    ->like('TIME(datetime)', $parameters['temptime'], 'both')
+                    ->like('TIME(datetime)', $parameters['temptime'], 'after')
                     ->count_all_results($this->tbl_attendance);
                 if (intval($attendanceExist) <= 0){
                     $addedAttendance = $this->db->insert($this->tbl_attendance, [
@@ -7341,7 +7340,7 @@ class Timesheet_model extends CI_Model{
                     $result["shift_id"] = $empRow->shift_id;
                 } else { $result['response'] = false; }
             } elseif (strtotime($parameters['date']) >= strtotime($parameters['start']) && strtotime($parameters['date']) <= strtotime($parameters['end']) &&
-            $isValidDate == false){
+            $isValidDate === false){
                 $result['response'] = false;
                 $result['invalid_entries'] = [
                     'emp_id' => $empRow->emp_id,
@@ -7350,7 +7349,7 @@ class Timesheet_model extends CI_Model{
                     'date' => $parameters['date'],
                 ];
             }
-        } else { 
+        } else {
             $result['response'] = false;
             $result['employee_not_found'] = true;
         }
