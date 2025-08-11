@@ -12422,27 +12422,49 @@ class Employee_model extends CI_Model {
         $post = $this->input->post();
         $resultset = array();
         if(isset($post["sbr_no"], $post["payment_date"], $post["company_id"]) && ($post["sbr_no"] && $post["payment_date"] && $post["company_id"])){
+            $errorFlag = false;
+            $errorMessage = array();
             $post["sbr_no"] = strtoupper(trim($post["sbr_no"]));
             if(isset($post["company_id"]) && $post["company_id"]){
                 $qComp = $this->db->get_where($this->companyTable, array("id" => $post["company_id"], "is_archived" => 0));
                 if($qComp->num_rows() == 1){ $post["company_code"] = $qComp->row()->description; }
             }
+
             $monthName = date("F", mktime(0, 0, 0, $post['month_name'], 1));
             $post["month_name"] = strtolower($monthName);
 
-            $post["created_by"] = $this->core_layout->getCurrentEmployeeId();
-            $post["created_at"] = date("Y-m-d H:i:s");
-            $added = $this->db->insert($this->sbrPaymentTable, $post);
-            if($added){
-                $resultset["response"] = true;
-                $resultset["toastr_msg"] = "SBR payment has been added successfully.";
-                $resultset["toastr_state"] = "success";
-                $this->core_layout->setEventLog("SBR Payment - SBR payment has been added successfully.","insert", "success", "gcchris", "user");
-            }else{
+            $checker = $this->db->get_where($this->sbrPaymentTable, array("company_id"=>$post["company_id"], "month_name"=>$post["month_name"], "year"=>$post["year"]));
+            if($checker->num_rows() > 0){
+                $errorFlag = true;
+                $errorMessage[] = "SBR payment for this month, year and company already exists.";
+            }
+
+            $sbrChecker = $this->db->get_where($this->sbrPaymentTable, array("sbr_no"=>$post["sbr_no"]));
+            if($sbrChecker->num_rows() > 0){
+                $errorFlag = true;
+                $errorMessage[] = "SBR number already exists.";
+            }
+
+            if($errorFlag){
                 $resultset["response"] = false;
-                $resultset["toastr_msg"] = "Failed to save SBR payment!";
+                $resultset["toastr_msg"] = implode("<br>", $errorMessage);
                 $resultset["toastr_state"] = "error";
-                $this->core_layout->setEventLog("SBR Payment - Failed to save SBR payment!","insert", "error", "gcchris", "system");
+                $this->core_layout->setEventLog("SBR Payment - ".implode("<br>", $errorMessage),"insert", "error", "gcchris", "user");
+            }else{
+                $post["created_by"] = $this->core_layout->getCurrentEmployeeId();
+                $post["created_at"] = date("Y-m-d H:i:s");
+                $added = $this->db->insert($this->sbrPaymentTable, $post);
+                if($added){
+                    $resultset["response"] = true;
+                    $resultset["toastr_msg"] = "SBR payment has been added successfully.";
+                    $resultset["toastr_state"] = "success";
+                    $this->core_layout->setEventLog("SBR Payment - SBR payment has been added successfully.","insert", "success", "gcchris", "user");
+                }else{
+                    $resultset["response"] = false;
+                    $resultset["toastr_msg"] = "Failed to save SBR payment!";
+                    $resultset["toastr_state"] = "error";
+                    $this->core_layout->setEventLog("SBR Payment - Failed to save SBR payment!","insert", "error", "gcchris", "system");
+                }
             }
         }else{
             $resultset["response"] = false;
@@ -12647,22 +12669,68 @@ class Employee_model extends CI_Model {
                 $post["month_name"] = strtolower($monthName);
             }
 
-            $post["last_updated_by"] = $this->core_layout->getCurrentEmployeeId();
-            $post["last_updated_at"] = date("Y-m-d H:i:s");
-            $updated = $this->db->update($this->sbrPaymentTable, $post, array("id"=>$id));
-            if($updated && $this->db->affected_rows() > 0){
-                $resultset["response"] = true;
-                $resultset["toastr_msg"] = "SBR payment has been updated successfully.";
-                $this->core_layout->setEventLog("SBR Payment - SBR payment has been updated successfully.", "update", "success", "gcchris", "user");
+            $qSbr = $this->db->get_where($this->sbrPaymentTable, array("id"=>$id));
+            if($qSbr->num_rows() == 1){
+                $errorFlag = false;
+                $errorMessage = array();
+                $row = $qSbr->row();
+
+                $filterUpdate = false;
+                $tempFilter = array("company_id"=>$row->company_id, "month_name"=>$row->month_name, "year"=>$row->year);
+                if(isset($post["company_id"]) && $row->company_id != $post["company_id"]){
+                    $tempFilter["company_id"] = $post["company_id"];
+                    $filterUpdate = true;
+                }
+                if(isset($post["month_name"]) && $row->month_name != $post["month_name"]){
+                    $tempFilter["month_name"] = $post["month_name"];
+                    $filterUpdate = true;
+                }
+                if(isset($post["year"]) && $row->year != $post["year"]){
+                    $tempFilter["year"] = $post["year"];
+                    $filterUpdate = true;
+                }
+
+                if($filterUpdate){
+                    $qFilter = $this->db->get_where($this->sbrPaymentTable, $tempFilter);
+                    if($qFilter->num_rows() > 0){
+                        $errorFlag = true;
+                        $errorMessage[] = "SBR payment for this month, year and company already exists.";
+                    }
+                }
+
+                if($row->sbr_no != $post["sbr_no"]){
+                    $qSbrNumber = $this->db->get_where($this->sbrPaymentTable, array("sbr_no"=>$post["sbr_no"]));
+                    if($qSbrNumber->num_rows() > 0){
+                        $errorFlag = true;
+                        $errorMessage[] = "SBR number already exists.";
+                    }
+                }
+
+                if($errorFlag){
+                    $resultset["response"] = false;
+                    $resultset["toastr_msg"] = implode("<br>", $errorMessage);
+                    $this->core_layout->setEventLog("SBR Payment - ".implode("<br>", $errorMessage), "update", "error", "gcchris", "system");
+                }else{
+                    $post["last_updated_by"] = $this->core_layout->getCurrentEmployeeId();
+                    $post["last_updated_at"] = date("Y-m-d H:i:s");
+                    $updated = $this->db->update($this->sbrPaymentTable, $post, array("id"=>$id));
+                    if($updated && $this->db->affected_rows() > 0){
+                        $resultset["response"] = true;
+                        $resultset["toastr_msg"] = "SBR payment has been updated successfully.";
+                        $this->core_layout->setEventLog("SBR Payment - SBR payment has been updated successfully.", "update", "success", "gcchris", "user");
+                    }else{
+                        $resultset["response"] = false;
+                        $resultset["toastr_msg"] = "Failed to update SBR payment.";
+                        $this->core_layout->setEventLog("SBR Payment - Failed to update SBR payment.", "update", "error", "gcchris", "system");
+                    }
+                }
             }else{
                 $resultset["response"] = false;
-                $resultset["toastr_msg"] = "Failed to update SBR payment.";
-                $this->core_layout->setEventLog("SBR Payment - Failed to update SBR payment.", "update", "error", "gcchris", "system");
+                $resultset["toastr_msg"] = "SBR payment data no data found.";
             }
         }else{
             $resultset["response"] = false;
             $resultset["toastr_msg"] = "No data found.";
-            $this->core_layout->setEventLog("SBR Payment - No data found.", "update", "error", "gcchris", "system");
         }
 
         return $resultset;

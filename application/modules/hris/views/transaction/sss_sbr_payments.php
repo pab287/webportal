@@ -74,18 +74,42 @@
                 <form id="form-sbr_payment" method="post">
                     <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>" />
                     <div class="modal-body">
-                        <div class="row">
+                        <div class="form-group m-form__group">
+                            <label for="company" class="col-form-label required">Company</label>
+                            <select name="company_id" id="company" class="form-control" data-validation="required">
+                                <option value=""></option>
+                            </select>
+                        </div>
+                        <div class="form-group m-form__group row">
                             <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
                                 <div class="form-group m-form__group">
-                                    <label for="sbr_number" class="col-form-label">SBR #</label>
-                                    <input type="text" class="form-control" id="sbr_number" name="sbr_no" autocomplete="off" maxlength="22" />
+                                    <label for="month" class="col-form-label required">Month</label>
+                                    <select name="month_name" id="month" class="form-control" data-validation="required">
+                                        <option value=""></option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
                                 <div class="form-group m-form__group">
-                                    <label for="payment_date" class="col-form-label">Payment Date</label>
+                                    <label for="year" class="col-form-label required">Year</label>
+                                    <select name="year" id="year" class="form-control" data-validation="required">
+                                        <option value=""></option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group m-form__group row">
+                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
+                                <div class="form-group m-form__group">
+                                    <label for="sbr_number" class="col-form-label required">SBR #</label>
+                                    <input type="text" class="form-control" id="sbr_number" name="sbr_no" autocomplete="off" maxlength="22" data-validation="required" />
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
+                                <div class="form-group m-form__group">
+                                    <label for="payment_date" class="col-form-label required">Payment Date</label>
                                     <div class="input-group" id="date-picker">
-                                        <input type="text" class="form-control" id="payment_date" name="payment_date" autocomplete="off" />
+                                        <input type="text" class="form-control" id="payment_date" name="payment_date" autocomplete="off" data-validation="required" />
                                         <span class="input-group-addon">
                                             <i class="la la-calendar-check-o"></i>
                                         </span>
@@ -93,31 +117,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
-                                <div class="form-group m-form__group">
-                                    <label for="month" class="col-form-label">Month</label>
-                                    <select name="month_name" id="month" class="form-control">
-                                        <option value=""></option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
-                                <div class="form-group m-form__group">
-                                    <label for="year" class="col-form-label">Year</label>
-                                    <select name="year" id="year" class="form-control">
-                                        <option value=""></option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group m-form__group">
-                            <label for="company" class="col-form-label">Company</label>
-                            <select name="company_id" id="company" class="form-control">
-                                <option value=""></option>
-                            </select>
-                        </div>
+                       
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary btnSave" id="btn-save-sbr_payment">Save</button>
@@ -141,44 +141,36 @@
                     <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>" />
                     <div id="sbr_payment-content" class="modal-body">
                         <input type="hidden" name="id" v-model="row.id" />
-                        <div class="row">
-                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
-                                <div class="form-group m-form__group">
-                                    <label for="edit_sbr_number" class="col-form-label">SBR #</label>
-                                    <input type="text" class="form-control" id="edit_sbr_number" name="sbr_no" autocomplete="off" maxlength="22" v-model="row.sbr_no" />
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
-                                <div class="form-group m-form__group">
-                                    <label for="edit_payment_date" class="col-form-label">Payment Date</label>
-                                    <div class="input-group" id="date-picker">
-                                        <input type="text" class="form-control" id="edit_payment_date" name="payment_date" autocomplete="off" v-model="row.payment_date" />
-                                        <span class="input-group-addon">
-                                            <i class="la la-calendar-check-o"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="form-group m-form__group">
+                            <label for="edit_company" class="col-form-label" :class="row.contribution_count == '0' ? 'required' : ''">Company</label>
+                            <template v-if="row.contribution_count == '0'">
+                            <select name="company_id" id="edit_company" class="form-control" data-validation="required">
+                                <option value=""></option>
+                            </select>
+                            </template>
+                            <template v-else>
+                            <p class="form-control mb-0" disabled v-text="row.company_code">&nbsp;</p>
+                            </template>
                         </div>
                         <div class="row">
                             <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
                                 <div class="form-group m-form__group">
-                                    <label for="edit_month" class="col-form-label">Month</label>
+                                    <label for="edit_month" class="col-form-label" :class="row.contribution_count == '0' ? 'required' : ''">Month</label>
                                     <template v-if="row.contribution_count == '0'">
-                                    <select name="month_name" id="edit_month" class="form-control">
+                                    <select name="month_name" id="edit_month" class="form-control" data-validation="required">
                                         <option value=""></option>
                                     </select>
                                     </template>
                                     <template v-else>
-                                    <p class="form-control mb-0" disabled v-text="row.month_name.toUpperCase()">&nbsp;</p>
+                                    <p class="form-control mb-0" disabled v-text="row.month_name">&nbsp;</p>
                                     </template>
                                 </div>
                             </div>
                             <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
                                 <div class="form-group m-form__group">
-                                    <label for="edit_year" class="col-form-label">Year</label>
+                                    <label for="edit_year" class="col-form-label" :class="row.contribution_count == '0' ? 'required' : ''">Year</label>
                                     <template v-if="row.contribution_count == '0'">
-                                    <select name="year" id="edit_year" class="form-control">
+                                    <select name="year" id="edit_year" class="form-control" data-validation="required">
                                         <option value=""></option>
                                     </select>
                                     </template>
@@ -188,18 +180,27 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="form-group m-form__group">
-                            <label for="edit_company" class="col-form-label">Company</label>
-                            <template v-if="row.contribution_count == '0'">
-                            <select name="company_id" id="edit_company" class="form-control">
-                                <option value=""></option>
-                            </select>
-                            </template>
-                            <template v-else>
-                            <p class="form-control mb-0" disabled v-text="row.company_code">&nbsp;</p>
-                            </template>
+
+                        <div class="row">
+                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
+                                <div class="form-group m-form__group">
+                                    <label for="edit_sbr_number" class="col-form-label required">SBR #</label>
+                                    <input type="text" class="form-control" id="edit_sbr_number" name="sbr_no" autocomplete="off" maxlength="22" v-model="row.sbr_no" data-validation="required" />
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
+                                <div class="form-group m-form__group">
+                                    <label for="edit_payment_date" class="col-form-label required">Payment Date</label>
+                                    <div class="input-group" id="date-picker">
+                                        <input type="text" class="form-control" id="edit_payment_date" name="payment_date" autocomplete="off" v-model="row.payment_date" data-validation="required" />
+                                        <span class="input-group-addon">
+                                            <i class="la la-calendar-check-o"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                        
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary btnSave" id="btn-update-sbr_payment">Save</button>

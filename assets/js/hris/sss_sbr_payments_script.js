@@ -41,6 +41,8 @@ $("#modal-sbr_payment #company").select2({
     allowClear: true,
     placeholder: 'Select Company',
     dropdownParent: $("#modal-sbr_payment")
+}).on("select2:select, change", function(e){
+    $(e.target).validate();
 });
 
 $("#modal-sbr_payment #payment_date").datepicker({
@@ -48,6 +50,8 @@ $("#modal-sbr_payment #payment_date").datepicker({
     autoclose: true,
     startDate: moment(entryDate).format('YYYY-MM-DD'),
     endDate: moment().format('YYYY-MM-DD'),
+}).on("changeDate", function (e) {
+    $(e.target).validate();
 });
 
 $("#modal-sbr_payment #month").select2({
@@ -56,6 +60,8 @@ $("#modal-sbr_payment #month").select2({
     placeholder: "SELECT MONTH",
     allowClear: true,
     dropdownParent: $("#modal-sbr_payment")
+}).on("select2:select, change", function(e){
+    $(e.target).validate();
 });
 
 $("#modal-sbr_payment #year").select2({
@@ -64,6 +70,8 @@ $("#modal-sbr_payment #year").select2({
     placeholder: "SELECT YEAR",
     allowClear: true,
     dropdownParent: $("#modal-sbr_payment")
+}).on("select2:select, change", function(e){
+    $(e.target).validate();
 });
 
 
@@ -217,6 +225,12 @@ const vmContribution = new Vue({
 const vmSbrPayment = new Vue({
     el: "#sbr_payment-content",
     data: { row: {} },
+    watch: {
+        'row.month_name'(val) {
+            this.row.month_name = val.toUpperCase();
+            return this;
+        },
+    },
     methods: {
         setSelect2Containers: function () {
             const { company_id, month, year }= this.row;
