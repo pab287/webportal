@@ -41,7 +41,7 @@ $("#modal-sbr_payment #company").select2({
     allowClear: true,
     placeholder: 'Select Company',
     dropdownParent: $("#modal-sbr_payment")
-}).on("select2:select, change", function(e){
+}).on("select2:select", function(e){
     $(e.target).validate();
 });
 
@@ -52,16 +52,17 @@ $("#modal-sbr_payment #payment_date").datepicker({
     endDate: moment().format('YYYY-MM-DD'),
 }).on("changeDate", function (e) {
     $(e.target).validate();
-});
-
-$("#modal-sbr_payment #month").select2({
-    width: '100%',
-    data: months,
-    placeholder: "SELECT MONTH",
-    allowClear: true,
-    dropdownParent: $("#modal-sbr_payment")
-}).on("select2:select, change", function(e){
-    $(e.target).validate();
+}).on("show", function (e) {
+    let m = $("#modal-sbr_payment #month").val();
+    let y = $("#modal-sbr_payment #year").val();
+    if(m && y){
+        m = parseInt(m) + 1;
+        if(m > 12){
+            m = 1;
+            y = parseInt(y) + 1;
+        }
+        $("#modal-sbr_payment #payment_date").datepicker("setDate", moment(`${y}-${m}-01`).format('YYYY-MM-DD'));
+    }
 });
 
 $("#modal-sbr_payment #year").select2({
@@ -70,7 +71,56 @@ $("#modal-sbr_payment #year").select2({
     placeholder: "SELECT YEAR",
     allowClear: true,
     dropdownParent: $("#modal-sbr_payment")
-}).on("select2:select, change", function(e){
+}).on("select2:select", function(e){
+    $(e.target).validate();
+    const cValue = $(e.target).val();
+    const entryYear = moment(entryDate).year();
+    if(cValue == moment().year()){
+        let tempMonth = moment().format('M');
+        tempMonth = parseInt(tempMonth) + 1;
+        const monthSelect = $("#modal-sbr_payment #month");
+        if(typeof monthSelect !== "undefined" && monthSelect.length > 0){
+            monthSelect.empty();
+            $.each(months, function(k, v){
+                const nOption = new Option(v.text, v.id, false, false);
+                if(k >= tempMonth){ nOption.disabled = true; }
+                monthSelect.append(nOption);
+            });
+            monthSelect.val("").trigger("change.select2");
+        }
+    } else if(cValue >= entryYear){
+        let tempMonth = moment(entryDate).format('M');
+        tempMonth = parseInt(tempMonth);
+        const monthSelect = $("#modal-sbr_payment #month");
+        if(typeof monthSelect !== "undefined" && monthSelect.length > 0){
+            monthSelect.empty();
+            $.each(months, function(k, v){
+                const nOption = new Option(v.text, v.id, false, false);
+                if(k < tempMonth){ nOption.disabled = true; }
+                monthSelect.append(nOption);
+            });
+            monthSelect.val("").trigger("change.select2");
+        }
+    } else{
+        const monthSelect = $("#modal-sbr_payment #month");
+        if(typeof monthSelect !== "undefined" && monthSelect.length > 0){
+            monthSelect.empty();
+            $.each(months, function(k, v){
+                const nOption = new Option(v.text, v.id, false, false);
+                monthSelect.append(nOption);
+            });
+            monthSelect.val("").trigger("change.select2");
+        }
+    }
+});
+
+$("#modal-sbr_payment #month").select2({
+    width: '100%',
+    data: months,
+    placeholder: "SELECT MONTH",
+    allowClear: true,
+    dropdownParent: $("#modal-sbr_payment")
+}).on("select2:select", function(e){
     $(e.target).validate();
 });
 
@@ -157,14 +207,18 @@ $(document).on("click", ".btnPreviewSbr", function (e) {
 
 $(document).on("click", ".btnEditSbrPayment", function (e) {
     const rawData = $(this).data("row");
-    const { month_name } = rawData;
+    const { month_name, contribution_count } = rawData;
     const monthNum = moment().month(month_name).format("M");
     rawData.month = monthNum;
     vmSbrPayment.row = { ...rawData };
-    setTimeout(function () {
-        vmSbrPayment.setDatePicker();
-        vmSbrPayment.setSelect2Containers();
-    }, 250);
+    if(parseInt(contribution_count) === 0){
+        setTimeout(function () {
+            vmSbrPayment.setDatePicker();
+            vmSbrPayment.setSelect2Containers();
+        }, 250);
+    }else{
+        vmSbrPayment.destroySelect2();
+    }
     $("#modal-edit_sbr_payment").modal("show");
 });
 
@@ -232,7 +286,17 @@ const vmSbrPayment = new Vue({
         },
     },
     methods: {
+        initMonth: function (destroy = false, nMonths = []) {
+            const currentElement = this.$el;
+            if (destroy && $("#edit_month", currentElement).hasClass("select2-hidden-accessible")) {
+                $("#edit_month", currentElement).select2("destroy");
+            }
+            setTimeout(function () {
+                
+            }, destroy ? 0 : 150);
+        },
         setSelect2Containers: function () {
+            const _this = this;
             const { company_id, month, year }= this.row;
             const currentElement = this.$el;
             $("#edit_company", currentElement).select2({
@@ -243,21 +307,50 @@ const vmSbrPayment = new Vue({
                 dropdownParent: $(currentElement)
             });
 
-            $("#edit_month", currentElement).select2({
-                data: months,
-                width: '100%',
-                allowClear: true,
-                placeholder: 'Select Month',
-                dropdownParent: $(currentElement)
-            });
-
             $("#edit_year", currentElement).select2({
                 data: _years,
                 width: '100%',
                 allowClear: true,
                 placeholder: 'Select Year',
                 dropdownParent: $(currentElement)
+            }).on("select2:select", function(e){
+                const year = $(this).val();
+                if(year == moment().year()){
+                    let tempMonth = moment().format('M');
+                    tempMonth = parseInt(tempMonth) + 1;
+
+                    const monthSelect = $("#edit_month", currentElement);
+                    if(typeof monthSelect !== "undefined" && monthSelect.length > 0){
+                        monthSelect.empty();
+                        $.each(months, function(k, v){
+                            const nOption = new Option(v.text, v.id, false, false);
+                            if(k >= tempMonth){ nOption.disabled = true; }
+                            monthSelect.append(nOption);
+                        });
+                        monthSelect.val("").trigger("change.select2");
+                    }
+                }else{
+                    const monthSelect = $("#edit_month", currentElement);
+                    if(typeof monthSelect !== "undefined" && monthSelect.length > 0){
+                        monthSelect.empty();
+                        $.each(months, function(k, v){
+                            const nOption = new Option(v.text, v.id, false, false);
+                            monthSelect.append(nOption);
+                        });
+                        monthSelect.val("").trigger("change.select2");
+                    }
+                }
             });
+
+            $("#edit_month", currentElement).select2({
+                    data: months,
+                    width: '100%',
+                    allowClear: true,
+                    placeholder: 'Select Month',
+                    dropdownParent: $(currentElement)
+                }).on("select2:select", function (e) {
+                    $(e.target).validate();
+                });
 
             $("#edit_company", currentElement).val(company_id).trigger("change");
             $("#edit_month", currentElement).val(month).trigger("change");
@@ -274,6 +367,12 @@ const vmSbrPayment = new Vue({
                 endDate: moment().format('YYYY-MM-DD'),
             });
             $("#edit_payment_date", currentElement).datepicker("setDate", payment_date);
+            return this;
+        }, destroySelect2: function () {
+            const currentElement = this.$el;
+            $("#edit_company", currentElement).select2("destroy");
+            $("#edit_year", currentElement).select2("destroy");
+            $("#edit_month", currentElement).select2("destroy");
             return this;
         }
     }
@@ -294,7 +393,7 @@ $.validate({
                     toastr.success(json.toastr_msg, "Save SBR Payment", 5000);
                     $("#modal-sbr_payment").modal("hide");
                     dtSbrPayments.ajax.reload(null, false);
-                    resetForm(currentForm);
+                    setTimeout(function () { resetForm(currentForm); }, 250);
                 }else{
                     toastr.error(json.toastr_msg, "Save SBR Payment", 5000);
                 }
@@ -319,7 +418,7 @@ $.validate({
                     toastr.success(json.toastr_msg, "Update SBR Payment", 5000);
                     $("#modal-edit_sbr_payment").modal("hide");
                     dtSbrPayments.ajax.reload(null, false);
-                    resetForm(currentForm);
+                    setTimeout(function () { resetForm(currentForm); }, 250);
                 }else{
                     toastr.error(json.toastr_msg, "Update SBR Payment", 5000);
                 }
@@ -327,9 +426,9 @@ $.validate({
         });
         return false;
     }
-})
+});
 
 const resetForm = (currentForm) => {
-    currentForm[0].reset();
     currentForm.find("select").val("").trigger("change");
+    currentForm[0].reset();
 };

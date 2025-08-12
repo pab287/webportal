@@ -280,10 +280,11 @@
             $this->core_layout->setPrivilegeName("hris_masterfile_sss_premium");
 
             $this->load->model("payroll/payroll_m", "payroll");
+            $entryDate = $this->employee_model->getPayrollSheetFirstEntryDate();
             $tempData = array();
-            $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
+            $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData($entryDate);
             $tempData["company"] = $this->payroll->select2CompanyData("description");
-            $tempData["entry_date"] = $this->employee_model->getPayrollSheetFirstEntryDate();
+            $tempData["entry_date"] = $entryDate;
             
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);

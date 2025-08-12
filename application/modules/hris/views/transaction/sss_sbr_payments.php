@@ -83,16 +83,16 @@
                         <div class="form-group m-form__group row">
                             <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
                                 <div class="form-group m-form__group">
-                                    <label for="month" class="col-form-label required">Month</label>
-                                    <select name="month_name" id="month" class="form-control" data-validation="required">
+                                    <label for="year" class="col-form-label required">Year</label>
+                                    <select name="year" id="year" class="form-control" data-validation="required">
                                         <option value=""></option>
                                     </select>
                                 </div>
                             </div>
                             <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
                                 <div class="form-group m-form__group">
-                                    <label for="year" class="col-form-label required">Year</label>
-                                    <select name="year" id="year" class="form-control" data-validation="required">
+                                    <label for="month" class="col-form-label required">Month</label>
+                                    <select name="month_name" id="month" class="form-control" data-validation="required">
                                         <option value=""></option>
                                     </select>
                                 </div>
@@ -155,19 +155,6 @@
                         <div class="row">
                             <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
                                 <div class="form-group m-form__group">
-                                    <label for="edit_month" class="col-form-label" :class="row.contribution_count == '0' ? 'required' : ''">Month</label>
-                                    <template v-if="row.contribution_count == '0'">
-                                    <select name="month_name" id="edit_month" class="form-control" data-validation="required">
-                                        <option value=""></option>
-                                    </select>
-                                    </template>
-                                    <template v-else>
-                                    <p class="form-control mb-0" disabled v-text="row.month_name">&nbsp;</p>
-                                    </template>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
-                                <div class="form-group m-form__group">
                                     <label for="edit_year" class="col-form-label" :class="row.contribution_count == '0' ? 'required' : ''">Year</label>
                                     <template v-if="row.contribution_count == '0'">
                                     <select name="year" id="edit_year" class="form-control" data-validation="required">
@@ -176,6 +163,19 @@
                                     </template>
                                     <template v-else>
                                     <p class="form-control mb-0" disabled v-text="row.year">&nbsp;</p>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-6 col-lg-6 col-xl-6 col-sm-12">
+                                <div class="form-group m-form__group">
+                                    <label for="edit_month" class="col-form-label" :class="row.contribution_count == '0' ? 'required' : ''">Month</label>
+                                    <template v-if="row.contribution_count == '0'">
+                                    <select name="month_name" id="edit_month" class="form-control" data-validation="required">
+                                        <option value=""></option>
+                                    </select>
+                                    </template>
+                                    <template v-else>
+                                    <p class="form-control mb-0" disabled v-text="row.month_name">&nbsp;</p>
                                     </template>
                                 </div>
                             </div>
@@ -223,7 +223,7 @@
                 <div class="modal-body">
                     <div id="contribution_content" class="row">
                         <div class="col-12 col-md-12 col-lg-12 col-xl-12 col-sm-12 mb-5">
-                            <div class="m-widget12">
+                            <div class="m-widget12 mb-3">
                                 <div class="m-widget12__item">
                                     <span class="m-widget12__text1">
                                         <label for="" class="m--font-bolder mb-0">SBR #</label><br>
@@ -291,8 +291,8 @@
                                 <thead>
                                     <tr>
                                         <th>#</th>
-                                        <th>SSS #</th>
                                         <th>Employee Name</th>
+                                        <th>SSS #</th>
                                         <th class="text-right">Total Contribution</th>
                                     </tr>
                                 </thead>

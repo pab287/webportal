@@ -5045,10 +5045,11 @@ class Payroll_m extends CI_Model
         return $data;
     }
 
-    public function getPostedPayrollSheetYearsData()
+    public function getPostedPayrollSheetYearsData($entryDate = null)
     {
         $arrData = array();
         $this->db->select('`year` id, `year` `text`');
+        if($entryDate){ $this->db->where('pay_date >=', $entryDate); }
         $this->db->group_by('year');
         $this->db->order_by('year', 'desc');
         $qTemp = $this->db->get('payroll.payroll_sheet');

@@ -12478,7 +12478,7 @@ class Employee_model extends CI_Model {
     public function getSbrPaymentsDatatableRequest() {
         $post = $this->input->post();
         $resultset = array();
-        $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+        $search = (isset($post["search"]['value']) && $post["search"]['value']) ? trim($post["search"]['value']) : false;
         $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
         $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
         $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
@@ -12493,14 +12493,13 @@ class Employee_model extends CI_Model {
     }
 
     protected function sbrPaymentsDataQuery($search=null) {
-        $filterFields = array("sb.sbr_no", "sb.payment_date", "sb.company_code", "sb.month_name", "sb.year");
+        $filterFields = array("sb.sbr_no", "DATE_FORMAT(sb.payment_date, '%m/%d/%Y')", "sb.company_code", "sb.month_name", "sb.year");
         $this->db->select('sb.id, sb.sbr_no, sb.company_id, sb.payment_date, sb.company_code, sb.month_name, sb.year, IFNULL(COUNT(sc.id), 0) as contribution_count');
         $this->db->from($this->sbrPaymentTable." sb");
         $this->db->join($this->sbrContributionTable." as sc", 'sc.sbr_id = sb.id', 'left');
         if (isset($search)) {
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
-                if($field == "sb.payment_date"){ $search = date("Y-m-d", strtotime($search)); }
                 ($key == 0) ? $this->db->like($field, $search, "both") : $this->db->or_like($field, $search, "both");
             }
             $this->db->group_end();
