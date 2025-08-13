@@ -75,7 +75,7 @@ $("#modal-sbr_payment #year").select2({
     $(e.target).validate();
     const cValue = $(e.target).val();
     const entryYear = moment(entryDate).year();
-    if(cValue == moment().year()){
+    if (cValue == moment().year()){
         let tempMonth = moment().format('M');
         tempMonth = parseInt(tempMonth) + 1;
         const monthSelect = $("#modal-sbr_payment #month");
@@ -88,7 +88,7 @@ $("#modal-sbr_payment #year").select2({
             });
             monthSelect.val("").trigger("change.select2");
         }
-    } else if(cValue >= entryYear){
+    } else if (cValue >= entryYear){
         let tempMonth = moment(entryDate).format('M');
         tempMonth = parseInt(tempMonth);
         const monthSelect = $("#modal-sbr_payment #month");
@@ -101,7 +101,7 @@ $("#modal-sbr_payment #year").select2({
             });
             monthSelect.val("").trigger("change.select2");
         }
-    } else{
+    } else {
         const monthSelect = $("#modal-sbr_payment #month");
         if(typeof monthSelect !== "undefined" && monthSelect.length > 0){
             monthSelect.empty();
@@ -211,14 +211,11 @@ $(document).on("click", ".btnEditSbrPayment", function (e) {
     const monthNum = moment().month(month_name).format("M");
     rawData.month = monthNum;
     vmSbrPayment.row = { ...rawData };
-    if(parseInt(contribution_count) === 0){
-        setTimeout(function () {
-            vmSbrPayment.setDatePicker();
-            vmSbrPayment.setSelect2Containers();
-        }, 250);
-    }else{
+    if(parseInt(contribution_count) > 0){
         vmSbrPayment.destroySelect2();
     }
+    setTimeout(() => { vmSbrPayment.setSelect2Containers(); }, 250);
+    vmSbrPayment.setDatePicker();
     $("#modal-edit_sbr_payment").modal("show");
 });
 
@@ -296,7 +293,6 @@ const vmSbrPayment = new Vue({
             }, destroy ? 0 : 150);
         },
         setSelect2Containers: function () {
-            const _this = this;
             const { company_id, month, year }= this.row;
             const currentElement = this.$el;
             $("#edit_company", currentElement).select2({
@@ -314,8 +310,8 @@ const vmSbrPayment = new Vue({
                 placeholder: 'Select Year',
                 dropdownParent: $(currentElement)
             }).on("select2:select", function(e){
-                const year = $(this).val();
-                if(year == moment().year()){
+                const cValue = $(this).val();
+                if (cValue == moment().year()){
                     let tempMonth = moment().format('M');
                     tempMonth = parseInt(tempMonth) + 1;
 
@@ -329,7 +325,20 @@ const vmSbrPayment = new Vue({
                         });
                         monthSelect.val("").trigger("change.select2");
                     }
-                }else{
+                } else if (cValue >= entryYear){
+                    let tempMonth = moment(entryDate).format('M');
+                    tempMonth = parseInt(tempMonth);
+                    const monthSelect = $("#edit_month", currentElement);
+                    if(typeof monthSelect !== "undefined" && monthSelect.length > 0){
+                        monthSelect.empty();
+                        $.each(months, function(k, v){
+                            const nOption = new Option(v.text, v.id, false, false);
+                            if(k < tempMonth){ nOption.disabled = true; }
+                            monthSelect.append(nOption);
+                        });
+                        monthSelect.val("").trigger("change.select2");
+                    }
+                } else {
                     const monthSelect = $("#edit_month", currentElement);
                     if(typeof monthSelect !== "undefined" && monthSelect.length > 0){
                         monthSelect.empty();
@@ -355,7 +364,6 @@ const vmSbrPayment = new Vue({
             $("#edit_company", currentElement).val(company_id).trigger("change");
             $("#edit_month", currentElement).val(month).trigger("change");
             $("#edit_year", currentElement).val(year).trigger("change");
-
             return this;
         }, setDatePicker: function () {
             const { payment_date }= this.row;

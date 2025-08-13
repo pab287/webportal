@@ -37,6 +37,7 @@ if(typeof filterHired !== "undefined" && filterHired.length == 1){
         const { id } = e.params.data;
         selectedCompanyId = id;
         $("#employee").val("").trigger("change");
+        $(e.target).validate();
     }).on("select2:unselect", function (e) {
         selectedCompanyId = null;
         $("#employee").val("").trigger("change");
@@ -63,6 +64,8 @@ if(typeof filterHired !== "undefined" && filterHired.length == 1){
         escapeMarkup: function (markup) {
             return markup;
         }
+    }).on("select2:select", function (e) {
+        $(e.target).validate();
     });    
 }
 
@@ -138,7 +141,7 @@ const dtTable = $("#table-sss_premium_contribution").DataTable({
     buttons: [
         {
             extend: 'print',
-            autoPrint: false,
+            autoPrint: true,
             text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT</span>',
             className: "pull-right printAction btnPrint",
             title: function () {
@@ -207,7 +210,7 @@ const dtTable = $("#table-sss_premium_contribution").DataTable({
                         let tempValue = v.value;
                         tempValue = tempValue ? tempValue.toUpperCase() : tempValue;
 
-                        if (tempLabel && v.is_active == true) {
+                        if (tempLabel && v.is_active === true) {
                             let tempCell = `<div style='display: inline-block; position: relative; width: 30%; margin-top: 30px;'>
                                 <p style='font-weight: bold;'>${tempLabel}:</p>
                                 <p style='font-weight: 600; margin-left: 40px; margin-right: 40px; margin-top: 50px; padding-top: 10px; border-top: 1px solid #000000;'>${tempValue}</p>
@@ -230,11 +233,11 @@ const dtTable = $("#table-sss_premium_contribution").DataTable({
         }
     ], drawCallback: function (settings) {
         const api = this.api();
+        const tempData = api.data();
         const btnPrint = $(settings.nTableWrapper).find(".printAction");
         const dtActions = $(settings.nTableWrapper).find(".dtActions");
         if (typeof btnPrint !== "undefined" && typeof dtActions !== "undefined") {
             btnPrint.addClass("btn m-btn btn-brand m-btn--icon m--hide animated fadeIn ml-1");
-            const tempData = api.data();
             if (tempData.length > 0) {
                 if (btnPrint.hasClass("m--hide") === true) { btnPrint.removeClass("m--hide"); }
                 if (dtActions.hasClass("m--hide") === true) { dtActions.removeClass("m--hide"); }
@@ -243,10 +246,26 @@ const dtTable = $("#table-sss_premium_contribution").DataTable({
                 if (btnPrint.hasClass("m--hide") === false) { btnPrint.addClass("m--hide"); }
             }
         }
-        const tempData = api.data();
-        if(tempData.length > 0){
-            getCurrentSignatories(selectedCompanyId);
+        const dtDetails = $(settings.nTableWrapper).find(".dtDetails");
+        if (typeof dtDetails !== "undefined" && tempData.length > 0) {
+            const { employee, company } = filters;
+            const employeeName = typeof employee.employee_name !== "undefined" ? employee.employee_name : '---';
+            const companyName = typeof company.company_name !== "undefined" ? company.company_name : 'GC&C, INC.';
+            const sssNo = typeof employee.sss_no !== "undefined" ? employee.sss_no : '---';
+            dtDetails.html(`<div class="row">
+                    <div class="col-12 col-md-12 col-lg-12 col-sm-12">
+                        <p class="mb-0"><strong>COMPANY: </strong>${companyName}</p>
+                    </div>
+                    <div class="col-7 col-md-7 col-lg-7 col-sm-12">
+                    <p class="mb-0"><strong>EMPLOYEE NAME: </strong>${employeeName}</p>
+                    </div>
+                    <div class="col-5 col-md-5 col-lg-5 col-sm-12">
+                        <p class="mb-0"><strong>SSS NUMBER: </strong>${sssNo}</p>
+                    </div>
+                </div>`);
+
         }
+        if(tempData.length > 0){ getCurrentSignatories(selectedCompanyId); }
     }
 });
 
@@ -289,10 +308,11 @@ $.validate({
                     dtTable.clear().rows.add(json.data).draw(false);
                     responseContent.rows = json.data;
                     responseContent.count = json.count;
-
                     toastr.success(json.toastr_msg, "Filtered Options");
                 } else {
+                    responseContent.count = json.count;
                     toastr.error(json.toastr_msg, "Filtered Options");
+                    dtTable.clear().rows.add([]).draw(false);
                 }
                 currentForm.find(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
             }

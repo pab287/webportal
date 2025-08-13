@@ -61,16 +61,14 @@ span.help-block.form-error {
                     <div class="row">
                         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                             <div class="form-group">
-                                <label for="company" class="m--font-bolder">COMPANY <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">( Optional )</span></label>
-                                <select name="company" id="company" class="form-control"><option></option></select>
+                                <label for="company" class="m--font-bolder required">COMPANY</label>
+                                <select name="company" id="company" class="form-control" data-validation="required"><option></option></select>
                             </div>
                         </div>
                         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                             <div class="form-group">
-                                <label for="employee" class="m--font-bolder required">Employee</label>
-                                <select name="employee" id="employee" class="form-control" data-validation="required">
-                                    <option></option>
-                                </select>
+                                <label for="employee" class="m--font-bolder required">EMPLOYEE</label>
+                                <select name="employee" id="employee" class="form-control" data-validation="required"><option></option></select>
                             </div>
                         </div>
                     </div>

@@ -3136,15 +3136,18 @@ class Reports_model extends CI_Model{
                 $resultset["response"] = true;
                 $resultset["data"] = $q->result();
                 $resultset["count"] = $q->num_rows();
+                $resultset["toastr_msg"] = "A total of <strong>" . $resultset["count"] . "</strong> record(s) found.";
             }else{
                 $resultset["response"] = false;
                 $resultset["data"] = array();
                 $resultset["count"] = 0;
+                $resultset["toastr_msg"] = "No record(s) found.";
             }
         }else{
             $resultset["response"] = false;
             $resultset["data"] = array();
             $resultset["count"] = 0;
+            $resultset["toastr_msg"] = "No record(s) found.";
         }
         return $resultset;
     }
