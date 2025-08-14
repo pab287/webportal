@@ -2046,4 +2046,16 @@
             $data = $this->employee_model->updateSbrPayment();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
+        
+        public function get_employee_loan_remarks($id){
+            $this->load->model("payroll/employee_m", "payroll_employee");
+            $data = $this->payroll_employee->getLoanRemark($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_employee_loan_iterest_charge_history($id){
+            $this->load->model("payroll/employee_m", "payroll_employee");
+            $data = $this->payroll_employee->getEmployeeLoanInterestChargeHistory($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
     }
