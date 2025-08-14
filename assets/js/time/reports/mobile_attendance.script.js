@@ -1,10 +1,14 @@
+const modalPreview = $("#modal-preview-mobile_attendance");
 let _companies = [];
-$tempDate = "2025-07-13";
-const defaultDate = moment($tempDate).subtract('1', 'days').format("MMM. DD, YYYY");
+let psEmployeeGroup = [];
+//const $tempDate = "2025-07-13";
+const defaultDate = moment().subtract('1', 'days').format("MMM. DD, YYYY");
 const nDate = defaultDate + " - " + defaultDate;
 $("#date-range").val(nDate);
 
-if(typeof _tempContentData.companies !== "undefined" && _tempContentData.companies.length > 0){ _companies = _tempContentData.companies; }
+if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
+    if(typeof _tempContentData.companies !== "undefined" && _tempContentData.companies.length > 0){ _companies = _tempContentData.companies; }
+}
 $("#company")
 .select2({
     placeholder: 'Select an option',
@@ -12,7 +16,7 @@ $("#company")
     data: _companies,
     allowClear: true,
 }).on("select2:select", function (data) {
-    $(data.target).validate();
+    /*** $(data.target).validate(); ***/
 });
 
 $("#employees")
@@ -67,7 +71,7 @@ $("#payroll_group").select2({
                         if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
                             tempEmployeeSelector.empty();
                             $.each(tempData, function (ii, vv) {
-                                var tempOption = new Option(vv.text, vv.id, true, true);
+                                const tempOption = new Option(vv.text, vv.id, true, true);
                                 tempEmployeeSelector.append(tempOption);
                             });
                             tempEmployeeSelector.prop("disabled", true);
@@ -82,7 +86,7 @@ $("#payroll_group").select2({
             if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
                 tempEmployeeSelector.empty();
                 $.each(employees, function (ii, vv) {
-                    var tempOption = new Option(vv.text, vv.id, true, true);
+                    const tempOption = new Option(vv.text, vv.id, true, true);
                     tempEmployeeSelector.append(tempOption);
                 });
                 tempEmployeeSelector.prop("disabled", true);
@@ -120,7 +124,7 @@ $("#payroll_group").select2({
                         if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
                             tempEmployeeSelector.empty();
                             $.each(tempData, function (ii, vv) {
-                                var tempOption = new Option(vv.text, vv.id, true, true);
+                                const tempOption = new Option(vv.text, vv.id, true, true);
                                 tempEmployeeSelector.append(tempOption);
                             });
                             tempEmployeeSelector.prop("disabled", true);
@@ -149,9 +153,8 @@ $("#date-picker").daterangepicker({
     locale: { format: 'MM/DD/YYYY' },
     maxDate: moment().format("MM/DD/YYYY")
 }).on('apply.daterangepicker', function (ev, picker) {
-    $("#date-range")
-    .val(picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY'))
-    .validate();
+    $("#date-range").val(picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY'))
+    /*** $("#date-range").validate(); ***/
 });
 
 const dtTable = $("#mobile_attendance_logs").DataTable({
@@ -185,37 +188,145 @@ const dtTable = $("#mobile_attendance_logs").DataTable({
         },
         { data: "date", width: "10%", className: "text-center", render: function (data) { return moment(data).format("MM/DD/YYYY"); } },
         { data: "time", width: "10%", className: "text-center", render: function (data) { return moment(data, "HH:mm:ss").format("hh:mm A"); } },
-        { data: "time_status", width: "14%", className: "text-center", render: function (data) { return data ? data : "---"; } },
+        { data: "time_status", width: "14%", className: "text-center", render: function (data) { return data != null ? data : "---"; } },
         { data: "in_location", width: "11%", className: "text-center", orderable: false },
-        { data: "address", width: "*", orderable: false }],
+        { data: "address", width: "*", orderable: false },
+        { data: null, width: "7%", className: "text-center", orderable: false, render: function (data, type, row) {
+            const rawData = JSON.stringify(row);
+            return `<button class="btn btn-sm btn-outline-info m-btn m-btn--icon m-btn--icon-only m-btn--custom m-btn--pill m-btn--air btnView btnPreviewMobileAttendance" data-row='${rawData}'
+            data-toogle="m-tooltip" data-placement="top" title="View Mobile Attendance">
+            <i class="la la-map-marker"></i>
+            </button>`;
+        }},
+    ],
         drawCallback: function (settings) {
             const api = this.api();
             const rows = api.rows({ page: 'current' }).nodes();
             const pageRows = api.rows({ page: 'current' }).data();
             let last = null;
             api.column(0, { page: 'current' })
-                .data()
-                .each(function (group, i) {
-                    last = (last !== null) ? last.toUpperCase() : last;
-                    group = (group !== null) ? group.toUpperCase() : group;
-                    const empHeaderIndex = api.rows(i)[0];
-                    const row = pageRows[empHeaderIndex];
-                    if (last !== group) {
-                        let cbElement = '';
-                        $(rows).eq(i).before(
-                            `<tr class="group tr-header-${row.emp_id}">
-                                <td colspan="12">
-                                    ${cbElement}
-                                    <span style="font-weight: normal; color: whitesmoke;">${row.biometricno}</span>
-                                    <span class="ml-2">${group}</span>
-                                </td>
-                            </tr>`
-                        );
+            .data()
+            .each(function (group, i) {
+                last = (last !== null) ? last.toUpperCase() : last;
+                group = (group !== null) ? group.toUpperCase() : group;
+                const empHeaderIndex = api.rows(i)[0];
+                const row = pageRows[empHeaderIndex];
+                if (last !== group) {
+                    let cbElement = '';
+                    $(rows).eq(i).before(
+                        `<tr class="group tr-header-${row.emp_id}">
+                            <td colspan="12">
+                                ${cbElement}
+                                <span style="font-weight: normal; color: whitesmoke;">${row.biometricno}</span>
+                                <span class="ml-2">${group}</span>
+                            </td>
+                        </tr>`
+                    );
 
-                        last = group;
-                    }
-                });
+                    last = group;
+                }
+            });
+
+            const { geofence } = settings.json;
+            vmPreviewMobileAttendance.geofences = { ...geofence };
         }
 });
 
-jQuery(document).ready(function () {});
+const vmPreviewMobileAttendance = new Vue({
+    el: "#preview-mobile_attendance", 
+    data: { row: {}, map: null, marker: null, geofences: {} },
+    methods: {
+        dateTimeFormatter: function(){
+            const { date, time } = this.row;
+            const dateTime = date + " " + time;
+            return moment(new Date(dateTime), "YYYY-MM-DD HH:mm:ss").format("LLL");
+        }, initTempMap: function () {
+            const _this = this;
+            const { latitude: lat, longtitude: lng, employee_id } = _this.row;
+            const location = { lat: parseFloat(lat), lng: parseFloat(lng) };
+
+            _this.map = new google.maps.Map(_this.$refs.googleMap, {
+                center: location,
+                zoom: 18,
+                fullscreenControl: false,
+                streetViewControl: false,
+                zoomControl: false,
+                gestureHandling: "none",
+                mapTypeId: 'satellite',
+                mapTypeControl: false,
+                mapId: "61eadc851067d069",
+            });
+
+            const { AdvancedMarkerElement } = google.maps.marker;
+            _this.marker = new AdvancedMarkerElement({
+                position: location,
+                map: _this.map,
+                title: "Mobile Attendance Location"
+            });
+
+            if(typeof _this.geofences[employee_id] != "undefined" && _this.geofences[employee_id].length > 0){
+                const polygonData = _this.geofences[employee_id];
+                polygonData.forEach(coords => {
+                    coords = coords.map(item => { return { lat: parseFloat(item.lat), lng: parseFloat(item.lng) }; });
+                    return new google.maps.Polygon({
+                        paths: coords,
+                        strokeColor: "#ffd000ff",
+                        strokeOpacity: 0.8,
+                        strokeWeight: 2,
+                        fillColor: "#00ff6aff",
+                        fillOpacity: 0.35,
+                        map: _this.map
+                    });
+                });
+
+            }
+        }
+    }
+});
+jQuery(document).on("click", ".btnPreviewMobileAttendance", function () {
+    const _self = $(this);
+    const data = _self.data("row");
+    vmPreviewMobileAttendance.row = { ...data };
+    vmPreviewMobileAttendance.initTempMap();
+    modalPreview.modal("show"); 
+});
+
+$.validate({
+    form: "#frm-filter",
+    lang: "en",
+    onSuccess: function (form) {
+        const currentForm = form[0];
+        let propDisabled = false;
+        const tempEmployeeFilter = $(currentForm).find("select#employee");
+        if(typeof tempEmployeeFilter !== "undefined"){
+            propDisabled = tempEmployeeFilter.is(":disabled");
+            if(propDisabled){ tempEmployeeFilter.prop("disabled", false); }
+        }
+
+        const formData = $(currentForm).serialize();
+        if(propDisabled){ tempEmployeeFilter.prop("disabled", true); }
+        console.log(formData);
+        return false;
+    }
+});
+
+const resetFilter = function (event) {
+    const form = $(event).closest("form");
+    if (typeof form !== "undefined" && form.length == 1) {
+        const select2 = form.find("#employees, #payroll_group");
+        if (typeof select2 !== "undefined" && select2.length > 0) {
+            $.each(select2, function (i, v) {
+                const multi = $(v)[0].multiple;
+                if (multi) {
+                    $(v).val([])
+                        .trigger("change")
+                        .prop("disabled", false);
+                } else {
+                    $(v).val("")
+                        .trigger("change");
+                }
+            });
+        }
+        psEmployeeGroup = [];
+    }
+}

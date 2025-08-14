@@ -17,7 +17,7 @@
                     </div>
                 </div>
                 <div class="m-portlet__body">
-                    <form action="" class="m-form" id="frm-filter">
+                    <form class="m-form" id="frm-filter">
                         <div class="form-group m-form__group pb-0">
                             <label for="date-range" class="m-form__label required">Date</label>
                             <div class="input-group" id="date-picker">
@@ -92,6 +92,7 @@
 									<th>Status</th>
 									<th>In Location</th>
 									<th>Location Address</th>
+                                    <th>Action</th>
 								</tr>
 							</thead>
 							<tbody></tbody>
@@ -101,4 +102,70 @@
 			</div>
 		</div>
 	</div>
+
+    <div class="modal fade" id="modal-preview-mobile_attendance" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Preview Attendance</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="preview-mobile_attendance" class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="m-widget3">
+                                <div class="m-widget3__item">
+                                    <div class="m-widget3__header">
+                                        <div class="m-widget3__info pl-0">
+                                            <p class="m-widget3__username mb-0"><span v-text="row.employee_name">&nbsp;</span>
+                                                <span class="ml-5 m--font-primary" v-text="row.biometricno">&nbsp;</span>
+                                            </p>
+                                            <p class="m-widget3__time" v-text="dateTimeFormatter()">&nbsp;</p>
+                                        </div>
+                                    </div>
+                                    <div class="m-widget3__body">
+                                        <p class="m-widget3__text" v-text="row.address">&nbsp;</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <table class="table table-striped" style="width:100%">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th class="text-center">Punch Status</th>
+                                        <th class="text-center">In Location</th>
+                                        <th>Longitude</th>
+                                        <th>Latitude</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td v-text="row.date">&nbsp;</td>
+                                        <td v-text="row.time">&nbsp;</td>
+                                        <td class="text-center" v-text="row.time_status">&nbsp;</td>
+                                        <td class="text-center">
+                                            <span class="m--font-boldest" :class="row.in_location == 'Yes' ? 'text-success' : 'text-danger'"
+                                            v-text="row.in_location">&nbsp;</span>
+                                        </td>
+                                        <td v-text="row.longtitude">&nbsp;</td>
+                                        <td v-text="row.latitude">&nbsp;</td>
+                                    </tr>
+                            </table>
+                        </div>
+                        <div class="col-12">
+                            <div ref="googleMap" style="width: 100%; height: 400px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

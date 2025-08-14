@@ -5,6 +5,11 @@ class Attendance_model extends CI_Model {
     protected $tbl_payroll_group = "payroll.payroll_group";
     protected $tbl_app_attendance = "gcctimeutility.app_attendance";
     protected $tbl_companies = "gcchris.tblcompanies";
+    protected $tbl_personnel = "gcctimeutility.personnel";
+    protected $tbl_personnel_location = "gcctimeutility.personnel_locations";
+    protected $tbl_applocation_sites = "gcctimeutility.app_location_sites";
+    protected $tbl_appusers = "gcctimeutility.app_users";
+
     public function __construct() {
         parent::__construct();
         $this->load->model("gcctime/Biometric_model", "biometric");
@@ -1632,11 +1637,12 @@ class Attendance_model extends CI_Model {
         }
         $rowData = $this->getMobileAttendanceData($search, $limit, $offset, $sortBy, $sortOrder, $filters);
         $rowCount = $this->getMobileAttendanceCount($search, $filters);
-
+        $getGeofences = $this->getActiveGeofences();
         $resultset = array();
         $resultset["recordsTotal"] = $rowCount;
         $resultset["recordsFiltered"] = $rowCount;
         $resultset["data"] = $rowData;
+        $resultset["geofence"] = $getGeofences;
         return $resultset;
     }
 
@@ -1691,5 +1697,29 @@ class Attendance_model extends CI_Model {
         }
         $query = $dbQuery->get();
         return $query->num_rows();
+    }
+
+    public function getActiveGeofences() {
+        $arrGeofences = array();
+        $this->db->select("emp.id, site.geofence_polygon");
+        $this->db->from($this->tbl_appusers." app");
+        $this->db->join($this->tbl_employees." emp", "emp.id = app.emp_id", "INNER");
+        $this->db->join($this->tbl_personnel." per", "per.biometric_id = emp.biometricno OR per.biometricno = emp.biometricno", "INNER");
+        $this->db->join($this->tbl_personnel_location." loc", "loc.personnel_id = per.id", "INNER");
+        $this->db->join($this->tbl_applocation_sites." site", "site.id = loc.site_location_id", "INNER");
+        $this->db->group_start();
+        $this->db->where("site.geofence_polygon IS NOT NULL");
+        $this->db->where("site.geofence_polygon != ''");
+        $this->db->group_end();
+        $query = $this->db->get();
+        if($query->num_rows() > 0){
+            foreach ($query->result() as $site) {
+                $coords = @unserialize($site->geofence_polygon);
+                if(is_array($coords) && !empty($coords)){
+                    $arrGeofences[$site->id][] = $coords;
+                }
+            }
+        }
+        return $arrGeofences;
     }
 }
