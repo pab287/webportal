@@ -1,3 +1,9 @@
+<style>
+    #table-expiring-probees tbody * {
+        font-size: 12px;
+    }
+</style>
+
 <div class="m-content">
     <div class="m-portlet m-portlet--mobile">
         <div class="m-portlet__head">
@@ -11,7 +17,7 @@
         </div>
         <div class="m-portlet__body">
             <div class="table-responsive">
-                <table class="table table-bordered table-hover" id="table-expiring-probees" width="100%">
+                <table class="table table-bordered table-hover table-striped" id="table-expiring-probees" width="100%">
                     <thead>
                     <tr>
                         <th></th>
@@ -19,11 +25,11 @@
                         <th>Position</th>
                         <th>ID #</th>
                         <th>Name</th>
+                        <th>Immediate Head</th>
                         <th>Date Hired</th>
                         <th>3rd Month</th>
-                        <!-- <th>4.5 Months</th> -->
                         <th>5th Month</th>
-                        <th>End Contract</th>
+                        <th>End of probationary</th>
                         <th>Days `til Eval.</th>
                     </tr>
                     </thead>

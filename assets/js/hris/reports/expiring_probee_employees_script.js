@@ -28,11 +28,36 @@ tblExpiringProbees = $('#table-expiring-probees')
                             dropdownEl.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
                         });
                 },
-                orientation: 'landscape'
+                orientation: 'landscape',
+                customize: function (doc) {
+                    doc.defaultStyle.fontSize = 8;
+                    doc.styles.tableHeader.fontSize = 10;
+                    doc.pageMargins = [20, 20, 20, 20];
+                },
             },
             {
                 extend: 'print',
                 title: 'EXPIRING PROBATIONARY EMPLOYEES',
+                customize: function (win) {
+                    const css = `
+                        @page { 
+                            size: A4 landscape; 
+                            margin: 10mm; 
+                        }
+                        body {
+                            font-size: 10px;
+                        }
+                        table {
+                            font-size: 10px;
+                        }
+                    `;
+
+                    const head = win.document.head || win.document.getElementsByTagName('head')[0];
+                    const style = win.document.createElement('style');
+                    style.type = 'text/css';
+                    style.appendChild(win.document.createTextNode(css));
+                    head.appendChild(style);
+                },
                 action: function (e, dt, node, config) {
                     const self = this;
                     getExportData(e, dt, node, config, self, baseUrl('hris/reports/get_expiring_employees/1/?work_status=PROBATIONARY'), 'print')
@@ -75,6 +100,7 @@ tblExpiringProbees = $('#table-expiring-probees')
             },
             {data: 'idno'},
             {data: 'name'},
+            {data: 'head'},
             {
                 data: 'date_hired',
                 render: function (data) {
@@ -87,12 +113,6 @@ tblExpiringProbees = $('#table-expiring-probees')
                     return moment(data).format('MMM DD, YYYY')
                 }
             },
-            // {
-            //     data: 'secondEvaluation',
-            //     render: function (data) {
-            //         return moment(data).format('MMM DD, YYYY')
-            //     }
-            // },
             {
                 data: 'finalEvaluation',
                 render: function (data) {
@@ -118,7 +138,7 @@ tblExpiringProbees = $('#table-expiring-probees')
             orderable: false,
             targets: 0
         }],
-        order: [[5, 'asc']],
+        order: [[6, 'asc']],
         pageLength: 50,
         initComplete: function () {
             const dropdown = '' +
