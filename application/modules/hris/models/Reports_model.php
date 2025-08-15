@@ -388,7 +388,7 @@ class Reports_model extends CI_Model{
 
             $res = is_array($query) && !empty($query) ? $query['name'] : null;
         } else {
-            $res = "N/A";
+            $res = null;
         }
 
         return $res;
