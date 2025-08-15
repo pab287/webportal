@@ -122,7 +122,7 @@ tblExpiringProbees = $('#table-expiring-probees')
             {
                 data: 'end_of_contract',
                 render: function (data) {
-                    return moment(data).format('MMM DD, YYYY')
+                    return data && data != "0000-00-00" ? moment(data).format('MMM DD, YYYY') : "";
                 }
             },
             {
