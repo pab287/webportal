@@ -99,37 +99,35 @@
             </div>
         </div>
 
-        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x" v-show="vm_tab3.level !== 'SUPERVISORY' && vm_tab3.level !== 'MANAGERIAL'  && vm_tab3.level !== 'EXECUTIVE' "></div>
-        <div class="row" v-show="vm_tab3.level !== 'SUPERVISORY' && vm_tab3.level !== 'MANAGERIAL'  && vm_tab3.level !== 'EXECUTIVE' ">
+        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x" v-show=" vm_tab3.level !== 'EXECUTIVE' "></div>
+        <div class="row" v-show="vm_tab3.level !== 'MANAGERIAL'  && vm_tab3.level !== 'EXECUTIVE' ">
             <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label text-center">
                 <label class="m-checkbox m-checkbox--check-bold m-checkbox--state-brand col-form-label" style="padding-top: 1px !important">
                     <input type="checkbox" id="is_two_level" :checked="vm_tab3.current_tl_supervisory == 1 ? true : false" name="tl_supervisory" value="1"> 
-                    <label for=""> TWO LEVEL SUPERVISORY </label>
+                    <label for="is_two_level"> TWO LEVEL SUPERIOR </label>
                     <span></span>
                 </label>
-                <span class="flaticon-questions-circular-button" data-placement='right' data-toggle='m-tooltip' title='' data-original-title='Click box to enable Two Level Supervisory' data-skin="dark" style="font-size: 15px; margin-left: 3px;"></span>
+                <span class="flaticon-questions-circular-button" data-placement='right' data-toggle='m-tooltip' title='' data-original-title='Click box to enable Two Level Superior' data-skin="dark" style="font-size: 15px; margin-left: 3px;"></span>
             </div>
         </div>
-        <div class="row m--margin-bottom-10" v-show="vm_tab3.level !== 'SUPERVISORY' && vm_tab3.level !== 'MANAGERIAL'  && vm_tab3.level !== 'EXECUTIVE' ">
+        <div class="row m--margin-bottom-10" v-show="vm_tab3.level !== 'EXECUTIVE' ">
             <div class="col-12 col-sm-12 col-md-8 col-lg-8 col-xl-8">
                 <div class="form-group m-form__group row">
-                    <label for="position" class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label required">Immediate Supervisor:</label>
+                    <label for="position" class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label required">Immediate Superior:</label>
                     <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
-                        <select id="m--input-supervisor_id" class="form-control m-input select2" name="supervisor" placeholder="Select an option"
-                                v-model="vm_tab3.supervisor" data-validation="required">
+                        <select id="m--input-supervisor_id" class="form-control m-input select2" name="supervisor" placeholder="Select an option" v-model="vm_tab3.supervisor" data-validation="required">
                             <option value="0">None</option>
                         </select>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="row m--margin-bottom-10" v-show="vm_tab3.level !== 'SUPERVISORY' && vm_tab3.level !== 'MANAGERIAL'  && vm_tab3.level !== 'EXECUTIVE' ">
+        <div class="row m--margin-bottom-10" v-show="vm_tab3.level !== 'MANAGERIAL'  && vm_tab3.level !== 'EXECUTIVE' ">
             <div class="col-12 col-sm-12 col-md-8 col-lg-8 col-xl-8" v-show="vm_tab3.current_tl_supervisory == 1">
                 <div id="remove-initial-class" class="form-group m-form__group row">
                     <label for="position" class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label required">Department Manager:</label>
                     <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
-                        <select id="m--input-manager_id" class="form-control m-input select2" name="manager" placeholder="Select an option"
-                                v-model="vm_tab3.manager" data-validation="required">
+                        <select id="m--input-manager_id" class="form-control m-input select2" name="manager" placeholder="Select an option" v-model="vm_tab3.manager" data-validation="required">
                             <option value="0">None</option>
                         </select>
                     </div>
