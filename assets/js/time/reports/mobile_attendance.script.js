@@ -1,6 +1,7 @@
 const modalPreview = $("#modal-preview-mobile_attendance");
 let _companies = [];
 let psEmployeeGroup = [];
+let globalFormData = null;
 //const $tempDate = "2025-07-13";
 const defaultDate = moment().subtract('1', 'days').format("MMM. DD, YYYY");
 const nDate = defaultDate + " - " + defaultDate;
@@ -297,7 +298,7 @@ $.validate({
     onSuccess: function (form) {
         const currentForm = form[0];
         let propDisabled = false;
-        const tempEmployeeFilter = $(currentForm).find("select#employee");
+        const tempEmployeeFilter = $(currentForm).find("select#employees");
         if(typeof tempEmployeeFilter !== "undefined"){
             propDisabled = tempEmployeeFilter.is(":disabled");
             if(propDisabled){ tempEmployeeFilter.prop("disabled", false); }
@@ -305,7 +306,7 @@ $.validate({
 
         const formData = $(currentForm).serialize();
         if(propDisabled){ tempEmployeeFilter.prop("disabled", true); }
-        console.log(formData);
+        getScriptRendering(currentForm.action, formData, currentForm);
         return false;
     }
 });
@@ -329,4 +330,23 @@ const resetFilter = function (event) {
         }
         psEmployeeGroup = [];
     }
+}
+
+const getScriptRendering = function (formUrl, formData, currentForm) {
+    $.ajax({
+        url: formUrl,
+        type: "POST",
+        dataType: "JSON",
+        data: formData,
+        beforeSend: function () {
+            $(currentForm)
+                .find(".btn-submit")
+                .addClass("m-btn--custom m-loader m-loader--light m-loader--right")
+                .prop("disabled", true);
+        },
+        success: function (json) {
+            if (json.response) {}
+            console.log(json);
+        }
+    });
 }

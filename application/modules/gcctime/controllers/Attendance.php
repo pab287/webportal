@@ -1668,4 +1668,11 @@
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
         }
+
+        public function get_mobile_attendance_data() {
+            $data = $this->attendance->getMobileAttendanceDataRecord();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
     }

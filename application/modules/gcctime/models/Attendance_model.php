@@ -1635,6 +1635,7 @@ class Attendance_model extends CI_Model {
             $date01 = date("Y-m-d", strtotime(trim($tempDate[1])));
             $filters["dates"] = array("from" => $date00, "to" => $date01);
         }
+
         $rowData = $this->getMobileAttendanceData($search, $limit, $offset, $sortBy, $sortOrder, $filters);
         $rowCount = $this->getMobileAttendanceCount($search, $filters);
         $getGeofences = $this->getActiveGeofences();
@@ -1685,7 +1686,6 @@ class Attendance_model extends CI_Model {
             $dbQuery->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
         }
         $query = $dbQuery->get();
-        //var_dump($this->db->last_query());
         return $query->result();
     }
 
@@ -1721,5 +1721,27 @@ class Attendance_model extends CI_Model {
             }
         }
         return $arrGeofences;
+    }
+
+    public function getMobileAttendanceDataRecord(){
+        $post = $this->input->post();
+        if(isset($post) && $post){
+            $dateTime = date("Y-m-d H:i:s", strtotime("-1 years"));
+            $this->db->select("app.date, app.time, app.address, app.longtitude, app.latitude, app.time_status, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+                CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                        TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+                END,' ', UPPER(TRIM(emp.lastname)),
+                CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                    UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                    emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
+                END) as employee_name, emp.biometricno, comp.code as company_code, IF(app.state = '0', 'Yes', 'No') as in_location, app.updated_at, emp.id as  employee_id");
+            $this->db->from($this->tbl_app_attendance." app");
+            $this->db->join($this->tbl_employees." emp", "emp.biometricno = app.biometric_id", "INNER");
+            $this->db->join($this->tbl_companies." comp", "comp.id = emp.company_id", "INNER");
+            $this->db->where("app.time_status !=", "");
+            $this->db->where("app.updated_at >=", $dateTime);
+        }
+        return $post;
     }
 }

@@ -17,12 +17,13 @@
                     </div>
                 </div>
                 <div class="m-portlet__body">
-                    <form class="m-form" id="frm-filter">
+                    <form class="m-form" id="frm-filter" action="<?php echo base_url('gcctime/attendance/get_mobile_attendance_data'); ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                         <div class="form-group m-form__group pb-0">
                             <label for="date-range" class="m-form__label required">Date</label>
                             <div class="input-group" id="date-picker">
                                 <input type="text" class="form-control m-input" readonly="" placeholder=""
-                                       name="date-range" id="date-range" data-validation="required">
+                                       name="date_range" id="date-range" data-validation="required">
                                 <span class="input-group-addon">
                                     <i class="la la-calendar-check-o"></i>
                                 </span>

@@ -9462,7 +9462,7 @@
             $this->db->where("psloanpayments.loan_id", $id);
             $this->db->order_by("ps.pay_date", "DESC");
             $resultSet["data"] = $this->db->get("payroll.payroll_sheet_loan_payments psloanpayments")->result();
-            return $resultSet;
+            return $resultSet; 
         }
 
         function getEmployeeLoanInterestChargeHistory($id) {
