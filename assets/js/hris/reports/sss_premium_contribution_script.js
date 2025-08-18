@@ -118,6 +118,63 @@ const responseContent = new Vue({
     data: { rows: [], count: 0 }
 });
 
+const vmPortletSignatories = new Vue({
+    el: "#portlet--signatories",
+    data: { row: {}, count: 0 },
+    methods: {
+        openModalSignatory: function () {
+            return psSignatoryModal.modal("show");
+        },
+        resetModalSignatory: function () {
+            return psResetSignatoryModal.modal("show");
+        }
+    }
+});
+
+const toggleActionsVisibility = (api, tableWrapper) => {
+  const data = api.data();
+  const printButton = $(tableWrapper).find(".printAction");
+  const actions = $(tableWrapper).find(".dtActions");
+  
+  if (printButton && actions) {
+    printButton.addClass("btn m-btn btn-brand m-btn--icon m--hide animated fadeIn ml-1");
+    
+    const shouldShowActions = data.length > 0;
+    printButton.toggleClass("m--hide", !shouldShowActions);
+    actions.toggleClass("m--hide", !shouldShowActions);
+  }
+}
+
+const displayDetails = (api, tableWrapper) => {
+  const tableData = api.data();
+  const detailsElement = $(tableWrapper).find(".dtDetails");
+
+  if (detailsElement && tableData.length > 0) {
+    const { employee, company } = filters;
+    const employeeName = employee.employee_name || '---';
+    const companyName = company.company_name || 'GC&C, INC.';
+    const sssNumber = employee.sss_no || '---';
+
+    const detailsHtml = `
+      <div class="row">
+        <div class="col-12 col-md-12 col-lg-12 col-sm-12">
+          <p class="mb-0"><strong>COMPANY: </strong>${companyName}</p>
+        </div>
+        <div class="col-7 col-md-7 col-lg-7 col-sm-12">
+          <p class="mb-0"><strong>EMPLOYEE NAME: </strong>${employeeName}</p>
+        </div>
+        <div class="col-5 col-md-5 col-lg-5 col-sm-12">
+          <p class="mb-0"><strong>SSS NUMBER: </strong>${sssNumber}</p>
+        </div>
+      </div>
+    `;
+
+    detailsElement.html(detailsHtml);
+  } else {
+    detailsElement.html('');
+  }
+}
+
 const dtTable = $("#table-sss_premium_contribution").DataTable({
     dom: "<'row'<'col-md-8 dtDetails'><'col-md-4 dtActions m--hide'B>>rtlp",
     serverSide: false,
@@ -234,38 +291,13 @@ const dtTable = $("#table-sss_premium_contribution").DataTable({
     ], drawCallback: function (settings) {
         const api = this.api();
         const tempData = api.data();
-        const btnPrint = $(settings.nTableWrapper).find(".printAction");
-        const dtActions = $(settings.nTableWrapper).find(".dtActions");
-        if (typeof btnPrint !== "undefined" && typeof dtActions !== "undefined") {
-            btnPrint.addClass("btn m-btn btn-brand m-btn--icon m--hide animated fadeIn ml-1");
-            if (tempData.length > 0) {
-                if (btnPrint.hasClass("m--hide") === true) { btnPrint.removeClass("m--hide"); }
-                if (dtActions.hasClass("m--hide") === true) { dtActions.removeClass("m--hide"); }
-            } else {
-                if (dtActions.hasClass("m--hide") === false) { dtActions.addClass("m--hide"); }
-                if (btnPrint.hasClass("m--hide") === false) { btnPrint.addClass("m--hide"); }
-            }
-        }
-        const dtDetails = $(settings.nTableWrapper).find(".dtDetails");
-        if (typeof dtDetails !== "undefined" && tempData.length > 0) {
-            const { employee, company } = filters;
-            const employeeName = typeof employee.employee_name !== "undefined" ? employee.employee_name : '---';
-            const companyName = typeof company.company_name !== "undefined" ? company.company_name : 'GC&C, INC.';
-            const sssNo = typeof employee.sss_no !== "undefined" ? employee.sss_no : '---';
-            dtDetails.html(`<div class="row">
-                    <div class="col-12 col-md-12 col-lg-12 col-sm-12">
-                        <p class="mb-0"><strong>COMPANY: </strong>${companyName}</p>
-                    </div>
-                    <div class="col-7 col-md-7 col-lg-7 col-sm-12">
-                    <p class="mb-0"><strong>EMPLOYEE NAME: </strong>${employeeName}</p>
-                    </div>
-                    <div class="col-5 col-md-5 col-lg-5 col-sm-12">
-                        <p class="mb-0"><strong>SSS NUMBER: </strong>${sssNo}</p>
-                    </div>
-                </div>`);
-
-        }
+        toggleActionsVisibility(api, settings.nTableWrapper);
+        displayDetails(api, settings.nTableWrapper);
         if(tempData.length > 0){ getCurrentSignatories(selectedCompanyId); }
+        else{
+            vmPortletSignatories.row = {};
+            vmPortletSignatories.count = 0;
+        }
     }
 });
 
@@ -319,19 +351,6 @@ $.validate({
         });
 
         return false;
-    }
-});
-
-const vmPortletSignatories = new Vue({
-    el: "#portlet--signatories",
-    data: { row: {}, count: 0 },
-    methods: {
-        openModalSignatory: function () {
-            return psSignatoryModal.modal("show");
-        },
-        resetModalSignatory: function () {
-            return psResetSignatoryModal.modal("show");
-        }
     }
 });
 
