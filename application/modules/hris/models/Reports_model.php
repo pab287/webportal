@@ -316,9 +316,9 @@ class Reports_model extends CI_Model{
 
         foreach($query as $row) {
 
-            if ($row['level'] ==  'MANAGERIAL' || $row['level'] ==  'SUPERVISORY' || $row['level'] == 'Department Head') {
+            if ($row['level'] == 'EXECUTIVE') {
                 // Automatic under cla ky CMD kng manager or supervisor cla
-                $head_name = "CHARLES ANTHONY DUMANCAS";
+                $head_name = $row['name'];
             } else {
                 // Kng indi sa supervisor_meta ko ma look up ky hambal nla sa employee data butungon ang head, indi sa department
                 $sup_val = $row['supervisor_meta'];
@@ -330,7 +330,7 @@ class Reports_model extends CI_Model{
                     $supervisory_data = unserialize($sup_val);
 
                     if (is_array($supervisory_data)) {
-                        $priority_head = $supervisory_data['managerial'] ?? $supervisory_data['supervisory'] ?? null;
+                        $priority_head = $supervisory_data['supervisory'] ?? $supervisory_data['managerial'] ?? null;
                         $head_id = (int)$priority_head;
 
                         $head_name = $this->get_head_by_id($head_id);
