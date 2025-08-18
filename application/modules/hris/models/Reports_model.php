@@ -317,7 +317,7 @@ class Reports_model extends CI_Model{
         foreach($query as $row) {
 
             if ($row['level'] == 'EXECUTIVE') {
-                // Automatic under cla ky CMD kng manager or supervisor cla
+                // Automatic they're own boss of themselves 😎
                 $head_name = $row['name'];
             } else {
                 // Kng indi sa supervisor_meta ko ma look up ky hambal nla sa employee data butungon ang head, indi sa department
