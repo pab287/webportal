@@ -208,7 +208,7 @@
             </div>
         </div>
     </div>
-    <div class="row">
+    <div class="row" id="m-content">
         <div class="col-lg-12 col-md-12 col-sm-12">
             <div class="m-portlet">
                 <div class="m-portlet__head">
@@ -218,7 +218,7 @@
                                 <i class="flaticon-truck"></i>
                             </span>
                             <h3 class="m-portlet__head-text">
-                                Total Aproved Travel Orders
+                                Total Approved Travel Orders
                             </h3>
                         </div>
                     </div>
