@@ -1648,7 +1648,7 @@
 
         function get_employee_loan_payment_history($id) {
             $this->load->model("payroll/employee_m");
-            echo json_encode($this->employee_m->getEmployeeLoanPaymentHistory($id));
+            echo json_encode($this->employee_m->getEmployeeLoanPaymentHistory($id)); 
         }
 
         function save_one_month_days_gap_setup(){
