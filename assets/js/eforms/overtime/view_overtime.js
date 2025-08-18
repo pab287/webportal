@@ -22,6 +22,9 @@ const vmTab1 = new Vue({
                 const startTime = moment(startDate);
                 const timeDifference = Math.abs(currentDate - startTime);
                 const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+                /*** hotfix for undo approvals ***/
+                if(startTime >= currentDate){ return true; }
+                /*** hotfix for undo approvals ***/
                 return daysDifference <= 15;
             }
             return false;
