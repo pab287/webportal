@@ -16,7 +16,7 @@ class Travel_order extends MY_Controller
 
     public function index()
     {
-        $this->core_layout->setPrivilegeName("eforms_travel_order");
+        $this->core_layout->setPrivilegeName("to_dashboard");
         $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
         $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
         $this->core_layout->addJs("global/js/amcharts4/core.js", true);
