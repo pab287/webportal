@@ -67,6 +67,5 @@ class Time_in_out extends Dbase{
         $data = $this->TIO->app_version();
         echo $data;
     }
-    
 }
 ?>

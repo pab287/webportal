@@ -81,6 +81,32 @@
 					</div>
 				</div>
 				<div class="m-portlet__body">
+                    <div id="statusFilter" class="mb-2 m-animate-fade-in" v-if="count > 0">
+                        <div class="m-form__group form-group row">
+                            <label for="" class="col-2 col-form-label">
+                                Site Location Status
+                            </label>
+                            <div class="col-10">
+                                <div class="m-radio-inline">
+                                    <label class="m-radio">
+                                        <input type="radio" value="all" v-model="status">
+                                        All
+                                        <span></span>
+                                    </label>
+                                    <label class="m-radio">
+                                        <input type="radio" value="Yes" v-model="status">
+                                        <label for="" class="m--font-success">Inside Location</label>
+                                        <span></span>
+                                    </label>
+                                    <label class="m-radio">
+                                        <input type="radio" value="No" v-model="status">
+                                        <label for="" class="m--font-danger">Outside Location</label>
+                                        <span></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 					<div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
 						<table class="table table-striped table-bordered" id="mobile_attendance_logs" style="width:100%">
 							<thead>
@@ -159,7 +185,7 @@
                             </table>
                         </div>
                         <div class="col-12">
-                            <div ref="googleMap" style="width: 100%; height: 400px;"></div>
+                            <div class="m-animate-fade-in" ref="googleMap" style="width: 100%; height: 400px;"></div>
                         </div>
                     </div>
                 </div>

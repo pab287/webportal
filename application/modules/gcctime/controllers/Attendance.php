@@ -45,6 +45,8 @@
             $this->core_layout->setPrivilegeName("gcctime_attendance_mobile");
             $arrData = array("companies" => $this->attendance->select2CompanyData());
             $this->core_layout->addExternalJs("https://maps.googleapis.com/maps/api/js?key=" . $_ENV['PROD_MAP_KEY']."&libraries=geometry,marker&loading=async", true);
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
             $this->core_layout->addJs("js/time/reports/mobile_attendance.script.js", true, $arrData);
             $this->load->view('core/templates/header');
             $this->load->view('attendance/mobile_attendance');

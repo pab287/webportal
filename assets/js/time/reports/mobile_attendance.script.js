@@ -2,11 +2,10 @@ const modalPreview = $("#modal-preview-mobile_attendance");
 let _companies = [];
 let psEmployeeGroup = [];
 let globalFormData = null;
-//const $tempDate = "2025-07-13";
 const defaultDate = moment().subtract('1', 'days').format("MMM. DD, YYYY");
 const nDate = defaultDate + " - " + defaultDate;
 $("#date-range").val(nDate);
-
+toastr.options = { "positionClass": "toast-bottom-right" }
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.companies !== "undefined" && _tempContentData.companies.length > 0){ _companies = _tempContentData.companies; }
 }
@@ -17,7 +16,23 @@ $("#company")
     data: _companies,
     allowClear: true,
 }).on("select2:select", function (data) {
-    /*** $(data.target).validate(); ***/
+    $(data.target).validate();
+    const form = $(data.target).closest("form");
+    const select2 = form.find("#employees, #payroll_group");
+    if (typeof select2 !== "undefined" && select2.length > 0) {
+        $.each(select2, function (i, v) {
+            const multi = $(v)[0].multiple;
+            if (multi) {
+                $(v).val([])
+                    .trigger("change")
+                    .prop("disabled", false);
+            } else {
+                $(v).val("")
+                    .trigger("change");
+            }
+        });
+    }
+    psEmployeeGroup = [];
 });
 
 $("#employees")
@@ -159,25 +174,15 @@ $("#date-picker").daterangepicker({
 });
 
 const dtTable = $("#mobile_attendance_logs").DataTable({
-    dom: 'frtlip',
-    searching: false,
-    serverSide: true,
-    processing: true,
+    dom: '<"row"<"outsideLocation col-sm-12 col-md-8 col-lg-8"><"col-sm-12 col-md-4 col-lg-4"f>>rtlip',
+    destroy: true,
+    serverSide: false,
+    processing: false,
     autoWidth: false,
-    order: [[3, "desc"]],
-    ajax: {
-        url: baseUrl("gcctime/attendance/get_mobile_attendance_list"),
-        type: "post",
-        global: false,
-        dataType: "json",
-        data: function (d) {
-            d[_csrf_token] = _csrf_hash;
-            d["date_range"] = $("#date-range").val();
-            return d;
-        }
-    }, columns: [{
-            data: "employee_name", visible: false,
-            render: function (data, type, row) {
+    ordering: false,
+    columns: [{
+        data: "employee_name", visible: false,
+        render: function (data, type, row) {
                 return row.employee_name;
         }},
         { data: "biometricno", visible: false },
@@ -194,44 +199,71 @@ const dtTable = $("#mobile_attendance_logs").DataTable({
         { data: "address", width: "*", orderable: false },
         { data: null, width: "7%", className: "text-center", orderable: false, render: function (data, type, row) {
             const rawData = JSON.stringify(row);
-            return `<button class="btn btn-sm btn-outline-info m-btn m-btn--icon m-btn--icon-only m-btn--custom m-btn--pill m-btn--air btnView btnPreviewMobileAttendance" data-row='${rawData}'
+            const tempClass = row.in_location.toLowerCase() == 'no' ? 'btn-outline-warning' : 'btn-outline-success';
+            return `<button class="btn btn-sm ${tempClass} m-btn m-btn--icon m-btn--icon-only m-btn--custom m-btn--pill m-btn--air btnView btnPreviewMobileAttendance" data-row='${rawData}'
             data-toogle="m-tooltip" data-placement="top" title="View Mobile Attendance">
             <i class="la la-map-marker"></i>
             </button>`;
         }},
-    ],
-        drawCallback: function (settings) {
-            const api = this.api();
-            const rows = api.rows({ page: 'current' }).nodes();
-            const pageRows = api.rows({ page: 'current' }).data();
-            let last = null;
-            api.column(0, { page: 'current' })
-            .data()
-            .each(function (group, i) {
-                last = (last !== null) ? last.toUpperCase() : last;
-                group = (group !== null) ? group.toUpperCase() : group;
-                const empHeaderIndex = api.rows(i)[0];
-                const row = pageRows[empHeaderIndex];
-                if (last !== group) {
-                    let cbElement = '';
-                    $(rows).eq(i).before(
-                        `<tr class="group tr-header-${row.emp_id}">
-                            <td colspan="12">
-                                ${cbElement}
-                                <span style="font-weight: normal; color: whitesmoke;">${row.biometricno}</span>
-                                <span class="ml-2">${group}</span>
-                            </td>
-                        </tr>`
-                    );
+    ], createdRow: function (row, data) {
+        const { in_location } = data;
+        if(in_location.toLowerCase() == 'no'){ $(row).addClass('bg-danger text-white'); }
+    }, initComplete: function () {
+        $("#mobile_attendance_logs_filter input[type='search']").removeClass("form-control-sm");
+    },
+    drawCallback: function (settings) {
+        const api = this.api();
+        const rows = api.rows({ page: 'current' }).nodes();
+        const pageRows = api.rows({ page: 'current' }).data();
+        let last = null;
+        api.column(0, { page: 'current' })
+        .data()
+        .each(function (group, i) {
+            last = (last !== null) ? last.toUpperCase() : last;
+            group = (group !== null) ? group.toUpperCase() : group;
+            const empHeaderIndex = api.rows(i)[0];
+            const row = pageRows[empHeaderIndex];
+            const groupKey = row.biometricno + "--" + moment(row.date).format("YYYYMMDD");
+            if (last !== groupKey) {
+                let cbElement = '';
+                if(row.in_location.toLowerCase() == 'no'){ cbElement = '<i class="la la-exclamation-circle m--regular-font-size-lg2 mr-2"></i> '; }
+                $(rows).eq(i).before(
+                    `<tr class="group tr-header-${row.employee_id}">
+                        <td colspan="12">
+                            ${cbElement}
+                            <span style="font-weight: normal; color: whitesmoke;">${row.biometricno}</span>
+                            <span class="ml-2">${group}</span>
+                        </td>
+                    </tr>`
+                );
 
-                    last = group;
-                }
-            });
-
-            const { geofence } = settings.json;
-            vmPreviewMobileAttendance.geofences = { ...geofence };
-        }
+                last = groupKey;
+            }
+        });
+        setTimeout(mapUnblockUI, 100);
+    }
 });
+
+const vmFilter = new Vue({
+    el: "#statusFilter",
+    data: { status: "all", count: 0 },
+    watch: {
+        status() {
+            mapBlockUI();
+            setTimeout(()=>{ 
+                dtTable.draw();
+            }, 100);
+        }
+    }
+});
+
+$.fn.dataTable.ext.search.push(function(_settings, data, _dataIndex) {
+    const filter = vmFilter.status;
+    const inLocation = data[6];
+    if (filter === "all") return true;
+    return inLocation === filter; 
+});
+
 
 const vmPreviewMobileAttendance = new Vue({
     el: "#preview-mobile_attendance", 
@@ -345,8 +377,35 @@ const getScriptRendering = function (formUrl, formData, currentForm) {
                 .prop("disabled", true);
         },
         success: function (json) {
-            if (json.response) {}
-            console.log(json);
+            const { geofence, outside_location } = json;
+            vmPreviewMobileAttendance.geofences = {};
+            vmFilter.count = 0;
+            if (json.response) {
+                vmPreviewMobileAttendance.geofences = { ...geofence }
+                vmFilter.count = outside_location;
+                vmFilter.status = "all";
+                if(json.data.length > 0){
+                    const tempHtml = outside_location > 0 ? `A total of <b>${outside_location}</b> attendance record(s) detected outside of site location.`
+                    : `A total of <b>${json.data.length}</b> attendance record(s) found.`;
+                    $(".outsideLocation").html(tempHtml).addClass("text-uppercase m-animate-fade-in");
+                }else{
+                    $(".outsideLocation").html("").removeClass("text-uppercase");
+                }
+                dtTable.clear().rows.add(json.data).draw(false);
+                if(parseInt(outside_location) > 0){
+                    setTimeout(() => {
+                        Swal.fire({
+                            title: 'Outside Site Location Detected!',
+                            html: `A total of <b>${outside_location}</b> attendance record(s) detected outside of site location.`,
+                            icon: 'warning',
+                        });
+                    }, 1000);
+                }
+            }else{
+                $(".outsideLocation").html("").removeClass("text-uppercase");
+                dtTable.clear().rows.add([]).draw(false);
+                toastr.error("No data found!", "Filter Search", 5000);
+            }
         }
     });
 }

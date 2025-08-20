@@ -1619,37 +1619,35 @@ class Attendance_model extends CI_Model {
         return $resultset;
     }
 
-    public function getMobileAttendanceList(){
-        $post = $this->input->post();
-        $filters = array();
-        $orderValue = array(array("column"=>"1", "dir"=>"desc"));
-        $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
-        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
-        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
-        $sortBy = (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
-        $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $orderValue;
-        $dateRange = (isset($post["date_range"]) && $post["date_range"])? $post["date_range"]: null;
-        $tempDate = explode("-", $dateRange);
-        if(is_array($tempDate) && !empty($tempDate) && count($tempDate) == 2){
-            $date00 = date("Y-m-d", strtotime(trim($tempDate[0])));
-            $date01 = date("Y-m-d", strtotime(trim($tempDate[1])));
-            $filters["dates"] = array("from" => $date00, "to" => $date01);
+    public function getActiveGeofences($employeeIds = array()) {
+        $arrGeofences = array();
+        $this->db->select("emp.id, site.geofence_polygon");
+        $this->db->from($this->tbl_appusers." app");
+        $this->db->join($this->tbl_employees." emp", "emp.id = app.emp_id", "INNER");
+        $this->db->join($this->tbl_personnel." per", "per.biometric_id = emp.biometricno OR per.biometricno = emp.biometricno", "INNER");
+        $this->db->join($this->tbl_personnel_location." loc", "loc.personnel_id = per.id", "INNER");
+        $this->db->join($this->tbl_applocation_sites." site", "site.id = loc.site_location_id", "INNER");
+        $this->db->group_start();
+        $this->db->where("site.geofence_polygon IS NOT NULL");
+        $this->db->where("site.geofence_polygon != ''");
+        $this->db->group_end();
+        if(is_array($employeeIds) && !empty($employeeIds)){
+            $this->db->where_in("emp.id", $employeeIds);
         }
-
-        $rowData = $this->getMobileAttendanceData($search, $limit, $offset, $sortBy, $sortOrder, $filters);
-        $rowCount = $this->getMobileAttendanceCount($search, $filters);
-        $getGeofences = $this->getActiveGeofences();
-        $resultset = array();
-        $resultset["recordsTotal"] = $rowCount;
-        $resultset["recordsFiltered"] = $rowCount;
-        $resultset["data"] = $rowData;
-        $resultset["geofence"] = $getGeofences;
-        return $resultset;
+        $query = $this->db->get();
+        if($query->num_rows() > 0){
+            foreach ($query->result() as $site) {
+                $coords = @unserialize($site->geofence_polygon);
+                if(is_array($coords) && !empty($coords)){
+                    $arrGeofences[$site->id][] = $coords;
+                }
+            }
+        }
+        return $arrGeofences;
     }
 
-    protected function getMobileAttendanceQuery($search=null){
+    protected function getMobileAttendanceQuery($post = array()){
         $dateTime = date("Y-m-d H:i:s", strtotime("-1 years"));
-        $filterFields = array("app.date", "app.time", "emp.biometricno", "emp.firstname", "emp.middlename", "emp.lastname", "CONCAT(emp.firstname,' ', emp.lastname)");
         $this->db->select("app.date, app.time, app.address, app.longtitude, app.latitude, app.time_status, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
             CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
                     TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
@@ -1664,84 +1662,47 @@ class Attendance_model extends CI_Model {
         $this->db->join($this->tbl_companies." comp", "comp.id = emp.company_id", "INNER");
         $this->db->where("app.time_status !=", "");
         $this->db->where("app.updated_at >=", $dateTime);
-        if (isset($search) && $search) {
+        if(isset($post["company"]) && $post["company"]){ $this->db->where("comp.id", $post["company"]); }
+        if(isset($post["employees"]) && is_array($post["employees"]) && !empty($post["employees"]) && count($post["employees"]) > 0){
+            $this->db->where_in("emp.id", $post["employees"]);
+        }
+        $dateRange = (isset($post["date_range"]) && $post["date_range"])? $post["date_range"]: null;
+        $tempDate = explode("-", $dateRange);
+        if(is_array($tempDate) && !empty($tempDate) && count($tempDate) == 2){
             $this->db->group_start();
-            foreach ($filterFields as $key => $field) {
-                if($key == 0){ $this->db->like($field, $search, "both"); }
-                else{ $this->db->or_like($field, $search, "both"); }
-            }
+            $this->db->where("app.date >=", date("Y-m-d", strtotime($tempDate[0])));
+            $this->db->where("app.date <=", date("Y-m-d", strtotime($tempDate[1])));
             $this->db->group_end();
         }
-        return $this->db;
+        $this->db->order_by("app.date", "desc");
+        $this->db->order_by("emp.lastname", "asc");
+        return $this->db->get();
     }
-    protected function getMobileAttendanceData($search = null, $limit = 10, $offset = 0, $sortBy = 1, $sortOrder = array(), $filters = array()){
-        $dbQuery = $this->getMobileAttendanceQuery($search);
-        if(isset($filters["dates"]["from"]) && isset($filters["dates"]["to"])){
-            $dbQuery->where("app.date >=", $filters["dates"]["from"]);
-            $dbQuery->where("app.date <=", $filters["dates"]["to"]);
-        }
-        if ($limit != -1) { $dbQuery->limit($limit, $offset); }
-        if(isset($sortOrder[0]['column']) && isset($sortOrder[0]['dir'])){
-            $i = $sortOrder[0]['column'];
-            $dbQuery->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
-        }
-        $query = $dbQuery->get();
-        return $query->result();
-    }
-
-    protected function getMobileAttendanceCount($search = null, $filters=array()){
-        $dbQuery = $this->getMobileAttendanceQuery($search);
-        if(isset($filters["dates"]["from"]) && isset($filters["dates"]["to"])){
-            $dbQuery->where("app.date >=", $filters["dates"]["from"]);
-            $dbQuery->where("app.date <=", $filters["dates"]["to"]);
-        }
-        $query = $dbQuery->get();
-        return $query->num_rows();
-    }
-
-    public function getActiveGeofences() {
-        $arrGeofences = array();
-        $this->db->select("emp.id, site.geofence_polygon");
-        $this->db->from($this->tbl_appusers." app");
-        $this->db->join($this->tbl_employees." emp", "emp.id = app.emp_id", "INNER");
-        $this->db->join($this->tbl_personnel." per", "per.biometric_id = emp.biometricno OR per.biometricno = emp.biometricno", "INNER");
-        $this->db->join($this->tbl_personnel_location." loc", "loc.personnel_id = per.id", "INNER");
-        $this->db->join($this->tbl_applocation_sites." site", "site.id = loc.site_location_id", "INNER");
-        $this->db->group_start();
-        $this->db->where("site.geofence_polygon IS NOT NULL");
-        $this->db->where("site.geofence_polygon != ''");
-        $this->db->group_end();
-        $query = $this->db->get();
-        if($query->num_rows() > 0){
-            foreach ($query->result() as $site) {
-                $coords = @unserialize($site->geofence_polygon);
-                if(is_array($coords) && !empty($coords)){
-                    $arrGeofences[$site->id][] = $coords;
-                }
-            }
-        }
-        return $arrGeofences;
-    }
-
+    
     public function getMobileAttendanceDataRecord(){
         $post = $this->input->post();
+        $resultset = array();
         if(isset($post) && $post){
-            $dateTime = date("Y-m-d H:i:s", strtotime("-1 years"));
-            $this->db->select("app.date, app.time, app.address, app.longtitude, app.latitude, app.time_status, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
-                CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
-                        TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
-                    THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
-                END,' ', UPPER(TRIM(emp.lastname)),
-                CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
-                    UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
-                    emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
-                END) as employee_name, emp.biometricno, comp.code as company_code, IF(app.state = '0', 'Yes', 'No') as in_location, app.updated_at, emp.id as  employee_id");
-            $this->db->from($this->tbl_app_attendance." app");
-            $this->db->join($this->tbl_employees." emp", "emp.biometricno = app.biometric_id", "INNER");
-            $this->db->join($this->tbl_companies." comp", "comp.id = emp.company_id", "INNER");
-            $this->db->where("app.time_status !=", "");
-            $this->db->where("app.updated_at >=", $dateTime);
+            $qData = $this->getMobileAttendanceQuery($post);
+            if($qData->num_rows() > 0){
+                $employeeIds = array();
+                $outsideLocation = 0;
+                foreach ($qData->result() as $res) {
+                    $employeeIds[] = $res->employee_id;
+                    if($res->in_location == "No"){ $outsideLocation++; }
+                }
+                $resultset["response"] = true;
+                $resultset["data"] = $qData->result();
+                $resultset["outside_location"] = $outsideLocation;
+                $resultset["geofence"] = $this->getActiveGeofences($employeeIds);
+            }else{
+                $resultset["response"] = false;
+                $resultset["data"] = array();
+            }
+        }else{
+            $resultset["response"] = false;
+            $resultset["data"] = array();
         }
-        return $post;
+        return $resultset;
     }
 }
