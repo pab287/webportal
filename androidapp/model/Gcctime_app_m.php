@@ -1694,7 +1694,7 @@
 
 
 
-        public function gcctimeEformLoginv311() {
+        public function gcctimeLoginv311() {
             $r = $_POST;
             $required = ['username', 'password', 'unique_id', 'device_id', 'device_name'];
             $msg = "";
@@ -1716,7 +1716,7 @@
             $device_name = str_replace(" ", "_", $r['device_name']);
         
             $sql = "SELECT a.biometricno, a.id, a.firstname, b.username, b.emp_id, b.is_suspended,
-                        a.idno, c.name AS position_name, a.pic_filename, a.lastname,a.company_id, a.department_id,
+                        a.idno, c.name AS position_name, a.pic_filename, a.lastname,a.company_id, a.department_id, b.reset_pin,
                         IFNULL(d.code, 'No Company') AS company,
                         IFNULL(e.code, 'No Department') AS department, a.level
                     FROM tblemployees a
@@ -1780,6 +1780,7 @@
                                     "is_suspended" => $emp_data['is_suspended'],
                                     "token" => $token,
                                     "is_allowed_app_user" => $isAllowed,
+                                    "pin" => $emp_data['reset_pin']
                                 ]
                             ]);
                         }
@@ -1812,7 +1813,18 @@
             return $status;
         }
 
-
+        private function locationId($id) {
+            $stmt = $this->conn("gcctimeutility")->prepare(
+                "SELECT site_name 
+                FROM gcctimeutility.app_location_sites 
+                WHERE id = :id"
+            );
+            $stmt->execute([':id' => $id]);
+            $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+            return $data ? $data['site_name'] : "No Location Found";
+        }
+        
 
         public function fetchAttendancev311() {
 
@@ -1830,8 +1842,8 @@
             $connzkt = $this->conn("zktime_logs");
             $array = array();
             
-            $appAttendance = $conn->prepare("SELECT id, state, time_status, biometric_id, latitude, longtitude, date, time
-                                    FROM gcctimeutility.app_attendance 
+            $appAttendance = $conn->prepare("SELECT id, state, time_status, biometric_id, latitude, longtitude, date, time, location_id, polygon
+                                    FROM gcctimeutility.app_attendance
                                     WHERE biometric_id = :biometric_id AND date >= CURDATE() - INTERVAL 30 DAY");
             
             $appAttendance->bindParam(':biometric_id', $biometric_id, PDO::PARAM_STR);
@@ -1848,6 +1860,8 @@
                 $list['date'] = $row['date'] . ' ' . $row['time'];
                 $list['state'] = ($row['state'] === '' || $row['state'] === '0') ? 'in' : 'out';
                 $list['log_device'] = 'app';
+                $list['site_name'] = $this->locationId($row['location_id']);
+                $list['polygon'] = unserialize($row['polygon']) ? unserialize($row['polygon']) : '';
                 array_push($array, $list);
             }
 
@@ -1869,6 +1883,8 @@
                 $list['date'] = $row['date'];
                 $list['state'] = 'in';
                 $list['log_device'] = 'bio';
+                $list['site_name'] = '';
+                $list['polygon'] = '';
                 array_push($array, $list);
             }
             return json_encode($array);
@@ -1930,5 +1946,90 @@
 
         }
 
+
+
+
+
+
+        /*** ------------------------------------------100 meter radius polygon near pin ------------------------------------------------***/
+        // Haversine formula to compute distance in meters
+        function haversineDistance($lat1, $lng1, $lat2, $lng2) {
+            $earthRadius = 6371000; // meters
+            $dLat = deg2rad($lat2 - $lat1);
+            $dLng = deg2rad($lng2 - $lng1);
+
+            $a = sin($dLat / 2) * sin($dLat / 2) +
+                cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+                sin($dLng / 2) * sin($dLng / 2);
+
+            $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+            return $earthRadius * $c;
+        }
+
+        // Ray casting algorithm to check if point is inside polygon
+        function pointInPolygon($point, $polygon) {
+            $x = $point['lng'];
+            $y = $point['lat'];
+            $inside = false;
+            $n = count($polygon);
+
+            for ($i = 0, $j = $n - 1; $i < $n; $j = $i++) {
+                $xi = $polygon[$i]['lng']; $yi = $polygon[$i]['lat'];
+                $xj = $polygon[$j]['lng']; $yj = $polygon[$j]['lat'];
+
+                $intersect = (($yi > $y) != ($yj > $y)) &&
+                            ($x < ($xj - $xi) * ($y - $yi) / ($yj - $yi + 0.0) + $xi);
+
+                if ($intersect){ $inside = !$inside; }
+            }
+
+            return $inside;
+        }
+
+        // Main function: detect polygons within 100m radius of pin
+        public function detectPolygonsNearPin($pin, $polygons, $radius = 100) {
+            $detected = [];
+            foreach ($polygons as $polyIndex => $polygon) {
+                $found = false;
+                // 1. If pin is inside polygon → match
+                if ($this->pointInPolygon($pin, $polygon)) { $found = true; }
+                // 2. Else, check if any vertex of polygon is within radius
+                if (!$found) {
+                    foreach ($polygon as $vertex) {
+                        $distance = $this->haversineDistance($pin['lat'], $pin['lng'], $vertex['lat'], $vertex['lng']);
+                        if ($distance <= $radius) {
+                            $found = true;
+                            break;
+                        }
+                    }
+                }
+
+                if ($found) {
+                    $detected[] = $polygon; // store polygon index or ID
+                }
+            }
+
+            return $detected;
+        }
+        /*** 100 meter radius polygon near pin ***/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
+
 ?>
