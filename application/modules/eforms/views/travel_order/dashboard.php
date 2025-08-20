@@ -227,7 +227,7 @@
                     </div>
                 </div>
                 <div class="m-portlet__body">
-                    <span class="m--font-bolder" id="approvedLabel">
+                    <span class="m--font-bolder" v-text="pieChartLabel">
                         ALL TIME
                     </span>
                     <div id="approvedPieChart" style="width: 100%;height: 500px;">

@@ -15,7 +15,6 @@ const formatted = moment().format('MMMM D, YYYY dddd');
 let approvedChart = null;
 let analyticsChart = null;
 let analyticsLabel= $('#analyticsLabel');
-let pieChartLabel = $('#approvedLabel');
 let tableDate = null;
 let createdToLabel = $('#createdToLabel');
 createdToLabel.text(formatted);
@@ -66,7 +65,7 @@ var tblTravel = $("#table-travel-today").DataTable({
                 tempHtml += "<p>" + row.driver + "</p>";
                 if (typeof row.vehicle_plate !== "undefined" && row.vehicle_description !== "undefined") {
                     tempHtml += "<p>" + row.vehicle_plate + "</p>";
-                    tempHtml += "<p>" + row.vehicle_description + "</p>";
+                    // tempHtml += "<p>" + row.vehicle_description + "</p>";
                 }
                 tempHtml += "</div>";
             }
@@ -167,7 +166,7 @@ var tblTravel2 = $("#table-travel-weekly").DataTable({
                 tempHtml += "<p>" + row.driver + "</p>";
                 if (typeof row.vehicle_plate !== "undefined" && row.vehicle_description !== "undefined") {
                     tempHtml += "<p>" + row.vehicle_plate + "</p>";
-                    tempHtml += "<p>" + row.vehicle_description + "</p>";
+                    // tempHtml += "<p>" + row.vehicle_description + "</p>";
                 }
                 tempHtml += "</div>";
             }
@@ -484,7 +483,8 @@ $.ajax({
   let travelOderDataSheet = new Vue({
     el: "#m-content",
     data: {
-        approved:{}
+        approved:{},
+        pieChartLabel: "All Time",
     },
     mounted() {
         this.get_approved_travel_order();
@@ -609,7 +609,7 @@ const makeToApprovedRequest = (data) => {
   };
 
   const handleTOApprovedCancel = () => {
-    pieChartLabel.text("All Time");
+    travelOderDataSheet.pieChartLabel = "All Time";
     makeToApprovedRequest({ all: true })
         .done(handleToApprovedResponse);
   };
@@ -619,16 +619,16 @@ const makeToApprovedRequest = (data) => {
     const endDate = picker.endDate.format('YYYY-MM-DD');
     
     if (startDate === moment().format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
-        pieChartLabel.text(formatted); 
+        travelOderDataSheet.pieChartLabel = formatted; 
     } else if (startDate === moment().subtract(6, 'days').format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
-        pieChartLabel.text("LAST 7 DAYS"); 
+        travelOderDataSheet.pieChartLabel = "LAST 7 DAYS"; 
     } else if (startDate === moment().subtract(29, 'days').format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
-        pieChartLabel.text("LAST 30 DAYS");  
+        travelOderDataSheet.pieChartLabel = "LAST 30 DAYS"; 
     } else if (startDate === moment().subtract(1, 'days').format('YYYY-MM-DD') && endDate === moment().subtract(1, 'days').format('YYYY-MM-DD')) {
-        pieChartLabel.text("YESTERDAY"); 
+        travelOderDataSheet.pieChartLabel = "YESTERDAY"; 
     } 
     else if (startDate === moment("2016-01-01").format('YYYY-MM-DD') && endDate === moment().format('YYYY-MM-DD')) {
-        pieChartLabel.text("ALL TIME");
+        travelOderDataSheet.pieChartLabel = "ALL TIME"; 
     }
     else {
         pieChartLabel.text(`FROM: ${picker.startDate.format('MMM D, YYYY')} - TO: ${picker.endDate.format('MMM D, YYYY')}`);
