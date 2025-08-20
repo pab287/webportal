@@ -2868,7 +2868,7 @@
 
                 $draw = (isset($post['draw']) && $post['draw']) ? $post['draw'] : 0;
                 $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
-                $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 0;
+                $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
                 $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
                 $date = (isset($post["date"]) && $post["date"]) ? $post["date"] : null;
                 $posts = $this->get_created_to($limit, $start, $order, $dir, $date);
@@ -2925,7 +2925,9 @@
                 $this->db->where("a.created_dt >=", $todayStart);
                 $this->db->where("a.created_dt <=", $todayEnd);
             }
-            $this->db->limit($limit, $start);
+            if($limit != -1){
+                $this->db->limit($limit, $start);
+            }
             $this->db->order_by($order, $dir);
             $query = $this->db->get();
             if ($query->num_rows() > 0) {
@@ -3028,7 +3030,7 @@
 
                 $draw = (isset($post['draw']) && $post['draw']) ? $post['draw'] : 0;
                 $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
-                $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 0;
+                $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
                 $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
                 $date = (isset($post["date"]) && $post["date"]) ? $post["date"] : null;
 
@@ -3090,7 +3092,9 @@
             )");
             $this->db->where("a.status", "Approved");
             $this->db->where("a.accomplished",0);
-            $this->db->limit($limit, $start);
+            if($limit != -1){
+                $this->db->limit($limit, $start);
+            }
             $this->db->order_by($order, $dir);
             $this->db->group_by("a.id");
             $query = $this->db->get();
