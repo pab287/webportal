@@ -560,9 +560,8 @@ class User_model extends CI_Model{
         $id = $post['id'];
         $this->db->trans_start();
         $sendOtp = $this->sendOTP($id);
-        var_dump($sendOtp);
         if (!$sendOtp['sent_sms'] && !$sendOtp['sent_email']) {
-            $resultset['message'] = $sendOtp['message'];
+            $resultset['message'] = "OTP NOT SENT";
             $this->db->trans_rollback();
             $this->logEvent($resultset, $id);
             return $resultset;
@@ -631,11 +630,12 @@ class User_model extends CI_Model{
         if ($result->mobile_no) {
             $message = "[GC&C] Your Conyxph account recovery code is: $OTP. For security reasons, do not share this code with anyone. " .
                        "If you did not request this, please ignore this message.";
-            $response['sent_sms'] = $this->gateway->sendPlaySMS($result->mobile_no, $message)->status;
+            $sms_result = $this->gateway->sendPlaySMS($result->mobile_no, $message);
+            $response['sent_sms'] = $sms_result ? $sms_result['status'] : false;
             $response['mobile_no'] = $result->mobile_no;
         }
         
-        // $response['sent_email'] = @$this->core_layout->send_email('core','GC & C Conyx PH','Account Recovery',$email_content,$mailer);
+        $response['sent_email'] = @$this->core_layout->send_email('core','GC & C Conyx PH','Account Recovery',$email_content,$mailer);
         return $response;
     }
 
