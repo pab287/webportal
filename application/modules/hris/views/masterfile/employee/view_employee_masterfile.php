@@ -1,3 +1,9 @@
+<?php 
+echo "<pre>";
+var_dump($data);
+echo "</pre>";
+?>
+
 <style type="text/css">
     .company-logo {
         border-radius: 0 !important;

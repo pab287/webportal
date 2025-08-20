@@ -524,9 +524,15 @@ if (typeof _tempContentData !== "undefined") {
     });
     var vmTab3 = new Vue({
         el: "#frmEditEmploymentData",
-        data: { vm_tab3: tempData },
+        data: { vm_tab3: tempData,
+            supervisory: [],
+            managerial: []
+         },
         mounted: function () {
             var vmData = this.vm_tab3;
+
+            this.supervisory = {...tempDropdownData.dropdown_supervisory};
+            this.managerial = {...tempDropdownData.dropdown_supervisory};
 
             const employee_status = vmData.employee_status ? vmData.employee_status.toLowerCase() : "";
             const work_status = vmData.work_status ? vmData.work_status.toLowerCase() : "";
@@ -675,7 +681,7 @@ if (typeof _tempContentData !== "undefined") {
             //     _data = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, data.id);
             // });
 
-            this.supervisorySelect2('#m--input-supervisor_id', true, vmData.supervisor, _supData);
+            this.supervisorySelect2('#m--input-supervisor_id', true, _supData, vmData.supervisor);
 
             if (vmData.current_tl_supervisory == 1) {
                 this.managerialSelect2('#m--input-manager_id', true, _data, vmData.manager);
@@ -933,18 +939,29 @@ if (typeof _tempContentData !== "undefined") {
                     setTimeout(() => { $(e.target).validate(); }, 250);
                 });
 
-            $('#level')
-                .select2({
-                    placeholder: "Select Option",
-                    width: "100%"
-                })
-                .val(vmData.level)
-                .trigger("change")
-                .on("select2:select", function (e) {
-                    const data = e.params.data;
-                    // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { level: data.id });
-                    vmData = Object.assign({}, vmData, { level: data.id });
-                });
+            $('#level').select2({
+                placeholder: "Select Option",
+                width: "100%"
+            })
+            .val(vmData.level)
+            .trigger("change")
+            .on("select2:select", function (e) {
+                const data = e.params.data;
+                vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { level: data.id });
+                // vmData = Object.assign({}, vmData, { level: data.id });
+
+                if (data.id === "MANAGERIAL") {
+                    $('#is_two_level').trigger('change', function() {
+                        $(this).prop('checked', false);
+                    });
+                                        
+                    vmTab3.vm_tab3.supervisor = 0;
+                    vmTab3.vm_tab3.manager = 0;
+
+                    vmTab3.supervisorySelect2('#m--input-supervisor_id', true, tempDropdownData.dropdown_supervisory, 0);
+                    vmTab3.managerialSelect2('#m--input-manager_id', true, tempDropdownData.dropdown_supervisory, 0);
+                }
+            });
 
             $('#m_datepicker_2').datepicker({
                 format: 'M d,yyyy',
@@ -1003,12 +1020,12 @@ if (typeof _tempContentData !== "undefined") {
             });
 
             $('#is_two_level').on('change', function(){
-                if($(this).is(':checked')){
-                    var __data = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, vmTab3.vm_tab3.supervisor);
+                if ($(this).is(':checked')) {
+                    let __data = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, vmTab3.vm_tab3.supervisor);
                     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 1 });
 
                     vmTab3.managerialSelect2('#m--input-manager_id', true, __data, vmData.manager ? vmData.manager : 0);
-                }else{
+                } else {
                     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { current_tl_supervisory: 0, manager: 0 });
 
                     $("#m--input-manager_id").val('').trigger('change');
@@ -1016,7 +1033,7 @@ if (typeof _tempContentData !== "undefined") {
             });
         },
         methods: {
-            supervisorySelect2(target, destroy = false, id = 0, data = {}){
+            supervisorySelect2(target, destroy = false, data = {}, id = 0){
                 var currentTarget = $(target);
 
                 if (destroy) {
@@ -1076,7 +1093,7 @@ if (typeof _tempContentData !== "undefined") {
                     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { manager: data.id });
                     var _tempData = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, data.id);
 
-                    vmTab3.supervisorySelect2('#m--input-supervisor_id', true, vmTab3.vm_tab3.supervisor, _tempData);
+                    vmTab3.supervisorySelect2('#m--input-supervisor_id', true, _tempData, vmTab3.vm_tab3.supervisor);
                 });
             }, excludeEmployee(arr = [], id = 0){
                 let _data = [];
