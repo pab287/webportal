@@ -1,10 +1,9 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed');
+<?php defined('BASEPATH') || exit('No direct script access allowed');
 class Core_model extends CI_Model{
-    private $jsList = array(), $cssList = array(), $jsArrayData = array(), $isFooterJs = array(), $scriptAttribute = array(), $attribute = array();
-    private $jsExternalList = array(), $cssExternalList = array(), $isFooterExternalJs = array(), $scriptOrder = array();
-    private $title, $headerTitle, $crumbTitle, $bodyClass, $privilegeName, $module, $table, $field_id;
-
-    private $historyModule, $historyTableName, $historyTableFieldId, $historyEventId, $historyEmployeeId;
+    protected $jsList = array(), $cssList = array(), $jsArrayData = array(), $isFooterJs = array(), $scriptAttribute = array(), $attribute = array();
+    protected $jsExternalList = array(), $cssExternalList = array(), $isFooterExternalJs = array(), $scriptOrder = array();
+    protected $title, $headerTitle, $crumbTitle, $bodyClass, $privilegeName, $module, $table, $field_id;
+    protected $historyModule, $historyTableName, $historyTableFieldId, $historyEventId, $historyEmployeeId;
 
     private $userdata = array();
     private $current_data_time = null;
@@ -12,7 +11,7 @@ class Core_model extends CI_Model{
     protected $emailTemplateTable = "email_template";
     protected $emailProtocolTable = "email_protocol_settings";
 
-    function __construct(){
+    public function __construct(){
         parent::__construct();
         $this->load->model("core/access_control_model", "acl_model");
         if ($this->session->userdata("logged_in")) {
@@ -23,7 +22,7 @@ class Core_model extends CI_Model{
         date_default_timezone_set('Asia/Manila');
     }
 
-    function getPerformanceRating($emp_id = null) {
+    public function getPerformanceRating($emp_id = null) {
         $date_end = $this->db->get_where("gccmaster.tblemployees", array("id"=>$emp_id))->row_array();
         $limit = 1;
         // if($date_end['date_end'] == NULL OR $date_end['date_end'] == "0000-00-00"){
@@ -48,46 +47,46 @@ class Core_model extends CI_Model{
     }
 
     /*** logged history ***/
-    function coreHistoryLogs(){
+    public function coreHistoryLogs(){
 		return clone $this;
     }
 
-    function setHistoryLogModule($module=null){
+    public function setHistoryLogModule($module=null){
 		if ($module) {
             $this->historyModule = $module;
             return $this;
         }
     }
 
-    function setHistoryLogTableName($tableName=null){
+    public function setHistoryLogTableName($tableName=null){
 		if ($tableName) {
             $this->historyTableName = $tableName;
             return $this;
         }
     }
 
-    function setHistoryLogTableFieldId($tableFieldId=null){
+    public function setHistoryLogTableFieldId($tableFieldId=null){
 		if ($tableFieldId) {
             $this->historyTableFieldId = $tableFieldId;
             return $this;
         }
     }
 
-    function setHistoryLogEventId($eventId=null){
+    public function setHistoryLogEventId($eventId=null){
 		if ($eventId) {
             $this->historyEventId = $eventId;
             return $this;
         }
     }
 
-    function setHistoryLogEmployeeId($employeeId=null){
+    public function setHistoryLogEmployeeId($employeeId=null){
 		if ($employeeId) {
             $this->historyEmployeeId = $employeeId;
             return $this;
         }
     }
 
-    function saveLoggedEventHistory(){
+    public function saveLoggedEventHistory(){
         if($this->historyEventId && $this->historyModule && $this->historyTableName && $this->historyTableFieldId){
             $tempData = array(
                 "event_id"=>$this->historyEventId,
@@ -96,9 +95,7 @@ class Core_model extends CI_Model{
                 "table_field_id"=>$this->historyTableFieldId,
                 "employee_id"=>$this->historyEmployeeId ? $this->historyEmployeeId: 0,
             );
-
-            $added = $this->db->insert("gccmaster.logged_event_history", $tempData);
-            return $added;
+            return $this->db->insert("gccmaster.logged_event_history", $tempData);
         }else{
             return false;
         }
@@ -107,44 +104,44 @@ class Core_model extends CI_Model{
      /*** logged history ***/
 
 
-    function coreLogs(){
+    public function coreLogs(){
 		return clone $this;
     }
 
-    function setLogModule($module=null){
+    public function setLogModule($module=null){
 		if ($module) {
             $this->module = $module;
             return $this;
         }
     }
 
-    function setLogTable($table=null){
+    public function setLogTable($table=null){
 		if ($table) {
             $this->table = $table;
             return $this;
         }
     }
 
-    function setLogFieldId($field_id=null){
+    public function setLogFieldId($field_id=null){
 		if ($field_id) {
             $this->field_id = $field_id;
             return $this;
         }
     }
 
-    function getLogModule(){
+    public function getLogModule(){
         return ($this->module)? $this->module: false;
     }
 
-    function getLogTable(){
+    public function getLogTable(){
         return ($this->table)? $this->table: false;
     }
 
-    function getLogFieldId(){
+    public function getLogFieldId(){
         return ($this->field_id)? $this->field_id: false;
     }
 
-    function logNotification($notification = null, $status = "success", $module = "portal", $type = "system"){
+    public function logNotification($notification = null, $status = "success", $module = "portal", $type = "system"){
         if ($notification) {
             $module = ($this->module)? $this->module: $module;
             $data = array();
@@ -163,7 +160,7 @@ class Core_model extends CI_Model{
         } else { return false; }
     }
 
-    function getLogNotification($module = null){
+    public function getLogNotification($module = null){
         $this->db->from("gccmaster.log_notification");
         if ($module) {
             $this->db->where("module", $module);
@@ -177,7 +174,7 @@ class Core_model extends CI_Model{
         }
     }
 
-    function setEventLog($log_message = "", $user_action = "", $type = "success", $database = "", $table = "user", $employeeId=null){
+    public function setEventLog($log_message = "", $user_action = "", $type = "success", $database = "", $table = "user", $employeeId=null){
         $tempUserId = isset($this->userdata["emp_id"]) && $this->userdata["emp_id"] ? $this->userdata["emp_id"]: 0;
         if($employeeId){ $tempUserId = $employeeId; }
         $data = array();
@@ -207,7 +204,7 @@ class Core_model extends CI_Model{
     }
 
 
-    function addJs($path = null, $footer = false, $arrData = array(), $attribute=""){
+    public function addJs($path = null, $footer = false, $arrData = array(), $attribute=""){
         if ($path) {
             $this->jsList[] = $path;
             $this->scriptOrder[] = md5($path);
@@ -218,7 +215,7 @@ class Core_model extends CI_Model{
         }
     }
 
-    function addExternalJs($path = null, $footer = false, $arrData = array()){
+    public function addExternalJs($path = null, $footer = false, $arrData = array()){
         if ($path) {
             $this->jsExternalList[] = $path;
             $this->scriptOrder[] = md5($path);
@@ -235,26 +232,26 @@ class Core_model extends CI_Model{
         }
     }
 
-    function addJsonData($arrData=array()){
+    public function addJsonData($arrData=array()){
         $this->jsArrayData[] = $arrData;
         return $this;
     }
 
-    function addCss($path = null){
+    public function addCss($path = null){
         if ($path) {
             $this->cssList[] = $path;
             return $this;
         }
     }
 
-    function addExternalCss($path = null){
+    public function addExternalCss($path = null){
         if ($path) {
             $this->cssExternalList[] = $path;
             return $this;
         }
     }
 
-    function getStoredJs(){
+    public function getStoredJs(){
         $html = "";
         if(is_array($this->scriptOrder) && count($this->scriptOrder) > 0){
             foreach ($this->scriptOrder as $key => $md5Data) {
@@ -300,7 +297,7 @@ class Core_model extends CI_Model{
         return $html;
     }
 
-    function getStoredFooterJs(){
+    public function getStoredFooterJs(){
         $html = "";
         if ($this->jsArrayData && count($this->jsArrayData) > 0) {
             foreach ($this->jsArrayData as $dd) {
@@ -351,7 +348,7 @@ class Core_model extends CI_Model{
         return $html;
     }
 
-    function getStoredCss(){
+    public function getStoredCss(){
         $html = "";
         if ($this->cssList) {
             foreach ($this->cssList as $list) {
@@ -372,14 +369,14 @@ class Core_model extends CI_Model{
         return $html;
     }
 
-    function setPageTitle($title = null){
+    public function setPageTitle($title = null){
         if ($title) {
             $this->title = $title;
             return $this;
         }
     }
 
-    function getPageTitle(){
+    public function getPageTitle(){
         $html = "";
         if ($this->title) {
             $html .= $this->title;
@@ -387,21 +384,21 @@ class Core_model extends CI_Model{
         return $html;
     }
 
-    function setHeaderTitle($title = null){
+    public function setHeaderTitle($title = null){
         if ($title) {
             $this->headerTitle = $title;
             return $this;
         }
     }
 
-    function setCrumbTitle($title = null){
+    public function setCrumbTitle($title = null){
         if ($title) {
             $this->crumbTitle = $title;
             return $this;
         }
     }
 
-    function getHeaderTitle(){
+    public function getHeaderTitle(){
         $html = "";
         if ($this->headerTitle) {
             $html .= $this->headerTitle;
@@ -409,7 +406,7 @@ class Core_model extends CI_Model{
         return $html;
     }
 
-    function getCrumbTitle(){
+    public function getCrumbTitle(){
         $html = "";
         if ($this->crumbTitle) {
             $html .= $this->crumbTitle;
@@ -417,14 +414,14 @@ class Core_model extends CI_Model{
         return $html;
     }
 
-    function setBodyClass($class = null){
+    public function setBodyClass($class = null){
         if ($class) {
             $this->bodyClass = $class;
             return $this;
         }
     }
 
-    function getBodyClass(){
+    public function getBodyClass(){
         $html = "";
         if ($this->bodyClass) {
             $html .= $this->bodyClass;
@@ -432,33 +429,32 @@ class Core_model extends CI_Model{
         return $html;
     }
 
-    function hasBodyClass(){
+    public function hasBodyClass(){
         return ($this->bodyClass !== "") ? true : false;
     }
 
-    function setPrivilegeName($name = null){
+    public function setPrivilegeName($name = null){
         if ($name) {
             $this->privilegeName = $name;
             return $this;
         }
     }
 
-    function getPrivilegeName(){
+    public function getPrivilegeName(){
         if (!$this->privilegeName) return false;
         return $this->privilegeName;
     }
 
-    function getSidebarNavigation($includes = array(), $isActive = 0){
+    public function getSidebarNavigation($includes = array(), $isActive = 0){
         $menuItems = array();
         $arrData = $this->acl_model->getAccessControlMenu($includes, $isActive);
         $menuItems["aclMenu"] = $arrData;
         $menuItems["roleResource"] = $this->authenticate->getRoleResource();
 
-        $html = $this->load->view("core/access_control/html/side_nav", $menuItems, true);
-        return $html;
+        return $this->load->view("core/access_control/html/side_nav", $menuItems, true);
     }
 
-    function generatePrivileges(){
+    public function generatePrivileges(){
         $arrData = array();
         $id = $this->authenticate->getRoleId();
         $query = $this->db->get_where("user_role_acl", array("role_id" => $id));
@@ -469,7 +465,7 @@ class Core_model extends CI_Model{
             if ($privilege) {
                 foreach ($privilege as $vv) {
                     $isNode = strpos($vv, "-");
-                    if ($isNode == true) {
+                    if ($isNode !== false) {
                         $dd = explode("-", $vv);
                         if (count($dd) == 2) {
                             $aclId = $dd[0];
@@ -495,7 +491,7 @@ class Core_model extends CI_Model{
         return $arrData;
     }
 
-    function generatePrivilegesUrl(){
+    public function generatePrivilegesUrl(){
         $arrData = array();
         $id = $this->authenticate->getRoleId();
         $query = $this->db->get_where("user_role_acl", array("role_id" => $id));
@@ -506,7 +502,7 @@ class Core_model extends CI_Model{
             if ($privilege) {
                 foreach ($privilege as $vv) {
                     $isNode = strpos($vv, "-");
-                    if ($isNode == true) {
+                    if ($isNode !== false) {
                         $dd = explode("-", $vv);
                         if (count($dd) == 2) {
                             $aclId = $dd[0];
@@ -532,7 +528,7 @@ class Core_model extends CI_Model{
         return $arrData;
     }
 
-    function generatePrivilegeAction(){
+    public function generatePrivilegeAction(){
         $arrData = array();
         $id = $this->authenticate->getRoleId();
         $query = $this->db->get_where("user_role_acl", array("role_id" => $id));
@@ -543,7 +539,7 @@ class Core_model extends CI_Model{
             if ($privilege) {
                 foreach ($privilege as $vv) {
                     $isNode = strpos($vv, "-");
-                    if ($isNode == true) {
+                    if ($isNode !== false) {
                         $dd = explode("-", $vv);
                         if (count($dd) == 2) {
                             $aclId = $dd[0];
@@ -569,14 +565,12 @@ class Core_model extends CI_Model{
         return $arrData;
     }
 
-    function getCurrentActions(){
+    public function getCurrentActions(){
         $actions = array();
         $currentActions = $this->generatePrivileges();
         $privilegeName = $this->getPrivilegeName();
-        if ($privilegeName) {
-            if (isset($currentActions[$privilegeName]) && $currentActions[$privilegeName]) {
-                $actions = $currentActions[$privilegeName];
-            }
+        if ($privilegeName && (isset($currentActions[$privilegeName]) && $currentActions[$privilegeName])) {
+            $actions = $currentActions[$privilegeName];
         }
 
         if (isset($currentActions["global_privileges"]) && $currentActions["global_privileges"]) {
@@ -597,15 +591,14 @@ class Core_model extends CI_Model{
         }
 
         $tempActions = array("back", "close");
-        //$tempActions = array("back", "cancel", "close");
-        foreach ($tempActions as $key => $value) { if(!in_array($value, $actions)){ $actions[] = $value; }}
+        foreach ($tempActions as $value) { if(!in_array($value, $actions)){ $actions[] = $value; }}
         return $actions;
     }
 
-    function listXml(){
+    public function listXml(){
         $arrData = array();
-        $RoleId = $this->authenticate->getRoleId();
-        if ($RoleId && $RoleId == 1 || $RoleId == 2) {
+        $roleId = $this->authenticate->getRoleId();
+        if ($roleId && $roleId == 1 || $roleId == 2) {
             $xmlFile = realpath('assets/static/xml/privileges/admin_privilege.xml');
             if (file_exists($xmlFile)) {
                 $xmlstr = file_get_contents($xmlFile);
@@ -620,7 +613,7 @@ class Core_model extends CI_Model{
         return $arrData;
     }
 
-    function getIdleTimerState(){
+    public function getIdleTimerState(){
         $response = false;
         $xmlFile = realpath('assets/static/xml/privileges/admin_privilege.xml');
         if (file_exists($xmlFile)) {
@@ -637,12 +630,12 @@ class Core_model extends CI_Model{
         return $response;
     }
 
-    function getCurrentSession(){
+    public function getCurrentSession(){
         if (!$this->userdata) return false;
         return $this->userdata;
     }
 
-    function getUserLoggedIn(){
+    public function getUserLoggedIn(){
         if (!$this->userdata) return false;
 
         $loggedIn = $this->userdata;
@@ -650,7 +643,6 @@ class Core_model extends CI_Model{
 
             $lastname = (isset($loggedIn["lastname"]) && $loggedIn["lastname"]) ? $loggedIn["lastname"] : "";
             $firstname = (isset($loggedIn["firstname"]) && $loggedIn["firstname"]) ? $loggedIn["firstname"] : "";
-            $middlename = (isset($loggedIn["middlename"]) && $loggedIn["middlename"]) ? $loggedIn["middlename"] : "";
 
             $currentUserData = (object)$this->getUserData($loggedIn["id"]);
             $currentRoleId = (isset($currentUserData->role_id) && $currentUserData->role_id) ? $currentUserData->role_id : 0;
@@ -696,12 +688,11 @@ class Core_model extends CI_Model{
 
     /*** new function User Data ***/
     public function getUserData($id = null){
-        if (!$this->userdata) return false;
+        if (!$this->userdata) { return false; }
 
         $session = $this->userdata;
         $userId = ($id) ? $id : $session["id"];
         if ($userId) {
-            $arrData = array();
             $tableEmployees = "tblemployees a";
             $tableUsers = "tblusers b";
 
@@ -730,12 +721,11 @@ class Core_model extends CI_Model{
     }
 
     public function getEmployeeData($id = null){
-        if (!$this->userdata) return false;
+        if (!$this->userdata){ return false; }
 
         $session = $this->userdata;
         $employeeId = ($id) ? $id : $session["emp_id"];
         if ($employeeId) {
-            $arrData = array();
             $tableEmployees = "tblemployees a";
             $tableUsers = "tblusers b";
 
@@ -789,10 +779,10 @@ class Core_model extends CI_Model{
             if ($nMiddleName && $nSuffix) {
                 $displayName1 = "{$lastname}, {$firstname} {$nMiddleName} {$nSuffix}";
                 $displayName2 = "{$firstname} {$nMiddleName} {$lastname} {$nSuffix}";
-            } else if ($nSuffix) {
+            } elseif ($nSuffix) {
                 $displayName1 = "{$lastname}, {$firstname} {$nSuffix}";
                 $displayName2 = "{$firstname} {$lastname} {$nSuffix}";
-            } else if ($nMiddleName) {
+            } elseif ($nMiddleName) {
                 $displayName1 = "{$lastname}, {$firstname} {$nMiddleName}";
                 $displayName2 = "{$firstname} {$nMiddleName} {$lastname}";
             } else {
@@ -815,10 +805,9 @@ class Core_model extends CI_Model{
 
     /*** new function User Data ***/
 
-    function generateCode($length = 13){
+    public function generateCode($length = 13){
         $str = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        $genCode = substr(str_shuffle($str), 0, $length);
-        return $genCode;
+        return substr(str_shuffle($str), 0, $length);
     }
 
     /*** email function ***/
@@ -859,17 +848,9 @@ class Core_model extends CI_Model{
                 $sent = $emailSender->send();
                 if(!$sent){ $coreLogs->logNotification($emailSender->print_debugger(), "error"); }
 
-                if ($sent) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
+                return $sent ? true : false;
+            } else { return false; }
+        } else { return false; }
     }
 
     private function doMailer($email_title = null, $overrideMailer = array()){
@@ -894,7 +875,7 @@ class Core_model extends CI_Model{
                  /*** smtp_port: [ 587 ], 465 ***/
                  /*** smtp_crypto: [ tls ], ssl ***/
 
-                $config = Array(
+                $config = array(
                     'protocol' => $tempRow->protocol,
                     'smtp_host' => $tempRow->smtp_host,
                     'smtp_port' => intval($tempRow->smtp_port),
@@ -903,7 +884,7 @@ class Core_model extends CI_Model{
                     'smtp_pass' => $smtpPassword,
                     'smtp_mailtype' => 'html',
                     'charset' => 'utf-8',
-                    'wordwrap' => TRUE,
+                    'wordwrap' => true,
                 );
 
                 if(isset($overrideMailer["config"]) && $overrideMailer["config"]){
@@ -916,16 +897,10 @@ class Core_model extends CI_Model{
                     $this->email->set_newline("\r\n");
                     $this->email->set_mailtype("html");
                     $this->email->from($smtpUser, $email_title);
-
                     return $this->email;
-                } else {
-                    return false;
-                }
+                } else { return false; }
             }
-        }else{
-            return false;
-        }
-
+        }else{ return false; }
     }
 
     private function getEmailModule($module = null){
@@ -935,8 +910,7 @@ class Core_model extends CI_Model{
             $this->db->where('send_email', 1);
             $query = $this->db->get();
             if ($query->num_rows() == 1) {
-                $row = $query->row();
-                return $row;
+                return $query->row();
             } else {
                 return false;
             }
@@ -945,7 +919,7 @@ class Core_model extends CI_Model{
         }
     }
 
-    function getTimeAgo($timestamp){
+    public function getTimeAgo($timestamp){
         $time_ago = strtotime($timestamp);
         $current_time = time();
         $time_difference = $current_time - $time_ago;
@@ -960,31 +934,31 @@ class Core_model extends CI_Model{
 
         if ($seconds <= 60) {
             return "Just Now";
-        } else if ($minutes <= 60) {
+        } elseif ($minutes <= 60) {
             if ($minutes == 1) {
                 return "one minute ago";
             } else {
                 return "$minutes minutes ago";
             }
-        } else if ($hours <= 24) {
+        } elseif ($hours <= 24) {
             if ($hours == 1) {
                 return "an hour ago";
             } else {
                 return "$hours hrs ago";
             }
-        } else if ($days <= 7) {
+        } elseif ($days <= 7) {
             if ($days == 1) {
                 return "yesterday";
             } else {
                 return "$days days ago";
             }
-        } else if ($weeks <= 4.3) {
+        } elseif ($weeks <= 4.3) {
             if ($weeks == 1) {
                 return "a week ago";
             } else {
                 return "$weeks weeks ago";
             }
-        } else if ($months <= 12) {
+        } elseif ($months <= 12) {
             if ($months == 1) {
                 return "a month ago";
             } else {
@@ -1001,7 +975,7 @@ class Core_model extends CI_Model{
 
     /*** email function ***/
 
-    function insertArchiveLog($archived_table, $archived_id, $status = 1) // default > 1=archived, 2=restored
+    public function insertArchiveLog($archived_table, $archived_id, $status = 1) // default > 1=archived, 2=restored
     {
         $user = $this->getUserLoggedIn();
         $employee_id = $user['employee_id'];
@@ -1056,7 +1030,7 @@ class Core_model extends CI_Model{
     public function renderModalContent($module=null, $model=null, $function=null){
         $resultset = array();
         if($module && $model && $function){
-            $temp = $this->load->model("{$module}/{$model}", "{$model}");
+            $this->load->model("{$module}/{$model}", "{$model}");
             $resultset = $this->$model->$function();
         }else{
             $resultset["response"] = false;
@@ -1076,7 +1050,7 @@ class Core_model extends CI_Model{
 
 	public function adminBackendTemplate($parameters = array()){
 		$this->load->view("core/templates/header", $parameters);
-		if(isset($$parameters["view"]) && $parameters["view"]){
+		if(isset($parameters["view"]) && $parameters["view"]){
 			$this->load->view($parameters["view"], $paremeters);
 		}
 		$this->load->view("core/templates/footer", $parameters);
@@ -1109,7 +1083,7 @@ class Core_model extends CI_Model{
         return $resultset;
     }
     // for cash advance notification
-    function getPayrollPendings(){
+    public function getPayrollPendings(){
         $result = array();
         $get = $this->input->get();
         $rowData = $this->get_payroll_pending($get['type']);
@@ -1124,18 +1098,17 @@ class Core_model extends CI_Model{
 
         return $result;
     }
-    function get_payroll_pending($type){
+    public function get_payroll_pending($type){
         $getPrevilage = $this->personal_roles_for_notif();
 
         $company = $this->userdata['company'];
-        $result = array();
         $date= date("Y-m-d", strtotime("-1 year"));
         $this->db->select('a.id as ca_id, UPPER(CONCAT(b.firstname, " ", b.lastname)) as fullname, a.status as ca_status, b.company_id as comp, UPPER(a.position) as pst, a.reference_no as ca_ref, UPPER(a.department) as dept, FORMAT(a.amt_applied, 2) as amt, a.created_dt as created');
         $this->db->from('gcceforms.cash_advance a');
         $this->db->join('gccmaster.tblemployees b', 'b.id = a.employee', 'left');
         if($type == 'payroll'){
             $this->db->where('a.status', 'Payroll Balance Pending');
-        }else if($type == 'acctg'){
+        }elseif($type == 'acctg'){
             $this->db->where('a.status', 'Accounting Balance Pending');
         }else{
             $this->db->where('a.status', 'Awaiting Approval');
@@ -1151,12 +1124,11 @@ class Core_model extends CI_Model{
         $this->db->limit('10');
 
         $query = $this->db->get();
-        $q = $query->result();
-        $result = $q;
-        return $result;
+        return $query->result();
     }
 
-    function get_payroll_pending_count(){
+    public function get_payroll_pending_count(){
+        $result = 0;
         $getPrevilage = $this->personal_roles_for_notif();
         if(in_array('ca_payroll_notif', $getPrevilage)){
             $date = date("Y-m-d", strtotime("-1 year"));
@@ -1168,16 +1140,13 @@ class Core_model extends CI_Model{
             $this->db->group_by('a.id');
 
             $query = $this->db->get();
-            $q = $query->result();
-            $result = $query->num_rows(); 
-        }else{
-            $result = 0;  
+            $result = $query->num_rows();
         }
-
         return $result;
     }
 
-    function get_pyrll_pending_count(){
+    public function get_pyrll_pending_count(){
+        $result = 0;
         $date = date("Y-m-d", strtotime("-1 year"));
         $getPrevilage = $this->personal_roles_for_notif();
         if(in_array('ca_payroll_notif', $getPrevilage)){
@@ -1189,15 +1158,13 @@ class Core_model extends CI_Model{
             $this->db->group_by('a.id');
 
             $query = $this->db->get();
-            $q = $query->result();
             $result = $query->num_rows();
-        }else{
-            return 0;
         }
         return $result;
     }
 
-    function get_acctg_pending_count(){
+    public function get_acctg_pending_count(){
+        $result = 0;
         $company = $this->userdata['company'];
         $date= date("Y-m-d", strtotime("-1 year"));
         $getPrevilage = $this->personal_roles_for_notif();
@@ -1214,16 +1181,14 @@ class Core_model extends CI_Model{
             $this->db->group_by('a.id');
 
             $query = $this->db->get();
-            $q = $query->result();
             $result = $query->num_rows();
-        }else{
-            $result = 0;
         }
 
         return $result;
     }
 
-    function get_approval_pending_count(){
+    public function get_approval_pending_count(){
+        $result = 0;
         $date = date("Y-m-d", strtotime("-1 year"));
         $getPrevilage = $this->personal_roles_for_notif();
         if(in_array('ca_approval_notif', $getPrevilage)){
@@ -1235,16 +1200,13 @@ class Core_model extends CI_Model{
             $this->db->group_by('a.id');
 
             $query = $this->db->get();
-            $q = $query->result();
             $result = $query->num_rows();
-        }else{
-            return 0;
         }
         return $result;
     }
 
     // for cash advance notification 
-    function personal_roles_for_notif(){
+    public function personal_roles_for_notif(){
         $arrData = array();
         $id = $this->authenticate->getRoleId();
         $query = $this->db->get_where("user_role_acl", array("role_id" => $id));
@@ -1254,16 +1216,13 @@ class Core_model extends CI_Model{
             if ($privilege) {
                 foreach ($privilege as $vv) {
                     $isNode = strpos($vv, "-");
-                    if ($isNode == true) {
+                    if ($isNode !== false) {
                         $dd = explode("-", $vv);
                         if (count($dd) == 2) {
                             $aclId = $dd[0];
                             $privilegeId = $dd[1];
-
                             $acl = $this->db->get_where("access_control_list", array("id" => $aclId, 'name' => 'ca_masterfile'));
                             if ($acl->num_rows() == 1) {
-                                $rowAcl = $acl->row();
-
                                 $privilegeData = $this->db->get_where("privilege_list", array("id" => $privilegeId));
                                 if ($privilegeData->num_rows() == 1) {
                                     $rowPriv = $privilegeData->row();
@@ -1276,15 +1235,11 @@ class Core_model extends CI_Model{
                 }
             }
         }
-
         return $arrData;
     }
 
-    function get_all_ca(){
+    public function get_all_ca(){
         $company = $this->userdata['company'];
-        $payroll = 0;
-        $acctg = 0;
-        $approve = 0;
         $result = array();
         $where = '';
 
@@ -1300,10 +1255,8 @@ class Core_model extends CI_Model{
             $where .= '';
         }
 
-        if($where != ''){
-            if(in_array('ca_acctg_notif', $has_previ) || in_array('ca_acctg_fo_notif', $has_previ)){
-                $where .= ' OR ';
-            }
+        if($where != '' && (in_array('ca_acctg_notif', $has_previ) || in_array('ca_acctg_fo_notif', $has_previ))){
+            $where .= ' OR ';
         }
 
         if(in_array('ca_acctg_notif', $has_previ) || in_array('ca_acctg_fo_notif', $has_previ)){
@@ -1314,10 +1267,8 @@ class Core_model extends CI_Model{
             }
         }
 
-        if($where != ''){
-            if(in_array('ca_approval_notif', $has_previ)){
-                $where .= ' OR ';
-            }
+        if($where != '' && (in_array('ca_approval_notif', $has_previ))){
+            $where .= ' OR ';
         }
 
         if(in_array('ca_approval_notif', $has_previ)){

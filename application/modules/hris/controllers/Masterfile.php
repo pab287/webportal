@@ -249,7 +249,7 @@
                 $arrData["loans_ca_reference"] = $this->employee->getCaRef($id);
                 $arrData["questions_list"] = $this->employee_model->getQuestionsList();
                 
-                $this->core_layout->addJs("plugins/star-rating/js/jquery.star-rating-svg.min.js", TRUE);
+                $this->core_layout->addJs("plugins/star-rating/js/jquery.star-rating-svg.min.js", true);
                 $this->core_layout->addCss("plugins/star-rating/css/star-rating-svg.css");
                 $this->core_layout->addJs("plugins/pdf/pdf.min.js", true);
                 $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
@@ -261,21 +261,37 @@
                 $this->core_layout->addJs("js/buttons.print.min.js", true);
 
                 $this->core_layout->addJs("js/ams/jquery.maskMoney.min.js", true);
-                $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
-                $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
+                $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+                $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
                 $this->core_layout->addJs("js/hris/employee_masterfile_script.js", true, $arrData);
                 $this->core_layout->addJs("js/hris/employee_documents_script.js", true);
                 $this->core_layout->addJs("js/hris/employee_edit_and_archive_script.js", true);
-
-                $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
-                $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
-                
                 $this->load->view("core/templates/header");
                 $this->load->view("hris/masterfile/employee/edit_masterfile", $arrData);
                 $this->load->view("core/templates/footer");
             } else {
                 redirect(base_url("hris/masterfile/employee"), "refresh");
             }
+        }
+
+        public function sss_premium() {
+            $this->core_layout->setBodyClass("hris transaction sss_premium");
+            $this->core_layout->setPageTitle("HRIS - Transactrion SSS Premium");
+            $this->core_layout->setPrivilegeName("hris_masterfile_sss_premium");
+
+            $this->load->model("payroll/payroll_m", "payroll");
+            $entryDate = $this->employee_model->getPayrollSheetFirstEntryDate();
+            $tempData = array();
+            $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData($entryDate);
+            $tempData["company"] = $this->payroll->select2CompanyData("description");
+            $tempData["entry_date"] = $entryDate;
+            
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+            $this->core_layout->addJs("js/hris/sss_sbr_payments_script.js", true, $tempData);
+            $this->load->view("core/templates/header");
+            $this->load->view("hris/transaction/sss_sbr_payments");
+            $this->load->view("core/templates/footer");
         }
 
         function get_employee_datatable_request($employee_status = "Active") {
@@ -2006,4 +2022,28 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
+        public function save_sbr_payment(){
+            $data = $this->employee_model->saveSbrPayment();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_sbr_payments_datatable_request(){
+            $data = $this->employee_model->getSbrPaymentsDatatableRequest();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function generate_sbr_payment(){
+            $data = $this->employee_model->generateSbrPayment();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_sbr_payment_preview(){
+            $data = $this->employee_model->getSbrPaymentPreview();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function update_sbr_payment(){
+            $data = $this->employee_model->updateSbrPayment();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
     }

@@ -214,11 +214,10 @@ class Payroll_m extends CI_Model
         return array("results" => $results, "sql" => $this->db->last_query());
     }
 
-    function select2CompanyData(){
-        $this->db->select("companies.id, companies.`code` `text`, companies.*");
-        $this->db->order_by("`code`", "ASC");
-        $results = $this->db->get("gcchris.tblcompanies companies")->result();
-        return $results;
+    public function select2CompanyData($companyColumn='code'){
+        $this->db->select("companies.id, companies.`{$companyColumn}` `text`, companies.*");
+        $this->db->order_by("`{$companyColumn}`", "ASC");
+        return $this->db->get("gcchris.tblcompanies companies")->result();
 
     }
 
@@ -5046,10 +5045,11 @@ class Payroll_m extends CI_Model
         return $data;
     }
 
-    public function getPostedPayrollSheetYearsData()
+    public function getPostedPayrollSheetYearsData($entryDate = null)
     {
         $arrData = array();
         $this->db->select('`year` id, `year` `text`');
+        if($entryDate){ $this->db->where('pay_date >=', $entryDate); }
         $this->db->group_by('year');
         $this->db->order_by('year', 'desc');
         $qTemp = $this->db->get('payroll.payroll_sheet');
