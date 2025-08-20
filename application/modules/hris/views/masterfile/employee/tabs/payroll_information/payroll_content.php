@@ -1692,60 +1692,146 @@
 
     loanPaymentHistoryModal.on("show.bs.modal", function () {
         const id = $(this).attr("data-id");
-        $("table", this)
-            .DataTable({
-                dom: "frtlp",
-                serverSide: false,
-                destroy: true,
-                ajax: {
-                    url: baseUrl(`hris/masterfile/get_employee_loan_payment_history/${id}`),
-                    type: "GET",
-                    dataType: "JSON"
-                },
-                autoWidth: false,
-                columns: [
-                    {
-                        data: null,
-                        render: function (data, type, row) {
-                            return `<span class="m--font-boldest">${moment(data.date_start).format("MMM. DD, YYYY")}</span>`
-                                + " - " + `<span class="m--font-boldest">${moment(data.date_end).format("MMM. DD, YYYY")}</span>`;
-                        }
-                    },
-                    {
-                        width: "30%",
-                        data: null,
-                        render: function (data, type, row) {
-                            return `<div class="m--font-bolder">${row.firstname} ${row.lastname}</div>
-                                    <div class="m--regular-font-size-sm1 text-muted">${moment(row.posted_at).format("lll")}</div>`;
-                        }
-                    },
-                    {
-                        width: "25%",
-                        data: "amount_due",
-                        className: "text-right",
-                        render: function (data, type, row) {
-                            return `<span class="m--font-boldest">
-                                        ${parseFloat(data).toLocaleString("en-US", {maximumFractionDigits: 2})}
-                                    </span>`;
-                        }
-                    },
-                ],
-                footerCallback: function (row, data, start, end, display) {
-                    const api = this.api();
-                    const total = api
-                        .column(2)
-                        .data()
-                        .reduce(function (a, b) {
-                            return parseFloat(a) + parseFloat(b);
-                        }, 0);
 
-                    $(api.column(2).footer()).html(
-                        `<span class="m--font-boldest m--regular-font-size-lg1">
-                            ${parseFloat(total).toLocaleString("en-US", {maximumFractionDigits: 2})}
-                        </span>`
-                    );
-                }
-            });
+        /** nav tab issue fixes ***/
+        const cTab = $("#employee--loan_payment_history .nav-link.active").attr("href");
+        $("#employee--loan_payment_history .tab-pane").removeClass("active show");
+        $(cTab).addClass("active show");
+        
+        $("#employee--loan_payment_history .nav-link").on("click", function () {
+            const tab = $(this).attr("href");
+            $("#employee--loan_payment_history .tab-pane").removeClass("active show");
+            $(tab).addClass("active show");
+        });
+        /** nav tab issue fixes ***/
+
+        $("#tab_payments table", this).DataTable({
+            dom: "frtlp",
+            serverSide: false,
+            destroy: true,
+            ajax: {
+                url: baseUrl(`hris/masterfile/get_employee_loan_payment_history/${id}`),
+                type: "GET",
+                dataType: "JSON"
+            },
+            autoWidth: false,
+            columns: [
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return `<span class="m--font-boldest">${moment(data.date_start).format("MMM. DD, YYYY")}</span>`
+                            + " - " + `<span class="m--font-boldest">${moment(data.date_end).format("MMM. DD, YYYY")}</span>`;
+                    }
+                },
+                {
+                    width: "30%",
+                    data: null,
+                    render: function (data, type, row) {
+                        return `<div class="m--font-bolder">${row.firstname} ${row.lastname}</div>
+                                <div class="m--regular-font-size-sm1 text-muted">${moment(row.posted_at).format("lll")}</div>`;
+                    }
+                },
+                {
+                    width: "25%",
+                    data: "amount_due",
+                    className: "text-right",
+                    render: function (data, type, row) {
+                        return `<span class="m--font-boldest">
+                                    ${parseFloat(data).toLocaleString("en-US", {maximumFractionDigits: 2})}
+                                </span>`;
+                    }
+                },
+            ],
+            footerCallback: function (row, data, start, end, display) {
+                const api = this.api();
+                const total = api
+                    .column(2)
+                    .data()
+                    .reduce(function (a, b) {
+                        return parseFloat(a) + parseFloat(b);
+                    }, 0);
+
+                $(api.column(2).footer()).html(
+                    `<span class="m--font-boldest m--regular-font-size-lg1">
+                        ${parseFloat(total).toLocaleString("en-US", {maximumFractionDigits: 2})}
+                    </span>`
+                );
+            }
+        });
+
+        $("#tab_interest_charges table", this).DataTable({
+            dom: "frtlp",
+            serverSide: false,
+            destroy: true,
+            ordering: false,
+            ajax: {
+                url: baseUrl(`hris/masterfile/get_employee_loan_iterest_charge_history/${id}`),
+                type: "GET",
+                dataType: "JSON"
+            },
+            autoWidth: false,
+            columns: [
+                {
+                    data: "pay_date",
+                    render: function (data, type, row) {
+                        return `<span class="m--font-boldest">${moment(row.date_start).format("MMM. DD, YYYY")}</span>`
+                            + " - " + `<span class="m--font-boldest">${moment(row.date_end).format("MMM. DD, YYYY")}</span>`;
+                    }
+                },
+                {
+                    width: "30%",
+                    data: null,
+                    render: function (data, type, row) {
+                        return `<div class="m--font-bolder">${row.firstname} ${row.lastname}</div>
+                                <div class="m--regular-font-size-sm1 text-muted">${moment(row.posted_at).format("lll")}</div>`;
+                    }
+                },
+                {
+                    width: "15%",
+                    data: "amount_due",
+                    className: "text-right",
+                    render: function (data, type, row) {
+                        return `<span class="m--font-boldest">
+                                    ${parseFloat(data).toLocaleString("en-US", {maximumFractionDigits: 2})}
+                                </span>`;
+                    }
+                },
+                {
+                    width: "15%",
+                    data: "total_interest_amount",
+                    className: "text-right",
+                    render: function (data, type, row) {
+                        return `<span class="m--font-boldest">
+                                    ${parseFloat(data).toLocaleString("en-US", {maximumFractionDigits: 2})}
+                                </span>`;
+                    }
+                },
+            ],
+            footerCallback: function (row, data, start, end, display) {
+                const api = this.api();
+                const total = api
+                    .column(3)
+                    .data()
+                    .reduce(function (a, b) {
+                        return parseFloat(a) + parseFloat(b);
+                    }, 0);
+
+                $(api.column(3).footer()).html(
+                    `<span class="m--font-boldest m--regular-font-size-lg1">
+                        ${parseFloat(total).toLocaleString("en-US", {maximumFractionDigits: 2})}
+                    </span>`
+                );
+            }
+        });
+
+        $.ajax({
+            url : baseUrl(`hris/masterfile/get_employee_loan_remarks/${id}`),
+            type: "GET",
+            dataType: "JSON",
+            success: function(response){
+                $("#_for_remarks").text(response.remarks);
+            }
+        });
     });
 
     const getCAReferences = function(){

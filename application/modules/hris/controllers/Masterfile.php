@@ -1647,7 +1647,8 @@
         }
 
         function get_employee_loan_payment_history($id) {
-            echo json_encode($this->employee_model->getEmployeeLoanPaymentHistory($id));
+            $this->load->model("payroll/employee_m");
+            echo json_encode($this->employee_m->getEmployeeLoanPaymentHistory($id)); 
         }
 
         function save_one_month_days_gap_setup(){
@@ -2044,6 +2045,18 @@
 
         public function update_sbr_payment(){
             $data = $this->employee_model->updateSbrPayment();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+        
+        public function get_employee_loan_remarks($id){
+            $this->load->model("payroll/employee_m", "payroll_employee");
+            $data = $this->payroll_employee->getLoanRemark($id);
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_employee_loan_iterest_charge_history($id){
+            $this->load->model("payroll/employee_m", "payroll_employee");
+            $data = $this->payroll_employee->getEmployeeLoanInterestChargeHistory($id);
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
     }
