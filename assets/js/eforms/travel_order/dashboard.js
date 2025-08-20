@@ -29,9 +29,11 @@ function getColor(status) {
 }
 var search_val = "";
 var tblTravel = $("#table-travel-today").DataTable({
-    dom: '<"toolbar">tl',
+    dom: 'rtlp',
 	serverSide: true,
     processing: true,
+    scrollY: "450px", 
+    scrollCollapse: true,
     ajax: {
 		url: baseUrl("eforms/travel_order/get_created"),
 		type: "post",
@@ -39,16 +41,15 @@ var tblTravel = $("#table-travel-today").DataTable({
         global: false,
        data: function(d){
             d.csrf_token = _csrf_hash,
-            d.search['value'] = search_val
             d.date = tableDate;
         }
     },
     searching: true,
     columns: [
         
-        { data: "reference_no" },
-        { data: "company" },
-        { data: null },
+        { data: "reference_no",width: "*%" },
+        { data: "company"},
+        { data: null, width: "*%", },
         { data: null, width: "15%", },
         { data: null, width: "25%", },
         
@@ -129,9 +130,11 @@ var tblTravel = $("#table-travel-today").DataTable({
     }]
 });
 var tblTravel2 = $("#table-travel-weekly").DataTable({
-    dom: '<"toolbar">tl',
+    dom: 'rtlp',
 	serverSide: true,
     processing: true,
+    scrollY: "450px", 
+    scrollCollapse: true,
     ajax: {
 		url: baseUrl("eforms/travel_order/get_departing"),
 		type: "post",
@@ -139,16 +142,15 @@ var tblTravel2 = $("#table-travel-weekly").DataTable({
         global: false,
         data: function(d){
             d.csrf_token = _csrf_hash,
-            d.search['value'] = search_val,
             d.date = tableDate;
         }
     },
     searching: true,
     columns: [
         
-        { data: "reference_no" },
+        { data: "reference_no", width: "*%" },
         { data: "company" },
-        { data: null },
+        { data: null, width: "*%", },
         { data: null, width: "15%", },
         { data: null, width: "25%", },
         

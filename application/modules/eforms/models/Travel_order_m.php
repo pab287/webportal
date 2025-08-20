@@ -2872,7 +2872,7 @@
                 $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
                 $date = (isset($post["date"]) && $post["date"]) ? $post["date"] : null;
                 $posts = $this->get_created_to($limit, $start, $order, $dir, $date);
-
+                $filtered = $this->get_created_to_count($date);
                 $data = array();
                 if (!empty($posts)) {
                     foreach ($posts as $pst) {
@@ -2897,15 +2897,17 @@
                     }
                 }
                 $json_data = array(
-
-                    "data" => $data
+                    "data" => $data,
+                    "recordsTotal" => $filtered,
+                    "recordsFiltered" => $filtered
                 );
 
                 return $json_data;
             } else {
                 return array(
-
-                    "data" => array()
+                    "data" => array(),
+                    "recordsTotal" => 0,
+                    "recordsFiltered" => 0,
                 );
             }
         }
@@ -3017,6 +3019,25 @@
 
         }
 
+        private function get_created_to_count($date){
+            $arrData = array();
+            $this->db->select("a.id, a.reference_no, a.company, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt");
+            $this->db->from("gcceforms.travel_order a");
+            if (!empty($date['start']) && !empty($date['end'])) {
+                $s = date('Y-m-d H:i:s', strtotime($date['start'] . ' 00:00:00'));
+                $e = date('Y-m-d H:i:s', strtotime($date['end'] . ' 23:59:59'));
+                $this->db->where("a.created_dt >=", $s);
+                $this->db->where("a.created_dt <=", $e);
+            }else{
+                $todayStart = date('Y-m-d 00:00:00');
+                $todayEnd = date('Y-m-d 23:59:59');
+                $this->db->where("a.created_dt >=", $todayStart);
+                $this->db->where("a.created_dt <=", $todayEnd);
+            }
+            $query = $this->db->get();
+            return $query->num_rows();
+        }
+
         function getDeparting() {
             $post = $this->input->post();
             if ($post) {
@@ -3035,7 +3056,7 @@
                 $date = (isset($post["date"]) && $post["date"]) ? $post["date"] : null;
 
                 $posts = $this->get_departing_to($limit, $start, $order, $dir, $date);
-
+                $filtered = $this->get_departing_to_count($date);
 
                 $data = array();
                 if (!empty($posts)) {
@@ -3061,15 +3082,17 @@
                     }
                 }
                 $json_data = array(
-
-                    "data" => $data
+                    "data" => $data,
+                    "recordsFiltered" => $filtered,
+                    "recordsTotal" => $filtered,
                 );
 
                 return $json_data;
             } else {
                 return array(
-
-                    "data" => array()
+                    "data" => array(),
+                    "recordsTotal" => 0,
+                    "recordsFiltered" => 0,
                 );
             }
         }
@@ -3184,6 +3207,29 @@
 
             return $arrData;
 
+        }
+
+        private function get_departing_to_count($date) {
+            $check = date('Y-m-d', strtotime("-7 days"));
+            $arrData = array();
+            $this->db->select("a.id, a.reference_no, a.company, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt");
+            $this->db->from("gcceforms.travel_order a");
+            $this->db->join("gcceforms.travel_destination td", "td.travel_order_id = a.id", "left");
+            if (!empty($date['start']) && !empty($date['end'])) {
+                $startDate = date('Y-m-d H:i:s', strtotime($date['start'] . ' 00:00:00'));
+                $endDate = date('Y-m-d H:i:s', strtotime($date['end'] . ' 23:59:59'));
+            } else {
+                $startDate = date('Y-m-d 00:00:00');
+                $endDate = date('Y-m-d 23:59:59');
+            }
+            $this->db->where("(
+                (td.date_from <= '$endDate' AND td.date_to >= '$startDate')
+            )");
+            $this->db->where("a.status", "Approved");
+            $this->db->where("a.accomplished",0);
+            $query = $this->db->get();
+            return $query->num_rows();
+        
         }
 
         function m_get_travel_analytics_for_dashboard() {
