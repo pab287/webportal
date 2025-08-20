@@ -43,9 +43,10 @@ var tblTravel = $("#table-travel-today").DataTable({
             d.date = tableDate;
         }
     },
+    order: [0, "desc"],
     searching: true,
     columns: [
-        
+        {data: "id", visible: false},
         { data: "reference_no",width: "*%" },
         { data: "company"},
         { data: null, width: "*%", },
@@ -56,7 +57,7 @@ var tblTravel = $("#table-travel-today").DataTable({
     columnDefs: [{
         data: null,
         defaultContent: "",
-        targets: 2,
+        targets: 3,
         orderable: false,
         render: function (data, type, row, meta) {
             var tempHtml = "<div class='custom-details driver--details'><p>No Assigned Driver</p></div>";
@@ -91,7 +92,7 @@ var tblTravel = $("#table-travel-today").DataTable({
     }, {
         data: null,
         defaultContent: "",
-        targets: 3,
+        targets: 4,
         orderable: false,
         render: function (data, type, row, meta) {
             var tempHtml = "<div class='custom-details driver--details'><ul class='custom_list--dot'><li>No Assigned Personnel</li></ul></div>";
@@ -110,7 +111,7 @@ var tblTravel = $("#table-travel-today").DataTable({
     }, {
         data: null,
         defaultContent: "",
-        targets: 4,
+        targets: 5,
         orderable: false,
         render: function (data, type, row, meta) {
             var tempHtml = "<div class='custom-details driver--details'><p>No Assigned Destination</p></div>";
@@ -146,7 +147,7 @@ var tblTravel2 = $("#table-travel-weekly").DataTable({
     },
     searching: true,
     columns: [
-        
+        { data: "id", visible: false},
         { data: "reference_no", width: "*%" },
         { data: "company" },
         { data: null, width: "*%", },
@@ -157,7 +158,7 @@ var tblTravel2 = $("#table-travel-weekly").DataTable({
     columnDefs: [{
         data: null,
         defaultContent: "",
-        targets: 2,
+        targets: 3,
         orderable: false,
         render: function (data, type, row, meta) {
             var tempHtml = "<div class='custom-details driver--details'><p>No Assigned Driver</p></div>";
@@ -192,7 +193,7 @@ var tblTravel2 = $("#table-travel-weekly").DataTable({
     }, {
         data: null,
         defaultContent: "",
-        targets: 3,
+        targets: 4,
         orderable: false,
         render: function (data, type, row, meta) {
             var tempHtml = "<div class='custom-details driver--details'><ul class='custom_list--dot'><li>No Assigned Personnel</li></ul></div>";
@@ -211,7 +212,7 @@ var tblTravel2 = $("#table-travel-weekly").DataTable({
     }, {
         data: null,
         defaultContent: "",
-        targets: 4,
+        targets: 5,
         orderable: false,
         render: function (data, type, row, meta) {
             var tempHtml = "<div class='custom-details driver--details'><p>No Assigned Destination</p></div>";

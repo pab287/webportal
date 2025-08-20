@@ -2859,19 +2859,14 @@
             $post = $this->input->post();
             if ($post) {
                 $columns = array("a.status", "a.reference_no", "a.company");
-                $dir = "DESC";
-                $order = "a.id";
-                if (isset($post["order"]) && $post["order"]) {
-                    $dir = $post["order"][0]["dir"];
-                    $order = $columns[$post["order"][0]["column"]];
-                }
-
+                $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+                $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
                 $draw = (isset($post['draw']) && $post['draw']) ? $post['draw'] : 0;
                 $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
                 $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
                 $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
                 $date = (isset($post["date"]) && $post["date"]) ? $post["date"] : null;
-                $posts = $this->get_created_to($limit, $start, $order, $dir, $date);
+                $posts = $this->get_created_to($limit, $start, $sortBy,$sortOrder , $date);
                 $filtered = $this->get_created_to_count($date);
                 $data = array();
                 if (!empty($posts)) {
@@ -2912,7 +2907,7 @@
             }
         }
 
-        private function get_created_to($limit = 10, $start = 0, $order = "a.id", $dir = "DESC", $date) {
+        private function get_created_to($limit = 10, $start = 0, $sortBy, $sortOrder, $date) {
             $arrData = array();
             $this->db->select("a.id, a.reference_no, a.company, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt");
             $this->db->from("gcceforms.travel_order a");
@@ -2930,7 +2925,12 @@
             if($limit != -1){
                 $this->db->limit($limit, $start);
             }
-            $this->db->order_by($order, $dir);
+            if($sortOrder !== null){
+                $i = $sortOrder[0]['column'];
+                $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            }else{
+                $this->db->order_by("a.id", "DESC");
+            }
             $query = $this->db->get();
             if ($query->num_rows() > 0) {
                 foreach ($query->result() as $rs) {
@@ -3042,12 +3042,8 @@
             $post = $this->input->post();
             if ($post) {
                 $columns = array("a.status", "a.reference_no", "a.company");
-                $dir = "DESC";
-                $order = "a.id";
-                if (isset($post["order"]) && $post["order"]) {
-                    $dir = $post["order"][0]["dir"];
-                    $order = $columns[$post["order"][0]["column"]];
-                }
+                $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+                $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
 
                 $draw = (isset($post['draw']) && $post['draw']) ? $post['draw'] : 0;
                 $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
@@ -3055,7 +3051,7 @@
                 $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
                 $date = (isset($post["date"]) && $post["date"]) ? $post["date"] : null;
 
-                $posts = $this->get_departing_to($limit, $start, $order, $dir, $date);
+                $posts = $this->get_departing_to($limit, $start, $sortBy, $sortOrder, $date);
                 $filtered = $this->get_departing_to_count($date);
 
                 $data = array();
@@ -3097,7 +3093,7 @@
             }
         }
 
-        private function get_departing_to($limit = 10, $start = 0, $order = "a.id", $dir = "DESC", $date) {
+        private function get_departing_to($limit = 10, $start = 0, $sortBy, $sortOrder, $date) {
             $check = date('Y-m-d', strtotime("-7 days"));
             $arrData = array();
             $this->db->select("a.id, a.reference_no, a.company, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt");
@@ -3118,7 +3114,13 @@
             if($limit != -1){
                 $this->db->limit($limit, $start);
             }
-            $this->db->order_by($order, $dir);
+            if($sortOrder !== null){
+                $i = $sortOrder[0]['column'];
+                $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            }else{
+                $this->db->order_by("a.id", "DESC");
+            }
+
             $this->db->group_by("a.id");
             $query = $this->db->get();
             if ($query->num_rows() > 0) {

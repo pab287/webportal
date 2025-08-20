@@ -151,6 +151,7 @@
                             width="100%">
                             <thead>
                             <tr>
+                                <th></th>
                                 <th>Reference No</th>
                                 <th>File Under</th>
                                 <th>Driver & Vehicle</th>
@@ -192,6 +193,7 @@
                             width="100%">
                             <thead>
                             <tr>
+                                <th></th>
                                 <th>Reference No</th>
                                 <th>File Under</th>
                                 <th>Driver & Vehicle</th>
