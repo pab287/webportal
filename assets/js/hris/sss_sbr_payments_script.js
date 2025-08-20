@@ -88,7 +88,17 @@ $("#modal-sbr_payment #year").select2({
             });
             monthSelect.val("").trigger("change.select2");
         }
-    } else if (cValue >= entryYear){
+    } else if (cValue > entryYear){
+        const monthSelect = $("#modal-sbr_payment #month");
+        if(typeof monthSelect !== "undefined" && monthSelect.length > 0){
+            monthSelect.empty();
+            $.each(months, function(_k, v){
+                const nOption = new Option(v.text, v.id, false, false);
+                monthSelect.append(nOption);
+            });
+            monthSelect.val("").trigger("change.select2");
+        }
+    } else {
         let tempMonth = moment(entryDate).format('M');
         tempMonth = parseInt(tempMonth);
         const monthSelect = $("#modal-sbr_payment #month");
@@ -97,16 +107,6 @@ $("#modal-sbr_payment #year").select2({
             $.each(months, function(k, v){
                 const nOption = new Option(v.text, v.id, false, false);
                 if(k < tempMonth){ nOption.disabled = true; }
-                monthSelect.append(nOption);
-            });
-            monthSelect.val("").trigger("change.select2");
-        }
-    } else {
-        const monthSelect = $("#modal-sbr_payment #month");
-        if(typeof monthSelect !== "undefined" && monthSelect.length > 0){
-            monthSelect.empty();
-            $.each(months, function(k, v){
-                const nOption = new Option(v.text, v.id, false, false);
                 monthSelect.append(nOption);
             });
             monthSelect.val("").trigger("change.select2");
@@ -325,7 +325,17 @@ const vmSbrPayment = new Vue({
                         });
                         monthSelect.val("").trigger("change.select2");
                     }
-                } else if (cValue >= entryYear){
+                } else if (cValue > entryYear){
+                    const monthSelect = $("#edit_month", currentElement);
+                    if(typeof monthSelect !== "undefined" && monthSelect.length > 0){
+                        monthSelect.empty();
+                        $.each(months, function(_k, v){
+                            const nOption = new Option(v.text, v.id, false, false);
+                            monthSelect.append(nOption);
+                        });
+                        monthSelect.val("").trigger("change.select2");
+                    }
+                } else {
                     let tempMonth = moment(entryDate).format('M');
                     tempMonth = parseInt(tempMonth);
                     const monthSelect = $("#edit_month", currentElement);
@@ -334,16 +344,6 @@ const vmSbrPayment = new Vue({
                         $.each(months, function(k, v){
                             const nOption = new Option(v.text, v.id, false, false);
                             if(k < tempMonth){ nOption.disabled = true; }
-                            monthSelect.append(nOption);
-                        });
-                        monthSelect.val("").trigger("change.select2");
-                    }
-                } else {
-                    const monthSelect = $("#edit_month", currentElement);
-                    if(typeof monthSelect !== "undefined" && monthSelect.length > 0){
-                        monthSelect.empty();
-                        $.each(months, function(k, v){
-                            const nOption = new Option(v.text, v.id, false, false);
                             monthSelect.append(nOption);
                         });
                         monthSelect.val("").trigger("change.select2");
