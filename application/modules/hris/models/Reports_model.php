@@ -249,6 +249,86 @@ class Reports_model extends CI_Model{
     }
 
     public function getExpiringEmployees($export, $work_status){
+        $select = "
+            UCASE(IF(company.code IS NULL, emp.company_id ,company.code)) as company,
+            UCASE(IF(pos.name IS NULL, emp.position, TRIM(pos.name))) as position,
+            CAST(emp.idno AS DECIMAL(10)) as idno,
+            UCASE(
+                CONCAT(emp.firstname, ' ', emp.middlename, ' ', emp.lastname,
+                    CASE
+                        WHEN emp.suffix IS NOT NULL AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)
+                    ELSE '' END
+                )
+            ) as name,
+            emp.date_start as date_hired,
+            DATE_ADD(emp.date_start, INTERVAL 3 MONTH) as firstEvaluation,
+            DATE_ADD(emp.date_start, INTERVAL 5 MONTH) as finalEvaluation,
+            emp.date_end_prob as end_of_contract,
+            DATEDIFF(DATE_ADD(emp.date_start, INTERVAL 5 MONTH), CURDATE()) daysBeforeEvaluation,
+            emp.level,
+            emp.supervisor_meta
+        ";
+
+        $joinArr = array(
+            array('table' => 'gcchris.tblcompanies as company', 'condition' => 'emp.company_id = company.id', 'option' => 'LEFT'),
+            array('table' => 'gcchris.tbldepartments as dep', 'condition' => 'emp.department_id = dep.id', 'option' => 'LEFT'),
+            array('table' => 'gcchris.tblposition as pos', 'condition' => 'emp.position = pos.id', 'option' => 'LEFT')
+        );
+
+        $where = array(
+            "emp.work_status" => $work_status,
+            "emp.employee_status" => "Active",
+        );
+
+        $this->db->select($select);
+        $this->db->where($where);
+        foreach ($joinArr as $join) {
+            $this->db->join($join['table'], $join['condition'], $join['option']);
+        }
+
+        $query = $this->db->get($this->tblEmployees . " emp")->result_array();
+
+        $res = array();
+
+        foreach($query as $row) {
+
+            if ($row['level'] == 'EXECUTIVE') {
+                // Automatic they're own boss of themselves 😎
+                $head_name = $row['name'];
+            } else {
+                // Kng indi sa supervisor_meta ko ma look up ky hambal nla sa employee data butungon ang head, indi sa department
+                $sup_val = $row['supervisor_meta'];
+
+                // check kng nka serialize or plain ID
+                if (is_string($sup_val) && @unserialize($sup_val) !== false || $sup_val === 'a:0:{}') {
+
+                    // Serialized -> unserialize it
+                    $supervisory_data = unserialize($sup_val);
+
+                    if (is_array($supervisory_data)) {
+                        $priority_head = $supervisory_data['supervisory'] ?? $supervisory_data['managerial'] ?? null;
+                        $head_id = (int)$priority_head;
+
+                        $head_name = $this->get_head_by_id($head_id);
+                    }
+                } else {
+                    // Plain ID
+                    $head_id = (int)$sup_val;
+
+                    $head_name = $this->get_head_by_id($head_id);
+                }
+            }
+
+            $row['head'] = $head_name;
+            $row['supervisor_meta'] = @unserialize($row['supervisor_meta']);
+            $res[] = $row;
+        }
+
+        $resultSet['data'] = $res;
+        return $resultSet;
+    }
+
+    public function getExpiringEmployees_old($export, $work_status){
         $tableConfig = $this->input->post();
         $tableConfigStd = $this->utilities->parseFormDataToObject($tableConfig);
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($tableConfigStd);

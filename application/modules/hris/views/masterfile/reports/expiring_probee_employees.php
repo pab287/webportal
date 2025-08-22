@@ -14,13 +14,17 @@
                     </h3>
                 </div>
             </div>
+            <div class="m-portlet__head-tools">
+                <button class="btn btn-success m-btn" id="ExportExcel" data-toggle="m-tooltip" title="" data-original-title="EXPORT EXCEL">
+                    <span><i class="fa fa-file-excel-o"></i></span>
+                </button>
+            </div>
         </div>
         <div class="m-portlet__body">
             <div class="table-responsive">
                 <table class="table table-bordered table-hover table-striped" id="table-expiring-probees" width="100%">
                     <thead>
                     <tr>
-                        <th></th>
                         <th>Company</th>
                         <th>Position</th>
                         <th>ID #</th>
@@ -30,7 +34,7 @@
                         <th>3rd Month</th>
                         <th>5th Month</th>
                         <th>End of probationary</th>
-                        <th>Days `til Eval.</th>
+                        <th title="Days until evaluation">Days Eval.</th>
                     </tr>
                     </thead>
                     <tbody></tbody>
