@@ -944,11 +944,13 @@ if (typeof _tempContentData !== "undefined") {
                 vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { level: data.id });
                 // vmData = Object.assign({}, vmData, { level: data.id });
 
-                if (data.id === "MANAGERIAL") {
+                if (data.id === "MANAGERIAL" || data.id === "EXECUTIVE") {
                     $('#is_two_level').trigger('change', function() {
                         $(this).prop('checked', false);
                     });
-                                        
+                    
+                    vmTab3.vm_tab3.tl_supervisory = 0;
+                    vmTab3.vm_tab3.current_tl_supervisory = 0;
                     vmTab3.vm_tab3.supervisor = 0;
                     vmTab3.vm_tab3.manager = 0;
 

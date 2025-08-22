@@ -682,7 +682,7 @@
 <table class="responsive">
     <template v-if="main.position === 'owner'"></template>
     <template v-else>
-        <template v-if="['SUPERVISORY', 'MANAGERIAL', 'EXECUTIVE'].includes(main.level)">
+        <!-- <template v-if="['SUPERVISORY', 'MANAGERIAL', 'EXECUTIVE'].includes(main.level)">
             <thead class="customsalary">
                 <th>SUPERVISOR</th>
             </thead>
@@ -692,7 +692,7 @@
                 </tr>
             </tbody>
         </template>
-        <template v-else>
+        <template v-else> -->
             <thead class="customsalary">
                 <th>SUPERVISOR</th>
                 <th>DEPARTMENT MANAGER</th>
@@ -703,7 +703,7 @@
                     <td data-label="MANAGER" v-text="manager || 'N/A'"></td>
                 </tr>
             </tbody>
-        </template>
+        <!-- </template> -->
     </template>
 </table>
 
