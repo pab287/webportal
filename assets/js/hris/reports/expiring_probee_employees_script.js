@@ -100,7 +100,7 @@ tblExpiringProbees = $('#table-expiring-probees')
             },
             {data: 'idno'},
             {data: 'name'},
-            {data: 'head'},
+            {data: 'head', orderable: false},
             {
                 data: 'date_hired',
                 render: function (data) {
