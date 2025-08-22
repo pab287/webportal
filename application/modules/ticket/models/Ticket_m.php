@@ -1060,27 +1060,12 @@ class Ticket_m extends CI_Model
         $minutes = floor(($avg_seconds % 3600) / 60);
         $seconds = $avg_seconds % 60;
         
-        $formatted_avg_time = '';
-        
-        if ($days > 0) {
-            $formatted_avg_time .= $days . ($days == 1 ? "day " : "days ");
-        }
-        if ($hours > 0) {
-            $formatted_avg_time .= $hours . ($hours == 1 ? "hr " : "hrs ");
-        }
-        if ($minutes > 0) {
-            $formatted_avg_time .= $minutes . ($minutes == 1 ? "min " : "mins ");
-        }
-        if ($seconds > 0) {
-            $formatted_avg_time .= $seconds . ($seconds == 1 ? "sec" : "secs");
-        }
-        
-        if ($formatted_avg_time === '') {
-            $formatted_avg_time = "INVALID";
-        }
-        
-        // Trim trailing space
-        $formatted_avg_time = rtrim($formatted_avg_time);
+        $formatted_avg_time = [
+            "days"    => $days,
+            "hours"   => $hours,
+            "minutes" => $minutes,
+            "seconds" => $seconds,
+        ];
 
         $avg_response_query = $this->db->query("
             SELECT AVG(TIMESTAMPDIFF(SECOND, new_logs.created_at, completed_logs.created_at)) as avg_seconds
@@ -1106,26 +1091,13 @@ class Ticket_m extends CI_Model
         $response_minutes = floor(($avg_response_seconds % 3600) / 60);
         $response_seconds = $avg_response_seconds % 60;
         
-        $formatted_avg_response_time = '';
+        $formatted_avg_response_time = [
+            "days"    => $response_days,
+            "hours"   => $response_hours,
+            "minutes" => $response_minutes,
+            "seconds" => $response_seconds,
+        ];
         
-        if ($response_days > 0) {
-            $formatted_avg_response_time .= $response_days . ($response_days == 1 ? "day " : "days ");
-        }
-        if ($response_hours > 0) {
-            $formatted_avg_response_time .= $response_hours . ($response_hours == 1 ? "hr " : "hrs ");
-        }
-        if ($response_minutes > 0) {
-            $formatted_avg_response_time .= $response_minutes . ($response_minutes == 1 ? "min " : "mins ");
-        }
-        if ($response_seconds > 0) {
-            $formatted_avg_response_time .= $response_seconds . ($response_seconds == 1 ? "sec" : "secs");
-        }
-        
-        if ($formatted_avg_response_time === '') {
-            $formatted_avg_response_time = "INVALID";
-        }
-        
-        $formatted_avg_response_time = rtrim($formatted_avg_response_time);
         
         $data = [
             "widget" => [
@@ -1624,8 +1596,8 @@ class Ticket_m extends CI_Model
         $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
         $start_time = $start_date . ' 00:00:00';
         $end_time = $end_date . ' 23:59:59';
-    
-        $this->db->select("a.performed_by, 
+        $filter = isset($post['filter']) ? $post['filter'] : "all";
+        $this->db->select("a.performed_by, a.responsibility,
         COUNT(*) as ticket_count, 
         IF(a.performed_by = 0, 'Unassigned', CONCAT(
             b.firstname, ' ', b.lastname,
@@ -1639,14 +1611,16 @@ class Ticket_m extends CI_Model
         )) as name,
         SUM(CASE WHEN a.status = 'completed' THEN 1 ELSE 0 END) as completed,
         SUM(CASE WHEN a.status = 'open' THEN 1 ELSE 0 END) as open,
-        SUM(CASE WHEN a.status = 'in progress' THEN 1 ELSE 0 END) as in_progress,
-        SUM(CASE WHEN a.status = 'resolved' THEN 1 ELSE 0 END) as resolved");
+        SUM(CASE WHEN a.status = 'in progress' THEN 1 ELSE 0 END) as in_progress,");         // SUM(CASE WHEN a.status = 'resolved' THEN 1 ELSE 0 END) as resolved
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.performed_by", "LEFT");
         $this->db->where("a.is_archived", 0);
         // $this->db->where("a.status !=", "completed");
         $this->db->where("a.status !=", "cancelled");
         // $this->db->where("a.status !=", "resolved");
+        if ($filter != "all") {
+            $this->db->where("a.responsibility", $filter);
+        }
         $this->db->where("(b.employee_status = 'Active' OR a.performed_by = 0)");
     
         if (isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']) {
@@ -1660,7 +1634,7 @@ class Ticket_m extends CI_Model
     
         $employee_tickets = [];
         foreach ($result as $row) {
-            $employee_tickets[ucwords(strtolower($row['name']))] = ["total" => $row['ticket_count'], "completed" => $row['completed'], "open" => $row['open'], "in_progress" => $row['in_progress'], "resolved" => $row['resolved']];
+            $employee_tickets[ucwords(strtolower($row['name']))] = ["total" => $row['ticket_count'], "completed" => $row['completed'], "open" => $row['open'], "in_progress" => $row['in_progress']];
         }
         return ["assigned" => $employee_tickets];
     }
@@ -1696,7 +1670,7 @@ class Ticket_m extends CI_Model
         $this->db->from('gccticket.ticket t');
         $this->db->join('(SELECT ticket_id, created_at FROM gccticket.trail_logs_event WHERE type = "new") nl', 't.id = nl.ticket_id');
         $this->db->join('(SELECT ticket_id, created_at FROM gccticket.trail_logs_event WHERE type = "completed") ip', 't.id = ip.ticket_id');
-        $this->db->where('t.status', 'completed');
+        // $this->db->where('t.status', 'completed');
         $this->db->where('t.is_archived', 0);
 
         if(!isset($post['all']) || !$post['all'] == 'true'){
@@ -1712,27 +1686,15 @@ class Ticket_m extends CI_Model
         $minutes = floor(($avg_seconds % 3600) / 60);
         $seconds = $avg_seconds % 60;
         
-        $formatted_avg_time = '';
-           
-        if ($days > 0) {
-            $formatted_avg_time .= $days . ($days == 1 ? "day " : "days ");
-        }
-        if ($hours > 0) {
-            $formatted_avg_time .= $hours . ($hours == 1 ? "hr " : "hrs ");
-        }
-        if ($minutes > 0) {
-            $formatted_avg_time .= $minutes . ($minutes == 1 ? "min " : "mins ");
-        }
-        if ($seconds > 0) {
-            $formatted_avg_time .= $seconds . ($seconds == 1 ? "sec" : "secs");
-        }
+
+        $data = [
+            "days"    => $days,
+            "hours"   => $hours,
+            "minutes" => $minutes,
+            "seconds" => $seconds,
+        ];
         
-        if ($formatted_avg_time === '') {
-            $formatted_avg_time = "INVALID";
-        }
-           
-        $formatted_avg_time = rtrim($formatted_avg_time);
-        return $formatted_avg_time;
+        return $data;
     }
 
     public function getAveResponseTime(){
@@ -1744,7 +1706,7 @@ class Ticket_m extends CI_Model
         $this->db->from('gccticket.ticket t');
         $this->db->join('(SELECT ticket_id, created_at FROM gccticket.trail_logs_event WHERE type = "new") nl', 't.id = nl.ticket_id');
         $this->db->join('(SELECT ticket_id, created_at FROM gccticket.trail_logs_event WHERE type = "in progress") ip', 't.id = ip.ticket_id');
-        $this->db->where('t.status', 'in progress');
+        // $this->db->where('t.status', 'in progress');
         $this->db->where('t.is_archived', 0);
 
         if(!isset($post['all']) || !$post['all'] == 'true'){
@@ -1757,33 +1719,17 @@ class Ticket_m extends CI_Model
         $avg_response_result = $avg_response_query->row_array();
         $avg_response_seconds = isset($avg_response_result['avg_seconds']) ? $avg_response_result['avg_seconds'] : 0;
         
-        $response_days = floor($avg_response_seconds / 86400);
-        $response_hours = floor(($avg_response_seconds % 86400) / 3600);
-        $response_minutes = floor(($avg_response_seconds % 3600) / 60);
-        $response_seconds = $avg_response_seconds % 60;
-        
-        $formatted_avg_response_time = '';
-        
-        if ($response_days > 0) {
-            $formatted_avg_response_time .= $response_days . ($response_days == 1 ? "day " : "days ");
-        }
-        if ($response_hours > 0) {
-            $formatted_avg_response_time .= $response_hours . ($response_hours == 1 ? "hr " : "hrs ");
-        }
-        if ($response_minutes > 0) {
-            $formatted_avg_response_time .= $response_minutes . ($response_minutes == 1 ? "min " : "mins ");
-        }
-        if ($response_seconds > 0) {
-            $formatted_avg_response_time .= $response_seconds . ($response_seconds == 1 ? "sec" : "secs");
-        }
-        
-        if ($formatted_avg_response_time === '') {
-            $formatted_avg_response_time = "INVALID";
-        }
-        
-        $formatted_avg_response_time = rtrim($formatted_avg_response_time);
-    
-        return $formatted_avg_response_time;
+        $days = floor($avg_response_seconds / 86400);
+        $hours = floor(($avg_response_seconds % 86400) / 3600);
+        $minutes = floor(($avg_response_seconds % 3600) / 60);
+        $seconds = $avg_response_seconds % 60;
+        $data = [
+            "days"    => $days,
+            "hours"   => $hours,
+            "minutes" => $minutes,
+            "seconds" => $seconds,
+        ];
+        return $data;
     }
 
     function getExistingTicketPerUser(){

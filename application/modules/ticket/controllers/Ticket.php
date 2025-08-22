@@ -22,7 +22,8 @@ class Ticket extends MY_Controller {
         $this->core_layout->addJs("global/js/amcharts4/charts.js", true);
         $this->core_layout->addJs("global/js/amcharts4/maps.js", true);
         $this->core_layout->addJs("global/js/amcharts4/themes/animated.js", true);
-        $this->core_layout->addJs("js/ticket/index.js", true);
+        $tempData["responsibility"] = $this->ticket->select2CategoryData('responsibility');
+        $this->core_layout->addJs("js/ticket/index.js", true,$tempData,"?v=0.0.1");
         $this->load->view("core/templates/header");
         $this->load->view("ticket/dashboard");
         $this->load->view("core/templates/footer");
