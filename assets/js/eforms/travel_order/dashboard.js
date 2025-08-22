@@ -632,7 +632,7 @@ const makeToApprovedRequest = (data) => {
         travelOderDataSheet.pieChartLabel = "ALL TIME"; 
     }
     else {
-        pieChartLabel.text(`FROM: ${picker.startDate.format('MMM D, YYYY')} - TO: ${picker.endDate.format('MMM D, YYYY')}`);
+        travelOderDataSheet.pieChartLabel = `FROM: ${picker.startDate.format('MMM D, YYYY')} - TO: ${picker.endDate.format('MMM D, YYYY')}`;
     }
     makeToApprovedRequest({ start: startDate, end: endDate })
     .done(handleToApprovedResponse);
