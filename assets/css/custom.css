@@ -921,6 +921,8 @@ span#select2-edit_resume_recruitment-container {
     cursor: pointer;
 }
 
+table#table-payroll-payslip thead th,
+table#table-payroll-payslip tbody td,
 table#table-payroll-sheet thead th,
 table#table-payroll-sheet tbody td {
     font-size: 10px;

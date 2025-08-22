@@ -5221,11 +5221,12 @@ class Payroll_m extends CI_Model{
 
     }
 
-    function getPayrollPayslipTableRequest(){
+    public function getPayrollPayslipTableRequest(){
         $resultset = array();
         $post = $this->input->post();
         $data = array();
         if(isset($post) && $post){
+            $settings = $this->getSettings();
             $ps_ids = isset($post["ps_ids"]) && is_array($post["ps_ids"])? $post["ps_ids"] : array();
             if($ps_ids && count($ps_ids) > 0){
                 $dir = "ASC";
@@ -5235,14 +5236,11 @@ class Payroll_m extends CI_Model{
                     GROUP_CONCAT(DISTINCT(CONCAT(created_adjustments.particulars,'||',created_adjustments.amount, '||', created_adjustments.adj_type, '||', created_adjustments.status))) created_adjustments,
                     GROUP_CONCAT(DISTINCT(CONCAT(ps_loan.code,'||',psl_payment.amount_due, '||', ps_loan.loan_class))) sss_hdmf_loan_deduction,
                     IFNULL(po.is_telegram, 0) as is_telegram";
-
                 $this->db->select($sqlSelect);
-
                 /*** show all generated ***/
                 if(isset($settings->enable_zero_netpay) && intval($settings->enable_zero_netpay->setting_value) == 0){ $this->db->where("ps.no_of_days !=", 0);  }
                 /*** $this->db->where("ps.no_of_days !=", 0); ***/
                 /*** show all generated ***/
-                
                 $this->db->where("ps.posted", 1);
                 $this->db->where_in("ps.id", $ps_ids);
 
@@ -5273,7 +5271,7 @@ class Payroll_m extends CI_Model{
         return $resultset;
     }
 
-    function getCurrentPayrollPayslip($id=null){
+    public function getCurrentPayrollPayslip($id=null){
         $resultset = array();
         if($id){
             $sqlSelect = "ps.*, DATE_FORMAT(ps.date_start, '%m/%d/%y') as date_start, DATE_FORMAT(ps.date_end, '%m/%d/%y') as date_end, emp.payroll_type, emp.basic_rate,
