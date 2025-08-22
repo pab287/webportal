@@ -73,11 +73,6 @@ tblExpiringProbees = $('#table-expiring-probees').DataTable({
             }
         },
     ],
-    columnDefs: [{
-        searchable: false,
-        orderable: false,
-        targets: 0
-    }],
     order: [[5, 'asc']],
     pageLength: 10,
     initComplete: function () {
