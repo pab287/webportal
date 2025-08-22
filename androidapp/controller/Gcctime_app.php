@@ -13,8 +13,8 @@
             echo $data;
         }
 
-        public function is_signout(){
-            $data = $this->GCCTIME_EFORM->isSignout();
+        public function is_signoutv311(){
+            $data = $this->GCCTIME_EFORM->isSignoutv311();
             echo $data;
         }
         

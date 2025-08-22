@@ -70,29 +70,43 @@
         }
         
 
-        public function isSignout() {
+        public function isSignoutv311() {
             $emp_id = $_POST['emp_id'] ?? null;
+            $token = $_POST['token'] ?? null;
             $msg = "";
             $status = false;
+            $proceed = true;
 
+            $validate_token = $this->checkToken($emp_id, $token);
+
+            if (!$validate_token) {
+                $this->saveLogs("error", "sign out", 0, "[Mobile] User sign out failed - missing emp_id");
+                $msg = "Invalid token to sign out.";
+                $proceed = false;
+            }
             if (!$emp_id) {
                 $this->saveLogs("error", "sign out", 0, "[Mobile] User sign out failed - missing emp_id");
                 $msg = "Employee ID not found.";
+                $proceed = false;
             }
 
-            $conn = $this->conn("gcctimeutility");
-            $stmt = $conn->prepare("UPDATE gcctimeutility.app_users SET status = 1 WHERE emp_id = :emp_id");
-            $stmt->bindParam(':emp_id', $emp_id);
-
-            if ($stmt->execute()) {
-                $this->saveLogs("success", "sign out", $emp_id, "[Mobile] User signed out");
-                $msg = "Successfully signed out.";
-                $status = true;
+            if($proceed){
+                $conn = $this->conn("gcctimeutility");
+                $stmt = $conn->prepare("UPDATE gcctimeutility.app_users SET status = 1 WHERE emp_id = :emp_id");
+                $stmt->bindParam(':emp_id', $emp_id);
+    
+                if ($stmt->execute()) {
+                    $this->saveLogs("success", "sign out", $emp_id, "[Mobile] User signed out");
+                    $msg = "Successfully signed out.";
+                    $status = true;
+                }
             }
+            
 
             return json_encode(["status" => $status, "msg" => $msg]);
 
         }
+
         
         public function portalModules(){
             $conn = $this->conn();
@@ -1208,27 +1222,57 @@
             $emp = isset($_POST['emp_id']) ? $_POST['emp_id'] : '';
             $status = isset($_POST['status']) ? $_POST['status'] : '';
             $msg = isset($_POST['msg']) ? $_POST['msg'] : '';
-
-            if(empty($emp) || empty($status) || empty($msg)){
-                return json_encode(["status" => false, "msg" => "Missing or empty field(s)"]);
+            $token  = isset($_POST['token']) ? $_POST['token'] : '';
+        
+            $validate_token = $this->checkToken($emp, $token);
+        
+            if (empty($emp) || empty($status) || empty($msg) || !$validate_token) {
+                return json_encode([
+                    "status" => false,
+                    "msg" => empty($emp) || empty($status) || empty($msg)
+                        ? "Missing or empty field(s)"
+                        : "Invalid token to log."
+                ]);
             }
-
-            if($this->saveLogs("error", $status, $emp, "[Mobile] $msg")){
+        
+            if ($this->saveLogs("error", $status, $emp, "[Mobile] $msg")) {
                 return json_encode(["status" => true, "msg" => "Successfully logged"]);
-            }else{
+            } else {
                 return json_encode(["status" => false, "msg" => "Failed to log"]);
             }
         }
 
+
         public function offlineInvalidActLogv311(){
             $logs = isset($_POST['logs']) ? $_POST['logs'] : '';
+            $emp_id = isset($_POST['emp_id']) ? $_POST['emp_id'] : '';
+            $token = isset($_POST['token']) ? $_POST['token'] : '';
+            $validate_token = $this->checkToken($emp_id, $token);
             $status = false;
             $proceed = true;
-            $msg = "Invalid log data";
+            $msg = "Invalid log data.";
+            
             if(empty($logs)){
                 $proceed = false;
                 $status = false;
                 $msg = "Missing data in logs parameter";
+            }
+
+            if(empty($token)){
+                $proceed = false;
+                $status = false;
+                $msg = "No token found.";
+            }
+            if(empty($emp_id)){
+                $proceed = false;
+                $status = false;
+                $msg = "No employee ID found.";
+            }
+
+            if (!$validate_token) {
+                $this->saveLogs("error", "sign out", 0, "[Mobile] User sign out failed - missing emp_id");
+                $msg = "Invalid token to sign out.";
+                $proceed = false;
             }
 
             if($proceed){
@@ -1239,7 +1283,6 @@
                         $emp = $log['emp_id'] ?? 'unknown';
                         $status = $log['status'] ?? 'unknown';
                         $msg = $log['msg'] ?? 'no message';
-
                         $this->saveLogs("error", $status, $emp, "[Mobile] $msg");
                     }
                     $msg = "Successfully logged";
@@ -1830,13 +1873,16 @@
 
             $emp_id = $_POST['emp_id'];
             $biometric_id = $_POST['biometric_id'];
+            $token = $_POST['token'] ?? null;
+            
+            $validate_token = $this->checkToken($emp_id, $token);
 
-            if(!$this->userExists($biometric_id, $emp_id)){
+            if(!$this->userExists($biometric_id, $emp_id) || !$validate_token){
                 return json_encode([
                     "status" => false,
-                    "msg" => "Parameters does not match, user not found."
+                    "msg" => !$validate_token ? "Invalid token." : "Parameters does not match, user not found."
                 ]);
-            };
+            }
 
             $conn = $this->conn("gcctimeutility");
             $connzkt = $this->conn("zktime_logs");
