@@ -524,15 +524,9 @@ if (typeof _tempContentData !== "undefined") {
     });
     var vmTab3 = new Vue({
         el: "#frmEditEmploymentData",
-        data: { vm_tab3: tempData,
-            supervisory: [],
-            managerial: []
-         },
+        data: { vm_tab3: tempData },
         mounted: function () {
             var vmData = this.vm_tab3;
-
-            this.supervisory = {...tempDropdownData.dropdown_supervisory};
-            this.managerial = {...tempDropdownData.dropdown_supervisory};
 
             const employee_status = vmData.employee_status ? vmData.employee_status.toLowerCase() : "";
             const work_status = vmData.work_status ? vmData.work_status.toLowerCase() : "";
