@@ -1221,8 +1221,8 @@
                         </template>
                         <template v-else> -->
                             <thead class="customsalary">
-                                <th>SUPERVISOR</th>
-                                <th>DEPARTMENT MANAGER</th>
+                                <th>Immediate Superior</th>
+                                <th>2nd Level Superior</th>
                             </thead>
                             <tbody>
                                 <tr>

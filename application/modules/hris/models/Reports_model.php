@@ -250,6 +250,7 @@ class Reports_model extends CI_Model{
 
     public function getExpiringEmployees($export, $work_status){
         $select = "
+            emp.id,
             UCASE(IF(company.code IS NULL, emp.company_id ,company.code)) as company,
             UCASE(IF(pos.name IS NULL, emp.position, TRIM(pos.name))) as position,
             CAST(emp.idno AS DECIMAL(10)) as idno,
@@ -292,9 +293,8 @@ class Reports_model extends CI_Model{
 
         foreach($query as $row) {
 
-            if ($row['level'] == 'EXECUTIVE') {
-                // Automatic they're own boss of themselves 😎
-                $head_name = $row['name'];
+            if ($row['id'] == 2) { // Charles Anthony M. Dumancas - Final Boss 😎
+                $head_name = "N/A";
             } else {
                 // Kng indi sa supervisor_meta ko ma look up ky hambal nla sa employee data butungon ang head, indi sa department
                 $sup_val = $row['supervisor_meta'];
