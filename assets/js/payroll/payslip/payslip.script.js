@@ -13,7 +13,7 @@ let dtPayslipTable;
 let dtPayrollIds = [];
 let _company = [];
 let _companyId = 0;
-let dropdown_company = [];
+let dropdownCompany = [];
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0) {
     if (jQuery.inArray("view_by_company", _currentActions) !== -1) {
