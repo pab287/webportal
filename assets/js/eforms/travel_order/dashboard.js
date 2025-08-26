@@ -16,6 +16,8 @@ let approvedChart = null;
 let analyticsChart = null;
 let analyticsLabel= $('#analyticsLabel');
 let tableDate = null;
+let toCreated = null;
+let toDeparting = null;
 let createdToLabel = $('#createdToLabel');
 createdToLabel.text(formatted);
 let departingToLabel = $('#departingToLabel');
@@ -40,7 +42,7 @@ var tblTravel = $("#table-travel-today").DataTable({
         global: false,
        data: function(d){
             d.csrf_token = _csrf_hash,
-            d.date = tableDate;
+            d.date = toCreated;
         }
     },
     order: [0, "desc"],
@@ -142,7 +144,7 @@ var tblTravel2 = $("#table-travel-weekly").DataTable({
         global: false,
         data: function(d){
             d.csrf_token = _csrf_hash,
-            d.date = tableDate;
+            d.date = toDeparting;
         }
     },
     searching: true,
@@ -434,13 +436,13 @@ $.ajax({
     else {
         createdToLabel.text(`FROM: ${picker.startDate.format('MMM D, YYYY')} - TO: ${picker.endDate.format('MMM D, YYYY')}`);
     }
-    tableDate = {start: startDate, end: endDate};
+    toCreated = {start: startDate, end: endDate};
     tblTravel.ajax.reload();
   };
 
   const handleTableCancel  = () => {
     analyticsLabel.text("ALL TIME");
-    tableDate = {start:moment("2016-01-01").format('YYYY-MM-DD'), end : moment().format('YYYY-MM-DD')};
+    toCreated = {start:moment("2016-01-01").format('YYYY-MM-DD'), end : moment().format('YYYY-MM-DD')};
     tblTravel.ajax.reload();
   };
 
@@ -467,13 +469,13 @@ $.ajax({
     else {
         departingToLabel.text(`FROM: ${picker.startDate.format('MMM D, YYYY')} - TO: ${picker.endDate.format('MMM D, YYYY')}`);
     }
-    tableDate = {start: startDate, end: endDate};
+    toDeparting = {start: startDate, end: endDate};
     tblTravel2.ajax.reload();
   };
 
   const handleDepartTableCancel  = () => {
     departingToLabel.text("ALL TIME");
-    tableDate = {start:moment("2016-01-01").format('YYYY-MM-DD'), end : moment().format('YYYY-MM-DD')};
+    toDeparting = {start:moment("2016-01-01").format('YYYY-MM-DD'), end : moment().format('YYYY-MM-DD')};
     tblTravel2.ajax.reload();
   };
 
