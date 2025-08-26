@@ -5,6 +5,7 @@ let assigneeChart = null;
 let completionChart = null;
 let chartHand = null;
 let chartLabel = null;
+let assignDate = null;
 const textRange = "All Time ";
 let ticketDataSheet = new Vue({
   el: "#m-content",
@@ -271,6 +272,7 @@ let ticketDataSheet = new Vue({
       const chartData = Object.keys(data).map(employee => {
           return {
               name: employee, 
+              id: parseInt(data[employee].id),
               open: parseInt(data[employee].open), 
               completed: parseInt(data[employee].completed), 
               in_progress: parseInt(data[employee]["in_progress"]), 
@@ -324,6 +326,11 @@ let ticketDataSheet = new Vue({
           series.columns.template.fill = statusColors[status.label];
   
           series.columns.template.tooltipText = `${status.label}: [bold]{valueX}[/]`;
+          series.columns.template.events.on("hit", function (e) {
+            const row = e.target.dataItem.dataContext; 
+            const assigneeId = row.id;
+            window.open(baseUrl('ticket/tickets?assignee=' + assigneeId), '_blank');
+        });
       });
   
       assigneeChart.legend = new am4charts.Legend();  
@@ -899,6 +906,7 @@ const handleTicketPrioritiesResponse = (data) => {
       .on('apply.daterangepicker', handlePrioritiesApply);
 
       const makeTicketAssignedRequest = (data) => {
+        assignDate = data;
         return $.ajax({
             url: baseUrl("ticket/ticket/get_total_assignee/"), 
             type: "POST",
@@ -906,6 +914,7 @@ const handleTicketPrioritiesResponse = (data) => {
             global: false,
             data: {
                 csrf_token: _csrf_hash,
+                filter: $("#assigneeSelect").val(),
                 ...data
             }
         });
@@ -1020,6 +1029,7 @@ const handleTicketPrioritiesResponse = (data) => {
               global: false,
               data: {
                 csrf_token: _csrf_hash,
+                ...assignDate,
                 filter: $("#assigneeSelect").val(),
               },
               dataType: "JSON",

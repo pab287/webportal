@@ -31,6 +31,8 @@ class Ticket extends MY_Controller {
 
     function tickets(){
         $this->core_layout->setPrivilegeName("ticket_masterfile");
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
         $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', TRUE);

@@ -30,12 +30,13 @@ class Ticket_m extends CI_Model
         $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
+        $date = (isset($post["date"]) && $post["date"]) ? $post["date"] : null;
         $rowCount = 0;
         $rowData = array();
         $view_own_request = (in_array("view_own_request", $this->core_layout->getCurrentActions())) ? true : false;
         $payroll =  (in_array("payroll_ticket", $this->core_layout->getCurrentActions())) ? true : false;
-        $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll, $params);
-        $rowCount = $this->get_ticket_masterfile_count($search, $query_builder, $view_own_request, $payroll, $params);
+        $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll, $params, $date);
+        $rowCount = $this->get_ticket_masterfile_count($search, $query_builder, $view_own_request, $payroll, $params, $date);
 
         $totalNotFiltered = $rowCount;
 
@@ -46,7 +47,7 @@ class Ticket_m extends CI_Model
         return $resultset;
     }
 
-    public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll, $params){
+    public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll, $params, $date){
         $resultset = array();
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id, d.code as department, a.created_at");
@@ -59,13 +60,20 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->join("gcchris.tbldepartments as d" , "d.id = a.department_id", 'LEFT');
         if($params){
-            $allowed_fields = ['priority', 'status', 'category'];
+            $allowed_fields = ['priority', 'status', 'category', 'performed_by'];
             foreach($params as $field => $value) {
                 if(in_array($field, $allowed_fields)) {
                     $this->db->where("LOWER(a.$field)", strtolower($value));
                 }
             }
         }
+        if ($date && isset($date['start']) && isset($date['end'])) {
+            $start = date('Y-m-d', strtotime($date['start']));
+            $end   = date('Y-m-d', strtotime($date['end']));
+            $this->db->where('DATE(a.created_at) >=', $start);
+            $this->db->where('DATE(a.created_at) <=', $end);
+        }
+
         $current_user_id = $this->user_data['emp_id'];
         if($payroll) {
             $this->db->where('cat.name', 'payroll');
@@ -139,7 +147,7 @@ class Ticket_m extends CI_Model
         return $resultset;
     }
     
-    private function get_ticket_masterfile_count($search = null, $query_builder = null, $view_own_request, $payroll, $params){
+    private function get_ticket_masterfile_count($search = null, $query_builder = null, $view_own_request, $payroll, $params, $date){
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
@@ -151,13 +159,21 @@ class Ticket_m extends CI_Model
         $this->db->join("gcchris.tbldepartments as d" , "d.id = a.department_id", 'LEFT');
         $this->db->where('a.is_archived', '0');
         if($params){
-            $allowed_fields = ['priority', 'status', 'category'];
+            $allowed_fields = ['priority', 'status', 'category', 'performed_by'];
             foreach($params as $field => $value) {
                 if(in_array($field, $allowed_fields)) {
                     $this->db->where("LOWER(a.$field)", strtolower($value));
                 }
             }
         }
+
+        if ($date && isset($date['start']) && isset($date['end'])) {
+            $start = date('Y-m-d', strtotime($date['start']));
+            $end   = date('Y-m-d', strtotime($date['end']));
+            $this->db->where('DATE(a.created_at) >=', $start);
+            $this->db->where('DATE(a.created_at) <=', $end);
+        }
+        
         // $this->db->where("LOWER(a.status) != 'cancelled'", NULL, FALSE);
         $current_user_id = $this->user_data['emp_id']; 
         if($payroll) {
@@ -1617,7 +1633,7 @@ class Ticket_m extends CI_Model
         $this->db->where("a.is_archived", 0);
         // $this->db->where("a.status !=", "completed");
         $this->db->where("a.status !=", "cancelled");
-        // $this->db->where("a.status !=", "resolved");
+        $this->db->where("a.status !=", "resolved");
         if ($filter != "all") {
             $this->db->where("a.responsibility", $filter);
         }
@@ -1634,7 +1650,7 @@ class Ticket_m extends CI_Model
     
         $employee_tickets = [];
         foreach ($result as $row) {
-            $employee_tickets[ucwords(strtolower($row['name']))] = ["total" => $row['ticket_count'], "completed" => $row['completed'], "open" => $row['open'], "in_progress" => $row['in_progress']];
+            $employee_tickets[ucwords(strtolower($row['name']))] = ["total" => $row['ticket_count'], "completed" => $row['completed'], "open" => $row['open'], "in_progress" => $row['in_progress'], "id" => $row['performed_by']];
         }
         return ["assigned" => $employee_tickets];
     }
