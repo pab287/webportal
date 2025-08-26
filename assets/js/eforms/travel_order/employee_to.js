@@ -674,7 +674,7 @@ $(document).ready(function () {
                 },
                 operators: ['equal', 'not_equal']
             },
-            { id: 'reference_no', label: 'Advice #', type: 'string' },
+            { id: 'reference_no', label: 'Travel order No.', type: 'string' },
             { id: 'personnel', field: 'CONCAT(toe.firstname, toe.lastname)',  label: 'Personnel', type: 'string', operators: ['contains', 'equal'] },
             { id: 'tod.destination', label: 'Destination', type: 'string', operators: ['contains', 'equal', 'not_equal'] },
             { id: 'c.company', label: 'File Under', type: 'string' },
@@ -715,6 +715,12 @@ $('#query-builder-btn').on('click', function () {
         if(result.sql.includes('Accomplished')){
             result.sql = result.sql.replace('a.status', 'a.accomplished');
             result.sql = result.sql.replace('Accomplished', '1');
+        }
+        if(result.sql.includes("'Approved'")) {
+            result.sql = result.sql.replace(
+                /a\.status\s*=\s*'Approved'/g, 
+                "(a.status = 'Approved' AND a.accomplished = 0)"
+            );
         }
 
         query_builder = result;
