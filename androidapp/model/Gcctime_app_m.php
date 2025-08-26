@@ -80,13 +80,13 @@
             $validate_token = $this->checkToken($emp_id, $token);
 
             if (!$validate_token) {
-                $this->saveLogs("error", "sign out", 0, "[Mobile] User sign out failed - missing emp_id");
+                $this->saveLogs("error", "sign out", 0, "[Mobile] User sign out failed - missing token");
                 $msg = "Invalid token to sign out.";
                 $proceed = false;
             }
             if (!$emp_id) {
                 $this->saveLogs("error", "sign out", 0, "[Mobile] User sign out failed - missing emp_id");
-                $msg = "Employee ID not found.";
+                $msg = "Employee ID not found to sign out.";
                 $proceed = false;
             }
 
@@ -585,6 +585,7 @@
                 $stmt->execute();
                 $resultId = $conn->lastInsertId();
             }
+            $this->detectPolygonsNearPin($params['biometric_id'], $resultId, $params['latitude'], $params['longitude']);
             return $resultId;
         }
 
@@ -1308,19 +1309,26 @@
         public function timeLogOfflinev311() {
 
             $emp_id = isset($_POST['emp_id']) ? $_POST['emp_id'] : null;
-            $userExist = $this->userExistsApp($emp_id);
-            $isAllowed = $this->allowAppUser($emp_id);
+            $token = $_POST['token'] ?? null;
             $rawInput = $_POST['logs'];
             $msg = "";
             $response['data'] = [];
             $proceed = true;
             $decoded = json_decode(urldecode($rawInput), true);
 
+            $validate_token = $this->checkToken($emp_id, $token);
+            if (!$validate_token) {
+                $proceed = false;
+                $msg = "Invalid token to sync attendance.";
+            }
+
+            $userExist = $this->userExistsApp($emp_id);
             if(!$userExist){
                 $proceed = false;
                 $msg = "Parameters does not match, user not found.";
             }
 
+            $isAllowed = $this->allowAppUser($emp_id);
             if (!$isAllowed) {
                 $proceed = false;
                 $msg = "You are not allowed to use this app.";
@@ -1513,7 +1521,7 @@
             $coords = json_decode($_POST['coords'], true);
         
             if (!isset($coords['latitude'], $coords['longitude'])) {
-                $this->saveLogs("error", $logs_action, $emp, "[Mobile] No coordinates");
+                $this->saveLogs("error", 'time '.$time_status, $emp, "[Mobile] No coordinates");
                 $status = 0;
                 $msg = "Coordinates not found.";
             }
@@ -1530,6 +1538,8 @@
                 $geo_status = 2;
             }
 
+            // $this->detectPolygonsNearPin($bio, $coords['latitude'], $coords['longitude']);
+
             $isAllowed = $this->allowAppUser($emp);
         
             $latitude = $coords['latitude']?? '';
@@ -1540,7 +1550,7 @@
             $max_time = date('H:i:s', strtotime("$interval +1 minute"));
         
             if (!$sites_id) {
-                $this->saveLogs("error", $logs_action, $emp, "[Mobile] No site location");
+                $this->saveLogs("error", 'time '.$time_status, $emp, "[Mobile] No site location");
                 $status = 0;
                 $msg = "No Site Location Found.";
             }
@@ -1562,8 +1572,7 @@
                     $msg = "Invalid token.";
                 }
 
-
-                $this->saveLogs("error", $logs_action, $emp, "[Mobile] $msg");
+                $this->saveLogs("error", 'time '.$time_status, $emp, "[Mobile] $msg");
                 return json_encode(["status" => $status, "msg" => $msg]);
             }
             $this->store_logs($_POST, $personnel_id);
@@ -1584,14 +1593,14 @@
             $insertedID = $this->addAppAttendanceRecordv311($data);
         
             if (!$insertedID) {
-                $this->saveLogs("error", $logs_action, $emp, "[Mobile] Error saving record");
+                $this->saveLogs("error", 'time '.$time_status, $emp, "[Mobile] Error saving record");
                 $status = 3;
-                $msg = "Error in saving $logs_action";
+                $msg = "Error in saving 'time '.$time_status";
             }
 
             $this->getSupervisorManager($emp, "Outside Assigned Site Location", $this->timeStatusString($time_status), $geo_status, $dateTime, $bio, $latitude, $longitude);
             $this->log($bio, $longitude, $latitude);
-            $this->saveLogs("success", $logs_action, $emp, "[Mobile] $logs_action");
+            $this->saveLogs("success", 'time '.$time_status, $emp, "[Mobile] $logs_action");
             return json_encode($this->user_logsv311($bio, $date, $time, $status, $insertedID, $msg));
 
         }
@@ -2033,41 +2042,99 @@
             return $inside;
         }
 
-        // Main function: detect polygons within 100m radius of pin
-        public function detectPolygonsNearPin($pin, $polygons, $radius = 100) {
-            $detected = [];
-            foreach ($polygons as $polyIndex => $polygon) {
-                $found = false;
-                // 1. If pin is inside polygon → match
-                if ($this->pointInPolygon($pin, $polygon)) { $found = true; }
-                // 2. Else, check if any vertex of polygon is within radius
-                if (!$found) {
-                    foreach ($polygon as $vertex) {
-                        $distance = $this->haversineDistance($pin['lat'], $pin['lng'], $vertex['lat'], $vertex['lng']);
-                        if ($distance <= $radius) {
-                            $found = true;
-                            break;
-                        }
+            public function detectPolygonsNearPin($id, $attId, float $lat, float $lng) {
+                $radius = 100;
+                $pin = ["lat" => $lat, "lng" => $lng];
+            
+                $pol1 = $this->getSiteLocationv311($id);
+                if (!$pol1) {
+                    return false;
+                }
+            
+                $polygons = [];
+                foreach ($pol1 as $poly) {
+                    $polygonData = @unserialize($poly['geofence_polygon']);
+                    if ($polygonData && is_array($polygonData)) {
+                        $polygons[] = $polygonData;
                     }
                 }
-
-                if ($found) {
-                    $detected[] = $polygon; // store polygon index or ID
+            
+                $detected = [];
+                foreach ($polygons as $polygon) {
+                    $isWithin = false;
+            
+                    if ($this->pointInPolygon($pin, $polygon)) {
+                        $isWithin = true;
+                    } else {
+                        foreach ($polygon as $vertex) {
+                            $distance = $this->haversineDistance(
+                                floatval($pin['lat']), floatval($pin['lng']),
+                                floatval($vertex['lat']), floatval($vertex['lng'])
+                            );
+                            if ($distance <= $radius) {
+                                $isWithin = true;
+                                break;
+                            }
+                        }
+                    }
+            
+                    if ($isWithin) {
+                        $detected[] = $polygon;
+                    }
                 }
+            
+                if (!empty($detected)) {
+                    $this->insertAttGeoLog(serialize($detected), $attId);
+                }
+            
+                return $detected;
+            }
+            
+            
+            
+
+
+
+
+        function getSiteLocationv311($bio) {
+            
+            $conn = $this->conn("gcctimeutility");
+        
+            $sql = "SELECT c.geofence_polygon
+                    FROM gcctimeutility.personnel a
+                    LEFT JOIN gcctimeutility.personnel_locations b ON b.personnel_id = a.id
+                    LEFT JOIN gcctimeutility.app_location_sites c ON c.id = b.site_location_id
+                    WHERE a.biometric_id = :bio OR a.biometricno = :bio";
+        
+            $stmt = $conn->prepare($sql);
+            $stmt->bindParam(':bio', $bio);
+            $stmt->execute();
+        
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (!$rows) {
+                return false;
             }
 
-            return $detected;
+            return $rows;
+
         }
-        /*** 100 meter radius polygon near pin ***/
 
+        function insertAttGeoLog($serialized, $attId) {
+            $conn = $this->conn('gcctimeutility');
+            $stmt = $conn->prepare('
+                INSERT INTO gcctimeutility.attendance_geofence_log
+                (attendance_id, geofence)
+                VALUES
+                (:attendance_id, :geofence)
+            ');
+            $stmt->bindParam(':attendance_id', $attId);
+            $stmt->bindParam(':geofence', $serialized);
+            $stmt->execute();
+        }
+        
 
-
-
-
-
-
-
-
+        
 
 
 
