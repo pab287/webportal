@@ -13,11 +13,13 @@ let dtPayslipTable;
 let dtPayrollIds = [];
 let _company = [];
 let _companyId = 0;
+let dropdown_company = [];
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0) {
     if (jQuery.inArray("view_by_company", _currentActions) !== -1) {
         if(typeof _tempContentData.company !== "undefined" && _tempContentData.company){ _company = _tempContentData.company; _companyId = _tempContentData.company.id; }
     }
+    if(typeof _tempContentData.dropdown_company !== "undefined" && _tempContentData.dropdown_company){ dropdownCompany = _tempContentData.dropdown_company; }
 }
 
 const vmPayslip = new Vue({
@@ -109,7 +111,8 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
         width: '100%',
         allowClear: true,
         dropdownParent: modalGeneratePayslip,
-        ajax: {
+        data: dropdownCompany,
+        /*** ajax: {
             url: baseUrl("payroll/select_company"),
             dataType: "json",
             delay: 250,
@@ -117,7 +120,7 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
             processResults: function (data) {
                 return data;
             }
-        }
+        } ***/
     }).on("select2:select", function (data) {
         selectedCompany = data.params.data;
     });
