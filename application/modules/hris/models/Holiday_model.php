@@ -460,4 +460,9 @@
             $q = $this->db->get($this->tblHolidays . " holidays");
             return $q->num_rows();
         }
+
+       public function getCompanyEvents(){
+            
+       }
+
     }

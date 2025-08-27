@@ -119,4 +119,24 @@
             $data = $this->department->getDepartment();
             echo json_encode($data);
         }
+
+        public function company_events_calendar()
+        {
+            $this->core_layout->setPrivilegeName("hris_cal_of_probationary");
+            $this->core_layout->addJs("vendors/custom/fullcalendar/fullcalendar.bundle.js", true);
+            $this->core_layout->addJs("js/hris/calendar/calendar_of_probationary_script.js", true);
+            $this->core_layout->addCss("vendors/custom/fullcalendar/fullcalendar.bundle.css", true);
+            $this->core_layout->addCss("css/hris/calendar.css", true);
+
+            $this->load->view("core/templates/header");
+            $this->load->view("masterfile/calendar/calendar_of_events/index");
+            $this->load->view("core/templates/footer");
+        }
+
+        public function get_company_events()
+        {
+            $data = $this->holiday->getCompanyEvents();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
     }
