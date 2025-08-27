@@ -1796,13 +1796,11 @@
                     $isSuspended = $this->isSuspended($emp_data['id'], $token);
                     if ($isSuspended) {
                         $msg = "Your Account is suspended.";
-                        $check = "suspended";
                         $proceed = false;
                     }
                     if($proceed){
                         $check = $this->checkUserExist($emp_data['id'], $device_name, $device_id, $app_user_id, $unique_id, $emp_data['biometricno']);
                         if ($check === 'grant_access') {
-                            $msg = $check;
                             $this->saveLogs("success", "sign in", $emp_data['id'], "[Mobile] User sign in");
                             $this->updateUserStatus($emp_data['id'], $app_user_id, $unique_id, $device_id, $device_name);
                             if (!$isAllowed) {
@@ -1838,6 +1836,7 @@
                                 ]);
                             }
                         }
+                        $msg = $check;
                     }
                 }
             }
