@@ -82,31 +82,5 @@
             $data = $this->GCCTIME_EFORM->appVersionv311();
             echo $data;
         }
-        
-
-        // public function detectPoly_gonsNearPin(){
-        //     $data = $this->GCCTIME_EFORM->detectPolygonsNearPin();
-        //     echo $data;
-        // }
-
-
-        // public function inout_pin(){
-        //     $data = $this->GCCTIME_EFORM->detectPolygonsNearPin();
-        //     echo $data;
-
-        //     $pin = ["lat"=> 14.5409213, "lng" => 121.0179794];
-        //     $pin2 = ["lat"=> 14.5776287, "lng" => 121.0514059];
-        //     $pin3 = ["lat"=> 14.5779186, "lng" => 121.0510310];
-        //     $pin4 = ["lat"=> 14.5790956, "lng" => 121.0494040];
-        //     $polygons = [];
-        //     $pol1 = 'a:4:{i:0;a:2:{s:3:"lat";s:18:"14.589899799354106";s:3:"lng";s:18:"121.06197166847988";}i:1;a:2:{s:3:"lat";s:18:"14.589487079899774";s:3:"lng";s:17:"121.0616323690395";}i:2;a:2:{s:3:"lat";s:18:"14.589357293747911";s:3:"lng";s:18:"121.06182012367054";}i:3;a:2:{s:3:"lat";s:17:"14.58978169418048";s:3:"lng";s:18:"121.06214467096135";}}';
-        //     $pol2 = 'a:5:{i:0;a:2:{s:3:"lat";s:18:"14.577932066629783";s:3:"lng";s:18:"121.05158517781739";}i:1;a:2:{s:3:"lat";s:18:"14.577459619880807";s:3:"lng";s:18:"121.05127940598969";}i:2;a:2:{s:3:"lat";s:18:"14.576556257342425";s:3:"lng";s:18:"121.05264196816925";}i:3;a:2:{s:3:"lat";s:18:"14.577002747335811";s:3:"lng";s:18:"121.05295846883301";}i:4;a:2:{s:3:"lat";s:18:"14.577973600361473";s:3:"lng";s:18:"121.05160127107148";}}';
-        //     $p1Data = @unserialize($pol1);
-        //     $p2Data = @unserialize($pol2);
-        //     array_push($polygons, $p1Data, $p2Data);
-        //     $coords = $this->GCCTIME_EFORM->detectPolygonsNearPin($pin3, $polygons);
-        //     var_dump($coords);
-        // }
-
     }
 ?>

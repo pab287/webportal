@@ -2,6 +2,9 @@
     class Gcctime_app_m extends Dbase{
         use Logs_maker;
 
+        // Author: Rockefeller
+        // Date: 27/08/2025
+
         public function gcctimeEformLogin() {
             $r = $_POST;
             $required = ['username', 'password', 'unique_id', 'device_id', 'device_name'];
@@ -1205,9 +1208,15 @@
             $sth->bindParam(':emp_id', $id);
             $sth->execute();
             $data = $sth->fetch(PDO::FETCH_ASSOC);
-            if ($data && isset($data['allow_app_user']) && $data['allow_app_user'] == 0) {
+        
+            if (!$data) {
                 return false;
             }
+        
+            if (isset($data['allow_app_user']) && $data['allow_app_user'] == 0) {
+                return false;
+            }
+        
             return true;
         }
 
@@ -1472,7 +1481,7 @@
             $sth->execute();
             $data = $sth->fetch(PDO::FETCH_ASSOC);
         
-            return ($data && $data['mobile_token'] === $token);
+            return ($data && $data['mobile_token'] === $token) ? true : false;
         }
 
         private function checkEmployeeId($emp_id) {
@@ -1481,16 +1490,10 @@
             $sth = $conn->prepare($sql);
             $sth->bindParam(':emp_id', $emp_id);
             $sth->execute();
-            return ($sth->rowCount() > 0);
+            return ($sth->rowCount() > 0) ? true : false;
         }
 
         
-        // G C C T I M E A P P v3.1.1  G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1
-        // G C C T I M E A P P v3.1.1  G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1
-        // G C C T I M E A P P v3.1.1  G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1
-        // G C C T I M E A P P v3.1.1  G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1 G C C T I M E A P P v3.1.1
-        // Author: Rockefeller
-        // Date: 31/07/2025
 
         public function timeLogv311() {
             $date = date("Y-m-d");
@@ -1540,8 +1543,6 @@
             } else {
                 $geo_status = 2;
             }
-
-            // $this->detectPolygonsNearPin($bio, $coords['latitude'], $coords['longitude']);
 
             $isAllowed = $this->allowAppUser($emp);
         
@@ -1752,11 +1753,10 @@
         public function gcctimeLoginv311() {
             $r = $_POST;
             $required = ['username', 'password', 'unique_id', 'device_id', 'device_name'];
-            $msg = "";
+            $msg = "Something went wrong. Please ask the administrator for assistance.";
             $proceed = true;
             $status = false;
             
-
             foreach ($required as $key) {
                 if (empty($r[$key])) {
                     return json_encode(["status" => $status, "msg" => ucfirst(str_replace("_", " ", $key)) . " is missing."]);
@@ -1787,59 +1787,57 @@
 
             if (!$emp_data) {
                 $msg = "Username or password is incorrect.";
-                $status = false;
                 $proceed = false;
             }else{
                 $isAllowed = $this->allowAppUser($emp_data['id']);
-                if (!$isAllowed) {
-                    $msg = "You are not eligible to use the app. Please contact your department head for access.";
-                    $status = false;
-                    $proceed = false;
-                }
-
                 if($proceed){
                     $app_user_id = md5($unique_id . $emp_data['id']);
                     $token = (string) $this->getToken($emp_data['id']);
                     $isSuspended = $this->isSuspended($emp_data['id'], $token);
                     if ($isSuspended) {
                         $msg = "Your Account is suspended.";
-                        $status = false;
                         $check = "suspended";
                         $proceed = false;
                     }
                     if($proceed){
                         $check = $this->checkUserExist($emp_data['id'], $device_name, $device_id, $app_user_id, $unique_id, $emp_data['biometricno']);
                         if ($check === 'grant_access') {
+                            $msg = $check;
                             $this->saveLogs("success", "sign in", $emp_data['id'], "[Mobile] User sign in");
                             $this->updateUserStatus($emp_data['id'], $app_user_id, $unique_id, $device_id, $device_name);
-                            return json_encode([
-                                "status" => true,
-                                "msg" => "Success",
-                                "user_data" => [
-                                    "emp_id" => $emp_data['id'],
-                                    "app_user_id" => $app_user_id,
-                                    "biometric_id" => $emp_data['biometricno'],
-                                    "firstname" => $emp_data['firstname'],
-                                    "lastname" => $emp_data['lastname'],
-                                    "idno" => $emp_data['idno'],
-                                    "position_name" => $emp_data['position_name'],
-                                    "pic_filename" => $emp_data['pic_filename'],
-                                    "lvl_ranking" => $emp_data['level'],
-                                    "device_name" => $device_name,
-                                    "device_id" => $device_id,
-                                    "company_id" => $emp_data['company_id'],
-                                    "department_id" => $emp_data['department_id'],
-                                    "unique_id" => $unique_id,
-                                    "company" => $emp_data['company'],
-                                    "department" => $emp_data['department'],
-                                    "is_suspended" => $emp_data['is_suspended'],
-                                    "token" => $token,
-                                    "is_allowed_app_user" => $isAllowed,
-                                    "pin" => $emp_data['reset_pin']
-                                ]
-                            ]);
+                            if (!$isAllowed) {
+                                $msg = "You are not eligible to use the app. Please contact your department head for access.";
+                                return json_encode(["status" => false, "msg" => $msg]);
+                            }
+                            if($proceed){
+                                return json_encode([
+                                    "status" => true,
+                                    "msg" => "Success",
+                                    "user_data" => [
+                                        "emp_id" => $emp_data['id'],
+                                        "app_user_id" => $app_user_id,
+                                        "biometric_id" => $emp_data['biometricno'],
+                                        "firstname" => $emp_data['firstname'],
+                                        "lastname" => $emp_data['lastname'],
+                                        "idno" => $emp_data['idno'],
+                                        "position_name" => $emp_data['position_name'],
+                                        "pic_filename" => $emp_data['pic_filename'],
+                                        "lvl_ranking" => $emp_data['level'],
+                                        "device_name" => $device_name,
+                                        "device_id" => $device_id,
+                                        "company_id" => $emp_data['company_id'],
+                                        "department_id" => $emp_data['department_id'],
+                                        "unique_id" => $unique_id,
+                                        "company" => $emp_data['company'],
+                                        "department" => $emp_data['department'],
+                                        "is_suspended" => $emp_data['is_suspended'],
+                                        "token" => $token,
+                                        "is_allowed_app_user" => $isAllowed,
+                                        "pin" => $emp_data['reset_pin']
+                                    ]
+                                ]);
+                            }
                         }
-                    $msg = $check;
                     }
                 }
             }
