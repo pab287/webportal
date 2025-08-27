@@ -1352,7 +1352,7 @@
             
                 foreach ($logs as $log) {
                     $list = [];
-            
+                    $resultId = 0;
                     $location = json_decode($log['location'], true);
                     $longitude = $location['longitude'];
                     $latitude = $location['latitude'];
@@ -1424,6 +1424,9 @@
                                 $list['status'] = false;
                                 $failedCount++;
                             }
+                            $resultId = $conn->lastInsertId();
+                            $this->detectPolygonsNearPin($bio_num, $resultId, $latitude, $longitude);
+
                         }
                     } else {
                         $list['status'] = false;
@@ -2092,9 +2095,6 @@
             
             
             
-
-
-
 
         function getSiteLocationv311($bio) {
             
