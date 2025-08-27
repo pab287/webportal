@@ -1953,10 +1953,19 @@
             $proceed = true;
             $appVersion = "";
             $appUrl = "";
+            $token = $_POST['token'] ?? null;
+            $emp_id = $_POST['emp_id'] ?? null;
+            $validate_token = $this->checkToken($emp_id, $token);
 
             if (!isset($_POST['app_version']) || !isset($_POST['app_name'])) {
                 $status = false;
                 $msg = "Missing required parameters";
+                $proceed = false;
+            }
+
+            if (!$validate_token) {
+                $status = false;
+                $msg = "Invalid Token.";
                 $proceed = false;
             }
         
