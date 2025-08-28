@@ -1,3 +1,6 @@
+let params="";
+let ticket_vue = null;
+
 var getUrlParameter = function getUrlParameter(sParam) {
     var sPageURL = decodeURIComponent(window.location.search.substring(1)),
         sURLVariables = sPageURL.split('&'),
@@ -11,6 +14,15 @@ var getUrlParameter = function getUrlParameter(sParam) {
     }
 };
 param_id = getUrlParameter('id');
+if(getUrlParameter('status') !== undefined){
+    params = "?status="+getUrlParameter('status');
+}else if(getUrlParameter('category') !== undefined){
+    params = "?category="+getUrlParameter('category');
+}
+else if(getUrlParameter('priority') !== undefined){
+    params = "?priority="+getUrlParameter('priority');
+}
+
 let search_val = "";
 let query_builder = "";
 
@@ -19,7 +31,7 @@ let tbl = $("#table-tickets").DataTable({
     serverSide: true,
     processing: true,
     ajax: {
-        url: baseUrl("ticket/ticket/ticket_masterfile"),
+        url: baseUrl("ticket/ticket/ticket_masterfile")+params,
         type: "post",
         global: false,
         dataType: "json",
@@ -34,11 +46,17 @@ let tbl = $("#table-tickets").DataTable({
     columns: [
         {data: "id", visible: false},
         {data: "reference_no"},
-        {data: "category"},
-        {data: "sub_category",
+        {
+            data: 'category',
             render: function (data, type, row) {
-                return row.sub_category ? row.sub_category : 'NOT SET';
-        }},
+                return `
+                    <div>
+                        ${row.category || 'NOT SET'}<br>
+                        <small class='m--font-bolder'>Sub-category: ${row.sub_category || 'NOT SET'}</small>
+                    </div>
+                `;
+            }
+        },
         {data: "priority",
             render: function (data, type, row) {
                 if (!row.priority) return "<span class='m-badge m-badge--secondary m-badge--wide text-white'><strong>NOT SET</strong></span>";
@@ -87,38 +105,55 @@ let tbl = $("#table-tickets").DataTable({
                 return `<span class='m-badge ${badgeClass} m-badge--wide text-white'><strong>${row.status}</strong></span>`;
             }
         },        
-        {data: "requested_date",
+        {
+            data: "requested_date",
             render: function (data, type, row) {
-                return moment(row.requested_date).format('MMM D, YYYY hh:mm A');
+                const formattedDate = moment(row.requested_date).format('MMM D, YYYY hh:mm A');
+        
+                const status = row.status?.toLowerCase();
+                if (status === 'completed' || status === 'resolved') {
+                    return formattedDate;
+                }
+        
+                if (!row.requested_date) return '---';
+        
+                const today = new Date();
+                const requestDate = new Date(row.requested_date);
+        
+                if (isNaN(requestDate.getTime())) return formattedDate;
+        
+                const diffTime = today - requestDate;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+                if (diffDays <= 0) {
+                    return `${formattedDate}<br><small style="color:green;font-weight:bold;">Not Overdue</small>`;
+                }
+        
+                return `
+                    ${formattedDate}<br>
+                    <small style="color:red;font-weight:bold;">
+                        ${diffDays.toLocaleString()} ${diffDays === 1 ? 'Day' : 'Days'} Overdue
+                    </small>
+                `;
             }
         },
         {
-            data: null,
+            data: "created_at",
             render: function (data, type, row) {
-                if(row.status == 'completed' || row.status.toLowerCase() == 'resolved') {
-                    return 'Ticket Completed';
-                }
-                if(row.status.toLowerCase() == 'cancelled') {
-                    return 'Ticket Cancelled';
-                }
-                if (!row.requested_date) return '---';
-                
-                const today = new Date();
-                const requestDate = new Date(row.requested_date);
-                
-                // Return empty if invalid date
-                if (isNaN(requestDate.getTime())) return '';
-                
-                // Calculate difference in days
-                const diffTime = today - requestDate;
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                
-                if (diffDays <= 0) return 'Not Overdue';
-                
-                return `${diffDays.toLocaleString()} ${diffDays === 1 ? 'Day' : 'Days'}`;
+                return moment(data).format('MMM D, YYYY hh:mm A');
             }
-        },        
-        {data: "requestor"},
+        },      
+        {
+            data: 'requestor',
+            render: function (data, type, row) {
+                return `
+                    <div>
+                        ${row.requestor || 'NOT SET'}<br>
+                        <small>${row.department || 'NOT SET'}</small>
+                    </div>
+                `;
+            }
+        },
         {data: "performed_by"},
         {data: null, width: "10%", className: "text-center"},
     ],
@@ -128,7 +163,7 @@ let tbl = $("#table-tickets").DataTable({
         },
         {
             targets: [7],
-            orderable: false
+            // orderable: false
         },
         {
             data: null,
@@ -182,10 +217,10 @@ function itemDatatableActions($id, $status) {
             "   <i class='la la-pencil-square'></i>" +
             "</a>";
         _actionButton += " <a style='text-decoration: none;' " +
-            "   href='" + baseUrl('ticket/ticket/view_ticket?id=') + $id + "' " +
             "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnView'" +
-            "   data-toggle='m-tooltip' data-placement='bottom' title='' data-delay='{\"show\": 200, \"hide\": 0}'" +
             "   data-original-title='View Ticket'" +
+            "   data-toggle='modal' data-target='#view-ticket-modal'" +
+            "   data-ticket-id='" + $id + "'" + 
             "   data-skin='dark'>" +
             "   <i class='la la-eye'></i>" +
             "</a>";
@@ -396,4 +431,115 @@ function clear_query_builder() {
     $('#query-builder').queryBuilder('reset');
     query_builder = null;
     tbl.ajax.reload();
+}
+
+ticket_vue = new Vue({
+    el: "#completed-ticket-preview-dialog",
+    data: {vm_tickets: []},
+    mounted: function () {
+        get_completed_ticket();
+    },
+    methods: {
+        rateTicket(ticket_id,reference_no) {
+            let id = ticket_id;
+            const self = this;
+            Swal.fire({
+                title: 'HOW WOULD YOU RATE OUR SERVICE?\n Reference No: '+reference_no,
+                html: `<div style="margin: 20px 0; text-align: center;">
+                            <div id="stars" style="font-size: 30px; margin-bottom: 20px;">
+                                <span class="star" data-rating="1" title="Terrible">☆</span>
+                                <span class="star" data-rating="2" title="Poor">☆</span>
+                                <span class="star" data-rating="3" title="Average">☆</span>
+                                <span class="star" data-rating="4" title="Good">☆</span>
+                                <span class="star" data-rating="5" title="Excellent">☆</span>
+                            </div>
+                            <textarea id="ticket_feedback" placeholder="FEEDBACK..." style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid rgb(0, 0, 0);"></textarea>
+                        </div>`,
+                target: '#completed-ticket-preview-dialog',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                allowEnterKey: false,
+                showCloseButton: true,
+                confirmButtonText: 'Submit Rating',
+                preConfirm: () => {
+                    const rating = document.querySelector('.star.active') ? 
+                    document.querySelector('.star.active').getAttribute('data-rating') : null;
+                    if (!rating) {
+                        Swal.showValidationMessage('Please select a rating');
+                        return false;
+                    }
+                    return {rating: rating};
+                },
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const ratingData = result.value;
+                    $.ajax({
+                        url: baseUrl("ticket/ticket/update_rating") ,
+                        dataType: "json",
+                        type: "POST",
+                        data: {
+                            csrf_token: _csrf_hash,
+                            id: id,
+                            rating: ratingData.rating,
+                            rating_feedback: $('#ticket_feedback').val(),
+                        },
+                        success: function (response) {
+                            if (response) {
+                                toastr.success("Thank you!", "Your rating has been submitted successfully.", 5000);
+                                get_completed_ticket(true);
+                            } else {
+                                toastr.error("Error","Failed to submit rating.", 5000);
+                            }
+                        }
+                    })
+                }
+            });
+            const stars = document.querySelectorAll('.star');
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    const rating = parseInt(this.getAttribute('data-rating'));
+                    highlightStars(rating);
+                });
+            });
+        },
+        formatDate(date){
+            return moment(date).format('MMM D, YYYY hh:mm A');
+        }
+    }
+});
+
+function get_completed_ticket(update=false) {
+    $.ajax({
+        url: baseUrl("ticket/ticket/get_completed_ticket_per_user"),
+        type: "POST",
+        dataType: "json",
+        data: {
+            csrf_token: _csrf_hash,
+        },
+        success: function (data) {
+            if (data.length > 0) {
+                if(!update){
+                    $("#completed-ticket-preview-dialog").modal("show");
+                }
+                ticket_vue.vm_tickets = data;
+            }else{
+                $("#completed-ticket-preview-dialog").modal("hide");
+            }
+        }
+    });
+}
+
+function highlightStars(rating) {
+    const stars = document.querySelectorAll('.star');
+    stars.forEach(star => {
+        star.style.color = '#FFC000';
+        star.textContent = '☆';
+        star.classList.remove('active');
+        if (parseInt(star.getAttribute('data-rating')) <= rating) {
+            star.textContent = '★';
+            if (parseInt(star.getAttribute('data-rating')) === rating) {
+                star.classList.add('active');
+            }
+        }
+    });
 }

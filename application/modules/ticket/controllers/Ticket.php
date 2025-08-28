@@ -10,7 +10,6 @@ class Ticket extends MY_Controller {
         $this->core_layout->setPrivilegeName("ticket_masterfile");
 
         $this->load->model('Ticket_m','ticket');
-		
         date_default_timezone_set('Asia/Manila');
     }
 
@@ -31,10 +30,13 @@ class Ticket extends MY_Controller {
 
     function tickets(){
         $this->core_layout->setPrivilegeName("ticket_masterfile");
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
         $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', TRUE);
         $this->core_layout->addJs('js/querybuilder/query-builder.standalone.min.js', TRUE);
         $this->core_layout->setPageTitle("TICKET - Masterfile");
         $this->core_layout->addJs("js/ticket/ticket.js", true);
+        $this->core_layout->addJs("js/ticket/view_ticket.js",true);
 		$this->load->view('core/templates/header');
         $this->load->view('ticket/tickets');
         $this->load->view('core/templates/footer');
@@ -105,11 +107,21 @@ class Ticket extends MY_Controller {
     }
 
     function view_ticket(){
+        $data = array();
+        $serve = filter_var( $this->input->get('serve'), FILTER_VALIDATE_BOOLEAN);
+        $rate = filter_var( $this->input->get('rate'), FILTER_VALIDATE_BOOLEAN);
+        if($serve){
+            $id = $this->input->get('id');
+            $data = $this->ticket->serveTicket($id);
+        }
+        if($rate){
+            $data['rate']= true;
+        }
         $this->core_layout->setPrivilegeName("ticket_masterfile");
         $this->core_layout->setPageTitle("TICKET - View Ticket");
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
-        $this->core_layout->addJs("js/ticket/view_ticket.js", true);
+        $this->core_layout->addJs("js/ticket/view_ticket.js",true,$data);
 		$this->load->view('core/templates/header');
         $this->load->view('ticket/view_ticket');
         $this->load->view('core/templates/footer');
@@ -123,7 +135,8 @@ class Ticket extends MY_Controller {
     }
 
     function ticket_masterfile(){
-        $data =  $this->ticket->ticketMasterfile();
+        $params = $this->input->get();
+        $data =  $this->ticket->ticketMasterfile($params);
         $this->output
         ->set_content_type('json')
         ->set_output(json_encode($data));
@@ -363,6 +376,16 @@ class Ticket extends MY_Controller {
 
     public function close_ticket(){
         $data = $this->ticket->closeTicket();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function update_rating(){
+        $data = $this->ticket->updateRating();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_completed_ticket_per_user(){
+        $data = $this->ticket->getCompletedTicketPerUser();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 

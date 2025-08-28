@@ -13,6 +13,9 @@ class Reports_model extends CI_Model{
     protected $tblDefaultLocation = "gcchris.default_station_location";
     protected $tblSalaryHistory = 'gcchris.tblsalaries';
 
+    protected $sbrPaymentTable = "gcchris.sss_sbr_payments";
+    protected $sbrContributionTable = "gcchris.sss_sbr_contributions";
+
     protected $now = null;
     protected $user = null;
 
@@ -1088,13 +1091,37 @@ class Reports_model extends CI_Model{
         return $results;
     }
 
+    public function getReportsSelect2EmployeeData(){
+        $get = $this->input->get();
+        $this->db->select("id, CONCAT(UPPER(TRIM(firstname)), ' ',
+        CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND TRIM(middlename) !='' AND middlename IS NOT NULL
+            THEN CONCAT(SUBSTR(middlename, 1, 1), '.') ELSE '' END,' ', UPPER(TRIM(lastname)),
+        CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND suffix IS NOT NULL
+            THEN CONCAT(' ', UPPER(TRIM(suffix))) ELSE '' END) as text");
+        $this->db->from("gccmaster.tblemployees");
+        if(isset($get["company_id"]) && $get["company_id"]){
+            $this->db->where("company_id", $get["company_id"]);
+        }
+        if (isset($get['q']) && $get['q']) {
+            $this->db->group_start();
+            $this->db->like("firstname", $get['q'], "both");
+            $this->db->or_like("lastname", $get['q'], "both");
+            $this->db->or_like("CONCAT(firstname, ' ', lastname)", $get['q'], "both");
+            $this->db->group_end();
+        }
+        $this->db->limit(25);
+        $this->db->order_by("lastname", "ASC");
+        $query = $this->db->get();
+        return array("results" => $query->result_array());
+    }
+
     public function getSelect2EmployeeData(){
         $get = $this->input->get();
         $resultarray = array();
         if(isset($get["company_id"]) && $get["company_id"]){
             $departmentId = (isset($get["department_id"]) && $get["department_id"])? $get["department_id"]: 0;
             $this->db->select("a.id, CONCAT(UPPER(TRIM(a.firstname)), ' ', CASE WHEN UPPER(TRIM(a.middlename)) != 'N/A' AND UPPER(TRIM(a.middlename)) != 'NONE' AND TRIM(a.middlename) !='' AND a.middlename IS NOT NULL
-                THEN CONCAT(SUBSTR(a.middlename, 1, 1), '.') ELSE '' END,' ', UPPER(TRIM(a.lastname)), CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
+                THEN CONCAT(UPPER(SUBSTR(a.middlename, 1, 1)), '.') ELSE '' END,' ', UPPER(TRIM(a.lastname)), CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
                 a.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(a.suffix))) ELSE '' END) as employee_name");
             $this->db->from("gccmaster.tblemployees a");
             $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
@@ -1122,8 +1149,7 @@ class Reports_model extends CI_Model{
                 }
             }
         }
-        
-        
+
         return array("results" => $resultarray);
     }
 
@@ -3060,5 +3086,93 @@ class Reports_model extends CI_Model{
         return $resultset;
     }
 
+    public function getPayrollSheetFirstEntryDate(){
+        $this->db->select("pay_date");
+        $this->db->from("payroll.payroll_sheet");
+        $this->db->where("posted", 1);
+        $this->db->order_by("pay_date", "ASC");
+        $this->db->limit(1);
+        return $this->db->get()->row()->pay_date;
+    }
 
+    public function getSssPremiumContributionYears(){
+        $this->db->select("year as id, year as text");
+        $this->db->from($this->sbrPaymentTable);
+        $this->db->group_by("year");
+        $this->db->order_by("year", "DESC");
+        return $this->db->get()->result();
+    }
+
+    public function sssPremiumContributionReportData(){
+        $post = $this->input->post();
+        $resultset = array();
+        if(isset($post["employee"]) && $post["employee"]){
+            $tempFilter = array();
+            if(isset($post["filter_by"], $post['filter_month'], $post['filter_year']) && ($post["filter_by"] == "month" && $post['filter_month'] && $post['filter_year'])){
+                $monthName = date("F", mktime(0, 0, 0, $post['filter_month'], 1));
+                $tempFilter["month_name"] = strtolower(trim($monthName));
+                $tempFilter["year"] = $post['filter_year'];
+            }elseif(isset($post["filter_by"], $post['filter_year']) && ($post["filter_by"] == "year" && $post['filter_year'])){
+                $tempFilter["year"] = $post['filter_year'];
+            }
+
+            $this->db->select("sc.id, sp.sbr_no, sp.year, sp.month_name, sp.payment_date, sc.sss_total");
+            $this->db->from($this->sbrContributionTable." sc");
+            $this->db->join($this->sbrPaymentTable." sp", "sp.id = sc.sbr_id", "INNER");
+            $this->db->where("sc.employee_id", $post["employee"]);
+            if(isset($post["company"]) && $post["company"]){ $this->db->where("sp.company_id", $post["company"]); }
+            if(is_array($tempFilter) && !empty($tempFilter)){
+                $this->db->group_start();
+                foreach ($tempFilter as $key => $value) { $this->db->where($key, $value); }
+                $this->db->group_end();
+            }
+            $this->db->order_by("sp.year", "ASC");
+            $this->db->order_by("FIELD(sp.month_name, 'January','February','March','April','May','June','July','August','September','October','November','December')", null, false);
+            $q = $this->db->get();
+            if($q->num_rows() > 0){
+                $tempFilter["employee"] = $this->getEmployeeSssPremiumFilter($post["employee"]);
+                $tempFilter["company"] = $this->getCompanySssPremiumFilter($post["company"]);
+                $resultset["filter"] = $tempFilter;
+                $resultset["response"] = true;
+                $resultset["data"] = $q->result();
+                $resultset["count"] = $q->num_rows();
+                $resultset["toastr_msg"] = "A total of <strong>" . $resultset["count"] . "</strong> record(s) found.";
+            }else{
+                $resultset["response"] = false;
+                $resultset["data"] = array();
+                $resultset["count"] = 0;
+                $resultset["toastr_msg"] = "No record(s) found.";
+            }
+        }else{
+            $resultset["response"] = false;
+            $resultset["data"] = array();
+            $resultset["count"] = 0;
+            $resultset["toastr_msg"] = "No record(s) found.";
+        }
+        return $resultset;
+    }
+
+    protected function getCompanySssPremiumFilter($id=null){
+        if($id){
+            $this->db->select("UPPER(description) as company_name, UPPER(company_address) as company_address");
+            $qCompanyData = $this->db->get_where($this->companyTable, array("id" => $id));
+            return $qCompanyData->row();
+        }else{
+            return false;
+        }
+    }
+    protected function getEmployeeSssPremiumFilter($id=null){
+        if($id){
+            $this->db->select("sss_no,
+            CONCAT(UPPER(TRIM(firstname)), ' ',
+            CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND TRIM(middlename) !='' AND middlename IS NOT NULL
+            THEN CONCAT(UPPER(SUBSTR(middlename, 1, 1)), '.') ELSE '' END,' ', UPPER(TRIM(lastname)),
+            CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND suffix IS NOT NULL 
+            THEN CONCAT(' ', UPPER(TRIM(suffix))) ELSE '' END) as employee_name");
+            $qEmployeeData = $this->db->get_where($this->tblEmployees, array("id" => $id));
+            return $qEmployeeData->row();
+        }else{
+            return false;
+        }
+    }
 }

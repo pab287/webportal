@@ -90,8 +90,8 @@
                                     </div>  
                                     <div class="col-md-6">
                                         <div class="form-group form__group">   
-                                            <label>Bill Amount</label>
-                                            <input class="form-control m-input text-right billing_amount" step="0.01" id="billing_amount" readonly autocomplete="off">
+                                            <label>Remaining Balance</label>
+                                            <input name="billing_amount" class="form-control m-input text-right billing_amount" step="0.01" id="billing_amount" readonly autocomplete="off">
                                         </div>             
                                     </div>
                                 </div>
@@ -107,7 +107,7 @@
                                     <div class="col-md-12">
                                         <div class="form-group form__group">
                                             <label>Total</label>
-                                            <input class="form-control m-input text-right total_balance" step="0.01" readonly type="text">
+                                            <input name="overpayment" class="form-control m-input text-right overpayment" step="0.01" readonly type="text">
                                         </div>
                                     </div>
                                 </div>
@@ -148,7 +148,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="m-form col-md-6 form__group row">
+                        <div class="m-form col-md-6 form__group row penalty_layout" style="display: none;">
                             <div class="col-md-12 m--margin-bottom">
                             <div class="m-form__heading">
                                 <h3 class="m-form__heading-title">
@@ -180,21 +180,28 @@
                                 </div>
                             </div> -->
                             <div class="row m--margin-bottom">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
+                                    <div class="form-group form__group">   
+                                        <label>Bill Amount</label>
+                                        <input id="default_billing_amount" type="text" readonly class="form-control m-input text-right" step="any" autocomplete="off">
+                                    </div>             
+                                </div>  
+
+                                <div class="col-md-3">
                                     <div class="form-group form__group">   
                                         <label>Sub Total</label>
                                         <input id="sub_total" name="sub_total" type="text" readonly class="form-control m-input text-right" step="any" autocomplete="off">
                                     </div>             
                                 </div>  
 
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group form__group">   
                                         <label>Balance Covered</label>
                                         <input id="balance_covered" type="text" name="balance_covered" readonly class="form-control m-input text-right" step="any" autocomplete="off">
                                     </div>             
                                 </div>  
 
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group form__group">   
                                         <label style="font-weight: bold;">
                                             Net Payment
@@ -206,13 +213,9 @@
                         </div>
                     <div class="m-portlet__foot">
                         <div class="m-form__actions m--paddingless text-right" style="padding:0;">
-                            <button type="submit" class="btn btn-accent btnSave" id="btnSave" disabled>
-                                Submit
-                            </button>
+                            <button type="submit" class="btn btn-accent btnSave" id="btnSave" disabled>Submit</button>
                             <a href="<?php echo site_url("eforms/billing/payment"); ?>">
-                                <button type="button" class="btn btn-secondary btnCancel">
-                                    Cancel
-                                </button>
+                                <button type="button" class="btn btn-secondary btnCancel">Cancel</button>
                             </a>
                         </div>
                     </div>

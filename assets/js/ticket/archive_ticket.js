@@ -34,10 +34,15 @@ let tbl = $("#table-tickets-archive").DataTable({
     columns: [
         {data: null, defaultContent: '-', className: "d-flex justify-content-center"},
         {data: "reference_no"},
-        {data: "category"},
-        {data: "sub_category",
+        {
+            data: null,
             render: function (data, type, row) {
-                return row.sub_category ? row.sub_category : 'NOT SET';
+                return `
+                    <div>
+                        ${row.category || 'NOT SET'}<br>
+                        <small class='m--font-bolder'>Sub-category: ${row.sub_category || 'NOT SET'}</small>
+                    </div>
+                `;
             }
         },
         {data: "priority",
@@ -88,34 +93,29 @@ let tbl = $("#table-tickets-archive").DataTable({
                 return `<span class='m-badge ${badgeClass} m-badge--wide text-white'><strong>${row.status}</strong></span>`;
             }
         },
-        {data: "requested_date",
+        {
+            data: "requested_date",
             render: function (data, type, row) {
                 return moment(row.requested_date).format('MMM D, YYYY hh:mm A');
             }
         },
-        {data: null,
+        {
+            data: "created_at",
             render: function (data, type, row) {
-                if(row.status.toLowerCase()  == 'completed' || row.status == 'RESOLVED') {
-                    return 'Ticket Completed';
-                }
-                if (!row.requested_date) return '---';
-                
-                const today = new Date();
-                const requestDate = new Date(row.requested_date);
-                
-                // Return empty if invalid date
-                if (isNaN(requestDate.getTime())) return '';
-                
-                // Calculate difference in days
-                const diffTime = today - requestDate;
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                
-                if (diffDays <= 0) return 'Not Overdue';
-                
-                return `${diffDays.toLocaleString()} ${diffDays === 1 ? 'Day' : 'Days'}`;
+                return moment(data).format('MMM D, YYYY hh:mm A');
             }
-        }, 
-        {data: "requestor"},
+        },      
+        {
+            data: null,
+            render: function (data, type, row) {
+                return `
+                    <div>
+                        ${row.requestor || 'NOT SET'}<br>
+                        <small>${row.department || 'NOT SET'}</small>
+                    </div>
+                `;
+            }
+        },
         {data: "performed_by"},
         {data: null, width: "10%", className: "text-center"},
     ],

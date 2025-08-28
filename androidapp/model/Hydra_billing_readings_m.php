@@ -553,8 +553,10 @@ class Hydra_billing_readings_m extends Dbase{
 							$list['due_date'] = $bill_info["due_date"];
 							$list['over_payment'] = $bill_info["over_payment"];
 							$list['reconnectionFee'] = $bill_info["reconnectionFee"];
-							$list['total_balance'] = $bill_info["total_balance"];
+							// $list['total_balance'] = $bill_info["total_balance"];
+							$list['total_balance'] = $bill_info["total_balance"] - $bill_info["over_payment"];
 							$list['total_penalty'] = $bill_info["total_penalty"];
+							$list['overdue_charges'] = $bill_info["overdue_charges"];
 							$list['total_amount_due'] = $bill_info["total_amount_due"];
 							$list['ref_no'] = $reference_no;
 						} else {
@@ -629,7 +631,8 @@ class Hydra_billing_readings_m extends Dbase{
 		}
 
         // $total_amount_due = ($charges + $balance_last_bill['total_penalty'] + $balance_last_bill['total_balance'] + $reconnectionFee) - $over_payment;
-		$total_amount_due = ($charges + $balance_last_bill['total_balance'] + $overdue_charges + $balance_last_bill['total_penalty'] + $reconnectionFee) - $over_payment;
+		// $total_amount_due = ($charges + $balance_last_bill['total_balance'] + $overdue_charges + $balance_last_bill['total_penalty'] + $reconnectionFee) - $over_payment;
+		$total_amount_due = ($charges + $balance_last_bill['total_balance'] + $balance_last_bill['total_penalty'] + $reconnectionFee) - $over_payment;
 
         $list["current_reading_date"] = $current_reading_date;
         $list["reading_ref_no"] = $currentReading["reading_ref_no"];
@@ -654,7 +657,8 @@ class Hydra_billing_readings_m extends Dbase{
 		$list["actual_current_bill"] = number_format($actual_current_bill, 2,'.','');
         $list["over_payment"] = number_format($over_payment, 2,'.','');
 		$list['overdue_charges'] = $overdue_charges;
-        $list["total_penalty"] = number_format($overdue_charges, 2,'.','');
+        // $list["total_penalty"] = number_format($overdue_charges, 2,'.','');
+		$list["total_penalty"] = number_format($balance_last_bill['total_penalty'], 2,'.','');
         $list["total_balance"] = number_format($balance_last_bill['total_balance'] + $balance_last_bill['total_penalty'], 2,'.','');
         $list["total_amount_due"] = number_format($total_amount_due, 2,'.','');
         $list["reconnectionFee"] = number_format($reconnectionFee, 2,'.','');
@@ -672,59 +676,116 @@ class Hydra_billing_readings_m extends Dbase{
 		return $sth->rowCount();
     }
 
-	// current_y & current_m added in the condition for not include the current billing.
+	public function test_compute_balance_last_bill($account_id) {
+		$balance_last_bill = $this->computeBalanceLastBill($account_id);
+		return $balance_last_bill;
+	}
+
 	private function computeBalanceLastBill($account_id) {
 		try {
 			$current_bill_id = $this->get_current_bill_id($account_id);
 			$array = array();
 			$conn = $this->conn();
 			$current_date = date("Y-m-d");
-			$current_y = date("Y");
-			$current_m = date("m");
 			$penalties = $this->getPenalties();
-			$total_balance = 0;
-			$total_penalty = 0;
-			$sth = $conn->prepare("SELECT id, total_charges, due_date, billing_to
-								   FROM hydra_billing.bills
-								   WHERE account_id = :account_id
-								   AND is_paid = '0'
-								   AND status = '1'
-								   AND id != :current_bill_id
-								   AND (month(billing_to) != :current_m
-								   OR year(billing_to) != :current_y)");
-			$sth->bindParam(':current_bill_id', $current_bill_id, PDO::PARAM_INT);
-			$sth->bindParam(':account_id', $account_id, PDO::PARAM_INT);
-			$sth->bindParam(':current_m', $current_m, PDO::PARAM_INT);
-			$sth->bindParam(':current_y', $current_y, PDO::PARAM_INT);
-			$sth->execute();
-			while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
-				$bill_payments = $this->computeBillsPaid($row['id']);
-				$overdue_charges = 0;
 
-				if ($current_date > $row['due_date']) {
-					if ($penalties['type'] == 'percentage') {
-						$overdue_charges = ($penalties['amount'] / 100) * $row['total_charges'];
+			// Get the most recent previous unpaid bill by ID
+			$sth = $conn->prepare("SELECT id, total_charges, due_date
+								FROM hydra_billing.bills
+								WHERE account_id = :account_id
+								AND is_paid = 0
+								AND status = 1
+								AND id < :current_bill_id
+								ORDER BY id DESC
+								LIMIT 1");
+			$sth->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+			$sth->bindParam(':current_bill_id', $current_bill_id, PDO::PARAM_INT);
+			$sth->execute();
+
+			$total_penalty = 0;
+			$total_balance = 0;
+
+			if ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+				$bill_id = $row['id'];
+				$charges = $row['total_charges'];
+				$due_date = $row['due_date'];
+
+				// Compute overdue if needed
+				if ($current_date > $due_date) {
+					if ($penalties['type'] === 'percentage') {
+						$total_penalty = ($penalties['amount'] / 100) * $charges;
 					} else {
-						$overdue_charges = $penalties['amount'];
+						$total_penalty = $penalties['amount'];
 					}
 				}
 
-				$total = $row['total_charges'] - $bill_payments;
-
-				$total_penalty += $overdue_charges;
-				$total_balance += $total;
+				$payments = $this->computeBillsPaid($bill_id);
+				$total_balance = $charges - $payments;
 			}
-	
-			$array['total_penalty'] = $total_penalty;
-			$array['total_balance'] = $total_balance;
-			// $array['current_bill_id'] = $current_bill_id;
+
+			$array['total_penalty'] = number_format((float)$total_penalty, 2, '.', '');
+			$array['total_balance'] = number_format($total_balance, 2, '.', '');
 			return $array;
+
 		} catch (PDOException $e) {
-			// Handle the exception
-			$err = error_log("Error in computeBalanceLastBill: " . $e->getMessage());
-			return array('total_penalty' => 0, 'total_balance' => 0, 'err_msgg' => $err); // or handle it in a way that makes sense for your application
+			$err = error_log("Error in computeBalanceLastBill2: " . $e->getMessage());
+			return array('total_penalty' => 0, 'total_balance' => 0, 'err_msgg' => $err);
 		}
 	}
+
+	// current_y & current_m added in the condition for not include the current billing.
+	// private function computeBalanceLastBill($account_id) {
+	// 	try {
+	// 		$current_bill_id = $this->get_current_bill_id($account_id);
+	// 		$array = array();
+	// 		$conn = $this->conn();
+	// 		$current_date = date("Y-m-d");
+	// 		$current_y = date("Y");
+	// 		$current_m = date("m");
+	// 		$penalties = $this->getPenalties();
+	// 		$total_balance = 0;
+	// 		$total_penalty = 0;
+	// 		$sth = $conn->prepare("SELECT id, total_charges, due_date, billing_to
+	// 							   FROM hydra_billing.bills
+	// 							   WHERE account_id = :account_id
+	// 							   AND is_paid = '0'
+	// 							   AND status = '1'
+	// 							   AND id != :current_bill_id
+	// 							   AND (month(billing_to) != :current_m
+	// 							   OR year(billing_to) != :current_y)");
+	// 		$sth->bindParam(':current_bill_id', $current_bill_id, PDO::PARAM_INT);
+	// 		$sth->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+	// 		$sth->bindParam(':current_m', $current_m, PDO::PARAM_INT);
+	// 		$sth->bindParam(':current_y', $current_y, PDO::PARAM_INT);
+	// 		$sth->execute();
+	// 		while ($row = $sth->fetch(PDO::FETCH_ASSOC)) {
+	// 			$bill_payments = $this->computeBillsPaid($row['id']);
+	// 			$overdue_charges = 0;
+
+	// 			if ($current_date > $row['due_date']) {
+	// 				if ($penalties['type'] == 'percentage') {
+	// 					$overdue_charges = ($penalties['amount'] / 100) * $row['total_charges'];
+	// 				} else {
+	// 					$overdue_charges = $penalties['amount'];
+	// 				}
+	// 			}
+
+	// 			$total = $row['total_charges'] - $bill_payments;
+
+	// 			$total_penalty += $overdue_charges;
+	// 			$total_balance += $total;
+	// 		}
+	
+	// 		$array['total_penalty'] = $total_penalty;
+	// 		$array['total_balance'] = $total_balance;
+	// 		// $array['current_bill_id'] = $current_bill_id;
+	// 		return $array;
+	// 	} catch (PDOException $e) {
+	// 		// Handle the exception
+	// 		$err = error_log("Error in computeBalanceLastBill: " . $e->getMessage());
+	// 		return array('total_penalty' => 0, 'total_balance' => 0, 'err_msgg' => $err); // or handle it in a way that makes sense for your application
+	// 	}
+	// }
 
 	public function get_current_bill_id($account_id) {
 		$conn = $this->conn();
@@ -806,53 +867,96 @@ class Hydra_billing_readings_m extends Dbase{
 
 			$res = array();
 			// SUM of received_amount
-			$received_amount_query = $conn->prepare("SELECT SUM(received_amount) AS received_amount
-													  FROM hydra_billing.payments
-													  WHERE account_id = :account_id
-													  AND is_archive = 0");
-			$received_amount_query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
-			$received_amount_query->execute();
-			$received_amount = $received_amount_query->fetch(PDO::FETCH_ASSOC);
-
-			// SUM of net_payment
-			$net_payment_query = $conn->prepare("SELECT SUM(p.net_payment) AS net_payment
-												FROM hydra_billing.payments p
-												JOIN (
-													SELECT bill_id, MIN(id) AS min_id
+			$received_query = $conn->prepare("SELECT SUM(received_amount) AS received_amount
 													FROM hydra_billing.payments
 													WHERE account_id = :account_id
-													AND is_archive = 0
-													GROUP BY bill_id
-												) AS first_payments ON p.id = first_payments.min_id");
-			$net_payment_query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
-			$net_payment_query->execute();
-			$net_payment = $net_payment_query->fetch(PDO::FETCH_ASSOC);
+													AND is_archive = 0");
+			$received_query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+			$received_query->execute();
+			$total_received = $received_query->fetch(PDO::FETCH_ASSOC);
 
-			// SUM of balance_covered
-			$balance_covered_query = $conn->prepare("SELECT SUM(p.balance_covered) AS balance_covered
+	        // ==========================================================================
+
+			// SUM of bill_amount
+			$bill_query = $conn->prepare("SELECT SUM(b.total_charges) AS total_bill_amount
+												FROM hydra_billing.bills b
+												WHERE b.account_id = :account_id
+												AND b.status = 1
+												AND EXISTS (
+													SELECT 1 FROM hydra_billing.payments p 
+													WHERE p.bill_id = b.id AND p.is_archive = 0
+												)");
+			$bill_query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+			$bill_query->execute();
+			$total_bill = $bill_query->fetch(PDO::FETCH_ASSOC);
+
+			// ==========================================================================
+
+			// SUM of overdue
+			$overdue_query = $conn->prepare("SELECT p.bill_id, p.penalties
 													FROM hydra_billing.payments p
-													JOIN (
-														SELECT bill_id, MIN(id) AS min_id
-														FROM hydra_billing.payments
-														WHERE account_id = :account_id
-														AND is_archive = 0
-														GROUP BY bill_id
-													) AS first_payments ON p.id = first_payments.min_id");
-			$balance_covered_query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
-			$balance_covered_query->execute();
-			$balance_covered = $balance_covered_query->fetch(PDO::FETCH_ASSOC);
+													WHERE p.account_id = :account_id
+													AND p.is_archive = 0");
+			$overdue_query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+			$overdue_query->execute();
+			$overdue_amount = $overdue_query->fetchAll(PDO::FETCH_ASSOC);
+
+			$total_overdue = 0;
+			$seen_bills = [];
+
+			foreach ($overdue_amount as $row) {
+				$overdue = @unserialize($row['penalties']);  // Handle serialized array
+
+				if (!is_array($overdue) || empty($overdue)) {
+					continue;
+				}
+
+				$first = $overdue[0];
+
+				// Create a unique key using dueDate and total_amount
+				$bill_key = $first['dueDate'] . '-' . $first['total_amount'];
+
+				if (!isset($seen_bills[$bill_key])) {
+					$seen_bills[$bill_key] = true;
+					$total_overdue += floatval($first['overdue']);
+				}
+			}
+
+			// ==========================================================================
+
+			// SUM of reconnection_fee
+			$reconnection_query = $conn->prepare("SELECT account_id, SUM(reconnection_fee) AS total_reconnection_fee
+												FROM (
+													SELECT bill_id, account_id, MAX(reconnection_fee) AS reconnection_fee
+													FROM hydra_billing.payments
+													WHERE is_archive = 0
+													GROUP BY bill_id, account_id
+												) AS sub
+												WHERE account_id = :account_id
+												GROUP BY account_id");
+			$reconnection_query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+			$reconnection_query->execute();
+			$reconnection_res = $reconnection_query->fetch(PDO::FETCH_ASSOC);
+			$total_reconnection = isset($reconnection_res['total_reconnection_fee']) ? floatval($reconnection_res['total_reconnection_fee']) : 0.00;
+
+			// ==========================================================================
+
+			// Format to 2 decimal places & convert to float
+			$received_amount = (float)number_format($total_received['received_amount'], 2, '.', '');
+			$bill = (float)number_format($total_bill['total_bill_amount'], 2, '.', '');
+			$overdue = (float)number_format($total_overdue, 2, '.', '');
+			$reconnection_fee = (float)number_format($total_reconnection, 2, '.', '');
 			
-			$received_amount = $received_amount['received_amount'];
-			$net_payment = $net_payment['net_payment'];
-			$balance_covered = $balance_covered['balance_covered'];
+			// Compute values
+			$total_charge = $bill + $overdue + $reconnection_fee;
+			$overpayment = $received_amount - $total_charge;
+			$total = $overpayment < 0 ? 0 : $overpayment;
 
-			$received_net_payment = $received_amount - $net_payment;
-			$total = $received_net_payment - $balance_covered;
-
-			$res['total_received_amount'] = $received_amount;
-			$res['total_net_payment'] = $net_payment;
-			$res['total_balance_covered'] = $balance_covered;
-			$res['total'] = $total;
+			$res['received_amount'] = $received_amount;
+			$res['bill'] = $bill;
+			$res['overdue'] = $overdue;
+			$res['reconnection_fee'] = $reconnection_fee;
+			$res['total'] = number_format($total, 2, '.', '');
 			
 			return number_format($total < 0 ? 0 : $total, 2, '.', '');
 			
@@ -862,6 +966,74 @@ class Hydra_billing_readings_m extends Dbase{
 			return number_format(0, 2, '.', ''); // or handle it in a way that makes sense for your application
 		}
 	}
+
+	// private function computeOverPayment($account_id){
+	// 	try {
+	// 		$conn = $this->conn();
+
+	// 		$res = array();
+	// 		// SUM of received_amount
+	// 		$received_amount_query = $conn->prepare("SELECT SUM(received_amount) AS received_amount
+	// 												  FROM hydra_billing.payments
+	// 												  WHERE account_id = :account_id
+	// 												  AND is_archive = 0");
+	// 		$received_amount_query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+	// 		$received_amount_query->execute();
+	// 		$received_amount = $received_amount_query->fetch(PDO::FETCH_ASSOC);
+
+	// 		// SUM of net_payment
+	// 		$net_payment_query = $conn->prepare("SELECT SUM(p.net_payment) AS net_payment
+	// 											FROM hydra_billing.payments p
+	// 											JOIN (
+	// 												SELECT bill_id, MIN(id) AS min_id
+	// 												FROM hydra_billing.payments
+	// 												WHERE account_id = :account_id
+	// 												AND is_archive = 0
+	// 												GROUP BY bill_id
+	// 											) AS first_payments ON p.id = first_payments.min_id");
+	// 		$net_payment_query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+	// 		$net_payment_query->execute();
+	// 		$net_payment = $net_payment_query->fetch(PDO::FETCH_ASSOC);
+
+	// 		// SUM of balance_covered
+	// 		$balance_covered_query = $conn->prepare("SELECT SUM(p.balance_covered) AS balance_covered
+	// 												FROM hydra_billing.payments p
+	// 												JOIN (
+	// 													SELECT bill_id, MIN(id) AS min_id
+	// 													FROM hydra_billing.payments
+	// 													WHERE account_id = :account_id
+	// 													AND is_archive = 0
+	// 													GROUP BY bill_id
+	// 												) AS first_payments ON p.id = first_payments.min_id");
+	// 		$balance_covered_query->bindParam(':account_id', $account_id, PDO::PARAM_INT);
+	// 		$balance_covered_query->execute();
+	// 		$balance_covered = $balance_covered_query->fetch(PDO::FETCH_ASSOC);
+			
+	// 		$received_amount = $received_amount['received_amount'];
+	// 		$net_payment = $net_payment['net_payment'];
+	// 		$balance_covered = $balance_covered['balance_covered'];
+
+	// 		$received_net_payment = $received_amount - $net_payment;
+	// 		$total = $received_net_payment - $balance_covered;
+
+	// 		$res['total_received_amount'] = $received_amount;
+	// 		$res['total_net_payment'] = $net_payment;
+	// 		$res['total_balance_covered'] = $balance_covered;
+	// 		$res['total'] = $total;
+
+	// 		return $res;
+
+	// 		// var_dump($res); // For debugging purposes, you can remove this line later
+	// 		// die;
+			
+	// 		return number_format($total < 0 ? 0 : $total, 2, '.', '');
+			
+	// 	} catch (PDOException $e) {
+	// 		// Handle the exception
+	// 		error_log("Error in computeOverPayment: " . $e->getMessage());
+	// 		return number_format(0, 2, '.', ''); // or handle it in a way that makes sense for your application
+	// 	}
+	// }
 
 	private function getPenalties(){
 		$conn = $this->conn();

@@ -214,11 +214,10 @@ class Payroll_m extends CI_Model
         return array("results" => $results, "sql" => $this->db->last_query());
     }
 
-    function select2CompanyData(){
-        $this->db->select("companies.id, companies.`code` `text`, companies.*");
-        $this->db->order_by("`code`", "ASC");
-        $results = $this->db->get("gcchris.tblcompanies companies")->result();
-        return $results;
+    public function select2CompanyData($companyColumn='code'){
+        $this->db->select("companies.id, companies.`{$companyColumn}` `text`, companies.*");
+        $this->db->order_by("`{$companyColumn}`", "ASC");
+        return $this->db->get("gcchris.tblcompanies companies")->result();
 
     }
 
@@ -2404,6 +2403,20 @@ class Payroll_m extends CI_Model
                                         $this->db->insert("payroll.payroll_sheet_loan_payments", $loan_data);
                                     }
                                 }
+                            }else{
+                                /*** for zero amount due ***/
+                                if(floatval($loan->amount_due) <= 0){
+                                    $getZeroLoan = $this->db
+                                    ->where("loan_id", $loan->id)
+                                    ->where("payroll_sheet_id", $payroll_sheet_id)
+                                    ->get("payroll.payroll_sheet_loan_payments");
+                                    if($getZeroLoan->num_rows() > 0){
+                                        foreach ($getZeroLoan->result() as $zeroLoan) {
+                                            $this->db->where("id", $zeroLoan->id)->delete("payroll.payroll_sheet_loan_payments");
+                                        }
+                                    }
+                                }
+                                /*** for zero amount due ***/
                             }
 
                             $tempBalance = floatval($loan->amount) - floatval($loan->total_amount_paid);
@@ -2906,7 +2919,7 @@ class Payroll_m extends CI_Model
         $has_pagibig_no = (isset($_contAcctNumber->pagibig_no) && $_contAcctNumber->pagibig_no)? true: false;
         $has_tin_no = (isset($_contAcctNumber->tin_no) && $_contAcctNumber->tin_no)? true: false;
 
-        if($temp_taxable_income > 0){
+        if($temp_taxable_income > 0 && $parameters->switch == "1"){
             $alteredTaxableDeduction = $this->getFixedTaxableDeduction($parameters->emp_id);
             
             $hasPreviousDeduction = new stdClass();
@@ -5032,10 +5045,11 @@ class Payroll_m extends CI_Model
         return $data;
     }
 
-    public function getPostedPayrollSheetYearsData()
+    public function getPostedPayrollSheetYearsData($entryDate = null)
     {
         $arrData = array();
         $this->db->select('`year` id, `year` `text`');
+        if($entryDate){ $this->db->where('pay_date >=', $entryDate); }
         $this->db->group_by('year');
         $this->db->order_by('year', 'desc');
         $qTemp = $this->db->get('payroll.payroll_sheet');
