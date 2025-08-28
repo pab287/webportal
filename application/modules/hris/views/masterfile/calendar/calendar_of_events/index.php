@@ -1,3 +1,8 @@
+<style>
+    .help-block.form-error{
+        display: none;
+    }
+</style>
 <div class="m-content">
     <div class="m-portlet" id="m_portlet">
         <div class="m-portlet__head">
@@ -45,7 +50,7 @@
                 <div class="tab-pane active" id="list-view-tab">
                     <div class="row m--margin-top-20 m--margin-bottom-30">
                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
-                            <button type="button" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" onclick="openAddHolidayModal(null, true)">
+                            <button type="button" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#addNewEvent">
                                 <i class="la la-plus"></i>
                                 ADD EVENT
                             </button>
@@ -75,12 +80,14 @@
                         <table class="table table-bordered table-hover" id="table-calendar-of-holidays" style="width: 100%;">
                             <thead>
                             <tr>
-                                <th>DATE FROM</th>
-                                <th>DATE TO</th>
-                                <th>HOLIDAY DESCRIPTION</th>
-                                <th>TAGGED COMPANY</th>
+                                <th></th>
+                                <th>TITLE</th>
+                                <th>DESCRIPTION</th>
+                                <th>VENUE</th>
+                                <th>SPEAKERS</th>
+                                <!-- <th>TAGGED COMPANY</th>
                                 <th>CLASSIFICATION</th>
-                                <th>ACTIONS</th>
+                                <th>ACTIONS</th> -->
                             </tr>
                             </thead>
                             <tbody></tbody>
@@ -96,6 +103,71 @@
     </div>
 </div>
 
-<div class="modal fade document-modal-container" data-keyboard="false" data-backdrop="static" tabindex="-1" role="dialog">
-
+<div class="modal fade show" id="addNewEvent" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Company Event</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id='new_event_form' onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
+                <div class="modal-body" id="event_calendar_body">
+                    <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="event_title" class="form-control-label required">Event Title</label>
+                                <input name="event_title" type="text" class="form-control m-input date" placeholder="event title" data-validation="required">
+                            </div>
+                            <div class="form-group">
+                                <label for="event_description" class="form-control-label required">Event description</label>
+                                <input name="event_description" type="text" class="form-control m-input date" placeholder="event description" data-validation="required">
+                            </div>
+                            <div class="form-group">
+                                <label for="date" class="form-control-label required">Event Schedule</label>
+                                <input name="date" type="text" id="event_date" class="form-control m-input date" placeholder="Select date" data-validation="required" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="event_venue" class="form-control-label required">Event Venue</label>
+                                <input name="event_venue" type="text" class="form-control m-input date" placeholder="event venue" data-validation="required">
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="form-control-label required">Event Speakers</label>
+                                <template v-for="(speaker, index) in speakers" :key="index">
+                                    <div class="bg-light border rounded p-3 mb-3 position-relative">
+                                        <button type="button" class="close" :class="{ 'd-none': speakers.length === 1 }" @click="removeSpeaker(index)">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                        <div class="row">
+                                            <div class="col-4 mb-2">
+                                                <label :for="`speakers[${index}][name]`" class="form-label required">Name</label>
+                                                <input :name="`speakers[${index}][name]`" type="text" class="form-control" placeholder="speaker name" data-validation="required">
+                                            </div>
+                                            <div class="col-4 mb-2">
+                                                <label :for="`speakers[${index}][position]`" class="form-label required">Title/Position</label>
+                                                <input :name="`speakers[${index}][position]`"  type="text" class="form-control" placeholder="speaker position" data-validation="required">
+                                            </div>
+                                            <div class="col-4 mb-2">
+                                                <label :for="`speakers[${index}][company]`" class="form-label">Company/Organization</label>
+                                                <input :name="`speakers[${index}][company]`" type="text" class="form-control" placeholder="speaker company or organization">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <button type="button" class="btn btn-success mt-2 w-100 btnSave" @click="addNewSpeaker()">
+                                    <i class="la la-plus"></i> Add New Speaker
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btnSave"><i class="la la-check mr-2"></i>SAVE</button>
+                    <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>

@@ -120,22 +120,26 @@
             echo json_encode($data);
         }
 
-        public function company_events_calendar()
-        {
-            $this->core_layout->setPrivilegeName("hris_cal_of_probationary");
+        public function company_events_calendar(){
+            $this->core_layout->setPrivilegeName("company_events_calendar");
+            $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
+            $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
             $this->core_layout->addJs("vendors/custom/fullcalendar/fullcalendar.bundle.js", true);
-            $this->core_layout->addJs("js/hris/calendar/calendar_of_probationary_script.js", true);
+            $this->core_layout->addJs("js/hris/calendar/calendar_of_events.js", true);
             $this->core_layout->addCss("vendors/custom/fullcalendar/fullcalendar.bundle.css", true);
             $this->core_layout->addCss("css/hris/calendar.css", true);
-
             $this->load->view("core/templates/header");
             $this->load->view("masterfile/calendar/calendar_of_events/index");
             $this->load->view("core/templates/footer");
         }
 
-        public function get_company_events()
-        {
-            $data = $this->holiday->getCompanyEvents();
+        public function save_event(){
+            $data = $this->holiday->saveEvent();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_events_tabular(){
+            $data = $this->holiday->getEventsTabular();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 

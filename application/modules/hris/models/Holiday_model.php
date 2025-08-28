@@ -4,6 +4,8 @@
     class Holiday_model extends CI_Model {
         protected $tblHolidays = "gcchris.tblholidays";
         protected $shiftScheduleCalendarTable = "gcctimeutility.shift_schedule_calendar";
+        protected $eventsCalendarTable = "gcchris.events_calendar";
+        protected $eventsSpeakersTable = "gcchris.events_speakers";
         protected $now = null;
         protected $user = null;
 
@@ -461,8 +463,142 @@
             return $q->num_rows();
         }
 
-       public function getCompanyEvents(){
+        public function saveEvent(){
+            $response = ["success" => false, "message" => "An error occurred while saving the event."];
+            $post = $this->input->post();
+            $date_range = isset($post['date']) ? explode(" - ", $post['date']) : [];
+            $start_date = isset($date_range[0]) ? date("Y-m-d", strtotime($date_range[0])) : null;
+            $end_date   = isset($date_range[1]) ? date("Y-m-d", strtotime($date_range[1])) : null;
+        
+            $event_data = [
+                "event_title"   => $post['event_title'] ?? null,
+                "description"   => $post['event_description'] ?? null,
+                "event_venue"   => $post['event_venue'] ?? null,
+                "event_from"    => $start_date,
+                "event_to"      => $end_date,
+            ];
+        
+            $this->db->trans_start();
+        
+            $this->db->insert($this->eventsCalendarTable, $event_data);
+            $event_id = $this->db->insert_id();
+        
+            if (!empty($post['speakers']) && is_array($post['speakers'])) {
+                foreach ($post['speakers'] as $row) {
+                    $speaker_data = [
+                        "event_id" => $event_id,
+                        "speaker_name"     => $row['name'] ?? null,
+                        "position" => $row['position'] ?? null,
+                        "company"  => !empty($row['company']) ? $row['company'] : null,
+                    ];
+                    $this->db->insert($this->eventsSpeakersTable, $speaker_data);
+                }
+            }
+        
+            $this->db->trans_complete();
+            if ($this->db->trans_status() === FALSE) {
+                $response = [
+                    "success" => false,
+                    "message" => "Company event was not successfully saved."
+                ];
+                $this->core_layout->setEventLog("Failed to insert company event.","insert", "error", "gcchris", "system");
+            } else {
+                $response = [
+                    "success" => true,
+                    "message" => "Company event was successfully saved."
+                ];
+                $this->core_layout->setEventLog("Added new company event","insert", "success", "gcchris", "user");
+            }
+            return $response;
+        }
+
+        public function getEventsTabular(){
+            $post = $this->input->post();
+            $order_val = array(array("column"=>"0", "dir"=>"desc"));
+            $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+            $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
+            $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+            $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+            $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
+            $rowData = array();
+            $rowData = $this->getEventsData($limit, $offset, $sortBy, $sortOrder, $search,);
+            $rowCount = $this->getEventsDataCount($search);
+          
+            $data["recordsTotal"] = $rowCount;
+            $data["recordsFiltered"] = $rowCount;
+            $data["data"] = $rowData;
+            return $data;
+        }
+
+        private function getEventsData($limit, $offset, $sortBy, $sortOrder, $search){
+            $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to");
+            $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to,
+                GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
+                GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
+                GROUP_CONCAT(b.company SEPARATOR '||') as speaker_companies");
+            $this->db->from($this->eventsCalendarTable . " a");
+            $this->db->join($this->eventsSpeakersTable . " b", "a.id = b.event_id", "left");
+     
+            if ($search) {
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+
+            if ($limit != -1) {
+                $this->db->limit($limit, $offset);
+            }
+            $i = $sortOrder[0]['column'];
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            $this->db->group_by("a.id");
+            $query = $this->db->get();
+            $result = $query->result_array();
+            foreach ($result as &$row) {
+                $names = explode("||", $row['speaker_names']);
+                $positions = explode("||", $row['speaker_positions']);
+                $companies = explode("||", $row['speaker_companies']);
             
-       }
+                $speakers = [];
+                foreach ($names as $i => $name) {
+                    if ($name) {
+                        $speakers[] = [
+                            "speaker_name" => $name,
+                            "position"     => $positions[$i] ?? null,
+                            "company"      => $companies[$i] ?? null,
+                        ];
+                    }
+                }
+                $row['speakers'] = $speakers;
+                unset($row['speaker_names'], $row['speaker_positions'], $row['speaker_companies']);
+            }
+            return $result;
+
+        }
+
+        private function getEventsDataCount($search){
+            $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to");
+            $this->db->from($this->eventsCalendarTable . " a");
+            $this->db->join($this->eventsSpeakersTable . " b", "a.id = b.event_id", "left");
+            $this->db->group_by("a.id");
+            if ($search) {
+                $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+                $this->db->group_end();
+            }
+            $query = $this->db->get();
+            return $query->num_rows();
+        }
 
     }
