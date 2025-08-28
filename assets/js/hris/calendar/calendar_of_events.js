@@ -41,7 +41,14 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
                     }).join(""); // separator between speakers
 
                 }
-            }
+            }, 
+            {
+                data: null,
+                orderable: false,
+                render: function (data, type, row, meta) {
+                    return itemDatatableActions(row.id, row.status);
+                }
+            },            
         ]
     });
 
@@ -120,3 +127,36 @@ $.validate({
         return false;
     }
 });
+
+function itemDatatableActions($id, $status) {
+    let _actionButton = "";
+
+    _actionButton += " <a style='text-decoration: none;' " +
+        "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit' " +
+        "   data-toggle='modal' data-target='#edit-events-modal' " +   
+        "   data-ticket-id='" + $id + "' " +
+        "   data-skin='dark' " +
+        "   title='Edit Ticket'>" +
+        "   <i class='la la-pencil-square'></i>" +
+        "</a>";
+
+    _actionButton += " <a style='text-decoration: none;' " +
+        "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnView' " +
+        "   data-toggle='modal' data-target='#view-ticket-modal' " +
+        "   data-ticket-id='" + $id + "' " +
+        "   data-skin='dark' " +
+        "   title='View Ticket'>" +
+        "   <i class='la la-eye'></i>" +
+        "</a>";
+
+    _actionButton += " <button " +
+        "   type='button' " +
+        "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnArchive' " +
+        "   onclick='deleteR(" + $id + ")' " +
+        "   data-toggle='m-tooltip' data-placement='bottom' title='Archive Ticket' " +
+        "   data-skin='dark'>" +
+        "   <i class='la la-file-archive-o'></i>" +
+        "</button>";
+
+    return _actionButton;
+}

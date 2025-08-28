@@ -85,9 +85,7 @@
                                 <th>DESCRIPTION</th>
                                 <th>VENUE</th>
                                 <th>SPEAKERS</th>
-                                <!-- <th>TAGGED COMPANY</th>
-                                <th>CLASSIFICATION</th>
-                                <th>ACTIONS</th> -->
+                                <th>ACTIONS</th>
                             </tr>
                             </thead>
                             <tbody></tbody>
@@ -168,6 +166,19 @@
                     <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade show" id="edit-events-modal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Company Event</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
         </div>
     </div>
 </div>
