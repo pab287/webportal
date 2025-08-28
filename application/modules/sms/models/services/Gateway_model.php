@@ -82,10 +82,17 @@
                        "verify_peer_name"=>false,
                   ),
               );
-                $response['data']=file_get_contents($urltouse,false,stream_context_create($arrContextOptions));
-                $response['status']=true;
+              $response_data = @file_get_contents($urltouse, false, stream_context_create($arrContextOptions));
+              if($response_data && strpos($response_data, 'OK') === 0){
+                  $response['status'] = true;
+                  $response['data'] = $response_data;
+              } else {
+                  $response['status'] = false;
+                  $response['data'] = $response_data;
+              }
             }else{
-                return false;
+                $response['data']=[];
+                $response['status'] = false;
             }
         
             return($response);
