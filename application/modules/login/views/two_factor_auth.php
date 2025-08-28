@@ -233,7 +233,7 @@ input[type="radio"]:checked::after {
                                         </div>
                                     </div>
 
-                                    <div class="radio-option disabled">
+                                    <div class="radio-option">
                                         <label class="radio-label">
                                             <input type="radio" name="method" value="telegram">
                                             <span class="label-text">Telegram</span>

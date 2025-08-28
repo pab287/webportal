@@ -471,10 +471,80 @@ Class Login_m extends CI_Model
                 }
                 return $result;
                 
-            case 'telegram':
-                // Add Telegram implementation here
-                return true; // Placeholder
+                case 'telegram':
+                    $msg = "🔐 *NEVER SHARE YOUR OTP* especially on social media, SMS, or email links.\n\n" .
+                           "Your GC&C Conyxph One Time Password (OTP) is: `{$data['key_code']}`\n\n" .
+                           "If this was not you, please ignore this message.";
+                    
+                    $result = $this->sendTelegramOTP($send_to, $msg);
+                    return $result;
         }
+    }
+
+    private function sendTelegramOTP($chat_id, $message) {
+        $result = array();
+        try {
+            $bot_token = $_ENV['GCC_NOTIFICATION_BOT'];
+            
+            if (empty($bot_token) || !isset($bot_token)) {
+                $result['status'] = false;
+                $result['message'] = 'Telegram bot token not configured';
+                return $result;
+            }
+            
+            $telegram_api_url = "https://api.telegram.org/bot{$bot_token}/sendMessage";
+            
+            $post_data = array(
+                'chat_id' => $chat_id,
+                'text' => $message,
+                'parse_mode' => 'Markdown',
+                'disable_web_page_preview' => true
+            );
+            
+            // Initialize cURL
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $telegram_api_url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            
+            $response = curl_exec($ch);
+            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curl_error = curl_error($ch);
+            curl_close($ch);
+            
+            if ($curl_error) {
+                $result['status'] = false;
+                $result['message'] = 'cURL Error: ' . $curl_error;
+                return $result;
+            }
+            
+            if ($http_code !== 200) {
+                $result['status'] = false;
+                $result['message'] = 'HTTP Error: ' . $http_code;
+                return $result;
+            }
+            
+            $telegram_response = json_decode($response, true);
+            
+            if ($telegram_response && $telegram_response['ok']) {
+                $result['status'] = true;
+                $result['message'] = 'Telegram message sent successfully';
+                $result['telegram_response'] = $telegram_response;
+            } else {
+                $result['status'] = false;
+                $result['message'] = 'Telegram API Error: ' . ($telegram_response['description'] ?? 'Unknown error');
+                $result['telegram_response'] = $telegram_response;
+            }
+            
+        } catch (Exception $e) {
+            $result['status'] = false;
+            $result['message'] = 'Exception: ' . $e->getMessage();
+        }
+        
+        return $result;
     }
 
     private function getEmployeeNameById($id){
