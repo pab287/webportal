@@ -41,6 +41,18 @@
             $this->load->view('core/templates/footer');
         }
 
+        public function mobile_attendance() {
+            $this->core_layout->setPrivilegeName("gcctime_attendance_mobile");
+            $arrData = array("companies" => $this->attendance->select2CompanyData());
+            $this->core_layout->addExternalJs("https://maps.googleapis.com/maps/api/js?key=" . $_ENV['PROD_MAP_KEY']."&libraries=geometry,marker&loading=async", true);
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+            $this->core_layout->addJs("js/time/reports/mobile_attendance.script.js", true, $arrData);
+            $this->load->view('core/templates/header');
+            $this->load->view('attendance/mobile_attendance');
+            $this->load->view('core/templates/footer');
+        }
+
         function upload_attendance_file() {
             $resultset = array();
 
@@ -1629,5 +1641,40 @@
         public function get_app_attendance(){
             $attend = $this->attendance->syncAttendanceApp();
             echo $attend;
+        }
+
+        public function select_employee(){
+            $data = $this->attendance->selectEmployee();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function select_payroll_group() {
+            $data = $this->attendance->selectPayrollGroup();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function get_payroll_group_multiple() {
+            $data = $this->attendance->getPayrollGroupMultiple();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function get_mobile_attendance_list() {
+            $data = $this->attendance->getMobileAttendanceList();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+
+        public function get_mobile_attendance_data() {
+            $data = $this->attendance->getMobileAttendanceDataRecord();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
         }
     }

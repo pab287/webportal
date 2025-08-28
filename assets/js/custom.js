@@ -202,7 +202,8 @@ var collapsibleAccordionIconSwitch = function () {
 };
 
 var firstLoad = function () {
-    setTimeout(mapBlockUI, 100);
+    mapBlockUI();
+    //setTimeout(mapBlockUI, 200);
 };
 
 window.onload = firstLoad();
@@ -211,7 +212,7 @@ jQuery(document)
     .ready(function () {
         renderSelect2();
         uniqueCodeTampering();
-        setTimeout(mapUnblockUI, 200);
+        setTimeout(mapUnblockUI, 750);
 
         $('.modal:not([modal-exempt-custom])').modal({
             backdrop: "static",
@@ -224,7 +225,7 @@ jQuery(document)
         mapBlockUI();
     })
     .ajaxStop(function () {
-        setTimeout(mapUnblockUI, 200);
+        setTimeout(mapUnblockUI, 750);
     });
 
 (function ($) {
@@ -632,6 +633,7 @@ $(document).on("click", ".m-menu__link", function (e) {
 }); ***/
 
 $(window).on('beforeunload', function (e) {
+    mapBlockUI();
     if ($.xhrPool.length > 0) {
         $.xhrPool.abortAll();
         /*** window.stop();
