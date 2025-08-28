@@ -565,7 +565,6 @@ class Timesheet_model extends CI_Model{
                                 $overtime_end = null;
                                 
                                 $response = $this->generateNoShiftOvertime($tempRow, $night_diff_cfg, $date, $generated_manually);
-                                var_dump($response);
                                 if(isset($response["total_accredited_ot_hrs"]) && $response["total_accredited_ot_hrs"]){
                                     $total_accredited_ot_hrs = floatval($response["total_accredited_ot_hrs"]);
                                 }
@@ -1245,20 +1244,6 @@ class Timesheet_model extends CI_Model{
                             $pm_start = $prevRow->pm_in ? date("H:i:s", strtotime($prevRow->pm_in)): null;
                             $pm_end = $prevRow->pm_out ? date("H:i:s", strtotime($prevRow->pm_out)): null;
                             
-                            /** start shift schedule ***/
-                            $shift_am_start = $prevRow->shift_am_start ? date("H:i:s", strtotime($prevRow->shift_am_start)): null;
-                            $shift_am_end = $prevRow->shift_am_end ? date("H:i:s", strtotime($prevRow->shift_am_end)): null;
-                            $shift_pm_start = $prevRow->shift_pm_start ? date("H:i:s", strtotime($prevRow->shift_pm_start)): null;
-                            $shift_pm_end = $prevRow->shift_pm_end ? date("H:i:s", strtotime($prevRow->shift_pm_end)): null;
-                            /** end shift schedule ***/
-
-                            $tempProps = array("am_start", "am_end", "pm_start", "pm_end");
-                            foreach ($tempProps as $prop) {
-                                if(${$prop}){ $hasAttendance = true; break; }
-                            }
-                            
-                            $am_shift_only = (($shift_am_start !== null && $shift_am_end !== null) && ($shift_pm_start === null && $shift_pm_end === null));
-                            
                             $_attendance_am_start = $am_start ? date("Y-m-d H:i", strtotime("{$previousDate} {$am_start}")): null;
                             $_attendance_am_end = $am_end ? date("Y-m-d H:i", strtotime("{$previousDate} {$am_end}")): null;
                             $_attendance_pm_start = $pm_start ? date("Y-m-d H:i", strtotime("{$previousDate} {$pm_start}")): null;
@@ -1275,7 +1260,6 @@ class Timesheet_model extends CI_Model{
                             }
                             if(($_attendance_pm_start && $_attendance_pm_end) && (strtotime($_attendance_pm_end) < strtotime($_attendance_pm_start) || ($_hasNextDayAttendance && $_attendance_pm_end))){
                                 $_attendance_pm_end = date("Y-m-d H:i", strtotime("+1 day", strtotime($_attendance_pm_end)));
-                                $_hasNextDayAttendance = true;
                             }
 
                             $_tempAttrAttendance = array();
@@ -1291,15 +1275,12 @@ class Timesheet_model extends CI_Model{
 		                    $ot_end_dtr = date("Y-m-d H:i", strtotime($_tempAttrAttendance[sizeof($_tempAttrAttendance) - 1]));
                         }
                     }
+
                     $ot_start = strtotime($ot_start_dtr) < strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from)))
                         ? date('Y-m-d H:i', strtotime($_overtime->date_from)) : $ot_start_dtr;
 
                     $ot_end = strtotime($ot_end_dtr) > strtotime(date('Y-m-d H:i', strtotime($_overtime->date_to)))
                         ? date('Y-m-d H:i', strtotime($_overtime->date_to)): $ot_end_dtr;
-                    
-                    if($isNightShift && (strtotime($ot_end) === strtotime($ot_end_dtr))){
-                        $ot_end = date('Y-m-d H:i', strtotime($_overtime->date_to));
-                    }
 
                     if(strtotime($ot_start) >= strtotime($_previousNightDiff)
                         && strtotime($ot_start) < strtotime($_nextNightDiff)){
@@ -1320,9 +1301,12 @@ class Timesheet_model extends CI_Model{
                     if($otAfterShift){
                         $init_start_date = new DateTime($ot_start);
                         $start_ndiff_date = $init_start_date->format('Y-m-d');
+
+                        if($isNightShift){ $start_ndiff_date = $init_start_date->modify("-1 day")->format('Y-m-d'); }
+                        
                         $start_ndiff_time = $night_diff_cfg->start_time;
                         $start_ndiff_date_time = date('Y-m-d H:i', strtotime($start_ndiff_date . " " . $start_ndiff_time));
-    
+
                         $init_end_date = new DateTime($ot_end);
                         $end_ndiff_date = $init_end_date->format('Y-m-d');
                         $end_ndiff_time = $night_diff_cfg->end_time;
@@ -1330,11 +1314,15 @@ class Timesheet_model extends CI_Model{
     
                         $ndiff_start = $start_ndiff_date_time;
                         $ndiff_end = $end_ndiff_date_time;
-
                         if (strtotime(date('Y-m-d', strtotime($ot_start)))
                             === strtotime(date('Y-m-d', strtotime($ot_end)))) {
                             $init_end_date = new DateTime($ot_start);
                             $end_ndiff_date = $init_end_date->modify("+1 day")->format('Y-m-d');
+
+                            if($isNightShift){
+                                $end_ndiff_date = $init_end_date->modify("-1 day")->format('Y-m-d');
+                            }
+
                             $end_ndiff_time = $night_diff_cfg->end_time;
                             $end_ndiff_date_time = date("Y-m-d H:i", strtotime($end_ndiff_date . " " . $end_ndiff_time));
     
@@ -1361,13 +1349,14 @@ class Timesheet_model extends CI_Model{
                     $ot_seconds = (strtotime($ot_end) - strtotime($ot_start));
                     $ot_minutes = doubleval($ot_seconds) < 0 ? 0 : (doubleval($ot_seconds) / 60);
                     
+                    $tempNdiffStart = $isNightShift ? $_previousNightDiff: $_otNdiffStart;
                     /*** START OVERTIME W/ NIGHT DIFF COMPUTATION REG OT ***/
                     if($ot_night_diff > 0){
-                        $_ot_seconds = (strtotime($_otNdiffStart) - strtotime($ot_start));
+                        $_ot_seconds = (strtotime($tempNdiffStart) - strtotime($ot_start));
                         $ot_minutes = doubleval($_ot_seconds) < 0 ? 0 : (doubleval($_ot_seconds) / 60);
                     }
                     /*** END OVERTIME W/ NIGHT DIFF COMPUTATION REG OT ***/
-
+                    
                     $regularOvertimeTotal = $ot_minutes / 60;
                     $otTotal = $regularOvertimeTotal + $ot_night_diff;
 
@@ -1379,7 +1368,8 @@ class Timesheet_model extends CI_Model{
 
                     $ot_night_diff = doubleval($ot_night_diff);
                     $ot_hrs = number_format($regularOvertimeTotal, 2, '.', '');
-                    if($otNightDiffOnly->is_night_diff){
+
+                    if($otNightDiffOnly->is_night_diff && $isNightShift === false){
                         $ot_hrs = number_format($otNightDiffOnly->ot_regular, 2, '.', '');
                         $ot_night_diff = number_format($otNightDiffOnly->ot_night_diff, 2, '.', '');
                         $regularOTHours = $ot_hrs;
@@ -1388,6 +1378,7 @@ class Timesheet_model extends CI_Model{
 
                     if($ot_hrs >= 5){ $ot_hrs = $ot_hrs - 1; }
                     
+
                     if($regularOTHours > 0 && floatval($ot_hrs) > $regularOTHours && $otAfterShift){
                         $tempOTDiff = 0;
                         $tempOTDiff = floatval($ot_hrs) - $regularOTHours;
@@ -1450,7 +1441,7 @@ class Timesheet_model extends CI_Model{
 
                 $regularOTHours = round($regularOTHours, 2);
                 $nDiffOTHours = round($nDiffOTHours, 2);
-
+                
                 /*** if($ot_hrs > 0 && floatval($ot_hrs % 0.50) > 0){ $ot_hrs = floor($ot_hrs); }
                 if($ot_night_diff > 0 && floatval($ot_night_diff % 0.50) > 0){ $ot_night_diff = floor($ot_night_diff); } ***/
 
