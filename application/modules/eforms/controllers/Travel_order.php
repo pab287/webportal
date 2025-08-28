@@ -16,7 +16,9 @@ class Travel_order extends MY_Controller
 
     public function index()
     {
-        $this->core_layout->setPrivilegeName("eforms_travel_order");
+        $this->core_layout->setPrivilegeName("to_dashboard");
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
         $this->core_layout->addJs("global/js/amcharts4/core.js", true);
         $this->core_layout->addJs("global/js/amcharts4/charts.js", true);
         $this->core_layout->addJs("global/js/amcharts4/maps.js", true);
@@ -31,7 +33,8 @@ class Travel_order extends MY_Controller
     {
         $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', TRUE);
         $this->core_layout->addJs('js/querybuilder/query-builder.standalone.min.js', TRUE);
-        
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
         
@@ -261,15 +264,13 @@ class Travel_order extends MY_Controller
             ->set_output(json_encode($data));
     }
 
-    function get_daily(){
-        $data = $this->travel_order->getDaily();
-        $this->output
-            ->set_content_type('json')
-            ->set_output(json_encode($data));
+    function get_created(){
+        $data = $this->travel_order->getCreated();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
-    function get_weekly(){
-        $data = $this->travel_order->getWeekly();
+    function get_departing(){
+        $data = $this->travel_order->getDeparting();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
@@ -1360,7 +1361,7 @@ class Travel_order extends MY_Controller
     public function get_travel_analytics_for_dashboard()
     {
         $data = $this->travel_order->m_get_travel_analytics_for_dashboard();
-        echo json_encode($data);
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function confirm_travel_destination(){
@@ -1486,4 +1487,10 @@ class Travel_order extends MY_Controller
         ->set_content_type('json')
         ->set_output(json_encode($data));
     }
+
+    public function get_approved_chart(){
+        $data = $this->travel_order->getApprovedChartData();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }

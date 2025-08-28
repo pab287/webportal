@@ -29,8 +29,10 @@
             $start = (isset($post["start_date"]) && $post["start_date"]) ? $post["start_date"] : false;
             $end = (isset($post["end_date"]) && $post["end_date"]) ? $post["end_date"] : false;
             $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
-            $status = (isset($post['status']) && $post['status']) ? ucwords($post['status']) : null; //clicked in portal dashboard
-            
+            $status = (isset($post['status']) && $post['status']) ? ucwords($post['status']) : null; 
+            $accomplished = (isset($post['accomplished']) && $post['accomplished']) ? $post['accomplished'] : null; 
+            $overDue = (isset($post['overdue']) && $post['overdue']) ? $post['overdue'] : null; 
+            $onGoing = (isset($post['ongoing']) && $post['ongoing']) ? $post['ongoing'] : null; 
             $privilege = $this->core_layout->getCurrentActions();
 
             $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
@@ -40,8 +42,8 @@
                 $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
             }
             
-            $rowData = $this->get_all_item($privilege, $start, $end, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_by_company, $companyDescription);
-            $rowCount = $this->get_all_item_count($privilege, $start, $end, $query_builder, $search, $status, $view_by_company, $companyDescription);
+            $rowData = $this->get_all_item($privilege, $start, $end, $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_by_company, $companyDescription,$accomplished,$overDue,$onGoing);
+            $rowCount = $this->get_all_item_count($privilege, $start, $end, $query_builder, $search, $status, $view_by_company, $companyDescription,$accomplished,$overDue,$onGoing);
             // if (!$search) {
             //     $rowData = $this->get_all_post($privilege, $start, $end, $query_builder, $limit, $offset, $sortBy, $sortOrder, $status);
             //     $rowCount = $this->get_all_post_count($privilege, $start, $end, $query_builder, $status);
@@ -63,7 +65,7 @@
             return $resultset;
         }
 
-        public function get_all_item($privilege, $start, $end, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_by_company = false, $companyDescription = null) {
+        public function get_all_item($privilege, $start, $end, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_by_company = false, $companyDescription = null,$accomplished,$overDue,$onGoing) {
             $filterFields1 = array("a.id", "a.status", "a.reference_no", "a.company", "a.driver", "a.others_remarks","te.lastname","te.firstname","td.des_to", 'tod.destination', 'toe.firstname', 'toe.lastname');
             $date = date("Y-m-d", strtotime("-1 year", time()));
             $check = date("Y-m-d", strtotime("-1 year", time()));
@@ -92,20 +94,41 @@
                 $this->db->where("a.status !=", "Cancelled");
                 $this->db->where("DATE(a.created_dt) >=", $check);
                 $this->db->group_by("a.id");
-            } else {
+            }
+            else if ($status == 'Accomplished') {
+                $this->db->where('a.accomplished', 1);
+            }
+            else if ($status) {
+                $this->db->where('a.status', $status);
+                $this->db->where('a.accomplished', 0);
+            }
+            else {
                 $this->db->group_start();
                 $this->db->where("a.status !=", "Cancelled");
                 $this->db->where("DATE(a.created_dt) >=", $check);
                 $this->db->group_end();
             }
 
+            if($accomplished == '1'){
+                $this->db->where('a.status', 'Approved');
+                $this->db->where("td.accomplished", 1);
+            }
+            if($overDue == '1'){
+                $today = date('Y-m-d');
+                $this->db->where('a.status', 'Approved');
+                $this->db->where("td.accomplished", 0);
+                $this->db->where("td.date_to <", $today);
+            }
+            if($onGoing == '1'){
+                $today = date('Y-m-d');
+                $this->db->where('a.status', 'Approved');
+                $this->db->where("td.accomplished", 0);
+                $this->db->where("td.date_to >", $today);
+            }     
             if (isset($query_builder) && $query_builder) {
                 $this->db->where($query_builder);
             }
-        
-            if ($status) {
-                $this->db->where('a.status', $status);
-            }
+
 
             $view_own_request = (in_array("view_own_request", $privilege)) ? true : false;
             if($view_own_request && ($this->user_data['emp_id']!=1)){
@@ -205,6 +228,17 @@
         
                     $this->db->select("td.destination, td.date_from, td.date_to");
                     $this->db->from("gcceforms.travel_destination td");
+                    
+                    if($overDue == '1'){
+                        $today = date('Y-m-d');
+                        $this->db->where("td.accomplished", 0);
+                        $this->db->where("td.date_to <", $today);
+                    }
+                    if($onGoing == '1'){
+                        $today = date('Y-m-d');
+                        $this->db->where("td.accomplished", 0);
+                        $this->db->where("td.date_to >", $today);
+                    }  
                     if ($start && $end) {
                         $this->db->group_start();
                         $this->db->where("DATE(td.date_from) >=", $start);
@@ -214,10 +248,14 @@
                     } else {
                         $this->db->where("td.travel_order_id", $rowId);
                     }
+                    if($accomplished || $status == 'Accomplished'){
+                        $this->db->where("td.accomplished", 1);
+                    }
+                
                     $destination = $this->db->get();
                     $destinationDateTime = array();
                     $tempDates = array();
-        
+                    
                     if ($destination->num_rows() > 0) {
                         $des_num = 0;
                         foreach ($destination->result() as $key => $vx) {
@@ -244,9 +282,9 @@
                             array_push($tempDates, $vx->date_to);
                         }
                     } else {
-                        return array();
+                        // array_push($destinationDateTime, "");
+                        // array_push($tempDates, "");
                     }
-
                     $rs->personnels = $rowPersonnel;
                     $rs->driver = $rowDriver;
                     $rs->vehicle_plate = $rowVehiclePlate;
@@ -264,7 +302,7 @@
             return $arrData;
         }
 
-        public function get_all_item_count($privilege, $start, $end, $query_builder=null, $search = null, $status = null, $view_by_company = false, $companyDescription = null){
+        public function get_all_item_count($privilege, $start, $end, $query_builder=null, $search = null, $status = null, $view_by_company = false, $companyDescription = null, $accomplished,$overDue,$onGoing ){
             $role_id = $this->authenticate->getRoleId();
             $current_date = date("Y-m-d");
 
@@ -293,20 +331,44 @@
                 $this->db->where("a.status !=", "Cancelled");
                 $this->db->where("DATE(a.created_dt) >=", $check);
                 $this->db->group_by("a.id");
-            }else{
+            }
+            else if ($status == 'Accomplished') {
+                $this->db->where('a.accomplished', 1);
+            }
+            else if ($status) {
+                $this->db->where('a.status', $status);
+                $this->db->where('a.accomplished', 0);
+            }
+            else{
                 $this->db->group_start();
                 $this->db->where("a.status !=", "Cancelled");
                 $this->db->where("DATE(a.created_dt) >=", $check);
                 $this->db->group_end();
             }
 
+            if($accomplished == '1'){
+                $this->db->where('a.status', 'Approved');
+                $this->db->where("td.accomplished", 1);
+            }
+
+            if($overDue == '1'){
+                $today = date('Y-m-d');
+                $this->db->where('a.status', 'Approved');
+                $this->db->where("td.accomplished", 0);
+                $this->db->where("td.date_to <", $today);
+            }
+
+            if($onGoing == '1'){
+                $today = date('Y-m-d');
+                $this->db->where('a.status', 'Approved');
+                $this->db->where("td.accomplished", 0);
+                $this->db->where("td.date_to >", $today);
+            }  
+
             if(isset($query_builder) && $query_builder){
                 $this->db->where($query_builder);
             }
         
-            if($status){
-                $this->db->where('a.status', $status);
-            }
         
             $view_own_request = (in_array("view_own_request", $privilege)) ? true : false;
             if($view_own_request && ($this->user_data['emp_id']!=1)){
@@ -366,7 +428,8 @@
                 $this->db->where("a.status !=", "Cancelled");
                 $this->db->where("a.created_dt >=", $check);
                 $this->db->group_by("a.id");
-            }else{
+            }
+            else{
                 $this->db->where("a.status !=", "Cancelled");
                 $this->db->where("a.created_dt >=", $check);
             }
@@ -374,9 +437,7 @@
                 $this->db->where($query_builder);
             }
 
-            if($status){
-                $this->db->where('a.status', $status);
-            }
+
 
             $view_own_request = (in_array("view_own_request", $privilege)) ? true : false;
             if($view_own_request && ($this->user_data['emp_id']!=1)){
@@ -2794,26 +2855,19 @@
             return $query->row();
         }
 
-        function getDaily() {
+        function getCreated() {
             $post = $this->input->post();
             if ($post) {
                 $columns = array("a.status", "a.reference_no", "a.company");
-                $dir = "DESC";
-                $order = "a.id";
-                if (isset($post["order"]) && $post["order"]) {
-                    $dir = $post["order"][0]["dir"];
-                    $order = $columns[$post["order"][0]["column"]];
-                }
-
+                $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+                $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
                 $draw = (isset($post['draw']) && $post['draw']) ? $post['draw'] : 0;
                 $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
-                $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 0;
+                $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
                 $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
-
-
-                $posts = $this->get_all_post_daily($limit, $start, $order, $dir);
-
-
+                $date = (isset($post["date"]) && $post["date"]) ? $post["date"] : null;
+                $posts = $this->get_created_to($limit, $start, $sortBy,$sortOrder , $date);
+                $filtered = $this->get_created_to_count($date);
                 $data = array();
                 if (!empty($posts)) {
                     foreach ($posts as $pst) {
@@ -2838,29 +2892,46 @@
                     }
                 }
                 $json_data = array(
-
-                    "data" => $data
+                    "data" => $data,
+                    "recordsTotal" => $filtered,
+                    "recordsFiltered" => $filtered
                 );
 
                 return $json_data;
             } else {
                 return array(
-
-                    "data" => array()
+                    "data" => array(),
+                    "recordsTotal" => 0,
+                    "recordsFiltered" => 0,
                 );
             }
         }
 
-        private function get_all_post_daily($limit = 10, $start = 0, $order = "a.id", $dir = "DESC") {
-            $check = date('Y-m-d');
+        private function get_created_to($limit = 10, $start = 0, $sortBy, $sortOrder, $date) {
             $arrData = array();
             $this->db->select("a.id, a.reference_no, a.company, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt");
             $this->db->from("gcceforms.travel_order a");
-            $this->db->like('DATE(a.created_dt)', $check);
-            $this->db->limit($limit, $start);
-            $this->db->order_by($order, $dir);
+            if (!empty($date['start']) && !empty($date['end'])) {
+                $s = date('Y-m-d H:i:s', strtotime($date['start'] . ' 00:00:00'));
+                $e = date('Y-m-d H:i:s', strtotime($date['end'] . ' 23:59:59'));
+                $this->db->where("a.created_dt >=", $s);
+                $this->db->where("a.created_dt <=", $e);
+            }else{
+                $todayStart = date('Y-m-d 00:00:00');
+                $todayEnd = date('Y-m-d 23:59:59');
+                $this->db->where("a.created_dt >=", $todayStart);
+                $this->db->where("a.created_dt <=", $todayEnd);
+            }
+            if($limit != -1){
+                $this->db->limit($limit, $start);
+            }
+            if($sortOrder !== null){
+                $i = $sortOrder[0]['column'];
+                $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            }else{
+                $this->db->order_by("a.id", "DESC");
+            }
             $query = $this->db->get();
-
             if ($query->num_rows() > 0) {
                 foreach ($query->result() as $rs) {
                     $rowId = $rs->id;
@@ -2948,25 +3019,40 @@
 
         }
 
-        function getWeekly() {
+        private function get_created_to_count($date){
+            $arrData = array();
+            $this->db->select("a.id, a.reference_no, a.company, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt");
+            $this->db->from("gcceforms.travel_order a");
+            if (!empty($date['start']) && !empty($date['end'])) {
+                $s = date('Y-m-d H:i:s', strtotime($date['start'] . ' 00:00:00'));
+                $e = date('Y-m-d H:i:s', strtotime($date['end'] . ' 23:59:59'));
+                $this->db->where("a.created_dt >=", $s);
+                $this->db->where("a.created_dt <=", $e);
+            }else{
+                $todayStart = date('Y-m-d 00:00:00');
+                $todayEnd = date('Y-m-d 23:59:59');
+                $this->db->where("a.created_dt >=", $todayStart);
+                $this->db->where("a.created_dt <=", $todayEnd);
+            }
+            $query = $this->db->get();
+            return $query->num_rows();
+        }
+
+        function getDeparting() {
             $post = $this->input->post();
             if ($post) {
                 $columns = array("a.status", "a.reference_no", "a.company");
-                $dir = "DESC";
-                $order = "a.id";
-                if (isset($post["order"]) && $post["order"]) {
-                    $dir = $post["order"][0]["dir"];
-                    $order = $columns[$post["order"][0]["column"]];
-                }
+                $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+                $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
 
                 $draw = (isset($post['draw']) && $post['draw']) ? $post['draw'] : 0;
                 $start = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
-                $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 0;
+                $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
                 $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
+                $date = (isset($post["date"]) && $post["date"]) ? $post["date"] : null;
 
-
-                $posts = $this->get_all_post_weekly($limit, $start, $order, $dir);
-
+                $posts = $this->get_departing_to($limit, $start, $sortBy, $sortOrder, $date);
+                $filtered = $this->get_departing_to_count($date);
 
                 $data = array();
                 if (!empty($posts)) {
@@ -2992,29 +3078,51 @@
                     }
                 }
                 $json_data = array(
-
-                    "data" => $data
+                    "data" => $data,
+                    "recordsFiltered" => $filtered,
+                    "recordsTotal" => $filtered,
                 );
 
                 return $json_data;
             } else {
                 return array(
-
-                    "data" => array()
+                    "data" => array(),
+                    "recordsTotal" => 0,
+                    "recordsFiltered" => 0,
                 );
             }
         }
 
-        private function get_all_post_weekly($limit = 10, $start = 0, $order = "a.id", $dir = "DESC") {
+        private function get_departing_to($limit = 10, $start = 0, $sortBy, $sortOrder, $date) {
             $check = date('Y-m-d', strtotime("-7 days"));
             $arrData = array();
             $this->db->select("a.id, a.reference_no, a.company, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt");
             $this->db->from("gcceforms.travel_order a");
-            $this->db->where('DATE(a.created_dt) >= ', $check);
-            $this->db->limit($limit, $start);
-            $this->db->order_by($order, $dir);
-            $query = $this->db->get();
+            $this->db->join("gcceforms.travel_destination td", "td.travel_order_id = a.id", "left");
+            if (!empty($date['start']) && !empty($date['end'])) {
+                $startDate = date('Y-m-d H:i:s', strtotime($date['start'] . ' 00:00:00'));
+                $endDate = date('Y-m-d H:i:s', strtotime($date['end'] . ' 23:59:59'));
+            } else {
+                $startDate = date('Y-m-d 00:00:00');
+                $endDate = date('Y-m-d 23:59:59');
+            }
+            $this->db->where("(
+                (td.date_from <= '$endDate' AND td.date_to >= '$startDate')
+            )");
+            $this->db->where("a.status", "Approved");
+            $this->db->where("a.accomplished",0);
+            if($limit != -1){
+                $this->db->limit($limit, $start);
+            }
+            if($sortOrder !== null){
+                $i = $sortOrder[0]['column'];
+                $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+            }else{
+                $this->db->order_by("a.id", "DESC");
+            }
 
+            $this->db->group_by("a.id");
+            $query = $this->db->get();
             if ($query->num_rows() > 0) {
                 foreach ($query->result() as $rs) {
                     $rowId = $rs->id;
@@ -3059,6 +3167,7 @@
 
                     $this->db->select("td.destination, td.date_from, td.date_to");
                     $this->db->from("gcceforms.travel_destination td");
+                    $this->db->where("td.accomplished",0);
                     $this->db->where("td.travel_order_id", $rowId);
                     $destination = $this->db->get();
 
@@ -3102,13 +3211,45 @@
 
         }
 
-        function m_get_travel_analytics_for_dashboard() {
-            $this->db->select("a.status, COUNT(a.id) AS count, (select count(status) from gcceforms.travel_order where status='Approved' AND accomplishment_dt != '0000-00-00 00:00:00') as accom");
+        private function get_departing_to_count($date) {
+            $check = date('Y-m-d', strtotime("-7 days"));
+            $arrData = array();
+            $this->db->select("a.id, a.reference_no, a.company, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt");
             $this->db->from("gcceforms.travel_order a");
+            $this->db->join("gcceforms.travel_destination td", "td.travel_order_id = a.id", "left");
+            if (!empty($date['start']) && !empty($date['end'])) {
+                $startDate = date('Y-m-d H:i:s', strtotime($date['start'] . ' 00:00:00'));
+                $endDate = date('Y-m-d H:i:s', strtotime($date['end'] . ' 23:59:59'));
+            } else {
+                $startDate = date('Y-m-d 00:00:00');
+                $endDate = date('Y-m-d 23:59:59');
+            }
+            $this->db->where("(
+                (td.date_from <= '$endDate' AND td.date_to >= '$startDate')
+            )");
+            $this->db->where("a.status", "Approved");
+            $this->db->where("a.accomplished",0);
+            $query = $this->db->get();
+            return $query->num_rows();
+        
+        }
+
+        function m_get_travel_analytics_for_dashboard() {
+            $post = $this->input->post();
+            $this->db->reset_query();
+            $this->db->select("a.status, COUNT(a.id) AS count, (select count(status) from gcceforms.travel_order where status='Approved' AND Accomplished = 1) as accom");
+            $this->db->from("gcceforms.travel_order a");
+            if (!empty($post['date']['start']) && !empty($post['date']['end'])) {
+                $start = date('Y-m-d H:i:s', strtotime($post['date']['start'] . ' 00:00:00'));
+                $end = date('Y-m-d H:i:s', strtotime($post['date']['end'] . ' 23:59:59'));
+                $this->db->where("DATE(a.created_dt) >=", $start);
+                $this->db->where("DATE(a.created_dt) <=", $end);
+            }
+            $this->db->where("a.accomplished", 0);
             $this->db->group_by("a.status");
             $this->db->order_by("FIELD(a.status, 'Pending', 'Approved', 'Hr Noted', 'Disapproved', 'Cancelled')");
-            $query = $this->db->get();
 
+            $query = $this->db->get();
             if ($query->num_rows() > 0) {
                 $arrData = array();
                 foreach ($query->result() as $key => $rs) {
@@ -3152,24 +3293,33 @@
             return $arrData[0];
         }
 
-        function mostTraveledVehicle() {
-            $this->db->select("*,count(vehicle) c");
-            $this->db->from("gcceforms.travel_order");
-            $this->db->where("vehicle !=", "");
-            $this->db->group_by("vehicle");
+        public function mostTraveledVehicle() {
+            $this->db->select("b.name as vehicle_name,b.plateno, COUNT(a.id) as c");
+            $this->db->from("gccasset.vehicles b");
+            $this->db->join("gcceforms.travel_order a", "a.vehicle_id = b.id", "inner");
+            $this->db->where("a.vehicle_id !=", "");
+            $this->db->where("a.vehicle_id IS NOT NULL");
+            $this->db->group_by("b.id, b.name");
             $this->db->order_by("c", "DESC");
             $this->db->limit(1);
-            $query = $this->db->get();
-            if ($query->num_rows() > 0) {
-                $arrData = array();
-                foreach ($query->result() as $key => $rs) {
-                    $rs->sum = $this->sumDetails("travel_order", "vehicle");
-                    $arrData[] = $rs;
-                }
-                return $arrData[0];
-            } else {
-                return array();
-            }
+            
+            $result = $this->db->get()->row();
+            $this->db->reset_query();
+            $this->db->select("COUNT(*) as sum");
+            $this->db->from("gcceforms.travel_order");
+            $this->db->where("vehicle_id !=", "");
+            $this->db->where("status", "Approved");
+            $this->db->or_where("status", "Accomplised");
+            // $this->db->where("vehicle_id IS NOT NULL");
+            
+            $total = $this->db->get()->row();
+            
+            return [
+                'vehicle_name' => $result->vehicle_name ?? '',
+                'c' => $result->c ?? 0,
+                'vehicle' => $result->plateno ?? 'NO PLATENO',
+                'sum' => $total->sum ?? 0
+            ];
         }
 
         function mostTraveledDestination() {
@@ -5334,6 +5484,42 @@
             $arrData['personnel'] = $newPersonnel;
             $arrData['destination'] = $newDestination;
             return $arrData;
+        }
+
+        public function getApprovedChartData() {
+            $post = $this->input->post();
+            $start_date = isset($post['start']) ? $post['start'] : date('Y-m-d');
+            $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
+            $current_date = date('Y-m-d');
+            $escaped_current_date = $this->db->escape($current_date);
+            
+            $this->db->select("
+                COUNT(td.id) as total_approved,
+                COUNT(DISTINCT CASE WHEN td.accomplished = 1 THEN td.id END) as accomplished,
+                COUNT(DISTINCT CASE WHEN td.accomplished = 0 AND td.date_to < $escaped_current_date THEN td.id END) as Overdue,
+                COUNT(DISTINCT CASE WHEN td.accomplished = 0 AND td.date_to >= $escaped_current_date THEN td.id END) as Ongoing
+            ");
+        
+            $this->db->from('gcceforms.travel_destination td');
+            $this->db->join('gcceforms.travel_order to', 'to.id = td.travel_order_id', 'left');
+            $this->db->where('to.status', 'Approved');
+            
+            if ($start_date && $end_date) {
+                $this->db->where('to.approved_dt >=', $start_date);
+                $this->db->where('to.approved_dt <=', $end_date . ' 23:59:59');
+            }
+            
+            $single_query = $this->db->get();
+            $single_result = $single_query->row();
+            
+            $data['approved'] = array(
+                'Accomplished' => (int)$single_result->accomplished,
+                'Overdue' => (int)$single_result->Overdue,
+                'Ongoing' => (int)$single_result->Ongoing
+            );
+            $data['total'] = (int)$single_result->total_approved;
+            
+            return $data;
         }
 
     }

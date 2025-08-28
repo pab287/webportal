@@ -1,5 +1,8 @@
 var recordsTotal = 0;
 var param_status = "";
+let param_accomplished = "";
+let param_overdue = "";
+let param_ongoing = "";
 
 var getUrlParameter = function getUrlParameter(sParam) {
     var sPageURL = decodeURIComponent(window.location.search.substring(1)),
@@ -16,6 +19,15 @@ var getUrlParameter = function getUrlParameter(sParam) {
 
 if(typeof getUrlParameter('status') !== 'undefined'){
     param_status = getUrlParameter('status');
+}
+if(typeof getUrlParameter('accomplished') !== 'undefined'){
+    param_accomplished = getUrlParameter('accomplished');
+}
+if(typeof getUrlParameter('overdue') !== 'undefined'){
+    param_overdue = getUrlParameter('overdue');
+}
+if(typeof getUrlParameter('ongoing') !== 'undefined'){
+    param_ongoing = getUrlParameter('ongoing');
 }
 
 $(document).ready(function(){
@@ -189,6 +201,9 @@ var tblTravelOrder = $("#table-travel_order").DataTable({
             d.end_date = end_date,
             d.query_builder = query_builder,
             d.status = param_status
+            d.accomplished = param_accomplished
+            d.overdue = param_overdue
+            d.ongoing = param_ongoing
         },
         error: function (xhr, error, code){
             tblTravelOrder.ajax.reload(null, false);
@@ -659,7 +674,7 @@ $(document).ready(function () {
                 },
                 operators: ['equal', 'not_equal']
             },
-            { id: 'reference_no', label: 'Advice #', type: 'string' },
+            { id: 'reference_no', label: 'Travel order No.', type: 'string' },
             { id: 'personnel', field: 'CONCAT(toe.firstname, toe.lastname)',  label: 'Personnel', type: 'string', operators: ['contains', 'equal'] },
             { id: 'tod.destination', label: 'Destination', type: 'string', operators: ['contains', 'equal', 'not_equal'] },
             { id: 'c.company', label: 'File Under', type: 'string' },
@@ -700,6 +715,12 @@ $('#query-builder-btn').on('click', function () {
         if(result.sql.includes('Accomplished')){
             result.sql = result.sql.replace('a.status', 'a.accomplished');
             result.sql = result.sql.replace('Accomplished', '1');
+        }
+        if(result.sql.includes("'Approved'")) {
+            result.sql = result.sql.replace(
+                /a\.status\s*=\s*'Approved'/g, 
+                "(a.status = 'Approved' AND a.accomplished = 0)"
+            );
         }
 
         query_builder = result;
@@ -778,6 +799,10 @@ var isAccomplishModalOpen = false;
 
 function loadTravelOrder() {
     if(!isAccomplishModalOpen){
+        param_status = "";
+        param_accomplished = "";
+        param_overdue = "";
+        param_ongoing = "";
         tblTravelOrder.ajax.reload(null, false);
     }
 }
