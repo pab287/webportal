@@ -133,7 +133,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="" class="form-control-label required">Event Speakers</label>
-                                <template v-for="(speaker, index) in speakers" :key="index">
+                                <template v-for="(speaker, index) in edit_speakers.speakers" :key="index">
                                     <div class="bg-light border rounded p-3 mb-3 position-relative">
                                         <button type="button" class="close" :class="{ 'd-none': speakers.length === 1 }" @click="removeSpeaker(index)">
                                             <span aria-hidden="true">&times;</span>
@@ -154,7 +154,7 @@
                                         </div>
                                     </div>
                                 </template>
-                                <button type="button" class="btn btn-success mt-2 w-100 btnSave" @click="addNewSpeaker()">
+                                <button type="button" class="btn btn-success mt-2 w-100 btnSave" @click="addEditSpeaker()">
                                     <i class="la la-plus"></i> Add New Speaker
                                 </button>
                             </div>
@@ -179,6 +179,63 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
+            <form id='edit_event_form' onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
+                <div class="modal-body" id="event_calendar_body">
+                    <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="event_title" class="form-control-label required">Event Title</label>
+                                <input name="event_title" type="text" class="form-control m-input date" placeholder="event title" v-model="eventsData.event_title" data-validation="required">
+                            </div>
+                            <div class="form-group">
+                                <label for="event_description" class="form-control-label required">Event description</label>
+                                <input name="event_description" type="text" class="form-control m-input date" placeholder="event description" v-model="eventsData.description" data-validation="required">
+                            </div>
+                            <div class="form-group">
+                                <label for="date" class="form-control-label required">Event Schedule</label>
+                                <input name="date" type="text" id="event_date" class="form-control m-input date" placeholder="Select date" :value="formatSchedule(eventsData.event_from,eventsData.event_to)" data-validation="required" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="event_venue" class="form-control-label required">Event Venue</label>
+                                <input name="event_venue" type="text" class="form-control m-input date" placeholder="event venue" v-model="eventsData.event_venue" data-validation="required">
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="form-control-label required">Event Speakers</label>
+                                <template v-for="(item, index) in eventsData.speakers" :key="index">
+                                    <div class="bg-light border rounded p-3 mb-3 position-relative">
+                                        <button type="button" class="close" :class="{ 'd-none': eventsData.speakers.length === 1 }" @click="removeSpeaker(index)">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                        <input type="hidden" :name="`speakers[${index}][id]`" v-model="item.id">
+                                        <div class="row">
+                                            <div class="col-4 mb-2">
+                                                <label :for="`item.speakers[${index}][name]`" class="form-label required">Name</label>
+                                                <input :name="`item.speakers[${index}][name]`" type="text" class="form-control" placeholder="speaker name" v-model="item.speaker_name" data-validation="required">
+                                            </div>
+                                            <div class="col-4 mb-2">
+                                                <label :for="`item.speakers[${index}][position]`" class="form-label required">Title/Position</label>
+                                                <input :name="`item.speakers[${index}][position]`"  type="text" class="form-control" placeholder="speaker position"  v-model="item.position" data-validation="required">
+                                            </div>
+                                            <div class="col-4 mb-2">
+                                                <label :for="`item.speakers[${index}][company]`" class="form-label">Company/Organization</label>
+                                                <input :name="`item.speakers[${index}][company]`" type="text" class="form-control" placeholder="speaker company or organization" v-model="item.company">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <button type="button" class="btn btn-success mt-2 w-100 btnSave" @click="addNewSpeaker()">
+                                    <i class="la la-plus"></i> Add New Speaker
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btnSave"><i class="la la-check mr-2"></i>SAVE</button>
+                    <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

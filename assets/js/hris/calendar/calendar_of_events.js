@@ -1,8 +1,10 @@
 let holidayCalendar;
 let speakerIndex = 1;
+let selectedEventData = null;
 let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
     .DataTable({
         dom: 'frtlip',
+        rowId: 'id',
         serverSide: true,
         processing: true,
         searching: false,
@@ -76,7 +78,7 @@ $('#addNewEvent').on('shown.bs.modal', function () {
 
 let eventVue = new Vue({
     el: "#new_event_form",
-    data: {speakers: [{name: '', position: '', company: ''}]},
+    data: {speakers: [{name: '', position: '', company: ''}], edit_speakers:[]},
     mounted: function () {
     },
     methods:{
@@ -116,7 +118,7 @@ $.validate({
                     $(form).trigger("reset");
                     $("#addNewEvent").modal('hide');
                     toastr.success(res.message, 'Success', 5000);
-                    // holidayCalendar.ajax.reload();
+                    tblCalendarOfHolidays.ajax.reload();
                     // $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
                 }else{
                     toastr.error(res.message, 'Error', 5000);
@@ -128,13 +130,12 @@ $.validate({
     }
 });
 
-function itemDatatableActions($id, $status) {
+function itemDatatableActions(id, status) {
     let _actionButton = "";
 
     _actionButton += " <a style='text-decoration: none;' " +
         "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit' " +
-        "   data-toggle='modal' data-target='#edit-events-modal' " +   
-        "   data-ticket-id='" + $id + "' " +
+        "   onclick='onEditTicket(" + id + ")' " +   
         "   data-skin='dark' " +
         "   title='Edit Ticket'>" +
         "   <i class='la la-pencil-square'></i>" +
@@ -142,8 +143,7 @@ function itemDatatableActions($id, $status) {
 
     _actionButton += " <a style='text-decoration: none;' " +
         "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnView' " +
-        "   data-toggle='modal' data-target='#view-ticket-modal' " +
-        "   data-ticket-id='" + $id + "' " +
+        "   onclick='onViewTicket(" + id + ")' " +  
         "   data-skin='dark' " +
         "   title='View Ticket'>" +
         "   <i class='la la-eye'></i>" +
@@ -152,11 +152,92 @@ function itemDatatableActions($id, $status) {
     _actionButton += " <button " +
         "   type='button' " +
         "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnArchive' " +
-        "   onclick='deleteR(" + $id + ")' " +
+        "   onclick='deleteR(" + id + ")' " +   
         "   data-toggle='m-tooltip' data-placement='bottom' title='Archive Ticket' " +
         "   data-skin='dark'>" +
         "   <i class='la la-file-archive-o'></i>" +
         "</button>";
 
     return _actionButton;
+}
+
+let editEventVue = new Vue({
+    el: "#edit-events-modal",
+    data: {
+        eventsData:{
+
+        }
+    },
+    mounted: function () {
+    },
+    methods:{
+        addNewSpeaker() {
+            console.log('Adding new speaker');
+            this.eventsData.speakers.push({
+                name: '',
+                position: '',
+                company: ''
+            });
+        },
+        removeSpeaker(index) {
+            if (this.eventsData.speakers.length > 1) {
+                this.eventsData.speakers.splice(index, 1);
+            }
+        },
+        formatSchedule(dateFrom, dateTo) {
+            if (dateFrom && dateTo) {
+                let start = moment(dateFrom).format('MMM DD, YYYY');
+                let end = moment(dateTo).format('MMM DD, YYYY');
+                return `${start} - ${end}`;
+            }
+            return '';
+        }
+    },
+});
+
+function onEditTicket(id) {
+    let rowData = tblCalendarOfHolidays.row('#'+id).data();
+    selectedEventData = JSON.parse(JSON.stringify(rowData));
+    // selectedEventData.speakers = {...(rowData.speakers || [])};
+    editEventVue.eventsData = { ...rowData };
+    $("#edit-events-modal").modal("show");
+}
+
+$.validate({
+    form : '#edit_event_form',
+    lang: 'en',
+    onSuccess : function(form) {
+        let formData =  $(form).serialize();
+        let eventData = JSON.parse(JSON.stringify(editEventVue.eventsData));
+        if(!checkChanges(eventData, selectedEventData)){
+            toastr.info('No changes detected.', 'Info', 5000);
+            return false;
+        };
+        $.ajax({
+            url: baseUrl('hris/calendar/update_event'),
+            type: "POST",
+            dataType: "json",
+            data: formData,
+            beforeSend: function() {
+                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+            },
+            success: function(res) {
+                // if(res.success){
+                //     $(form).trigger("reset");
+                //     $("#addNewEvent").modal('hide');
+                //     toastr.success(res.message, 'Success', 5000);
+                //     tblCalendarOfHolidays.ajax.reload();
+                //     // $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                // }else{
+                //     toastr.error(res.message, 'Error', 5000);
+                //     // $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                // }
+            }
+        });
+    }
+});
+
+function checkChanges(newData, oldData) {
+    console.log('Comparing data:', newData, oldData);
+    return JSON.stringify(newData) !== JSON.stringify(oldData);
 }

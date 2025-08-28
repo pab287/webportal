@@ -143,4 +143,9 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
+        public function update_event(){
+            $data = $this->holiday->updateEvent();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
     }

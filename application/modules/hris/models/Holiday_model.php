@@ -534,6 +534,7 @@
             $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to");
             $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to,
                 GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
+                GROUP_CONCAT(b.id SEPARATOR '||') as speaker_id,
                 GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
                 GROUP_CONCAT(b.company SEPARATOR '||') as speaker_companies");
             $this->db->from($this->eventsCalendarTable . " a");
@@ -560,6 +561,7 @@
             $query = $this->db->get();
             $result = $query->result_array();
             foreach ($result as &$row) {
+                $id = explode("||", $row['speaker_id']);
                 $names = explode("||", $row['speaker_names']);
                 $positions = explode("||", $row['speaker_positions']);
                 $companies = explode("||", $row['speaker_companies']);
@@ -569,13 +571,14 @@
                     if ($name) {
                         $speakers[] = [
                             "speaker_name" => $name,
+                            "id"           => $id[$i] ?? null,
                             "position"     => $positions[$i] ?? null,
                             "company"      => $companies[$i] ?? null,
                         ];
                     }
                 }
                 $row['speakers'] = $speakers;
-                unset($row['speaker_names'], $row['speaker_positions'], $row['speaker_companies']);
+                unset($row['speaker_id'],$row['speaker_names'], $row['speaker_positions'], $row['speaker_companies']);
             }
             return $result;
 
@@ -599,6 +602,10 @@
             }
             $query = $this->db->get();
             return $query->num_rows();
+        }
+
+        public function updateEvent(){
+            $post = $this->input->post();
         }
 
     }
