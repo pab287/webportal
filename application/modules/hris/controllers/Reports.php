@@ -138,9 +138,12 @@ class Reports extends MY_Controller{
         $this->core_layout->addJs("js/vfs_fonts.js", true);
         $this->core_layout->addJs("js/buttons.html5.min.js", true);
         $this->core_layout->addJs("js/buttons.print.min.js", true);
-
+        
         $this->core_layout->addCss("css/buttons.dataTables.min.css", true);
         /* END DATATABLE PRINT CONFIG */
+
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
 
         $this->core_layout->addJs('js/hris/reports/expiring_probee_employees_script.js', true);
 

@@ -252,31 +252,115 @@ class Reports_model extends CI_Model{
     }
 
     public function getExpiringEmployees($export, $work_status){
+        $select = "
+            emp.id,
+            UCASE(IF(company.code IS NULL, emp.company_id ,company.code)) as company,
+            UCASE(IF(pos.name IS NULL, emp.position, TRIM(pos.name))) as position,
+            CAST(emp.idno AS DECIMAL(10)) as idno,
+            UCASE(
+                CONCAT(emp.firstname, ' ', emp.middlename, ' ', emp.lastname,
+                    CASE
+                        WHEN emp.suffix IS NOT NULL AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)
+                    ELSE '' END
+                )
+            ) as name,
+            emp.date_start as date_hired,
+            DATE_ADD(emp.date_start, INTERVAL 3 MONTH) as firstEvaluation,
+            DATE_ADD(emp.date_start, INTERVAL 5 MONTH) as finalEvaluation,
+            emp.date_end_prob as end_of_contract,
+            DATEDIFF(DATE_ADD(emp.date_start, INTERVAL 5 MONTH), CURDATE()) daysBeforeEvaluation,
+            emp.level,
+            emp.supervisor_meta
+        ";
+
+        $joinArr = array(
+            array('table' => 'gcchris.tblcompanies as company', 'condition' => 'emp.company_id = company.id', 'option' => 'LEFT'),
+            array('table' => 'gcchris.tbldepartments as dep', 'condition' => 'emp.department_id = dep.id', 'option' => 'LEFT'),
+            array('table' => 'gcchris.tblposition as pos', 'condition' => 'emp.position = pos.id', 'option' => 'LEFT')
+        );
+
+        $where = array(
+            "emp.work_status" => $work_status,
+            "emp.employee_status" => "Active",
+        );
+
+        $this->db->select($select);
+        $this->db->where($where);
+        foreach ($joinArr as $join) {
+            $this->db->join($join['table'], $join['condition'], $join['option']);
+        }
+
+        $query = $this->db->get($this->tblEmployees . " emp")->result_array();
+
+        $res = array();
+
+        foreach($query as $row) {
+
+            if ($row['id'] == 2) { // Charles Anthony M. Dumancas - Final Boss 😎
+                $head_name = "N/A";
+            } else {
+                // Kng indi sa supervisor_meta ko ma look up ky hambal nla sa employee data butungon ang head, indi sa department
+                $sup_val = $row['supervisor_meta'];
+
+                // check kng nka serialize or plain ID
+                if (is_string($sup_val) && @unserialize($sup_val) !== false || $sup_val === 'a:0:{}') {
+
+                    // Serialized -> unserialize it
+                    $supervisory_data = unserialize($sup_val);
+
+                    if (is_array($supervisory_data)) {
+                        $priority_head = $supervisory_data['supervisory'] ?? $supervisory_data['managerial'] ?? null;
+                        $head_id = (int)$priority_head;
+
+                        $head_name = $this->get_head_by_id($head_id);
+                    }
+                } else {
+                    // Plain ID
+                    $head_id = (int)$sup_val;
+
+                    $head_name = $this->get_head_by_id($head_id);
+                }
+            }
+
+            $row['head'] = $head_name;
+            $row['supervisor_meta'] = @unserialize($row['supervisor_meta']);
+            $res[] = $row;
+        }
+
+        $resultSet['data'] = $res;
+        return $resultSet;
+    }
+
+    public function getExpiringEmployees_old($export, $work_status){
         $tableConfig = $this->input->post();
         $tableConfigStd = $this->utilities->parseFormDataToObject($tableConfig);
         $pageOptions = $this->utilities->getDatatablesConfigForPagination($tableConfigStd);
         $search = $pageOptions->search;
 
-        $select = "emp.id, emp.date_start date_hired,";
-        $select .= "DATE_ADD(emp.date_start, INTERVAL 3 MONTH) firstEvaluation,";
-        // $select .= "DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) secondEvaluation,";
-        $select .= "DATE_ADD(emp.date_start, INTERVAL 5 MONTH) finalEvaluation,";
-        $select .= "emp.date_end_prob end_of_contract,";
-        $select .= "DATEDIFF(emp.date_end_prob, CURDATE()) daysBeforeEvaluation,";
-        $select .= "CAST(emp.idno AS DECIMAL(10)) AS idno,";
-        $select .= "UCASE(CONCAT(emp.firstname, ' ', emp.middlename, ' ', emp.lastname, ";
-        $select .= "    CASE";
-        $select .= "        WHEN emp.suffix IS NOT NULL AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)";
-        $select .= "    ELSE '' END)) `name`,";
-        $select .= "UCASE(IF(company.code IS NULL, emp.company_id ,company.code)) company,";
-        $select .= "UCASE(IF(dep.description IS NULL, emp.department_id, dep.description)) department,";
-        // $select .= "UCASE(IF(pos.name IS NULL, emp.position, pos.name)) `position`";
-        $select .= "UCASE(IF(pos.name IS NULL, emp.position, TRIM(pos.name))) `position`";
+        $select = "
+            UCASE(IF(company.code IS NULL, emp.company_id ,company.code)) as company,
+            UCASE(IF(pos.name IS NULL, emp.position, TRIM(pos.name))) as position,
+            CAST(emp.idno AS DECIMAL(10)) as idno,
+            UCASE(
+                CONCAT(emp.firstname, ' ', emp.middlename, ' ', emp.lastname,
+                    CASE
+                        WHEN emp.suffix IS NOT NULL AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)
+                    ELSE '' END
+                )
+            ) as name,
+            emp.date_start as date_hired,
+            DATE_ADD(emp.date_start, INTERVAL 3 MONTH) as firstEvaluation,
+            DATE_ADD(emp.date_start, INTERVAL 5 MONTH) as finalEvaluation,
+            emp.date_end_prob as end_of_contract,
+            DATEDIFF(DATE_ADD(emp.date_start, INTERVAL 5 MONTH), CURDATE()) daysBeforeEvaluation,
+            emp.level,
+            emp.supervisor_meta
+        ";
 
         $joinArr = array(
-            array('table' => 'gcchris.tblcompanies company', 'condition' => 'emp.company_id = company.id', 'option' => 'LEFT'),
-            array('table' => 'gcchris.tbldepartments dep', 'condition' => 'emp.department_id = dep.id', 'option' => 'LEFT'),
-            array('table' => 'gcchris.tblposition pos', 'condition' => 'emp.position = pos.id', 'option' => 'LEFT')
+            array('table' => 'gcchris.tblcompanies as company', 'condition' => 'emp.company_id = company.id', 'option' => 'LEFT'),
+            array('table' => 'gcchris.tbldepartments as dep', 'condition' => 'emp.department_id = dep.id', 'option' => 'LEFT'),
+            array('table' => 'gcchris.tblposition as pos', 'condition' => 'emp.position = pos.id', 'option' => 'LEFT')
         );
 
         $where = array(
@@ -308,7 +392,46 @@ class Reports_model extends CI_Model{
         $this->db->like($searchFields["field"], $searchFields["key"], $searchFields["option"]);
 
         $this->db->order_by($pageOptions->order_column, $pageOptions->order_direction);
-        $resultSet['data'] = $this->db->get($this->tblEmployees . " emp")->result();
+
+        $query = $this->db->get($this->tblEmployees . " emp")->result_array();
+
+        $res = array();
+
+        foreach($query as $row) {
+
+            if ($row['level'] == 'EXECUTIVE') {
+                // Automatic they're own boss of themselves 😎
+                $head_name = $row['name'];
+            } else {
+                // Kng indi sa supervisor_meta ko ma look up ky hambal nla sa employee data butungon ang head, indi sa department
+                $sup_val = $row['supervisor_meta'];
+
+                // check kng nka serialize or plain ID
+                if (is_string($sup_val) && @unserialize($sup_val) !== false || $sup_val === 'a:0:{}') {
+
+                    // Serialized -> unserialize it
+                    $supervisory_data = unserialize($sup_val);
+
+                    if (is_array($supervisory_data)) {
+                        $priority_head = $supervisory_data['supervisory'] ?? $supervisory_data['managerial'] ?? null;
+                        $head_id = (int)$priority_head;
+
+                        $head_name = $this->get_head_by_id($head_id);
+                    }
+                } else {
+                    // Plain ID
+                    $head_id = (int)$sup_val;
+
+                    $head_name = $this->get_head_by_id($head_id);
+                }
+            }
+
+            $row['head'] = $head_name;
+            $row['supervisor_meta'] = @unserialize($row['supervisor_meta']);
+            $res[] = $row;
+        }
+
+        $resultSet['data'] = $res;
         $resultSet['recordsTotal'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $searchFields, $joinArr);
         $resultSet['recordsFiltered'] = $this->utilities->getTableCount($this->tblEmployees . " emp", $where, $searchFields, $joinArr);
         if (intval($export) == 1){
@@ -320,6 +443,38 @@ class Reports_model extends CI_Model{
             $this->core_layout->setEventLog("User searched for: "."'<strong>".$search."</strong>'"." in <strong>Expiring ".$work_status." Employees</strong>. System found: <strong>".$resultSet['recordsTotal']." results.</strong>", "search", 'success', "gcchris", 'user');
         }
         return $resultSet;
+    }
+
+    public function get_head_by_id($head_id) {
+        if ($head_id != 0) {
+            $this->db->select("
+                UCASE(
+                    CONCAT(
+                        firstname, ' ',
+                        CASE 
+                            WHEN middlename IS NOT NULL AND middlename != '' 
+                                THEN CONCAT(LEFT(middlename, 1), '. ')
+                            ELSE ''
+                        END,
+                        lastname,
+                        CASE
+                            WHEN suffix IS NOT NULL AND suffix != 'N/A' AND suffix != 'NONE' 
+                                THEN CONCAT(' ', suffix)
+                            ELSE ''
+                        END
+                    )
+                ) AS name
+            ");
+            $this->db->from($this->tblEmployees);
+            $this->db->where('id', $head_id);
+            $query = $this->db->get()->row_array();
+
+            $res = is_array($query) && !empty($query) ? $query['name'] : null;
+        } else {
+            $res = null;
+        }
+
+        return $res;
     }
 
     public function getCompanyCollection(){
