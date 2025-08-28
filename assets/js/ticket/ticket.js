@@ -116,7 +116,7 @@ let tbl = $("#table-tickets").DataTable({
                 const formattedDate = moment(row.requested_date).format('MMM D, YYYY hh:mm A');
         
                 const status = row.status?.toLowerCase();
-                if (status === 'completed' || status === 'resolved') {
+                if (status === 'completed' || status === 'resolved' || 'cancelled') {
                     return formattedDate;
                 }
         
