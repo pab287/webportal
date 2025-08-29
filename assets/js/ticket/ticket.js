@@ -417,6 +417,16 @@ $(document).ready(function () {
                     data: [{id: '', text: ''},{id: 'low', text: 'Low'}, {id: 'medium', text: 'Medium'}, {id: 'high', text: 'High'}],
                  }
                 },
+                { id: 'responsibility', label: 'Responsible', type: 'string',
+                    input: 'select',
+                    plugin: 'select2',
+                    operators: ['equal', 'not_equal'],
+                    plugin_config: {
+                        placeholder: 'Select. .',
+                        width: '250px',
+                        data: _tempContentData.responsibility,
+                     }
+                },
             { id: 'message', label: 'Issue', type: 'string', operators: ['contains'] },
         ]
     });
