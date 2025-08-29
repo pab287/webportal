@@ -1264,24 +1264,27 @@
             
             if(empty($logs)){
                 $proceed = false;
-                $status = false;
                 $msg = "Missing data in logs parameter";
             }
 
             if(empty($token)){
                 $proceed = false;
-                $status = false;
                 $msg = "No token found.";
             }
             if(empty($emp_id)){
                 $proceed = false;
-                $status = false;
-                $msg = "No employee ID found.";
+                $msg = "No employee ID parameter found.";
+            }
+
+            $userExist = $this->userExistsApp($emp_id);
+            if(!$userExist){
+                $proceed = false;
+                $msg = "User not found.";
             }
 
             if (!$validate_token) {
                 $this->saveLogs("error", "sign out", 0, "[Mobile] User sign out failed - missing emp_id");
-                $msg = "Invalid token to sign out.";
+                $msg = "Invalid token.";
                 $proceed = false;
             }
 
