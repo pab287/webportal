@@ -27,7 +27,29 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
             { data: 'id', name: 'id', visible: false },
             { data: 'event_title' },
             { data: 'description' },
-            { data: 'event_venue', name: 'event_venue',},
+            { 
+                data: null, 
+                name: 'event_venue',
+                render: function(data, type, row) {
+                    let venue = row.event_venue ? row.event_venue : "No Venue";
+                    let schedule = "";
+                    if (row.event_from && row.event_to) {
+                        let fromDate = moment(row.event_from).format("MMM DD, YYYY");
+                        let toDate   = moment(row.event_to).format("MMM DD, YYYY");
+            
+                        if (fromDate === toDate) {
+                            schedule = fromDate; // same day
+                        } else {
+                            schedule = fromDate + " - " + toDate;
+                        }
+                    }
+            
+                    return `<div>
+                                <strong>${venue}</strong><br>
+                                <small>${schedule}</small>
+                            </div>`;
+                }
+            },
             { 
                 data: null, 
                 render: function(data, type, row) {
@@ -54,8 +76,31 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
         ]
     });
 
+    $('#search-holidays')
+    .donetyping(function () {
+        tblCalendarOfHolidays.ajax.reload();
+    });
+
+    $('#filter-year')
+        .on('change', function () {
+            tblCalendarOfHolidays.ajax.reload();
+        });
+
+    $('#filter-year')
+        .datepicker({
+            todayHighlight: true,
+            orientation: "bottom left",
+            templates: {
+                leftArrow: '<i class="la la-angle-left"></i>',
+                rightArrow: '<i class="la la-angle-right"></i>'
+            },
+            format: "yyyy",
+            viewMode: "years",
+            minViewMode: "years",
+            autoclose: true
+        });
+
 $('#addNewEvent').on('shown.bs.modal', function () {
-    console.log('modal opened');
     if ($('#event_date').data('daterangepicker')) {
         $('#event_date').data('daterangepicker').remove();
     }
@@ -64,6 +109,7 @@ $('#addNewEvent').on('shown.bs.modal', function () {
         autoUpdateInput: false,
         locale: {
             format: 'MMM DD, YYYY',
+            cancelLabel: 'Clear'
         }
     });
 
@@ -83,7 +129,6 @@ let eventVue = new Vue({
     },
     methods:{
         addNewSpeaker() {
-            console.log('Adding new speaker');
             this.speakers.push({
                 name: '',
                 position: '',
@@ -91,7 +136,6 @@ let eventVue = new Vue({
             });
         },
         removeSpeaker(index) {
-            console.log('Removing speaker at index:', index);
             if (this.speakers.length > 1) {
                 this.speakers.splice(index, 1);
             }
@@ -103,8 +147,6 @@ $.validate({
     form : '#new_event_form',
     lang: 'en',
     onSuccess : function(form) {
-        console.log('Validation successful');
-
         $.ajax({
             url: baseUrl('hris/calendar/save_event'),
             type: "POST",
@@ -132,31 +174,31 @@ $.validate({
 
 function itemDatatableActions(id, status) {
     let _actionButton = "";
-
     _actionButton += " <a style='text-decoration: none;' " +
         "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit' " +
-        "   onclick='onEditTicket(" + id + ")' " +   
+        "   onclick='onEditEvent(" + id + ")' " +  
+        "   data-toggle='m-tooltip' data-placement='bottom' title='View Ticket' " +
         "   data-skin='dark' " +
-        "   title='Edit Ticket'>" +
-        "   <i class='la la-pencil-square'></i>" +
-        "</a>";
-
-    _actionButton += " <a style='text-decoration: none;' " +
-        "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnView' " +
-        "   onclick='onViewTicket(" + id + ")' " +  
-        "   data-skin='dark' " +
-        "   title='View Ticket'>" +
+        "   title='View Event'>" +
         "   <i class='la la-eye'></i>" +
         "</a>";
 
     _actionButton += " <button " +
         "   type='button' " +
         "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnArchive' " +
-        "   onclick='deleteR(" + id + ")' " +   
+        "   onclick='deleteArchive(" + id + ")' " +   
         "   data-toggle='m-tooltip' data-placement='bottom' title='Archive Ticket' " +
         "   data-skin='dark'>" +
         "   <i class='la la-file-archive-o'></i>" +
         "</button>";
+
+        _actionButton += " <a " +
+        "   href='" + baseUrl('hris/calendar/add_participants/') + id + "' " +
+        "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill' " +
+        "   data-toggle='m-tooltip' data-placement='bottom' title='Add Participants' " +
+        "   data-skin='dark'>" +
+        "   <i class='la la-user-plus'></i>" +
+        "</a>";
 
     return _actionButton;
 }
@@ -166,13 +208,13 @@ let editEventVue = new Vue({
     data: {
         eventsData:{
 
-        }
+        },
+        disabled:true,
     },
     mounted: function () {
     },
     methods:{
         addNewSpeaker() {
-            console.log('Adding new speaker');
             this.eventsData.speakers.push({
                 name: '',
                 position: '',
@@ -195,17 +237,19 @@ let editEventVue = new Vue({
     },
 });
 
-function onEditTicket(id) {
+function onEditEvent(id) {
     let rowData = tblCalendarOfHolidays.row('#'+id).data();
     selectedEventData = JSON.parse(JSON.stringify(rowData));
-    // selectedEventData.speakers = {...(rowData.speakers || [])};
-    editEventVue.eventsData = { ...rowData };
+    selectedEventData.date = moment(rowData.event_from).format("MMM DD, YYYY") 
+    + " - " + moment(rowData.event_to).format("MMM DD, YYYY");
+    editEventVue.eventsData = JSON.parse(JSON.stringify(rowData));
     $("#edit-events-modal").modal("show");
 }
 
 $.validate({
     form : '#edit_event_form',
     lang: 'en',
+    scrollToTopOnError: false,
     onSuccess : function(form) {
         let formData =  $(form).serialize();
         let eventData = JSON.parse(JSON.stringify(editEventVue.eventsData));
@@ -222,22 +266,88 @@ $.validate({
                 $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
             },
             success: function(res) {
-                // if(res.success){
-                //     $(form).trigger("reset");
-                //     $("#addNewEvent").modal('hide');
-                //     toastr.success(res.message, 'Success', 5000);
-                //     tblCalendarOfHolidays.ajax.reload();
-                //     // $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                // }else{
-                //     toastr.error(res.message, 'Error', 5000);
-                //     // $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                // }
+                if(res.status){
+                    $(form).trigger("reset");
+                    $("#edit-events-modal").modal('hide');
+                    toastr.success(res.message, 'Success', 5000);
+                    tblCalendarOfHolidays.ajax.reload(null, false);
+                    // $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                }else{
+                    toastr.error(res.message, 'Error', 5000);
+                    // $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                }
+                $('#edit_event_form')[0].reset();
             }
         });
+        return false;
     }
 });
 
 function checkChanges(newData, oldData) {
-    console.log('Comparing data:', newData, oldData);
     return JSON.stringify(newData) !== JSON.stringify(oldData);
+}
+
+$('#edit-events-modal').on('shown.bs.modal', function () {
+    if ($('#edit_event_date').data('daterangepicker')) {
+        $('#edit_event_date').data('daterangepicker').remove();
+    }
+    $('#edit_event_date').daterangepicker({
+        showDropdowns: true,
+        autoUpdateInput: false,
+        locale: {
+            format: 'MMM DD, YYYY',
+            cancelLabel: 'Clear'
+        }
+    });
+
+    $('#edit_event_date').on('apply.daterangepicker', function(ev, picker) {
+        $(this).val(picker.startDate.format('MMM DD, YYYY') + ' - ' + picker.endDate.format('MMM DD, YYYY'));
+        editEventVue.eventsData.date = $(this).val();
+    });
+
+    $('#edit_event_date').on('cancel.daterangepicker', function(ev, picker) {
+        $(this).val('');
+    });
+});
+
+$('#edit-events-modal').on('hidden.bs.modal', function () {
+    $('#edit_event_form')[0].reset();
+    editEventVue.eventsData = {};
+    editEventVue.disabled = true;
+});
+
+function deleteArchive(id){
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This event will be archived and cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, archive it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl('hris/calendar/archive_event'),
+                type: "POST",
+                dataType: "json",
+                data: {
+                    csrf_token : _csrf_hash,
+                    id:id
+                },
+                beforeSend: function() {
+                    $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                },
+                success: function(res) {
+                    if(res.status){
+                        Swal.fire('Archived!', res.message, 'success');
+                        tblCalendarOfHolidays.ajax.reload(null, false);
+                    }else{
+                        Swal.fire('Error!', res.message, 'error');
+                    }
+                }
+            });
+        }
+    });
 }

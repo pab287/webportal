@@ -516,13 +516,14 @@
             $post = $this->input->post();
             $order_val = array(array("column"=>"0", "dir"=>"desc"));
             $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+            $year = (isset($post["search"]['filter_year']) && $post["search"]['filter_year'])? $post["search"]['filter_year']: false;
             $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
             $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
             $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
             $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
             $rowData = array();
-            $rowData = $this->getEventsData($limit, $offset, $sortBy, $sortOrder, $search,);
-            $rowCount = $this->getEventsDataCount($search);
+            $rowData = $this->getEventsData($limit, $offset, $sortBy, $sortOrder, $search,$year);
+            $rowCount = $this->getEventsDataCount($search,$year);
           
             $data["recordsTotal"] = $rowCount;
             $data["recordsFiltered"] = $rowCount;
@@ -530,16 +531,23 @@
             return $data;
         }
 
-        private function getEventsData($limit, $offset, $sortBy, $sortOrder, $search){
-            $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to");
+        private function getEventsData($limit, $offset, $sortBy, $sortOrder, $search , $year){
+            $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to","b.speaker_name","b.position","b.company");
             $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to,
                 GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
                 GROUP_CONCAT(b.id SEPARATOR '||') as speaker_id,
                 GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
-                GROUP_CONCAT(b.company SEPARATOR '||') as speaker_companies");
+                GROUP_CONCAT(b.company SEPARATOR '||') as speaker_companies,
+                CONCAT(
+                    DATE_FORMAT(a.event_from, '%b %d, %Y'),
+                    ' - ',
+                    DATE_FORMAT(a.event_to, '%b %d, %Y')
+                ) as date
+                ");
             $this->db->from($this->eventsCalendarTable . " a");
             $this->db->join($this->eventsSpeakersTable . " b", "a.id = b.event_id", "left");
-     
+            $this->db->where("YEAR(a.event_to)", $year);
+            $this->db->where("a.is_archive", 0);
             if ($search) {
                 $this->db->group_start();
                 foreach ($filterFields as $key => $field) {
@@ -584,11 +592,23 @@
 
         }
 
-        private function getEventsDataCount($search){
-            $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to");
+        private function getEventsDataCount($search,$year){
+            $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to","b.speaker_name","b.position","b.company");
+            $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to,
+            GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
+            GROUP_CONCAT(b.id SEPARATOR '||') as speaker_id,
+            GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
+            GROUP_CONCAT(b.company SEPARATOR '||') as speaker_companies,
+            CONCAT(
+                DATE_FORMAT(a.event_from, '%b %d, %Y'),
+                ' - ',
+                DATE_FORMAT(a.event_to, '%b %d, %Y')
+            ) as date
+            ");
             $this->db->from($this->eventsCalendarTable . " a");
             $this->db->join($this->eventsSpeakersTable . " b", "a.id = b.event_id", "left");
-            $this->db->group_by("a.id");
+            $this->db->where("YEAR(a.event_to)", $year);
+            $this->db->where("a.is_archive", 0);
             if ($search) {
                 $this->db->group_start();
                 foreach ($filterFields as $key => $field) {
@@ -600,12 +620,81 @@
                 }
                 $this->db->group_end();
             }
+            $this->db->group_by("a.id");
             $query = $this->db->get();
             return $query->num_rows();
         }
 
         public function updateEvent(){
             $post = $this->input->post();
+            $eventId = $post['id'];
+            $date_range = explode(" - ", $post['date']);
+            $event_from = isset($date_range[0]) ? date("Y-m-d", strtotime($date_range[0])) : null;
+            $event_to   = isset($date_range[1]) ? date("Y-m-d", strtotime($date_range[1])) : null;
+        
+            $eventData = [
+                "event_title" => $post['event_title'],
+                "description" => $post['event_description'],
+                "event_venue" => $post['event_venue'],
+                "event_from"  => $event_from,
+                "event_to"    => $event_to,
+            ];
+            $this->db->trans_start();
+            $this->db->where("id", $eventId)->update($this->eventsCalendarTable, $eventData);
+            $this->db->where("event_id", $eventId)->delete($this->eventsSpeakersTable);
+        
+            if (!empty($post['speakers'])) {
+                $speakerBatch = [];
+                foreach ($post['speakers'] as $spk) {
+                    $speakerBatch[] = [
+                        "event_id"     => $eventId,
+                        "speaker_name" => $spk['name'],
+                        "position"     => $spk['position'],
+                        "company"      => $spk['company']
+                    ];
+                }
+                $this->db->insert_batch($this->eventsSpeakersTable, $speakerBatch);
+            }
+        
+            $this->db->trans_complete();
+            if ($this->db->trans_status() === FALSE) {
+                $this->core_layout->setEventLog("Failed to update company event.","update", "error", "gcchris", "system");
+                return [
+                    "status"  => "error",
+                    "message" => "Failed to update event. Please try again."
+                ];
+            } else {
+                $this->core_layout->setEventLog("Updated company event","update", "success", "gcchris", "user");
+                return [
+                    "status"  => "success",
+                    "message" => "Event updated successfully."
+                ];
+            }
         }
 
+        public function archiveEvent(){
+            $post = $this->input->post();
+            $id = $post['id'];
+            $this->db->trans_start();
+            $this->db->where("id", $id);
+            $this->db->update($this->eventsCalendarTable, ["is_archive" => 1]);
+
+            $this->db->where("event_id", $id);
+            $this->db->update($this->eventsSpeakersTable, ["is_archive" => 1]);
+            $this->db->trans_complete();
+        
+            if ($this->db->trans_status() === FALSE) {
+                $this->core_layout->setEventLog("Failed to archive company event ID: {$id}.","archive","error","gcchris","system");
+                return [
+                    "status"  => "error",
+                    "message" => "Failed to archive event. Please try again."
+                ];
+            } else {
+                $this->core_layout->setEventLog("Archived company event ID: {$id}.","archive","success","gcchris","user");
+                return [
+                    "status"  => "success",
+                    "message" => "Event archived successfully."
+                ];
+            }
+        }
     }
