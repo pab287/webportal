@@ -38,18 +38,19 @@
 						</div>
 					</div>
 					<div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
-						<table class="table table-striped table-bordered" id="app_users_tbl" width="100%">
+						<table class="table table-striped table-bordered" id="app_users_tbl" style="width: 100%">
 							<thead>
 								<tr>
 									<th>User</th>
 									<th>Device Name</th>
 									<th>Device ID</th>
 									<th>Status</th>
-									<th>Actions</th>
+									<th>Allowed</th>
+									<th>Last Updated At</th>
+									<th>Action</th>
 								</tr>
 							</thead>
-							<tbody>	
-							</tbody>
+							<tbody></tbody>
 						</table>
 					</div>
 				</div>
@@ -106,8 +107,8 @@
 	</div>
 </div>
 
-<div id="edit_app_user_modal" class="modal" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
+<div id="edit_app_user_modal" class="modal" tabindex="-1">
+  <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Modal title</h5>
@@ -142,38 +143,44 @@
 </div>
 
 <script type="text/javascript">
-
 	var search_val = "";
-	var query_builder = "";
 	var appuser_tbl = $("#app_users_tbl").DataTable({
 		dom: '<"toolbar">rtlip',
 		serverSide: true,
 		processing: true,
 		aaSorting: [],
 		ajax: {
-				url: baseUrl("gcctime/App_users/getUsersLogin"),
-				type: "post",
-				global: false,
-				dataType: "json",
-				data: function(d){
-				d.csrf_token = _csrf_hash,
-				d.search['value'] = search_val,
-				d.query_builder = query_builder
+			url: baseUrl("gcctime/app_users/getUsersLogin"),
+			type: "post",
+			global: false,
+			dataType: "json",
+			data: function(d){
+				d.csrf_token = _csrf_hash;
+				d.search['value'] = search_val;
+				return d;
 			}
 		},
 		searching: true,
 		columns: [
-			{ data: "employee_name", width: "20%", render: function (data) {
+			{ data: "employee_name", width: "29%", render: function (data) {
 					return "<strong style='color: #525252;'>"+data+"</strong>";
 				}
 			},
 			{ data: "device_name", width: "20%"},
-			{ data: "device_id", width: "25%"},
-			{ data: "status", width: "8%", className: "text-center", render: function (data) {
+			{ data: "device_id", width: "15%"},
+			{ data: "status", width: "10%", className: "text-center", orderable: false, render: function (data) {
 					return renderStatus(data);
 				}
 			},
-			{ data: null, width: "5%", className: "text-center"},
+			{ data: "allow_app_user", width: "6%", className: "text-center", orderable: false, render: function (data) {
+				const tempClass = data == "1" ? "m-badge--success" : "m-badge--danger";
+				const tempLabel = data == "1" ? "YES" : "NO";
+				return `<span class='m-badge m-badge--wide m--font-light m--font-boldest ${tempClass}'>${tempLabel}</span>`;
+			}},
+			{ data: "last_logged_in", width: "15%", orderable: false, render: function (data) {
+				return data ? moment(data).format("LLL") : "---";
+			}},
+			{ data: null, width: "5%", className: "text-center", orderable: false },
 		],
 		columnDefs: [
 			{
@@ -194,11 +201,14 @@
 		if(row){
 		var tempHtml = "---";
 		var tempActions = [];
-		var currentActions = ["sign_out", "delete"];
+		var currentActions = ["sign_out", "update", "delete"];
 		$.each(currentActions, function(index, value){
 			tempActions.push(value);
 		});
 
+		const tempClass = parseInt(row.allow_app_user) == 1 ? "la-toggle-off" : "la-toggle-on";
+		const tempLabel = parseInt(row.allow_app_user) == 1 ? "Disallow User" : "Allow User";
+		const rawData = JSON.stringify(row);
 		tempHtml = `<div class="dropdown">
 				<a href="#" class="btn m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" data-toggle="dropdown"> 
 					<i class="la la-ellipsis-h"></i>
@@ -206,6 +216,9 @@
 				<div class="dropdown-menu dropdown-menu-right">`;
 			$.each(tempActions, function(ii, vv){
 				switch(vv){
+					case "update":
+						tempHtml += `<a class="dropdown-item " href="javascript:void(0);" onClick='allowApplicationUser(`+rawData+`)'><i class="la ${tempClass}"></i> ${tempLabel}</a>`;
+					break;
 					case "sign_out":
 						if(row.status == 2){
 							tempHtml += `<a class="dropdown-item" href="javascript:void(0);" onclick='modalSignout(`+ row.id +`,`+`\"` + row.employee_name + `\")'><i class="la la-sign-out"></i> Sign Out</a>`;
@@ -244,7 +257,7 @@
 	function archiveUser(){
 		var id = document.getElementById('archive_id').value;
 		$.ajax({
-			url: baseUrl("gcctime/App_users/deleteAppUser"),
+			url: baseUrl("gcctime/app_users/deleteAppUser"),
 			type: "POST",
 			data: {
 			csrf_token: _csrf_hash,
@@ -253,7 +266,7 @@
 			success: function(response){
 				if(response = 1){
               		$('#m_archived').modal('hide');
-					appuser_tbl.ajax.reload();
+					appuser_tbl.ajax.reload(null, false);
 				}
 			},
 			error: function (request, status, error) {
@@ -272,7 +285,7 @@
 	function signOutUser(){
 		var id = document.getElementById('id').value;
 		$.ajax({
-			url: baseUrl("gcctime/App_users/signOutAppUser"),
+			url: baseUrl("gcctime/app_users/signOutAppUser"),
 			type: "POST",
 			data: {
 			csrf_token: _csrf_hash,
@@ -281,13 +294,57 @@
 			success: function(response){
 				if(response = 1){
               		$('#m_signout').modal('hide');
-					appuser_tbl.ajax.reload();
+					appuser_tbl.ajax.reload(null, false);
 				}
 			},
 			error: function (request, status, error) {
                 toastr.error("Please check your internet connection.", "Connection Error");
 			}
 		});
+	}
+
+	function allowApplicationUser(data){
+		if(typeof data !== "undefined" && Object.keys(data).length > 0){
+			const { allow_app_user, id, emp_id, employee_name } = data;
+			const tempTitle = parseInt(allow_app_user) == 1 ? "Disallow" : "Allow";
+			Swal.fire({
+				title: 'Are you sure?',
+				html: "Do you want to "+tempTitle+" <strong>`"+employee_name+"`</strong> to access the application?",
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#3085d6',
+				cancelButtonColor: '#d33',
+				confirmButtonText: 'Yes, '+tempTitle+' it!'
+			}).then((result) => {
+				if (result.isConfirmed) {
+					const allow_user = parseInt(allow_app_user) == 1 ? 0 : 1;
+					$.ajax({
+						url: baseUrl("gcctime/app_users/update_allow_user_access"),
+						type: "POST",
+						dataType: "JSON",
+						data: {
+							csrf_token: _csrf_hash,
+							id: id,
+							allow_app_user: allow_user,
+							emp_id: emp_id
+						},
+						success: function(json){
+							const { response, toastr_msg } = json;
+							if(response){
+								appuser_tbl.ajax.reload(null, false);
+								toastr.success(toastr_msg, tempTitle+" Application User", 5000);
+							}else{
+								toastr.error(toastr_msg, tempTitle+" Application User", 5000);
+							}
+						},
+						error: function (request, status, error) {
+							toastr.error("Please check your internet connection.", "Connection Error");
+						}
+					});
+				}
+			})
+			console.log(data);
+		}
 	}
 
 </script>

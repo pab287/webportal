@@ -1646,6 +1646,7 @@ class Attendance_model extends CI_Model {
         return $arrGeofences;
     }
 
+
     protected function getMobileAttendanceQuery($post = array()){
         $dateTime = date("Y-m-d H:i:s", strtotime("-1 years"));
         $this->db->select("app.date, app.time, app.address, app.longtitude, app.latitude, app.time_status, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
