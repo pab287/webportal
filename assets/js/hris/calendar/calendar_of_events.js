@@ -351,3 +351,69 @@ function deleteArchive(id){
         }
     });
 }
+
+console.log(_tempContentData);
+
+const CalendarBasic = function () {
+    return {
+        init: function () {
+            const todayDate = moment().startOf('day');
+            const YM = todayDate.format('YYYY-MM');
+            const YESTERDAY = todayDate.clone().subtract(1, 'day').format('YYYY-MM-DD');
+            const TODAY = todayDate.format('YYYY-MM-DD');
+            const TOMORROW = todayDate.clone().add(1, 'day').format('YYYY-MM-DD');
+
+            holidayCalendar = $('#m_calendar')
+                .fullCalendar({
+                    header: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'month,agendaDay,listYear'
+                    },
+                    eventStartEditable: true, // editable through dragging option
+                    eventDurationEditable: false,  // editable through resizing option
+                    eventLimit: true, // allow "more" link when too many events
+                    navLinks: true,
+                    events: _tempContentData.events,
+
+                    dayClick: function (date, jsEvent, view) {
+                        openAddHolidayModal(date.format());
+                    },
+
+                    eventClick: function (calEvent, jsEvent, view) {
+                        openEditHolidayModal(calEvent);
+                    },
+
+                    eventDrop: function (info) {
+                        updateOnDragDone(info);
+                    },
+
+                    eventRender: function (event, element) {
+                        // if (element.hasClass('fc-day-grid-event')) {
+                        //     element.data('content', event.description);
+                        //     element.data('placement', 'top');
+                        //     mApp.initPopover(element);
+                        // } else if (element.hasClass('fc-time-grid-event')) {
+                        //     element.find('.fc-title').append('<div class="fc-description">' + event.description + '</div>');
+                        // } else if (element.find('.fc-list-item-title').lenght !== 0) {
+                        //     element.find('.fc-list-item-title').append('<div class="fc-description">' + event.description + '</div>');
+                        // }
+                        
+                        // if(event.company == 'all'){
+                        //     element.find('.fc-content').append('<div class="mt-3 mb-2 text-white"><span style="font-weight: 900">Tagged Companies</span>: All Companies</div>');
+                        // }else{
+                        //     let obj = '';
+                        //     const companies = event.company.length;
+                        //     $.each(event.company, function(index, value){
+                        //         const lastItem = index === companies - 1;
+                        //         const separator = lastItem ? '' : ', ';
+                        //         obj += value.text.split(' ')[0] + separator;
+                        //     });
+
+                        //     element.find('.fc-content').append('<div class="mt-3 mb-2 text-white"><span style="font-weight: 900">Tagged Companies</span>: '+obj+'</div>');
+                        // }
+                    }
+                });
+        }
+    };
+}();

@@ -121,6 +121,7 @@
         }
 
         public function company_events_calendar(){
+            $data = array();
             $this->core_layout->setPageTitle("HRIS - Event Calendar");
             $this->core_layout->setPrivilegeName("company_events_calendar");
             $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
@@ -128,7 +129,8 @@
             $this->core_layout->addJs("vendors/custom/fullcalendar/fullcalendar.bundle.js", true);
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
-            $this->core_layout->addJs("js/hris/calendar/calendar_of_events.js", true);
+            $data['events'] = $this->holiday->getEvents();
+            $this->core_layout->addJs("js/hris/calendar/calendar_of_events.js", true,$data);
             $this->core_layout->addCss("vendors/custom/fullcalendar/fullcalendar.bundle.css", true);
             $this->core_layout->addCss("css/hris/calendar.css", true);
             $this->load->view("core/templates/header");

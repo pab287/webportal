@@ -697,4 +697,11 @@
                 ];
             }
         }
+
+        public function getEvents(){
+            $this->db->select("id, event_title title, description, event_venue venue, event_from start, event_to end");
+            $this->db->where("is_archive", 0);
+            $query = $this->db->get($this->eventsCalendarTable);
+            return $query->result();
+        }
     }
