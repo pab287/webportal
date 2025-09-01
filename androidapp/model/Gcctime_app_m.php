@@ -1498,12 +1498,12 @@
 
         private function checkEmployeeLock($emp_id) {
             $conn = $this->conn("gccmaster");
-            $sql = "SELECT lockout FROM tblusers.tblusers WHERE emp_id = :emp_id";
+            $sql = "SELECT lockout FROM gccmaster.tblusers WHERE emp_id = :emp_id";
             $sth = $conn->prepare($sql);
             $sth->bindParam(':emp_id', $emp_id);
             $sth->execute();
             $data = $sth->fetch(PDO::FETCH_ASSOC);
-            if ($data && $data['lockout'] == 1) {
+            if ($data && $data['lockout'] == 0) {
                 return false;
             }
             return true;
