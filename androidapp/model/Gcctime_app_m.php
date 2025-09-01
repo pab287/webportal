@@ -1496,6 +1496,19 @@
             return ($sth->rowCount() > 0) ? true : false;
         }
 
+        private function checkEmployeeLock($emp_id) {
+            $conn = $this->conn("gccmaster");
+            $sql = "SELECT lockout FROM tblusers.tblusers WHERE emp_id = :emp_id";
+            $sth = $conn->prepare($sql);
+            $sth->bindParam(':emp_id', $emp_id);
+            $sth->execute();
+            $data = $sth->fetch(PDO::FETCH_ASSOC);
+            if ($data && $data['lockout'] == 1) {
+                return false;
+            }
+            return true;
+        }
+
         
 
         public function timeLogv311() {
@@ -1793,12 +1806,22 @@
                 $proceed = false;
             }else{
                 $isAllowed = $this->allowAppUser($emp_data['id']);
+                $assignedLocation = $this->checkAssignedLocation($emp_data['biometricno']);
+                $lockoutUser = $this->checkEmployeeLock($emp_data['id']);
                 if($proceed){
                     $app_user_id = md5($unique_id . $emp_data['id']);
                     $token = (string) $this->getToken($emp_data['id']);
                     $isSuspended = $this->isSuspended($emp_data['id'], $token);
                     if ($isSuspended) {
                         $msg = "Your Account is suspended.";
+                        $proceed = false;
+                    }
+                    if (!$assignedLocation){
+                        $msg = "No assigned Location";
+                        $proceed = false;
+                    }
+                    if ($lockoutUser){
+                        $msg = "This user account is locked. Please contact IT Support";
                         $proceed = false;
                     }
                     if($proceed){
@@ -2145,8 +2168,45 @@
 
         
 
+        private function checkAssignedLocation($bio) {
 
+            $conn = $this->conn("gcctimeutility");
+            $sql = "SELECT c.id, c.site_name, c.geofence_polygon, c.latitude, c.longtitude 
+                    FROM gcctimeutility.personnel a
+                    LEFT JOIN gcctimeutility.personnel_locations b ON b.personnel_id = a.id
+                    LEFT JOIN gcctimeutility.app_location_sites c ON c.id = b.site_location_id
+                    WHERE a.biometric_id = :bio OR a.biometricno = :bio";
+        
+            $stmt = $conn->prepare($sql);
+            $stmt->bindParam(':bio', $bio);
+            $stmt->execute();
+        
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!$rows) {
+                $status = false;
+                $msg = "No assigned Location";
+            }
+        
+            $resultset = array_filter(array_map(function ($row) {
+                if (empty($row['geofence_polygon'])){return null;}
+                return [
+                    "data" => [
+                        "id" => $row["id"],
+                        "site_name" => $row["site_name"],
+                        "latitude" => $row["latitude"],
+                        "longtitude" => $row["longtitude"],
+                    ],
+                    "geofence_polygon" => $this->changeGeoKey($row["geofence_polygon"])
+                ];
+            }, $rows));
+        
+            if (!$resultset) {
+                return false;
+            }
 
+            return true;
+
+        }
 
 
 
