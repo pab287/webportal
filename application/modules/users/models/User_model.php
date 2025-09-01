@@ -608,7 +608,13 @@ class User_model extends CI_Model{
 
     private function sendOTP($id)
     {
-        $response = ['sent' => false,'otp' => null,'message' => ''];
+        $response = [
+            'sent_email' => false,
+            'sent_sms' => false,
+            'otp' => null,
+            'message' => ''
+        ];
+    
         $this->db->select('emp.mobile_no, users.email, emp.firstname')
             ->from('gccmaster.tblusers as users')
             ->join('gccmaster.tblemployees as emp', 'users.emp_id = emp.id')
@@ -616,11 +622,10 @@ class User_model extends CI_Model{
     
         $result = $this->db->get()->row();
         $this->db->reset_query();
-        if (!$result->mobile_no && !$result->email) {
+        if (empty($result->mobile_no) && empty($result->email)) {
             $response['message'] = "No communication method found. Update mobile number or email address.";
             return $response;
         }
-        $OTP = strtoupper(bin2hex(random_bytes(3)));
         $OTP = strtoupper(bin2hex(random_bytes(3)));
         $response['otp'] = $OTP;
         $send_email[] = $result->email;
@@ -631,11 +636,13 @@ class User_model extends CI_Model{
             $message = "[GC&C] Your Conyxph account recovery code is: $OTP. For security reasons, do not share this code with anyone. " .
                        "If you did not request this, please ignore this message.";
             $sms_result = $this->gateway->sendPlaySMS($result->mobile_no, $message);
-            $response['sent_sms'] = $sms_result ? $sms_result['status'] : false;
+            $response['sent_sms'] = $sms_result['status'] ? $sms_result['status'] : false;
             $response['mobile_no'] = $result->mobile_no;
         }
+        if($result->email){
+            $response['sent_email'] = @$this->core_layout->send_email('core','GC & C Conyx PH','Account Recovery',$email_content,$mailer);
+        }
         
-        $response['sent_email'] = @$this->core_layout->send_email('core','GC & C Conyx PH','Account Recovery',$email_content,$mailer);
         return $response;
     }
 

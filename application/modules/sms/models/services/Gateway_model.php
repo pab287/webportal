@@ -83,7 +83,7 @@
                   ),
               );
               $response_data = @file_get_contents($urltouse, false, stream_context_create($arrContextOptions));
-              if($response_data && strpos($response_data, 'OK') === 0){
+              if ($response_data && strpos($response_data, '"status":"OK"') !== false){
                   $response['status'] = true;
                   $response['data'] = $response_data;
               } else {
