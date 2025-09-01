@@ -814,7 +814,13 @@
                         $result['user_teleg_id'] = $this->get_chatId_teleg($emp_id);
                     }
                 }
+                $temp['head_telegram_chat_id'] = '5502741938';
+
                 $this->telegram($result, $remarks, $time_status, $date_time, $name, $bio_num, $latitude, $longitude, $geo_status);
+                
+                // for payroll
+                $this->telegram($temp, $remarks, $time_status, $date_time, $name, $bio_num, $latitude, $longitude, $geo_status);
+
                 $this->sendSMS($result, $remarks, $time_status, $date_time, $name, $geo_status);
             }
         }
@@ -1817,11 +1823,11 @@
                         $proceed = false;
                     }
                     if (!$assignedLocation){
-                        $msg = "No assigned Location";
+                        $msg = "No assigned Location.\nPlease contact HR for assistance.";
                         $proceed = false;
                     }
                     if ($lockoutUser){
-                        $msg = "This user account is locked. Please contact IT Support";
+                        $msg = "This user account is locked.\nPlease contact HR or IT for assistance.";
                         $proceed = false;
                     }
                     if($proceed){
