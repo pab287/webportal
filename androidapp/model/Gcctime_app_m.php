@@ -814,10 +814,9 @@
                         $result['user_teleg_id'] = $this->get_chatId_teleg($emp_id);
                     }
                 }
-                $temp['head_telegram_chat_id'] = '5502741938';
+                $temp['head_telegram_chat_id'] = '7140544745';
 
                 $this->telegram($result, $remarks, $time_status, $date_time, $name, $bio_num, $latitude, $longitude, $geo_status);
-                
                 // for payroll
                 $this->telegram($temp, $remarks, $time_status, $date_time, $name, $bio_num, $latitude, $longitude, $geo_status);
 
@@ -868,7 +867,8 @@
                 $telegram_msg  = "<b>" . strtoupper($name) . "</b>\n";
                 $telegram_msg .= "<b>DateTime</b>: " . strtoupper($date_time) . "\n";
                 $telegram_msg .= "<b>Biometric#</b>: " . strtoupper($bio_num) . "\n";
-                $telegram_msg .= "<b>VerifyMethod</b>: " . "<b>". strtoupper($time_status)."</b>" . "$geo_msg\n";
+                // $telegram_msg .= "<b>VerifyMethod</b>: " . "<b>". strtoupper($time_status)."</b>" . "$geo_msg\n";
+                $telegram_msg .= "<b>VerifyMethod</b>: " . "<b>". strtoupper($time_status)."</b>";
                 $telegram_msg .= "<b>Remarks</b>: " . strtoupper($remarks)."\n\n";
                 $telegram_msg .= "<a href='$mapUrl'><b>View Location on Map</b></a>";
 
@@ -1204,7 +1204,7 @@
             $data->bindParam(":id", $id);
             $data->execute();
             $row = $data->fetch(PDO::FETCH_ASSOC);
-            return $row ? $row['geofence_polygon'] : null;
+            return $row ? $row['geofence_polygon'] : 'No Polygon Found';
         }
 
         private function allowAppUser($id) {
@@ -1349,7 +1349,7 @@
             $isAllowed = $this->allowAppUser($emp_id);
             if (!$isAllowed) {
                 $proceed = false;
-                $msg = "You are not allowed to use this app.";
+                $msg = "You are not eligible to use the app. Please contact your department head for access.";
             }
             if ($decoded === null) {
                 $proceed = false;
@@ -1539,7 +1539,7 @@
 
 
             $time_status = isset($_POST['time_status']) ? $_POST['time_status'] : '';
-            $site_id = isset($_POST['location_id']) ? $_POST['location_id'] : '';
+            $site_id = isset($_POST['location_id']) ? $_POST['location_id'] : 0;
             $polygon = $this->getPolygon($site_id);
             if (empty($time_status)) {
                 $status = 0;
@@ -1577,8 +1577,6 @@
         
             if (!$sites_id) {
                 $this->saveLogs("error", 'time '.$time_status, $emp, "[Mobile] No site location");
-                $status = 0;
-                $msg = "No Site Location Found.";
             }
         
             if ($interval && $max_time >= $time) {
@@ -1591,7 +1589,7 @@
                 }
                 if (!$isAllowed) {
                     $status = 3;
-                    $msg = "You are not allowed to use this app.";
+                    $msg = "You are not eligible to use the app. Please contact your department head for access.";
                 }
                 if (!$tokenStatus) {
                     $status = 3;
@@ -1613,7 +1611,7 @@
                 'is_fingerprint' => 1,
                 'time_status' => $time_status,
                 'location_id' => $site_id,
-                'polygon' => $polygon
+                'polygon' => $polygon,
             ];
 
             $insertedID = $this->addAppAttendanceRecordv311($data);
@@ -1630,13 +1628,6 @@
             return json_encode($this->user_logsv311($bio, $date, $time, $status, $insertedID, $msg));
 
         }
-
-
-
-
-
-
-
 
 
         
@@ -1912,9 +1903,9 @@
 
         public function fetchAttendancev311() {
 
-            $emp_id = $_POST['emp_id'];
-            $biometric_id = $_POST['biometric_id'];
-            $token = $_POST['token'] ?? null;
+            $emp_id = isset($_POST['emp_id']) ? $_POST['emp_id'] : '';
+            $biometric_id = isset($_POST['biometric_id']) ? $_POST['biometric_id'] : '';
+            $token = isset($_POST['token']) ? $_POST['token'] : '';
             
             $validate_token = $this->checkToken($emp_id, $token);
 
@@ -1984,9 +1975,12 @@
             $proceed = true;
             $appVersion = "";
             $appUrl = "";
+
             $token = $_POST['token'] ?? null;
+
             $emp_id = $_POST['emp_id'] ?? null;
             $validate_token = $this->checkToken($emp_id, $token);
+            $isAllowed = $this->allowAppUser($emp_id);
 
             if (!isset($_POST['app_version']) || !isset($_POST['app_name'])) {
                 $status = false;
@@ -1999,9 +1993,17 @@
                 $msg = "Invalid Token.";
                 $proceed = false;
             }
-        
+            
+            if(!$validate_token && $isAllowed){
+                $status = true;
+                $proceed = true;
+            }
 
-        
+            if (!$isAllowed) {
+                $proceed = false;
+                $msg = "You are not eligible to use the app. Please contact your department head for access.";
+            }
+
             if ($proceed) {
                 $appversion = $_POST['app_version'];
                 $appname = $_POST['app_name'];
