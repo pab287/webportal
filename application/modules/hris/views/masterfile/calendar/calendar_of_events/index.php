@@ -2,6 +2,47 @@
     .help-block.form-error{
         display: none;
     }
+
+    .fc-time {
+    display: none !important;
+}
+
+/* Improve hover effects using Metronic shadow utilities */
+.fc-event:hover {
+    box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2) !important;
+    transform: translateY(-1px);
+    transition: all 0.3s ease;
+}
+
+/* Improve month view event display */
+.fc-month-view .fc-event {
+    margin-bottom: 1px;
+    min-height: 22px;
+    border: none !important;
+}
+
+/* Override Metronic widget spacing for calendar events */
+.fc-event .m-widget4__item-wrapper {
+    padding: 3px 5px !important;
+}
+
+/* Adjust Metronic badges in calendar events */
+.fc-event .m-badge {
+    font-size: 8px !important;
+    padding: 1px 3px !important;
+    vertical-align: middle;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .fc-event .m-widget4__item-title {
+        font-size: 10px !important;
+    }
+    
+    .fc-event .m-widget4__item-desc {
+        font-size: 8px !important;
+    }
+}
 </style>
 <div class="m-content">
     <div class="m-portlet" id="m_portlet">
@@ -21,7 +62,7 @@
                     role="tablist">
                     <li class="nav-item m-tabs__item">
                         <a class="nav-link m-tabs__link active" data-toggle="tab"
-                           href="#list-view-tab" role="tab" onclick="clearCalender()">
+                           href="#list-view-tab" role="tab">
                             TABULAR VIEW
                         </a>
                     </li>

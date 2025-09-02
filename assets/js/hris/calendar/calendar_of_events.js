@@ -355,8 +355,15 @@ function deleteArchive(id){
 console.log(_tempContentData);
 
 const CalendarBasic = function () {
+    let calendarInitialized = false;
+    
     return {
         init: function () {
+            if (calendarInitialized) {
+                $('#m_calendar').fullCalendar('render');
+                return;
+            }
+            
             const todayDate = moment().startOf('day');
             const YM = todayDate.format('YYYY-MM');
             const YESTERDAY = todayDate.clone().subtract(1, 'day').format('YYYY-MM-DD');
@@ -370,10 +377,9 @@ const CalendarBasic = function () {
                         center: 'title',
                         right: 'month,agendaDay,listYear'
                     },
-                    eventStartEditable: true, // editable through dragging option
-                    eventDurationEditable: false,  // editable through resizing option
-                    eventLimit: true, // allow "more" link when too many events
-                    navLinks: true,
+                    // Hide time display in month view
+                    displayEventTime: false,
+                    
                     events: _tempContentData.events,
 
                     dayClick: function (date, jsEvent, view) {
@@ -388,32 +394,67 @@ const CalendarBasic = function () {
                         updateOnDragDone(info);
                     },
 
-                    eventRender: function (event, element) {
-                        // if (element.hasClass('fc-day-grid-event')) {
-                        //     element.data('content', event.description);
-                        //     element.data('placement', 'top');
-                        //     mApp.initPopover(element);
-                        // } else if (element.hasClass('fc-time-grid-event')) {
-                        //     element.find('.fc-title').append('<div class="fc-description">' + event.description + '</div>');
-                        // } else if (element.find('.fc-list-item-title').lenght !== 0) {
-                        //     element.find('.fc-list-item-title').append('<div class="fc-description">' + event.description + '</div>');
-                        // }
+                    eventRender: function(event, element) {
+                        // Remove default time display
+                        element.find('.fc-time').remove();
                         
-                        // if(event.company == 'all'){
-                        //     element.find('.fc-content').append('<div class="mt-3 mb-2 text-white"><span style="font-weight: 900">Tagged Companies</span>: All Companies</div>');
-                        // }else{
-                        //     let obj = '';
-                        //     const companies = event.company.length;
-                        //     $.each(event.company, function(index, value){
-                        //         const lastItem = index === companies - 1;
-                        //         const separator = lastItem ? '' : ', ';
-                        //         obj += value.text.split(' ')[0] + separator;
-                        //     });
-
-                        //     element.find('.fc-content').append('<div class="mt-3 mb-2 text-white"><span style="font-weight: 900">Tagged Companies</span>: '+obj+'</div>');
-                        // }
-                    }
+                        // Get speakers info
+                        const speakers = event.speakers || [];
+                        const speakerNames = speakers.map(speaker => speaker.speaker_name).join(', ');
+                        
+                        // Create custom event content using Metronic 5 classes
+                        const customContent = `
+                            <div class="m-widget4__item-wrapper">
+                                <div class="m-widget4__item-title m--font-boldest" style="color: white; font-size: 11px;">
+                                    ${event.title}
+                                </div>
+                                <div class="m-widget4__item-desc" style="color: rgba(255,255,255,0.8); font-size: 9px;">
+                                    <span class="m-badge m-badge--white m-badge--pill m-badge--xs m--margin-right-5">
+                                        <i class="la la-map-marker"></i>
+                                    </span>
+                                    ${event.venue}
+                                </div>
+                                ${speakers.length > 0 ? `
+                                <div class="m-widget4__item-desc" style="color: rgba(255,255,255,0.7); font-size: 8px;">
+                                    <span class="m-badge m-badge--white m-badge--pill m-badge--xs m--margin-right-5">
+                                        <i class="la la-user"></i>
+                                    </span>
+                                    ${speakerNames}
+                                </div>` : ''}
+                            </div>
+                        `;
+                        
+                        // Replace the event content
+                        element.find('.fc-content').html(customContent);
+                        
+                        // Add custom tooltip with full speaker details
+                        let tooltipText = `${event.description}\nVenue: ${event.event_venue}`;
+                        if (speakers.length > 0) {
+                            tooltipText += '\nSpeakers:\n';
+                            speakers.forEach(speaker => {
+                                tooltipText += `• ${speaker.speaker_name} - ${speaker.position}, ${speaker.company}\n`;
+                            });
+                        }
+                        element.attr('title', tooltipText);
+                        
+                        // Add Metronic classes and styling
+                        element.addClass('m-portlet__body m--padding-5');
+                        element.css({
+                            'border-radius': '4px',
+                            'border': 'none'
+                        });
+                        
+                        if (speakers.length > 0) {
+                            element.css('background', 'linear-gradient(135deg, #6c7ae0 0%, #9baaf3 100%)');
+                            element.addClass('m-badge--brand');
+                        } else {
+                            element.css('background', 'linear-gradient(135deg, #fd397a 0%, #fb5581 100%)');
+                            element.addClass('m-badge--danger');
+                        }
+                    },
                 });
+                
+            calendarInitialized = true;
         }
     };
 }();

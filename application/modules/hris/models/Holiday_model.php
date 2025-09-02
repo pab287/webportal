@@ -699,9 +699,35 @@
         }
 
         public function getEvents(){
-            $this->db->select("id, event_title title, description, event_venue venue, event_from start, event_to end");
-            $this->db->where("is_archive", 0);
-            $query = $this->db->get($this->eventsCalendarTable);
-            return $query->result();
+            $this->db->select("
+                e.id, 
+                e.event_title title, 
+                e.description, 
+                e.event_venue venue, 
+                e.event_from start, 
+                e.event_to end,
+                GROUP_CONCAT(
+                    JSON_OBJECT(
+                        'id', s.id,
+                        'speaker_name', s.speaker_name,
+                        'position', s.position,
+                        'company', s.company
+                    )
+                ) as speakers_json
+            ");
+            $this->db->from($this->eventsCalendarTable . ' e');
+            $this->db->join($this->eventsSpeakersTable . ' s', 'e.id = s.event_id', 'left');
+            $this->db->where("e.is_archive", 0);
+            $this->db->group_by('e.id');
+            $events = $this->db->get()->result();
+        
+            // Process speakers JSON
+            foreach($events as &$event) {
+                $event->speakers = $event->speakers_json ? 
+                    json_decode('[' . $event->speakers_json . ']') : [];
+                unset($event->speakers_json);
+            }
+            
+            return $events;
         }
     }
