@@ -236,7 +236,7 @@
 
 	function renderStatus(data) {
 		if(data == 2){
-			return '<div class="m-badge m-badge--info m-badge--wide" role="alert"><strong>Signed In</strong></div>';
+			return '<div class="m-badge m-badge--info m-badge--wide" role="alert"><strong>Active</strong></div>';
 		} else {
 			return '<div class="m-badge m-badge--default m-badge--wide" role="alert"><strong>Signed out</strong></div>';
 		}
