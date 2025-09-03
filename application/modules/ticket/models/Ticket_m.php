@@ -1471,8 +1471,12 @@ class Ticket_m extends CI_Model
         $start_time = $start_date . ' 00:00:00';
         $end_time = $end_date . ' 23:59:59';
         $this->db->from("gccticket.ticket");
+        $this->db->where('created_at !=', '0000-00-00 00:00:00');
         $this->db->where("LOWER(status)", "open");
         $this->db->where("is_archived", 0);
+        if(isset($post['all']) && $post['all'] == 'true'){
+            return $this->db->count_all_results();
+        }
         $this->db->where("created_at >= ", $start_time);
         $this->db->where("created_at <= ", $end_time);
         return $this->db->count_all_results();
@@ -1486,7 +1490,11 @@ class Ticket_m extends CI_Model
         $end_time = $end_date . ' 23:59:59';
         $this->db->from("gccticket.ticket");
         $this->db->where("is_archived", 0);
+        $this->db->where('created_at !=', '0000-00-00 00:00:00');
         $this->db->where("LOWER(status) != 'cancelled'");
+        if(isset($post['all']) && $post['all'] == 'true'){
+            return $this->db->count_all_results();
+        }
         $this->db->where("created_at >= ", $start_time);
         $this->db->where("created_at <= ", $end_time);
         return $this->db->count_all_results();
@@ -1499,9 +1507,13 @@ class Ticket_m extends CI_Model
         $start_time = $start_date . ' 00:00:00';
         $end_time = $end_date . ' 23:59:59';
         $this->db->from("gccticket.ticket");
+        $this->db->where('created_at !=', '0000-00-00 00:00:00');
         $this->db->where("LOWER(priority)", "high");
         $this->db->where("LOWER(status)", "open");
         $this->db->where("is_archived", 0);
+        if(isset($post['all']) && $post['all'] == 'true'){
+            return $this->db->count_all_results();
+        }
         $this->db->where("created_at >= ", $start_time);
         $this->db->where("created_at <= ", $end_time);
         return $this->db->count_all_results();
@@ -1628,6 +1640,7 @@ class Ticket_m extends CI_Model
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.performed_by", "LEFT");
         $this->db->where("a.is_archived", 0);
+        $this->db->where('a.created_at !=', '0000-00-00 00:00:00');
         // $this->db->where("a.status !=", "completed");
         $this->db->where("a.status !=", "cancelled");
         $this->db->where("a.status !=", "resolved");
