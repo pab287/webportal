@@ -1993,11 +1993,26 @@ class Employee_model extends CI_Model {
                 }
 
                 if ($data->mobile_no) {
-                    $data->mobile_no = strlen($data->mobile_no) == 11 ? ltrim($data->mobile_no, '09') : $data->mobile_no;
+                    if (strlen($data->mobile_no) >= 12) {
+                        $charRemoved = 3;
+
+                        if (strlen($data->mobile_no) > 12) {
+                            $data->mobile_no = preg_replace('/[^a-zA-Z0-9 ]/', '', $data->mobile_no);
+                        }
+                    } elseif (strlen($data->mobile_no) == 11) {
+                        $charRemoved = 2;
+                    } elseif (strlen($data->mobile_no) == 10) {
+                        $charRemoved = 1;
+                    } else {
+                        $charRemoved = 0;
+                    }
+
+                    $data->mobile_no = substr($data->mobile_no, $charRemoved);
                 }
                 
                 if ($data->company_phone_no){
-                    $data->company_phone_no = strlen($data->company_phone_no) == 11 ? ltrim($data->company_phone_no, '09') : $data->company_phone_no;
+                    // $data->company_phone_no = strlen($data->company_phone_no) == 11 ? ltrim($data->company_phone_no, '09') : $data->company_phone_no;
+                    $data->company_phone_no = strlen($data->company_phone_no) == 11 ? substr($data->company_phone_no, 2) : $data->company_phone_no;
                 }
 
                 $data->company = (isset($data->comp_description) && $data->comp_description)? $data->comp_description: "No assigned company";
