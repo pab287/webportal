@@ -59,6 +59,7 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->join("gcchris.tbldepartments as d" , "d.id = a.department_id", 'LEFT');
+        $this->db->where('a.created_at !=', '0000-00-00 00:00:00');
         if($params){
             $allowed_fields = ['priority', 'status', 'category', 'performed_by'];
             foreach($params as $field => $value) {
@@ -157,6 +158,7 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->join("gcchris.tbldepartments as d" , "d.id = a.department_id", 'LEFT');
+        $this->db->where('a.created_at !=', '0000-00-00 00:00:00');
         $this->db->where('a.is_archived', '0');
         if($params){
             $allowed_fields = ['priority', 'status', 'category', 'performed_by'];
@@ -1048,7 +1050,9 @@ class Ticket_m extends CI_Model
         ");
         $this->db->from("gccticket.ticket as a");
         $this->db->where('is_archived', 0);
-        // $this->db->where("LOWER(a.status) != 'cancelled'");
+        $this->db->where('a.status !=', 'cancelled');
+        $this->db->where('a.created_at >=', '2016-01-01 00:00:00');
+        $this->db->where('a.created_at <=', date('Y-m-d 23:59:59'));
         $query = $this->db->get();
         $result = $query->row_array();
         
@@ -1065,7 +1069,8 @@ class Ticket_m extends CI_Model
                 FROM gccticket.trail_logs_event
                 WHERE type = 'completed'
             ) completed_logs ON t.id = completed_logs.ticket_id
-            WHERE t.status = 'completed' AND t.is_archived = 0
+            WHERE t.status = 'completed' AND t.is_archived = 0 
+            AND t.created_at BETWEEN '2016-01-01 00:00:00' AND '".date('Y-m-d 23:59:59')."'
         ");
         
         $avg_result = $avg_completion_query->row_array();
@@ -1096,7 +1101,7 @@ class Ticket_m extends CI_Model
                 FROM gccticket.trail_logs_event
                 WHERE type = 'in progress'
             ) completed_logs ON t.id = completed_logs.ticket_id
-            WHERE t.status = 'in progress' AND t.is_archived = 0
+            WHERE t.is_archived = 0
         ");
 
         $avg_response_result = $avg_response_query->row_array();
@@ -1468,9 +1473,6 @@ class Ticket_m extends CI_Model
         $this->db->from("gccticket.ticket");
         $this->db->where("LOWER(status)", "open");
         $this->db->where("is_archived", 0);
-        if(isset($post['all']) && $post['all'] == 'true'){
-            return $this->db->count_all_results();
-        }
         $this->db->where("created_at >= ", $start_time);
         $this->db->where("created_at <= ", $end_time);
         return $this->db->count_all_results();
@@ -1484,10 +1486,7 @@ class Ticket_m extends CI_Model
         $end_time = $end_date . ' 23:59:59';
         $this->db->from("gccticket.ticket");
         $this->db->where("is_archived", 0);
-        // $this->db->where("LOWER(status) != 'cancelled'");
-        if(isset($post['all']) && $post['all'] == 'true'){
-            return $this->db->count_all_results();
-        }
+        $this->db->where("LOWER(status) != 'cancelled'");
         $this->db->where("created_at >= ", $start_time);
         $this->db->where("created_at <= ", $end_time);
         return $this->db->count_all_results();
@@ -1501,13 +1500,8 @@ class Ticket_m extends CI_Model
         $end_time = $end_date . ' 23:59:59';
         $this->db->from("gccticket.ticket");
         $this->db->where("LOWER(priority)", "high");
-        $this->db->where("LOWER(status) !=", "completed");
-        $this->db->where("LOWER(status) !=", "resolved");
-        $this->db->where("LOWER(status) !=", "cancelled");
+        $this->db->where("LOWER(status)", "open");
         $this->db->where("is_archived", 0);
-        if(isset($post['all']) && $post['all'] == 'true'){
-            return $this->db->count_all_results();
-        }
         $this->db->where("created_at >= ", $start_time);
         $this->db->where("created_at <= ", $end_time);
         return $this->db->count_all_results();
@@ -1528,6 +1522,7 @@ class Ticket_m extends CI_Model
          ");
         $this->db->from("gccticket.ticket");
         $this->db->where("is_archived", 0);
+        $this->db->where('created_at !=', '0000-00-00 00:00:00');
         if(isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']){
             $this->db->where("created_at >= ", $start_time);
             $this->db->where("created_at <= ", $end_time);
@@ -1568,6 +1563,7 @@ class Ticket_m extends CI_Model
                 $this->db->where("created_at >= ", $start_time);
                 $this->db->where("created_at <= ", $end_time);
             }
+            $this->db->where('created_at !=', '0000-00-00 00:00:00');
             $count = $this->db->count_all_results('gccticket.ticket');
             $categoryCounts[$category['name']] = (string)$count;
             
@@ -1591,6 +1587,7 @@ class Ticket_m extends CI_Model
          ");
         $this->db->from("gccticket.ticket");
         $this->db->where("is_archived", 0);
+        $this->db->where('created_at !=', '0000-00-00 00:00:00');
         // $this->db->where("status", "open");
         if(isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']){
             $this->db->where("created_at >= ", $start_time);
@@ -1664,6 +1661,7 @@ class Ticket_m extends CI_Model
 
         $this->db->select("COUNT(*) as total, SUM(CASE WHEN status = 'completed' OR status = 'resolved' THEN 1 ELSE 0 END) as completed");
         $this->db->from("gccticket.ticket");
+        $this->db->where('created_at !=', '0000-00-00 00:00:00');
         $this->db->where("is_archived", 0);
 
         if (isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']) {
@@ -1686,9 +1684,8 @@ class Ticket_m extends CI_Model
         $this->db->from('gccticket.ticket t');
         $this->db->join('(SELECT ticket_id, created_at FROM gccticket.trail_logs_event WHERE type = "new") nl', 't.id = nl.ticket_id');
         $this->db->join('(SELECT ticket_id, created_at FROM gccticket.trail_logs_event WHERE type = "completed") ip', 't.id = ip.ticket_id');
-        // $this->db->where('t.status', 'completed');
+        $this->db->where('LOWER(t.status)', 'completed');
         $this->db->where('t.is_archived', 0);
-
         if(!isset($post['all']) || !$post['all'] == 'true'){
             $this->db->where('t.created_at >=', $start_date . ' 00:00:00');
             $this->db->where('t.created_at <=', $end_date . ' 23:59:59');
