@@ -1539,9 +1539,8 @@
             $bio = $_POST['biometric_id'];
             $emp = $_POST['emp_id'];
 
-            // $tokenStatus = $this->checkToken($emp, $token);
+            $tokenStatus = $this->checkToken($emp, $token);
 
-            $tokenStatus = true;
 
             $time_status = isset($_POST['time_status']) ? $_POST['time_status'] : '';
             $site_id = isset($_POST['location_id']) ? $_POST['location_id'] : 0;
@@ -2282,16 +2281,16 @@
         
     public function getEmployeeTravelOrder($employeeId = null, $date=null, $token = null, $array = false){
         $employeeId = isset($_POST['emp_id']) ? $_POST['emp_id'] : $employeeId;
-        // $token = isset($_POST['tk']) ? $_POST['tk'] : $token;
+        $token = isset($_POST['tk']) ? $_POST['tk'] : $token;
         $date = isset($_POST['date']) ? $_POST['date'] :  $date;
-        // $validate_token = $this->checkToken($employeeId, $token);
+        $validate_token = $this->checkToken($employeeId, $token);
         $status = true;
 
-        // if (!$validate_token) {
-        //     $this->saveLogs("error", "travel", $employeeId, "[Mobile] missing token");
-        //     $msg = "Invalid token to get travel order.";
-        //     return json_encode(["status" => $status, "msg" => $msg]);
-        // }
+        if (!$validate_token) {
+            $this->saveLogs("error", "travel", $employeeId, "[Mobile] missing token");
+            $msg = "Invalid token to get travel order.";
+            return json_encode(["status" => $status, "msg" => $msg]);
+        }
 
 
         $resultset = array();
