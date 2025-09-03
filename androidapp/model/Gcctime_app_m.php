@@ -1587,7 +1587,7 @@
                 $status = 4;
             }
             
-            $has_travel_order = $this->getEmployeeTravelOrder($emp, $date, $token, true);
+            $has_travel_order = $this->getEmployeeTO($emp, $date);
 
             $currentDateTime = strtotime("$date $time");
             $isWithinTravelOrder = false;
@@ -2276,23 +2276,7 @@
         // Travel order
 
 
-
-
-        
-    public function getEmployeeTravelOrder($employeeId = null, $date=null, $token = null, $array = false){
-        $employeeId = isset($_POST['emp_id']) ? $_POST['emp_id'] : $employeeId;
-        $token = isset($_POST['tk']) ? $_POST['tk'] : $token;
-        $date = isset($_POST['date']) ? $_POST['date'] :  $date;
-        $validate_token = $this->checkToken($employeeId, $token);
-        $status = true;
-
-        if (!$validate_token) {
-            $this->saveLogs("error", "travel", $employeeId, "[Mobile] missing token");
-            $msg = "Invalid token to get travel order.";
-            return json_encode(["status" => $status, "msg" => $msg]);
-        }
-
-
+    private function getEmployeeTO($employeeId = null, $date=null){
         $resultset = array();
         if($employeeId && $date){
         $arrTravelId = $this->getTravelOrderDriverById($employeeId);
@@ -2310,7 +2294,40 @@
             }
         }
         }
-        return $array ? $resultset : json_encode($resultset);
+        return $resultset;
+    }
+
+        
+    public function getEmployeeTravelOrder(){
+        $employeeId = isset($_POST['emp_id']) ? $_POST['emp_id'] : null;
+        $token = isset($_POST['token']) ? $_POST['token'] : null;
+        $date = isset($_POST['date']) ? $_POST['date'] : null;
+        $validate_token = $this->checkToken($employeeId, $token);
+
+        if (!$validate_token) {
+            $this->saveLogs("error", "travel", $employeeId, "[Mobile] missing token");
+            $msg = "Invalid token to get travel order.";
+            return json_encode(['status' => false, 'msg'=> $msg]);
+        }
+
+        $resultset = array();
+        if($employeeId && $date){
+        $arrTravelId = $this->getTravelOrderDriverById($employeeId);
+        $arrPersonnelId = $this->getTravelOrderPersonnelById($employeeId);
+        $travelIds = array_merge($arrTravelId, $arrPersonnelId);
+            if(is_array($travelIds) && !empty($travelIds)){
+                $travelIds = array_unique($travelIds);
+                $tempDate = date('Y-m-d', strtotime($date));
+                $destinations = $this->getTravelOrderDestination($travelIds, $tempDate);
+                if(is_array($destinations) && !empty($destinations)){
+                $ids = array_column($destinations, 'id');
+                $uniqueIds = array_unique($ids);
+                $cData = array_intersect_key($destinations, $uniqueIds);
+                $resultset = array_values($cData);
+                }
+            }
+        }
+        return json_encode($resultset);
     }
 
     protected function getTravelOrderDestination($travelIds = array(), $tempDate = null){
