@@ -960,5 +960,23 @@ class Portal_model extends CI_Model{
         return $cash_advance;
     }
 
+    public function getPayslip() {
+        $userData = $this->session->userdata('logged_in');
+        $arrData  = array();
+        $id       = $userData['emp_id'];
+    
+        if ($id) {
+            $this->db->select("id, pay_date, date_start, date_end, gross_pay, net_pay, bonus_code, is_bonus");
+            $this->db->where("emp_id", $id);
+            $this->db->where("posted", 1);
+            $this->db->order_by("pay_date", "DESC");
+            $this->db->limit(1); 
+            $query   = $this->db->get("payroll.payroll_sheet");
+    
+            $arrData = $query->row_array(); // single row
+        }
+    
+        return $arrData;
+    }
     
 }

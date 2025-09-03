@@ -343,7 +343,7 @@
             </div>
 
             <?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0)): ?>
-            <div class="m-portlet">
+            <div class="m-portlet" id="payroll-sheet-payslip">
                 <div class="m-portlet__head pt-4 pb-4">
                     <div class="m-portlet__head-caption">
                         <div class="m-portlet__head-title">

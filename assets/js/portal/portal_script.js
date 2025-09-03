@@ -28,7 +28,12 @@ if(window.location == siteUrl("portal/index")){
 
 var vmTab1 = new Vue({
     el: "#portal_notifications",
-    data: { vm_tab1: {show:false,}, vm_travel_order: {show:false,}, vm_acct: {show:false,}, vm_borrowing: {show:false,}, vm_overtime: {show:false,}, vm_transmittal: {show:false,}, vm_shipping : {show:false,}, vm_ca : {show:false,} },
+    data: { vm_tab1: {show:false,}, vm_travel_order: {show:false,}, vm_acct: {show:false,}, vm_borrowing: {show:false,}, vm_overtime: {show:false,}, vm_transmittal: {show:false,}, vm_shipping : {show:false,}, vm_ca : {show:false,},
+            payslip: {show:false,data:[]},
+            },
+            mounted(){
+                this.getPayslip();
+            },
     methods: {
         styles: {
             width: '50%',
@@ -122,62 +127,38 @@ var vmTab1 = new Vue({
                     vmTab1.vm_ca.show = true;
                 }
             });
-        },
-    },
-    mounted: function(){
-
-            $('#showLoa').on('click', () => {
-              this.getUnapprovedLoa();
-          });
-            $('#showCA').on('click', () => {
-              this.getCashadvance();
-          });
-            $('#showOT').on('click', () => {
-              this.getOvertime();
-          });
-            $('#showBORR').on('click', () => {
-              this.getBorrowing();
-          });
-            $('#showTO').on('click', () => {
-              this.getTravelOrder();
-          });
-            $('#showACCT').on('click', () => {
-              this.getAccountability();
-          });
-            $('#showTRANS').on('click', () => {
-              this.getTransmittal();
-          });
-          $('#showSA').on('click', () => {
-            this.getShipping();
-          });
-    
-            $("#companySelect").on("select2:select", () => { // Use an arrow function to preserve `this`
-              console.log("Selected");
-              this.getAccountability(); // `this` now correctly refers to the Vue instance
+        },getPayslip(){
+            $.ajax({
+                url:  siteUrl("portal/get_payslip"),
+                type: "get",
+                dataType: "json",
+                success: function (json) {
+                    vmTab1.payslip.data = Object.assign({}, json);
+                    vmTab1.payslip.show = false;
+                    console.log(vmTab1.payslip.data);
+                }
             });
-          },
-
-    
-
+        },formatDate(date){
+            if(!date) return "---";
+            return moment(date).format("MMM DD, YYYY");
+        },formatDateCoverage(start, end) {
+            if(!start || !end) return "---";
+            const startMoment = moment(start);
+            const endMoment = moment(end);
+        
+            if (startMoment.month() === endMoment.month() && startMoment.year() === endMoment.year()) {
+                return `${startMoment.format("MMM DD")} - ${endMoment.format("DD, YYYY")}`;
+            } else if (startMoment.year() === endMoment.year()) {
+                return `${startMoment.format("MMM DD")} - ${endMoment.format("MMM DD, YYYY")}`;
+            } else {
+                return `${startMoment.format("MMM DD, YYYY")} - ${endMoment.format("MMM DD, YYYY")}`;
+            }
+        },formatCurrency(amount){
+            if(!amount) return "₱0.00";
+            return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
+        }
+    },
   });
 }
 
-$(document).ready(function() {
-  $("#companySelect").select2({
-    placeholder: 'Select',
-    width: '100%',
-    allowClear: true,
-    ajax: {
-        url: baseUrl("portal/get_company_collection"),
-        dataType: "json",
-        async: true,
-        contentType:"application/json; charset=utf-8",
-        global: false,
-        data: {csrf_token : _csrf_hash},
-        processResults: function (data) {
-            return data;
-        }
-    }
-  });
-});
 

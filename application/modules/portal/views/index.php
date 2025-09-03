@@ -533,152 +533,90 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
             </div>
             <div class="m-content" id="portal_notifications">
                 <div class="row">
-                    <!-- LOA -->
-                    <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-3" style="padding: 0px;">
-                    <?php if(isset($loa_module) && $loa_module) { ?>
-                    <div class="col-md-12 col-lg-12 col-xl-12">
-                        <div class="m-portlet m-portlet--head-sm">
-                            <div class="m-portlet__head">
-                                <div class="m-portlet__head-caption">
-                                    <div class="m-portlet__head-title">
-                                        <span class="m-portlet__head-icon">
-                                            <i class="fa fa-calendar-check-o"></i>
-                                        </span>
-                                        <h4 class="m-portlet__head-text">LEAVE OF ABSENCE</h4>
+                <?php if(isset($showPayrollPayslip) && $showPayrollPayslip): ?>
+                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                            <div class="m-portlet m-portlet--head-sm ">
+                                <div class="m-portlet__head">
+                                    <div class="m-portlet__head-caption">
+                                        <div class="m-portlet__head-title">
+                                            <span class="m-portlet__head-icon">
+                                                <i class="la la-money"></i>
+                                            </span>
+                                            <h4 class="m-portlet__head-text">PAYSLIP</h4>
+                                        </div>
+                                    </div>
+                                    <div class="m-portlet__head-tools">
+                                        <button href="javacscript:void(0)" @click="payslip.show = !payslip.show" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only mr-2"><i :class="payslip.show ? 'fa fa-eye' : 'fa fa-eye-slash'"></i></button>
+                                        <a href="<?= base_url("core/profile/#payroll-sheet-payslip")?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
                                     </div>
                                 </div>
-                                <div class="m-portlet__head-tools">
-                                    <a href="<?= base_url("eforms/loa/masterfile")?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
-                                </div>
-                            </div>
-                            <div class="m-portlet__body m-portlet__body-sm m-portlet__body--no-padding" id="loa">
-                            <div class="m-widget1" v-if="!vm_tab1.show">
-                            <div class="m-widget1__item">
-                            <div class="row align-items-center">
-                                            <div class="col">
-                                                <button class="btn" id="showLoa" style="width: 100%; background-color: #564ec0;  background-color: #564ec0; "  ><h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                  <h3 class="m-widget1__title" style="font-size: 10px !important; color: white; color: white;">
-                                                    SHOW DATA
-                                                  </h3>
-                                                </button>
-                                            </div>
-                                        </div>
-                            </div>
-                            </div>    
-                            <div class="m-widget1" v-else>
+                                <div class="m-widget1">
                                     <div class="m-widget1__item">
-                                    <div class="row align-items-center" v-if="true">
+                                        <div class="row m-row--no-padding align-items-center">
                                             <div class="col">
-                                                <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                  NO PENDING LOA FOR APPROVAL
+                                                <h3 class="m-widget1__title">
+                                                    GROSS PAY
                                                 </h3>
+                                                <span class="m-widget1__desc">BEFORE DEDUCTIONS</span>
                                             </div>
-                                        </div>
-                                        <div v-else>
-                                            <a href="<?=base_url('eforms/loa/masterfile').'?status=pending' ?>">
-                                                <div class="row align-items-center">
-                                                    <div class="col">
-                                                        <h3 class="m-widget1__title">
-                                                        PENDING APPROVAL
-                                                        </h3>
-                                                        <span class="m-widget1__desc">
-                                                            LOA FOR APPROVAL
-                                                        </span>
-                                                    </div>
-                                                    <div class="col m--align-right">
-                                                        <span class="m-widget1__number m--font-brand">
-                                                            {{vm_tab1.employee_count}}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div class="progress m-progress--sm" v-html="vm_tab1.progress_loa_pending"></div>
-                                                <span class="m--font-bolder m--font-metal">
-                                                    {{vm_tab1.scroll_width}} %
+                                            <div class="col m--align-right">
+                                            <span class="m-widget1__number m--font-brand" 
+                                                    v-text="payslip.show ? formatCurrency(payslip.data.gross_pay) : '*****'">
                                                 </span>
-                                            </a>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <?php } ?>
-                    <!-- Overtime -->
-                    <?php if(isset($overtime_module) && $overtime_module) { ?>
-                    <div class="col-md-12 col-lg-12 col-xl-12">
-                        <div class="m-portlet m-portlet--head-sm">
-                            <div class="m-portlet__head">
-                                <div class="m-portlet__head-caption">
-                                    <div class="m-portlet__head-title">
-                                        <span class="m-portlet__head-icon">
-                                            <i class="fa fa-clock-o"></i>
-                                        </span>
-                                        <h4 class="m-portlet__head-text">OVERTIME</h4>
-                                    </div>
-                                </div>
-                                <div class="m-portlet__head-tools">
-                                    <a href="<?= base_url("eforms/overtime/masterfile")?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
-                                </div>
-                            </div>
-                            <div class="m-portlet__body m-portlet__body--no-padding" id="overtime">
-                            <div class="m-widget1" v-if="!vm_overtime.show">
-                            <div class="m-widget1__item">
-                            <div class="row align-items-center">
-                                            <div class="col">
-                                            <button class="btn" id="showOT" style="width: 100%; background-color: #564ec0;  background-color: #564ec0; "  ><h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                  <h3 class="m-widget1__title" style="font-size: 10px !important; color: white; color: white;">
-                                                    SHOW DATA
-                                                  </h3>
-                                                </button>
-                                            </div>
-                              </div>
-                            </div>
-                            </div> 
-                                <div class="m-widget1" v-else>
                                     <div class="m-widget1__item">
-                                        <div class="row align-items-center" v-if="vm_overtime.for_approval == 0">
+                                        <div class="row m-row--no-padding align-items-center">
                                             <div class="col">
-                                                <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                  NO PENDING OVERTIME FOR APPROVAL
+                                                <h3 class="m-widget1__title">
+                                                    NET PAY
                                                 </h3>
+                                                <span class="m-widget1__desc">TAKE HOME AMOUNT</span>
+                                            </div>
+                                            <div class="col m--align-right">
+                                                <span class="m-widget1__number m--font-brand" 
+                                                    v-text="payslip.show ? formatCurrency(payslip.data.net_pay) : '*****'">
+                                                </span>
                                             </div>
                                         </div>
-                                        <div v-else>
-                                            <a href="<?=base_url('eforms/overtime/masterfile').'?status=pending' ?>">
-                                                <div class="row m-row--no-padding align-items-center">
-                                                    <div class="col">
-                                                        <h3 class="m-widget1__title">
-                                                            PENDING APPROVAL
-                                                        </h3>
-                                                        <span class="m-widget1__desc">
-                                                            OVERTIME FOR APPROVAL
-                                                        </span>
-                                                    </div>
-                                                    <div class="col m--align-right">
-                                                        <span class="m-widget1__number m--font-brand">
-                                                            {{vm_overtime.for_approval}}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div class="progress m-progress--sm" v-html="vm_overtime.progress_ot"></div>
-                                                <span class="m--font-bolder m--font-metal">
-                                                    {{vm_overtime.pending_count}} %
+                                    </div>
+                                    <div class="m-widget1__item">
+                                        <div class="row m-row--no-padding align-items-center">
+                                            <div class="col">
+                                                <h3 class="m-widget1__title">
+                                                    PAY DATE
+                                                </h3>
+                                                <span class="m-widget1__desc">PAYMENT PROCESSED</span>
+                                            </div>
+                                            <div class="col m--align-right">
+                                                <span class="m-widget1__number m--font-brand" v-text="formatDate(payslip.data.pay_date)">
                                                 </span>
-                                            </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="m-widget1__item">
+                                        <div class="row m-row--no-padding align-items-center">
+                                            <div class="col">
+                                                <h3 class="m-widget1__title">
+                                                    COVERAGE DATE
+                                                </h3>
+                                                <span class="m-widget1__desc">WORK PERIOD</span>
+                                            </div>
+                                            <div class="col m--align-right">
+                                                <span class="m-widget1__number m--font-brand" v-text="formatDateCoverage(payslip.data.date_start, payslip.data.date_end)">
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <?php } ?>
-                    </div>
-                    <!-- Cash Advance -->
+                        </div>  
+                    <?php endif; ?>
                     <?php if(isset($ca_module) && $ca_module) { ?>
                     <template>
-                    <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-3">
-                        <div class="m-portlet m-portlet--head-sm m-portlet--full-height">
+                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                        <div class="m-portlet m-portlet--head-sm">
                             <div class="m-portlet__head">
                                 <div class="m-portlet__head-caption">
                                     <div class="m-portlet__head-title">
@@ -694,19 +632,17 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                             </div>
                             <div class="m-portlet__body m-portlet__body--no-padding" id="cash_advance">
                             <div class="m-widget1" v-if="!vm_ca.show">
-                            <div class="m-widget1__item">
-                            <div class="row align-items-center">
-                                            <div class="col">
-                                                
-                                                <button class="btn" id="showCA" style="width: 100%; background-color: #564ec0;   "  ><h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                <h3 class="m-widget1__title" style="font-size: 10px !important; color: white;">
-                                                SHOW DATA
-                                                </h3>
-                                                </button>
-                                                
-                                            </div>
+                                <div class="m-widget1__item">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <button class="btn w-100 btn-brand" id="showCA" @click="getCashadvance">
+                                                <span style="font-size: 10px !important; color: white; color: white;">
+                                                    SHOW DATA
+                                                </span>
+                                            </button>
                                         </div>
-                            </div>
+                                    </div>
+                                </div>
                             </div> 
                                 <div class="m-widget1" v-else>
                                     <div class="m-widget1__item">
@@ -904,7 +840,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                         <div class="row align-items-center" v-if="vm_ca.final_approval == 0">
                                             <div class="col">
                                                 <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                    NO PENDING TO FOR FINAL APPROVAL
+                                                    NO PENDING CA FOR FINAL APPROVAL
                                                 </h3>
                                             </div>
                                         </div>
@@ -933,20 +869,151 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                         </div>
                                     </div>
                                 </div>
-
-
-
-
                             </div>
                         </div>
                     </div>
                     </template>
                     <?php } ?>
-                    <!-- travel order -->
+                <?php if(isset($loa_module) && $loa_module) { ?>
+                        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-3">
+                            <div class="m-portlet m-portlet--head-sm ">
+                                <div class="m-portlet__head">
+                                    <div class="m-portlet__head-caption">
+                                        <div class="m-portlet__head-title">
+                                            <span class="m-portlet__head-icon">
+                                                <i class="fa fa-calendar-check-o"></i>
+                                            </span>
+                                            <h4 class="m-portlet__head-text">LEAVE OF ABSENCE</h4>
+                                        </div>
+                                    </div>
+                                    <div class="m-portlet__head-tools">
+                                        <a href="<?= base_url("eforms/loa/masterfile")?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
+                                    </div>
+                                </div>
+                                <div class="m-portlet__body m-portlet__body-sm m-portlet__body--no-padding" id="loa">
+                                    <div class="m-widget1" v-if="!vm_tab1.show">
+                                        <div class="m-widget1__item">
+                                            <div class="row align-items-center">
+                                                <div class="col">
+                                                    <button class="btn w-100 btn-brand" id="showLoa" @click="getUnapprovedLoa()"><h3 class="m-widget1__title text-muted">
+                                                        <span style="font-size: 10px !important; color: white; color: white;">
+                                                            SHOW DATA
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="m-widget1" v-else>
+                                        <div class="m-widget1__item">
+                                            <div class="row align-items-center" v-if="true">
+                                                    <div class="col">
+                                                        <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                        NO PENDING LOA FOR APPROVAL
+                                                        </h3>
+                                                    </div>
+                                                </div>
+                                                <div v-else>
+                                                    <a href="<?=base_url('eforms/loa/masterfile').'?status=pending' ?>">
+                                                        <div class="row align-items-center">
+                                                            <div class="col">
+                                                                <h3 class="m-widget1__title">
+                                                                PENDING APPROVAL
+                                                                </h3>
+                                                                <span class="m-widget1__desc">
+                                                                    LOA FOR APPROVAL
+                                                                </span>
+                                                            </div>
+                                                            <div class="col m--align-right">
+                                                                <span class="m-widget1__number m--font-brand">
+                                                                    {{vm_tab1.employee_count}}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="progress m-progress--sm" v-html="vm_tab1.progress_loa_pending"></div>
+                                                        <span class="m--font-bolder m--font-metal">
+                                                            {{vm_tab1.scroll_width}} %
+                                                        </span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                            </div>
+                        </div>
+                    <?php } ?>
+                    <?php if(isset($overtime_module) && $overtime_module) { ?>
+                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-3">
+                        <div class="m-portlet m-portlet--head-sm ">
+                            <div class="m-portlet__head">
+                                <div class="m-portlet__head-caption">
+                                    <div class="m-portlet__head-title">
+                                        <span class="m-portlet__head-icon">
+                                            <i class="fa fa-clock-o"></i>
+                                        </span>
+                                        <h4 class="m-portlet__head-text">OVERTIME</h4>
+                                    </div>
+                                </div>
+                                <div class="m-portlet__head-tools">
+                                    <a href="<?= base_url("eforms/overtime/masterfile")?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
+                                </div>
+                            </div>
+                            <div class="m-portlet__body m-portlet__body--no-padding" id="overtime">
+                                <div class="m-widget1" v-if="!vm_overtime.show">
+                                    <div class="m-widget1__item">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <button class="btn w-100 btn-brand" id="showOT" @click="getOvertime()"><h3 class="m-widget1__title text-muted">
+                                                    <span style="font-size: 10px !important; color: white; color: white;">
+                                                        SHOW DATA
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="m-widget1" v-else>
+                                    <div class="m-widget1__item">
+                                        <div class="row align-items-center" v-if="vm_overtime.for_approval == 0">
+                                            <div class="col">
+                                                <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                  NO PENDING OVERTIME FOR APPROVAL
+                                                </h3>
+                                            </div>
+                                        </div>
+                                        <div v-else>
+                                            <a href="<?=base_url('eforms/overtime/masterfile').'?status=pending' ?>">
+                                                <div class="row m-row--no-padding align-items-center">
+                                                    <div class="col">
+                                                        <h3 class="m-widget1__title">
+                                                            PENDING APPROVAL
+                                                        </h3>
+                                                        <span class="m-widget1__desc">
+                                                            OVERTIME FOR APPROVAL
+                                                        </span>
+                                                    </div>
+                                                    <div class="col m--align-right">
+                                                        <span class="m-widget1__number m--font-brand">
+                                                            {{vm_overtime.for_approval}}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="progress m-progress--sm" v-html="vm_overtime.progress_ot"></div>
+                                                <span class="m--font-bolder m--font-metal">
+                                                    {{vm_overtime.pending_count}} %
+                                                </span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php } ?>
                     <?php if(isset($to_module) && $to_module){ ?>
                     <template>
-                    <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-3">
-                        <div class="m-portlet m-portlet--head-sm m-portlet--full-height">
+                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-3">
+                        <div class="m-portlet m-portlet--head-sm ">
                             <div class="m-portlet__head">
                                 <div class="m-portlet__head-caption">
                                     <div class="m-portlet__head-title">
@@ -961,22 +1028,20 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                 </div>
                             </div>
                             <div class="m-portlet__body m-portlet__body--no-padding" id="travel_order">
-                                
-                            <div class="m-widget1" v-if="!vm_travel_order.show">
-                            <div class="m-widget1__item">
-                            <div class="row align-items-center">
+                                <div class="m-widget1" v-if="!vm_travel_order.show">
+                                    <div class="m-widget1__item">
+                                        <div class="row align-items-center">
                                             <div class="col">
-                                                <button class="btn" id="showTO" style="width: 100%; background-color: #564ec0;  font-size: 10px !important; backgroud-color: #564ec0;">
-                                                <h3 class="m-widget1__title" style="font-size: 10px !important; color: white;">
-                                                SHOW DATA
-                                                </h3>
-                                              </button>
-                                                
+                                                <button class="btn w-100 btn-brand" id="showTO" @click="getTravelOrder()">
+                                                    <span style="font-size: 10px !important; color: white; color: white;">
+                                                        SHOW DATA
+                                                    </span>
+                                                </button>
                                             </div>
                                         </div>
-                            </div>
-                            </div>
-                            <div class="m-widget1" v-else>
+                                    </div>
+                                </div>
+                                <div class="m-widget1" v-else>
                                     <div class="m-widget1__item">
                                         <div class="row align-items-center" v-if="vm_travel_order.recommendation == 0">
                                             <div class="col">
@@ -1082,8 +1147,8 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                     <!-- Accountability -->
                     <?php if(isset($accountability_module) && $accountability_module) { ?>
                     <template>
-                    <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-3">
-                        <div class="m-portlet m-portlet--head-sm m-portlet--full-height">
+                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-3">
+                        <div class="m-portlet m-portlet--head-sm ">
                             <div class="m-portlet__head">
                                 <div class="m-portlet__head-caption">
                                     <div class="m-portlet__head-title">
@@ -1098,20 +1163,19 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                 </div>
                             </div>
                             <div class="m-portlet__body m-portlet__body--no-padding" id="accountability">
-                            <div class="m-widget1" v-if="!vm_acct.show">
-                            <div class="m-widget1__item">
-                            <div class="row align-items-center">
+                                <div class="m-widget1" v-if="!vm_acct.show">
+                                    <div class="m-widget1__item">
+                                        <div class="row align-items-center">
                                             <div class="col">
-                                                <button class="btn" id="showACCT" style="width: 100%; background-color: #564ec0;   "  ><h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                <h3 class="m-widget1__title" style="font-size: 10px !important; color: white;">
-                                                SHOW DATA
-                                                </h3>
+                                                <button class="btn w-100 btn-brand" id="showACCT" @click="getAccountability()">
+                                                    <span style="font-size: 10px !important; color: white; color: white;">
+                                                        SHOW DATA
+                                                    </span>
                                                 </button>
-
                                             </div>
                                         </div>
-                            </div>
-                            </div>
+                                    </div>
+                                </div>
                                 <div class="m-widget1" style="max-height: 600px; overflow-y: auto;" v-else>
                                     <div class="m-widget1__item" style="background: none;">
                                         <div class="row align-items-center" v-if="vm_acct.acct_note == null || vm_acct.acct_note == 0 || vm_acct.acct_note == ''">
@@ -1250,8 +1314,8 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                     <!-- Borrowing -->
                     <?php if(isset($borrowing_module) && $borrowing_module) { ?>
                     <template>
-                    <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-3">
-                        <div class="m-portlet m-portlet--head-sm m-portlet--full-height">
+                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-3">
+                        <div class="m-portlet m-portlet--head-sm ">
                             <div class="m-portlet__head">
                                 <div class="m-portlet__head-caption">
                                     <div class="m-portlet__head-title">
@@ -1266,19 +1330,19 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                 </div>
                             </div>
                             <div class="m-portlet__body m-portlet__body--no-padding" id="borrowing">
-                            <div class="m-widget1" v-if="!vm_borrowing.show">
-                            <div class="m-widget1__item">
-                            <div class="row align-items-center">
+                                <div class="m-widget1" v-if="!vm_borrowing.show">
+                                    <div class="m-widget1__item">
+                                        <div class="row align-items-center">
                                             <div class="col">
-                                                <button class="btn" id="showBORR" style="width: 100%; background-color: #564ec0;   "  ><h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                <h3 class="m-widget1__title" style="font-size: 10px !important; color: white;">
-                                                SHOW DATA
-                                                </h3>
+                                                <button class="btn w-100 btn-brand" id="showBORR" @click="getBorrowing()">
+                                                    <span style="font-size: 10px !important; color: white; color: white;">
+                                                        SHOW DATA
+                                                    </span>
                                                 </button>
                                             </div>
                                         </div>
-                            </div>
-                            </div> 
+                                    </div>
+                                </div> 
                                 <div class="m-widget1" v-else>
                                     <div class="m-widget1__item" v-if="vm_borrowing.approval_priv">
                                         <div class="row align-items-center" v-if="vm_borrowing.for_approval == 0">
@@ -1386,8 +1450,8 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                     <!-- Transmittal -->
                     <?php if(isset($tr_module) && $tr_module){ ?>
                     <template>
-                    <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-3">
-                        <div class="m-portlet m-portlet--head-sm m-portlet--full-height">
+                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-3">
+                        <div class="m-portlet m-portlet--head-sm ">
                             <div class="m-portlet__head">
                                 <div class="m-portlet__head-caption">
                                     <div class="m-portlet__head-title">
@@ -1402,21 +1466,19 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                 </div>
                             </div>
                             <div class="m-portlet__body m-portlet__body--no-padding" id="transmittal">
-
-                            <div class="m-widget1" v-if="!vm_transmittal.show">
-                            <div class="m-widget1__item">
-                            <div class="row align-items-center">
+                                <div class="m-widget1" v-if="!vm_transmittal.show">
+                                    <div class="m-widget1__item">
+                                        <div class="row align-items-center">
                                             <div class="col">
-                                                <button class="btn" id="showTRANS" style="width: 100%; background-color: #564ec0;   "  ><h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                <h3 class="m-widget1__title" style="font-size: 10px !important; color: white;">
-                                                SHOW DATA
-                                                </h3>
+                                                <button class="btn w-100 btn-brand" id="showTRANS" @click="getTransmittal()">
+                                                    <span style="font-size: 10px !important; color: white; color: white;">
+                                                        SHOW DATA
+                                                    </span>
                                                 </button>
                                             </div>
                                         </div>
-                            </div>
-                            </div>
-
+                                    </div>
+                                </div>
                                 <div class="m-widget1" v-else>
                                     <div class="m-widget1__item">
                                         <div class="row align-items-center" v-if="vm_transmittal.for_approval == 0">
@@ -1483,8 +1545,8 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                     <!-- Shipping -->
                     <?php if(isset($ship_module) && $ship_module) { ?>
                     <template>
-                    <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-3">
-                        <div class="m-portlet m-portlet--head-sm m-portlet--full-height">
+                    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-3">
+                        <div class="m-portlet m-portlet--head-sm ">
                             <div class="m-portlet__head">
                                 <div class="m-portlet__head-caption">
                                     <div class="m-portlet__head-title">
@@ -1499,22 +1561,20 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                 </div>
                             </div>
                             <div class="m-portlet__body m-portlet__body--no-padding" id="shipping">
-                            
-                            <div class="m-widget1" v-if="!vm_shipping.show">
-                            <div class="m-widget1__item">
-                            <div class="row align-items-center">
+                                <div class="m-widget1" v-if="!vm_shipping.show">
+                                    <div class="m-widget1__item">
+                                        <div class="row align-items-center">
                                             <div class="col">
-                                                <button class="btn" id="showSA" style="width: 100%; background-color: #564ec0;   "  ><h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                <h3 class="m-widget1__title" style="font-size: 10px !important; color: white;">
-                                                SHOW DATA
-                                                </h3>
+                                                <button class="btn w-100 btn-brand" id="showSA" @click="getShipping()">
+                                                    <span style="font-size: 10px !important; color: white; color: white;">
+                                                        SHOW DATA
+                                                    </span>
                                                 </button>
                                             </div>
                                         </div>
-                            </div>
-                            </div>
-                            
-                            <div class="m-widget1" v-else>
+                                    </div>
+                                </div>
+                                <div class="m-widget1" v-else>
                                     <div class="m-widget1__item">
                                         <div class="row align-items-center" v-if="vm_shipping.for_approval == 0">
                                             <div class="col">
