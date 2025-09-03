@@ -891,12 +891,13 @@
                 $conn = $this->conn("gcctimeutility");
                 
                 $sql = "SELECT * FROM gcctimeutility.app_version 
-                        WHERE app_name = :appname 
+                        WHERE app_name = :appname AND app_version = :appversion
                         ORDER BY released_dt DESC 
                         LIMIT 1";
                 
                 $stmt = $conn->prepare($sql);
                 $stmt->bindParam(':appname', $appname, PDO::PARAM_STR);
+                $stmt->bindParam(':appversion', $appversion, PDO::PARAM_STR);
                 $stmt->execute();
                 
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);

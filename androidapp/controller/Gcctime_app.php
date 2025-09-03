@@ -82,5 +82,34 @@
             $data = $this->GCCTIME_EFORM->appVersionv311();
             echo $data;
         }
+        public function travel_order_data(){
+            $data = $this->GCCTIME_EFORM->getEmployeeTravelOrder();
+            echo $data;
+        }
+
+
+
+        
+        // public function travel_order_data(){
+        //     $driver = '1159';
+        //     $employee = '2308';
+        //     $data = $this->GCCTIME_EFORM->getEmployeeTravelOrder($employee, '2025-09-02', true);
+        //     foreach($data as $row) {
+        //         $dateTime = date("Y-m-d H:i:s");
+        //         $dateFrom = date("Y-m-d H:i:s", strtotime("-30 minutes", strtotime($row['date_from'])));
+        //         $dateTo = date("Y-m-d H:i:s", strtotime("+1 hour", strtotime($row['date_to'])));
+        //         if(strtotime($dateTime) >= strtotime($dateFrom) && strtotime($dateTime) <= strtotime($dateTo)){
+        //             echo "pasok";
+        //             var_dump($dateFrom, $dateTo, $dateTime);
+        //             break;
+        //         }else{
+        //             echo "di pasok";
+        //             break;
+        //         }
+        //     }
+        //     //var_dump($data);
+        // }
+
+
     }
 ?>

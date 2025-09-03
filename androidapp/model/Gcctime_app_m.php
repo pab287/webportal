@@ -565,13 +565,15 @@
                 $params['time_status'],
                 $params['location_id'],
                 $params['polygon'],
+                $params['to_id'],
+                $params['to_ref'],
             )) {
                 $conn = $this->conn('gcctimeutility');
                 $stmt = $conn->prepare('
                     INSERT INTO gcctimeutility.app_attendance
-                    (biometric_id, state, time, date, address, longtitude, latitude, is_fingerprint, time_status,location_id, polygon)
+                    (biometric_id, state, time, date, address, longtitude, latitude, is_fingerprint, time_status,location_id, polygon, to_id, to_ref)
                     VALUES
-                    (:biometric_id, :state, :time, :date, :address, :longtitude, :latitude, :is_fingerprint, :time_status, :location_id, :polygon)
+                    (:biometric_id, :state, :time, :date, :address, :longtitude, :latitude, :is_fingerprint, :time_status, :location_id, :polygon, :to_id, :to_ref)
                 ');
 
                 $stmt->bindParam(':biometric_id', $params['biometric_id']);
@@ -585,6 +587,8 @@
                 $stmt->bindParam(':time_status', $params['time_status']);
                 $stmt->bindParam(':location_id', $params['location_id']);
                 $stmt->bindParam(':polygon', $params['polygon']);
+                $stmt->bindParam(':to_id', $params['to_id']);
+                $stmt->bindParam(':to_ref', $params['to_ref']);
                 $stmt->execute();
                 $resultId = $conn->lastInsertId();
             }
@@ -814,12 +818,12 @@
                         $result['user_teleg_id'] = $this->get_chatId_teleg($emp_id);
                     }
                 }
-                $temp['head_telegram_chat_id'] = '7140544745';
+
+                // for payroll
+                $temp['head_telegram_chat_id'] = '6190181690';
 
                 $this->telegram($result, $remarks, $time_status, $date_time, $name, $bio_num, $latitude, $longitude, $geo_status);
-                // for payroll
                 $this->telegram($temp, $remarks, $time_status, $date_time, $name, $bio_num, $latitude, $longitude, $geo_status);
-
                 $this->sendSMS($result, $remarks, $time_status, $date_time, $name, $geo_status);
             }
         }
@@ -864,11 +868,11 @@
                 $mapUrl = "https://www.google.com/maps?q={$latitude},{$longitude}";
 
                 $telegram_msg = '';
-                $telegram_msg  = "<b>" . strtoupper($name) . "</b>\n";
+                $telegram_msg  = "<b>Name</b>: " . strtoupper($name) . "\n";
                 $telegram_msg .= "<b>DateTime</b>: " . strtoupper($date_time) . "\n";
-                $telegram_msg .= "<b>Biometric#</b>: " . strtoupper($bio_num) . "\n";
+                $telegram_msg .= "<b>Biometric #</b>: " . strtoupper($bio_num) . "\n";
                 // $telegram_msg .= "<b>VerifyMethod</b>: " . "<b>". strtoupper($time_status)."</b>" . "$geo_msg\n";
-                $telegram_msg .= "<b>VerifyMethod</b>: " . "<b>". strtoupper($time_status)."</b>";
+                $telegram_msg .= "<b>VerifyMethod</b>: " . "<b>". strtoupper($time_status)."</b>\n";
                 $telegram_msg .= "<b>Remarks</b>: " . strtoupper($remarks)."\n\n";
                 $telegram_msg .= "<a href='$mapUrl'><b>View Location on Map</b></a>";
 
@@ -1196,7 +1200,7 @@
 
         private function getPolygon($id) {
             if (empty($id)) {
-                return null;
+                return serialize([]);
             }
             $conn = $this->conn("gcctimeutility");
             $sql = "SELECT geofence_polygon FROM gcctimeutility.app_location_sites WHERE id = :id";
@@ -1204,7 +1208,7 @@
             $data->bindParam(":id", $id);
             $data->execute();
             $row = $data->fetch(PDO::FETCH_ASSOC);
-            return $row ? $row['geofence_polygon'] : 'No Polygon Found';
+            return $row ? $row['geofence_polygon'] : serialize([]);
         }
 
         private function allowAppUser($id) {
@@ -1374,7 +1378,7 @@
                     $location = json_decode($log['location'], true);
                     $longitude = $location['longitude'];
                     $latitude = $location['latitude'];
-                    $site_id = isset($log['location_id']) ? $log['location_id'] : '';
+                    $site_id = isset($log['location_id']) ? $log['location_id'] : '0';
                     $polygon = $this->getPolygon($site_id);
                     $emp_id = $log['emp_id'];
                     $bio_num = $log['biometric'];
@@ -1525,7 +1529,6 @@
             $msg = "";
             $status = 2;
             $token = isset($_POST['token']) ? $_POST['token'] : '';
-            
             $required = ['biometric_id', 'emp_id', 'coords'];
             $missing = array_filter($required, fn($f) => empty($_POST[$f]));
             if ($missing) {
@@ -1535,8 +1538,10 @@
         
             $bio = $_POST['biometric_id'];
             $emp = $_POST['emp_id'];
-            $tokenStatus = $this->checkToken($emp, $token);
 
+            // $tokenStatus = $this->checkToken($emp, $token);
+
+            $tokenStatus = true;
 
             $time_status = isset($_POST['time_status']) ? $_POST['time_status'] : '';
             $site_id = isset($_POST['location_id']) ? $_POST['location_id'] : 0;
@@ -1582,8 +1587,31 @@
             if ($interval && $max_time >= $time) {
                 $status = 4;
             }
+            
+            $has_travel_order = $this->getEmployeeTravelOrder($emp, $date, $token, true);
 
-            if ($status === 0 || !$isAllowed || $status === 4 || !$tokenStatus) {
+            $currentDateTime = strtotime("$date $time");
+            $isWithinTravelOrder = false;
+            $to_ref = '';
+            $to_id = 0;
+            
+            foreach ($has_travel_order as $order) {
+                $dateFrom = strtotime($order['date_from'] . ' -30 minutes');
+                $dateTo   = strtotime($order['date_to']   . ' +30 minutes');
+            
+                if ($currentDateTime >= $dateFrom && $currentDateTime <= $dateTo) {
+                    $isWithinTravelOrder = true;
+                    $to_ref = $order['reference_no'];
+                    $to_id  = $order['id'];
+                    break;
+                }
+            }
+
+            if (!$isWithinTravelOrder && ($geo_status === 1 || $geo_status === 2)) {
+                $status = 5;
+            }
+
+            if ($status === 0 || !$isAllowed || $status === 4 || !$tokenStatus || $status === 5) {
                 if ($status === 4) {
                     $msg = "Re-logged within 1-minute interval";
                 }
@@ -1594,6 +1622,12 @@
                 if (!$tokenStatus) {
                     $status = 3;
                     $msg = "Invalid token.";
+                }
+                if($status === 5 && !empty($has_travel_order)){
+                    $msg = "Your travel order is not valid at this time.\nYou may only log outside the assigned site location within the approved Travel Order date and time.";
+                }
+                if($status === 5 && empty($has_travel_order)){
+                    $msg = "You don't have privilege to punch outside the assigned site location.";
                 }
 
                 $this->saveLogs("error", 'time '.$time_status, $emp, "[Mobile] $msg");
@@ -1612,6 +1646,8 @@
                 'time_status' => $time_status,
                 'location_id' => $site_id,
                 'polygon' => $polygon,
+                'to_id' => $to_id,
+                'to_ref' => $to_ref,
             ];
 
             $insertedID = $this->addAppAttendanceRecordv311($data);
@@ -2011,7 +2047,9 @@
                 $conn = $this->conn("gcctimeutility");
                 
                 $sql = "SELECT * FROM gcctimeutility.app_version 
-                        WHERE app_name = :appname AND app_version = :appversion LIMIT 1";
+                        WHERE app_name = :appname AND app_version = :appversion
+                        ORDER BY released_dt DESC 
+                        LIMIT 1";
                 
                 $stmt = $conn->prepare($sql);
                 $stmt->bindParam(':appname', $appname, PDO::PARAM_STR);
@@ -2215,6 +2253,126 @@
             return true;
 
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // Travel order
+
+
+
+
+        
+    public function getEmployeeTravelOrder($employeeId = null, $date=null, $token = null, $array = false){
+        $employeeId = isset($_POST['emp_id']) ? $_POST['emp_id'] : $employeeId;
+        // $token = isset($_POST['tk']) ? $_POST['tk'] : $token;
+        $date = isset($_POST['date']) ? $_POST['date'] :  $date;
+        // $validate_token = $this->checkToken($employeeId, $token);
+        $status = true;
+
+        // if (!$validate_token) {
+        //     $this->saveLogs("error", "travel", $employeeId, "[Mobile] missing token");
+        //     $msg = "Invalid token to get travel order.";
+        //     return json_encode(["status" => $status, "msg" => $msg]);
+        // }
+
+
+        $resultset = array();
+        if($employeeId && $date){
+        $arrTravelId = $this->getTravelOrderDriverById($employeeId);
+        $arrPersonnelId = $this->getTravelOrderPersonnelById($employeeId);
+        $travelIds = array_merge($arrTravelId, $arrPersonnelId);
+        if(is_array($travelIds) && !empty($travelIds)){
+            $travelIds = array_unique($travelIds);
+            $tempDate = date('Y-m-d', strtotime($date));
+            $destinations = $this->getTravelOrderDestination($travelIds, $tempDate);
+            if(is_array($destinations) && !empty($destinations)){
+            $ids = array_column($destinations, 'id');
+            $uniqueIds = array_unique($ids);
+            $cData = array_intersect_key($destinations, $uniqueIds);
+            $resultset = array_values($cData);
+            }
+        }
+        }
+        return $array ? $resultset : json_encode($resultset);
+    }
+
+    protected function getTravelOrderDestination($travelIds = array(), $tempDate = null){
+        $arrData = array();
+        if(is_array($travelIds) && !empty($travelIds) && $tempDate){
+        $whereIn = implode(',', $travelIds);
+        $conn = $this->conn();
+        $sth = $conn->prepare("SELECT t.id, t.reference_no, t.created_dt, td.date_from, td.date_to, t.company, t.department, td.purpose, td.destination
+        FROM gcceforms.travel_destination as td
+        INNER JOIN gcceforms.travel_order as t ON td.travel_order_id = t.id
+        WHERE t.id IN (:id) OR (DATE(td.date_from) <= :_date AND DATE(td.date_to) >= :_date)
+        OR (DATE(td.date_from) >= :_date AND DATE(td.date_to) <= :_date)
+        AND t.status = 'Approved'");
+        $sth->bindParam(':id', $whereIn, PDO::PARAM_INT);
+        $sth->bindParam(':_date', $tempDate, PDO::PARAM_STR);
+        $sth->execute();
+        if($sth->rowCount() > 0){
+            foreach($sth->fetchAll(PDO::FETCH_ASSOC) as $row ){
+            if($this->insertTravelData($row, $travelIds, $tempDate)){ $arrData[] = $row; }
+            }
+        }
+        }
+        return $arrData;
+    }
+
+    protected function insertTravelData($row = array(), $travelIds = array(), $tempDate = null){
+        if(in_array($row['id'], $travelIds)){
+            $dtFrom = date('Y-m-d', strtotime($row['date_from']));
+            $dtTo = date('Y-m-d', strtotime($row['date_to']));
+            if(strtotime($tempDate) >= strtotime($dtFrom) && strtotime($tempDate) <= strtotime($dtTo)){
+                return $row;
+            }
+        }
+    }
+
+    protected function getTravelOrderDriverById($id=0) {
+        $arrIds = array();
+        $conn = $this->conn();
+        $sth = $conn->prepare("SELECT id FROM gcceforms.travel_order WHERE driver_id = :id AND status = 'Approved'");
+        $sth->bindParam(':id', $id, PDO::PARAM_INT);
+        $sth->execute();
+        if($sth->rowCount() > 0){
+        foreach($sth->fetchAll(PDO::FETCH_ASSOC) as $row ){ $arrIds[] = intval($row['id']); }
+        }
+        return $arrIds;
+    }
+
+    protected function getTravelOrderPersonnelById($id=0) {
+        $arrIds = array();
+        $conn = $this->conn();
+        $sth = $conn->prepare("SELECT tp.travel_order_id FROM gcceforms.travel_personnel as tp
+        INNER JOIN gcceforms.travel_order as `to` ON tp.travel_order_id = to.id
+        WHERE tp.employee_id = :id AND to.status = 'Approved'");
+        $sth->bindParam(':id', $id, PDO::PARAM_INT);
+        $sth->execute();
+        if($sth->rowCount() > 0){
+        foreach($sth->fetchAll(PDO::FETCH_ASSOC) as $row ){ $arrIds[] = intval($row['travel_order_id']); }
+        }
+        return $arrIds;
+    }
+    
 
 
 
