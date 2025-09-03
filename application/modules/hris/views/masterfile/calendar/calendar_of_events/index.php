@@ -68,7 +68,7 @@
                     </li>
                     <li class="nav-item m-tabs__item">
                         <a class="nav-link m-tabs__link" data-toggle="tab"
-                           href="#calender-view-tab" role="tab" onclick="CalendarBasic.init();">
+                           href="#calender-view-tab" role="tab">
                             CALENDAR VIEW
                         </a>
                     </li>
@@ -133,7 +133,6 @@
                         </table>
                     </div>
                 </div>
-
                 <div class="tab-pane" id="calender-view-tab">
                     <div id="m_calendar" class="fc fc-unthemed fc-ltr"></div>
                 </div>

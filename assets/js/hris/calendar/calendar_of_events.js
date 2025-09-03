@@ -352,7 +352,7 @@ function deleteArchive(id){
     });
 }
 
-console.log(_tempContentData);
+
 
 const CalendarBasic = function () {
     let calendarInitialized = false;
@@ -458,3 +458,11 @@ const CalendarBasic = function () {
         }
     };
 }();
+
+$('a[data-toggle="tab"][href="#calender-view-tab"]').on('shown.bs.tab', function () {
+    if ($('#m_calendar').data('fullCalendar')) {
+        $('#m_calendar').fullCalendar('render');
+    } else {
+        CalendarBasic.init();
+    }
+});
