@@ -9,7 +9,7 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
         processing: true,
         searching: false,
         ordering: true,
-        // order: [[0, 'asc']],
+        order: [[3, 'desc']],
         ajax: {
             url: baseUrl('hris/calendar/get_events_tabular'),
             type: 'post',
@@ -19,16 +19,13 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
                 d.search['value'] = $("#search-holidays").val();
                 d.search['filter_year'] = $('#filter-year').val();
             },
-            // success: function(res) {
-            //     console.log('DataTables AJAX response:', res);
-            // }
         },
         columns: [
             { data: 'id', name: 'id', visible: false },
             { data: 'event_title' },
             { data: 'description' },
             { 
-                data: null, 
+                data: "event_to", 
                 name: 'event_venue',
                 render: function(data, type, row) {
                     let venue = row.event_venue ? row.event_venue : "No Venue";
@@ -51,7 +48,7 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
                 }
             },
             { 
-                data: null, 
+                data: null, orderable: false,
                 render: function(data, type, row) {
                     if (!row.speakers || row.speakers.length === 0) {
                         return '<span class="text-muted">No speakers</span>';
@@ -243,6 +240,7 @@ function onEditEvent(id) {
     selectedEventData.date = moment(rowData.event_from).format("MMM DD, YYYY") 
     + " - " + moment(rowData.event_to).format("MMM DD, YYYY");
     editEventVue.eventsData = JSON.parse(JSON.stringify(rowData));
+    $("#btnEdit").show();
     $("#edit-events-modal").modal("show");
 }
 
@@ -356,79 +354,54 @@ function deleteArchive(id){
 
 const CalendarBasic = function () {
     let calendarInitialized = false;
-    
     return {
         init: function () {
             if (calendarInitialized) {
                 $('#m_calendar').fullCalendar('render');
                 return;
             }
-            
-            const todayDate = moment().startOf('day');
-            const YM = todayDate.format('YYYY-MM');
-            const YESTERDAY = todayDate.clone().subtract(1, 'day').format('YYYY-MM-DD');
-            const TODAY = todayDate.format('YYYY-MM-DD');
-            const TOMORROW = todayDate.clone().add(1, 'day').format('YYYY-MM-DD');
-
             holidayCalendar = $('#m_calendar')
                 .fullCalendar({
                     header: {
                         left: 'prev,next today',
                         center: 'title',
-                        right: 'month,agendaDay,listYear'
+                        right: 'month'
                     },
-                    // Hide time display in month view
                     displayEventTime: false,
                     
                     events: _tempContentData.events,
-
-                    dayClick: function (date, jsEvent, view) {
-                        openAddHolidayModal(date.format());
-                    },
 
                     eventClick: function (calEvent, jsEvent, view) {
                         openEditHolidayModal(calEvent);
                     },
 
-                    eventDrop: function (info) {
-                        updateOnDragDone(info);
-                    },
-
                     eventRender: function(event, element) {
-                        // Remove default time display
                         element.find('.fc-time').remove();
-                        
-                        // Get speakers info
                         const speakers = event.speakers || [];
                         const speakerNames = speakers.map(speaker => speaker.speaker_name).join(', ');
-                        
-                        // Create custom event content using Metronic 5 classes
                         const customContent = `
                             <div class="m-widget4__item-wrapper">
-                                <div class="m-widget4__item-title m--font-boldest" style="color: white; font-size: 11px;">
+                                <div class="m-widget4__item-title m--font-boldest mb-1" style="color: white; font-size: 1.2em;">
                                     ${event.title}
                                 </div>
-                                <div class="m-widget4__item-desc" style="color: rgba(255,255,255,0.8); font-size: 9px;">
-                                    <span class="m-badge m-badge--white m-badge--pill m-badge--xs m--margin-right-5">
-                                        <i class="la la-map-marker"></i>
+                                <div class="m-widget4__item-desc mb-1" style="color: rgba(255,255,255,0.8); font-size: 1em;">
+                                    <span class=" m--margin-right-5">
+                                        <i class="la la-map-marker"></i> ${event.venue}
                                     </span>
-                                    ${event.venue}
+                                   
                                 </div>
                                 ${speakers.length > 0 ? `
-                                <div class="m-widget4__item-desc" style="color: rgba(255,255,255,0.7); font-size: 8px;">
-                                    <span class="m-badge m-badge--white m-badge--pill m-badge--xs m--margin-right-5">
-                                        <i class="la la-user"></i>
+                                <div class="m-widget4__item-desc mb-1" style="color: rgba(255,255,255,0.7); font-size: 1em;">
+                                    <span class="m--margin-right-5">
+                                        <i class="la la-user"></i> ${speakerNames}
                                     </span>
-                                    ${speakerNames}
+                                   
                                 </div>` : ''}
                             </div>
                         `;
                         
-                        // Replace the event content
                         element.find('.fc-content').html(customContent);
-                        
-                        // Add custom tooltip with full speaker details
-                        let tooltipText = `${event.description}\nVenue: ${event.event_venue}`;
+                        let tooltipText = `${event.description}\nVenue: ${event.venue}`;
                         if (speakers.length > 0) {
                             tooltipText += '\nSpeakers:\n';
                             speakers.forEach(speaker => {
@@ -436,8 +409,6 @@ const CalendarBasic = function () {
                             });
                         }
                         element.attr('title', tooltipText);
-                        
-                        // Add Metronic classes and styling
                         element.addClass('m-portlet__body m--padding-5');
                         element.css({
                             'border-radius': '4px',
@@ -453,11 +424,16 @@ const CalendarBasic = function () {
                         }
                     },
                 });
-                
             calendarInitialized = true;
         }
     };
 }();
+
+$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+    var target = $(e.target).attr("href");
+    $('.tab-pane').removeClass('active show');
+    $(target).addClass('active show');
+});
 
 $('a[data-toggle="tab"][href="#calender-view-tab"]').on('shown.bs.tab', function () {
     if ($('#m_calendar').data('fullCalendar')) {
@@ -466,3 +442,18 @@ $('a[data-toggle="tab"][href="#calender-view-tab"]').on('shown.bs.tab', function
         CalendarBasic.init();
     }
 });
+
+function openEditHolidayModal(event) {
+    const data = {
+        id: event.id,
+        event_title: event.title,
+        event_from: event.start ? event.start.format() : null,
+        event_to: event.end ? event.end.format() : null,
+        description: event.description || "",
+        event_venue: event.venue || "",
+        speakers: event.speakers || [],
+    };
+    editEventVue.eventsData = JSON.parse(JSON.stringify(data));
+    $("#edit-events-modal").modal("show");
+    $("#btnEdit").hide();
+}

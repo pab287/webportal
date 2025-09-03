@@ -4,45 +4,39 @@
     }
 
     .fc-time {
-    display: none !important;
-}
-
-/* Improve hover effects using Metronic shadow utilities */
-.fc-event:hover {
-    box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2) !important;
-    transform: translateY(-1px);
-    transition: all 0.3s ease;
-}
-
-/* Improve month view event display */
-.fc-month-view .fc-event {
-    margin-bottom: 1px;
-    min-height: 22px;
-    border: none !important;
-}
-
-/* Override Metronic widget spacing for calendar events */
-.fc-event .m-widget4__item-wrapper {
-    padding: 3px 5px !important;
-}
-
-/* Adjust Metronic badges in calendar events */
-.fc-event .m-badge {
-    font-size: 8px !important;
-    padding: 1px 3px !important;
-    vertical-align: middle;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .fc-event .m-widget4__item-title {
-        font-size: 10px !important;
+        display: none !important;
     }
-    
-    .fc-event .m-widget4__item-desc {
-        font-size: 8px !important;
+
+    .fc-content{
+        padding-top: 10px !important;
+        padding-left: 10px !important;
     }
-}
+
+    .fc-event:hover {
+        box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2) !important;
+        transform: translateY(-1px);
+        transition: all 0.3s ease;
+    }
+
+    .fc-unthemed .fc-event.fc-start .fc-content:before{
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .fc-event .m-widget4__item-title {
+            font-size: 10px !important;
+        }
+        
+        .fc-event .m-widget4__item-desc {
+            font-size: 8px !important;
+        }
+    }
+    .tab-pane {
+        display: none;
+    }
+    .tab-pane.active {
+        display: block;
+    }
 </style>
 <div class="m-content">
     <div class="m-portlet" id="m_portlet">
@@ -88,7 +82,7 @@
         </div>
         <div class="m-portlet__body">
             <div class="tab-content">
-                <div class="tab-pane active" id="list-view-tab">
+                <div class="tab-pane active" id="list-view-tab" role="tabpanel">
                     <div class="row m--margin-top-20 m--margin-bottom-30">
                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                             <button type="button" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#addNewEvent">
@@ -133,7 +127,7 @@
                         </table>
                     </div>
                 </div>
-                <div class="tab-pane" id="calender-view-tab">
+                <div class="tab-pane" id="calender-view-tab" role="tabpanel">
                     <div id="m_calendar" class="fc fc-unthemed fc-ltr"></div>
                 </div>
             </div>
@@ -274,7 +268,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary btnSave" v-if="!disabled"><i class="la la-check mr-2"></i>SAVE</button>
-                    <button type="button" class="btn btn-warning text-white btnEdit" @click="!disabled ? disabled = true : disabled = false" :hidden="!disabled"><i class="la la-clipboard mr-2" ></i>EDIT</button>
+                    <button id="btnEdit" type="button" class="btn btn-warning text-white btnEdit" @click="!disabled ? disabled = true : disabled = false" :hidden="!disabled"><i class="la la-clipboard mr-2" ></i>EDIT</button>
                     <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CLOSE</button>
                 </div>
             </form>
