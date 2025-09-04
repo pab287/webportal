@@ -821,7 +821,7 @@
 
                 // for payroll
                 $data_teleg = $this->telegram_config_if_exist('gcctime_new');
-                if($data_teleg['telegram_chat_id'] != null){
+                if($data_teleg['telegram_chat_id'] != null && $result['head_telegram_chat_id'] != null && $data_teleg['telegram_chat_id'] != $result['head_telegram_chat_id']){
                     $temp['head_telegram_chat_id'] = $data_teleg['telegram_chat_id'];
                     $this->telegram($temp, $remarks, $time_status, $date_time, $name, $bio_num, $latitude, $longitude, $geo_status);
                 }
@@ -834,7 +834,7 @@
         public function telegram_config_if_exist($module) {
             $conn = $this->conn();
 
-            $query = "SELECT telegram_bot_token FROM gcceforms.telegram_config 
+            $query = "SELECT telegram_bot_token, telegram_chat_id FROM gcceforms.telegram_config 
                         WHERE module = :module";
             $sth = $conn->prepare($query);
             $sth->bindParam(':module', $module, PDO::PARAM_STR);
@@ -1325,12 +1325,6 @@
         }
 
 
-
-
-
-
-
-
         public function timeLogOfflinev311() {
 
             $emp_id = isset($_POST['emp_id']) ? $_POST['emp_id'] : null;
@@ -1626,7 +1620,7 @@
                     $msg = "Invalid token.";
                 }
                 if($status === 5 && !empty($has_travel_order)){
-                    $msg = "Your travel order is not valid at this time.\nYou may only log outside the assigned site location within the approved Travel Order date and time.";
+                    $msg = "Your travel order is not valid at this time.\nYou may only log outside the assigned site location within the approved Travel Order date and time.\n\n30 minutes before the start (date and time) and 30 minutes after the end (date and time) of the travel order.";
                 }
                 if($status === 5 && empty($has_travel_order)){
                     $msg = "You don't have privilege to punch outside the assigned site location.";
@@ -1658,6 +1652,8 @@
                 $this->saveLogs("error", 'time '.$time_status, $emp, "[Mobile] Error saving record");
                 $status = 3;
                 $msg = "Error in saving 'time '.$time_status";
+            }else{
+                $isWithinTravelOrder ? $msg = "has been successfully saved.\n\nT.O Reference #: $to_ref " : $msg = "has been successfully saved.";
             }
 
             $this->getSupervisorManager($emp, "Outside Assigned Site Location", $this->timeStatusString($time_status), $geo_status, $dateTime, $bio, $latitude, $longitude);
@@ -1958,7 +1954,7 @@
             $connzkt = $this->conn("zktime_logs");
             $array = array();
             
-            $appAttendance = $conn->prepare("SELECT id, state, time_status, biometric_id, latitude, longtitude, date, time, location_id, polygon
+            $appAttendance = $conn->prepare("SELECT id, state, time_status, biometric_id, latitude, longtitude, date, time, location_id, to_ref, polygon
                                     FROM gcctimeutility.app_attendance
                                     WHERE biometric_id = :biometric_id AND date >= CURDATE() - INTERVAL 30 DAY");
             
@@ -1977,6 +1973,7 @@
                 $list['state'] = ($row['state'] === '' || $row['state'] === '0') ? 'in' : 'out';
                 $list['log_device'] = 'app';
                 $list['site_name'] = $this->locationId($row['location_id']);
+                $list['to_ref'] = $row['to_ref'];
                 $list['polygon'] = unserialize($row['polygon']) ? unserialize($row['polygon']) : '';
                 array_push($array, $list);
             }
@@ -2000,6 +1997,7 @@
                 $list['state'] = 'in';
                 $list['log_device'] = 'bio';
                 $list['site_name'] = '';
+                $list['to_ref'] = '';
                 $list['polygon'] = '';
                 array_push($array, $list);
             }
@@ -2083,11 +2081,6 @@
             return json_encode(["status" => $status, "msg" => $msg, "app_version" => $appVersion, "app_url" => $appUrl]);
 
         }
-
-
-
-
-
 
         /*** ------------------------------------------100 meter radius polygon near pin ------------------------------------------------***/
         // Haversine formula to compute distance in meters
@@ -2256,28 +2249,7 @@
 
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         // Travel order
-
 
     private function getEmployeeTO($employeeId = null, $date=null){
         $resultset = array();
@@ -2391,11 +2363,6 @@
         }
         return $arrIds;
     }
-    
-
-
-
-
 
     }
 
