@@ -8,6 +8,7 @@ class Accountability_m extends CI_Model {
     protected $vehicleTable = "gccasset.vehicles";
     protected $borrTable = "gcceforms.borrowing";
     protected $borrBodyTable = "gcceforms.borrowing_body";
+    protected $user_data;
 
     public function __construct() {
         parent::__construct();
@@ -3758,23 +3759,15 @@ class Accountability_m extends CI_Model {
         $query->received_by = $this->receivedBy();
         $query->company = is_numeric($query->company) ? $this->getCompany($query->company) : $query->company;
         $query->department = is_numeric($query->department) ? $this->getDepartment($query->department) : $query->department;
-        // if (is_numeric($query->company)) {
-        //     $query->company = $this->getCompany($query->company);
-        // } else {
-        //     $query->company = $query->company;
-        // }
-
-        // if (is_numeric($query->department)) {
-        //     $query->department = $this->getDepartment($query->department);
-        // } else {
-        //     $query->department = $query->department;
-        // }
 
         $marked_returned = $this->marked_return_by($id);
         if ($marked_returned) {
             $query->marked_returned_by = ($marked_returned->marked_returned_by) ? $marked_returned->marked_returned_by : "";
             $query->marked_returned_dt = ($marked_returned->marked_returned_dt) ? $marked_returned->marked_returned_dt : "";
         }
+
+        $query->returned_by = $query->returned_by_detail;
+
         $dataArr[] = $query;
         $dataArr['data_body'] = $this->contentBodyDetail($id);
 
@@ -4745,6 +4738,7 @@ class Accountability_m extends CI_Model {
     
     function returnAccountability($id) {
         $tempRs = (array) $this->user_data;
+        $empId = $tempRs['emp_id'];
         $fullname = $this->core_layout->getDisplayName($tempRs);
         $tempFullname = (object)$fullname;
         $session_data = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
@@ -4800,6 +4794,23 @@ class Accountability_m extends CI_Model {
                 }
             }
         }
+
+        $total_no_of_items = $this->db->select('COUNT(id) as items')->get_where('gcceforms.accountability_body', array('accountability_id' => $id))->row();
+        $total_no_of_items_returned = $this->db->select('COUNT(id) as returned')->get_where('gcceforms.accountability_body', array('accountability_id' => $id, 'is_returned' => 1))->row();
+        
+        if ((int)$total_no_of_items->items == (int)$total_no_of_items_returned->returned) {
+            $is_contractor = $this->db->select('is_contract, issued_to')->get_where('gcceforms.accountability', array('id' => $id));
+            $rows = $is_contractor->row();
+            $returned_id = $is_contractor->num_rows() > 0 ? $rows->issued_to : $empId;
+
+            $returned_data = array(
+                'returned_by' => $returned_id,
+                'returned_date' => $date
+            );
+
+            $this->db->update('gcceforms.accountability', $returned_data, array('id' => $id));
+        }
+
         $data = $this->contentDetail($id);
         $companyTo = $data[0]->company;
 
@@ -4808,7 +4819,7 @@ class Accountability_m extends CI_Model {
         return true;
     }
 
-    function undoReturnAccountability() {
+    function undoReturnAccountability($id) {
         $session_data = $this->user_data;
         date_default_timezone_set('Asia/Singapore');
         $date = date('Y-m-d H:i:s');
@@ -4859,6 +4870,13 @@ class Accountability_m extends CI_Model {
 
             }
         }
+
+        $returned_data = array(
+            'returned_by' => '', 
+            'returned_date' => '0000-00-00'
+        );
+        $this->db->update('gcceforms.accountability', $returned_data, array('id' => $id));
+
         return true;
     }
 

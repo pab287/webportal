@@ -143,6 +143,12 @@ $.ajax({
 
         $("#remarks").text(data[0].remarks);
 
+        if (data[0].returned_by) {
+            data[0].returned_date = moment(data[0].returned_date).format("MMMM DD, YYYY hh:mm a");
+        } else {
+            $("#emptyReturnedBy").text('N/A');
+        }
+
         vmAccountability.vmAccData = Object.assign({}, data[0])
         vmTab2.vm_tab2 = Object.assign({}, data[0]);
         vmTab2.vm_tab_content = Object.assign({}, data.data_body.data);

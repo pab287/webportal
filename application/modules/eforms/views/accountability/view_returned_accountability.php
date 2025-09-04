@@ -66,21 +66,21 @@
                                     <label class="col-md-3 co-lg-3 col-sm-3 col-xs-12 col-form-label">
                                         Issued to:
                                     </label>
-                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" v-if="vmAccData.is_contract == 1">
-                                        <span id=''>{{vmAccData.contractor}}</span> <span id=''>{{vmAccData.date_issued}}</span>
-                                    </div>
-                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" v-else>
-                                        <span id=''>{{vmAccData.display_name}}</span> <span id=''>{{vmAccData.date_issued}}</span>
+                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
+                                        <span id=''>{{vmAccData.is_contract == 1 ? vmAccData.contractor : vmAccData.display_name }}</span> <span id=''>{{vmAccData.date_issued}}</span>
                                     </div>
                                 </div>
                                 <br>
-                                <div class="form-group m-form__group row">
+                                <div class="form-group m-form__group row" id="returned-section">
                                     <label class="col-md-3 co-lg-3 col-sm-3 col-xs-12 col-form-label">
                                         Returned by:
                                     </label>
-                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12 row">
-                                        {{vmAccData.returned_by}}
+                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" v-if="vmAccData.returned_by">
+                                        <!-- {{vmAccData.returned_by}} -->
+                                        <b id="returnedBy"> {{ vmAccData.returned_by }}</b>
+                                        <p id="returnedDate"> {{ vmAccData.returned_date }}</p>
                                     </div>
+                                    <b id="emptyReturnedBy"></b>
                                 </div>
                             </div>
                             <div class="col-md-6 col-sm-12">
