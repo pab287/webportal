@@ -95,6 +95,15 @@
 											</span>
                                         </button>
                                     </div>
+                                    <div class="col-4">
+                                        <div id="filter-by-date-range" class="form-group m-0">
+                                            <div id="date-picker" class="input-group">
+                                                <input type="text" readonly="readonly" placeholder="SELECT DATE RANGE" id="date-range" name="date_range" data-validation="required" class="form-control m-input valid"> 
+                                                    <span class="input-group-addon"><i class="la la-calendar-check-o"></i>
+                                                    </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-xl-4 order-1 order-xl-2 m--align-right d-flex flex-row">

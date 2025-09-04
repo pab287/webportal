@@ -22,7 +22,8 @@ class Ticket extends MY_Controller {
         $this->core_layout->addJs("global/js/amcharts4/charts.js", true);
         $this->core_layout->addJs("global/js/amcharts4/maps.js", true);
         $this->core_layout->addJs("global/js/amcharts4/themes/animated.js", true);
-        $this->core_layout->addJs("js/ticket/index.js", true);
+        $tempData["responsibility"] = $this->ticket->select2CategoryData('responsibility');
+        $this->core_layout->addJs("js/ticket/index.js", true,$tempData,"?v=0.0.1");
         $this->load->view("core/templates/header");
         $this->load->view("ticket/dashboard");
         $this->load->view("core/templates/footer");
@@ -30,12 +31,15 @@ class Ticket extends MY_Controller {
 
     function tickets(){
         $this->core_layout->setPrivilegeName("ticket_masterfile");
+        $tempData["responsibility"] = $this->ticket->select2CategoryData('responsibility');
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
         $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', TRUE);
         $this->core_layout->addJs('js/querybuilder/query-builder.standalone.min.js', TRUE);
         $this->core_layout->setPageTitle("TICKET - Masterfile");
-        $this->core_layout->addJs("js/ticket/ticket.js", true);
+        $this->core_layout->addJs("js/ticket/ticket.js", true, $tempData,"?v=0.0.1");
         $this->core_layout->addJs("js/ticket/view_ticket.js",true);
 		$this->load->view('core/templates/header');
         $this->load->view('ticket/tickets');

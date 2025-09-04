@@ -1,5 +1,6 @@
 let params="";
 let ticket_vue = null;
+let dateRange = null;
 
 var getUrlParameter = function getUrlParameter(sParam) {
     var sPageURL = decodeURIComponent(window.location.search.substring(1)),
@@ -22,6 +23,9 @@ if(getUrlParameter('status') !== undefined){
 else if(getUrlParameter('priority') !== undefined){
     params = "?priority="+getUrlParameter('priority');
 }
+else if(getUrlParameter('assignee') !== undefined){
+    params = "?performed_by="+getUrlParameter('assignee');
+}
 
 let search_val = "";
 let query_builder = "";
@@ -39,6 +43,7 @@ let tbl = $("#table-tickets").DataTable({
             d.csrf_token = _csrf_hash;
             d.search['value'] = search_val;
             d.query_builder = query_builder;
+            d.date = {...dateRange};
         }
     },
     searching: false,
@@ -111,7 +116,7 @@ let tbl = $("#table-tickets").DataTable({
                 const formattedDate = moment(row.requested_date).format('MMM D, YYYY hh:mm A');
         
                 const status = row.status?.toLowerCase();
-                if (status === 'completed' || status === 'resolved') {
+                if (status === 'completed' || status === 'resolved' || status ==='cancelled') {
                     return formattedDate;
                 }
         
@@ -412,6 +417,16 @@ $(document).ready(function () {
                     data: [{id: '', text: ''},{id: 'low', text: 'Low'}, {id: 'medium', text: 'Medium'}, {id: 'high', text: 'High'}],
                  }
                 },
+                { id: 'responsibility', label: 'Responsible', type: 'string',
+                    input: 'select',
+                    plugin: 'select2',
+                    operators: ['equal', 'not_equal'],
+                    plugin_config: {
+                        placeholder: 'Select. .',
+                        width: '250px',
+                        data: _tempContentData.responsibility,
+                     }
+                },
             { id: 'message', label: 'Issue', type: 'string', operators: ['contains'] },
         ]
     });
@@ -543,3 +558,31 @@ function highlightStars(rating) {
         }
     });
 }
+
+$("#date-picker").daterangepicker({
+    maxDate: moment().format("MM/DD/YYYY"),
+    buttonClasses: 'm-btn btn',
+    applyClass: 'btn-primary',
+    cancelClass: 'btn-secondary',
+    locale: { format: 'MM/DD/YYYY' },
+    ranges: {
+        'All Time': [moment("2016-01-01"), moment()],
+        'Today': [moment(), moment()],
+        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+        'Last 30 Days': [moment().subtract(29, 'days'), moment()]
+    }
+}).on('apply.daterangepicker', function (ev, picker) {
+    $("#date-range").val(
+        picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY')
+    ).trigger('change');
+    dateRange = {
+        start: picker.startDate.format('YYYY-MM-DD'),
+        end: picker.endDate.format('YYYY-MM-DD')
+    };
+    tbl.ajax.reload();
+}).on('cancel.daterangepicker', function(ev, picker) {
+    $("#date-range").val('').trigger('change');
+    dateRange = null; 
+    tbl.ajax.reload();
+});

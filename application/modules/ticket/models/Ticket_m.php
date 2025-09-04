@@ -30,12 +30,13 @@ class Ticket_m extends CI_Model
         $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
+        $date = (isset($post["date"]) && $post["date"]) ? $post["date"] : null;
         $rowCount = 0;
         $rowData = array();
         $view_own_request = (in_array("view_own_request", $this->core_layout->getCurrentActions())) ? true : false;
         $payroll =  (in_array("payroll_ticket", $this->core_layout->getCurrentActions())) ? true : false;
-        $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll, $params);
-        $rowCount = $this->get_ticket_masterfile_count($search, $query_builder, $view_own_request, $payroll, $params);
+        $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll, $params, $date);
+        $rowCount = $this->get_ticket_masterfile_count($search, $query_builder, $view_own_request, $payroll, $params, $date);
 
         $totalNotFiltered = $rowCount;
 
@@ -46,7 +47,7 @@ class Ticket_m extends CI_Model
         return $resultset;
     }
 
-    public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll, $params){
+    public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll, $params, $date){
         $resultset = array();
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id, d.code as department, a.created_at");
@@ -58,14 +59,22 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->join("gcchris.tbldepartments as d" , "d.id = a.department_id", 'LEFT');
+        $this->db->where('a.created_at !=', '0000-00-00 00:00:00');
         if($params){
-            $allowed_fields = ['priority', 'status', 'category'];
+            $allowed_fields = ['priority', 'status', 'category', 'performed_by'];
             foreach($params as $field => $value) {
                 if(in_array($field, $allowed_fields)) {
                     $this->db->where("LOWER(a.$field)", strtolower($value));
                 }
             }
         }
+        if ($date && isset($date['start']) && isset($date['end'])) {
+            $start = date('Y-m-d', strtotime($date['start']));
+            $end   = date('Y-m-d', strtotime($date['end']));
+            $this->db->where('DATE(a.created_at) >=', $start);
+            $this->db->where('DATE(a.created_at) <=', $end);
+        }
+
         $current_user_id = $this->user_data['emp_id'];
         if($payroll) {
             $this->db->where('cat.name', 'payroll');
@@ -139,7 +148,7 @@ class Ticket_m extends CI_Model
         return $resultset;
     }
     
-    private function get_ticket_masterfile_count($search = null, $query_builder = null, $view_own_request, $payroll, $params){
+    private function get_ticket_masterfile_count($search = null, $query_builder = null, $view_own_request, $payroll, $params, $date){
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
@@ -149,15 +158,24 @@ class Ticket_m extends CI_Model
         $this->db->join("gccticket.category as prio" , "prio.name = a.priority", 'LEFT');
         $this->db->join("gccticket.category as stat" , "stat.name = a.status", 'LEFT');
         $this->db->join("gcchris.tbldepartments as d" , "d.id = a.department_id", 'LEFT');
+        $this->db->where('a.created_at !=', '0000-00-00 00:00:00');
         $this->db->where('a.is_archived', '0');
         if($params){
-            $allowed_fields = ['priority', 'status', 'category'];
+            $allowed_fields = ['priority', 'status', 'category', 'performed_by'];
             foreach($params as $field => $value) {
                 if(in_array($field, $allowed_fields)) {
                     $this->db->where("LOWER(a.$field)", strtolower($value));
                 }
             }
         }
+
+        if ($date && isset($date['start']) && isset($date['end'])) {
+            $start = date('Y-m-d', strtotime($date['start']));
+            $end   = date('Y-m-d', strtotime($date['end']));
+            $this->db->where('DATE(a.created_at) >=', $start);
+            $this->db->where('DATE(a.created_at) <=', $end);
+        }
+        
         // $this->db->where("LOWER(a.status) != 'cancelled'", NULL, FALSE);
         $current_user_id = $this->user_data['emp_id']; 
         if($payroll) {
@@ -1032,7 +1050,9 @@ class Ticket_m extends CI_Model
         ");
         $this->db->from("gccticket.ticket as a");
         $this->db->where('is_archived', 0);
-        // $this->db->where("LOWER(a.status) != 'cancelled'");
+        $this->db->where('a.status !=', 'cancelled');
+        $this->db->where('a.created_at >=', '2016-01-01 00:00:00');
+        $this->db->where('a.created_at <=', date('Y-m-d 23:59:59'));
         $query = $this->db->get();
         $result = $query->row_array();
         
@@ -1049,7 +1069,8 @@ class Ticket_m extends CI_Model
                 FROM gccticket.trail_logs_event
                 WHERE type = 'completed'
             ) completed_logs ON t.id = completed_logs.ticket_id
-            WHERE t.status = 'completed' AND t.is_archived = 0
+            WHERE t.status = 'completed' AND t.is_archived = 0 
+            AND t.created_at BETWEEN '2016-01-01 00:00:00' AND '".date('Y-m-d 23:59:59')."'
         ");
         
         $avg_result = $avg_completion_query->row_array();
@@ -1060,27 +1081,12 @@ class Ticket_m extends CI_Model
         $minutes = floor(($avg_seconds % 3600) / 60);
         $seconds = $avg_seconds % 60;
         
-        $formatted_avg_time = '';
-        
-        if ($days > 0) {
-            $formatted_avg_time .= $days . ($days == 1 ? "day " : "days ");
-        }
-        if ($hours > 0) {
-            $formatted_avg_time .= $hours . ($hours == 1 ? "hr " : "hrs ");
-        }
-        if ($minutes > 0) {
-            $formatted_avg_time .= $minutes . ($minutes == 1 ? "min " : "mins ");
-        }
-        if ($seconds > 0) {
-            $formatted_avg_time .= $seconds . ($seconds == 1 ? "sec" : "secs");
-        }
-        
-        if ($formatted_avg_time === '') {
-            $formatted_avg_time = "INVALID";
-        }
-        
-        // Trim trailing space
-        $formatted_avg_time = rtrim($formatted_avg_time);
+        $formatted_avg_time = [
+            "days"    => $days,
+            "hours"   => $hours,
+            "minutes" => $minutes,
+            "seconds" => $seconds,
+        ];
 
         $avg_response_query = $this->db->query("
             SELECT AVG(TIMESTAMPDIFF(SECOND, new_logs.created_at, completed_logs.created_at)) as avg_seconds
@@ -1095,7 +1101,7 @@ class Ticket_m extends CI_Model
                 FROM gccticket.trail_logs_event
                 WHERE type = 'in progress'
             ) completed_logs ON t.id = completed_logs.ticket_id
-            WHERE t.status = 'in progress' AND t.is_archived = 0
+            WHERE t.is_archived = 0
         ");
 
         $avg_response_result = $avg_response_query->row_array();
@@ -1106,26 +1112,13 @@ class Ticket_m extends CI_Model
         $response_minutes = floor(($avg_response_seconds % 3600) / 60);
         $response_seconds = $avg_response_seconds % 60;
         
-        $formatted_avg_response_time = '';
+        $formatted_avg_response_time = [
+            "days"    => $response_days,
+            "hours"   => $response_hours,
+            "minutes" => $response_minutes,
+            "seconds" => $response_seconds,
+        ];
         
-        if ($response_days > 0) {
-            $formatted_avg_response_time .= $response_days . ($response_days == 1 ? "day " : "days ");
-        }
-        if ($response_hours > 0) {
-            $formatted_avg_response_time .= $response_hours . ($response_hours == 1 ? "hr " : "hrs ");
-        }
-        if ($response_minutes > 0) {
-            $formatted_avg_response_time .= $response_minutes . ($response_minutes == 1 ? "min " : "mins ");
-        }
-        if ($response_seconds > 0) {
-            $formatted_avg_response_time .= $response_seconds . ($response_seconds == 1 ? "sec" : "secs");
-        }
-        
-        if ($formatted_avg_response_time === '') {
-            $formatted_avg_response_time = "INVALID";
-        }
-        
-        $formatted_avg_response_time = rtrim($formatted_avg_response_time);
         
         $data = [
             "widget" => [
@@ -1478,6 +1471,7 @@ class Ticket_m extends CI_Model
         $start_time = $start_date . ' 00:00:00';
         $end_time = $end_date . ' 23:59:59';
         $this->db->from("gccticket.ticket");
+        $this->db->where('created_at !=', '0000-00-00 00:00:00');
         $this->db->where("LOWER(status)", "open");
         $this->db->where("is_archived", 0);
         if(isset($post['all']) && $post['all'] == 'true'){
@@ -1496,7 +1490,8 @@ class Ticket_m extends CI_Model
         $end_time = $end_date . ' 23:59:59';
         $this->db->from("gccticket.ticket");
         $this->db->where("is_archived", 0);
-        // $this->db->where("LOWER(status) != 'cancelled'");
+        $this->db->where('created_at !=', '0000-00-00 00:00:00');
+        $this->db->where("LOWER(status) != 'cancelled'");
         if(isset($post['all']) && $post['all'] == 'true'){
             return $this->db->count_all_results();
         }
@@ -1512,10 +1507,9 @@ class Ticket_m extends CI_Model
         $start_time = $start_date . ' 00:00:00';
         $end_time = $end_date . ' 23:59:59';
         $this->db->from("gccticket.ticket");
+        $this->db->where('created_at !=', '0000-00-00 00:00:00');
         $this->db->where("LOWER(priority)", "high");
-        $this->db->where("LOWER(status) !=", "completed");
-        $this->db->where("LOWER(status) !=", "resolved");
-        $this->db->where("LOWER(status) !=", "cancelled");
+        $this->db->where("LOWER(status)", "open");
         $this->db->where("is_archived", 0);
         if(isset($post['all']) && $post['all'] == 'true'){
             return $this->db->count_all_results();
@@ -1540,6 +1534,7 @@ class Ticket_m extends CI_Model
          ");
         $this->db->from("gccticket.ticket");
         $this->db->where("is_archived", 0);
+        $this->db->where('created_at !=', '0000-00-00 00:00:00');
         if(isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']){
             $this->db->where("created_at >= ", $start_time);
             $this->db->where("created_at <= ", $end_time);
@@ -1580,6 +1575,7 @@ class Ticket_m extends CI_Model
                 $this->db->where("created_at >= ", $start_time);
                 $this->db->where("created_at <= ", $end_time);
             }
+            $this->db->where('created_at !=', '0000-00-00 00:00:00');
             $count = $this->db->count_all_results('gccticket.ticket');
             $categoryCounts[$category['name']] = (string)$count;
             
@@ -1603,6 +1599,7 @@ class Ticket_m extends CI_Model
          ");
         $this->db->from("gccticket.ticket");
         $this->db->where("is_archived", 0);
+        $this->db->where('created_at !=', '0000-00-00 00:00:00');
         // $this->db->where("status", "open");
         if(isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']){
             $this->db->where("created_at >= ", $start_time);
@@ -1624,8 +1621,8 @@ class Ticket_m extends CI_Model
         $end_date = isset($post['end']) ? $post['end'] : date('Y-m-d');
         $start_time = $start_date . ' 00:00:00';
         $end_time = $end_date . ' 23:59:59';
-    
-        $this->db->select("a.performed_by, 
+        $filter = isset($post['filter']) ? $post['filter'] : "all";
+        $this->db->select("a.performed_by, a.responsibility,
         COUNT(*) as ticket_count, 
         IF(a.performed_by = 0, 'Unassigned', CONCAT(
             b.firstname, ' ', b.lastname,
@@ -1639,14 +1636,17 @@ class Ticket_m extends CI_Model
         )) as name,
         SUM(CASE WHEN a.status = 'completed' THEN 1 ELSE 0 END) as completed,
         SUM(CASE WHEN a.status = 'open' THEN 1 ELSE 0 END) as open,
-        SUM(CASE WHEN a.status = 'in progress' THEN 1 ELSE 0 END) as in_progress,
-        SUM(CASE WHEN a.status = 'resolved' THEN 1 ELSE 0 END) as resolved");
+        SUM(CASE WHEN a.status = 'in progress' THEN 1 ELSE 0 END) as in_progress,");         // SUM(CASE WHEN a.status = 'resolved' THEN 1 ELSE 0 END) as resolved
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.performed_by", "LEFT");
         $this->db->where("a.is_archived", 0);
+        $this->db->where('a.created_at !=', '0000-00-00 00:00:00');
         // $this->db->where("a.status !=", "completed");
         $this->db->where("a.status !=", "cancelled");
-        // $this->db->where("a.status !=", "resolved");
+        $this->db->where("a.status !=", "resolved");
+        if ($filter != "all") {
+            $this->db->where("a.responsibility", $filter);
+        }
         $this->db->where("(b.employee_status = 'Active' OR a.performed_by = 0)");
     
         if (isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']) {
@@ -1660,7 +1660,7 @@ class Ticket_m extends CI_Model
     
         $employee_tickets = [];
         foreach ($result as $row) {
-            $employee_tickets[ucwords(strtolower($row['name']))] = ["total" => $row['ticket_count'], "completed" => $row['completed'], "open" => $row['open'], "in_progress" => $row['in_progress'], "resolved" => $row['resolved']];
+            $employee_tickets[ucwords(strtolower($row['name']))] = ["total" => $row['ticket_count'], "completed" => $row['completed'], "open" => $row['open'], "in_progress" => $row['in_progress'], "id" => $row['performed_by']];
         }
         return ["assigned" => $employee_tickets];
     }
@@ -1674,6 +1674,7 @@ class Ticket_m extends CI_Model
 
         $this->db->select("COUNT(*) as total, SUM(CASE WHEN status = 'completed' OR status = 'resolved' THEN 1 ELSE 0 END) as completed");
         $this->db->from("gccticket.ticket");
+        $this->db->where('created_at !=', '0000-00-00 00:00:00');
         $this->db->where("is_archived", 0);
 
         if (isset($post['start']) && $post['start'] && isset($post['end']) && $post['end']) {
@@ -1696,9 +1697,8 @@ class Ticket_m extends CI_Model
         $this->db->from('gccticket.ticket t');
         $this->db->join('(SELECT ticket_id, created_at FROM gccticket.trail_logs_event WHERE type = "new") nl', 't.id = nl.ticket_id');
         $this->db->join('(SELECT ticket_id, created_at FROM gccticket.trail_logs_event WHERE type = "completed") ip', 't.id = ip.ticket_id');
-        $this->db->where('t.status', 'completed');
+        $this->db->where('LOWER(t.status)', 'completed');
         $this->db->where('t.is_archived', 0);
-
         if(!isset($post['all']) || !$post['all'] == 'true'){
             $this->db->where('t.created_at >=', $start_date . ' 00:00:00');
             $this->db->where('t.created_at <=', $end_date . ' 23:59:59');
@@ -1712,27 +1712,15 @@ class Ticket_m extends CI_Model
         $minutes = floor(($avg_seconds % 3600) / 60);
         $seconds = $avg_seconds % 60;
         
-        $formatted_avg_time = '';
-           
-        if ($days > 0) {
-            $formatted_avg_time .= $days . ($days == 1 ? "day " : "days ");
-        }
-        if ($hours > 0) {
-            $formatted_avg_time .= $hours . ($hours == 1 ? "hr " : "hrs ");
-        }
-        if ($minutes > 0) {
-            $formatted_avg_time .= $minutes . ($minutes == 1 ? "min " : "mins ");
-        }
-        if ($seconds > 0) {
-            $formatted_avg_time .= $seconds . ($seconds == 1 ? "sec" : "secs");
-        }
+
+        $data = [
+            "days"    => $days,
+            "hours"   => $hours,
+            "minutes" => $minutes,
+            "seconds" => $seconds,
+        ];
         
-        if ($formatted_avg_time === '') {
-            $formatted_avg_time = "INVALID";
-        }
-           
-        $formatted_avg_time = rtrim($formatted_avg_time);
-        return $formatted_avg_time;
+        return $data;
     }
 
     public function getAveResponseTime(){
@@ -1744,7 +1732,7 @@ class Ticket_m extends CI_Model
         $this->db->from('gccticket.ticket t');
         $this->db->join('(SELECT ticket_id, created_at FROM gccticket.trail_logs_event WHERE type = "new") nl', 't.id = nl.ticket_id');
         $this->db->join('(SELECT ticket_id, created_at FROM gccticket.trail_logs_event WHERE type = "in progress") ip', 't.id = ip.ticket_id');
-        $this->db->where('t.status', 'in progress');
+        // $this->db->where('t.status', 'in progress');
         $this->db->where('t.is_archived', 0);
 
         if(!isset($post['all']) || !$post['all'] == 'true'){
@@ -1757,33 +1745,17 @@ class Ticket_m extends CI_Model
         $avg_response_result = $avg_response_query->row_array();
         $avg_response_seconds = isset($avg_response_result['avg_seconds']) ? $avg_response_result['avg_seconds'] : 0;
         
-        $response_days = floor($avg_response_seconds / 86400);
-        $response_hours = floor(($avg_response_seconds % 86400) / 3600);
-        $response_minutes = floor(($avg_response_seconds % 3600) / 60);
-        $response_seconds = $avg_response_seconds % 60;
-        
-        $formatted_avg_response_time = '';
-        
-        if ($response_days > 0) {
-            $formatted_avg_response_time .= $response_days . ($response_days == 1 ? "day " : "days ");
-        }
-        if ($response_hours > 0) {
-            $formatted_avg_response_time .= $response_hours . ($response_hours == 1 ? "hr " : "hrs ");
-        }
-        if ($response_minutes > 0) {
-            $formatted_avg_response_time .= $response_minutes . ($response_minutes == 1 ? "min " : "mins ");
-        }
-        if ($response_seconds > 0) {
-            $formatted_avg_response_time .= $response_seconds . ($response_seconds == 1 ? "sec" : "secs");
-        }
-        
-        if ($formatted_avg_response_time === '') {
-            $formatted_avg_response_time = "INVALID";
-        }
-        
-        $formatted_avg_response_time = rtrim($formatted_avg_response_time);
-    
-        return $formatted_avg_response_time;
+        $days = floor($avg_response_seconds / 86400);
+        $hours = floor(($avg_response_seconds % 86400) / 3600);
+        $minutes = floor(($avg_response_seconds % 3600) / 60);
+        $seconds = $avg_response_seconds % 60;
+        $data = [
+            "days"    => $days,
+            "hours"   => $hours,
+            "minutes" => $minutes,
+            "seconds" => $seconds,
+        ];
+        return $data;
     }
 
     function getExistingTicketPerUser(){
