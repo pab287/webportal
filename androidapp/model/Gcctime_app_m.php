@@ -820,10 +820,13 @@
                 }
 
                 // for payroll
-                $temp['head_telegram_chat_id'] = '6190181690';
-
+                $data_teleg = $this->telegram_config_if_exist('gcctime_new');
+                if($data_teleg['telegram_chat_id'] != null){
+                    $temp['head_telegram_chat_id'] = $data_teleg['telegram_chat_id'];
+                    $this->telegram($temp, $remarks, $time_status, $date_time, $name, $bio_num, $latitude, $longitude, $geo_status);
+                }
+                
                 $this->telegram($result, $remarks, $time_status, $date_time, $name, $bio_num, $latitude, $longitude, $geo_status);
-                $this->telegram($temp, $remarks, $time_status, $date_time, $name, $bio_num, $latitude, $longitude, $geo_status);
                 $this->sendSMS($result, $remarks, $time_status, $date_time, $name, $geo_status);
             }
         }
