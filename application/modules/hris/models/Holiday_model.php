@@ -6,6 +6,12 @@
         protected $shiftScheduleCalendarTable = "gcctimeutility.shift_schedule_calendar";
         protected $eventsCalendarTable = "gcchris.events_calendar";
         protected $eventsSpeakersTable = "gcchris.events_speakers";
+        protected $eventsParticipantsTable = "gcchris.events_participants";
+        protected $employeesTable = "gccmaster.tblemployees";
+        protected $usersTable = "gccmaster.tblusers";
+        protected $positionsTable = "gcchris.tblposition";
+        protected $departmentTable = "gcchris.tbldepartments";
+        protected $companyTable = "gcchris.tblcompanies";
         protected $now = null;
         protected $user = null;
 
@@ -730,4 +736,66 @@
             
             return $events;
         }
+
+        public function getEventDetails($id) {
+            $this->db->select("
+                a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to,
+                GROUP_CONCAT(b.id SEPARATOR '||') as speaker_ids,
+                GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
+                GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
+                GROUP_CONCAT(b.company SEPARATOR '||') as speaker_companies
+            ")->from($this->eventsCalendarTable . " as a")
+              ->join($this->eventsSpeakersTable . " as b", "a.id = b.event_id", "left")
+              ->where("a.id", $id)
+              ->group_by("a.id");
+        
+            $row = $this->db->get()->row();
+        
+            if ($row) {
+                $ids       = explode("||", $row->speaker_ids ?? '');
+                $names     = explode("||", $row->speaker_names ?? '');
+                $positions = explode("||", $row->speaker_positions ?? '');
+                $companies = explode("||", $row->speaker_companies ?? '');
+        
+                $speakers = [];
+                foreach ($names as $i => $name) {
+                    if ($name) {
+                        $speakers[] = [
+                            "id"           => $ids[$i] ?? null,
+                            "speaker_name" => $name,
+                            "position"     => $positions[$i] ?? null,
+                            "company"      => $companies[$i] ?? null,
+                        ];
+                    }
+                }
+                $row->speakers = $speakers;
+                unset($row->speaker_ids, $row->speaker_names, $row->speaker_positions, $row->speaker_companies);
+            }
+            return $row;
+        }
+        
+        
+
+        public function getEventParticipants($id){
+            $this->db->select("a.id, a.status, a.emp_id, a.invited_by, a.invited_at, b.mobile_no, c.email, d.name as position, e.code as department, f.code as company,
+                CONCAT(
+                    LOWER(b.firstname),
+                    IF(b.middlename IS NOT NULL AND b.middlename != '', 
+                        CONCAT(' ', UPPER(LEFT(b.middlename, 1)), '.'), 
+                        ''
+                    ),
+                    ' ',
+                    LOWER(b.lastname)
+                ) AS fullname
+            ");
+            $this->db->from($this->eventsParticipantsTable." as a");
+            $this->db->join($this->employeesTable." as b", "a.emp_id = b.id", "left");
+            $this->db->join($this->usersTable." as c", "a.emp_id = c.emp_id", "left");
+            $this->db->join($this->positionsTable." as d", "b.position = d.id", "left");
+            $this->db->join($this->departmentTable." as e", "b.department_id = e.id", "left");
+            $this->db->join($this->companyTable." as f", "b.company_id = f.id", "left");
+            $this->db->where("a.event_id", $id);
+            return $this->db->get()->result();
+        }
+
     }

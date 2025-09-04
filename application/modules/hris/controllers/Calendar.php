@@ -142,8 +142,8 @@
             $this->core_layout->setPageTitle("HRIS - Event Calendar");
             $data = array();
             // $data['event_id'] = $id;
-            // $data['event_details'] = $this->holiday->getEventDetails($id);
-            // $data['employees'] = $this->employee->getActiveEmployees();
+            $data['event_details'] = $this->holiday->getEventDetails($id);
+            $data['participants'] = $this->holiday->getEventParticipants($id);
             // $data['companies'] = $this->company->getCompany();
             // $data['departments'] = $this->department->getDepartment();
             $this->core_layout->setPrivilegeName("company_events_calendar");
@@ -153,10 +153,10 @@
             $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.min.js', true);
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
-            $this->core_layout->addJs("js/hris/calendar/add_participants_script.js", true);
+            $this->core_layout->addJs("js/hris/calendar/add_participants_script.js", true,$data);
             $this->core_layout->addCss("css/hris/calendar.css", true);
             $this->load->view("core/templates/header");
-            $this->load->view("masterfile/calendar/calendar_of_events/participants_page", $data);
+            $this->load->view("masterfile/calendar/calendar_of_events/participants_page");
             $this->load->view("core/templates/footer");
         }
 
