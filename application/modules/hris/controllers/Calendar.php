@@ -144,6 +144,7 @@
             // $data['event_id'] = $id;
             $data['event_details'] = $this->holiday->getEventDetails($id);
             $data['participants'] = $this->holiday->getEventParticipants($id);
+            $data['employees'] = $this->holiday->getEmployeeSelection();
             // $data['companies'] = $this->company->getCompany();
             // $data['departments'] = $this->department->getDepartment();
             $this->core_layout->setPrivilegeName("company_events_calendar");
@@ -177,6 +178,11 @@
 
         public function archive_event(){
             $data = $this->holiday->archiveEvent();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_employee_information(){
+            $data = $this->holiday->getEmployeeInformation();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 

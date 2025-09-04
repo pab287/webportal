@@ -1,10 +1,33 @@
 let eventsDetails = null;
 let participants = null;
+let employees = null;
+let selectedEmployee = {
+    company: '',
+    department: '',
+    email: '',
+    firstname: '',
+    lastname: '',
+    middlename: '',
+    mobile_no: '',
+    position: '',
+};
+let selectedNonEmployee = {
+    company: '',
+    department: '',
+    email: '',
+    firstname: '',
+    lastname: '',
+    middlename: '',
+    mobile_no: '',
+    position: '',
+}
 if (_tempContentData !== undefined && _tempContentData !== null && _tempContentData !== '') {
     console.log(_tempContentData);
     eventsDetails = {..._tempContentData.event_details};
     participants = {..._tempContentData.participants};
+    employees =_tempContentData.employees;
 }
+
 
 let eventVue = new Vue({
     el: "#events-content",
@@ -12,9 +35,24 @@ let eventVue = new Vue({
         eventsData:{
 
         },
+        participantData:{
+            company: '',
+            department: '',
+            email: '',
+            firstname: '',
+            lastname: '',
+            middlename: '',
+            mobile_no: '',
+            position: '',
+        },
+
     },
     mounted: function () {
         this.eventsData = JSON.parse(JSON.stringify(eventsDetails));
+        $('#employee-select').prop('disabled', false);
+        $('#new_event_form input[type="text"], #new_event_form input[type="email"]')
+            .not('#employee-select') // not select2
+            .prop('disabled', true);
     },
     computed: {
         eventStatus() {
@@ -45,12 +83,30 @@ let eventVue = new Vue({
                 return `${fmt(start, optMD)} - ${fmt(end, optMD)}, ${start.getFullYear()}`
             }
             return `${fmt(start, { ...optMD, ...optY })} - ${fmt(end, { ...optMD, ...optY })}`
-        }
+        },
+        toggleEmployeeFields() {
+            if ($('#nonEmployeeToggle').is(':checked')) {
+                $('#employee-select').prop('disabled', false);
+                $('#new_event_form input[type="text"], #new_event_form input[type="email"]')
+                    .not('#employee-select') // not select2
+                    .prop('disabled', true);
+                    selectedNonEmployee = JSON.parse(JSON.stringify(this.participantData)); 
+                    this.participantData =  JSON.parse(JSON.stringify(selectedEmployee));
+                                $('#new_event_form')[0].reset();
+            } else {
+                $('#employee-select').prop('disabled', true);
+                $('#new_event_form input[type="text"], #new_event_form input[type="email"]').prop('disabled', false);
+                selectedEmployee = JSON.parse(JSON.stringify(this.participantData));
+                this.participantData = JSON.parse(JSON.stringify(selectedNonEmployee));
+                            $('#new_event_form')[0].reset();
+            }
+
+        },
     },
 });
 
 let participantsArray = Object.values(participants);
-console.log(participantsArray);
+
 const participantsTable = $('#participantsTable').DataTable({
     dom: 'frtlip',
     data: participantsArray,
@@ -150,3 +206,79 @@ function itemDatatableActions(id, status) {
 
     return _actionButton;
 }
+
+$("#employee-select").select2({
+    dropdownParent: $('#addNewParticipant'),
+    data: employees,
+    allowClear: true,
+    placeholder: "Select an option",
+    width: '100%'
+})
+.on('select2:select', function (e) {
+    let empId = $(this).val();
+    $('#new_event_form')[0].reset();
+
+
+    $.ajax({
+        url: baseUrl('hris/calendar/get_employee_information'),
+        type: "POST",
+        dataType: "json",
+        data: {
+            emp_id: empId,
+            csrf_token: $("#csrf_token").val()
+        },
+        success: function (response) {
+            selectedEmployee = response;
+            eventVue.participantData = JSON.parse(JSON.stringify(response));
+            console.log("Selected employee info:", response);
+        }
+    });
+})
+.on('change', function () {
+    // Fires on any change, including val(null).trigger('change')
+    if (!$(this).val()) {
+        selectedEmployee = {
+            company: '',
+            department: '',
+            email: '',
+            firstname: '',
+            lastname: '',
+            middlename: '',
+            mobile_no: '',
+            position: '',
+        };
+        eventVue.participantData = {
+            company: '',
+            department: '',
+            email: '',
+            firstname: '',
+            lastname: '',
+            middlename: '',
+            mobile_no: '',
+            position: '',
+        };
+        console.log("Selection cleared (change event)");
+    }
+});
+
+$.validate({
+    form : '#new_event_form',
+    lang: 'en',
+    onSuccess : function(form) {
+        console.log(form);
+            // $.ajax({
+            //     url: baseUrl('hris/calendar/save_event'),
+            //     type: "POST",
+            //     dataType: "json",
+            //     data: $(form).serialize(),
+            //     beforeSend: function() {
+            //         $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+            //     },
+            // });
+        
+    }
+});
+
+$('#addNewParticipant').on('hidden.bs.modal', function () {
+    $('#new_event_form')[0].reset();
+});

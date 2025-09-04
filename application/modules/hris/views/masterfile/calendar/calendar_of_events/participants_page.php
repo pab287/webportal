@@ -1,3 +1,66 @@
+<style>
+   .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #5BC236;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .toggle-label {
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+</style>
 <div class="row" id="events-content">
     <div class="col-12">
         <div class="m-content">
@@ -86,7 +149,7 @@
                                 <div class="col-12">
                                     <div class="table-responsive">
                                         <table class="table display table-bordered table-striped dataTable no-footer" id="participantsTable">
-                                            <thead class="w-100">
+                                            <thead>
                                                 <!-- <tr>
                                                     <th></th>
                                                     <th></th>
@@ -97,14 +160,7 @@
                                                     <th></th>
                                                 </tr> -->
                                             </thead>
-                                            <tbody class="w-100">
-                                                <!-- <template v-for="participant in eventsData.participants">
-                                                    <tr>
-                                                        <td v-text="participant.participant_name"></td>
-                                                        <td v-text="participant.position"></td>
-                                                        <td v-text="participant.company"></td>
-                                                    </tr>
-                                                </template> -->
+                                            <tbody>
                                             </tbody>
                                         </table>
                                     </div>
@@ -116,65 +172,89 @@
             </div>
         </div>
     </div>
-</div>
-
-<div class="modal fade show" id="addNewParticipant" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">ADD NEW PARTICIPANT</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form id='new_event_form' onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
+    <div class="modal fade show" id="addNewParticipant" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">ADD NEW PARTICIPANT</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
                 <div class="modal-body" id="event_calendar_body">
-                    <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="first_name" class="form-control-label required">First Name</label>
-                                <input name="first_name" type="text" class="form-control m-input" placeholder="first name" data-validation="required">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="middle_name" class="form-control-label required">Middle Name</label>
-                                <input name="middle_name" type="text" class="form-control m-input" placeholder="middle name" data-validation="required">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="last_name" class="form-control-label required">Last Name</label>
-                                <input name="last_name" type="text" class="form-control m-input" placeholder="last name" data-validation="required">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="phone" class="form-control-label required">Phone Number</label>
-                                <input name="phone" type="text" class="form-control m-input" placeholder="Phone number" data-validation="required">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="email" class="form-control-label required">Email</label>
-                                <input name="email" type="text" class="form-control m-input" placeholder="email" data-validation="required">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="phone" class="form-control-label required">Phone Number</label>
-                                <input name="phone" type="text" class="form-control m-input" placeholder="Phone number" data-validation="required">
+                    <div class="row">                            <div class="col-md-12">
+                            <div class="toggle-container">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="nonEmployeeToggle" @click="toggleEmployeeFields()" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <label for="nonEmployeeToggle" class="toggle-label">EMPLOYEE</label>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-success btnSave"><i class="la la-check mr-2"></i>SAVE</button>
-                    <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
-                </div>
-            </form>
+                    <form id='new_event_form' onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
+                        <div class="row">
+                            <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-group m-form__group">
+                                    <label class="form-control-label required">Employee</label>
+                                    <select id="employee-select" name="employee-select" placeholder="Select an option" data-validation="required">
+                                        <option></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-control-label required">Participant Name</label>
+                                <div class="form-row">
+                                    <div class="col-md-4">
+                                        <input name="first_name" type="text" class="form-control m-input" placeholder="First Name" v-model="participantData.firstname" data-validation="required">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input name="middle_name" type="text" class="form-control m-input" placeholder="Middle Name" v-model="participantData.middlename" data-validation="required">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input name="last_name" type="text" class="form-control m-input" placeholder="Last Name" v-model="participantData.lastname" data-validation="required">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-control-label required">Phone Number</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="la la-phone"></i></span>
+                                    </div>
+                                    <input name="phone" type="text" class="form-control m-input" placeholder="e.g. 09XXXXXXXXX" v-model="participantData.mobile_no" data-validation="required">
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-control-label required">Email</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="la la-envelope"></i></span>
+                                    </div>
+                                    <input name="email" type="email" class="form-control m-input" placeholder="example@domain.com" v-model="participantData.email" data-validation="required">
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-control-label required">Company</label>
+                                <input name="company" type="text" class="form-control m-input" placeholder="Company" v-model="participantData.company" data-validation="required">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-control-label required">Department</label>
+                                <input name="department" type="text" class="form-control m-input" placeholder="Department" v-model="participantData.department" data-validation="required">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-control-label required">Position</label>
+                                <input name="position" type="text" class="form-control m-input" placeholder="Position" v-model="participantData.position" data-validation="required">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success btnSave"><i class="la la-check mr-2"></i>SAVE</button>
+                        <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
-

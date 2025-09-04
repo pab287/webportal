@@ -798,4 +798,36 @@
             return $this->db->get()->result();
         }
 
+        public function getEmployeeSelection(){
+            $this->db->select("
+                id,
+                CASE
+                    WHEN LENGTH(middlename) > 1 
+                        THEN CONCAT(firstname, ' ', LEFT(middlename, 1), '. ', lastname)
+                    WHEN LENGTH(middlename) = 1 
+                        THEN CONCAT(firstname, ' ', middlename, '. ', lastname)
+                    ELSE CONCAT(firstname, ' ', lastname)
+                END AS text
+            ", false);
+        
+            $this->db->from($this->employeesTable);
+            $this->db->where('employee_status', 'Active');
+            $this->db->order_by('firstname', 'ASC');
+            return $this->db->get()->result();
+        }
+
+        public function getEmployeeInformation(){
+            $post = $this->input->post();
+            $id = $post['emp_id'];
+
+            $this->db->select("a.firstname, a.middlename, a.lastname, a.mobile_no, c.email, d.name as position, e.code as department, f.code as company");
+            $this->db->from($this->employeesTable. " as a");
+            $this->db->join($this->usersTable." as c", "a.id = c.emp_id", "left");
+            $this->db->join($this->positionsTable." as d", "a.position = d.id", "left");
+            $this->db->join($this->departmentTable." as e", "a.department_id = e.id", "left");
+            $this->db->join($this->companyTable." as f", "a.company_id = f.id", "left");
+            $this->db->where('a.id', $id);
+            return $this->db->get()->row();
+        }
+
     }
