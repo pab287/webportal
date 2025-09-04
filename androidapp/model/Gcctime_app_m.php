@@ -818,10 +818,11 @@
                         $result['user_teleg_id'] = $this->get_chatId_teleg($emp_id);
                     }
                 }
-
+                
                 // for payroll
                 $data_teleg = $this->telegram_config_if_exist('gcctime_new');
-                if($data_teleg['telegram_chat_id'] != null && $result['head_telegram_chat_id'] != null && $data_teleg['telegram_chat_id'] != $result['head_telegram_chat_id']){
+
+                if($data_teleg['telegram_chat_id'] != null && $data_teleg['telegram_chat_id'] != $result['head_telegram_chat_id']){
                     $temp['head_telegram_chat_id'] = $data_teleg['telegram_chat_id'];
                     $this->telegram($temp, $remarks, $time_status, $date_time, $name, $bio_num, $latitude, $longitude, $geo_status);
                 }
@@ -1653,7 +1654,7 @@
                 $status = 3;
                 $msg = "Error in saving 'time '.$time_status";
             }else{
-                $isWithinTravelOrder ? $msg = "has been successfully saved.\n\nT.O Reference #: $to_ref " : $msg = "has been successfully saved.";
+                $isWithinTravelOrder ? $msg = "has been successfully saved.\n\nTravel Order Ref #: $to_ref " : $msg = "has been successfully saved.";
             }
 
             $this->getSupervisorManager($emp, "Outside Assigned Site Location", $this->timeStatusString($time_status), $geo_status, $dateTime, $bio, $latitude, $longitude);
