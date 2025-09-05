@@ -1838,6 +1838,10 @@
                 $proceed = false;
             }else{
                 $isAllowed = $this->allowAppUser($emp_data['id']);
+                if (!$isAllowed) {
+                    $msg = "You are not eligible to use the app. Please contact your department head for access.";
+                    return json_encode(["status" => false, "msg" => $msg]);
+                }
                 $assignedLocation = $this->checkAssignedLocation($emp_data['biometricno']);
                 $lockoutUser = $this->checkEmployeeLock($emp_data['id']);
                 if($proceed){
@@ -1861,10 +1865,6 @@
                         if ($check === 'grant_access') {
                             $this->saveLogs("success", "sign in", $emp_data['id'], "[Mobile] User sign in");
                             $this->updateUserStatus($emp_data['id'], $app_user_id, $unique_id, $device_id, $device_name);
-                            if (!$isAllowed) {
-                                $msg = "You are not eligible to use the app. Please contact your department head for access.";
-                                return json_encode(["status" => false, "msg" => $msg]);
-                            }
                             if($proceed){
                                 return json_encode([
                                     "status" => true,
