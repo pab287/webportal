@@ -3265,11 +3265,13 @@
 
         function mostTraveledPerson() {
             $arrData = array();
-            
-            $this->db->select("*,count(employee_id) c, b.firstname, b.lastname, b.middlename, b.suffix");
+            $this->db->select("count(a.employee_id) c, b.firstname, b.lastname, b.middlename, b.suffix");
             $this->db->from("gcceforms.travel_personnel a");
+            $this->db->join("gcceforms.travel_order d", "a.travel_order_id=d.id", "left");
             $this->db->join("gccmaster.tblemployees b", "a.employee_id=b.id", "left");
-            $this->db->where("employee_id !=", "");
+            $this->db->where("a.employee_id !=", "");
+            $this->db->where("LOWER(d.status)", "approved");
+            $this->db->or_where("LOWER(d.status)", "accomplished");
             $this->db->group_by("employee_id");
             $this->db->order_by("c", "DESC");
             $this->db->limit(1);
@@ -3299,6 +3301,8 @@
             $this->db->join("gcceforms.travel_order a", "a.vehicle_id = b.id", "inner");
             $this->db->where("a.vehicle_id !=", "");
             $this->db->where("a.vehicle_id IS NOT NULL");
+            $this->db->where("LOWER(a.status)", "approved");
+            $this->db->or_where("LOWER(a.status)", "accomplished");
             $this->db->group_by("b.id, b.name");
             $this->db->order_by("c", "DESC");
             $this->db->limit(1);
@@ -3323,12 +3327,15 @@
         }
 
         function mostTraveledDestination() {
-            $this->db->select("*,count(destination) c");
-            $this->db->from("gcceforms.travel_destination");
-            $this->db->where("destination !=", "");
-            $this->db->group_by("destination");
+            $this->db->select("a.travel_to AS destination, COUNT(*) AS c");
+            $this->db->from("gcceforms.travel_destination a");
+            $this->db->join("gcceforms.travel_order d", "a.travel_order_id = d.id", "inner");
+            $this->db->where("a.travel_to !=", "");
+            $this->db->where("LOWER(d.status)", "approved");
+            $this->db->group_by("a.travel_to");
             $this->db->order_by("c", "DESC");
             $this->db->limit(1);
+
             $query = $this->db->get();
             if ($query->num_rows() > 0) {
                 $arrData = array();
