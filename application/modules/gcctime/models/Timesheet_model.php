@@ -984,17 +984,11 @@ class Timesheet_model extends CI_Model{
         $ot_night_diff = 0;
         $overtime_start = null;
         $overtime_end = null;
-        $hasAttendance = false;
 
         $nshiftParams = $this->nightshiftParams($date);
         $_nightShiftStart = $nshiftParams["start"];
         $_nightShiftEnd = $nshiftParams["end"];
         $hasShiftSchedule = $tempRow->has_shift == 1;
-
-        $am_start = $tempRow->am_in ? date("H:i:s", strtotime($tempRow->am_in)): null;
-        $am_end = $tempRow->am_out ? date("H:i:s", strtotime($tempRow->am_out)): null;
-        $pm_start = $tempRow->pm_in ? date("H:i:s", strtotime($tempRow->pm_in)): null;
-        $pm_end = $tempRow->pm_out ? date("H:i:s", strtotime($tempRow->pm_out)): null;
         
         /** start shift schedule ***/
         $shift_am_start = $tempRow->shift_am_start ? date("H:i:s", strtotime($tempRow->shift_am_start)): null;
@@ -1002,14 +996,8 @@ class Timesheet_model extends CI_Model{
         $shift_pm_start = $tempRow->shift_pm_start ? date("H:i:s", strtotime($tempRow->shift_pm_start)): null;
         $shift_pm_end = $tempRow->shift_pm_end ? date("H:i:s", strtotime($tempRow->shift_pm_end)): null;
         /** end shift schedule ***/
-
-        $tempProps = array("am_start", "am_end", "pm_start", "pm_end");
-        foreach ($tempProps as $prop) {
-            if(${$prop}){ $hasAttendance = true; break; }
-        }
         
         $am_shift_only = (($shift_am_start !== null && $shift_am_end !== null) && ($shift_pm_start === null && $shift_pm_end === null));
-
         $overtime = $this->db
             ->get_where($this->tbl_overtime,
                 array(
@@ -1023,18 +1011,22 @@ class Timesheet_model extends CI_Model{
         $hasOT = sizeof((array) $overtime) >= 1 ? 1 : 0;
         if (intval($hasOT) >= 1) {
             foreach ($overtime as $_overtime) {
-                $hasNextDayAttendance = false;
-
-                $ndiff_start = null;
-                $ndiff_end = null;
-
                 $regularOTHours = 0;
                 $nDiffOTHours = 0;
-                $otAfterShift = false;
+                $ot_hrs = 0;
+                $ot_night_diff = 0;
 
                 $_otStartDate = date("Y-m-d", strtotime($_overtime->date_from));
                 $_otStart = date('Y-m-d H:i', strtotime($_overtime->date_from));
                 $_otEnd = date('Y-m-d H:i', strtotime($_overtime->date_to));
+
+                $ot_start_dtr = date("Y-m-d H:i", strtotime($tempRow->date." ".$tempRow->shift_pm_end));
+                $ot_end_dtr = date("Y-m-d H:i", strtotime($tempRow->date." ".$tempRow->pm_out));
+
+                $ot_start = strtotime($ot_start_dtr) < strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from)))
+                ? date('Y-m-d H:i', strtotime($_overtime->date_from)) : $ot_start_dtr;
+                $ot_end = strtotime($ot_end_dtr) > strtotime(date('Y-m-d H:i', strtotime($_overtime->date_to)))
+                    ? date('Y-m-d H:i', strtotime($_overtime->date_to)) : $ot_end_dtr;
 
                 $_otNdiffStart = date("Y-m-d H:i", strtotime($_otStartDate." 22:00:00"));
                 $_otNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($_otStartDate." 05:00:00")));
@@ -1047,9 +1039,6 @@ class Timesheet_model extends CI_Model{
                     $_otNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($_otStartDate." ".$night_diff_cfg->end_time)));
                 }
 
-                $_previousNightDiff = date("Y-m-d H:i", strtotime("-1 day", strtotime($_otNdiffStart)));
-                $_nextNightDiff = date("Y-m-d H:i", strtotime("-1 day", strtotime($_otNdiffEnd)));
-
                 if($_otEnd && strtotime($_otEnd) > 0 && strtotime($_otEnd) > strtotime($_otNdiffStart)){
                     $regularOTHours = strtotime($_otNdiffStart) - strtotime($_otStart);
                     $regularOTHours = ($regularOTHours / 3600);
@@ -1061,30 +1050,12 @@ class Timesheet_model extends CI_Model{
                     $regularOTHours = ($regularOTHours / 3600);
                 }
 
-                $_attendance_am_start = $am_start ? date("Y-m-d H:i", strtotime("{$date} {$am_start}")): null;
-                $_attendance_am_end = $am_end ? date("Y-m-d H:i", strtotime("{$date} {$am_end}")): null;
-                $_attendance_pm_start = $pm_start ? date("Y-m-d H:i", strtotime("{$date} {$pm_start}")): null;
-                $_attendance_pm_end = $pm_end ? date("Y-m-d H:i", strtotime("{$date} {$pm_end}")): null;
-
-                if(($_attendance_am_start && $_attendance_am_end) && (strtotime($_attendance_am_end) < strtotime($_attendance_am_start))){
-                    $_attendance_am_end = date("Y-m-d H:i", strtotime("+1 day", strtotime($_attendance_am_end)));
-                    $hasNextDayAttendance = true;
-                }
-                if(($_attendance_am_end && $_attendance_pm_start) && (strtotime($_attendance_pm_start) < strtotime($_attendance_am_end) || ($hasNextDayAttendance && $_attendance_pm_start))){
-                    $_attendance_pm_start = date("Y-m-d H:i", strtotime("+1 day", strtotime($_attendance_pm_start)));
-                    $hasNextDayAttendance = true;
-                }
-                if(($_attendance_pm_start && $_attendance_pm_end) && (strtotime($_attendance_pm_end) < strtotime($_attendance_pm_start) || ($hasNextDayAttendance && $_attendance_pm_end))){
-                    $_attendance_pm_end = date("Y-m-d H:i", strtotime("+1 day", strtotime($_attendance_pm_end)));
-                    $hasNextDayAttendance = true;
-                }
-
-                $tempAttrAttendance = array();
-                $tempAttrProps = array("_attendance_am_start", "_attendance_am_end", "_attendance_pm_start", "_attendance_pm_end");
-                foreach ($tempAttrProps as $prop) {
-                    if(isset(${$prop}) && ${$prop}){
-                        $tempValuex = ${$prop};
-                        $tempAttrAttendance[] = $tempValuex;
+                $collectionScript = $this->attendanceCollectionScript($tempRow);
+                $tempAttrAttendance = $collectionScript["arrAttendance"];
+                if(is_array($collectionScript["attendance"]) && !empty($collectionScript["attendance"])){
+                    foreach ($collectionScript["attendance"] as $key => $value) {
+                        $tempKey = "_attendance_{$key}";
+                        ${$tempKey} = $value;
                     }
                 }
 
@@ -1098,192 +1069,17 @@ class Timesheet_model extends CI_Model{
                 if($isNightShift){ $shift_basis = $_otStart; }
 
                 if(count($tempAttrAttendance) > 1){
-                    $otNightDiffOnly = new stdClass();
-                    $otNightDiffOnly->is_night_diff = false;
-                    $otNightDiffOnly->ot_regular = 0;
-                    $otNightDiffOnly->ot_night_diff = 0;
-                    $isNightDiffOnly = false;
-
-                    $ot_start_dtr = date("Y-m-d H:i", strtotime($tempAttrAttendance[0]));
-		            $ot_end_dtr = date("Y-m-d H:i", strtotime($tempAttrAttendance[sizeof($tempAttrAttendance) - 1]));
-                    
-                    /** night shift **/
-                    if($isNightShift){
-                        $previousDate = date("Y-m-d", strtotime("-1 day", strtotime($tempRow->date)));
-                        $previousTs = $this->db->get_where($this->tbl_timesheet, array(
-                            "emp_id" => $tempRow->emp_id,
-                            "date" => $previousDate
-                        ));
-                        if($previousTs->num_rows() == 1){
-                            $prevRow = $previousTs->row();
-                            $am_start = $prevRow->am_in ? date("H:i:s", strtotime($prevRow->am_in)): null;
-                            $am_end = $prevRow->am_out ? date("H:i:s", strtotime($prevRow->am_out)): null;
-                            $pm_start = $prevRow->pm_in ? date("H:i:s", strtotime($prevRow->pm_in)): null;
-                            $pm_end = $prevRow->pm_out ? date("H:i:s", strtotime($prevRow->pm_out)): null;
-                            
-                            $_attendance_am_start = $am_start ? date("Y-m-d H:i", strtotime("{$previousDate} {$am_start}")): null;
-                            $_attendance_am_end = $am_end ? date("Y-m-d H:i", strtotime("{$previousDate} {$am_end}")): null;
-                            $_attendance_pm_start = $pm_start ? date("Y-m-d H:i", strtotime("{$previousDate} {$pm_start}")): null;
-                            $_attendance_pm_end = $pm_end ? date("Y-m-d H:i", strtotime("{$previousDate} {$pm_end}")): null;
-
-                            $_hasNextDayAttendance = false;
-                            if(($_attendance_am_start && $_attendance_am_end) && (strtotime($_attendance_am_end) < strtotime($_attendance_am_start))){
-                                $_attendance_am_end = date("Y-m-d H:i", strtotime("+1 day", strtotime($_attendance_am_end)));
-                                $_hasNextDayAttendance = true;
-                            }
-                            if(($_attendance_am_end && $_attendance_pm_start) && (strtotime($_attendance_pm_start) < strtotime($_attendance_am_end) || ($_hasNextDayAttendance && $_attendance_pm_start))){
-                                $_attendance_pm_start = date("Y-m-d H:i", strtotime("+1 day", strtotime($_attendance_pm_start)));
-                                $_hasNextDayAttendance = true;
-                            }
-                            if(($_attendance_pm_start && $_attendance_pm_end) && (strtotime($_attendance_pm_end) < strtotime($_attendance_pm_start) || ($_hasNextDayAttendance && $_attendance_pm_end))){
-                                $_attendance_pm_end = date("Y-m-d H:i", strtotime("+1 day", strtotime($_attendance_pm_end)));
-                            }
-
-                            $_tempAttrAttendance = array();
-                            $tempAttrProps = array("_attendance_am_start", "_attendance_am_end", "_attendance_pm_start", "_attendance_pm_end");
-                            foreach ($tempAttrProps as $prop) {
-                                if(isset(${$prop}) && ${$prop}){
-                                    $tempValuex = ${$prop};
-                                    $_tempAttrAttendance[] = $tempValuex;
-                                }
-                            }
-
-                            $ot_start_dtr = date("Y-m-d H:i", strtotime($_tempAttrAttendance[0]));
-		                    $ot_end_dtr = date("Y-m-d H:i", strtotime($_tempAttrAttendance[sizeof($_tempAttrAttendance) - 1]));
-                        }
-                    }
-                    /** night shift **/
-
-                    $ot_start = strtotime($ot_start_dtr) < strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from)))
-                        ? date('Y-m-d H:i', strtotime($_overtime->date_from)) : $ot_start_dtr;
-
-                    $ot_end = strtotime($ot_end_dtr) > strtotime(date('Y-m-d H:i', strtotime($_overtime->date_to)))
-                        ? date('Y-m-d H:i', strtotime($_overtime->date_to)): $ot_end_dtr;
-
-                    if(strtotime($ot_start) >= strtotime($_previousNightDiff)
-                        && strtotime($ot_start) < strtotime($_nextNightDiff)){
-                        $tempOTE = 0;
-                        $tempRegularOT = 0;
-                        if(strtotime($ot_end) > strtotime($_previousNightDiff) && strtotime($ot_end) <= strtotime($_nextNightDiff)){
-                            $tempOTE = strtotime($ot_end) - strtotime($ot_start);
-                        }else{
-                            $tempOTE = strtotime($_nextNightDiff) - strtotime($ot_start);
-                            $tempRegularOT = strtotime($ot_end) - strtotime($_nextNightDiff);
-                        }
-                        $otNightDiffOnly->ot_regular = ($tempRegularOT > 0)? $tempRegularOT / 3600: $tempRegularOT;
-                        $otNightDiffOnly->ot_night_diff = ($tempOTE > 0)? $tempOTE / 3600: $tempOTE;
-                        $otNightDiffOnly->is_night_diff = true;
-                    }
-
-                    if((strtotime($ot_start) >= strtotime($shift_basis)) && $hasShiftSchedule){ $otAfterShift = true; }
-                    if($otAfterShift){
-                        $init_start_date = new DateTime($ot_start);
-                        $start_ndiff_date = $init_start_date->format('Y-m-d');
-
-                        /** night shift **/
-                        if($isNightShift){ $start_ndiff_date = $init_start_date->modify("-1 day")->format('Y-m-d'); }
-                        /** night shift **/
-
-                        $start_ndiff_time = $night_diff_cfg->start_time;
-                        $start_ndiff_date_time = date('Y-m-d H:i', strtotime($start_ndiff_date . " " . $start_ndiff_time));
-
-                        $init_end_date = new DateTime($ot_end);
-                        $end_ndiff_date = $init_end_date->format('Y-m-d');
-                        $end_ndiff_time = $night_diff_cfg->end_time;
-                        $end_ndiff_date_time = date("Y-m-d H:i", strtotime($end_ndiff_date . " " . $end_ndiff_time));
-    
-                        $ndiff_start = $start_ndiff_date_time;
-                        $ndiff_end = $end_ndiff_date_time;
-                        if (strtotime(date('Y-m-d', strtotime($ot_start)))
-                            === strtotime(date('Y-m-d', strtotime($ot_end)))) {
-                            $init_end_date = new DateTime($ot_start);
-                            $end_ndiff_date = $init_end_date->modify("+1 day")->format('Y-m-d');
-                            
-                            /** night shift **/
-                            if($isNightShift){
-                                $end_ndiff_date = $init_end_date->modify("-1 day")->format('Y-m-d');
-                            }
-                            /** night shift **/
-
-                            $end_ndiff_time = $night_diff_cfg->end_time;
-                            $end_ndiff_date_time = date("Y-m-d H:i", strtotime($end_ndiff_date . " " . $end_ndiff_time));
-    
-                            $ndiff_start = $start_ndiff_date_time;
-                            $ndiff_end = $end_ndiff_date_time;
-                        }
-                        if (strtotime($ndiff_start) >= strtotime($ot_start)) {
-                            if (strtotime($ot_end) >= strtotime($ndiff_end)) {
-                                $ot_night_diff = strtotime($ndiff_end) - strtotime($ndiff_start);
-                                $ot_night_diff = $ot_night_diff / 3600;
-                            } else {
-                                $ot_night_diff = strtotime($ot_end) - strtotime($ndiff_start);
-                                $ot_night_diff = $ot_night_diff / 3600;
-                            }
-                        } elseif (strtotime($ot_end) > strtotime($ot_start)){
-                            $ot_night_diff = strtotime($ndiff_end) - strtotime($ot_start);
-                            $ot_night_diff = $ot_night_diff / 3600;
-                        }
-                        $ot_night_diff = ($ot_night_diff < 0) ? 0 : $ot_night_diff;
-                    }
-                    // END OVERTIME NIGHT DIFF CALCULATION
-                    
-                    $ot_seconds = (strtotime($ot_end) - strtotime($ot_start));
-                    $ot_minutes = doubleval($ot_seconds) < 0 ? 0 : (doubleval($ot_seconds) / 60);
-                    
-                    /** night shift **/
-                    $tempNdiffStart = $isNightShift ? $_previousNightDiff: $_otNdiffStart;
-                    /** night shift **/
-
-                    /*** START OVERTIME W/ NIGHT DIFF COMPUTATION REG OT ***/
-                    if($ot_night_diff > 0){
-                        $_ot_seconds = (strtotime($tempNdiffStart) - strtotime($ot_start));
-                        $ot_minutes = doubleval($_ot_seconds) < 0 ? 0 : (doubleval($_ot_seconds) / 60);
-                    }
-                    /*** END OVERTIME W/ NIGHT DIFF COMPUTATION REG OT ***/
-
-                    $regularOvertimeTotal = $ot_minutes / 60;
-                    $otTotal = $regularOvertimeTotal + $ot_night_diff;
-
-                    /*** deduct 1 hour on overtime with night differential ***/
-                    if(floatval($otTotal) >= 5 && $nDiffOTHours > 0){
-                        $ot_night_diff = $ot_night_diff - 1;
-                    }
-                    /*** deduct 1 hour on overtime with night differential ***/
-
-                    $ot_night_diff = doubleval($ot_night_diff);
-                    $ot_hrs = number_format($regularOvertimeTotal, 2, '.', '');
-
-                    if($otNightDiffOnly->is_night_diff){
-                        $ot_hrs = number_format($otNightDiffOnly->ot_regular, 2, '.', '');
-                        $ot_night_diff = number_format($otNightDiffOnly->ot_night_diff, 2, '.', '');
-                        $regularOTHours = $ot_hrs;
-                        $nDiffOTHours = $ot_night_diff;
-                    }
-
-                    if($ot_hrs >= 5){ $ot_hrs = $ot_hrs - 1; }
-                    
-                    if($regularOTHours > 0 && floatval($ot_hrs) > $regularOTHours && $otAfterShift){
-                        $tempOTDiff = 0;
-                        $tempOTDiff = floatval($ot_hrs) - $regularOTHours;
-                        $ot_hrs = $regularOTHours;
-                        $ot_night_diff = $ot_night_diff + $tempOTDiff;
-                    }
-                    
-                    /*** start after night diff regular hours inclusion ***/
-                    if(($ot_end && $ndiff_end) && floatval($ot_hrs) > 0 && strtotime($ot_end) > strtotime($ndiff_end)){
-                        $ext_ot_seconds = strtotime($ot_end) - strtotime($ndiff_end);
-                        $ext_ot_minutes = doubleval($ext_ot_seconds) < 0 ? 0 : (doubleval($ext_ot_seconds) / 60);
-                        $ext_regularOvertimeTotal = $ext_ot_minutes / 60;
-                        $ot_hrs = $ot_hrs + $ext_regularOvertimeTotal;
-
-                        if(($regularOTHours > 0 && $nDiffOTHours > 0) && $nDiffOTHours > $ext_regularOvertimeTotal ){
-                            $regularOTHours = $regularOTHours + $ext_regularOvertimeTotal;
-                            $nDiffOTHours = $nDiffOTHours - $ext_regularOvertimeTotal;
-                        }
-                    }
-                    /*** end after night diff regular hours inclusion ***/
-                    
-                    $ot_night_diff = number_format($ot_night_diff, 2, '.', '');
+                    $parameters = array("hasShiftSchedule" => $hasShiftSchedule, "overtime" => $_overtime, "timesheetExist" => $tempRow,
+                        "otAttendances" => $tempAttrAttendance, "nightDiffCfg" => $night_diff_cfg, "shiftBasis" => $shift_basis, "otNdiffStart" => $_otNdiffStart,
+                        "otNdiffEnd" => $_otNdiffEnd, "nDiffOTHours" => $nDiffOTHours, "isNightShift" => $isNightShift,
+                        "regularOTHours" => $regularOTHours, "otNightDiff"=>$ot_night_diff);
+                    $otScript = $this->overtimeComputationScript($parameters);
+                    $regularOTHours = $otScript["regularOTHours"];
+                    $nDiffOTHours = $otScript["nDiffOTHours"];
+                    $ot_hrs = $otScript["ot_hrs"];
+                    $ot_night_diff = number_format($otScript["ot_night_diff"], 2, '.', '');
+                    $ot_start = $otScript["ot_start"];
+                    $ot_end = $otScript["ot_end"];
 
                     $overtime_start = date("Y-m-d H:i", strtotime($ot_start));
                     $overtime_end = date("Y-m-d H:i", strtotime($ot_end));
@@ -2682,14 +2478,8 @@ class Timesheet_model extends CI_Model{
         }
 
         foreach ($overtime as $_overtime) {
-            $otAfterShift = false;
-
             $overtime_start = null;
             $overtime_end = null;
-
-            $ndiff_start = null;
-            $ndiff_end = null;
-
             $regularOTHours = 0;
             $nDiffOTHours = 0;
 
@@ -2701,7 +2491,7 @@ class Timesheet_model extends CI_Model{
             $_otEnd = date('Y-m-d H:i', strtotime($_overtime->date_to));
 
             $_otNdiffStart = date("Y-m-d H:i", strtotime($_otStartDate." 22:00:00"));
-            $_otNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($_otStartDate." 05:00:00")));
+            $_otNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($_otStartDate." 06:00:00")));
 
             if(isset($night_diff_cfg->start_time) && $night_diff_cfg->start_time){
                 $_otNdiffStart = date("Y-m-d H:i", strtotime($_otStartDate." ".$night_diff_cfg->start_time));
@@ -2710,9 +2500,6 @@ class Timesheet_model extends CI_Model{
             if(isset($night_diff_cfg->end_time) && $night_diff_cfg->end_time){
                 $_otNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($_otStartDate." ".$night_diff_cfg->end_time)));
             }
-
-            $_previousNightDiff = date("Y-m-d H:i", strtotime("-1 day", strtotime($_otNdiffStart)));
-            $_nextNightDiff = date("Y-m-d H:i", strtotime("-1 day", strtotime($_otNdiffEnd)));
 
             if($_otEnd && strtotime($_otEnd) > 0 && strtotime($_otEnd) > strtotime($_otNdiffStart)){
                 $regularOTHours = strtotime($_otNdiffStart) - strtotime($_otStart);
@@ -2733,202 +2520,17 @@ class Timesheet_model extends CI_Model{
             if($isNightShift){ $shift_basis = $_otStart; }
 
             if (sizeof($ot_attendances) > 1) {
-                $otNightDiffOnly = new stdClass();
-                $otNightDiffOnly->is_night_diff = false;
-                $otNightDiffOnly->ot_regular = 0;
-                $otNightDiffOnly->ot_night_diff = 0;
-                $isNightDiffOnly = false;
-
-                $ot_start_dtr = date("Y-m-d H:i", strtotime($ot_attendances[0]));
-                $ot_end_dtr = date("Y-m-d H:i", strtotime($ot_attendances[sizeof($ot_attendances) - 1]));
-
-                /** night shift **/
-                if($isNightShift){
-                    $previousDate = date("Y-m-d", strtotime("-1 day", strtotime($timesheet_exist->date)));
-                    $previousTs = $this->db->get_where($this->tbl_timesheet, array(
-                        "emp_id" => $timesheet_exist->emp_id,
-                        "date" => $previousDate
-                    ));
-                    if($previousTs->num_rows() == 1){
-                        $prevRow = $previousTs->row();
-                        $am_start = $prevRow->am_in ? date("H:i:s", strtotime($prevRow->am_in)): null;
-                        $am_end = $prevRow->am_out ? date("H:i:s", strtotime($prevRow->am_out)): null;
-                        $pm_start = $prevRow->pm_in ? date("H:i:s", strtotime($prevRow->pm_in)): null;
-                        $pm_end = $prevRow->pm_out ? date("H:i:s", strtotime($prevRow->pm_out)): null;
-                        
-                        $_attendance_am_start = $am_start ? date("Y-m-d H:i", strtotime("{$previousDate} {$am_start}")): null;
-                        $_attendance_am_end = $am_end ? date("Y-m-d H:i", strtotime("{$previousDate} {$am_end}")): null;
-                        $_attendance_pm_start = $pm_start ? date("Y-m-d H:i", strtotime("{$previousDate} {$pm_start}")): null;
-                        $_attendance_pm_end = $pm_end ? date("Y-m-d H:i", strtotime("{$previousDate} {$pm_end}")): null;
-
-                        $_hasNextDayAttendance = false;
-                        if(($_attendance_am_start && $_attendance_am_end) && (strtotime($_attendance_am_end) < strtotime($_attendance_am_start))){
-                            $_attendance_am_end = date("Y-m-d H:i", strtotime("+1 day", strtotime($_attendance_am_end)));
-                            $_hasNextDayAttendance = true;
-                        }
-                        if(($_attendance_am_end && $_attendance_pm_start) && (strtotime($_attendance_pm_start) < strtotime($_attendance_am_end) || ($_hasNextDayAttendance && $_attendance_pm_start))){
-                            $_attendance_pm_start = date("Y-m-d H:i", strtotime("+1 day", strtotime($_attendance_pm_start)));
-                            $_hasNextDayAttendance = true;
-                        }
-                        if(($_attendance_pm_start && $_attendance_pm_end) && (strtotime($_attendance_pm_end) < strtotime($_attendance_pm_start) || ($_hasNextDayAttendance && $_attendance_pm_end))){
-                            $_attendance_pm_end = date("Y-m-d H:i", strtotime("+1 day", strtotime($_attendance_pm_end)));
-                        }
-
-                        $_tempAttrAttendance = array();
-                        $tempAttrProps = array("_attendance_am_start", "_attendance_am_end", "_attendance_pm_start", "_attendance_pm_end");
-                        foreach ($tempAttrProps as $prop) {
-                            if(isset(${$prop}) && ${$prop}){
-                                $tempValuex = ${$prop};
-                                $_tempAttrAttendance[] = $tempValuex;
-                            }
-                        }
-
-                        $ot_start_dtr = date("Y-m-d H:i", strtotime($_tempAttrAttendance[0]));
-                        $ot_end_dtr = date("Y-m-d H:i", strtotime($_tempAttrAttendance[sizeof($_tempAttrAttendance) - 1]));
-                    }
-                }
-                /** night shift **/
-                
-                if(strtotime($ot_end_dtr) < strtotime($ot_start_dtr)){ $ot_end_dtr = date("Y-m-d H:i", strtotime("+1 day", strtotime($ot_end_dtr))); }
-
-                $ot_start = strtotime($ot_start_dtr) < strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from)))
-                    ? date('Y-m-d H:i', strtotime($_overtime->date_from)) : $ot_start_dtr;
-                $ot_end = strtotime($ot_end_dtr) > strtotime(date('Y-m-d H:i', strtotime($_overtime->date_to)))
-                    ? date('Y-m-d H:i', strtotime($_overtime->date_to)) : $ot_end_dtr;
-
-                if (sizeof($ot_attendances) < 2) {
-                    if (strtotime($ot_start_dtr) > strtotime($shift_basis) &&
-                        strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from))) < strtotime($ot_end_dtr)) {
-                        $_ot_start = new DateTime($_overtime->date_from);
-                        /*** remove the +1 minute overtime start data ***/
-                        if (strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from))) <= strtotime($shift_basis)) { /*** $_ot_start->modify("+1 minutes"); ***/ }
-                        $ot_start = $_ot_start->format("Y-m-d H:i");
-                    }
-                }
-
-                if((strtotime($ot_start) >= strtotime($shift_basis)) && $hasShiftSchedule){ $otAfterShift = true; }
-
-                if($otAfterShift === true){
-                    if(strtotime($ot_start) >= strtotime($_previousNightDiff)
-                        && strtotime($ot_start) < strtotime($_nextNightDiff)){
-                        $tempOTE = 0;
-                        $tempRegularOT = 0;
-                        if(strtotime($ot_end) > strtotime($_previousNightDiff) && strtotime($ot_end) <= strtotime($_nextNightDiff)){
-                            $tempOTE = strtotime($ot_end) - strtotime($ot_start);
-                        }else{
-                            $tempOTE = strtotime($_nextNightDiff) - strtotime($ot_start);
-                            $tempRegularOT = strtotime($ot_end) - strtotime($_nextNightDiff);
-                        }
-                        $otNightDiffOnly->ot_regular = ($tempRegularOT > 0)? $tempRegularOT / 3600: $tempRegularOT;
-                        $otNightDiffOnly->ot_night_diff = ($tempOTE > 0)? $tempOTE / 3600: $tempOTE;
-                        $otNightDiffOnly->is_night_diff = true;
-                    }
-                        
-                    $init_start_date = new DateTime($ot_start);
-                    $start_ndiff_date = $init_start_date->format('Y-m-d');
-                    /** night shift **/
-                    if($isNightShift){ $start_ndiff_date = $init_start_date->modify("-1 day")->format('Y-m-d'); }
-                    /** night shift **/
-
-                    $start_ndiff_time = $night_diff_cfg->start_time;
-                    $start_ndiff_date_time = date('Y-m-d H:i', strtotime($start_ndiff_date . " " . $start_ndiff_time));
-    
-                    $init_end_date = new DateTime($ot_end);
-                    $end_ndiff_date = $init_end_date->format('Y-m-d');
-                    $end_ndiff_time = $night_diff_cfg->end_time;
-                    $end_ndiff_date_time = date("Y-m-d H:i", strtotime($end_ndiff_date . " " . $end_ndiff_time));
-                    
-                    $ndiff_start = $start_ndiff_date_time;
-                    $ndiff_end = $end_ndiff_date_time;
-    
-                    if (strtotime(date('Y-m-d', strtotime($ot_start)))
-                        === strtotime(date('Y-m-d', strtotime($ot_end)))) {
-                        $init_end_date = new DateTime($ot_start);
-                        $end_ndiff_date = $init_end_date->modify("+1 day")->format('Y-m-d');
-                        /** night shift **/
-                        if($isNightShift){ $end_ndiff_date = $init_end_date->modify("-1 day")->format('Y-m-d'); }
-                        /** night shift **/
-                        $end_ndiff_time = $night_diff_cfg->end_time;
-                        $end_ndiff_date_time = date("Y-m-d H:i", strtotime($end_ndiff_date . " " . $end_ndiff_time));
-    
-                        $ndiff_start = $start_ndiff_date_time;
-                        $ndiff_end = $end_ndiff_date_time;
-                    }
-
-                    if (strtotime($ndiff_start) >= strtotime($ot_start)) {
-                        if (strtotime($ot_end) >= strtotime($ndiff_end)) {
-                            $ot_night_diff = strtotime($ndiff_end) - strtotime($ndiff_start);
-                            $ot_night_diff = $ot_night_diff / 3600;
-                        } else {
-                            $ot_night_diff = strtotime($ot_end) - strtotime($ndiff_start);
-                            $ot_night_diff = $ot_night_diff / 3600;
-                        }
-                    } else {
-                        $ot_night_diff = strtotime($ndiff_end) - strtotime($ot_start);
-                        $ot_night_diff = $ot_night_diff / 3600;
-                    }
-    
-                    $ot_night_diff = ($ot_night_diff < 0) ? 0 : $ot_night_diff;
-                }
-
-
-                $ot_seconds = (strtotime($ot_end) - strtotime($ot_start));
-                $ot_minutes = doubleval($ot_seconds) < 0 ? 0 : (doubleval($ot_seconds) / 60);
-
-                /** night shift **/
-                $tempNdiffStart = $isNightShift ? $_previousNightDiff: $_otNdiffStart;
-                /** night shift **/
-
-                /*** START OVERTIME W/ NIGHT DIFF COMPUTATION REG OT ***/
-                if($ot_night_diff > 0){
-                    $_ot_seconds = (strtotime($tempNdiffStart) - strtotime($ot_start));
-                    $ot_minutes = doubleval($_ot_seconds) < 0 ? 0 : (doubleval($_ot_seconds) / 60);
-                }
-                /*** END OVERTIME W/ NIGHT DIFF COMPUTATION REG OT ***/
-                $regularOvertimeTotal = $ot_minutes / 60;
-                $otTotal = $regularOvertimeTotal + $ot_night_diff;
-
-                /*** deduct 1 hour on overtime with night differential ***/
-                if(floatval($otTotal) >= 5 && $ot_night_diff > 0 && $otAfterShift == true){
-                    $ot_night_diff = $ot_night_diff - 1;
-                }
-                /*** deduct 1 hour on overtime with night differential ***/
-
-                $ot_night_diff = doubleval($ot_night_diff);
-                $ot_hrs = number_format($regularOvertimeTotal, 2, '.', '');
-
-                if($otNightDiffOnly->is_night_diff){
-                    $ot_hrs = number_format($otNightDiffOnly->ot_regular, 2, '.', '');
-                    $ot_night_diff = number_format($otNightDiffOnly->ot_night_diff, 2, '.', '');
-
-                    $regularOTHours = $ot_hrs;
-                    $nDiffOTHours = $ot_night_diff;
-                }
-
-                if($ot_hrs >= 5){ $ot_hrs = $ot_hrs - 1; }
-
-                if(floatval($ot_hrs) > $regularOTHours && $otAfterShift){
-                    $tempOTDiff = 0;
-                    $tempOTDiff = floatval($ot_hrs) - $regularOTHours;
-                    $ot_hrs = $regularOTHours;
-                    $ot_night_diff = $ot_night_diff + $tempOTDiff;
-                }
-
-                /*** start after night diff regular hours inclusion ***/
-                if(($ot_end && $ndiff_end) && floatval($ot_hrs) > 0 && strtotime($ot_end) > strtotime($ndiff_end)){
-                    $ext_ot_seconds = strtotime($ot_end) - strtotime($ndiff_end);
-                    $ext_ot_minutes = doubleval($ext_ot_seconds) < 0 ? 0 : (doubleval($ext_ot_seconds) / 60);
-                    $ext_regularOvertimeTotal = $ext_ot_minutes / 60;
-                    $ot_hrs = $ot_hrs + $ext_regularOvertimeTotal;
-
-                    if(($regularOTHours > 0 && $nDiffOTHours > 0) && $nDiffOTHours > $ext_regularOvertimeTotal ){
-                        $regularOTHours = $regularOTHours + $ext_regularOvertimeTotal;
-                        $nDiffOTHours = $nDiffOTHours - $ext_regularOvertimeTotal;
-                    }
-                }
-                /*** end after night diff regular hours inclusion ***/
-
-                $ot_night_diff = number_format($ot_night_diff, 2, '.', '');
+                $parameters = array("hasShiftSchedule" => $hasShiftSchedule, "overtime" => $_overtime, "timesheetExist" => $timesheet_exist,
+                    "otAttendances" => $ot_attendances, "nightDiffCfg" => $night_diff_cfg, "shiftBasis" => $shift_basis, "otNdiffStart" => $_otNdiffStart,
+                    "otNdiffEnd" => $_otNdiffEnd, "nDiffOTHours" => $nDiffOTHours, "isNightShift" => $isNightShift,
+                    "regularOTHours" => $regularOTHours, "otNightDiff"=>$ot_night_diff);
+                $otScript = $this->overtimeComputationScript($parameters);
+                $regularOTHours = $otScript["regularOTHours"];
+                $nDiffOTHours = $otScript["nDiffOTHours"];
+                $ot_hrs = $otScript["ot_hrs"];
+                $ot_night_diff = number_format($otScript["ot_night_diff"], 2, '.', '');
+                $ot_start = $otScript["ot_start"];
+                $ot_end = $otScript["ot_end"];
 
                 $overtime_start = date("Y-m-d H:i", strtotime($ot_start));
                 $overtime_end = date("Y-m-d H:i", strtotime($ot_end));
@@ -2940,7 +2542,6 @@ class Timesheet_model extends CI_Model{
                 $ot_hrs = $tempRegOtHours;
                 $ot_night_diff = $nDiffOTHours;
             }
-
 
             $regularOTHours = floatval($regularOTHours) > 0 ? $regularOTHours: 0;
             $nDiffOTHours = floatval($nDiffOTHours) > 0 ? $nDiffOTHours: 0;
@@ -2967,9 +2568,6 @@ class Timesheet_model extends CI_Model{
 
             $regularOTHours = round($regularOTHours, 2);
             $nDiffOTHours = round($nDiffOTHours, 2);
-
-            /*** if($ot_hrs > 0 && floatval($ot_hrs % 0.50) > 0){ $ot_hrs = floor($ot_hrs); }
-            if($ot_night_diff > 0 && floatval($ot_night_diff % 0.50) > 0){ $ot_night_diff = floor($ot_night_diff); } ***/
 
             if (sizeof((array) $timesheet_exist) >= 1 && intval($generated_manually) <= 0) {
                 $this->db->where("timesheet_id", $timesheet_exist->id);
@@ -3020,7 +2618,6 @@ class Timesheet_model extends CI_Model{
 
             $total_accredited_ot_hrs += $ot_hrs;
             $total_accredited_ot_nightdiff_hrs += $ot_night_diff;
-
         }
 
         $resultset["total_accredited_ot_hrs"] = $total_accredited_ot_hrs;
@@ -9778,5 +9375,240 @@ class Timesheet_model extends CI_Model{
         $_nightShiftStart = date("Y-m-d H:i:s", strtotime($date . " " . $nShiftStartTime));
         $_nightShiftEnd = strtotime($nShiftStartTime) > strtotime($nShiftEndTime) ? date("Y-m-d H:i:s", strtotime("+1 day", strtotime($date . " " . $nShiftEndTime))): date("Y-m-d H:i:s", strtotime($date . " " . $nShiftEndTime));
         return array("start" => $_nightShiftStart, "end" => $_nightShiftEnd);
+    }
+
+    protected function overtimeComputationScript($parameters=[]){
+        $hasShiftSchedule = $parameters["hasShiftSchedule"] ?? false;
+        $_overtime = $parameters["overtime"] ?? null;
+        $tempRow = $parameters["timesheetExist"] ?? null;
+        $tempAttrAttendance = $parameters["otAttendances"] ?? [];
+        $night_diff_cfg = $parameters["nightDiffCfg"] ?? null;
+        $shift_basis = $parameters["shiftBasis"] ?? null;
+        $_otNdiffStart = $parameters["otNdiffStart"] ?? null;
+        $_otNdiffEnd = $parameters["otNdiffEnd"] ?? null;
+        $nDiffOTHours = $parameters["nDiffOTHours"] ?? 0;
+        $isNightShift = $parameters["isNightShift"] ?? false;
+
+        $regularOTHours = $parameters["regularOTHours"] ?? 0;
+        $ot_night_diff = $parameters["otNightDiff"] ?? 0;
+
+        $ndiff_end = null;
+        $otAfterShift = false;
+        
+        $otNightDiffOnly = new stdClass();
+        $otNightDiffOnly->is_night_diff = false;
+        $otNightDiffOnly->ot_regular = 0;
+        $otNightDiffOnly->ot_night_diff = 0;
+
+        $_previousNightDiff = date("Y-m-d H:i", strtotime("-1 day", strtotime($_otNdiffStart)));
+        $_nextNightDiff = date("Y-m-d H:i", strtotime("-1 day", strtotime($_otNdiffEnd)));
+
+        $ot_start_dtr = date("Y-m-d H:i", strtotime($tempAttrAttendance[0]));
+        $ot_end_dtr = date("Y-m-d H:i", strtotime($tempAttrAttendance[sizeof($tempAttrAttendance) - 1]));
+
+        if($isNightShift){
+            $previousDate = date("Y-m-d", strtotime("-1 day", strtotime($tempRow->date)));
+            $previousTs = $this->db->get_where($this->tbl_timesheet, array(
+                "emp_id" => $tempRow->emp_id,
+                "date" => $previousDate
+            ));
+
+            if($previousTs->num_rows() == 1){
+                $prevRow = $previousTs->row();
+                $collectionScript = $this->attendanceCollectionScript($prevRow);
+                $_tempAttrAttendance = $collectionScript["arrAttendance"];
+                $ot_start_dtr = date("Y-m-d H:i", strtotime($_tempAttrAttendance[0]));
+                $ot_end_dtr = date("Y-m-d H:i", strtotime($_tempAttrAttendance[sizeof($_tempAttrAttendance) - 1]));
+            }
+        }
+
+        $ot_start = strtotime($ot_start_dtr) < strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from)))
+            ? date('Y-m-d H:i', strtotime($_overtime->date_from)) : $ot_start_dtr;
+
+        $ot_end = strtotime($ot_end_dtr) > strtotime(date('Y-m-d H:i', strtotime($_overtime->date_to)))
+            ? date('Y-m-d H:i', strtotime($_overtime->date_to)): $ot_end_dtr;
+
+        if(strtotime($ot_start) >= strtotime($_previousNightDiff)
+            && strtotime($ot_start) < strtotime($_nextNightDiff)){
+            $tempOTE = 0;
+            $tempRegularOT = 0;
+            if(strtotime($ot_end) > strtotime($_previousNightDiff) && strtotime($ot_end) <= strtotime($_nextNightDiff)){
+                $tempOTE = strtotime($ot_end) - strtotime($ot_start);
+            }else{
+                $tempOTE = strtotime($_nextNightDiff) - strtotime($ot_start);
+                if(strtotime($ot_end) < strtotime($_nextNightDiff)){
+                    $tempRegularOT = strtotime($ot_end) - strtotime($_nextNightDiff);
+                }
+            }
+            $otNightDiffOnly->ot_regular = ($tempRegularOT > 0)? $tempRegularOT / 3600: $tempRegularOT;
+            $otNightDiffOnly->ot_night_diff = ($tempOTE > 0)? $tempOTE / 3600: $tempOTE;
+            $otNightDiffOnly->is_night_diff = true;
+        }
+
+        if((strtotime($ot_start) >= strtotime($shift_basis)) && $hasShiftSchedule){ $otAfterShift = true; }
+        // START OVERTIME NIGHT DIFF CALCULATION
+        $afterShiftParams = array(
+            "otAfterShift" => $otAfterShift,
+            "otStart" => $ot_start,
+            "otEnd" => $ot_end,
+            "isNightShift" => $isNightShift,
+            "nightDiffCfg" => $night_diff_cfg,
+            "otNightDiff" => $ot_night_diff
+        );
+        $ot_night_diff = $this->otAfterShiftNightDiffScript($afterShiftParams);
+        // END OVERTIME NIGHT DIFF CALCULATION
+        
+        $ot_seconds = (strtotime($ot_end) - strtotime($ot_start));
+        $ot_minutes = doubleval($ot_seconds) < 0 ? 0 : (doubleval($ot_seconds) / 60);
+        
+        /** night shift **/
+        $tempNdiffStart = $isNightShift ? $_previousNightDiff: $_otNdiffStart;
+        /** night shift **/
+
+        /*** START OVERTIME W/ NIGHT DIFF COMPUTATION REG OT ***/
+        if($ot_night_diff > 0){
+            $_ot_seconds = (strtotime($tempNdiffStart) - strtotime($ot_start));
+            $ot_minutes = doubleval($_ot_seconds) < 0 ? 0 : (doubleval($_ot_seconds) / 60);
+        }
+        /*** END OVERTIME W/ NIGHT DIFF COMPUTATION REG OT ***/
+
+        $regularOvertimeTotal = $ot_minutes / 60;
+        $otTotal = $regularOvertimeTotal + $ot_night_diff;
+
+        /*** deduct 1 hour on overtime with night differential ***/
+        if(floatval($otTotal) >= 5 && $nDiffOTHours > 0){
+            $ot_night_diff = $ot_night_diff - 1;
+        }
+        /*** deduct 1 hour on overtime with night differential ***/
+
+        $ot_night_diff = doubleval($ot_night_diff);
+        $ot_hrs = number_format($regularOvertimeTotal, 2, '.', '');
+
+        if($otNightDiffOnly->is_night_diff){
+            $ot_hrs = number_format($otNightDiffOnly->ot_regular, 2, '.', '');
+            $ot_night_diff = number_format($otNightDiffOnly->ot_night_diff, 2, '.', '');
+            $regularOTHours = $ot_hrs;
+            $nDiffOTHours = $ot_night_diff;
+        }
+
+        if($ot_hrs >= 5){ $ot_hrs = $ot_hrs - 1; }
+        
+        if($regularOTHours > 0 && floatval($ot_hrs) > $regularOTHours && $otAfterShift){
+            $tempOTDiff = 0;
+            $tempOTDiff = floatval($ot_hrs) - $regularOTHours;
+            $ot_hrs = $regularOTHours;
+            $ot_night_diff = $ot_night_diff + $tempOTDiff;
+        }
+        
+        /*** start after night diff regular hours inclusion ***/
+        if(($ot_end && $ndiff_end) && floatval($ot_hrs) > 0 && strtotime($ot_end) > strtotime($ndiff_end)){
+            $ext_ot_seconds = strtotime($ot_end) - strtotime($ndiff_end);
+            $ext_ot_minutes = doubleval($ext_ot_seconds) < 0 ? 0 : (doubleval($ext_ot_seconds) / 60);
+            $ext_regularOvertimeTotal = $ext_ot_minutes / 60;
+            $ot_hrs = $ot_hrs + $ext_regularOvertimeTotal;
+
+            if(($regularOTHours > 0 && $nDiffOTHours > 0) && $nDiffOTHours > $ext_regularOvertimeTotal ){
+                $regularOTHours = $regularOTHours + $ext_regularOvertimeTotal;
+                $nDiffOTHours = $nDiffOTHours - $ext_regularOvertimeTotal;
+            }
+        }
+        /*** end after night diff regular hours inclusion ***/
+        
+        $ot_night_diff = number_format($ot_night_diff, 2, '.', '');
+        return array('ot_hrs' => $ot_hrs, 'ot_night_diff' => $ot_night_diff,
+        'regularOTHours' => $regularOTHours, 'nDiffOTHours' => $nDiffOTHours,
+        "ot_start" => $ot_start, "ot_end" => $ot_end);
+    }
+
+    protected function attendanceCollectionScript($prevRow=null){
+        $am_start = $prevRow->am_in ? date("H:i:s", strtotime($prevRow->am_in)): null;
+        $am_end = $prevRow->am_out ? date("H:i:s", strtotime($prevRow->am_out)): null;
+        $pm_start = $prevRow->pm_in ? date("H:i:s", strtotime($prevRow->pm_in)): null;
+        $pm_end = $prevRow->pm_out ? date("H:i:s", strtotime($prevRow->pm_out)): null;
+        
+        $_attendance_am_start = $am_start ? date("Y-m-d H:i", strtotime("{$prevRow->date} {$am_start}")): null;
+        $_attendance_am_end = $am_end ? date("Y-m-d H:i", strtotime("{$prevRow->date} {$am_end}")): null;
+        $_attendance_pm_start = $pm_start ? date("Y-m-d H:i", strtotime("{$prevRow->date} {$pm_start}")): null;
+        $_attendance_pm_end = $pm_end ? date("Y-m-d H:i", strtotime("{$prevRow->date} {$pm_end}")): null;
+        
+        $_tempAttrAttendance = array();
+        $arrAttendance = $this->nextDayAttendanceScript($_attendance_am_start, $_attendance_am_end, $_attendance_pm_start, $_attendance_pm_end);
+        if(is_array($arrAttendance) && !empty($arrAttendance)){
+            foreach ($arrAttendance as $key => $value) {
+                if($value){
+                    $tempKey = "_attendance_{$key}";
+                    ${$tempKey} = $value;
+                    $_tempAttrAttendance[] = $value;
+                }
+            }
+        }
+        
+        return array("arrAttendance" => $_tempAttrAttendance,
+        "attendance" => array("am_start" => $_attendance_am_start, "am_end" => $_attendance_am_end, "pm_start" => $_attendance_pm_start, "pm_end" => $_attendance_pm_end));
+    }
+
+    protected function nextDayAttendanceScript($am_start=null, $am_end=null, $pm_start=null, $pm_end=null){
+        $_hasNextDayAttendance = false;
+        if(($am_start && $am_end) && (strtotime($am_end) < strtotime($am_start))){
+            $am_end = date("Y-m-d H:i", strtotime("+1 day", strtotime($am_end)));
+            $_hasNextDayAttendance = true;
+        }
+        if(($am_end && $pm_start) && (strtotime($pm_start) < strtotime($am_end) || ($_hasNextDayAttendance && $pm_start))){
+            $pm_start = date("Y-m-d H:i", strtotime("+1 day", strtotime($pm_start)));
+            $_hasNextDayAttendance = true;
+        }
+        if(($pm_start && $pm_end) && (strtotime($pm_end) < strtotime($pm_start) || ($_hasNextDayAttendance && $pm_end))){
+            $pm_end = date("Y-m-d H:i", strtotime("+1 day", strtotime($pm_end)));
+        }
+
+        return array("am_start" => $am_start, "am_end" => $am_end, "pm_start" => $pm_start, "pm_end" => $pm_end);
+    }
+
+    protected function otAfterShiftNightDiffScript($parameters = []){
+        $otAfterShift = $parameters['otAfterShift'] ?? false;
+        $ot_start = $parameters['otStart'] ?? null;
+        $ot_end = $parameters['otEnd'] ?? null;
+        $isNightShift = $parameters['isNightShift'] ?? false;
+        $night_diff_cfg = $parameters['nightDiffCfg'] ?? null;
+        $ot_night_diff = $parameters['otNightDiff'] ?? 0;
+        
+        if($otAfterShift){
+            $init_start_date = new DateTime($ot_start);
+            $start_ndiff_date = $isNightShift ? $init_start_date->modify("-1 day")->format('Y-m-d') : $init_start_date->format('Y-m-d');
+            $start_ndiff_time = $night_diff_cfg->start_time;
+            $start_ndiff_date_time = date('Y-m-d H:i', strtotime($start_ndiff_date . " " . $start_ndiff_time));
+
+            $init_end_date = new DateTime($ot_end);
+            $end_ndiff_date = $init_end_date->format('Y-m-d');
+            $end_ndiff_time = $night_diff_cfg->end_time;
+            $end_ndiff_date_time = date("Y-m-d H:i", strtotime($end_ndiff_date . " " . $end_ndiff_time));
+
+            $ndiff_start = $start_ndiff_date_time;
+            $ndiff_end = $end_ndiff_date_time;
+            if (strtotime(date('Y-m-d', strtotime($ot_start)))
+                === strtotime(date('Y-m-d', strtotime($ot_end)))) {
+                $init_end_date = new DateTime($ot_start);
+                $end_ndiff_date = $isNightShift ? $init_end_date->modify("-1 day")->format('Y-m-d') : $init_end_date->modify("+1 day")->format('Y-m-d');
+                $end_ndiff_time = $night_diff_cfg->end_time;
+                $end_ndiff_date_time = date("Y-m-d H:i", strtotime($end_ndiff_date . " " . $end_ndiff_time));
+                $ndiff_start = $start_ndiff_date_time;
+                $ndiff_end = $end_ndiff_date_time;
+            }
+            if (strtotime($ndiff_start) >= strtotime($ot_start)) {
+                if (strtotime($ot_end) >= strtotime($ndiff_end)) {
+                    $ot_night_diff = strtotime($ndiff_end) - strtotime($ndiff_start);
+                    $ot_night_diff = $ot_night_diff / 3600;
+                } else {
+                    $ot_night_diff = strtotime($ot_end) - strtotime($ndiff_start);
+                    $ot_night_diff = $ot_night_diff / 3600;
+                }
+            } elseif (strtotime($ot_end) > strtotime($ot_start)){
+                $ot_night_diff = strtotime($ndiff_end) - strtotime($ot_start);
+                $ot_night_diff = $ot_night_diff / 3600;
+            }
+            $ot_night_diff = ($ot_night_diff < 0) ? 0 : $ot_night_diff;
+        }
+
+        return $ot_night_diff;
     }
 }
