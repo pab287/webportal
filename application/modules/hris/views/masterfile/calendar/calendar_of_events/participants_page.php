@@ -62,6 +62,7 @@
         }
 </style>
 <div class="row" id="events-content">
+<input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
     <div class="col-12">
         <div class="m-content">
             <div class="row">
@@ -181,20 +182,20 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body" id="event_calendar_body">
-                    <div class="row">                            <div class="col-md-12">
-                            <div class="toggle-container">
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="nonEmployeeToggle" @click="toggleEmployeeFields()" checked>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                                <label for="nonEmployeeToggle" class="toggle-label">EMPLOYEE</label>
+                <form id='new_event_form' onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
+                    <div class="modal-body" id="event_calendar_body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="toggle-container">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="nonEmployeeToggle" name="is_employee" @click="toggleEmployeeFields()" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <label for="nonEmployeeToggle" class="toggle-label">EMPLOYEE</label>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <form id='new_event_form' onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
                         <div class="row">
-                            <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                             <div class="col-md-12 mb-3">
                                 <div class="form-group m-form__group">
                                     <label class="form-control-label required">Employee</label>
@@ -207,13 +208,13 @@
                                 <label class="form-control-label required">Participant Name</label>
                                 <div class="form-row">
                                     <div class="col-md-4">
-                                        <input name="first_name" type="text" class="form-control m-input" placeholder="First Name" v-model="participantData.firstname" data-validation="required">
+                                        <input name="first_name" type="text" class="form-control m-input" placeholder="First Name" v-model="participantData.firstname" data-validation="required" maxlength="50">
                                     </div>
                                     <div class="col-md-4">
-                                        <input name="middle_name" type="text" class="form-control m-input" placeholder="Middle Name" v-model="participantData.middlename" data-validation="required">
+                                        <input name="middle_name" type="text" class="form-control m-input" placeholder="Middle Name" v-model="participantData.middlename" data-validation="required" maxlength="50">
                                     </div>
                                     <div class="col-md-4">
-                                        <input name="last_name" type="text" class="form-control m-input" placeholder="Last Name" v-model="participantData.lastname" data-validation="required">
+                                        <input name="last_name" type="text" class="form-control m-input" placeholder="Last Name" v-model="participantData.lastname" data-validation="required" maxlength="50">
                                     </div>
                                 </div>
                             </div>
@@ -223,7 +224,7 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="la la-phone"></i></span>
                                     </div>
-                                    <input name="phone" type="text" class="form-control m-input" placeholder="e.g. 09XXXXXXXXX" v-model="participantData.mobile_no" data-validation="required">
+                                    <input name="phone" type="text" class="form-control m-input" placeholder="e.g. 09XXXXXXXXX" v-model="participantData.mobile_no" data-validation="required" maxlength="13">
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -232,25 +233,111 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="la la-envelope"></i></span>
                                     </div>
-                                    <input name="email" type="email" class="form-control m-input" placeholder="example@domain.com" v-model="participantData.email" data-validation="required">
+                                    <input name="email" type="email" class="form-control m-input" placeholder="example@domain.com" v-model="participantData.email" data-validation="required" maxlength="50">
                                 </div>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-control-label required">Company</label>
-                                <input name="company" type="text" class="form-control m-input" placeholder="Company" v-model="participantData.company" data-validation="required">
+                                <input name="company" type="text" class="form-control m-input" placeholder="Company" v-model="participantData.company" data-validation="required" maxlength="50">
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-control-label required">Department</label>
-                                <input name="department" type="text" class="form-control m-input" placeholder="Department" v-model="participantData.department" data-validation="required">
+                                <input name="department" type="text" class="form-control m-input" placeholder="Department" v-model="participantData.department" data-validation="required" maxlength="50">
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-control-label required">Position</label>
-                                <input name="position" type="text" class="form-control m-input" placeholder="Position" v-model="participantData.position" data-validation="required">
+                                <input name="position" type="text" class="form-control m-input" placeholder="Position" v-model="participantData.position" data-validation="required" maxlength="50">
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-success btnSave"><i class="la la-check mr-2"></i>SAVE</button>
+                        <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade show" id="editParticipant" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">EDIT PARTICIPANT</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id='edit_participant_form' onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
+                    <div class="modal-body" id="event_calendar_body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="toggle-container">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="nonEmployeeToggleEdit" name="is_employee" :value="participantDataSelected.is_employee" :checked="participantDataSelected.is_employee == 1" disabled>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <label for="nonEmployeeToggle" class="toggle-label">EMPLOYEE</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <!-- <div class="col-md-12 mb-3">
+                                <div class="form-group m-form__group">
+                                    <label class="form-control-label required">Employee</label>
+                                    <select id="employee-select" name="employee-select" placeholder="Select an option" data-validation="required">
+                                        <option></option>
+                                    </select>
+                                </div>
+                            </div> -->
+                            <div class="col-md-12 mb-3">
+                                <label class="form-control-label required">Participant Name</label>
+                                <div class="form-row">
+                                    <div class="col-md-4">
+                                        <input name="first_name" type="text" class="form-control m-input" placeholder="First Name" data-validation="required" v-model="participantDataSelected.firstname" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input name="middle_name" type="text" class="form-control m-input" placeholder="Middle Name" data-validation="required" v-model="participantDataSelected.middlename" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input name="last_name" type="text" class="form-control m-input" placeholder="Last Name" data-validation="required"  v-model="participantDataSelected.lastname" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-control-label required">Phone Number</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="la la-phone"></i></span>
+                                    </div>
+                                    <input name="phone" type="text" class="form-control m-input" placeholder="e.g. 09XXXXXXXXX" data-validation="required"  v-model="participantDataSelected.mobile_no" maxlength="13">
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-control-label required">Email</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="la la-envelope"></i></span>
+                                    </div>
+                                    <input name="email" type="email" class="form-control m-input" placeholder="example@domain.com" data-validation="required" v-model="participantDataSelected.email" maxlength="50">
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-control-label required">Company</label>
+                                <input name="company" type="text" class="form-control m-input" placeholder="Company" data-validation="required" v-model="participantDataSelected.company" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-control-label required">Department</label>
+                                <input name="department" type="text" class="form-control m-input" placeholder="Department" data-validation="required" v-model="participantDataSelected.department" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-control-label required">Position</label>
+                                <input name="position" type="text" class="form-control m-input" placeholder="Position" data-validation="required" v-model="participantDataSelected.position" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-info btnSave"><i class="la la-check mr-2"></i>UPDATE</button>
                         <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
                     </div>
                 </form>

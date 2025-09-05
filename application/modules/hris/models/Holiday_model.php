@@ -14,6 +14,9 @@
         protected $companyTable = "gcchris.tblcompanies";
         protected $now = null;
         protected $user = null;
+        protected $loggedinData = null;
+        protected $loggedInUsername = null;
+        protected $user_data = null;
 
         function __construct() {
             parent::__construct();
@@ -776,29 +779,22 @@
         
         
 
-        public function getEventParticipants($id){
-            $this->db->select("a.id, a.status, a.emp_id, a.invited_by, a.invited_at, b.mobile_no, c.email, d.name as position, e.code as department, f.code as company,
-                CONCAT(
-                    LOWER(b.firstname),
-                    IF(b.middlename IS NOT NULL AND b.middlename != '', 
-                        CONCAT(' ', UPPER(LEFT(b.middlename, 1)), '.'), 
-                        ''
-                    ),
-                    ' ',
-                    LOWER(b.lastname)
-                ) AS fullname
-            ");
+        public function getEventParticipants($id, $id_only = false){
+            $this->db->select("a.id, a.event_id, a.emp_id, a.is_employee, a.status, a.emp_id, a.invited_by, a.invited_at, a.firstname, a.middlename, a.lastname, a.mobile_no, a.email, a.position, a.department, a.company, 
+                CONCAT(LOWER(a.firstname), IF(a.middlename IS NOT NULL AND a.middlename != '', CONCAT(' ', UPPER(LEFT(a.middlename, 1)), '.'), ''), ' ', LOWER(a.lastname)) AS fullname");
             $this->db->from($this->eventsParticipantsTable." as a");
-            $this->db->join($this->employeesTable." as b", "a.emp_id = b.id", "left");
-            $this->db->join($this->usersTable." as c", "a.emp_id = c.emp_id", "left");
-            $this->db->join($this->positionsTable." as d", "b.position = d.id", "left");
-            $this->db->join($this->departmentTable." as e", "b.department_id = e.id", "left");
-            $this->db->join($this->companyTable." as f", "b.company_id = f.id", "left");
             $this->db->where("a.event_id", $id);
             return $this->db->get()->result();
         }
 
-        public function getEmployeeSelection(){
+        public function getEmployeeSelection($id = null){
+            $ids = $this->db->select("emp_id")
+            ->from($this->eventsParticipantsTable)
+            ->where("event_id", $id)
+            ->where("is_employee", 1)
+            ->get()
+            ->result_array();
+            $ids = array_column($ids, 'emp_id');
             $this->db->select("
                 id,
                 CASE
@@ -812,6 +808,9 @@
         
             $this->db->from($this->employeesTable);
             $this->db->where('employee_status', 'Active');
+            if (!empty($ids)) {
+                $this->db->where_not_in('id', $ids);
+            }
             $this->db->order_by('firstname', 'ASC');
             return $this->db->get()->result();
         }
@@ -828,6 +827,42 @@
             $this->db->join($this->companyTable." as f", "a.company_id = f.id", "left");
             $this->db->where('a.id', $id);
             return $this->db->get()->row();
+        }
+
+        public function saveParticipant(){
+            $resultArray = array();
+            $post = $this->input->post();
+            $post['status'] = "pending";
+            $post['invited_by'] = $this->user_data['emp_id'];
+            unset($post['csrf_token']);
+            $insert = $this->db->insert($this->eventsParticipantsTable, $post);
+            if($insert){
+                $resultArray['participants'] = $this->getEventParticipants($post['event_id']);
+                $resultArray['success'] = true;
+                $resultArray['message'] = "Successfully saved participant.";
+            }else{
+                $resultArray['success'] = false;
+                $resultArray['message'] = "Failed to save participant.";
+            }
+            return $resultArray;
+        }
+
+        public function updateParticipant(){
+            $post  = $this->input->post();
+            $id    = $post['id'];
+            unset($post['csrf_token'], $post['fullname'], $post['id']);
+            $update = $this->db->where('id', $id)->update($this->eventsParticipantsTable, $post);
+            if($update){
+                $resultArray['participants'] = $this->getEventParticipants($post['event_id']);
+                $resultArray['success'] = true;
+                $resultArray['message'] = "Successfully updated participant.";
+                $this->core_layout->setEventLog("Participant added to event ID: {$id}.","update", "success", "gcchris", "user");
+            }else{
+                $resultArray['success'] = false;
+                $resultArray['message'] = "Failed to update participant.";
+                $this->core_layout->setEventLog("Failed to add participant to event ID: {$id}.","update", "error", "gcchris", "system");
+            }
+            return $resultArray;
         }
 
     }

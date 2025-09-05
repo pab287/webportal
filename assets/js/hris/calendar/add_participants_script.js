@@ -1,6 +1,8 @@
 let eventsDetails = null;
 let participants = null;
 let employees = null;
+let empId = null;
+let selectedData = null;
 let selectedEmployee = {
     company: '',
     department: '',
@@ -22,7 +24,6 @@ let selectedNonEmployee = {
     position: '',
 }
 if (_tempContentData !== undefined && _tempContentData !== null && _tempContentData !== '') {
-    console.log(_tempContentData);
     eventsDetails = {..._tempContentData.event_details};
     participants = {..._tempContentData.participants};
     employees =_tempContentData.employees;
@@ -45,6 +46,7 @@ let eventVue = new Vue({
             mobile_no: '',
             position: '',
         },
+        participantDataSelected:{},
 
     },
     mounted: function () {
@@ -88,17 +90,23 @@ let eventVue = new Vue({
             if ($('#nonEmployeeToggle').is(':checked')) {
                 $('#employee-select').prop('disabled', false);
                 $('#new_event_form input[type="text"], #new_event_form input[type="email"]')
-                    .not('#employee-select') // not select2
+                    .not('#employee-select')
                     .prop('disabled', true);
                     selectedNonEmployee = JSON.parse(JSON.stringify(this.participantData)); 
                     this.participantData =  JSON.parse(JSON.stringify(selectedEmployee));
-                                $('#new_event_form')[0].reset();
+                    let toggle = $('#nonEmployeeToggle').prop('checked');
+                    $('#new_event_form')[0].reset(); 
+                    $("#employee-select").val(empId).trigger('change');
+                    $('#nonEmployeeToggle').prop('checked', toggle);
             } else {
                 $('#employee-select').prop('disabled', true);
                 $('#new_event_form input[type="text"], #new_event_form input[type="email"]').prop('disabled', false);
                 selectedEmployee = JSON.parse(JSON.stringify(this.participantData));
                 this.participantData = JSON.parse(JSON.stringify(selectedNonEmployee));
-                            $('#new_event_form')[0].reset();
+                let toggle = $('#nonEmployeeToggle').prop('checked'); 
+                $('#new_event_form')[0].reset(); 
+                $("#employee-select").val(empId).trigger('change');
+                $('#nonEmployeeToggle').prop('checked', toggle);
             }
 
         },
@@ -106,18 +114,18 @@ let eventVue = new Vue({
 });
 
 let participantsArray = Object.values(participants);
-
 const participantsTable = $('#participantsTable').DataTable({
     dom: 'frtlip',
     data: participantsArray,
     scrollX: true,
     responsive: true,
     autoWidth: false,
-    searching: false,
+    searching: true,
     rowId: 'id',
+    order: [[1, 'asc']],
     columns: [
         { data: 'id', visible: false },
-        { data: null, title: 'Participant',
+        { data: 'lastname', title: 'Participant',
             render: function (data, type, row, meta) {
                 return `
                     <div class="font-weight-bold text-uppercase">${row.fullname}</div>
@@ -125,7 +133,7 @@ const participantsTable = $('#participantsTable').DataTable({
                 `;
             }
         },
-        { data: null, title: 'Company', className: "text-center",
+        { data: "is_employee", title: 'Company', className: "text-center",
             render: function (data, type, row, meta) {
                 return `
                     <div>${row.company ?? ''}</div>
@@ -155,22 +163,6 @@ const participantsTable = $('#participantsTable').DataTable({
         { data: null, title: 'Action', className: "text-center", orderable: false,
             render: function (data, type, row, meta) {
                 return itemDatatableActions(row.id, row.status);
-                if (row.id) {
-                    var _actionButton = "";
-                    _actionButton += "<div class='dropdown'>";
-                    _actionButton += "<a href='#' class='btn m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill' data-toggle='dropdown'>";
-                    _actionButton += "<i class='fa fa-ellipsis-v'></i>";
-                    _actionButton += "</a>";
-                    _actionButton += "<div class='dropdown-menu dropdown-menu-right'>";
-            
-                    _actionButton += "<a style='width: auto; cursor: pointer;' class='dropdown-item btnEdit' onclick='edit_resume(" + row.id + ")'><i class='la la-pencil-square'></i>Edit</a>";
-                    _actionButton += "<a style='width: auto; cursor: pointer;' class='dropdown-item btnEdit' onclick='archive_resume(" + row.id + ")'><i class='la la-folder'></i>Archive</a>";
-                    _actionButton += " </div>";
-                    _actionButton += "</div>";
-                    return _actionButton;
-                } else {
-                    return "HH";
-                }
             }
         }
     ]
@@ -178,32 +170,24 @@ const participantsTable = $('#participantsTable').DataTable({
 
 function itemDatatableActions(id, status) {
     let _actionButton = "";
-    _actionButton += " <a style='text-decoration: none;' " +
-        "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit' " +
-        "   onclick='onEditEvent(" + id + ")' " +  
-        "   data-toggle='m-tooltip' data-placement='bottom' title='View Ticket' " +
-        "   data-skin='dark' " +
-        "   title='View Event'>" +
-        "   <i class='la la-eye'></i>" +
-        "</a>";
-
-    _actionButton += " <button " +
-        "   type='button' " +
-        "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnArchive' " +
-        "   onclick='deleteArchive(" + id + ")' " +   
-        "   data-toggle='m-tooltip' data-placement='bottom' title='Archive Ticket' " +
-        "   data-skin='dark'>" +
-        "   <i class='la la-file-archive-o'></i>" +
-        "</button>";
-
-        _actionButton += " <a " +
-        "   href='" + baseUrl('hris/calendar/add_participants/') + id + "' " +
-        "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill' " +
-        "   data-toggle='m-tooltip' data-placement='bottom' title='Add Participants' " +
-        "   data-skin='dark'>" +
-        "   <i class='la la-user-plus'></i>" +
-        "</a>";
-
+    _actionButton += `
+        <div class="dropdown">
+            <button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" 
+                data-toggle="dropdown" 
+                aria-haspopup="true" 
+                aria-expanded="false">
+                <i class="fa fa-ellipsis-v"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-right">
+                <a class="dropdown-item btnEdit" href="javascript:void(0)" onclick="onEditEvent(${id})">
+                    <i class="la la-eye"></i> EDIT PARTICIPANT
+                </a>
+                <a class="dropdown-item btnArchive" href="javascript:void(0)" onclick="archiveParticipant(${id})">
+                    <i class="la la-file-archive-o"></i> Archive Participant
+                </a>
+            </div>
+        </div>
+    `;
     return _actionButton;
 }
 
@@ -215,9 +199,9 @@ $("#employee-select").select2({
     width: '100%'
 })
 .on('select2:select', function (e) {
-    let empId = $(this).val();
+    empId = $(this).val();
     $('#new_event_form')[0].reset();
-
+    $(this).val(empId);
 
     $.ajax({
         url: baseUrl('hris/calendar/get_employee_information'),
@@ -230,7 +214,6 @@ $("#employee-select").select2({
         success: function (response) {
             selectedEmployee = response;
             eventVue.participantData = JSON.parse(JSON.stringify(response));
-            console.log("Selected employee info:", response);
         }
     });
 })
@@ -257,7 +240,6 @@ $("#employee-select").select2({
             mobile_no: '',
             position: '',
         };
-        console.log("Selection cleared (change event)");
     }
 });
 
@@ -265,20 +247,123 @@ $.validate({
     form : '#new_event_form',
     lang: 'en',
     onSuccess : function(form) {
-        console.log(form);
-            // $.ajax({
-            //     url: baseUrl('hris/calendar/save_event'),
-            //     type: "POST",
-            //     dataType: "json",
-            //     data: $(form).serialize(),
-            //     beforeSend: function() {
-            //         $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-            //     },
-            // });
-        
+        let formData = eventVue.participantData;
+        formData.csrf_token = $("#csrf_token").val();
+        formData.is_employee = $("#nonEmployeeToggle").prop("checked") ? 1 : 0;
+        formData.emp_id = empId; 
+        formData.event_id = eventsDetails.id;
+        $.ajax({
+            url: baseUrl('hris/calendar/save_participant'),
+            type: "POST",
+            dataType: "json",
+            data: formData,
+            // beforeSend: function() {
+            //     $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+            // },
+            success: function(res) {
+                $('#new_event_form')[0].reset();
+                if(res.success){
+                    $("#addNewParticipant").modal('hide');
+                    toastr.success(res.message, 'Success', 5000);
+                    $("#employee-select option[value='" + empId + "']").remove();
+                    $("#employee-select").trigger('change.select2');
+                    setParticipantsData(res.participants);
+                }else{
+                    toastr.error(res.message, 'Error', 5000);
+                }
+            }
+        });
+        return false;
     }
 });
 
 $('#addNewParticipant').on('hidden.bs.modal', function () {
     $('#new_event_form')[0].reset();
 });
+
+function setParticipantsData(newData) {
+    participantsTable.clear();             
+    participantsTable.rows.add(newData);   
+    participantsTable.draw();            
+}
+
+function onEditEvent(id) {
+    let rowData = participantsTable.row('#'+id).data();
+    console.log(rowData);
+    selectedData = rowData; 
+    eventVue.participantDataSelected = JSON.parse(JSON.stringify(rowData));
+    $("#editParticipant").modal("show");
+}
+
+function archiveParticipant(id) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This participant will be archived.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, archive it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl('hris/calendar/archive_participant'),
+                type: 'POST',
+                data: {
+                    csrf_token: $("#csrf_token").val(),
+                    id: id
+                },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.success) {
+                        toastr.success(res.message, 'Success', 5000);
+                        setParticipantsData(res.participants); // refresh DataTable
+                    } else {
+                        toastr.error(res.message, 'Error', 5000);
+                    }
+                },
+                error: function() {
+                    toastr.error('Something went wrong', 'Error', 5000);
+                }
+            });
+        }
+    });
+}
+
+$.validate({
+    form : '#edit_participant_form',
+    lang: 'en',
+    scrollToTopOnError: false,
+    onSuccess : function(form) {
+        let formData = JSON.parse(JSON.stringify(eventVue.participantDataSelected));
+        if(!checkChanges(formData, selectedData)){
+            toastr.error("NO CHANGES DETECTED", 'Error', 5000);
+            return false;
+        }
+        formData.csrf_token = $("#csrf_token").val();
+        $.ajax({
+            url: baseUrl('hris/calendar/update_participant'),
+            type: "POST",
+            dataType: "json",
+            data: formData,
+            success: function(res) {
+                if(res.success){
+                    $("#editParticipant").modal('hide');
+                    toastr.success(res.message, 'Success', 5000);
+                    setParticipantsData(res.participants);
+                }else{
+                    toastr.error(res.message, 'Error', 5000);
+                }
+            }
+        });
+    }
+});
+
+function checkChanges(newData, oldData,){
+    console.log(oldData,newData);
+    if(JSON.stringify(oldData) !== JSON.stringify(newData)){
+        return true;
+    }
+}
+

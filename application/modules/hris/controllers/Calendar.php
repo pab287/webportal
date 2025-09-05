@@ -144,7 +144,10 @@
             // $data['event_id'] = $id;
             $data['event_details'] = $this->holiday->getEventDetails($id);
             $data['participants'] = $this->holiday->getEventParticipants($id);
-            $data['employees'] = $this->holiday->getEmployeeSelection();
+            $data['employees'] = $this->holiday->getEmployeeSelection($id);
+
+            // var_dump($data['employees']);
+            // die();
             // $data['companies'] = $this->company->getCompany();
             // $data['departments'] = $this->department->getDepartment();
             $this->core_layout->setPrivilegeName("company_events_calendar");
@@ -163,6 +166,16 @@
 
         public function save_event(){
             $data = $this->holiday->saveEvent();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function save_participant(){
+            $data = $this->holiday->saveParticipant();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function update_participant(){
+            $data = $this->holiday->updateParticipant();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
