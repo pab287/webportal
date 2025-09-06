@@ -4515,8 +4515,14 @@ class Billing_m extends CI_Model {
                 if($this->authenticate->getRoleId() == "1"){
                     $data["isArchiveHide"] = false;
                 } else {
-                    $data["isArchiveHide"] = $current_date > date('Y-m-d', strtotime($_query["created_date"])) ? true : false;
+                    // Give two months allowance for archive visibility
+                    $created_date = date('Y-m-d', strtotime($_query["created_date"]));
+                    $allowance_date = date('Y-m-d', strtotime($created_date . ' +1 months'));
+                    $data["isArchiveHide"] = $current_date > $allowance_date ? true : false;
                 }
+
+                $data["created_date"] = $created_date;
+                $data["allowance_date"] = $allowance_date;
 
                 $resultarray[] = $data;
             }
