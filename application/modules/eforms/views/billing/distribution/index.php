@@ -104,6 +104,7 @@
 										<th>Reading Date</th>
 										<th>Created By</th>
 										<th>Distribute</th>
+										<th class="text-center">Date Created</th>
 										<th class="notExport">Action</th>
 									</tr>
 								</thead>

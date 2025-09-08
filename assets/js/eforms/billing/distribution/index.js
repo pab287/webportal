@@ -47,9 +47,10 @@ var tbl_destribution = $("#table-water_supply").DataTable({
         { data: "reading_date", width: "5%"},
         { data: "name", width: "5%"},
         { data: "distribute", width: "5%", className: "text-right", render: function (data) {
-                return "<strong style='color: #525252;'>"+numberWithCommas(data)+"</strong>";
+                return "<strong style='color: #525252;'>" + numberWithCommas(data) + "</strong>";
             }
         },
+        { data: "created_date", width: "5%", className: "text-center"},
         { data: null, width: "2%", className: "text-center"},
    ],
    order: [[2, 'desc']],
