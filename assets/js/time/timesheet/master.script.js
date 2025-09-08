@@ -1157,14 +1157,6 @@ $(document)
                         if(arrEmpRecord.length > 0){
                             let _arrIds = [];
                             const ctr = arrEmpRecord.length;
-                            /*** let tempHtml = `<ul class='mt-2'>`;
-                            arrEmpRecord.forEach((row, _index) => {
-                                tempHtml += `<li class='m--font-bolder text-left ml-1'>${row.employee_name}</li>`;
-                                _arrIds.push(row.emp_id);
-                            });
-                            tempHtml += `</ul>`; ***/
-                            let timerInterval;
-
                             let tempHtml = `<div class='row swal--custom-list'>`;
                             arrEmpRecord.forEach((row, _index) => {
                                 tempHtml += `<div class='col-6 col-md-6 col-lg-6 col-sm-12'><span class='m--font-bolder text-left ml-1'>${row.employee_name}</span></div>`;
@@ -2461,7 +2453,7 @@ function initCreateTimeAdjustmentModal(response, id, employee_id, employee_name,
 
     $('#has-shift').val(has_shift);
 
-    if (hasOvertimeRequest == false) {
+    if (hasOvertimeRequest === false) {
         createTimeAdjustmentModal.find("#temp_overtime_in").text("");
         createTimeAdjustmentModal.find("#temp_overtime_out").text("");
         createTimeAdjustmentModal.find("#overtime_in").val("");

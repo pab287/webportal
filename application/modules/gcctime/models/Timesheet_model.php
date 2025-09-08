@@ -182,7 +182,7 @@ class Timesheet_model extends CI_Model{
                     return date("Y-m-d H:i", strtotime($_attendance->datetime));
                 }, $this->getAttendance($att_curr_day, $employee->id, $att_next_day, $nightShiftLastRecord));
                 $attendance = array_values(array_unique($attendance));
-
+                
                 $am_start = !empty($schedule) ? $schedule->am_start : null;
                 $am_end = !empty($schedule) ? $schedule->am_end : null;
                 $pm_start = !empty($schedule) ? $schedule->pm_start : null;
@@ -300,6 +300,7 @@ class Timesheet_model extends CI_Model{
                         $overtime_end = null;
 
                         $response = $this->generateTimesheetOvertime($timesheet_exist, $generated_manually, $overtime, $date, $am_end, $pm_end, $am_shift_only, $attendance, $night_diff_cfg);
+                        $allowOvertimeRequest = $response["allow_overtime_request"] ?? false;
 
                         if(isset($response["total_accredited_ot_hrs"]) && $response["total_accredited_ot_hrs"]){
                             $total_accredited_ot_hrs = floatval($response["total_accredited_ot_hrs"]);
@@ -317,7 +318,11 @@ class Timesheet_model extends CI_Model{
                         $this->db->where("id", $timesheet_exist->id);
                         $this->db->where("verified", 0);
 
-                        if(intval($timesheet_exist->has_overtime) == 0){ $this->db->set("has_overtime", 1); }
+                        if($allowOvertimeRequest && intval($timesheet_exist->has_overtime) == 0){ $this->db->set("has_overtime", 1); }
+                        $tempHasOvertime = $allowOvertimeRequest ? 1 : 0;
+                        $tempHasOvertime = ($overtime_start && $overtime_end) && strtotime($overtime_end) > strtotime($overtime_start) ? 1 : $tempHasOvertime;
+
+                        $this->db->set("has_overtime", $tempHasOvertime);
                         $this->db->set("total_accredited_ot_hrs", $total_accredited_ot_hrs);
                         $this->db->set("total_accredited_ndiff_ot_hrs", $ot_night_diff);
                         $this->db->set("overtime_in", $overtime_start);
@@ -384,7 +389,7 @@ class Timesheet_model extends CI_Model{
                             $overtime_end = null;
                             
                             $noBreakOvertime = intval($timesheet_exist->has_overtime) == 2;
-                            if (intval($timesheet_exist->has_overtime) == 1 || ($hasOvertimeRequest && $noBreakOvertime == false)) {
+                            if (intval($timesheet_exist->has_overtime) == 1 || ($hasOvertimeRequest && $noBreakOvertime === false)) {
                                 $response = $this->generateTimesheetOvertime($timesheet_exist, $generated_manually, $overtime, $date, $am_end, $pm_end, $am_shift_only, $attendance, $night_diff_cfg);
                                 if(isset($response["total_accredited_ot_hrs"]) && $response["total_accredited_ot_hrs"]){
                                     $total_accredited_ot_hrs = floatval($response["total_accredited_ot_hrs"]);
@@ -500,8 +505,9 @@ class Timesheet_model extends CI_Model{
                                 $ot_night_diff = 0;
                                 $overtime_start = null;
                                 $overtime_end = null;
-                                
                                 $response = $this->generateNoShiftOvertime($tempRow, $night_diff_cfg, $date, $generated_manually);
+                                $allowOvertimeRequest = $response["allow_overtime_request"] ?? false;
+
                                 if(isset($response["total_accredited_ot_hrs"]) && $response["total_accredited_ot_hrs"]){
                                     $total_accredited_ot_hrs = floatval($response["total_accredited_ot_hrs"]);
                                 }
@@ -518,7 +524,11 @@ class Timesheet_model extends CI_Model{
                                 $this->db->where("id", $tempRow->id);
                                 $this->db->where("verified", 0);
                                 
-                                if(isset($tempRow->has_overtime) && intval($tempRow->has_overtime) == 0){ $this->db->set("has_overtime", 1); }
+                                if($allowOvertimeRequest && isset($tempRow->has_overtime) && intval($tempRow->has_overtime) == 0){ $this->db->set("has_overtime", 1); }
+                                $tempHasOvertime = $hasApprovedOvertimeRequest || $allowOvertimeRequest ? 1 : 0;
+                                $tempHasOvertime = ($overtime_start && $overtime_end) && strtotime($overtime_end) > strtotime($overtime_start) ? 1 : $tempHasOvertime;
+
+                                $this->db->set("has_overtime", $tempHasOvertime);
                                 $this->db->set("total_accredited_ot_hrs", $total_accredited_ot_hrs);
                                 $this->db->set("total_accredited_ndiff_ot_hrs", $ot_night_diff);
                                 $this->db->set("overtime_in", $overtime_start);
@@ -979,6 +989,7 @@ class Timesheet_model extends CI_Model{
 
     public function generateNoShiftOvertime($tempRow, $night_diff_cfg, $date, $generated_manually){
         $arrData = array();
+        $hasOvertimeRequest = false;
         $total_accredited_ot_hrs = 0;
         $total_accredited_ot_nightdiff_hrs = 0;
         $ot_night_diff = 0;
@@ -1121,9 +1132,10 @@ class Timesheet_model extends CI_Model{
                 $regularOTHours = round($regularOTHours, 2);
                 $nDiffOTHours = round($nDiffOTHours, 2);
 
-                if($ot_end == $ot_start){
+                if($ot_end == $ot_start || strtotime($ot_end) < strtotime($ot_start)){
                     $overtime_start = date("Y-m-d H:i", strtotime($_overtime->date_from));
                     $overtime_end = date("Y-m-d H:i", strtotime($_overtime->date_to));
+                    $regularOTHours = 0;
                 }
                 
                 if (sizeof((array) $tempRow) >= 1 && intval($generated_manually) <= 0) {
@@ -1131,6 +1143,7 @@ class Timesheet_model extends CI_Model{
                         $this->db->where("timesheet_id", $tempRow->id);
                         $this->db->delete($this->tbl_timesheet_overtime);
                         $this->db->reset_query();
+                        $hasOvertimeRequest = false;
                     }else{
                         $this->db->where("timesheet_id", $tempRow->id);
                         $this->db->update($this->tbl_timesheet_overtime,
@@ -1144,6 +1157,7 @@ class Timesheet_model extends CI_Model{
                                 "accredited_ndiff_hrs" => $ot_night_diff,
                             ));
                         $this->db->reset_query();
+                        $hasOvertimeRequest = true;
                     }
                 } else {
                     $ts_ot_exist = $this->db
@@ -1157,6 +1171,7 @@ class Timesheet_model extends CI_Model{
                             $this->db->where("id", $ts_ot_exist->id);
                             $this->db->delete($this->tbl_timesheet_overtime);
                             $this->db->reset_query();
+                            $hasOvertimeRequest = false;
                         }else{
                             $this->db->where("id", $ts_ot_exist->id);
                             $this->db->update($this->tbl_timesheet_overtime,
@@ -1169,6 +1184,7 @@ class Timesheet_model extends CI_Model{
                                     "accredited_ndiff_hrs" => $ot_night_diff,
                                 ));
                             $this->db->reset_query();
+                            $hasOvertimeRequest = true;
                         }
                     } else {
                         $this->db->insert($this->tbl_timesheet_overtime,
@@ -1182,6 +1198,7 @@ class Timesheet_model extends CI_Model{
                                 "ndiff_hrs" => $nDiffOTHours,
                                 "accredited_ndiff_hrs" => $ot_night_diff,
                             ));
+                        $hasOvertimeRequest = true;
                     }
                 }
 
@@ -1194,6 +1211,7 @@ class Timesheet_model extends CI_Model{
         $arrData["ot_night_diff"] = $total_accredited_ot_nightdiff_hrs;
         $arrData["overtime_in"] = $overtime_start;
         $arrData["overtime_out"] = $overtime_end;
+        $arrData["allow_overtime_request"] = $hasOvertimeRequest; 
 
         return $arrData;
     }
@@ -2439,6 +2457,8 @@ class Timesheet_model extends CI_Model{
 
     public function generateTimesheetOvertime($timesheet_exist, $generated_manually, $overtime, $date, $am_end, $pm_end, $am_shift_only, $attendance, $night_diff_cfg){
         $resultset = array();
+        $hasOvertimeRequest = false;
+        
         $total_accredited_ot_hrs = 0;
         $total_accredited_ot_nightdiff_hrs = 0;
         $hasShiftSchedule = $timesheet_exist->has_shift == 1;
@@ -2569,30 +2589,23 @@ class Timesheet_model extends CI_Model{
             $regularOTHours = round($regularOTHours, 2);
             $nDiffOTHours = round($nDiffOTHours, 2);
 
-            if (sizeof((array) $timesheet_exist) >= 1 && intval($generated_manually) <= 0) {
-                $this->db->where("timesheet_id", $timesheet_exist->id);
-                $this->db->update($this->tbl_timesheet_overtime,
-                    array(
-                        "overtime_id" => $_overtime->id,
-                        "overtime_in" => $overtime_start,
-                        "overtime_out" => $overtime_end,
-                        "total_hrs" => $regularOTHours,
-                        "accredited_hrs" => $ot_hrs,
-                        "ndiff_hrs" => $nDiffOTHours,
-                        "accredited_ndiff_hrs" => $ot_night_diff,
-                    ));
-                $this->db->reset_query();
-            } else {
-                $ts_ot_exist = $this->db
-                    ->where("timesheet_id", $timesheet_exist->id)
-                    ->where("overtime_id", $_overtime->id)
-                    ->get($this->tbl_timesheet_overtime)
-                    ->row();
+            if($ot_end == $ot_start || strtotime($ot_end) < strtotime($ot_start)){
+                $overtime_start = date("Y-m-d H:i", strtotime($_overtime->date_from));
+                $overtime_end = date("Y-m-d H:i", strtotime($_overtime->date_to));
+                $regularOTHours = 0;
+            }
 
-                if (sizeof((array) $ts_ot_exist) >= 1) {
-                    $this->db->where("id", $ts_ot_exist->id);
+            if (sizeof((array) $timesheet_exist) >= 1 && intval($generated_manually) <= 0) {
+                if($regularOTHours == 0 && $ot_hrs == 0 && $nDiffOTHours == 0 && $ot_night_diff == 0){
+                    $this->db->where("timesheet_id", $timesheet_exist->id);
+                    $this->db->delete($this->tbl_timesheet_overtime);
+                    $this->db->reset_query();
+                    $hasOvertimeRequest = false;
+                }else{
+                    $this->db->where("timesheet_id", $timesheet_exist->id);
                     $this->db->update($this->tbl_timesheet_overtime,
                         array(
+                            "overtime_id" => $_overtime->id,
                             "overtime_in" => $overtime_start,
                             "overtime_out" => $overtime_end,
                             "total_hrs" => $regularOTHours,
@@ -2601,6 +2614,35 @@ class Timesheet_model extends CI_Model{
                             "accredited_ndiff_hrs" => $ot_night_diff,
                         ));
                     $this->db->reset_query();
+                    $hasOvertimeRequest = true;
+                }
+            } else {
+                $ts_ot_exist = $this->db
+                    ->where("timesheet_id", $timesheet_exist->id)
+                    ->where("overtime_id", $_overtime->id)
+                    ->get($this->tbl_timesheet_overtime)
+                    ->row();
+
+                if (sizeof((array) $ts_ot_exist) >= 1) {
+                    if($regularOTHours == 0 && $ot_hrs == 0 && $nDiffOTHours == 0 && $ot_night_diff == 0){
+                        $this->db->where("id", $ts_ot_exist->id);
+                        $this->db->delete($this->tbl_timesheet_overtime);
+                        $this->db->reset_query();
+                        $hasOvertimeRequest = false;
+                    }else{
+                        $this->db->where("id", $ts_ot_exist->id);
+                        $this->db->update($this->tbl_timesheet_overtime,
+                            array(
+                                "overtime_in" => $overtime_start,
+                                "overtime_out" => $overtime_end,
+                                "total_hrs" => $regularOTHours,
+                                "accredited_hrs" => $ot_hrs,
+                                "ndiff_hrs" => $nDiffOTHours,
+                                "accredited_ndiff_hrs" => $ot_night_diff,
+                            ));
+                        $this->db->reset_query();
+                        $hasOvertimeRequest = true;
+                    }
                 } else {
                     $this->db->insert($this->tbl_timesheet_overtime,
                         array(
@@ -2613,6 +2655,7 @@ class Timesheet_model extends CI_Model{
                             "ndiff_hrs" => $nDiffOTHours,
                             "accredited_ndiff_hrs" => $ot_night_diff,
                         ));
+                    $hasOvertimeRequest = true;
                 }
             }
 
@@ -2624,7 +2667,7 @@ class Timesheet_model extends CI_Model{
         $resultset["ot_night_diff"] = $total_accredited_ot_nightdiff_hrs;
         $resultset["overtime_in"] = $overtime_start ? $overtime_start: null;
         $resultset["overtime_out"] = $overtime_end ? $overtime_end: null;
-
+        $resultset["allow_overtime_request"] = $hasOvertimeRequest;
         return $resultset;
     }
 
@@ -3213,9 +3256,10 @@ class Timesheet_model extends CI_Model{
                                             $ndiffHrs = floatval($tsRow->ndiff_hrs);
                                             $ndiffAccHrs = floatval($tsRow->accredited_ndiff_hrs);
 
-                                            
-                                            if(($totHrs > 0 && $totAccHrs >= 0) && ($totHrs != $totAccHrs)){ $flagOtHrs = true; }
-                                            if(($ndiffHrs > 0 && $ndiffAccHrs >= 0) && ($ndiffHrs != $ndiffAccHrs)){ $flagOtHrs = true; }
+                                            if($totHrs != 0 && $totAccHrs != 0 && $ndiffHrs != 0 && $ndiffAccHrs != 0){
+                                                if(($totHrs > 0 && $totAccHrs >= 0) && ($totHrs != $totAccHrs)){ $flagOtHrs = true; }
+                                                if(($ndiffHrs > 0 && $ndiffAccHrs >= 0) && ($ndiffHrs != $ndiffAccHrs)){ $flagOtHrs = true; }
+                                            }
                                         }
                                         $this->db->reset_query();
 
@@ -9428,7 +9472,9 @@ class Timesheet_model extends CI_Model{
         $ot_end = strtotime($ot_end_dtr) > strtotime(date('Y-m-d H:i', strtotime($_overtime->date_to)))
             ? date('Y-m-d H:i', strtotime($_overtime->date_to)): $ot_end_dtr;
 
-        if(strtotime($ot_start) >= strtotime($_previousNightDiff)
+        $isValidOvertime = strtotime($ot_end) > strtotime($ot_start);
+        
+        if($isValidOvertime && strtotime($ot_start) >= strtotime($_previousNightDiff)
             && strtotime($ot_start) < strtotime($_nextNightDiff)){
             $tempOTE = 0;
             $tempRegularOT = 0;
@@ -9445,7 +9491,8 @@ class Timesheet_model extends CI_Model{
             $otNightDiffOnly->is_night_diff = true;
         }
 
-        if((strtotime($ot_start) >= strtotime($shift_basis)) && $hasShiftSchedule){ $otAfterShift = true; }
+        
+        if($isValidOvertime && (strtotime($ot_start) >= strtotime($shift_basis)) && $hasShiftSchedule){ $otAfterShift = true; }
         // START OVERTIME NIGHT DIFF CALCULATION
         $afterShiftParams = array(
             "otAfterShift" => $otAfterShift,
@@ -9456,9 +9503,10 @@ class Timesheet_model extends CI_Model{
             "otNightDiff" => $ot_night_diff
         );
         $ot_night_diff = $this->otAfterShiftNightDiffScript($afterShiftParams);
+
         // END OVERTIME NIGHT DIFF CALCULATION
         
-        $ot_seconds = (strtotime($ot_end) - strtotime($ot_start));
+        $ot_seconds = $isValidOvertime ? (strtotime($ot_end) - strtotime($ot_start)) : 0;
         $ot_minutes = doubleval($ot_seconds) < 0 ? 0 : (doubleval($ot_seconds) / 60);
         
         /** night shift **/
@@ -9483,7 +9531,7 @@ class Timesheet_model extends CI_Model{
 
         $ot_night_diff = doubleval($ot_night_diff);
         $ot_hrs = number_format($regularOvertimeTotal, 2, '.', '');
-
+        
         if($otNightDiffOnly->is_night_diff){
             $ot_hrs = number_format($otNightDiffOnly->ot_regular, 2, '.', '');
             $ot_night_diff = number_format($otNightDiffOnly->ot_night_diff, 2, '.', '');
@@ -9491,6 +9539,7 @@ class Timesheet_model extends CI_Model{
             $nDiffOTHours = $ot_night_diff;
         }
 
+        
         if($ot_hrs >= 5){ $ot_hrs = $ot_hrs - 1; }
         
         if($regularOTHours > 0 && floatval($ot_hrs) > $regularOTHours && $otAfterShift){
@@ -9499,6 +9548,7 @@ class Timesheet_model extends CI_Model{
             $ot_hrs = $regularOTHours;
             $ot_night_diff = $ot_night_diff + $tempOTDiff;
         }
+        
         
         /*** start after night diff regular hours inclusion ***/
         if(($ot_end && $ndiff_end) && floatval($ot_hrs) > 0 && strtotime($ot_end) > strtotime($ndiff_end)){
@@ -9513,6 +9563,7 @@ class Timesheet_model extends CI_Model{
             }
         }
         /*** end after night diff regular hours inclusion ***/
+        
         
         $ot_night_diff = number_format($ot_night_diff, 2, '.', '');
         return array('ot_hrs' => $ot_hrs, 'ot_night_diff' => $ot_night_diff,
@@ -9563,6 +9614,7 @@ class Timesheet_model extends CI_Model{
 
         return array("am_start" => $am_start, "am_end" => $am_end, "pm_start" => $pm_start, "pm_end" => $pm_end);
     }
+
 
     protected function otAfterShiftNightDiffScript($parameters = []){
         $otAfterShift = $parameters['otAfterShift'] ?? false;
