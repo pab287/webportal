@@ -243,7 +243,8 @@ function archiveAssetComponent(id, is_borrowed) {
                 const modalAlert = $(".cant-archive-alert-dialog");
                 const modalBody = modalAlert.find(".modal-body");
                 let el = "";
-                if (accountability && mother_asset_accountability) {
+                // if (accountability && mother_asset_accountability) { // commented because it returns blank modal if the component is only the accounted one
+                if (accountability) {
                     if (has_mother_asset && mother_asset_accountability) {
                         el = "" +
                             "<div class='normal-case m--regular-font-size-lg2'>" +
