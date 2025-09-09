@@ -142,7 +142,7 @@
                         <div class="m-portlet__body">
                             <div class="row">
                                 <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
-                                    <button type="button" class="btn m-btn m-btn--sm btn-success m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#addNewParticipant">
+                                    <button type="button" v-if="!eventAlreadyHappened" class="btn m-btn m-btn--sm btn-success m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#addNewParticipant">
                                         <i class="la la-user-plus"></i>
                                         ADD PARTICIPANT
                                     </button>

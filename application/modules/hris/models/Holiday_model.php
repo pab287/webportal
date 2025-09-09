@@ -784,6 +784,7 @@
                 CONCAT(LOWER(a.firstname), IF(a.middlename IS NOT NULL AND a.middlename != '', CONCAT(' ', UPPER(LEFT(a.middlename, 1)), '.'), ''), ' ', LOWER(a.lastname)) AS fullname");
             $this->db->from($this->eventsParticipantsTable." as a");
             $this->db->where("a.event_id", $id);
+            $this->db->where("a.is_archived", 0);
             return $this->db->get()->result();
         }
 
@@ -850,19 +851,98 @@
         public function updateParticipant(){
             $post  = $this->input->post();
             $id    = $post['id'];
-            unset($post['csrf_token'], $post['fullname'], $post['id']);
+            $event_title = $post['event_title'];
+            unset($post['csrf_token'], $post['fullname'], $post['id'], $post['event_title']);
             $update = $this->db->where('id', $id)->update($this->eventsParticipantsTable, $post);
             if($update){
                 $resultArray['participants'] = $this->getEventParticipants($post['event_id']);
                 $resultArray['success'] = true;
                 $resultArray['message'] = "Successfully updated participant.";
-                $this->core_layout->setEventLog("Participant added to event ID: {$id}.","update", "success", "gcchris", "user");
+                $this->core_layout->setEventLog("Participant added to event $event_title.","update", "success", "gcchris", "user");
             }else{
                 $resultArray['success'] = false;
                 $resultArray['message'] = "Failed to update participant.";
-                $this->core_layout->setEventLog("Failed to add participant to event ID: {$id}.","update", "error", "gcchris", "system");
+                $this->core_layout->setEventLog("Failed to add participant to event $event_title.","update", "error", "gcchris", "system");
             }
             return $resultArray;
         }
 
+        public function archiveParticipant(){
+            $post  = $this->input->post();
+            $id    = $post['id'];
+            $name  = $post['emp_name'];
+            $event_name = $post['event_title'];
+            $delete = $this->db->where('id', $id)->delete($this->eventsParticipantsTable);
+            if($delete){
+                if (!empty($post['is_employee']) && $post['is_employee'] == 1) {
+                    $employee = $this->db->select("
+                            id,
+                            CASE
+                                WHEN LENGTH(middlename) > 1 
+                                    THEN CONCAT(firstname, ' ', LEFT(middlename, 1), '. ', lastname)
+                                WHEN LENGTH(middlename) = 1 
+                                    THEN CONCAT(firstname, ' ', middlename, '. ', lastname)
+                                ELSE CONCAT(firstname, ' ', lastname)
+                            END AS text
+                        ", false)
+                        ->from($this->employeesTable)
+                        ->where('employee_status', 'Active')
+                        ->where('id', $post['emp_id'])
+                        ->get()
+                        ->row();
+        
+                    $resultArray['employee'] = $employee;
+                }
+                $resultArray['participants'] = $this->getEventParticipants($post['event_id']);
+                $resultArray['success'] = true;
+                $resultArray['message'] = "Successfully deleted participant.";
+                $this->core_layout->setEventLog("Participant $name deleted from event: { $event_name }.","delete", "success", "gcchris", "user");
+            }else{
+                $resultArray['success'] = false;
+                $this->core_layout->setEventLog("Participant $name failed to be deleted from event: { $event_name }.","delete", "error", "gcchris", "system");
+            }
+        
+            return $resultArray;
+        }
+
+
+        public function confirmParticipant(){
+            $post  = $this->input->post();
+            $id    = $post['id'];
+            $name  = $post['fullname'];
+            $event_name = $post['event_title'];
+            $update = $this->db->where('id', $id)->update($this->eventsParticipantsTable, ['status' => "confirmed"]);
+            if($update){
+                $resultArray['participants'] = $this->getEventParticipants($post['event_id']);
+                $resultArray['success'] = true;
+                $resultArray['message'] = "Participant has been successfully confirmed.";
+                $this->core_layout->setEventLog("Participant $name has been confirmed for event: $event_name.","update", "success", "gcchris", "user");
+            }else{
+                $resultArray['success'] = false;
+                $resultArray['message'] = "Failed to confirm participant.";
+                $this->core_layout->setEventLog("Failed to confirm participant $name for event: $event_name.","update", "error", "gcchris", "system");
+            }
+            return $resultArray;
+        }
+
+
+        public function declineParticipant(){
+            $post = $this->input->post();
+            $id = $post['id'];
+            $event_name = $post['event_title'];
+            $name  = $post['fullname'];
+            $update = $this->db->where('id', $id)->update($this->eventsParticipantsTable, ['status' => "declined"]);
+            if($update){
+                $resultArray['participants'] = $this->getEventParticipants($post['event_id']);
+                $resultArray['success'] = true;
+                $resultArray['message'] = "Participant has been successfully declined.";
+                $this->core_layout->setEventLog("Participant $name has been declined for event: $event_name .", "update", "success", "gcchris", "user");
+            }else{
+                $resultArray['success'] = false;
+                $resultArray['message'] = "Failed to decline participant.";
+                $this->core_layout->setEventLog("Failed to decline participant $name for event: $event_name .", "update", "error", "gcchris", "system");
+            }
+            return $resultArray;
+        }
+        
     }
