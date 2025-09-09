@@ -3747,7 +3747,7 @@
             // if current asset is not accounted get data from master file table
             $this->db->reset_query();
 
-            if (!empty($accountability) && $has_mother_asset && $mother_asset_accountability) {
+            if ((!empty($accountability) && $has_mother_asset && $mother_asset_accountability) ) {
                 $accountability = $this->db
                     ->select("CONCAT('(',TRIM(assets.assetacode),')', if(`name` IS NULL OR `name`='', assetname, `name`)) asset_name")
                     ->where("id", $asset_id)
