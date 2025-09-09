@@ -273,7 +273,7 @@ function archiveAsset(id, is_borrowed) {
                         "<div class='normal-case m--regular-font-size-lg2'>" +
                         "  <p>Asset, <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + accountability.asset_name + "</span> cannot be archived." +
                         "       This asset is still accounted to " +
-                        "       <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + accountability.issued_to + "</span>." +
+                        "       <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + accountability.issued_to.toUpperCase(); + "</span>." +
                         "  </p>" +
                         "</div>" +
                         "</br>";
@@ -284,7 +284,7 @@ function archiveAsset(id, is_borrowed) {
                         "<div class='normal-case m--regular-font-size-lg2'>" +
                         "   <p class='mb-1 m--font-bold'>Borrower:</p>" +
                         "   <p>This asset is still in the possession of" +
-                        "       <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + borrowing_history.borrower_name + "</span>." +
+                        "       <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + borrowing_history.borrower_name.toUpperCase(); + "</span>." +
                         "   </p>" +
                         "</div>";
                 }

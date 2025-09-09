@@ -4462,6 +4462,7 @@
             } else {
                 $mother_asset = $this->db->select("mother_asset")->where_in("id", $post->ids)->get("gccasset.assets")->result_array();
                 $results = array_column($mother_asset, 'mother_asset'); //returns array without index mother_asset
+                $components_ids = array();
                 
                 if (count($results) > 0) {
                     $selectAccountabilityFields .= ', acct.reference_no';
@@ -4485,31 +4486,51 @@
                                 ->get('gccasset.assets')
                                 ->result();
                             $v->components = $components;
+                            $assetIds = array_map(fn($item) => $item->asset_id, $components);
+
+                            array_push($components_ids, $assetIds);
                         }
                     }
-                    
-                    $this->db->reset_query();
-    
-                    $this->db->select($selectBorrowingHistory);
-                    $this->db->join("gcceforms.borrowing br", "br_body.borrowing_id = br.id AND LCASE(br_body.`type`)='$type'", "inner");
-                    $this->db->join("gccmaster.tblemployees employees", "employees.id = br.borrower", "INNER");
-                    $this->db->join("gccasset.assets assets", "assets.id = br_body.asset_id", "INNER");
-                    $this->db->where_in("br_body.asset_id", $post->ids);
-                    $this->db->where("br_body.is_returned", 0);
-                    $this->db->where("br.status !=", "Cancelled");
-                    $borrowing_history = $this->db->get("gcceforms.borrowing_body br_body")->result();
-        
                     $this->db->reset_query();
 
-                    if (count($borrowing_history) > 0) {
-                        foreach ($borrowing_history as $key => $v) {
-                            $components = $this->db->select("CONCAT('(',TRIM(assets.assetacode),')', if(`name` IS NULL OR `name`='', assetname, `name`)) asset_name, id as asset_id")
-                                ->where('mother_asset', $v->asset_id)
-                                ->where_in('id', $post->ids)
-                                ->get('gccasset.assets')
-                                ->result();
-                            $v->components = $components;
-                        }
+                    $components_ids = array_merge(...$components_ids); //merged into 1 level of array
+                    $diff = array_diff($post->ids, $components_ids); //Compares the selected components with their parent asset’s components and returns the IDs of those whose parent asset is not accounted for.
+                    
+                    if (count($diff) > 0) {
+                        // collects all components that been accounted except its mother asset to an employee 
+                        $this->db->select($selectAccountabilityFields);
+                        $this->db->join("gcceforms.accountability acct", "acct_body.accountability_id = acct.id AND LCASE(acct_body.`type`)='$type'", "inner");
+                        $this->db->join("gcchris.tblcontractor contractors", "contractors.id = acct.issued_to", "LEFT");
+                        $this->db->join("gccmaster.tblemployees employees", "employees.id = acct.issued_to", "LEFT");
+                        $this->db->join("gccasset.assets assets", "assets.id = acct_body.asset_id", "inner");
+                        $this->db->where_in("acct_body.asset_id", $diff);
+                        $this->db->where("acct_body.is_returned", 0);
+                        $this->db->where("acct.status !=", "Cancelled");
+                        $component = $this->db->get("gcceforms.accountability_body acct_body")->result();
+                        $mother_asset_accountability = array_merge($mother_asset_accountability, $component);
+                    }
+
+                }
+
+                $this->db->select($selectBorrowingHistory);
+                $this->db->join("gcceforms.borrowing br", "br_body.borrowing_id = br.id AND LCASE(br_body.`type`)='$type'", "inner");
+                $this->db->join("gccmaster.tblemployees employees", "employees.id = br.borrower", "INNER");
+                $this->db->join("gccasset.assets assets", "assets.id = br_body.asset_id", "INNER");
+                $this->db->where_in("br_body.asset_id", $post->ids);
+                $this->db->where("br_body.is_returned", 0);
+                $this->db->where("br.status !=", "Cancelled");
+                $borrowing_history = $this->db->get("gcceforms.borrowing_body br_body")->result();
+    
+                $this->db->reset_query();
+
+                if (count($borrowing_history) > 0) {
+                    foreach ($borrowing_history as $key => $v) {
+                        $components = $this->db->select("CONCAT('(',TRIM(assets.assetacode),')', if(`name` IS NULL OR `name`='', assetname, `name`)) asset_name, id as asset_id")
+                            ->where('mother_asset', $v->asset_id)
+                            ->where_in('id', $post->ids)
+                            ->get('gccasset.assets')
+                            ->result();
+                        $v->components = $components;
                     }
                 }
 

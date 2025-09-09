@@ -252,7 +252,7 @@ function archiveAssetComponent(id, is_borrowed) {
                             "       Asset, <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + accountability.asset_name + "</span> cannot be archived." +
                             "       Mother asset of this component with asset name, <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" +
                             "   " + mother_asset_accountability.asset_name + "</span> is still accounted to " +
-                            "       <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + mother_asset_accountability.issued_to + "</span>." +
+                            "       <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + mother_asset_accountability.issued_to.toUpperCase() + "</span>." +
                             "  </p>" +
                             "</div>" +
                             "</br>";
@@ -261,7 +261,7 @@ function archiveAssetComponent(id, is_borrowed) {
                             "<div class='normal-case m--regular-font-size-lg2'>" +
                             "  <p>Asset, <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + accountability.asset_name + "</span> cannot be archived." +
                             "       This asset is still accounted to " +
-                            "       <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + accountability.issued_to + "</span>." +
+                            "       <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + accountability.issued_to.toUpperCase() + "</span>." +
                             "  </p>" +
                             "</div>" +
                             "</br>";
@@ -273,7 +273,7 @@ function archiveAssetComponent(id, is_borrowed) {
                         "<div class='normal-case m--regular-font-size-lg2'>" +
                         "   <p class='mb-1 m--font-bold'>Borrower:</p>" +
                         "   <p>This asset is still in the possession of" +
-                        "       <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + borrowing_history.borrower_name + "</span>." +
+                        "       <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + borrowing_history.borrower_name.toUpperCase() + "</span>." +
                         "   </p>" +
                         "</div>";
                 }
@@ -646,9 +646,12 @@ const vmData = new Vue({
             return $.isEmptyObject(arr);
         }, removeAsset(index, ids, type) {
             const instance = this;
-
+            let assetIds = [];
             const row = instance.rows[type].find(({ asset_id }) => asset_id === ids);
-            let assetIds = row.components.map(item => item.asset_id);
+
+            if (typeof row.components !== 'undefined' && row.components) {
+                assetIds = row.components.map(item => item.asset_id);
+            }
 
             /** removing the item to the checkbox ids */
             if (type == 'accountability') {
@@ -662,6 +665,10 @@ const vmData = new Vue({
                             checkbox.checked = false;
                         }
                     });
+                } else {
+                    const i = assets_components.indexOf(ids);
+                    assets_components.splice(i, 1);
+                    $(`input[type=checkbox][value='${ids}']`).prop('checked', false);
                 }
             } else {
                 const i = assets_components.indexOf(ids);
