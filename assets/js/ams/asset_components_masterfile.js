@@ -2,6 +2,8 @@ var search_val = "";
 let advanced_search = {};
 var assets_components = [];
 const dropdown = $("#btn-export-asset-components > i");
+let acctTable;
+let borrTable;
 
 //init datatable
 var tblAssetComponents = $("#table-asset-components")
@@ -237,7 +239,7 @@ function archiveAssetComponent(id, is_borrowed) {
             const has_mother_asset = done.has_mother_asset;
             const mother_asset_accountability = done.mother_asset_accountability;
 
-            if (accountability && (borrowing_history || mother_asset_accountability)) {
+            if (accountability || (borrowing_history || mother_asset_accountability)) { // changed && to || because it prevents prompting the borrowed item
                 const modalAlert = $(".cant-archive-alert-dialog");
                 const modalBody = modalAlert.find(".modal-body");
                 let el = "";
@@ -522,3 +524,220 @@ $("#select2-status").select2({
     placeholder: 'Select Status',
     width: '100%'
 });  
+
+$("#modal-mass-archive").on("shown.bs.modal", function () {
+    if (assets_components.length > 0) {
+        vmData.count = assets_components.length; //initial count of assets
+        vmData.assets = assets_components.length; //count for assets after removing items with accountability, borrowing and mother assets
+
+        $.ajax({
+            url: baseUrl('ams/assets/check_multiple_if_borrowed_or_accounted'),
+            dataType: "JSON",
+            type: "POST",
+            data: {
+                csrf_token : _csrf_hash,
+                type : 'asset',
+                isComponent: 1,
+                ids : assets_components
+            },
+            success: function (response) {
+                vmData.isAssetClear = vmData.isEmpty(response.accountability) && vmData.isEmpty(response.borrowing_history) ? true : false;
+                vmData.rows = {...response};
+
+                setTimeout( function () {
+                    acctTable = $('#archive-accountability-table').DataTable({
+                        paging: false,
+                        searching: false,
+                        ordering: false,
+                        info: false,
+                        responsive: true
+                    });
+
+                    acctTable.rows().every(function() {
+                        let row = this.node();
+                        let components = $(row).data('components');
+
+                        if (components) {
+                            let html = '';
+                            if (components.length > 0) {
+                                html += `<table class="table table-sm table-bordered" width="100%">`;
+                                    html += '<thead>';
+                                        html += '<tr>';
+                                            html += '<th>Components</th>';
+                                        html += '</tr>';
+                                    html += '</thead>';
+                                    html += '<tbody>';
+                                        $.each(components, function (index, item) {
+                                            html += '<tr>';
+                                                html += `<td>${item.asset_name}</td>`;
+                                            html += '</tr>';
+                                        });
+                                    html += '</tbody>';
+                                html += `</table>`;
+
+                                this.child(html).show();
+                                $(row).addClass('shown');
+                            }
+                        }
+                    });
+
+                    borrTable = $('#archive-borrowing-table').DataTable({
+                        paging: false,
+                        searching: false,
+                        ordering: false,
+                        info: false,
+                        responsive: true
+                    });
+
+                    borrTable.rows().every(function() {
+                        let _row = this.node();
+                        let _components = $(_row).data('components');
+
+                        if (_components) {
+                            let _html = '';
+                            if (_components.length > 0) {
+                                _html += `<table class="table table-sm table-bordered" width="100%">`;
+                                    _html += '<thead>';
+                                        _html += '<tr>';
+                                            _html += '<th>Components</th>';
+                                        _html += '</tr>';
+                                    _html += '</thead>';
+                                    _html += '<tbody>';
+                                        $.each(_components, function (index, item) {
+                                            _html += '<tr>';
+                                                _html += `<td>${item.asset_name}</td>`;
+                                            _html += '</tr>';
+                                        });
+                                    _html += '</tbody>';
+                                _html += `</table>`;
+
+                                this.child(_html).show();
+                                $(row).addClass('shown');
+                            }
+                        }
+                    });
+
+                }, 500);
+
+                if (vmData.isEmpty(response.accountability) && vmData.isEmpty(response.borrowing_history)) { 
+                    archiveSelect2();
+                }
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                console.log(errorThrown);
+            }
+        });
+    }
+});
+
+$("#modal-mass-archive").on("hidden.bs.modal", function () {
+    vmData.rows = {...{} };
+    vmData.count = 0;
+    vmData.assets = 0;
+    vmData.isAssetClear = false;
+});
+
+const vmData = new Vue({
+    el: "#archive-list",
+    data: { rows: {}, count: 0, assets: 0, isAssetClear: false },
+    methods: {
+        isEmpty(arr){
+            return $.isEmptyObject(arr);
+        }, removeAsset(index, ids, type) {
+            const instance = this;
+
+            const row = instance.rows[type].find(({ asset_id }) => asset_id === ids);
+            let assetIds = row.components.map(item => item.asset_id);
+
+            /** removing the item to the checkbox ids */
+            if (type == 'accountability') {
+                if (assetIds.length > 0) {
+                    let remaining = assets_components.filter(id => !assetIds.includes(id));
+                    assets_components = remaining;
+    
+                    assetIds.forEach(id => {
+                        let checkbox = document.querySelector(`input[type="checkbox"][value="${id}"]`);
+                        if (checkbox) {
+                            checkbox.checked = false;
+                        }
+                    });
+                }
+            } else {
+                const i = assets_components.indexOf(ids);
+                assets_components.splice(i, 1);
+                $(`input[type=checkbox][value='${ids}']`).prop('checked', false);
+            }
+            
+            /** removing to the list */
+            instance.rows[type].splice(index, 1);
+            let _table = type == 'accountability' ? acctTable : borrTable;
+
+            /** removes the child components when removing the parent */
+            _table.rows(function (idx, data, node) {
+                return $(node).data('asset-id') == ids;
+            }).every(function () {
+                if (this.child && this.child.isShown()) {
+                    this.child.hide();
+                }
+                this.remove();
+            });
+            _table.draw();
+            /** removes the child components when removing the parent */
+
+            instance.isAssetClear = instance.isEmpty(instance.rows.accountability) && instance.isEmpty(instance.rows.borrowing_history) ? true : false;
+            instance.count = assets_components.length;
+            instance.assets = assets_components.length;
+            /** removing to the list */
+
+            $(".tooltip.bs-tooltip-top").empty();
+
+            const allCheckboxes = $("#table-asset-components tbody input[type='checkbox']").length;
+            const checkedCheckboxes = $("#table-asset-components tbody input[type='checkbox']:checked").length;
+            const checked = allCheckboxes <= checkedCheckboxes;
+            $('#selectall').prop('checked', checked);
+
+            if (instance.isAssetClear) {
+                archiveSelect2();
+            }
+        }
+    }
+})
+
+function archiveSelect2(){
+    setTimeout( function() {
+        $("#archive-select2-status").select2({
+            dropdownParent: $("#modal-mass-archive"),
+            placeholder: 'Select Status',
+            width: '100%'
+        });
+    }, 500);
+}
+
+$.validate({
+    form : '#mass-archive-form',
+	lang: 'en',
+	onSuccess : function(form) {
+		var _data = form.serializeArray();
+        _data.push({ name: 'ids', value: assets_components }, { name: 'type', value: 'component'});
+
+        $.ajax({
+            url: baseUrl('ams/assets/mass_archive_assets'),
+			type: "POST",
+			data: _data,
+            beforeSend: function(){
+				$(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+			},
+            success: function(response){
+                if (response.status) {
+                    toastr.success(response.msg, "", 5000);
+                    $("#modal-mass-archive").modal('hide');
+                    tblAssetComponents.ajax.reload();
+                } else {
+                    toastr.error(response.msg, "", 5000);
+                }
+            }
+        });
+
+        return false;
+    }
+})

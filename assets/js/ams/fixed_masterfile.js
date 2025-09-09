@@ -568,3 +568,118 @@ $('body, .modal-body')
         show: 300
     }
 });
+
+$("#modal-mass-archive").on("shown.bs.modal", function () {
+    if (assets.length > 0) {
+        vmData.count = assets.length; //initial count of assets
+        vmData.assets = assets.length; //count for assets after removing items with accountability, borrowing and mother assets
+
+        $.ajax({
+            url: baseUrl('ams/assets/check_multiple_if_borrowed_or_accounted'),
+            dataType: "JSON",
+            type: "POST",
+            data: {
+                csrf_token : _csrf_hash,
+                type : 'asset',
+                isComponent: 0,
+                ids : assets
+            },
+            success: function (response) {
+                vmData.isAssetClear = vmData.isEmpty(response.accountability) && vmData.isEmpty(response.borrowing_history) ? true : false;
+                vmData.rows = Object.assign({}, response);
+
+                if (vmData.isEmpty(response.accountability) && vmData.isEmpty(response.borrowing_history)) { 
+                    archiveSelect2();
+                }
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                console.log(errorThrown);
+            }
+        });
+    }
+});
+
+$("#modal-mass-archive").on("hidden.bs.modal", function () {
+    vmData.rows = Object.assign({});
+    vmData.count = 0;
+    vmData.assets = 0;
+    vmData.isAssetClear = false;
+});
+
+const vmData = new Vue({
+    el: "#archive-list",
+    data: { rows: {}, count: 0, assets: 0, isAssetClear: false },
+    methods: {
+        isEmpty(arr){
+            return $.isEmptyObject(arr);
+        }, removeAsset(index, id, type) {
+            const instance = this;
+
+            /** removing the item to the checkbox ids */
+            const i = assets.indexOf(id);
+
+            if (i !== -1) {
+                assets.splice(i, 1);
+                $(`input[type=checkbox][value='${id}']`).prop('checked', false);
+            }
+            /** removing the item to the checkbox ids */
+
+            /** removing to the list */
+            instance.rows[type].splice(index, 1);
+            instance.isAssetClear = instance.isEmpty(instance.rows.accountability) && instance.isEmpty(instance.rows.borrowing_history) ? true : false;
+            instance.count = assets.length;
+            instance.assets = assets.length;
+            /** removing to the list */
+
+            $(".tooltip.bs-tooltip-top").empty();
+
+            const allCheckboxes = $("#table-fixed-asset tbody input[type='checkbox']").length;
+            const checkedCheckboxes = $("#table-fixed-asset tbody input[type='checkbox']:checked").length;
+            const checked = allCheckboxes <= checkedCheckboxes;
+            $('#selectall').prop('checked', checked);
+
+            if (instance.isAssetClear) {
+                archiveSelect2();
+            }
+        }
+    }
+})
+
+function archiveSelect2(){
+    setTimeout( function() {
+        $("#archive-select2-status").select2({
+            dropdownParent: $("#modal-mass-archive"),
+            placeholder: 'Select Status',
+            width: '100%'
+        });
+    }, 500);
+}
+
+$.validate({
+    form : '#mass-archive-form',
+	lang: 'en',
+	onSuccess : function(form) {
+		var _data = form.serializeArray();
+        _data.push({ name: 'ids', value: assets }, { name: 'type', value: 'fixed'});
+
+        $.ajax({
+            url: baseUrl('ams/assets/mass_archive_assets'),
+			type: "POST",
+			data: _data,
+            beforeSend: function(){
+				$(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+			},
+            success: function(response){
+                if (response.status) {
+                    toastr.success(response.msg, "", 5000);
+                    $("#modal-mass-archive").modal('hide');
+                    tblFixedAsset.ajax.reload();
+                } else {
+                    toastr.error(response.msg, "", 5000);
+                }
+            }
+        });
+
+        return false;
+    }
+})

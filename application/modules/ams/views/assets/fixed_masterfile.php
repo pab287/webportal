@@ -84,6 +84,10 @@
                                                     <i class="fa fa-barcode"></i>
                                                     GENERATE BARCODE
                                                 </a>
+                                                <a class="dropdown-item" data-toggle="modal" data-target="#modal-mass-archive" href="#" id="mass-archive">
+                                                    <i class="la la-file-archive-o"></i>
+                                                    MASS ARCHIVE
+                                                </a>
                                             </div>
                                         </div>
                                     </div>
@@ -550,3 +554,123 @@
 <?php
     $this->load->view("modals/print_barcode");
 ?>
+
+<div class="modal fade" tabindex="-1" role="dialog" id="modal-mass-archive">
+    <div class="modal-dialog" role="document" id="archive-list">
+        <form id="mass-archive-form" method="POST">
+            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Mass Archive</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <template v-if="count > 0">
+                        <template v-if="!isEmpty(rows.accountability) || !isEmpty(rows.borrowing_history)">
+                            <div class="m-alert m-alert--outline alert alert-warning alert-dismissible fade show" role="alert">
+                                <strong>Warning!</strong> 
+                                Some of the selected assets is still in possession / accounted to an employee.
+                            </div>
+    
+                            <template v-if="!isEmpty(rows.accountability)">
+                                <h5>List of Asset(s) with active Accountability</h5>
+                                <table width="100%" class="table table-bordered">
+                                    <thead>
+                                        <th>ASSET</th>
+                                        <th>ISSUED TO</th>
+                                        <th width="5%"></th>
+                                    </thead>
+                                    <tbody>
+                                        <template v-for="(item, index) in rows.accountability">
+                                            <tr>
+                                                <td>{{ item.asset_name }}</td>
+                                                <td>{{ item.issued_to }}</td>
+                                                <td>
+                                                    <button type="button" class="btn btn-danger btn-sm" title="Remove from mass archive list" @click="removeAsset(index, item.asset_id, 'accountability')">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </template>
+    
+                            <template v-if="!isEmpty(rows.borrowing_history)">
+                                <div class="mt-3 m-separator m-separator--dashed d-xl-12"></div>
+    
+                                <h5>List of Asset(s) in Possession</h5>
+                                <table width="100%" class="table table-bordered">
+                                    <thead>
+                                        <th>ASSET</th>
+                                        <th>ISSUED TO</th>
+                                        <th width="5%"></th>
+                                    </thead>
+                                    <tbody>
+                                        <template v-for="(item, index) in rows.borrowing_history">
+                                            <tr>
+                                                <td>{{ item.asset_name }}</td>
+                                                <td>{{ item.borrower_name }}</td>
+                                                <td>
+                                                    <button type="button" class="btn btn-danger btn-sm" title="Remove from mass archive list" @click="removeAsset(index, item.asset_id, 'borrowing_history')">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </template>
+                        </template>
+                        <template v-else>
+                            <template v-if="isAssetClear">
+                                <h5 class="m-0">You are about to mass archive the selected assets. Confirm mass archiving of assets.</h5>
+
+                                <!-- <div class="m-separator m-separator--dashed d-xl-12"></div> -->
+
+                                <div class="form-group m-form__group mt-3">
+                                    <label>Status</label>
+                                    <select class="form-control m-input" id="archive-select2-status" name="status" data-validation="required">
+                                        <option></option>
+                                        <option value="damage">DAMAGED</option>
+                                        <option value="destructed">DESTRUCTED</option>
+                                        <option value="lost">LOST</option>
+                                        <option value="sold">SOLD</option>
+                                        <option value="junk">JUNK</option>
+                                        <option value="others">OTHERS</option>
+                                    </select>
+                            </div>
+                            <div class="form-group m-form__group">
+                                <label for="archive-remarks-text-area">Please leave a remark</label>
+                                <textarea name="mass_archive_remark" class="form-control m-input" id="mass-archive-remarks" rows="3" data-validation="required"></textarea>
+                            </div>
+                            </template>
+                        </template>
+                    </template>
+                    <template v-else>
+                        <div class='row'>
+                            <div class='col-md-12 bold text-center'>
+                                <h5 class='m-0'>NO ASSET SELECTED TO BE ARCHIVED. PLEASE CHECK AT LEAST ONE ASSET.</h5>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <div class="modal-footer">
+                    <template v-if="isAssetClear && count > 0">
+                        <button type="submit" class="btn btn-warning btnArchive text-white">
+                            Archive
+                        </button>
+                    </template>
+                    <template v-else>
+                        <button type="button" class="btn btn-warning btnArchive text-white" disabled="disabled">
+                            Archive
+                        </button>
+                    </template>
+                    <button type="button" class="btn btn-danger btnClose text-white" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
