@@ -121,7 +121,7 @@ let eventVue = new Vue({
 
 let participantsArray = Object.values(participants);
 const participantsTable = $('#participantsTable').DataTable({
-    dom: '<"toolbar">Brtlip',
+    dom: 'frtlip',
     data: participantsArray,
     // scrollX: true,
     responsive: true,
@@ -166,7 +166,7 @@ const participantsTable = $('#participantsTable').DataTable({
                 return `<span class="badge ${statusMap[data] || 'badge-secondary'}">${data}</span>`;
             }
         },
-        { data: null, title: 'Action', className: "text-center", orderable: false,
+        { data: null, title: 'Actions', className: "text-left", orderable: false,
             render: function (data, type, row, meta) {
                 return itemDatatableActions(row.id, row.status);
             }
@@ -280,39 +280,44 @@ const participantsTable = $('#participantsTable').DataTable({
 
 function itemDatatableActions(id, status) {
     let _actionButton = "";
-    _actionButton += `
-        <div class="dropdown">
-            <button class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" 
-                data-toggle="dropdown" 
-                aria-haspopup="true" 
-                aria-expanded="false">
-                <i class="fa fa-ellipsis-v"></i>
-            </button>
-            <div class="dropdown-menu" style="margin-top: 10px; z-index: 9999;">
-                <a class="dropdown-item btnEdit" href="javascript:void(0)" onclick="onEditEvent(${id})">
-                    <i class="la la-eye"></i> EDIT PARTICIPANT
-                </a>`;
 
-    if (status == 'pending') {
+    if (status === 'pending') {
         _actionButton += `
-                <a class="dropdown-item btnSave" href="javascript:void(0)" onclick="confirmParticipant(${id})">
-                    <i class="la la-check-circle text-success"></i> Confirm Attendance
-                </a>
-                <a class="dropdown-item btnSave" href="javascript:void(0)" onclick="declineParticipant(${id})">
-                    <i class="la la-times-circle text-danger"></i> Decline Attendance
-                </a>`;
+        <a href="javascript:void(0)" 
+            class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
+            onclick="confirmParticipant(${id})" 
+            title="Confirm Attendance">
+            <i class="la la-check-circle text-success"></i>
+        </a>
+        <a href="javascript:void(0)" 
+            class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
+            onclick="declineParticipant(${id})" 
+            title="Decline Attendance">
+            <i class="la la-times-circle text-danger"></i>
+        </a>`;
     }
 
     _actionButton += `
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item btnArchive" href="javascript:void(0)" onclick="archiveParticipant(${id})">
-                    <i class="la la-file-archive-o"></i> Archive Participant
-                </a>
-            </div>
-        </div>
-    `;
+        <a href="javascript:void(0)" 
+            class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
+            onclick="onEditEvent(${id})" 
+            title="Edit Participant">
+            <i class="la la-eye"></i>
+        </a>`;
+
+    _actionButton += `
+        <a href="javascript:void(0)" 
+            class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
+            onclick="archiveParticipant(${id})" 
+            title="Archive Participant">
+            <i class="la la-file-archive-o"></i>
+        </a>`;
+
     return _actionButton;
 }
+
+
+
 
 $("#employee-select").select2({
     dropdownParent: $('#addNewParticipant'),
@@ -579,3 +584,4 @@ function declineParticipant(id) {
         }
     });
 }
+
