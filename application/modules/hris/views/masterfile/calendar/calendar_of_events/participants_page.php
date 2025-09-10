@@ -195,7 +195,7 @@
         </div>
     </div>
     <div class="modal fade show" id="addNewParticipant" tabindex="-1">
-        <div class="modal-dialog modal-l">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">ADD NEW PARTICIPANT</h5>
