@@ -4474,15 +4474,47 @@ class Billing_m extends CI_Model {
         $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
         
-        $filterFields = array("a.distribute","a.reading_date", "b.firstname", "b.lastname", "c.name");
+        $filterFields = [
+            "e.firstname",
+            "e.middlename",
+            "e.lastname",
+            "CONCAT(TRIM(e.firstname), ' ', LEFT(TRIM(e.middlename), 1), '.', ' ', TRIM(e.lastname))",  
+            "CONCAT(TRIM(e.firstname), ' ', TRIM(e.lastname))",  
+            "CONCAT(TRIM(e.lastname), ' ', TRIM(e.firstname))",  
+            "CONCAT(TRIM(e.firstname), ' ', TRIM(e.middlename), ' ', TRIM(e.lastname))",  
+            "d.distribute",
+            "d.reading_date",
+            "s.name",
+            "d.meterno"
+        ];
 
-        $this->db->select("a.*, CONCAT(b.firstname,' ',b.lastname) as name, c.name as subdivision_name, a.created_date");
-        $this->db->from("hydra_billing.distribution a");
-        $this->db->join("gccmaster.tblemployees b", "b.id = a.created_by", "LEFT");
-        $this->db->join("hydra_billing.subdivision c", "c.id = a.subdivision_id", "LEFT");
-        $this->db->where("a.is_archive", "0");
+        $this->db->select("
+        CONCAT(
+            TRIM(e.firstname), 
+            ' ',
+            CASE
+                WHEN LOWER(TRIM(e.middlename)) = 'n/a' THEN ''
+                WHEN TRIM(e.middlename) != '' THEN CONCAT(LEFT(TRIM(e.middlename), 1), '. ')
+                ELSE ''
+            END,
+            TRIM(e.lastname)
+        ) AS name,
+        d.*, CONCAT(e.firstname,' ',e.lastname) as name, e.firstname, e.lastname, s.name as subdivision_name, d.created_date");
+        $this->db->from("hydra_billing.distribution d");
+        $this->db->join("gccmaster.tblemployees e", "e.id = d.created_by", "LEFT");
+        $this->db->join("hydra_billing.subdivision s", "s.id = d.subdivision_id", "LEFT");
+        $this->db->where("d.is_archive", 0);
+
+        $has_search = !empty($search);
         
-        if($search != ""){
+        if($has_search != ""){
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            // Remove commas from the search string but keep decimals
+            $search = str_replace(',', '', $search);
+            $search = rtrim(rtrim($search, '0'), '.');
+            // Remove all except letters, numbers, spaces, dash, and dot (for decimals)
+            $search = preg_replace('/[^a-zA-Z0-9\s\-.]/', '', $search);
+
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
                 if ($key == 0) {
@@ -4498,8 +4530,9 @@ class Billing_m extends CI_Model {
             $this->db->limit($limit, $offset);
         }
 
-        $this->db->order_by("a.created_date","DESC");
-        
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+
         $query = $this->db->get();
 
         if($query->num_rows() > 0){
@@ -4512,11 +4545,18 @@ class Billing_m extends CI_Model {
                 $data["subdivision_name"] = $_query['subdivision_name'];
                 $data["reading_date"] = $_query["reading_date"];
 
+                $created_date = date('Y-m-d', strtotime($_query["created_date"]));
+                $allowance_date = date('Y-m-d', strtotime($created_date . ' +1 months 15 days'));
+
                 if($this->authenticate->getRoleId() == "1"){
                     $data["isArchiveHide"] = false;
                 } else {
-                    $data["isArchiveHide"] = $current_date > date('Y-m-d', strtotime($_query["created_date"])) ? true : false;
+                    // Give two months allowance for archive visibility
+                    $data["isArchiveHide"] = $current_date > $allowance_date ? true : false;
                 }
+
+                $data["created_date"] = $created_date;
+                $data["allowance_date"] = $allowance_date;
 
                 $resultarray[] = $data;
             }

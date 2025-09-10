@@ -39,28 +39,34 @@ var tbl_destribution = $("#table-water_supply").DataTable({
    },
    searching: true,
    columns: [
-       { data: "subdivision_name", width: "5%", render: function (data) {
+        { data: "subdivision_name", width: "5%", render: function (data) {
                 return "<strong style='color: #525252;'>"+data+"</strong>";
             }
         },
-       { data: "meterno", width: "5%"},
-       { data: "reading_date", width: "5%"},
-       { data: "name", width: "5%"},
-       { data: "distribute", width: "5%", className: "text-right", render: function (data) {
-                return "<strong style='color: #525252;'>"+numberWithCommas(data)+"</strong>";
+        { data: "meterno", width: "5%"},
+        { data: "reading_date", width: "5%"},
+        { data: "name", width: "5%"},
+        { data: "distribute", width: "5%", className: "text-right", render: function (data) {
+                return "<strong style='color: #525252;'>" + numberWithCommas(data) + "</strong>";
             }
         },
-       { data: null, width: "2%", className: "text-center"},
+        { data: "created_date", width: "5%", className: "text-center"},
+        { data: null, width: "2%", className: "text-center"},
    ],
+   order: [[2, 'desc']],
    columnDefs: [
+        {
+            targets: 1,
+        },
         {
             data: null,
             defaultContent: "",
             targets: -1,
             orderable: false,
-            render: function ( data, type, row, meta ) { return itemDatatableActions(row); 
-        },
-    }
+            render: function ( 
+                data, type, row, meta ) { return itemDatatableActions(row); 
+            },
+        }
    ],
    select: {
     style:    'os',
