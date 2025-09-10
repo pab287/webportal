@@ -12,6 +12,7 @@
         protected $positionsTable = "gcchris.tblposition";
         protected $departmentTable = "gcchris.tbldepartments";
         protected $companyTable = "gcchris.tblcompanies";
+        protected $eventFilters = "gcchris.events_filters";
         protected $now = null;
         protected $user = null;
         protected $loggedinData = null;
@@ -503,6 +504,28 @@
                     $this->db->insert($this->eventsSpeakersTable, $speaker_data);
                 }
             }
+
+            if(!empty($post['company_id']) && is_array($post['company_id'])){
+                foreach ($post['company_id'] as $row) {
+                    $company_data = [
+                        "event_id" => $event_id,
+                        "filter_type" => "company",
+                        "filter_id" => $post['company_id'],
+                    ];
+                    $this->db->insert($this->eventFilters, $company_data);
+                }
+            }
+
+            if(!empty($post['department_id']) && is_array($post['department_id'])){
+                foreach ($post['department_id'] as $row) {
+                    $company_data = [
+                        "event_id" => $event_id,
+                        "filter_type" => "department",
+                        "filter_id" => $post['department_id'],
+                    ];
+                    $this->db->insert($this->eventFilters, $company_data);
+                }
+            }
         
             $this->db->trans_complete();
             if ($this->db->trans_status() === FALSE) {
@@ -773,6 +796,23 @@
                 }
                 $row->speakers = $speakers;
                 unset($row->speaker_ids, $row->speaker_names, $row->speaker_positions, $row->speaker_companies);
+                $this->db->select("status, COUNT(*) as total")
+                ->from($this->eventsParticipantsTable)
+                ->where("event_id", $id)
+                ->group_by("status");
+                $statusCounts = $this->db->get()->result();
+                $counts = [
+                    "pending"   => 0,
+                    "declined"  => 0,
+                    "confirmed" => 0
+                ];
+                foreach ($statusCounts as $sc) {
+                    if (isset($counts[$sc->status])) {
+                        $counts[$sc->status] = (int)$sc->total;
+                    }
+                }
+
+                $row->participant_counts = $counts;
             }
             return $row;
         }
@@ -784,7 +824,7 @@
                 CONCAT(LOWER(a.firstname), IF(a.middlename IS NOT NULL AND a.middlename != '', CONCAT(' ', UPPER(LEFT(a.middlename, 1)), '.'), ''), ' ', LOWER(a.lastname)) AS fullname");
             $this->db->from($this->eventsParticipantsTable." as a");
             $this->db->where("a.event_id", $id);
-            $this->db->where("a.is_archived", 0);
+            // $this->db->where("a.is_archived", 0);
             return $this->db->get()->result();
         }
 
@@ -943,6 +983,23 @@
                 $this->core_layout->setEventLog("Failed to decline participant $name for event: $event_name .", "update", "error", "gcchris", "system");
             }
             return $resultArray;
+        }
+
+        public function select2DepartmentData(){
+            $this->db->select('id, description AS text');
+            $this->db->from('gcchris.tbldepartments');
+            $this->db->where('description !=', '');
+            $this->db->where('is_archived', 0);
+            $this->db->order_by('description', 'ASC');
+            $query = $this->db->get();
+            return $query->result_array();
+        }
+
+        public function select2CompanyData(){
+            $this->db->select("companies.id, companies.`code` `text`, companies.*");
+            $this->db->order_by("`code`", "ASC");
+            $results = $this->db->get("gcchris.tblcompanies companies")->result();
+            return $results;
         }
         
     }

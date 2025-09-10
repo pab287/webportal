@@ -25,26 +25,42 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
             { data: 'event_title' },
             { data: 'description' },
             { 
-                data: "event_to", 
+                data: "event_venue", 
                 name: 'event_venue',
                 render: function(data, type, row) {
                     let venue = row.event_venue ? row.event_venue : "No Venue";
                     let schedule = "";
-                    if (row.event_from && row.event_to) {
-                        let fromDate = moment(row.event_from).format("MMM DD, YYYY");
-                        let toDate   = moment(row.event_to).format("MMM DD, YYYY");
+                    let statusTag = "";
             
-                        if (fromDate === toDate) {
-                            schedule = fromDate; // same day
+                    if (row.event_from && row.event_to) {
+                        let fromDate = moment(row.event_from);
+                        let toDate   = moment(row.event_to);
+                        let today    = moment();
+            
+                        let displayFrom = fromDate.format("MMM DD, YYYY");
+                        let displayTo   = toDate.format("MMM DD, YYYY");
+            
+                        if (displayFrom === displayTo) {
+                            schedule = displayFrom; // same day
                         } else {
-                            schedule = fromDate + " - " + toDate;
+                            schedule = displayFrom + " - " + displayTo;
+                        }
+            
+                        if (today.isBefore(fromDate, 'day')) {
+                            statusTag = `<span class="badge badge-info">Upcoming</span>`;
+                        } else if (today.isBetween(fromDate, toDate, 'day', '[]')) {
+                            statusTag = `<span class="badge badge-success">Ongoing</span>`;
+                        } else if (today.isAfter(toDate, 'day')) {
+                            statusTag = `<span class="badge badge-secondary">Done</span>`;
                         }
                     }
             
-                    return `<div>
-                                <strong>${venue}</strong><br>
-                                <small>${schedule}</small>
-                            </div>`;
+                    return `
+                        <div>
+                            <strong>${venue}</strong><br> 
+                            <small>${schedule}</small><br>
+                            ${statusTag}
+                        </div>`;
                 }
             },
             { 
@@ -67,7 +83,7 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
                 data: null,
                 orderable: false,
                 render: function (data, type, row, meta) {
-                    return itemDatatableActions(row.id, row.status);
+                    return itemDatatableActions(row.id, row.status, row.event_from, row.event_to);
                 }
             },            
         ]
@@ -123,6 +139,7 @@ let eventVue = new Vue({
     el: "#new_event_form",
     data: {speakers: [{name: '', position: '', company: ''}], edit_speakers:[]},
     mounted: function () {
+        this.initSelect2();
     },
     methods:{
         addNewSpeaker() {
@@ -137,12 +154,31 @@ let eventVue = new Vue({
                 this.speakers.splice(index, 1);
             }
         },
+        initSelect2(){
+            $("#company").select2({
+                dropdownParent: $('#new_event_form'),
+                data: _tempContentData.company,
+                allowClear: false,
+                placeholder: "Select an option",
+                width: '100%'
+            })
+
+            $("#department").select2({
+                dropdownParent: $('#new_event_form'),
+                data: _tempContentData.department,
+                allowClear: false,
+                placeholder: "Select an option",
+                width: '100%'
+            })
+
+        }
     },
 });
 
 $.validate({
     form : '#new_event_form',
     lang: 'en',
+    scrollToTopOnError : false,
     onSuccess : function(form) {
         $.ajax({
             url: baseUrl('hris/calendar/save_event'),
@@ -169,12 +205,12 @@ $.validate({
     }
 });
 
-function itemDatatableActions(id, status) {
+function itemDatatableActions(id, status, from, to) {
     let _actionButton = "";
     _actionButton += " <a style='text-decoration: none;' " +
         "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit' " +
         "   onclick='onEditEvent(" + id + ")' " +  
-        "   data-toggle='m-tooltip' data-placement='bottom' title='View Ticket' " +
+        "   data-toggle='m-tooltip' data-placement='bottom' title='View Event' " +
         "   data-skin='dark' " +
         "   title='View Event'>" +
         "   <i class='la la-eye'></i>" +
@@ -184,7 +220,7 @@ function itemDatatableActions(id, status) {
         "   type='button' " +
         "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnArchive' " +
         "   onclick='deleteArchive(" + id + ")' " +   
-        "   data-toggle='m-tooltip' data-placement='bottom' title='Archive Ticket' " +
+        "   data-toggle='m-tooltip' data-placement='bottom' title='Archive Event' " +
         "   data-skin='dark'>" +
         "   <i class='la la-file-archive-o'></i>" +
         "</button>";
@@ -192,9 +228,9 @@ function itemDatatableActions(id, status) {
         _actionButton += " <a " +
         "   href='" + baseUrl('hris/calendar/add_participants/') + id + "' " +
         "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill' " +
-        "   data-toggle='m-tooltip' data-placement='bottom' title='Add Participants' " +
+        "   data-toggle='m-tooltip' data-placement='bottom' title='Manage Participants' " +
         "   data-skin='dark'>" +
-        "   <i class='la la-user-plus'></i>" +
+        "   <i class='la la-user'></i>" +
         "</a>";
 
     return _actionButton;
@@ -209,6 +245,7 @@ let editEventVue = new Vue({
         disabled:true,
     },
     mounted: function () {
+
     },
     methods:{
         addNewSpeaker() {
@@ -457,3 +494,4 @@ function openEditHolidayModal(event) {
     $("#edit-events-modal").modal("show");
     $("#btnEdit").hide();
 }
+ 

@@ -79,6 +79,11 @@
                                     </h3>
                                 </div>
                             </div>
+                            <div class="m-portlet__head-tools">
+                                <a href="<?= base_url('hris/calendar/company_events_calendar') ?>" class="custom-btn-link">
+                                    <span class="m--font-bolder">Masterfile</span>
+                                </a>
+                            </div>
                         </div>
                         <div class="m-portlet__body">
                             <div class="row mb-4">
@@ -90,6 +95,7 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="m-separator m-separator--dashed d-xl-12"></div>
                             <div class="row text-center bg-light rounded p-3 mx-1 mb-4 text-uppercase">
                                 <div class="col-6">
                                     <small class="text-uppercase text-muted m--font-boldest d-block">Venue</small>
@@ -101,10 +107,25 @@
                                 </div>
                             </div>
                             <div class="m-separator m-separator--dashed d-xl-12"></div>
+                            <div class="row text-center bg-light rounded p-3 mx-1 mb-4 text-uppercase">
+                                <div class="col-4">
+                                    <small class="text-uppercase text-muted m--font-boldest d-block">Invited</small>
+                                    <div class="m--font-boldest text-dark">50</div>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-uppercase text-muted m--font-boldest d-block">Confirmed</small>
+                                    <div class="m--font-boldest text-dark">40</div>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-uppercase text-muted m--font-boldest d-block">Declined</small>
+                                    <div class="m--font-boldest text-dark">40</div>
+                                </div>
+                            </div>
+                            <div class="m-separator m-separator--dashed d-xl-12"></div>
                             <div class="row">
                                 <div class="col-12">
                                     <div class="d-flex flex-column align-items-center text-uppercase">
-                                    <h3 class="m-widget1__title">Guest Speakers</h3>
+                                    <h3 class="m-widget1__title m--font-boldest">Guest Speakers</h3>
                                     </div>
                                 </div>
                             </div>
@@ -174,7 +195,7 @@
         </div>
     </div>
     <div class="modal fade show" id="addNewParticipant" tabindex="-1">
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-l">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">ADD NEW PARTICIPANT</h5>
@@ -282,14 +303,6 @@
                             </div>
                         </div>
                         <div class="row">
-                            <!-- <div class="col-md-12 mb-3">
-                                <div class="form-group m-form__group">
-                                    <label class="form-control-label required">Employee</label>
-                                    <select id="employee-select" name="employee-select" placeholder="Select an option" data-validation="required">
-                                        <option></option>
-                                    </select>
-                                </div>
-                            </div> -->
                             <div class="col-md-12 mb-3">
                                 <label class="form-control-label required">Participant Name</label>
                                 <div class="form-row">
@@ -344,4 +357,18 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade show" id="attendanceSheet" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate Attendance Sheet</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>

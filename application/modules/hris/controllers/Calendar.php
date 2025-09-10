@@ -129,6 +129,8 @@
             $this->core_layout->addJs("vendors/custom/fullcalendar/fullcalendar.bundle.js", true);
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+            $data["company"] = $this->holiday->select2CompanyData();
+            $data["department"] = $this->holiday->select2DepartmentData();
             $data['events'] = $this->holiday->getEvents();
             $this->core_layout->addJs("js/hris/calendar/calendar_of_events.js", true,$data);
             $this->core_layout->addCss("vendors/custom/fullcalendar/fullcalendar.bundle.css", true);

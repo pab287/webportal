@@ -27,6 +27,7 @@ if (_tempContentData !== undefined && _tempContentData !== null && _tempContentD
     eventsDetails = {..._tempContentData.event_details};
     participants = {..._tempContentData.participants};
     employees =_tempContentData.employees;
+    console.log(eventsDetails);
 }
 
 
@@ -81,16 +82,19 @@ let eventVue = new Vue({
             return { label: "Event Done", class: "bg-secondary" };
         },
         formatDate(date_from, date_to) {
-            const start = new Date(date_from), end = new Date(date_to)
-            const fmt = (d, opts) => d.toLocaleDateString("en-US", opts)
-            const optMD = { month: "short", day: "numeric" }, optY = { year: "numeric" }
-    
-            if (start.getFullYear() === end.getFullYear()) {
-                if (start.getMonth() === end.getMonth())
-                    return `${fmt(start, optMD)} - ${end.getDate()}, ${start.getFullYear()}`
-                return `${fmt(start, optMD)} - ${fmt(end, optMD)}, ${start.getFullYear()}`
+            const start = new Date(date_from), end = new Date(date_to);
+            const fmt = (d, opts) => d.toLocaleDateString("en-US", opts);
+            const optMD = { month: "short", day: "numeric" }, optY = { year: "numeric" };
+            if (start.toDateString() === end.toDateString()) {
+                return fmt(start, { ...optMD, ...optY });
             }
-            return `${fmt(start, { ...optMD, ...optY })} - ${fmt(end, { ...optMD, ...optY })}`
+            if (start.getFullYear() === end.getFullYear()) {
+                if (start.getMonth() === end.getMonth()) {
+                    return `${fmt(start, optMD)} - ${end.getDate()}, ${start.getFullYear()}`;
+                }
+                return `${fmt(start, optMD)} - ${fmt(end, optMD)}, ${start.getFullYear()}`;
+            }
+            return `${fmt(start, { ...optMD, ...optY })} - ${fmt(end, { ...optMD, ...optY })}`;
         },
         toggleEmployeeFields() {
             if ($('#nonEmployeeToggle').is(':checked')) {
@@ -121,7 +125,7 @@ let eventVue = new Vue({
 
 let participantsArray = Object.values(participants);
 const participantsTable = $('#participantsTable').DataTable({
-    dom: 'frtlip',
+    dom: 'Bfrtlip',
     data: participantsArray,
     // scrollX: true,
     responsive: true,
@@ -139,7 +143,7 @@ const participantsTable = $('#participantsTable').DataTable({
                 `;
             }
         },
-        { data: "is_employee", title: 'Company', className: "text-center",
+        { data: "is_employee", title: 'Company', className: "text-left",
             render: function (data, type, row, meta) {
                 return `
                     <div>${row.company ?? ''}</div>
@@ -147,15 +151,13 @@ const participantsTable = $('#participantsTable').DataTable({
                 `;
             }
         },
-        { data: null, title: 'Contact', className: "text-center",
-            render: function (data, type, row, meta) {
-                return `
-                    <div><i class="la la-envelope"></i> ${row.email ?? ''}</div>
-                    <div><i class="la la-phone"></i> ${row.mobile_no ?? ''}</div>
-                `;
-            }
+        { data: 'email', title: 'Contact', className: "text-left",
+            render: (data, type, row) => `
+                ${row.email ? `<div>${row.email}</div>` : ''}
+                ${row.mobile_no ? `<div> ${row.mobile_no}</div>` : ''}
+            `
         },
-        { data: 'status', title: 'Status', className: "text-center",
+        { data: 'status', title: 'Status', className: "text-left",
             render: function (data, type, row, meta) {
                 const statusMap = {
                     pending: 'badge-warning',
@@ -172,66 +174,84 @@ const participantsTable = $('#participantsTable').DataTable({
             }
         }
     ],
+    initComplete: function () {
+        var btns = $('.dt-buttons').detach();
+        $('#participantsTable_filter').append(btns);
+        $('#participantsTable_filter .dt-button').removeClass('dt-button');
+
+        // Apply Metronic styles
+        $(".btnAdvanceSearch").addClass("btn m-btn--square btn-warning text-white mb-2 mt-2");
+        $(".btnPdfAction").addClass("btn m-btn--square btn-warning text-white ml-2");
+        $(".btnExcelAction").addClass("btn m-btn--square btn-info text-white ml-2");
+    },
     buttons: [
-        { 
-            extend: 'csv',
-            exportOptions: {
-                // columns: "thead th:not(.notExport)"
-            },
-            // fieldBoundary: '',
-            customize: function (csv) {
-                let data = csv.split("\n"); // Split CSV into rows
-                
-                let targetUppercase = [1, 6]; // Columns to make uppercase
-                let targetTotalCharges = 5;
-                // Loop through each row
-                data = data.map((row, rowIndex) => {
-                    // Split row into columns, considering quoted fields
-                    let columns = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-                
-                    columns = columns.map((col, columnIndex) => {
-                        col = col.trim(); // Remove extra spaces
-                
-                        if (rowIndex === 0) { 
-                            return col.replace(/\b\w/g, char => char.toUpperCase());
-                        }
-                
-                        if (targetUppercase.includes(columnIndex)) {
-                            col = col.toUpperCase(); // Convert to uppercase
-                        }
-                
-                        if (columnIndex === targetTotalCharges) {
-                            col = col.replace(/,/g, ''); // Remove commas
-                        }
-                
-                        return col;
-                    });
-                
-                    return columns.join(","); // Join modified columns
-                });
-  
-                return data.join("\n"); // Reassemble CSV
+        {
+            text: 'GENERATE ATTENDANCE SHEET',
+            title: 'CRS REPORTS',
+            className: 'btnAdvanceSearch btnSave',
+            action: function ( e, dt, node, config ){
+                $("#attendanceSheet").modal('show');
             }
-        }, 
-        { 
-            extend: 'excel',
-            exportOptions: {
-                // columns: "thead th:not(.notExport)"
-            },
-            customize: function (xlsx) {
-                let sheet = xlsx.xl.worksheets['sheet1.xml'];
+        },
+        // { 
+        //     extend: 'csv',
+        //     exportOptions: {
+        //         // columns: "thead th:not(.notExport)"
+        //     },
+        //     // fieldBoundary: '',
+        //     customize: function (csv) {
+        //         let data = csv.split("\n"); // Split CSV into rows
+                
+        //         let targetUppercase = [1, 6]; // Columns to make uppercase
+        //         let targetTotalCharges = 5;
+        //         // Loop through each row
+        //         data = data.map((row, rowIndex) => {
+        //             // Split row into columns, considering quoted fields
+        //             let columns = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+                
+        //             columns = columns.map((col, columnIndex) => {
+        //                 col = col.trim(); // Remove extra spaces
+                
+        //                 if (rowIndex === 0) { 
+        //                     return col.replace(/\b\w/g, char => char.toUpperCase());
+        //                 }
+                
+        //                 if (targetUppercase.includes(columnIndex)) {
+        //                     col = col.toUpperCase(); // Convert to uppercase
+        //                 }
+                
+        //                 if (columnIndex === targetTotalCharges) {
+        //                     col = col.replace(/,/g, ''); // Remove commas
+        //                 }
+                
+        //                 return col;
+        //             });
+                
+        //             return columns.join(","); // Join modified columns
+        //         });
   
-                // Convert Column B to Uppercase
-                $('row:not(:nth-child(2)) c[r^="B"]', sheet).each(function () {
-                    let cell = $(this).find('is t, v'); // Find the text inside
-                    let text = cell.text().trim(); // Get the existing text
+        //         return data.join("\n"); // Reassemble CSV
+        //     }
+        // }, 
+        // { 
+        //     extend: 'excel',
+        //     exportOptions: {
+        //         // columns: "thead th:not(.notExport)"
+        //     },
+        //     customize: function (xlsx) {
+        //         let sheet = xlsx.xl.worksheets['sheet1.xml'];
   
-                    if (text) {
-                        cell.text(text.toUpperCase()); // Convert to uppercase
-                    }
-                });
-            }
-        }, 
+        //         // Convert Column B to Uppercase
+        //         $('row:not(:nth-child(2)) c[r^="B"]', sheet).each(function () {
+        //             let cell = $(this).find('is t, v'); // Find the text inside
+        //             let text = cell.text().trim(); // Get the existing text
+  
+        //             if (text) {
+        //                 cell.text(text.toUpperCase()); // Convert to uppercase
+        //             }
+        //         });
+        //     }
+        // }, 
         // {
         //     extend: 'pdf',
         //     exportOptions: {
@@ -281,20 +301,26 @@ const participantsTable = $('#participantsTable').DataTable({
 function itemDatatableActions(id, status) {
     let _actionButton = "";
 
-    if (status === 'pending') {
+    let fromDate = moment(eventsDetails.event_from);
+    let toDate   = moment(eventsDetails.event_to);
+    let today    = moment();
+
+    let isUpcoming = today.isBefore(fromDate, 'day');
+
+    if (isUpcoming && status === 'pending') {
         _actionButton += `
-        <a href="javascript:void(0)" 
-            class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
-            onclick="confirmParticipant(${id})" 
-            title="Confirm Attendance">
-            <i class="la la-check-circle text-success"></i>
-        </a>
-        <a href="javascript:void(0)" 
-            class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
-            onclick="declineParticipant(${id})" 
-            title="Decline Attendance">
-            <i class="la la-times-circle text-danger"></i>
-        </a>`;
+            <a href="javascript:void(0)" 
+                class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
+                onclick="confirmParticipant(${id})" 
+                title="Confirm Attendance">
+                <i class="la la-check-circle text-success"></i>
+            </a>
+            <a href="javascript:void(0)" 
+                class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
+                onclick="declineParticipant(${id})" 
+                title="Decline Attendance">
+                <i class="la la-times-circle text-danger"></i>
+            </a>`;
     }
 
     _actionButton += `
@@ -315,6 +341,7 @@ function itemDatatableActions(id, status) {
 
     return _actionButton;
 }
+
 
 
 

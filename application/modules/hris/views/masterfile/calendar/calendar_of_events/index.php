@@ -149,6 +149,25 @@
                     <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                     <div class="row">
                         <div class="col-md-12">
+                            <div class="bg-light border rounded p-3 mb-3 position-relative">
+                                <label for="" class="form-control-label required">FILTERS</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="" class="form-control-label">Company</label>
+                                        <select name="company_id[]" class="form-control" id="company" multiple="multiple">
+                                            <option></option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="" class="form-control-label">Department</label>
+                                        <select name="department_id[]" class="form-control" id="department" multiple="multiple">
+                                            <option></option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
                             <div class="form-group">
                                 <label for="event_title" class="form-control-label required">Event Title</label>
                                 <input name="event_title" type="text" class="form-control m-input" placeholder="event title" data-validation="required">
