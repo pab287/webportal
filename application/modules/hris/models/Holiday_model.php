@@ -479,13 +479,20 @@
             $date_range = isset($post['date']) ? explode(" - ", $post['date']) : [];
             $start_date = isset($date_range[0]) ? date("Y-m-d", strtotime($date_range[0])) : null;
             $end_date   = isset($date_range[1]) ? date("Y-m-d", strtotime($date_range[1])) : null;
-        
+            $companyIds      = isset($post['company_id']) && is_array($post['company_id']) ? $post['company_id'] : [];
+            $departmentIds   = isset($post['department_id']) && is_array($post['department_id']) ? $post['department_id'] : [];
+            $companyArray = isset($post['company_array']) ? json_decode($post['company_array'], true) : [];
+            $departmentArray = isset($post['department_array']) ? json_decode($post['department_array'], true) : [];
             $event_data = [
-                "event_title"   => $post['event_title'] ?? null,
-                "description"   => $post['event_description'] ?? null,
-                "event_venue"   => $post['event_venue'] ?? null,
-                "event_from"    => $start_date,
-                "event_to"      => $end_date,
+                "event_title"       => $post['event_title'] ?? null,
+                "description"       => $post['event_description'] ?? null,
+                "event_venue"       => $post['event_venue'] ?? null,
+                "event_from"        => $start_date,
+                "event_to"          => $end_date,
+                "company_ids"       => serialize($companyIds),
+                "department_ids"    => serialize($departmentIds), 
+                "company_array"     => !empty($companyArray) ? implode(", ", $companyArray) : null,
+                "department_array"  => !empty($departmentArray) ? implode(", ", $departmentArray) : null,
             ];
         
             $this->db->trans_start();
@@ -505,27 +512,27 @@
                 }
             }
 
-            if(!empty($post['company_id']) && is_array($post['company_id'])){
-                foreach ($post['company_id'] as $row) {
-                    $company_data = [
-                        "event_id" => $event_id,
-                        "filter_type" => "company",
-                        "filter_id" => $post['company_id'],
-                    ];
-                    $this->db->insert($this->eventFilters, $company_data);
-                }
-            }
+            // if(!empty($post['company_id']) && is_array($post['company_id'])){
+            //     foreach ($post['company_id'] as $company_id) {
+            //         $company_data = [
+            //             "event_id" => $event_id,
+            //             "filter_type" => "company",
+            //             "filter_id" => $company_id,
+            //         ];
+            //         $this->db->insert($this->eventFiltersTable, $company_data);
+            //     }
+            // }
 
-            if(!empty($post['department_id']) && is_array($post['department_id'])){
-                foreach ($post['department_id'] as $row) {
-                    $company_data = [
-                        "event_id" => $event_id,
-                        "filter_type" => "department",
-                        "filter_id" => $post['department_id'],
-                    ];
-                    $this->db->insert($this->eventFilters, $company_data);
-                }
-            }
+            // if(!empty($post['department_id']) && is_array($post['department_id'])){
+            //     foreach ($post['department_id'] as $department_id) {
+            //         $department_data = [
+            //             "event_id" => $event_id,
+            //             "filter_type" => "department",
+            //             "filter_id" =>  $department_id,
+            //         ];
+            //         $this->db->insert($this->eventFiltersTable, $department_data);
+            //     }
+            // }
         
             $this->db->trans_complete();
             if ($this->db->trans_status() === FALSE) {
@@ -564,8 +571,8 @@
         }
 
         private function getEventsData($limit, $offset, $sortBy, $sortOrder, $search , $year){
-            $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to","b.speaker_name","b.position","b.company");
-            $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to,
+            $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to","b.speaker_name","b.position","b.company","a.company_array","a.department_array");
+            $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array,
                 GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
                 GROUP_CONCAT(b.id SEPARATOR '||') as speaker_id,
                 GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
@@ -619,14 +626,19 @@
                 }
                 $row['speakers'] = $speakers;
                 unset($row['speaker_id'],$row['speaker_names'], $row['speaker_positions'], $row['speaker_companies']);
+
+                $row['company_ids'] = (!empty($row['company_ids']) && ($tmp = @unserialize($row['company_ids'])) !== false) ? $tmp: [];
+                $row['department_ids'] = (!empty($row['department_ids']) && ($tmp = @unserialize($row['department_ids'])) !== false) ? $tmp: [];
+                $row['company_array']    = !empty($row['company_array']) ? explode(",", $row['company_array']) : [];
+                $row['department_array'] = !empty($row['department_array']) ? explode(",", $row['department_array']) : [];
+            
             }
             return $result;
-
         }
 
         private function getEventsDataCount($search,$year){
-            $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to","b.speaker_name","b.position","b.company");
-            $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to,
+            $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to","b.speaker_name","b.position","b.company","a.company_array","a.department_array");
+            $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_array, a.department_array, a.company_array, a.department_array,
             GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
             GROUP_CONCAT(b.id SEPARATOR '||') as speaker_id,
             GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
@@ -663,13 +675,21 @@
             $date_range = explode(" - ", $post['date']);
             $event_from = isset($date_range[0]) ? date("Y-m-d", strtotime($date_range[0])) : null;
             $event_to   = isset($date_range[1]) ? date("Y-m-d", strtotime($date_range[1])) : null;
-        
+            $companyIds      = isset($post['company_id']) && is_array($post['company_id']) ? $post['company_id'] : [];
+            $departmentIds   = isset($post['department_id']) && is_array($post['department_id']) ? $post['department_id'] : [];
+            $companyArray = isset($post['company_array']) ? json_decode($post['company_array'], true) : [];
+            $departmentArray = isset($post['department_array']) ? json_decode($post['department_array'], true) : [];
+
             $eventData = [
                 "event_title" => $post['event_title'],
                 "description" => $post['event_description'],
                 "event_venue" => $post['event_venue'],
                 "event_from"  => $event_from,
                 "event_to"    => $event_to,
+                "company_ids" => serialize($companyIds),
+                "department_ids" => serialize($departmentIds),
+                "company_array" => !empty($companyArray) ? implode(", ", $companyArray) : null,
+                "department_array" => !empty($departmentArray) ? implode(", ", $departmentArray) : null
             ];
             $this->db->trans_start();
             $this->db->where("id", $eventId)->update($this->eventsCalendarTable, $eventData);
@@ -996,10 +1016,12 @@
         }
 
         public function select2CompanyData(){
-            $this->db->select("companies.id, companies.`code` `text`, companies.*");
+            $this->db->select("companies.id, companies.`code` `text`");
+            $this->db->where('is_archived', 0);
             $this->db->order_by("`code`", "ASC");
             $results = $this->db->get("gcchris.tblcompanies companies")->result();
             return $results;
         }
-        
+
     }
+

@@ -154,16 +154,19 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label for="" class="form-control-label">Company</label>
-                                        <select name="company_id[]" class="form-control" id="company" multiple="multiple">
-                                            <option value="0">OPEN</option>
+                                        <select name="company_id[]" class="form-control m-input" id="company" multiple="multiple">
+                                            <option></option>
                                         </select>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="" class="form-control-label">Department</label>
-                                        <select name="department_id[]" class="form-control" id="department" multiple="multiple">
-                                            <option value="0">OPEN</option>
+                                        <select name="department_id[]" class="form-control m-input" id="department" multiple="multiple">
+                                            <option></option>
                                         </select>
                                     </div>
+                                    <small class="form-text mt-2 d-block col-12 text-danger">
+                                        Keep these blank if the event is open to everyone.
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -187,7 +190,7 @@
                             <div class="form-group">
                                 <label for="" class="form-control-label required">Event Speakers</label>
                                 <template v-for="(speaker, index) in speakers" :key="index">
-                                    <div class="bg-light border rounded p-3 mb-3 position-relative">
+                                    <div class="border rounded p-3 mb-3 position-relative">
                                         <button type="button" class="close" :class="{ 'd-none': speakers.length === 1 }" @click="removeSpeaker(index)">
                                             <span aria-hidden="true">&times;</span>
                                         </button>
@@ -237,6 +240,28 @@
                     <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                     <input type="hidden" name="id" :value="eventsData.id">
                     <div class="row">
+                        <div class="col-md-12">
+                            <div class="border rounded p-3 mb-3 position-relative">
+                                <label for="" class="form-control-label">FILTERS</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="" class="form-control-label">Company</label>
+                                        <select name="company_id[]" class="form-control m-input" id="company_edit" multiple="multiple" :disabled="disabled">
+                                            <option></option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="" class="form-control-label">Department</label>
+                                        <select name="department_id[]" class="form-control m-input" id="department_edit" multiple="multiple" :disabled="disabled">
+                                            <option></option>
+                                        </select>
+                                    </div>
+                                    <small class="form-text mt-2 d-block col-12 text-danger">
+                                        Keep these blank if the event is open to everyone.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
                         <div class="col-md-12">
                             <div class="form-group">
                                 <label for="event_title" class="form-control-label required">Event Title</label>

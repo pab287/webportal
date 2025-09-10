@@ -1,15 +1,21 @@
 let holidayCalendar;
 let speakerIndex = 1;
 let selectedEventData = null;
+let selectedCompanies = null;
+let selectedDepartments = null;
+let selectedCompaniesEdit = null;
+let selectedDepartmentsEdit = null;
+
 let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
     .DataTable({
         dom: 'frtlip',
         rowId: 'id',
         serverSide: true,
-        processing: true,
+        processing: false,
+        global: false,
         searching: false,
         ordering: true,
-        order: [[3, 'desc']],
+        order: [[0, 'desc']],
         ajax: {
             url: baseUrl('hris/calendar/get_events_tabular'),
             type: 'post',
@@ -82,6 +88,7 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
             {
                 data: null,
                 orderable: false,
+                width: "10%",
                 render: function (data, type, row, meta) {
                     return itemDatatableActions(row.id, row.status, row.event_from, row.event_to);
                 }
@@ -161,7 +168,10 @@ let eventVue = new Vue({
                 allowClear: false,
                 placeholder: "Select an option",
                 width: '100%'
-            })
+            }).on("change", function () {
+                let data = $(this).select2('data');
+                selectedCompanies = data.map(item => item.text); 
+            });
 
             $("#department").select2({
                 dropdownParent: $('#new_event_form'),
@@ -169,7 +179,10 @@ let eventVue = new Vue({
                 allowClear: false,
                 placeholder: "Select an option",
                 width: '100%'
-            })
+            }).on("change", function () {
+                let data = $(this).select2('data');
+                selectedDepartments = data.map(item => item.text); 
+            });
 
         }
     },
@@ -180,11 +193,14 @@ $.validate({
     lang: 'en',
     scrollToTopOnError : false,
     onSuccess : function(form) {
+        let formData = $(form).serializeArray();
+        formData.push({name: "company_array", value: JSON.stringify(selectedCompanies)});
+        formData.push({name: "department_array", value: JSON.stringify(selectedDepartments)});
         $.ajax({
             url: baseUrl('hris/calendar/save_event'),
             type: "POST",
             dataType: "json",
-            data: $(form).serialize(),
+            data: formData,
             beforeSend: function() {
                 $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
             },
@@ -192,6 +208,10 @@ $.validate({
                 if(res.success){
                     $(form).trigger("reset");
                     $("#addNewEvent").modal('hide');
+                    $("#company").val(null).trigger("change");
+                    $("#department").val(null).trigger("change");
+                    selectedCompanies = [];
+                    selectedDepartments = [];
                     toastr.success(res.message, 'Success', 5000);
                     tblCalendarOfHolidays.ajax.reload();
                     // $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
@@ -206,11 +226,12 @@ $.validate({
 });
 
 function itemDatatableActions(id, status, from, to) {
-    let _actionButton = "";
+    let _actionButton = "<span class='action-buttons'>";
+
     _actionButton += " <a style='text-decoration: none;' " +
         "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit' " +
         "   onclick='onEditEvent(" + id + ")' " +  
-        "   data-toggle='m-tooltip' data-placement='bottom' title='View Event' " +
+        "   data-toggle='m-tooltip' data-placement='bottom' " +
         "   data-skin='dark' " +
         "   title='View Event'>" +
         "   <i class='la la-eye'></i>" +
@@ -225,7 +246,7 @@ function itemDatatableActions(id, status, from, to) {
         "   <i class='la la-file-archive-o'></i>" +
         "</button>";
 
-        _actionButton += " <a " +
+    _actionButton += " <a " +
         "   href='" + baseUrl('hris/calendar/add_participants/') + id + "' " +
         "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill' " +
         "   data-toggle='m-tooltip' data-placement='bottom' title='Manage Participants' " +
@@ -233,8 +254,11 @@ function itemDatatableActions(id, status, from, to) {
         "   <i class='la la-user'></i>" +
         "</a>";
 
+    _actionButton += "</span>";
+
     return _actionButton;
 }
+
 
 let editEventVue = new Vue({
     el: "#edit-events-modal",
@@ -245,7 +269,7 @@ let editEventVue = new Vue({
         disabled:true,
     },
     mounted: function () {
-
+        this.initSelect2();
     },
     methods:{
         addNewSpeaker() {
@@ -267,6 +291,33 @@ let editEventVue = new Vue({
                 return `${start} - ${end}`;
             }
             return '';
+        },
+        initSelect2(){
+            $("#company_edit").select2({
+                dropdownParent: $('#edit_event_form'),
+                data: _tempContentData.company,
+                allowClear: false,
+                placeholder: "Select an option",
+                width: '100%'
+            }).on('change', function () {
+                let data = $(this).select2('data');
+                editEventVue.eventsData.company_ids = JSON.parse(JSON.stringify(data.map(item => item.id)));
+                editEventVue.eventsData.company_array = JSON.parse(JSON.stringify(data.map(item => item.text)));
+                selectedCompaniesEdit = JSON.parse(JSON.stringify(data.map(item => item.text)));
+            });
+
+            $("#department_edit").select2({
+                dropdownParent: $('#edit_event_form'),
+                data: _tempContentData.department,
+                allowClear: false,
+                placeholder: "Select an option",
+                width: '100%'
+            }).on('change', function () {
+                let data = $(this).select2('data');
+                editEventVue.eventsData.department_ids = JSON.parse(JSON.stringify(data.map(item => item.id)));
+                editEventVue.eventsData.department_array = JSON.parse(JSON.stringify(data.map(item => item.text)));
+                selectedDepartmentsEdit = JSON.parse(JSON.stringify(data.map(item => item.text)));
+            });
         }
     },
 });
@@ -278,6 +329,8 @@ function onEditEvent(id) {
     + " - " + moment(rowData.event_to).format("MMM DD, YYYY");
     editEventVue.eventsData = JSON.parse(JSON.stringify(rowData));
     $("#btnEdit").show();
+    $("#company_edit").val(rowData.company_ids).trigger('change');
+    $("#department_edit").val(rowData.department_ids).trigger('change');
     $("#edit-events-modal").modal("show");
 }
 
@@ -287,6 +340,8 @@ $.validate({
     scrollToTopOnError: false,
     onSuccess : function(form) {
         let formData =  $(form).serialize();
+        formData += "&company_array=" + encodeURIComponent(JSON.stringify(selectedCompaniesEdit));
+        formData += "&department_array=" + encodeURIComponent(JSON.stringify(selectedDepartmentsEdit));    
         let eventData = JSON.parse(JSON.stringify(editEventVue.eventsData));
         if(!checkChanges(eventData, selectedEventData)){
             toastr.info('No changes detected.', 'Info', 5000);
@@ -303,6 +358,10 @@ $.validate({
             success: function(res) {
                 if(res.status){
                     $(form).trigger("reset");
+                    $("#company_edit").val(null).trigger("change");
+                    $("#department_edit").val(null).trigger("change");
+                    selectedCompaniesEdit = [];
+                    selectedDepartmentsEdit = [];
                     $("#edit-events-modal").modal('hide');
                     toastr.success(res.message, 'Success', 5000);
                     tblCalendarOfHolidays.ajax.reload(null, false);
@@ -318,8 +377,21 @@ $.validate({
     }
 });
 
+function normalize(obj) {
+    if (Array.isArray(obj)) {
+        return obj.map(v => typeof v === "string" ? v.trim() : normalize(v));
+    } else if (obj !== null && typeof obj === "object") {
+        return Object.fromEntries(
+            Object.entries(obj).map(([k, v]) => [k, normalize(v)])
+        );
+    }
+    return typeof obj === "string" ? obj.trim() : obj;
+}
+
 function checkChanges(newData, oldData) {
-    return JSON.stringify(newData) !== JSON.stringify(oldData);
+    const normNew = normalize(newData);
+    const normOld = normalize(oldData);
+    return JSON.stringify(normNew) !== JSON.stringify(normOld);
 }
 
 $('#edit-events-modal').on('shown.bs.modal', function () {
