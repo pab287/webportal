@@ -2701,7 +2701,6 @@
                 }
             }
             $this->db->where($where);
-            $this->db->where('a.is_archived', 1);
             $this->db->like($searchFields, $pageOptions->search, "both");
             if ($pageOptions->length > -1) {
                 $this->db->limit($pageOptions->length, $pageOptions->start);
@@ -2730,9 +2729,12 @@
 
         function restoreArchivedAsset($id) {
             $resultSet = array();
-            $this->db->where("id", $id);
-            if ($this->db->update("gccasset.assets", array("is_archived" => 0, "archive_remark" => ""))) {
+            $post = $this->input->post();
 
+            $this->db->trans_begin();
+
+            $this->db->where("id", $id);
+            if ($this->db->update("gccasset.assets", array("is_archived" => 0, "archived_dt" => '0000-00-00', "archive_remark" => "", 'status' => $post['status']))) {
                 $this->core->insertArchiveLog("gccasset.assets", $id, 2);
                 $this->core_layout->setEventLog("User restored db id `".$id."` in masterfile datatable.","restore", "success", "gccasset", "user");
                 $resultSet["success"] = true;
@@ -2743,37 +2745,70 @@
                 $resultSet["message"] = $this->db->error();
             }
 
+            if ($this->db->trans_status() === FALSE) {
+                $this->db->trans_rollback();
+            } else {
+                $this->db->trans_commit();
+            }
+
             return $resultSet;
         }
 
         function deleteAsset($id) {
+            $this->db->trans_begin();
+
+            $this->db->select('id, assetacode, name, assetname, isComponent');
+            $this->db->where('id', $id);
+            $this->db->from('gccasset.assets');
+            $row = $this->db->get()->row();
+
+            $this->db->reset_query();
+
             if ($this->db->delete("gccasset.assets", array("id" => $id))) {
                 $resultSet["success"] = true;
                 $resultSet["message"] = "Asset was permanently deleted.";
+
+                $msg = "User deleted " . (($row->isComponent == 0) ? 'fixed asset' : 'component asset') . " with db id `{$row->id}`, asset code `<b>{$row->assetacode}</b>`, asset name `<b>{$row->name}</b>` and description of `<b>{$row->assetname}</b>`";
+
+                $this->core_layout->setEventLog($msg, "delete", "success", "gccasset", "user");
             } else {
                 $resultSet["success"] = false;
                 $resultSet["message"] = $this->db->error();
+
+                $msg = "User deleted " . (($row->isComponent == 0) ? 'fixed asset' : 'component asset') . " with db id `{$row->id}`, asset code `<b>{$row->assetacode}</b>`, asset name `<b>{$row->name}</b>` and description of `<b>{$row->assetname}</b>`";
+                $this->core_layout->setEventLog($msg, "delete", "error", "gccasset", "system");
+            }
+
+            if ($this->db->trans_status() === FALSE) {
+                $this->db->trans_rollback();
+            } else {
+                $this->db->trans_commit();
             }
 
             return $resultSet;
         }
 
         function restoreArchivedAssetsMultiple() {
-            $multiple_id = $this->input->post('multiple_id');
-            $multiple_id_arr = explode(",", $multiple_id);
+            $post = $this->input->post();
+            // $multiple_id = $this->input->post('multiple_id');
+            // $multiple_id_arr = explode(",", $multiple_id);
+            $multiple_id_arr = explode(",", $post['multiple_id']);
             $resultSet = array();
-            $this->db->where_in("id", $multiple_id_arr);
 
-            $output = '';
-            foreach($multiple_id_arr as $id){
-                $output .= $id.', ';
-            }
-            if ($this->db->update("gccasset.assets", array("status" => ""))) {
-                $this->core_layout->setEventLog("User restored db id `".$output."` in masterfile datatable.","restore", "success", "gccasset", "user");
+            // $output = '';
+            // foreach($multiple_id_arr as $id){
+            //     $output .= $id.', ';
+            // }
+
+            // if ($this->db->update("gccasset.assets", array("status" => ""))) { //original source code mhen mass restore
+            $this->db->where_in("id", $multiple_id_arr);
+            $query = $this->db->update("gccasset.assets", array("status" => $post['status'], 'is_archived' => 0, 'archived_dt' => '0000-00-00', 'archive_remark' => ''));
+            if ($query) {
+                $this->core_layout->setEventLog("User restored db id `".$post['multiple_id']."` in masterfile datatable.","restore", "success", "gccasset", "user");
                 $resultSet["success"] = true;
-                $resultSet["message"] = "Assets was restored back to master file.";
+                $resultSet["message"] = "Assets was restored back to masterfile.";
             } else {
-                $this->core_layout->setEventLog("User failed to restore db id `".$output."` in masterfile datatable.","restore", "error", "gccasset", "system");
+                $this->core_layout->setEventLog("User failed to restore db id `".$post['multiple_id']."` in masterfile datatable.","restore", "error", "gccasset", "system");
                 $resultSet["success"] = false;
                 $resultSet["message"] = $this->db->error();
             }
