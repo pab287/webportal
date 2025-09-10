@@ -81,7 +81,6 @@
         $(this).find('i').toggleClass('fa-eye fa-eye-slash');
     });
 
-
         if (session.next_update == null || session.next_update == "0000-00-00 00:00:00") {
             $(".password-change-reminder").modal("show");
         }
@@ -93,6 +92,7 @@
                 
                 if (session.waive_count >= 4) {
                     $("#changePasswordLater").hide();
+                    $("#waiveNull").show();
                 }
             }
         }
