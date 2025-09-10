@@ -2734,7 +2734,7 @@
             $this->db->trans_begin();
 
             $this->db->where("id", $id);
-            if ($this->db->update("gccasset.assets", array("is_archived" => 0, "archived_dt" => '0000-00-00', "archive_remark" => "", 'status' => $post['status']))) {
+            if ($this->db->update("gccasset.assets", array("is_archived" => 0, "archived_dt" => '0000-00-00', "archive_remark" => "", 'status' => 'operational'))) {
                 $this->core->insertArchiveLog("gccasset.assets", $id, 2);
                 $this->core_layout->setEventLog("User restored db id `".$id."` in masterfile datatable.","restore", "success", "gccasset", "user");
                 $resultSet["success"] = true;
@@ -2802,7 +2802,7 @@
 
             // if ($this->db->update("gccasset.assets", array("status" => ""))) { //original source code mhen mass restore
             $this->db->where_in("id", $multiple_id_arr);
-            $query = $this->db->update("gccasset.assets", array("status" => $post['status'], 'is_archived' => 0, 'archived_dt' => '0000-00-00', 'archive_remark' => ''));
+            $query = $this->db->update("gccasset.assets", array("status" => 'operational', 'is_archived' => 0, 'archived_dt' => '0000-00-00', 'archive_remark' => ''));
             if ($query) {
                 $this->core_layout->setEventLog("User restored db id `".$post['multiple_id']."` in masterfile datatable.","restore", "success", "gccasset", "user");
                 $resultSet["success"] = true;

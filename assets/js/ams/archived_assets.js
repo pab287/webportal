@@ -271,70 +271,35 @@ function restoreAsset(id) {
             const _modal = $(".document-modal-container");
             _modal.html(modal);
             _modal.modal("show");
-
-            $("#restore-status").select2({
-                width: '100%',
-                placeholder:'Select a Status',
-                dropdownParent: $('.document-modal-container')
-            });
-
-            $.validate({
-                form: '#confirmation-dialog',
-                lang: 'en',
-                onSuccess: function(form){
-                    var currentForm = form[0];
-                    var formData = $(currentForm).serialize();
-
-                    $.ajax({
-                        url: baseUrl('ams/assets/restore_archived_asset/') + id,
-                        type: "post",
-                        dataType: "json",
-                        data: formData,
-                        success: function(response) {
-                            if (response.success) {
-                                toastr.success(response.message, "", 5000);
-                                search_val = "";
-                                $("#search-archived-assets").val(search_val);
-                                filterArchivedAssets();
-                                closeModal();
-                            } else {
-                                toastr.error(response.message, "Error", 5000);
-                            }
-                        }
-                    })
-
-                    return false;
-                }
-            });
         }
     });
 }
 
-// $(".m-content")
-//     .on("submit", "#confirmation-dialog",
-//         function (e) {
-//             e.preventDefault();
-//             e.preventDefault();
-//             const form = $(this);
-//             const url = form.attr("action");
+$(".m-content")
+    .on("submit", "#confirmation-dialog",
+        function (e) {
+            e.preventDefault();
+            e.preventDefault();
+            const form = $(this);
+            const url = form.attr("action");
 
-//             $.ajax({
-//                 url: baseUrl(url),
-//                 type: "GET",
-//                 dataType: "JSON",
-//                 success: function (response) {
-//                     if (response.success) {
-//                         toastr.success(response.message, "", 5000);
-//                         search_val = "";
-//                         $("#search-archived-assets").val(search_val);
-//                         filterArchivedAssets();
-//                         closeModal();
-//                     } else {
-//                         toastr.error(response.message, "Error", 5000);
-//                     }
-//                 }
-//             })
-//         });
+            $.ajax({
+                url: baseUrl(url),
+                type: "GET",
+                dataType: "JSON",
+                success: function (response) {
+                    if (response.success) {
+                        toastr.success(response.message, "", 5000);
+                        search_val = "";
+                        $("#search-archived-assets").val(search_val);
+                        filterArchivedAssets();
+                        closeModal();
+                    } else {
+                        toastr.error(response.message, "Error", 5000);
+                    }
+                }
+            })
+        });
 
 function closeModal() {
     const modal = $(".document-modal-container");
@@ -367,45 +332,6 @@ function confirmRestoreSelections() {
     const ids = getCheckboxSelections();
     $("#frm-confirm-restore-multiple .multiple_id").val(ids);
     $("#confirm-restore-multiple").modal("show");
-
-    $("#restore-status").select2({
-        width: '100%',
-        placeholder:'Select a Status',
-        dropdownParent: $('#confirm-restore-multiple')
-    });
-
-    $.validate({
-        form: '#frm-confirm-restore-multiple',
-        lang: 'en',
-        onSuccess: function(form){
-            var currentForm = form[0];
-            var _url = currentForm.action;
-            var formData = $(currentForm).serialize();
-
-            $.ajax({
-                url: _url,
-                type: "post",
-                dataType: "json",
-                data: formData,
-                success: function(response) {
-                    if (response.success) {
-                        toastr.success(response.message, "Successfully restored.", 5000);
-                        search_val = "";
-                        $("#search-archived-assets").val(search_val);
-                        filterArchivedAssets();
-                        $("#confirm-restore-multiple").modal("hide");
-                        form.resetForm();
-                        enableButtons();
-                        $(".btn-restore-multiple").attr("disabled", true);
-                    } else {
-                        toastr.error(response.message, "Error", 5000);
-                    }
-                }
-            })
-
-            return false;
-        }
-    })
 }
 
 function confirmDeleteSelections() {
@@ -425,36 +351,36 @@ function getCheckboxSelections() {
     return selectedIds;
 }
 
-// $("#frm-confirm-restore-multiple") //original source code for multiple restore of archived assets. commented to changed it to a validation form
-//     .on("submit", function (e) {
-//         e.preventDefault();
-//         const form = $(this);
-//         const formData = new FormData(this);
+$("#frm-confirm-restore-multiple")
+    .on("submit", function (e) {
+        e.preventDefault();
+        const form = $(this);
+        const formData = new FormData(this);
 
-//         $.ajax({
-//             url: form.attr("action"),
-//             type: "POST",
-//             dataType: "JSON",
-//             contentType: false,
-//             processData: false,
-//             data: formData,
-//             success: function (response) {
-//                 if (response.success) {
-//                     toastr.success(response.message, "Successfully restored.", 5000);
-//                     search_val = "";
-//                     $("#search-archived-assets").val(search_val);
-//                     filterArchivedAssets();
-//                     $("#confirm-restore-multiple").modal("hide");
-//                     form.resetForm();
-//                     enableButtons();
-//                     $(".btn-restore-multiple").attr("disabled", true);
-//                     $(".btn-delete-multiple").attr("disabled", true);
-//                 } else {
-//                     toastr.error(response.message, "Error", 5000);
-//                 }
-//             }
-//         })
-//     });
+        $.ajax({
+            url: form.attr("action"),
+            type: "POST",
+            dataType: "JSON",
+            contentType: false,
+            processData: false,
+            data: formData,
+            success: function (response) {
+                if (response.success) {
+                    toastr.success(response.message, "Successfully restored.", 5000);
+                    search_val = "";
+                    $("#search-archived-assets").val(search_val);
+                    filterArchivedAssets();
+                    $("#confirm-restore-multiple").modal("hide");
+                    form.resetForm();
+                    enableButtons();
+                    $(".btn-restore-multiple").attr("disabled", true);
+                    $(".btn-delete-multiple").attr("disabled", true);
+                } else {
+                    toastr.error(response.message, "Error", 5000);
+                }
+            }
+        })
+    });
 
 
 $("#frm-confirm-delete-multiple")

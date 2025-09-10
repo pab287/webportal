@@ -227,16 +227,6 @@
                     <div style="text-transform: none; font-size: 20px;">
                         Are you sure to restore selected assets?
                     </div>
-
-                    <div class="mt-3">
-                        <label for="" class="required">Status </label>
-                        <select name="status" id="restore-status" class="form-control" data-validation="required">
-                            <option value=""></option>
-                            <option value="brandnew">Brand New</option>
-                            <option value="operational">Operational</option>
-                            <option value="repair">Repair</option>
-                        </select>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary btnNew">
