@@ -53,12 +53,15 @@
                     <?php endif; ?>
                     since your last change. Please take a moment to set a new password now.
                 </p>
+                <p id="waiveNull" class="small" style="color: red; display: none;">
+                    <small>You have exceeded 3 waived attempts. You are now required to update your password.</small>
+                </p>
             </div>
             <div class="modal-footer">
-                <button type="button" id="changePasswordLater" class="btn btn-warning btnClose" data-bs-dismiss="modal" onclick="changePasswordLater(<?php echo $this->session->userdata('logged_in')['id']; ?>)">
+                <button id="changePasswordLater" class="btn btn-warning" data-bs-dismiss="modal" onclick="changePasswordLater(<?php echo $this->session->userdata('logged_in')['id']; ?>)">
                     Waive Password Update
                 </button>
-                <button type="button" id="changePasswordNow" class="btn btn-primary btnSave" data-bs-dismiss="modal" onclick="changePasswordNow()">
+                <button id="changePasswordNow" class="btn btn-primary" data-bs-dismiss="modal" onclick="changePasswordNow()">
                     Update Password Now
                 </button>
             </div>
