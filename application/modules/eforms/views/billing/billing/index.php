@@ -131,14 +131,15 @@
 									<th class="toggle-all notExport">
 										<input type="checkbox" id="select_all_bills"> <span></span>
 									</th>
-									<th>Reference No.</th>
-									<th class="notExport">Reading Ref No.</th>
-									<th class="notExport">Account No.</th>
-									<th>Account Name</th>
+									<th title="Reference No.">Ref No.</th>
+									<th class="notExport" title="Reading Reference No.">Read No.</th>
+									<th class="notExport" title="Account No.">Acc No.</th>
+									<th>Name</th>
 									<th>Meter No.</th>
 									<th>Billing Date</th>
 									<th>Due Date</th>
-									<th>Total Charges</th>
+									<th title="Billing Amount">Amt.</th>
+									<th title="Total Charges">Full Amt.</th>
 									<th>Status</th>
 									<th class="notExport">Print</th>
 									<th class="notExport">Action</th>
@@ -588,6 +589,10 @@
 
 	#table-billing tbody tr.selected td.select-checkbox:before {
 		border: 1px solid #ffffff !important;
+	}
+
+	#table-billing tbody > * {
+		font-size: 12px;
 	}
 
 	#m_viewBill label {

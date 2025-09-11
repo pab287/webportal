@@ -2019,6 +2019,8 @@ class Billing_m extends CI_Model {
                     $_total_charges = $total_charges;
                 }
 
+                $data["full_amount"] = $this->getAccumulatedFullAmount($_query['id'], $_query["customer_id"]);
+
                 $data["total_charges"] = $_total_charges;
                 $data["solution"] = $_query['total_charges'] . " + " . $disconnectionFee . " + " . $data["overdue"] . " - " . $balance . " - " . $balanceCovered ." - " . $totalPayments . " = " . $total_charges;
                 $resultarray[] = $data;
@@ -2093,6 +2095,81 @@ class Billing_m extends CI_Model {
         $this->db->order_by('b.ref_no', 'DESC');
         $query = $this->db->get();
         return $query->num_rows();
+    }
+
+    public function getAccumulatedFullAmount($bill_id, $customer_id) {
+        $current_date = date('Y-m-d');
+        $penalties = $this->getPenalties();
+
+        $this->db->select('id, total_charges, due_date');
+        $this->db->from('hydra_billing.bills');
+        $this->db->where('account_id', $customer_id);
+        $this->db->where('id <=', $bill_id);
+        $this->db->where('is_paid', 0);
+        $this->db->where('status', 1);
+        $query = $this->db->get();
+
+        $result = array();
+        $full_amount = 0; // accumulator
+
+        foreach ($query->result_array() as $row) {
+
+            // Get total reconnection fee (first occurrence per bill_id)
+            $subquery = "
+                SELECT bill_id, account_id, MAX(reconnection_fee) AS reconnection_fee
+                FROM hydra_billing.payments
+                WHERE is_archive = 0
+                GROUP BY bill_id, account_id
+            ";
+
+            $this->db->select('account_id, SUM(reconnection_fee) AS total_reconnection_fee');
+            $this->db->from("($subquery) AS sub");
+            $this->db->where('account_id', $customer_id);
+            $this->db->where('bill_id', $bill_id);
+            $this->db->group_by('account_id');
+
+            $recon_query = $this->db->get();
+            $recon_result = $recon_query->row_array();
+            $total_reconnection_fee = isset($recon_result['total_reconnection_fee']) ? floatval($recon_result['total_reconnection_fee']) : 0.00;
+
+            // ==========================================================================
+            
+
+            // penalty calculation
+            $overdue = 0;
+            if ($current_date > $row['due_date']) {
+                if($penalties['type'] == 'percentage'){
+                    $overdue = ($penalties['amount'] / 100) * $row['total_charges'];
+                } else {
+                    $overdue = $penalties['amount'];
+                }
+            }
+
+            // Final Data
+            $payments = (float)$this->getBillPayments($row['id']);
+            $overdue = (float)number_format($overdue, 2, '.', '');
+            $reconnection_fee = (float)$total_reconnection_fee;
+            $bill_amount = (float)number_format($row['total_charges'], 2, '.', '');
+            $total_amount = (float)number_format(($bill_amount + $overdue + $reconnection_fee) - $payments, 2, '.', '');
+
+            // accumulate
+            $full_amount += $total_amount;
+
+            // Result
+            $result[] = array(
+                'id' => $row['id'],
+                'payments' => $payments,
+                'penalties' => $overdue,
+                'reconnection_fee' => $reconnection_fee,
+                'bill_amount' => $bill_amount,
+                'total_amount' => $total_amount,
+                'full_amount' => number_format($full_amount, 2, '.', ''),
+            );
+        }
+        return [
+            'bills' => $result,
+            'full_amount' => (float)number_format($full_amount, 2, '.', ''),
+        ];
     }
 
     function getReadingbyAccount(){
@@ -2856,7 +2933,7 @@ class Billing_m extends CI_Model {
     }
     
     function getBillPayments($bill_id){
-      $this->db->select("sum(received_amount) as total_paid");
+      $this->db->select("COALESCE(SUM(received_amount), 0) as total_paid");
       $this->db->from("hydra_billing.payments");
       $this->db->where("is_archive", 0);
       $this->db->where("bill_id", $bill_id);

@@ -44,6 +44,11 @@ const tblBillings = $("#table-billing").DataTable({
             return "<span class='m--font-boldest'>"+numberWithCommas(data)+"</span>";
         }
       },
+      { 
+        data: 'full_amount', className: "text-right", render: function (data) {
+            return "<span class='m--font-boldest'>"+numberWithCommas(data.full_amount)+"</span>";
+        }
+      },
       { data: "status", className: "text-center", render: function (data) {
             return renderStatusDue(data);
         }
@@ -62,7 +67,7 @@ const tblBillings = $("#table-billing").DataTable({
       },
       {
         orderable: false,
-        targets: [8, 9]
+        targets: [9, 10]
       },
       {
           data: null,
