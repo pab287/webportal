@@ -9503,6 +9503,27 @@ class Timesheet_model extends CI_Model{
         $ot_start_dtr = date("Y-m-d H:i", strtotime($tempAttrAttendance[0]));
         $ot_end_dtr = date("Y-m-d H:i", strtotime($tempAttrAttendance[sizeof($tempAttrAttendance) - 1]));
 
+        $arrShifts = array();
+        $shiftProps = array("shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end");
+        $tempShiftDate = date("Y-m-d", strtotime($tempRow->date));
+        foreach ($shiftProps as $key => $value) {
+            if($tempRow->{$value}){
+                if($key > 0 ){
+                    $prevValue = $tempRow->{$shiftProps[$key-1]};
+                    if(strtotime($tempRow->{$value}) < strtotime($prevValue)){ $tempShiftDate = date("Y-m-d", strtotime("+1 day", strtotime($tempShiftDate))); }
+                }
+                $nValue = date("Y-m-d H:i", strtotime($tempShiftDate." ".$tempRow->{$value}));
+                $arrShifts[] = $nValue;
+            }
+        }
+
+        if(is_array($arrShifts) && !empty($arrShifts)){
+            $firstShift = reset($arrShifts);
+            if(strtotime($ot_start_dtr) < strtotime($firstShift)){
+                $shift_basis = $firstShift;
+            }
+        }
+
         $hasPreviousNightShift = false;
         if($isNightShift){
             $previousDate = date("Y-m-d", strtotime("-1 day", strtotime($tempRow->date)));
@@ -9538,7 +9559,7 @@ class Timesheet_model extends CI_Model{
         }
         
         if($hasPreviousNightShift){ $ot_end = $_nextNightDiff; }
-
+        
         $isValidOvertime = strtotime($ot_end) > strtotime($ot_start);
         $allowNightDiff = strtotime($ot_end) >= strtotime($_otNdiffStart) && strtotime($ot_end) <= strtotime($_otNdiffEnd);
 
