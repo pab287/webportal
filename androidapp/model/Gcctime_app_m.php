@@ -1042,7 +1042,7 @@
                     VALUES ('$emp_id', '$device_name', '$device_id', '$app_user_id', '$unique_id', '$biometricno', 1)");
                 $userApp->execute();
                 if($userApp){
-                    $return_msg = 'new_grant_access';
+                    $return_msg = 'grant_access';
                 }else{
                     $msg = 'Error on the server. Please contact system administrator.';
                     $msg_logs = '[Mobile] Error on saving user credentials.';
