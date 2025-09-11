@@ -2570,7 +2570,6 @@ class Timesheet_model extends CI_Model{
             $startOfShift = reset($ot_attendances);
             $isNightShift = strtotime($startOfShift) >= strtotime($_nightShiftStart) && strtotime($startOfShift) <= strtotime($_nightShiftEnd);
             if($isNightShift){ $shift_basis = $_otStart; }
-
             $arrShifts = array();
             $shiftProps = array("shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end");
             $tempShiftDate = date("Y-m-d", strtotime($date));
@@ -2585,14 +2584,13 @@ class Timesheet_model extends CI_Model{
                 }
             }
 
-            if($isNightShift === false && is_array($arrShifts) && !empty($arrShifts)){
+            if(is_array($arrShifts) && !empty($arrShifts)){
                 $firstShift = reset($arrShifts);
                 if(strtotime($startOfShift) < strtotime($firstShift)){
                     $shift_basis = $firstShift;
                 }
             }
-            
-           
+
             if (sizeof($ot_attendances) > 1) {
                 $parameters = array("hasShiftSchedule" => $hasShiftSchedule, "overtime" => $_overtime, "timesheetExist" => $timesheet_exist,
                     "otAttendances" => $ot_attendances, "nightDiffCfg" => $night_diff_cfg, "shiftBasis" => $shift_basis, "otNdiffStart" => $_otNdiffStart,
@@ -9528,14 +9526,14 @@ class Timesheet_model extends CI_Model{
         $ot_end = strtotime($ot_end_dtr) > strtotime(date('Y-m-d H:i', strtotime($_overtime->date_to)))
             ? date('Y-m-d H:i', strtotime($_overtime->date_to)): $ot_end_dtr;
 
-        $hasNightDiff = true;
-        if($isNightShift === false && strtotime($shift_basis) > strtotime($ot_start) && strtotime($shift_basis) < strtotime($ot_end)){
+        if(strtotime($shift_basis) > strtotime($ot_start) && strtotime($shift_basis) < strtotime($ot_end)){
             $ot_end = $shift_basis;
-            $hasNightDiff = false;
         }
 
         $isValidOvertime = strtotime($ot_end) > strtotime($ot_start);
-        if($hasPreviousShift && $hasNightDiff && $isValidOvertime && strtotime($ot_start) >= strtotime($_previousNightDiff) && strtotime($ot_start) < strtotime($_nextNightDiff)){
+        $allowNightDiff = strtotime($ot_end) >= strtotime($_otNdiffStart) && strtotime($ot_end) <= strtotime($_otNdiffEnd);
+
+        if($allowNightDiff && $hasPreviousShift && $isValidOvertime && strtotime($ot_start) >= strtotime($_previousNightDiff) && strtotime($ot_start) < strtotime($_nextNightDiff)){
             $tempOTE = 0;
             $tempRegularOT = 0;
             if(strtotime($ot_end) > strtotime($_previousNightDiff) && strtotime($ot_end) <= strtotime($_nextNightDiff)){
@@ -9550,7 +9548,6 @@ class Timesheet_model extends CI_Model{
             $otNightDiffOnly->ot_night_diff = ($tempOTE > 0)? $tempOTE / 3600: $tempOTE;
             $otNightDiffOnly->is_night_diff = true;
         }
-
         
         if($isValidOvertime && (strtotime($ot_start) >= strtotime($shift_basis)) && $hasShiftSchedule){ $otAfterShift = true; }
         // START OVERTIME NIGHT DIFF CALCULATION
@@ -9582,7 +9579,6 @@ class Timesheet_model extends CI_Model{
         
         $regularOvertimeTotal = $ot_minutes / 60;
         $otTotal = $regularOvertimeTotal + $ot_night_diff;
-        
         /*** deduct 1 hour on overtime with night differential ***/
         if(floatval($otTotal) >= 5 && $nDiffOTHours > 0){
             $ot_night_diff = $ot_night_diff - 1;
