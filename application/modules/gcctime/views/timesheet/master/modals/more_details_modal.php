@@ -546,11 +546,11 @@
                     <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 m--regular-font-size-lg1">
                         <div>
                             <span class="m--font-bolder text-muted mr-2">VERIFIED BY: </span>
-                            <span class="m--font-boldest" style="text-transform: none;"><?= $timesheet->verified_by_name; ?></span>
+                            <span class="m--font-boldest" style="text-transform: none;"><?= strtoupper($timesheet->verified_by_name); ?></span>
                         </div>
                         <div>
                             <span class="m--font-bolder text-muted mr-2">VERIFIED DATE: </span>
-                            <span class="m--font-bolder" style="text-transform: none;"><?= strtoupper(date('F d, Y h:i A', strtotime($timesheet->verified_at))); ?></span>
+                            <span class="m--font-bolder" style="text-transform: none;"><?= strtoupper(date('M. d, Y h:i A', strtotime($timesheet->verified_at))); ?></span>
                         </div>
                     </div>
                     <?php endif; ?>
@@ -558,11 +558,11 @@
                     <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 m--regular-font-size-lg1">
                         <div>
                             <span class="m--font-bolder text-muted mr-2">LAST UPDATED BY: </span>
-                            <span class="m--font-boldest" style="text-transform: none;"><?= $timesheet->last_updated_by_name; ?></span>
+                            <span class="m--font-boldest" style="text-transform: none;"><?= strtoupper($timesheet->last_updated_by_name); ?></span>
                         </div>
                         <div>
                             <span class="m--font-bolder text-muted mr-2">LAST UPDATED DATE: </span>
-                            <span class="m--font-bolder" style="text-transform: none;"><?= strtoupper(date('F d, Y h:i A', strtotime($timesheet->last_updated_at))); ?></span>
+                            <span class="m--font-bolder" style="text-transform: none;"><?= strtoupper(date('M. d, Y h:i A', strtotime($timesheet->last_updated_at))); ?></span>
                         </div>
                     </div>
                     <?php endif; ?>
