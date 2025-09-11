@@ -1042,7 +1042,7 @@
                     VALUES ('$emp_id', '$device_name', '$device_id', '$app_user_id', '$unique_id', '$biometricno', 1)");
                 $userApp->execute();
                 if($userApp){
-                    $return_msg = 'grant_access';
+                    $return_msg = 'new_grant_access';
                 }else{
                     $msg = 'Error on the server. Please contact system administrator.';
                     $msg_logs = '[Mobile] Error on saving user credentials.';
@@ -1618,7 +1618,7 @@
                 }
                 if (!$tokenStatus) {
                     $status = 3;
-                    $msg = "Invalid token.";
+                    $msg = "Invalid token to proceed time log request.";
                 }
                 if($status === 5 && !empty($has_travel_order)){
                     $msg = "Your travel order is not valid at this time.\nYou may only log outside the assigned site location within the approved Travel Order date and time.\n\n30 minutes before the start (date and time) and 30 minutes after the end (date and time) of the travel order.";
@@ -1837,11 +1837,6 @@
                 $msg = "Username or password is incorrect.";
                 $proceed = false;
             }else{
-                $isAllowed = $this->allowAppUser($emp_data['id']);
-                if (!$isAllowed) {
-                    $msg = "You are not eligible to use the app. Please contact your department head for access.";
-                    return json_encode(["status" => false, "msg" => $msg]);
-                }
                 $assignedLocation = $this->checkAssignedLocation($emp_data['biometricno']);
                 $lockoutUser = $this->checkEmployeeLock($emp_data['id']);
                 if($proceed){
@@ -1854,6 +1849,9 @@
                     }
                     if (!$assignedLocation){
                         $msg = "No assigned Location.\nPlease contact HR for assistance.";
+                        if(empty($emp_data['biometricno'])){
+                            $msg = "No Biometric Number.\nPlease contact HR for assistance.";
+                        }
                         $proceed = false;
                     }
                     if ($lockoutUser){
@@ -1862,6 +1860,11 @@
                     }
                     if($proceed){
                         $check = $this->checkUserExist($emp_data['id'], $device_name, $device_id, $app_user_id, $unique_id, $emp_data['biometricno']);
+                        $isAllowed = $this->allowAppUser($emp_data['id']);
+                        if (!$isAllowed) {
+                            $msg = "You are not eligible to use the app. Please contact your department head for access.";
+                            return json_encode(["status" => false, "msg" => $msg]);
+                        }
                         if ($check === 'grant_access') {
                             $this->saveLogs("success", "sign in", $emp_data['id'], "[Mobile] User sign in");
                             $this->updateUserStatus($emp_data['id'], $app_user_id, $unique_id, $device_id, $device_name);
@@ -2027,7 +2030,7 @@
 
             if (!$validate_token) {
                 $status = false;
-                $msg = "Invalid Token.";
+                $msg = "Invalid Token to proceed the request.";
                 $proceed = false;
             }
             
