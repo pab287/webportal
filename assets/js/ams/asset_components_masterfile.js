@@ -243,9 +243,9 @@ function archiveAssetComponent(id, is_borrowed) {
                 const modalAlert = $(".cant-archive-alert-dialog");
                 const modalBody = modalAlert.find(".modal-body");
                 let el = "";
-                // if (accountability && mother_asset_accountability) { // commented because it returns blank modal if the component is accounted without mother asset
-                if (accountability) {
-                    if (has_mother_asset && mother_asset_accountability) {
+
+                if (accountability && mother_asset_accountability) {
+                    if (has_mother_asset && mother_asset_accountability && accountability.reference_no === mother_asset_accountability.reference_no) {
                         el = "" +
                             "<div class='normal-case m--regular-font-size-lg2'>" +
                             "  <p>" +
@@ -266,6 +266,17 @@ function archiveAssetComponent(id, is_borrowed) {
                             "</div>" +
                             "</br>";
                     }
+                } 
+                
+                if (accountability && !mother_asset_accountability){ //for accounted component that has a mother asset without accountability
+                    el = "" +
+                            "<div class='normal-case m--regular-font-size-lg2'>" +
+                            "  <p>Asset, <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + accountability.asset_name + "</span> cannot be archived." +
+                            "       This asset is still accounted to " +
+                            "       <span class='m--font-bold text-primary' style='border-bottom: 1px dotted #5867dd;'>" + accountability.issued_to.toUpperCase() + "</span>." +
+                            "  </p>" +
+                            "</div>" +
+                            "</br>";
                 }
 
                 if (borrowing_history) {
