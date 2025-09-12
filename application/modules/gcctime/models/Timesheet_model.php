@@ -9580,7 +9580,9 @@ class Timesheet_model extends CI_Model{
             $ot_end = $shift_basis;
         }
         
-        if($hasPreviousNightShift){ $ot_end = $_nextNightDiff; }
+        if($hasPreviousNightShift){
+            $ot_end = strtotime($shift_basis) > strtotime($ot_start) && strtotime($shift_basis) > strtotime($_nextNightDiff) ? $shift_basis : $_nextNightDiff;            
+        }
         
         $isValidOvertime = strtotime($ot_end) > strtotime($ot_start);
         $allowNightDiff = strtotime($ot_end) >= strtotime($_otNdiffStart) && strtotime($ot_end) <= strtotime($_otNdiffEnd);
