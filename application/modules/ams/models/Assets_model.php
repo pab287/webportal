@@ -2683,7 +2683,7 @@
                 ),
                 array(
                     "table" => "gccasset.assetcategory d",
-                    "condition" => "d.id = a.asset_category",
+                    "condition" => "d.code = a.asset_category",
                     "option" => "LEFT"
                 ),
                 array(
