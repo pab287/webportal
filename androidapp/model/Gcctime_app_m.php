@@ -1348,6 +1348,12 @@
                 $msg = "Parameters does not match, user not found.";
             }
 
+            $lockoutUser = $this->checkEmployeeLock($emp_id);
+            if ($lockoutUser){
+                $msg = "This user account is locked.\nPlease contact HR or IT for assistance.";
+                $proceed = false;
+            }
+
             $isAllowed = $this->allowAppUser($emp_id);
             if (!$isAllowed) {
                 $proceed = false;
@@ -1539,6 +1545,16 @@
 
             $tokenStatus = $this->checkToken($emp, $token);
 
+            if (!$tokenStatus) {
+                $status = 0;
+                $msg = "Invalid token to proceed time log request.";
+            }
+
+            $lockoutUser = $this->checkEmployeeLock($emp);
+            if ($lockoutUser){
+                $msg = "This user account is locked.\nPlease contact HR or IT for assistance.";
+                $status = 0;
+            }
 
             $time_status = isset($_POST['time_status']) ? $_POST['time_status'] : '';
             $site_id = isset($_POST['location_id']) ? $_POST['location_id'] : 0;
@@ -1608,7 +1624,7 @@
                 $status = 5;
             }
 
-            if ($status === 0 || !$isAllowed || $status === 4 || !$tokenStatus || $status === 5) {
+            if ($status === 0 || !$isAllowed || $status === 4 || $status === 5) {
                 if ($status === 4) {
                     $msg = "Re-logged within 1-minute interval";
                 }
@@ -1616,10 +1632,7 @@
                     $status = 3;
                     $msg = "You are not eligible to use the app. Please contact your department head for access.";
                 }
-                if (!$tokenStatus) {
-                    $status = 3;
-                    $msg = "Invalid token to proceed time log request.";
-                }
+                
                 if($status === 5 && !empty($has_travel_order)){
                     $msg = "Your travel order is not valid at this time.\nYou may only log outside the assigned site location within the approved Travel Order date and time.\n\n30 minutes before the start (date and time) and 30 minutes after the end (date and time) of the travel order.";
                 }
