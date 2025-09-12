@@ -183,6 +183,28 @@ class Timesheet_model extends CI_Model{
                 }, $this->getAttendance($att_curr_day, $employee->id, $att_next_day, $nightShiftLastRecord));
                 $attendance = array_values(array_unique($attendance));
                 
+                if($ts_exist->num_rows() == 1){
+                    $timesheetRow = $ts_exist->row();
+                    $attrAttendances = array();
+                    $attDate = date("Y-m-d", strtotime($date));
+                    $propAttr = array("am_in", "am_out", "pm_in", "pm_out");
+                    foreach ($propAttr as $key => $value) {
+                        if($key > 0){
+                            $tempKey = $propAttr[$key-1];
+                            if($timesheetRow->{$value} != null && $timesheetRow->{$tempKey} != null &&
+                                strtotime($timesheetRow->{$value}) < strtotime($timesheetRow->{$tempKey})){
+                                $attDate = date("Y-m-d", strtotime("+1 day", strtotime($date)));
+                            }
+                        }
+
+                        if($timesheetRow->{$value} != null){
+                            $attrAttendances[] = date("Y-m-d H:i", strtotime($attDate . " " . $timesheetRow->{$value}));
+                        }
+                    }
+
+                    $attendance = array_values(array_unique(array_merge($attendance, $attrAttendances)));
+                }
+
                 $am_start = !empty($schedule) ? $schedule->am_start : null;
                 $am_end = !empty($schedule) ? $schedule->am_end : null;
                 $pm_start = !empty($schedule) ? $schedule->pm_start : null;
@@ -2601,11 +2623,11 @@ class Timesheet_model extends CI_Model{
                 $nDiffOTHours = $otScript["nDiffOTHours"];
                 $ot_hrs = $otScript["ot_hrs"];
                 $ot_night_diff = number_format($otScript["ot_night_diff"], 2, '.', '');
-                $ot_start = $otScript["ot_start"];
-                $ot_end = $otScript["ot_end"];
+                $_otStart = $otScript["ot_start"];
+                $_otEnd = $otScript["ot_end"];
 
-                $overtime_start = date("Y-m-d H:i", strtotime($ot_start));
-                $overtime_end = date("Y-m-d H:i", strtotime($ot_end));
+                $overtime_start = date("Y-m-d H:i", strtotime($_otStart));
+                $overtime_end = date("Y-m-d H:i", strtotime($_otEnd));
             }else{
                 $tempRegOtHours = $regularOTHours;
                 if($tempRegOtHours >= 5){
@@ -2641,7 +2663,7 @@ class Timesheet_model extends CI_Model{
             $regularOTHours = round($regularOTHours, 2);
             $nDiffOTHours = round($nDiffOTHours, 2);
 
-            if($ot_end == $ot_start || strtotime($ot_end) < strtotime($ot_start)){
+            if($_otEnd == $_otStart || strtotime($_otEnd) < strtotime($_otStart)){
                 $overtime_start = date("Y-m-d H:i", strtotime($_overtime->date_from));
                 $overtime_end = date("Y-m-d H:i", strtotime($_overtime->date_to));
                 $regularOTHours = 0;
