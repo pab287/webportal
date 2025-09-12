@@ -2100,6 +2100,8 @@ class Billing_m extends CI_Model {
     public function getAccumulatedFullAmount($bill_id, $customer_id) {
         $current_date = date('Y-m-d');
         $penalties = $this->getPenalties();
+        $reconnectionFee = $this->getReconnectionFee();
+        $isDisconnectionStatus = $this->getCustomerDisconnectionStatus($customer_id);
 
         $this->db->select('id, total_charges, due_date');
         $this->db->from('hydra_billing.bills');
@@ -2109,31 +2111,28 @@ class Billing_m extends CI_Model {
         $this->db->where('status', 1);
         $query = $this->db->get();
 
+        // ==========================================================================
+        // Get total reconnection fee (first occurrence per bill_id) from payments
+        $subquery = "SELECT bill_id, account_id, MAX(reconnection_fee) AS reconnection_fee
+                    FROM hydra_billing.payments
+                    WHERE is_archive = 0
+                    GROUP BY bill_id, account_id";
+
+        $this->db->select('account_id, SUM(reconnection_fee) AS total_reconnection_fee');
+        $this->db->from("($subquery) AS sub");
+        $this->db->where('account_id', $customer_id);
+        // $this->db->where('bill_id', $bill_id);
+        $this->db->group_by('account_id');
+
+        $recon_query = $this->db->get();
+        $recon_result = $recon_query->row_array();
+        $total_reconnection_fee = isset($recon_result['total_reconnection_fee']) ? floatval($recon_result['total_reconnection_fee']) : 0.00;
+        // ==========================================================================
+
         $result = array();
         $full_amount = 0; // accumulator
 
         foreach ($query->result_array() as $row) {
-
-            // Get total reconnection fee (first occurrence per bill_id)
-            $subquery = "
-                SELECT bill_id, account_id, MAX(reconnection_fee) AS reconnection_fee
-                FROM hydra_billing.payments
-                WHERE is_archive = 0
-                GROUP BY bill_id, account_id
-            ";
-
-            $this->db->select('account_id, SUM(reconnection_fee) AS total_reconnection_fee');
-            $this->db->from("($subquery) AS sub");
-            $this->db->where('account_id', $customer_id);
-            $this->db->where('bill_id', $bill_id);
-            $this->db->group_by('account_id');
-
-            $recon_query = $this->db->get();
-            $recon_result = $recon_query->row_array();
-            $total_reconnection_fee = isset($recon_result['total_reconnection_fee']) ? floatval($recon_result['total_reconnection_fee']) : 0.00;
-
-            // ==========================================================================
-            
 
             // penalty calculation
             $overdue = 0;
@@ -2145,10 +2144,22 @@ class Billing_m extends CI_Model {
                 }
             }
 
-            // Final Data
+            // payments
             $payments = (float)$this->getBillPayments($row['id']);
+
+            // reconnection fee logic (unified)
+            if ($isDisconnectionStatus == 1) {
+                // customer is disconnected → apply fixed reconnection fee
+                $reconnection_fee = (float)$reconnectionFee['amount'];
+            } else {
+                // customer is not disconnected → check if bill has unpaid reconnection fees
+                // $reconnection_fee = (float)$total_reconnection_fee;
+                $reconnection_fee = 0;
+            }
+
+             // Final Data
             $overdue = (float)number_format($overdue, 2, '.', '');
-            $reconnection_fee = (float)$total_reconnection_fee;
+            // $reconnection_fee = (float)$total_reconnection_fee;
             $bill_amount = (float)number_format($row['total_charges'], 2, '.', '');
             $total_amount = (float)number_format(($bill_amount + $overdue + $reconnection_fee) - $payments, 2, '.', '');
 
@@ -2513,7 +2524,12 @@ class Billing_m extends CI_Model {
         $data["reading_refno"] = $query["reading_refno"];
         $data["balance"] = $balance;
         // $data["balanceLastBill"] = $balanceLastBill;
-        $data["balanceLastBill"] = $balanceLastBill_unaccumulate;
+        // $data["balanceLastBill"] = $balanceLastBill_unaccumulate;
+        
+        // Exclude the current bill from the accumulative balance calculation
+        $full_amount_bill = $this->getAccumulatedFullAmount($query['id'], $query["customer_id"])['full_amount'];
+        $data["balanceLastBill"] =  $full_amount_bill - $charges - $overdue - $reconnectionFee; // Use the accumulative balance for display
+
         $data["current_due"] = $charges;
         $data["total_charges"] = $net_payment;
         $data["overdue"] = $overdue;
@@ -3386,28 +3402,48 @@ class Billing_m extends CI_Model {
         $data = array();
         $post = $this->input->post();
         $id = $post["id"];
-        $data["is_archive"] = '1';
 
-        $this->db->where("id",$id);
+        // Check if the payment has a reconnection_fee > 0
+        $this->db->select('account_id, reconnection_fee');
+        $this->db->from('hydra_billing.payments');
+        $this->db->where('id', $id);
+        $payment = $this->db->get()->row_array();
+
+        if (isset($payment['reconnection_fee']) && floatval($payment['reconnection_fee']) != 0) {
+            $payment_has_disconnection = true;
+        }
+
+        $data["is_archive"] = '1';
+        $this->db->where("id", $id);
         $query = $this->db->update('hydra_billing.payments', $data);
 
-        if($query){
-
+        if ($query) {
             $bill_id = $this->getPaymentBill_id($id);
             $this->updateBillingPaidStatus($bill_id, '0');
 
-            $resultarray["status"] = TRUE;
+            if (isset($payment_has_disconnection) && $payment_has_disconnection) {
+                $this->updateDisconnectionStatusToDisconnect($payment['account_id']);
+            }
+
+            $resultarray["status"] = true;
             $resultarray["msg"] = "Successfully archived.";
 
             $this->core_layout->setEventLog("Payments - Archived payment ".$post["payment_ref_no"],"archived", "success", "hydra_billing", "user");
-        }else{
-            $resultarray["status"] = FALSE;
+        } else {
+            $resultarray["status"] = false;
             $resultarray["msg"] = "Error creating payment.";
 
             $this->core_layout->setEventLog("Payments - Error archiving payment ".$post["payment_ref_no"],"archived", "error", "hydra_billing", "user");
         }
 
         return $resultarray;
+    }
+
+    public function updateDisconnectionStatusToDisconnect($account_id){
+        $post["is_disconnected"] = '1';
+        $this->db->where("id", $account_id);
+        $this->db->where("is_disconnected",'0');
+        $this->db->update('hydra_billing.accounts', $post);
     }
 
     function getPaymentBill_id($id){

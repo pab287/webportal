@@ -263,9 +263,17 @@ p,span{font-size: 12px;}
     <table width="500">
         <tbody style="padding-bottom: 10px;">
             <tr>
-            <!-- <td colspan="4" style="padding: 5px 10px;border: 2px solid;"><div style="width: 80%;float: left;"><strong>Total Charges: </strong></div> <div style="text-align: center;width: 20%;float:right;text-align: right;"><strong><?php // echo $data["current_due"]."|".$data["balanceLastBill"]["total_amount"]."|".$data["balance"] ?></strong></div><div style="clear:both;"></div></td> -->
-            <!-- <td colspan="4" style="padding: 5px 10px;border: 2px solid;"><div style="width: 80%;float: left;"><strong>Total Charges: </strong></div> <div style="text-align: center;width: 20%;float:right;text-align: right;"><strong><?php //echo number_format((($data["current_due"] + $data["balanceLastBill"]["total_balance"] + $data['overdue'] + $data["balanceLastBill"]["total_penalty"] + $data['disconnection_fee']) - $data["balance"]),2,".",","); ?></strong></div><div style="clear:both;"></div> -->
-             <td colspan="4" style="padding: 5px 10px;border: 2px solid;"><div style="width: 80%;float: left;"><strong>Total Charges: </strong></div> <div style="text-align: center;width: 20%;float:right;text-align: right;"><strong><?php echo number_format((($data["current_due"] +  $data['overdue'] + $data['disconnection_fee']) - $data["balance"]),2,".",","); ?></strong></div><div style="clear:both;"></div>
+                <td colspan="4" style="padding: 5px 10px;border: 2px solid;">
+                    <div style="width: 80%;float: left;">
+                        <strong>Total Charges: </strong>
+                    </div> 
+
+                    <div style="text-align: center;width: 20%;float:right;text-align: right;">
+                        <strong><?php echo number_format((($data["balanceLastBill"] + $data['current_due'] + $data['overdue'] + $data['disconnection_fee']) - $data["balance"]),2,".",","); ?></strong>
+                    </div>
+                    
+                    <div style="clear:both;"></div>
+                </td>
             </tr>
             <tr>
                 <td colspan="4" style="padding-top: 10px;">
