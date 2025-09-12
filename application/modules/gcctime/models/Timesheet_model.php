@@ -9488,7 +9488,7 @@ class Timesheet_model extends CI_Model{
     protected function nightshiftParams($date=null){
         $date = $date ?? date("Y-m-d");
         $nightShiftParams = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "NIGHT_SHIFT_PARAMS"))->row();
-        $nShiftStartTime = isset($nightShiftParams->start_time) ? $nightShiftParams->start_time: "16:00:00";
+        $nShiftStartTime = isset($nightShiftParams->start_time) ? $nightShiftParams->start_time: "12:01:00";
         $nShiftEndTime = isset($nightShiftParams->end_time) ? $nightShiftParams->end_time: "12:00:00";
         $_nightShiftStart = date("Y-m-d H:i:s", strtotime($date . " " . $nShiftStartTime));
         $_nightShiftEnd = strtotime($nShiftStartTime) > strtotime($nShiftEndTime) ? date("Y-m-d H:i:s", strtotime("+1 day", strtotime($date . " " . $nShiftEndTime))): date("Y-m-d H:i:s", strtotime($date . " " . $nShiftEndTime));
