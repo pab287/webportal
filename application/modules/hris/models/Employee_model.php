@@ -12757,8 +12757,9 @@ class Employee_model extends CI_Model {
         );
 
         $_row = $this->db->select("bank_name, atm_info")->get_where($this->employeeTable, array('id' => $id))->row();
-        $_name = strtolower($_row->bank_name) == $post['bank_name'] ? '' : " bank name from <b>`$_row->bank_name`</b> to <b>`".$post['bank_name']."`</b>";
-        $account = $_row->atm_info == $num ? "" : ($_name != '' ? ' and ' : '')." account number from <b>`$_row->atm_info`</b> to <b>`$num`</b>";
+
+        $_name = strtolower($_row->bank_name) == $post['bank_name'] ? '' : ( $_row->bank_name == '' ? "  bank name <b>`".$post['bank_name']."`</b>" : " bank name from <b>`$_row->bank_name`</b> to <b>`".$post['bank_name']."`</b>" );
+        $account = $_row->atm_info == $num ? "" : ( $_row->atm_info == "" ? ($_name != '' ? ' and ' : '')." account number <b>`$num`</b>" : ($_name != '' ? ' and ' : '')." account number from <b>`$_row->atm_info`</b> to <b>`$num`</b>");
 
         $this->db->where('id', $id);
         $update = $this->db->update($this->employeeTable, $data);

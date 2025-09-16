@@ -3027,7 +3027,7 @@
                             const _data = data.data;
                             let html = "";
                             html += '<div>';
-                                html += `<h5>Duplicate entry detected. The ATM number <b>"${_data.atm_info}"</b> is already associated with an existing account holder <b>"${_data.employee_name}"</b>.</h5>`;
+                                html += `<h5>Duplicate entry detected. The ATM number <b>"${_data.atm_info}"</b> is already associated with an existing account holder <b>"${_data.employee_name.toUpperCase()}"</b>.</h5>`;
                             html += '<div>';
 
                             Swal.fire({
