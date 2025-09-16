@@ -11557,45 +11557,6 @@ class Employee_model extends CI_Model {
         return $result;
     }
 
-    private function updateBank($post, $id, $num, $bankInfo) {
-        $result = array();
-
-        $displayName = $this->core_layout->getEmployeeData($post['id'])["display_name_1"];
-        $data = array(
-            'bank_name' => $post['bank_name'],
-            'atm_info' => $num,
-        );
-
-        $_row = $this->db->select("bank_name, atm_info")->get_where($this->employeeTable, array('id' => $id))->row();
-        $_name = strtolower($_row->bank_name) == $post['bank_name'] ? '' : " bank name from <b>`$_row->bank_name`</b> to <b>`".$post['bank_name']."`</b>";
-        $account = $_row->atm_info == $num ? "" : ($_name != '' ? ' and ' : '')." account number from <b>`$_row->atm_info`</b> to <b>`$num`</b>";
-
-        $this->db->where('id', $id);
-        $update = $this->db->update($this->employeeTable, $data);
-
-        if ($update) {
-            $result['state'] = true;
-            $result['msg'] = $bankInfo > 0 ? 'Succesfully updated Bank Information' : 'Succesfully Saved Bank Information';
-
-            $msg = "Payroll Information of `$displayName's` with $_name $account has been updated.";
-
-            if ($this->db->affected_rows() > 0) {
-                $this->core_layout->setEventLog($msg, "update", "success", "gcchris", "user");
-            }
-        } else {
-            $result['state'] = false;
-            $result['msg'] = $bankInfo > 0 ? 'Failed to update Bank Information' : 'Failed to save Bank Information';
-
-            $msg = "Failed to add Payroll Information of `$displayName` with $_name $account";
-
-            if ($this->db->affected_rows() > 0) {
-                $this->core_layout->setEventLog($msg, "insert", "error", "gcchris", "system");
-            }
-        }
-
-        return $result;
-    }
-
     private function logChanges($currentData, $newData) {
             if (is_object($currentData)) {
                 $currentData = get_object_vars($currentData);
@@ -12784,5 +12745,44 @@ class Employee_model extends CI_Model {
         }
 
         return $resultset;
+    }
+
+    private function updateBank($post, $id, $num, $bankInfo) {
+        $result = array();
+
+        $displayName = $this->core_layout->getEmployeeData($post['id'])["display_name_1"];
+        $data = array(
+            'bank_name' => $post['bank_name'],
+            'atm_info' => $num,
+        );
+
+        $_row = $this->db->select("bank_name, atm_info")->get_where($this->employeeTable, array('id' => $id))->row();
+        $_name = strtolower($_row->bank_name) == $post['bank_name'] ? '' : " bank name from <b>`$_row->bank_name`</b> to <b>`".$post['bank_name']."`</b>";
+        $account = $_row->atm_info == $num ? "" : ($_name != '' ? ' and ' : '')." account number from <b>`$_row->atm_info`</b> to <b>`$num`</b>";
+
+        $this->db->where('id', $id);
+        $update = $this->db->update($this->employeeTable, $data);
+
+        if ($update) {
+            $result['state'] = true;
+            $result['msg'] = $bankInfo > 0 ? 'Succesfully updated Bank Information' : 'Succesfully Saved Bank Information';
+
+            $msg = "Payroll Information of `$displayName's` with $_name $account has been updated.";
+
+            if ($this->db->affected_rows() > 0) {
+                $this->core_layout->setEventLog($msg, "update", "success", "gcchris", "user");
+            }
+        } else {
+            $result['state'] = false;
+            $result['msg'] = $bankInfo > 0 ? 'Failed to update Bank Information' : 'Failed to save Bank Information';
+
+            $msg = "Failed to add Payroll Information of `$displayName` with $_name $account";
+
+            if ($this->db->affected_rows() > 0) {
+                $this->core_layout->setEventLog($msg, "insert", "error", "gcchris", "system");
+            }
+        }
+
+        return $result;
     }
 }
