@@ -765,11 +765,13 @@ $(document)
                                 }
                             }
 
+                            const paidHolidayState = parseInt(row.paid_holiday) === 1 ? 'm--font-success' : '';
+                            const paidHolidayText = parseInt(row.paid_holiday) === 1 ? 'Paid Holiday' : 'Holiday';
                             let HolidayIcon = ``;
                             if (parseInt(row.is_holiday) == 1) {
-                                HolidayIcon = `<i style="cursor: pointer;" class="fa fa-flag ml-2"
+                                HolidayIcon = `<i style="cursor: pointer;" class="fa fa-flag ml-2 ${paidHolidayState}"
                                     data-toggle="m-tooltip" data-skin="dark"
-                                    data-original-title="Holiday" data-delay='{"show": 500}'></i>`;
+                                    data-original-title="${paidHolidayText}" data-delay='{"show": 500}'></i>`;
                             }
 
                             if (dayOfWeek === 0) {

@@ -1435,7 +1435,16 @@ class Payroll_m extends CI_Model{
                     $temp_unrendered_minutes = $temp_unrendered_data->total_minutes;
                     $wholeDayAbsent = $temp_unrendered_data->absent_days;
                     $unpaidHoliday = $temp_unrendered_data->unpaid_holiday;
-    
+                    
+                    $unpaid_holiday_minutes = 0;
+                    if(is_array($unpaidHoliday) && !empty($unpaidHoliday)){
+                        $unpaid_holiday_minutes = array_reduce($unpaidHoliday, function ($carry, $item) {
+                            return $carry + $item["total_minutes"];
+                        }, 0);
+                    }
+                    
+                    $unpaid_holiday_amount = floatval($unpaid_holiday_minutes) > 0 ? floatval($unpaid_holiday_minutes) * $per_minute : 0;
+
                     $unrendered_minutes = array_reduce($timesheet, function ($carry, $item) {
                         $tempTotalTimeRendered = intval($item->total_time_rendered);
                         $tempMinutesDaily = (intval($item->paid_holiday) == 1)? $tempTotalTimeRendered : $item->minutes_daily;
@@ -1954,6 +1963,8 @@ class Payroll_m extends CI_Model{
                     "total_allowances" => $employee->total_allowance,
                     "total_holiday_minutes" => $holiday_minutes,
                     "total_holiday_amount" => $holiday,
+                    "unpaid_holiday_minutes" => $unpaid_holiday_minutes,
+                    "unpaid_holiday_amount" => $unpaid_holiday_amount,
                     "ut_minutes" => $total_ut_minutes,
                     "ut_amount" => $total_ut_amount,
                     "late_minutes" => $total_late_minutes,
