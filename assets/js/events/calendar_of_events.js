@@ -5,7 +5,9 @@ let selectedCompanies = null;
 let selectedDepartments = null;
 let selectedCompaniesEdit = null;
 let selectedDepartmentsEdit = null;
-
+if (_currentActions.includes("view_own_request")) {
+    $(".btnNew").hide();
+}
 let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
     .DataTable({
         dom: 'frtlip',
@@ -17,7 +19,7 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
         ordering: true,
         order: [[0, 'desc']],
         ajax: {
-            url: baseUrl('hris/calendar/get_events_tabular'),
+            url: baseUrl('events/get_events_tabular'),
             type: 'post',
             dataType: 'json',
             data: function (d) {
@@ -28,7 +30,16 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
         },
         columns: [
             { data: 'id', name: 'id', visible: false },
-            { data: 'event_title' },
+            { data: 'event_title',
+                render: function(data, type, row) {
+                    return `
+                        <div>
+                            <div class="fw-bold">${row.event_title}</div>
+                            <div class="small text-muted">BY: ${row.events_by}</div>
+                        </div>
+                    `;
+                }
+            },
             { data: 'description' },
             { 
                 data: "event_venue", 
@@ -90,7 +101,7 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
                 orderable: false,
                 width: "10%",
                 render: function (data, type, row, meta) {
-                    return itemDatatableActions(row.id, row.status, row.event_from, row.event_to);
+                    return itemDatatableActions(row.id, row.participant_status, row.event_from, row.event_to);
                 }
             },            
         ]
@@ -197,7 +208,7 @@ $.validate({
         formData.push({name: "company_array", value: JSON.stringify(selectedCompanies)});
         formData.push({name: "department_array", value: JSON.stringify(selectedDepartments)});
         $.ajax({
-            url: baseUrl('hris/calendar/save_event'),
+            url: baseUrl('events/save_event'),
             type: "POST",
             dataType: "json",
             data: formData,
@@ -228,36 +239,60 @@ $.validate({
 function itemDatatableActions(id, status, from, to) {
     let _actionButton = "<span class='action-buttons'>";
 
-    _actionButton += " <a style='text-decoration: none;' " +
-        "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit' " +
-        "   onclick='onEditEvent(" + id + ")' " +  
-        "   data-toggle='m-tooltip' data-placement='bottom' " +
-        "   data-skin='dark' " +
-        "   title='View Event'>" +
-        "   <i class='la la-eye'></i>" +
-        "</a>";
+    if (_currentActions.includes("view_own_request")) {
+        if (status !== undefined && status === "pending") {
+            _actionButton += `
+                <a href="javascript:void(0)" 
+                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
+                    onclick="confirmParticipant(${id})" 
+                    title="Confirm Attendance">
+                    <i class="la la-check-circle text-success"></i>
+                </a>
+                <a href="javascript:void(0)" 
+                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
+                    onclick="declineParticipant(${id})" 
+                    title="Decline Attendance">
+                    <i class="la la-times-circle text-danger"></i>
+                </a>`;
+        } else {
+            _actionButton += `<span class="text-success">Attendance Confirmed</span>`;
+        }
 
-    _actionButton += " <button " +
-        "   type='button' " +
-        "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnArchive' " +
-        "   onclick='deleteArchive(" + id + ")' " +   
-        "   data-toggle='m-tooltip' data-placement='bottom' title='Archive Event' " +
-        "   data-skin='dark'>" +
-        "   <i class='la la-file-archive-o'></i>" +
-        "</button>";
+        _actionButton += "</span>";
+        return _actionButton;
+    }
 
-    _actionButton += " <a " +
-        "   href='" + baseUrl('hris/calendar/add_participants/') + id + "' " +
-        "   class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill' " +
-        "   data-toggle='m-tooltip' data-placement='bottom' title='Manage Participants' " +
-        "   data-skin='dark'>" +
-        "   <i class='la la-user'></i>" +
-        "</a>";
+    _actionButton += `
+        <a style="text-decoration: none;" 
+            class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
+            onclick="onEditEvent(${id})" 
+            data-toggle="m-tooltip" data-placement="bottom" 
+            data-skin="dark" 
+            title="View Event">
+            <i class="la la-eye"></i>
+        </a>
+        <button 
+            type="button" 
+            class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
+            onclick="deleteArchive(${id})" 
+            data-toggle="m-tooltip" data-placement="bottom" title="Archive Event" 
+            data-skin="dark">
+            <i class="la la-file-archive-o"></i>
+        </button>
+        <a 
+            href="${baseUrl('events/add_participants/') + id}" 
+            class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnNew" 
+            data-toggle="m-tooltip" data-placement="bottom" title="Manage Participants" 
+            data-skin="dark">
+            <i class="la la-user"></i>
+        </a>
+    `;
 
     _actionButton += "</span>";
 
     return _actionButton;
 }
+
 
 
 let editEventVue = new Vue({
@@ -348,7 +383,7 @@ $.validate({
             return false;
         };
         $.ajax({
-            url: baseUrl('hris/calendar/update_event'),
+            url: baseUrl('events/update_event'),
             type: "POST",
             dataType: "json",
             data: formData,
@@ -436,7 +471,7 @@ function deleteArchive(id){
     }).then((result) => {
         if (result.isConfirmed) {
             $.ajax({
-                url: baseUrl('hris/calendar/archive_event'),
+                url: baseUrl('events/archive_event'),
                 type: "POST",
                 dataType: "json",
                 data: {
@@ -567,3 +602,82 @@ function openEditHolidayModal(event) {
     $("#btnEdit").hide();
 }
  
+function confirmParticipant(id) {
+    let rowData = tblCalendarOfHolidays.row('#'+id).data();
+    console.log(rowData);
+    let fullname = rowData.firstname + ' ' + rowData.middlename + ' ' + rowData.lastname;
+    Swal.fire({
+        title: 'Confirm Attendance?',
+        text: "Do you want to mark this participant as attending?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Confirm',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl('events/confirm_participant'),
+                type: "POST",
+                data: { 
+                    csrf_token: $("#csrf_token").val(),
+                    event_id: id,
+                    fullname: fullname,
+                    event_title: rowData.event_title,
+                    id: rowData.id 
+                },
+                dataType: "json",
+                success: function(res) {
+                    if(res.success){
+                        toastr.success(res.message, 'Success', 5000);
+                        tblCalendarOfHolidays.ajax.reload();
+                    }else{
+                        toastr.error(res.message, 'Error', 5000);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    toastr.error('Something went wrong while updating participant.', 'Error');
+                }
+            });
+        }
+    });
+}
+
+
+function declineParticipant(id) {
+    let rowData = tblCalendarOfHolidays.row('#'+id).data();
+    let fullname = rowData.firstname + ' ' + rowData.middlename + ' ' + rowData.lastname;
+    Swal.fire({
+        title: 'Decline Attendance?',
+        text: "Do you want to mark this participant as not attending?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Decline',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl('events/decline_participant'),
+                type: "POST",
+                data: { 
+                    csrf_token: $("#csrf_token").val(),
+                    event_id: id,
+                    fullname: fullname,
+                    event_title: rowData.event_title,
+                    id: rowData.id 
+                },
+                dataType: "json",
+                success: function(res) {
+                    if(res.success){
+                        toastr.success(res.message, 'Success', 5000);
+                        tblCalendarOfHolidays.ajax.reload();
+                    }else{
+                        toastr.error(res.message, 'Error', 5000);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    toastr.error('Something went wrong while declining participant.', 'Error');
+                }
+            });
+        }
+    });
+}

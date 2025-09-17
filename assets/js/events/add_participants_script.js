@@ -2,8 +2,7 @@ let eventsDetails = null;
 let participants = null;
 let employees = null;
 let empId = null;
-let selectedData = null;
-let selectedEmployee = {
+let selectedData = {
     company: '',
     department: '',
     email: '',
@@ -27,7 +26,7 @@ if (_tempContentData !== undefined && _tempContentData !== null && _tempContentD
     eventsDetails = {..._tempContentData.event_details};
     participants = {..._tempContentData.participants};
     employees =_tempContentData.employees;
-    console.log(eventsDetails);
+    console.log(participants);
 }
 
 
@@ -37,6 +36,7 @@ let eventVue = new Vue({
         eventsData:{
 
         },
+        participants:participants,
         participantData:{
             company: '',
             department: '',
@@ -66,7 +66,15 @@ let eventVue = new Vue({
             const now = new Date();
             const eventEnd = new Date(this.eventsData.event_to);
             return eventEnd < now; 
-          }
+          },
+          participantsCount() {
+            let list = Object.values(this.participants);
+            let invited = list.length;
+            let confirmed = list.filter(p => p.status === "confirmed").length;
+            let declined = list.filter(p => p.status === "declined").length;
+            let pending = list.filter(p => p.status === "pending").length;
+            return { invited, confirmed, declined, pending };
+        }
     },
     methods:{
         eventsStatus(date_from, date_to) {
@@ -79,7 +87,7 @@ let eventVue = new Vue({
             if (now >= start && now <= end) {
                 return { label: "Ongoing Event", class: "bg-success" };
             }
-            return { label: "Event Done", class: "bg-secondary" };
+            return { label: "Event Done", class: "bg-secondary text-dark" };
         },
         formatDate(date_from, date_to) {
             const start = new Date(date_from), end = new Date(date_to);
@@ -134,8 +142,12 @@ const participantsTable = $('#participantsTable').DataTable({
     rowId: 'id',
     order: [[1, 'asc']],
     columns: [
-        { data: 'id', visible: false },
-        { data: 'lastname', title: 'Participant',
+        { data: 'id', visible: false, defaultContent: '' },
+        { data: 'fullname', title:'Name', visible: false, defaultContent: '' },
+        { data: 'position', title:'Position', visible: false, defaultContent: '' },
+        { data: 'department_head_fullname', title:'Department Head', visible: false, defaultContent: '' },
+        { data: 'department', title:'Department', visible: false, defaultContent: '' },
+        { data: 'lastname', title: 'Participant', defaultContent: '',
             render: function (data, type, row, meta) {
                 return `
                     <div class="font-weight-bold text-uppercase">${row.fullname}</div>
@@ -143,7 +155,7 @@ const participantsTable = $('#participantsTable').DataTable({
                 `;
             }
         },
-        { data: "is_employee", title: 'Company', className: "text-left",
+        { data: "is_employee", title: 'Company', className: "text-left", defaultContent: '',
             render: function (data, type, row, meta) {
                 return `
                     <div>${row.company ?? ''}</div>
@@ -151,13 +163,13 @@ const participantsTable = $('#participantsTable').DataTable({
                 `;
             }
         },
-        { data: 'email', title: 'Contact', className: "text-left",
+        { data: 'email', title: 'Contact', className: "text-left", defaultContent: '',
             render: (data, type, row) => `
                 ${row.email ? `<div>${row.email}</div>` : ''}
                 ${row.mobile_no ? `<div> ${row.mobile_no}</div>` : ''}
             `
         },
-        { data: 'status', title: 'Status', className: "text-left",
+        { data: 'status', title: 'Status', className: "text-left", defaultContent: '',
             render: function (data, type, row, meta) {
                 const statusMap = {
                     pending: 'badge-warning',
@@ -168,9 +180,9 @@ const participantsTable = $('#participantsTable').DataTable({
                 return `<span class="badge ${statusMap[data] || 'badge-secondary'}">${data}</span>`;
             }
         },
-        { data: null, title: 'Actions', className: "text-left", orderable: false,
+        { data: null, title: 'Actions', className: "text-left", orderable: false, defaultContent: '',
             render: function (data, type, row, meta) {
-                return itemDatatableActions(row.id, row.status);
+                return itemDatatableActions(row.id, row.status, row.emp_id);
             }
         }
     ],
@@ -185,120 +197,92 @@ const participantsTable = $('#participantsTable').DataTable({
         $(".btnExcelAction").addClass("btn m-btn--square btn-info text-white ml-2");
     },
     buttons: [
-        {
-            text: 'GENERATE ATTENDANCE SHEET',
-            title: 'CRS REPORTS',
-            className: 'btnAdvanceSearch btnSave',
-            action: function ( e, dt, node, config ){
-                $("#attendanceSheet").modal('show');
-            }
-        },
-        // { 
-        //     extend: 'csv',
-        //     exportOptions: {
-        //         // columns: "thead th:not(.notExport)"
-        //     },
-        //     // fieldBoundary: '',
-        //     customize: function (csv) {
-        //         let data = csv.split("\n"); // Split CSV into rows
-                
-        //         let targetUppercase = [1, 6]; // Columns to make uppercase
-        //         let targetTotalCharges = 5;
-        //         // Loop through each row
-        //         data = data.map((row, rowIndex) => {
-        //             // Split row into columns, considering quoted fields
-        //             let columns = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-                
-        //             columns = columns.map((col, columnIndex) => {
-        //                 col = col.trim(); // Remove extra spaces
-                
-        //                 if (rowIndex === 0) { 
-        //                     return col.replace(/\b\w/g, char => char.toUpperCase());
-        //                 }
-                
-        //                 if (targetUppercase.includes(columnIndex)) {
-        //                     col = col.toUpperCase(); // Convert to uppercase
-        //                 }
-                
-        //                 if (columnIndex === targetTotalCharges) {
-        //                     col = col.replace(/,/g, ''); // Remove commas
-        //                 }
-                
-        //                 return col;
-        //             });
-                
-        //             return columns.join(","); // Join modified columns
+        // {
+        //     text: 'GENERATE ATTENDANCE SHEET',
+        //     title: 'CRS REPORTS',
+        //     className: 'btnAdvanceSearch btnSave',
+        //     action: function ( e, dt, node, config ){
+        //         console.log(eventVue.eventsData);
+        //         if ($('#attendanceDate').data('daterangepicker')) {
+        //             $('#attendanceDate').data('daterangepicker').remove();
+        //         }
+        //         $('#attendanceDate').daterangepicker({
+        //             showDropdowns: true,
+        //             autoUpdateInput: false,
+        //             singleDatePicker: true,
+        //             startDate: moment(),
+        //             parentElement: $('#attendanceSheet .modal-body'),
+        //             locale: {
+        //                 format: 'MMM DD, YYYY',
+        //                 cancelLabel: 'Clear'
+        //             }
         //         });
-  
-        //         return data.join("\n"); // Reassemble CSV
+        //         $('#attendanceDate').on('apply.daterangepicker', function(ev, picker) {
+        //             $(this).val(picker.startDate.format('MMM DD, YYYY'));
+        //         });
+            
+        //         $('#attendanceDate').on('cancel.daterangepicker', function(ev, picker) {
+        //             $(this).val('');
+        //         });
+
+        //         $('#startTime').timepicker({
+        //             timeFormat: 'h:mm p',
+        //             interval: 30,
+        //             minTime: '8',
+        //             defaultTime: '8',
+        //             startTime: '8:00',
+        //         });
+
+        //         $('#endTime').timepicker({
+        //             timeFormat: 'h:mm p',
+        //             interval: 30,
+        //             minTime: '8',
+        //             defaultTime: '12p',
+        //             startTime: '8:00',
+        //         });
+        //         $("#attendanceSheet").modal('show');
         //     }
-        // }, 
-        // { 
-        //     extend: 'excel',
-        //     exportOptions: {
-        //         // columns: "thead th:not(.notExport)"
+        // },
+        // {
+        //     extend: 'excelHtml5',
+        //     title: 'Attendance Sheet',
+        //     className: 'd-none btnSave buttons-excel',
+        //     filename: function() {
+        //         return 'attendance_sheet_' + moment().format('YYYY-MM-DD');
         //     },
-        //     customize: function (xlsx) {
-        //         let sheet = xlsx.xl.worksheets['sheet1.xml'];
-  
-        //         // Convert Column B to Uppercase
-        //         $('row:not(:nth-child(2)) c[r^="B"]', sheet).each(function () {
-        //             let cell = $(this).find('is t, v'); // Find the text inside
-        //             let text = cell.text().trim(); // Get the existing text
-  
-        //             if (text) {
-        //                 cell.text(text.toUpperCase()); // Convert to uppercase
+        //     messageTop: function() {
+        //         var attendanceDate = $('#attendanceDate').val() || moment().format('MMM DD, YYYY');
+        //         var startTime = $('#startTime').val() || '9:00 AM';
+        //         var endTime = $('#endTime').val() || '12:00 PM';
+        //         var eventTitle = (eventVue && eventVue.eventsData && eventVue.eventsData.title) ? 
+        //             eventVue.eventsData.title.toUpperCase() : 'TRAINING EVENT';
+                
+        //         return eventTitle + '\n' + 
+        //                'Date: ' + attendanceDate + '\n' + 
+        //                'Time: ' + startTime + ' - ' + endTime + '\n\n';
+        //     },
+        //     exportOptions: {
+        //         columns: [1,2,3,4] ,
+        //       },
+        //     action: function ( e, dt, node, config ){
+        //         $.fn.dataTable.ext.buttons.excelHtml5.action.call(this, e, dt, node, config);
+        //     },
+        //     customize: function(xlsx) {
+        //         var sheet = xlsx.xl.worksheets['sheet1.xml'];
+        //         $('row', sheet).each(function(index) {
+        //             var rowNum = index + 1;
+        //             if (index === 0) {
+        //                 $(this).append('<c r="E1" t="inlineStr" s="2"><is><t>Signature</t></is></c>');
+        //             } else {
+        //                 $(this).append('<c r="E' + rowNum + '" t="inlineStr"><is><t></t></is></c>');
         //             }
         //         });
         //     }
-        // }, 
-        // {
-        //     extend: 'pdf',
-        //     exportOptions: {
-        //         columns: "thead th:not(.notExport)"
-        //     },
-        //     orientation: 'landscape',
-        //     pageSize: 'LEGAL',
-        //     customize: function (doc) {
-        //         // Set dynamic widths for all columns
-        //         let columnWidths = new Array(doc.content[1].table.body[0].length).fill('*');
-  
-        //         // Define custom widths for specific columns (adjust index as needed)
-        //         columnWidths[1] = '20%';
-  
-        //         // Apply column widths
-        //         doc.content[1].table.widths = columnWidths;
-                
-        //         // Loop through table body and target specific column
-        //         doc.content[1].table.body.forEach(function (row, rowIndex) {
-        //             if (rowIndex === 0) { return; } // Skip the header row
-  
-        //             let targetUppercase = [1, 6]; // Columns to make uppercase
-        //             let targetCenter = [0, 2, 3, 4, 6]; // Columns to center align
-        //             let targetRight = 5; // Column to right align
-  
-        //             row.forEach((cell, columnIndex) => {
-        //               if (!cell.text) { return; }
-  
-        //               if (targetUppercase.includes(columnIndex)) {
-        //                   cell.text = cell.text.toUpperCase();
-        //               }
-  
-        //               if (targetCenter.includes(columnIndex)) {
-        //                   cell.alignment = 'center';
-        //               }
-  
-        //               if (columnIndex === targetRight) {
-        //                   cell.alignment = 'right';
-        //               }
-        //             });
-        //         });
-        //     }
-        // },
+        // }
     ],
 });
 
-function itemDatatableActions(id, status) {
+function itemDatatableActions(id, status, emp_id = null) {
     let _actionButton = "";
 
     let fromDate = moment(eventsDetails.event_from);
@@ -306,7 +290,9 @@ function itemDatatableActions(id, status) {
     let today    = moment();
 
     let isUpcoming = today.isBefore(fromDate, 'day');
+    let isDone     = today.isAfter(toDate, 'day');
 
+    // Confirm / Decline (only if upcoming and still pending)
     if (isUpcoming && status === 'pending') {
         _actionButton += `
             <a href="javascript:void(0)" 
@@ -323,6 +309,7 @@ function itemDatatableActions(id, status) {
             </a>`;
     }
 
+    // View/Edit
     _actionButton += `
         <a href="javascript:void(0)" 
             class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
@@ -331,6 +318,7 @@ function itemDatatableActions(id, status) {
             <i class="la la-eye"></i>
         </a>`;
 
+    // Archive
     _actionButton += `
         <a href="javascript:void(0)" 
             class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
@@ -339,10 +327,183 @@ function itemDatatableActions(id, status) {
             <i class="la la-file-archive-o"></i>
         </a>`;
 
+    // Award Certificate (only if event is done & participant confirmed)
+    if (isDone && status == 'confirmed') {
+        _actionButton += `
+            <a href="javascript:void(0)" 
+                class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
+                onclick="awardCertificate(${emp_id})" 
+                title="Award Certificate">
+                <i class="la la-certificate text-primary"></i>
+            </a>`;
+    }
+
     return _actionButton;
 }
 
+function awardCertificate(id,rowId) {
+        console.log(eventsDetails);
+    $.ajax({
+        url: baseUrl("events/get_modal_training/" + id),
+        type: "post",
+        data:{
+            csrf_token : _csrf_hash
+        },
+        dataType: "json",
+        
+        cache: false,
+        success: function (json) {
+            console.log(json);
+            let modalTempContent = $("#modalTempContent"); // grab the whole modal
+            let modalContent = modalTempContent.find("#modal-content");
+            if (typeof modalContent !== "undefined" && typeof json.html !== "undefined") {
+                modalContent.empty();
+                modalContent.append(json.html);
+                modalTempContent.modal('show');
 
+                if ($('#train_from').data('daterangepicker')) {
+                    $('#train_from').data('daterangepicker').remove();
+                }
+                if ($('#train_to').data('daterangepicker')) {
+                    $('#train_to').data('daterangepicker').remove();
+                }
+                
+                $('#train_from').daterangepicker({
+                    showDropdowns: true,
+                    autoUpdateInput: false,
+                    singleDatePicker: true,
+                    startDate: eventsDetails.event_from ? moment(eventsDetails.event_from) : moment(),
+                    locale: {
+                        format: 'YYYY-MM-DD',
+                        cancelLabel: 'Clear'
+                    }
+                });
+                
+                $('#train_from').on('apply.daterangepicker', function(ev, picker) {
+                    $(this).val(picker.startDate.format('YYYY-MM-DD'));
+                });
+                
+                $('#train_from').on('cancel.daterangepicker', function(ev, picker) {
+                    $(this).val('');
+                });
+                
+                $('#train_to').daterangepicker({
+                    showDropdowns: true,
+                    autoUpdateInput: false,
+                    singleDatePicker: true,
+                    startDate: eventsDetails.event_to ? moment(eventsDetails.event_to) : moment(),
+                    locale: {
+                        format: 'YYYY-MM-DD',
+                        cancelLabel: 'Clear'
+                    }
+                });
+                
+                $('#train_to').on('apply.daterangepicker', function(ev, picker) {
+                    $(this).val(picker.startDate.format('YYYY-MM-DD'));
+                });
+                
+                $('#train_to').on('cancel.daterangepicker', function(ev, picker) {
+                    $(this).val('');
+                });
+                $("#train_from").val(moment(eventsDetails.event_from).format("YYYY-MM-DD"));
+                $("#train_to").val(moment(eventsDetails.event_to).format("YYYY-MM-DD"));
+
+                $("#train_from").attr("data-original", eventsDetails.event_from); 
+                $("#train_from").attr("value", moment(eventsDetails.event_from).format("MMM DD, YYYY"));
+
+                $("#train_to").attr("data-original", eventsDetails.event_to);
+                $("#train_to").attr("value", moment(eventsDetails.event_to).format("MMM DD, YYYY"));
+
+                $("#training").val(eventsDetails.event_title);
+                $("#train_institution").val(eventsDetails.events_by);
+
+                if (Array.isArray(eventsDetails.speakers)) {
+                    const speakers = eventsDetails.speakers
+                        .map(s => s.speaker_name)
+                        .join(", ");
+                    $("#train_conductor").val(speakers);
+                }
+                $("#train_venue").val(eventsDetails.event_venue);
+
+                let url = baseUrl("hris/masterfile/upload_employee_training");
+                $("#fileupload_training")
+                    .fileupload({
+                        url: url,
+                        dataType: "json",
+                        formData: { csrf_token: _csrf_hash, employee_id: id },
+                        done: function (e, data) {
+                            var result = data.result;
+                            if (result.response) {
+                                modalContent.find("#training_attachment").val(result.filename);
+                                modalContent.find("#temp_fileupload").empty().text(result.filename);
+                                toastr.success(result.toastr_msg, "Upload Training and Seminar File", 5000);
+                            } else {
+                                toastr.error(result.toastr_msg, "Upload Training and Seminar File", 5000);
+                            }
+                        }
+                    })
+                    .prop("disabled", !$.support.fileInput)
+                    .parent()
+                    .addClass($.support.fileInput ? undefined : "disabled");
+
+                $.validate({
+                    form: "#form-trainings",
+                    lang: "en",
+                    onSuccess: function (form) {
+                        let currentForm = form[0];
+                        let url = baseUrl("events/set_modal_trainings");
+                        let formData = $(currentForm).serialize();
+                        formData += "&event_id=" + encodeURIComponent(eventsDetails.id);
+                        $.ajax({
+                            url: url,
+                            type: "post",
+                            dataType: "json",
+                            data: formData,
+                            beforeSend: function () {
+                                $(currentForm)
+                                    .find(".btn-submit")
+                                    .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                            },
+                            success: function (json) {
+                                if (json.response) {
+                                    toastr.success(
+                                        json.toastr_msg,
+                                        "Employee training and seminar has been saved.",
+                                        5000
+                                    );
+                                    currentForm.reset();
+                                    modalTempContent.modal("hide");
+                                    setParticipantsData(json.participants);
+                                } else {
+                                    toastr.error(
+                                        json.toastr_msg,
+                                        "Error updating employee training and seminar!",
+                                        5000
+                                    );
+                                }
+
+                                $(currentForm)
+                                    .find(".btn-submit")
+                                    .removeClass(
+                                        "m-btn--custom m-loader m-loader--light m-loader--right"
+                                    );
+                            },
+
+                        });
+                        return false;
+                    }
+                });
+            }
+        },
+        error: function (xhr) {
+            toastr.error(
+                "Something went wrong. Please try again.",
+                "Error updating employee training and seminar!",
+                5000
+            );
+        }
+    });
+}
 
 
 
@@ -359,7 +520,7 @@ $("#employee-select").select2({
     $(this).val(empId);
 
     $.ajax({
-        url: baseUrl('hris/calendar/get_employee_information'),
+        url: baseUrl('events/get_employee_information'),
         type: "POST",
         dataType: "json",
         data: {
@@ -410,7 +571,7 @@ $.validate({
         }
         formData.event_id = eventsDetails.id;
         $.ajax({
-            url: baseUrl('hris/calendar/save_participant'),
+            url: baseUrl('events/save_participant'),
             type: "POST",
             dataType: "json",
             data: formData,
@@ -441,7 +602,9 @@ $('#addNewParticipant').on('hidden.bs.modal', function () {
 function setParticipantsData(newData) {
     participantsTable.clear();             
     participantsTable.rows.add(newData);   
-    participantsTable.draw();            
+    participantsTable.draw();  
+    eventVue.participants = JSON.parse(JSON.stringify(newData));
+
 }
 
 function onEditEvent(id) {
@@ -466,7 +629,7 @@ function archiveParticipant(id) {
     }).then((result) => {
         if (result.isConfirmed) {
             $.ajax({
-                url: baseUrl('hris/calendar/archive_participant'),
+                url: baseUrl('events/archive_participant'),
                 type: 'POST',
                 data: {
                     csrf_token: $("#csrf_token").val(),
@@ -512,7 +675,7 @@ $.validate({
         formData.csrf_token = $("#csrf_token").val();
         formData.event_title = eventsDetails.event_title;
         $.ajax({
-            url: baseUrl('hris/calendar/update_participant'),
+            url: baseUrl('events/update_participant'),
             type: "POST",
             dataType: "json",
             data: formData,
@@ -548,7 +711,7 @@ function confirmParticipant(id) {
     }).then((result) => {
         if (result.isConfirmed) {
             $.ajax({
-                url: baseUrl('hris/calendar/confirm_participant'),
+                url: baseUrl('events/confirm_participant'),
                 type: "POST",
                 data: { 
                     csrf_token: $("#csrf_token").val(),
@@ -587,7 +750,7 @@ function declineParticipant(id) {
     }).then((result) => {
         if (result.isConfirmed) {
             $.ajax({
-                url: baseUrl('hris/calendar/decline_participant'),
+                url: baseUrl('events/decline_participant'),
                 type: "POST",
                 data: { 
                     csrf_token: $("#csrf_token").val(),
@@ -612,3 +775,12 @@ function declineParticipant(id) {
     });
 }
 
+$.validate({
+    form : '#attendance_sheet_form',
+    lang: 'en',
+    onSuccess : function(form) {
+        console.log(participantsTable.buttons().count()); 
+        participantsTable.button(1).trigger();
+        return false; 
+    }
+});

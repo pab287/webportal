@@ -180,6 +180,10 @@
                                 <input name="event_description" type="text" class="form-control m-input" placeholder="event description" data-validation="required">
                             </div>
                             <div class="form-group">
+                                <label for="events_by" class="form-control-label required">Institution</label>
+                                <input name="events_by" type="text" class="form-control m-input" placeholder="Institution" data-validation="required">
+                            </div>
+                            <div class="form-group">
                                 <label for="date" class="form-control-label required">Event Schedule</label>
                                 <input name="date" type="text" id="event_date" class="form-control m-input" placeholder="Select date" data-validation="required" readonly>
                             </div>
@@ -270,6 +274,10 @@
                             <div class="form-group">
                                 <label for="event_description" class="form-control-label required">Event description</label>
                                 <input name="event_description" type="text" class="form-control m-input" placeholder="event description" v-model="eventsData.description" data-validation="required" :disabled="disabled">
+                            </div>
+                            <div class="form-group">
+                                <label for="events_by" class="form-control-label required">Institution</label>
+                                <input name="events_by" type="text" class="form-control m-input" placeholder="Institution" v-model="eventsData.events_by" data-validation="required" :disabled="disabled">
                             </div>
                             <div class="form-group">
                                 <label for="date" class="form-control-label required">Event Schedule</label>

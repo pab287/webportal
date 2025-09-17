@@ -80,7 +80,7 @@
                                 </div>
                             </div>
                             <div class="m-portlet__head-tools">
-                                <a href="<?= base_url('hris/calendar/company_events_calendar') ?>" class="custom-btn-link">
+                                <a href="<?= base_url('events') ?>" class="custom-btn-link">
                                     <span class="m--font-bolder">Masterfile</span>
                                 </a>
                             </div>
@@ -88,7 +88,7 @@
                         <div class="m-portlet__body">
                             <div class="row mb-4">
                                 <div class="col-12">
-                                    <div class="d-flex flex-column align-items-center text-uppercase">
+                                    <div class="d-flex flex-column text-center text-uppercase">
                                         <h3 class="m-widget1__title m--font-boldest" v-text="eventsData.event_title"></h3>
                                         <small class="text-muted" v-text="eventsData.description"></small>
                                         <span class="badge px-3 py-2 mt-2" :class="eventStatus.class"v-text="eventStatus.label"></span>
@@ -108,17 +108,21 @@
                             </div>
                             <div class="m-separator m-separator--dashed d-xl-12"></div>
                             <div class="row text-center bg-light rounded p-3 mx-1 mb-4 text-uppercase">
-                                <div class="col-4">
+                                <div class="col-3">
                                     <small class="text-uppercase text-muted m--font-boldest d-block">Invited</small>
-                                    <div class="m--font-boldest text-dark">50</div>
+                                    <div class="m--font-boldest text-dark" v-text="participantsCount.invited"></div>
                                 </div>
-                                <div class="col-4">
+                                <div class="col-3">
+                                    <small class="text-uppercase text-muted m--font-boldest d-block">pending</small>
+                                    <div class="m--font-boldest text-dark" v-text="participantsCount.pending"></div>
+                                </div>
+                                <div class="col-3">
                                     <small class="text-uppercase text-muted m--font-boldest d-block">Confirmed</small>
-                                    <div class="m--font-boldest text-dark">40</div>
+                                    <div class="m--font-boldest text-dark"  v-text="participantsCount.confirmed"></div>
                                 </div>
-                                <div class="col-4">
-                                    <small class="text-uppercase text-muted m--font-boldest d-block">Declined</small>
-                                    <div class="m--font-boldest text-dark">40</div>
+                                <div class="col-3">
+                                    <small class="text-uppercase text-muted m--font-boldest d-block" >Declined</small>
+                                    <div class="m--font-boldest text-dark" v-text="participantsCount.declined"></div>
                                 </div>
                             </div>
                             <div class="m-separator m-separator--dashed d-xl-12"></div>
@@ -358,8 +362,22 @@
         </div>
     </div>
 
+    <div class="modal fade show" id="modalTempContent" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content" id="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Temp Title</h5>
+                    <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">test</div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade show" id="attendanceSheet" tabindex="-1">
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-md">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Generate Attendance Sheet</h5>
@@ -367,8 +385,45 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
+                <form id='attendance_sheet_form' onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-control-label">Event</label>
+                                <input name="title" type="text" class="form-control m-input" placeholder="Event" v-model="eventsData.event_title" disabled>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-control-label">Description</label>
+                                <textarea name="description" class="form-control m-input" placeholder="Event description..."  v-model="eventsData.description" disabled style="resize:none"></textarea>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-control-label required">Date</label>
+                                <input id="attendanceDate" name="attendanceDate" type="text" class="form-control m-input" placeholder="Select Attendance Date" data-validation="required" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-control-label required">Start</label>
+                                <input id="startTime" name="startTime" type="text" class="form-control m-input" placeholder="Start" data-validation="required" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-control-label required">End</label>
+                                <input id="endTime" name="endTime" type="text" class="form-control m-input" placeholder="End" data-validation="required" readonly>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-control-label">Venue</label>
+                                <input name="venue" type="text" class="form-control m-input" placeholder="Venue" v-model="eventsData.event_venue" disabled>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-control-label">Expected Attendees</label>
+                                <input name="attendees" type="text" class="form-control m-input" placeholder="Venue" v-model="participantsCount.confirmed" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success btnSave"><i class="la la-check mr-2"></i>GENERATE</button>
+                        <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-
 </div>
