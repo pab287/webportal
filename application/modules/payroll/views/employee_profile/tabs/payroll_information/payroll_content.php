@@ -3022,6 +3022,7 @@
                 success: function (data) {
                     if (data.state) {
                         toastr.success(data.msg, "Notice", 5000);
+                        vmBankInfo.row.atm_info = $("#atm_info").val();
                     } else {
                         if (typeof data.data != 'undefined' && data.data) {
                             const _data = data.data;
