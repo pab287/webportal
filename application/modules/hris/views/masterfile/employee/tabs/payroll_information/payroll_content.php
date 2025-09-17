@@ -107,7 +107,7 @@
                     <div class="form-group m-form__group row">
                         <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">ATM INFO: </label>
                         <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
-                            <input type="text" id="atm_info" name="atm_info" class="form-control m-input" autocomplete="off" data-validation="required" v-model="row.atm_info"/>
+                            <input type="text" id="atm_info" name="atm_info" class="form-control m-input" autocomplete="off" data-validation="required" :value="row.atm_info"/>
                         </div>
                     </div>
                 </div>
@@ -2090,6 +2090,7 @@
                 success: function (data) {
                     if (data.state) {
                         toastr.success(data.msg, "Notice", 5000);
+                        vmBankInfo.row.atm_info = $("#atm_info").val();
                     } else {
                         if (typeof data.data != 'undefined' && data.data) {
                             const _data = data.data;
@@ -2102,7 +2103,9 @@
                                 icon: 'error',
                                 title: 'Failed',
                                 html: html
-                            })
+                            });
+
+                            $("#atm_info").val($("#atm_info").val() === '' ? '' : vmBankInfo.row.atm_info);
                         }
 
                         toastr.error(data.msg, "Notice", 5000);
