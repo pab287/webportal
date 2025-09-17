@@ -1113,7 +1113,7 @@ class Curl_request extends MY_Controller {
 				$tempDevice = $this->db->get_where("gcctimeutility.devices", array("id"=>$post["device_id"]));
 				if($tempDevice->num_rows() === 1){ $post["device_name"] = $tempDevice->row()->device_name; }
 			}
-			$resultset["telegram_response"] = $this->sendTelegramPunchesByBiometricId($post); 
+			$resultset["telegram_response"] = $this->sendTelegramPunchesByBiometricId($post);
 		}
 
         $this->output
@@ -1263,6 +1263,7 @@ class Curl_request extends MY_Controller {
 		var_dump($response);
 	}
 
+
 	private function sendTelegramMessage($msg=null, $alterChatId=null) {
 		$resultset = array();
 		if($msg){
@@ -1320,9 +1321,10 @@ class Curl_request extends MY_Controller {
 
 	private function sendTelegramPunchesByBiometricId($tempPost=array()){
 		$resultset = array();
+		$resultset["chat_id"] = 0;
 		if(isset($tempPost["biometricno"], $tempPost["date"]) && $tempPost["biometricno"] && $tempPost["date"]){
 			$biometricId = trim($tempPost["biometricno"]);
-			$timeLog = strtoupper(date("M d, Y h:i A", strtotime(trim($tempPost["date"]))));
+			$timeLog = strtoupper(date("D, M d, Y h:i A", strtotime(trim($tempPost["date"]))));
 			$verifyMethod = "TIME IN";
 			$deviceName = isset($tempPost["device_name"]) && $tempPost["device_name"] ? trim($tempPost["device_name"]): "No Device Name";
 
@@ -1354,6 +1356,7 @@ class Curl_request extends MY_Controller {
 				if($tempChatId){
 					$tempMessage = "<b>{$employeeName}</b>\nDateTime: {$timeLog}\nBiometric#: {$biometricId}\nVerifyMethod: {$verifyMethod}\nDeviceName: {$deviceName}";
 					$resultset = $this->sendTelegramMessage($tempMessage, $tempChatId);
+					$resultset["chat_id"] = $tempChatId;
 				}else{
 					$resultset["response"] = false;
 					$resultset["message"] = "Biometric# {$biometricId}, chat Id not found!";
