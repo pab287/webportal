@@ -3023,6 +3023,19 @@
                     if (data.state) {
                         toastr.success(data.msg, "Notice", 5000);
                     } else {
+                        if (typeof data.data != 'undefined' && data.data) {
+                            const _data = data.data;
+                            let html = "";
+                            html += '<div>';
+                                html += `<h5>Duplicate entry detected. The ATM number <b>"${_data.atm_info}"</b> is already associated with an existing account holder <b>"${_data.employee_name.toUpperCase()}"</b>.</h5>`;
+                            html += '<div>';
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Failed',
+                                html: html
+                            });
+                        }
                         toastr.error(data.msg, "Notice", 5000);
                     }
                     $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
