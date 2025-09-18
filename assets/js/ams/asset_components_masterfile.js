@@ -235,7 +235,7 @@ $("#table-asset-components").on("click", "tbody input[type='checkbox']", functio
     $("input:checkbox[name=asset_id]:checked").each(function(){
         asset_id.push($(this).val());
     });
-    assets_components = assets_components.concat(asset_ids);
+    assets_components = assets_components.concat(asset_id);
 });
 
 //custom global search init
