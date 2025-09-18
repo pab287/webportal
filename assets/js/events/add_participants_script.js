@@ -568,7 +568,6 @@ $("#employee-select").select2({
     });
 })
 .on('change', function () {
-    // Fires on any change, including val(null).trigger('change')
     if (!$(this).val()) {
         selectedEmployee = {
             company: '',
