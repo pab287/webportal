@@ -45,8 +45,8 @@ const tblBillings = $("#table-billing").DataTable({
         }
       },
       { 
-        data: 'full_amount', className: "text-right", render: function (data) {
-            return "<span class='m--font-boldest'>"+numberWithCommas(data.full_amount)+"</span>";
+        data: 'pending_amount', className: "text-right", render: function (data) {
+            return "<span class='m--font-boldest'>"+numberWithCommas(data.pending_amount)+"</span>";
         }
       },
       { data: "status", className: "text-center", render: function (data) {
@@ -380,10 +380,11 @@ $('#m_viewBill').on('hidden.bs.modal', function () {
   $("#m_viewBill .bill-status").html('');
   $("#m_viewBill .bill_amount, #m_viewBill .overdue_fee, #m_viewBill .total-balance-covered, #m_viewBill total-received-amount, #m_viewBill .remaining-balance").text('0.00');
   $("#m_viewBill .overdue_fee").text('0.00');
+  $("#m_viewBill .reconnection_fee").text('0.00');
 });
 
 $('#table-billing').on("click","#viewBill",function(){
-  $('#frmUpdateBill').trigger("reset");
+
   var selectedBill_id = $(this).attr("data-id");
 
   var data_row = $("#table-billing").DataTable().rows($(this).parents('tr')).data();
@@ -487,10 +488,11 @@ $('#table-billing').on("click","#viewBill",function(){
           let bill_amount = 0;
           let remaining_balance = 0;
           let overdue = parseFloat(response.billdata.overdue) || 0;
+          let _reconnection_fee = parseFloat(response.billdata.reconnection_fee) || 0;
 
           const totalCharges = parseFloat(response.billdata.total_charges) || 0;
 
-          bill_amount = totalCharges + overdue;
+          bill_amount = totalCharges + overdue + _reconnection_fee;
           remaining_balance = bill_amount - total_received_amount;
 
           $('#m_viewBill .bill_amount').text(numberWithCommas(totalCharges));
@@ -501,6 +503,13 @@ $('#table-billing').on("click","#viewBill",function(){
           } else {
             $('#m_viewBill .overdue-sec').hide();
           }
+
+          // if (Number(_reconnection_fee) != 0) {
+          //   $('#m_viewBill .reconnection-sec').show();
+            $('#m_viewBill .reconnection_fee').text(numberWithCommas(_reconnection_fee));
+          // } else {
+          //   $('#m_viewBill .reconnection-sec').hide();
+          // }
           
           $('#m_viewBill .remaining-balance').text(numberWithCommas(remaining_balance < 0 ? 0 : remaining_balance));
       },
@@ -589,32 +598,6 @@ function recordPrintCount(id){
       }
   });
 }
-
-$.validate({
-    form : '#frmUpdateBill',
-    lang: 'en',
-    onSuccess : function(form) {
-        $.ajax({
-          url : $(form).attr("action"),
-          type: "POST",
-          data: $('#frmUpdateBill').serialize(),
-          dataType: "JSON",
-          success: function(data){
-            if(data.status == true){
-              toastr.success(data.msg, "Notification");
-              tblBillings.ajax.reload();
-              $("#m_viewBill").modal("hide");
-            }else{
-              toastr.warning(data.msg, "Notification");
-            }
-          },
-          error: function(data){
-            toastr.error("Please check your internet connection.", "Connection error");
-          }
-      });
-      return false;
-    },
-  });
   
   $(".massPrint").on("click",function(){
    var c = tblBillings.rows( { selected: true } ).data().pluck('id').toArray();

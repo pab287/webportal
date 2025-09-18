@@ -1881,7 +1881,7 @@ class Billing_m extends CI_Model {
             $this->db->where("YEAR(b.created_at)", $current_year); // Defaults to the current year
         }
         
-        if($has_search){
+        if ($has_search) {
             $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
             $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
 
@@ -1897,11 +1897,11 @@ class Billing_m extends CI_Model {
         } else {
             $this->db->where("YEAR(b.created_at)", $current_year);
         }
-        //$this->db->order_by('b.ref_no', 'DESC');
+
         $i = $sortOrder[0]['column'];
         $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
 
-        if($limit != -1){
+        if ($limit != -1) {
             $this->db->limit($limit, $offset);
         }
 
@@ -1913,38 +1913,33 @@ class Billing_m extends CI_Model {
                 $data = array();
                 $due_date = $_query["due_date"];
 
-                $balanceLastBill = $this->computeBalanceLastBill($_query["customer_id"], $_query['id'], $due_date);
-
                 if ($_query["is_paid"] == 0) {
                     $penalties = $this->getPenalties();
                     $balance = $this->computeOverPayment($_query["customer_id"]);
 
+                    $first_unpaid_bill_id = $this->first_unpaid_bill_for_reconnection($_query["customer_id"]);
                     $reconnectionFee = $this->getReconnectionFee()['amount'];
 
-                    $total_amount = $_query["total_charges"];
-                    $disconnectionFee = $_query["is_disconnected"] == 1 ? $reconnectionFee : 0.00;
-
-                    if ($current_date > $due_date) { // overdue
+                    // Apply reconnection fee only once on the first unpaid bill if the account is disconnected
+                    if ($_query["is_disconnected"] == 1 && $first_unpaid_bill_id == $_query['id']) {
+                        $disconnectionFee = $reconnectionFee;
+                    } else {
+                        $disconnectionFee = 0.00;
+                    }
+                    
+                    // overdue
+                    if ($current_date > $due_date) { 
                         if ($penalties['type'] == 'percentage') {
-                            $overdue = ($penalties['amount'] / 100) * $total_amount;
-                            $total_amount = $overdue + $total_amount;
+                            $overdue = ($penalties['amount'] / 100) * $_query["total_charges"];
                         } else {
                             $overdue = $penalties['amount'];
-                            $total_amount = $penalties['amount'] + $total_amount;
                         }
                     } else {
                         $overdue = 0.00;
                     }
 
-                    $net_payment = ($total_amount + $disconnectionFee) - $balance;
-
-                    if ($net_payment < 0) {
-                        $net_payment = 0.00;
-                    } else {
-                        $net_payment = $net_payment;
-                    }
-
-                    $totalPayments = $this->totalPayments($bill_id)['received_amount']; // Check for partial payment of current bill
+                    // Check for partial payment of current bill
+                    $totalPayments = $this->totalPayments($bill_id)['received_amount']; 
                 } else {
                     $totalPayments = 0;
                     $due_date = $_query["due_date"];
@@ -1986,42 +1981,25 @@ class Billing_m extends CI_Model {
                 $data["balance_covered"] = $balanceCovered;
                 $data["total_payments"] = $totalPayments;
                 $data["is_paid"] = $_query["is_paid"];
-                $data["balanceLastBill"] = $balanceLastBill;
-                
-                // $data["overdue"] = number_format(($overdue + $data["balanceLastBill"]["total_penalty"]),2,".",","); // OLD
-                // Remove balanceLastBill["total_penalty"] from overdue calculation to focus on current bill and its associated fees.
                 $data["overdue"] = number_format(($overdue) ,2, ".", ","); 
                 $data["disconnection_fee"] = $disconnectionFee;
+                $data["first_unpaid_bill_id"] = $first_unpaid_bill_id;
 
-                // $total_charges = ($_query['total_charges'] + $balanceLastBill["total_balance"] + $disconnectionFee + $data["overdue"]) - $balance - $balanceCovered - $totalPayments; // OLD
-
-                // I removed the balanceLastBill["total_balance"] from the total_charges calculation to focus only on the current bill and its associated fees.
-                // $total_charges = ($_query['total_charges'] + $disconnectionFee + $data["overdue"]) - $balance - $_query['balance_covered'] - $totalPayments;  // OLD
-                $total_charges = ($_query['total_charges'] + $disconnectionFee + $data["overdue"]);
+                $total_charges = $_query['total_charges'] + $disconnectionFee + $data["overdue"];
 
                 $t = [
                     'total_charges' => $_query['total_charges'],
-                    'balanceLastBill' => $balanceLastBill["total_balance"],
                     'disconnectionFee' => $disconnectionFee,
                     'overdue' => $data["overdue"],
                     'balance' => $balance,
                     'balance_covered' => $balanceCovered,
                     'totalPayments' => $totalPayments,
-                    // 'solution' => "(" .$_query['total_charges'] . " + " . $balanceLastBill["total_balance"] . " + " . $disconnectionFee . " + " . $data["overdue"] . ")" . " - " . $balance  . " - ". $balanceCovered . " - " . $totalPayments . " = " . $total_charges // OLD
                     'solution' => "(" .$_query['total_charges'] . " + " .  $disconnectionFee . " + " . $data["overdue"] . ")" . " - " . $balance  . " - ". $balanceCovered . " - " . $totalPayments . " = " . $total_charges
                 ];
 
                 $data['t'] = $t;
-
-                if ($_query["is_paid"] == 1) {
-                    $_total_charges = $_query['total_charges'] + $disconnectionFee + $data["overdue"];
-                } else {
-                    $_total_charges = $total_charges;
-                }
-
-                $data["full_amount"] = $this->getAccumulatedFullAmount($_query['id'], $_query["customer_id"]);
-
-                $data["total_charges"] = $_total_charges;
+                $data["pending_amount"] = $this->getAccumulatedPendingAmount($_query['id'], $_query["customer_id"]);
+                $data["total_charges"] = $total_charges;
                 $data["solution"] = $_query['total_charges'] . " + " . $disconnectionFee . " + " . $data["overdue"] . " - " . $balance . " - " . $balanceCovered ." - " . $totalPayments . " = " . $total_charges;
                 $resultarray[] = $data;
             }
@@ -2097,9 +2075,10 @@ class Billing_m extends CI_Model {
         return $query->num_rows();
     }
 
-    public function getAccumulatedFullAmount($bill_id, $customer_id) {
+    public function getAccumulatedPendingAmount($bill_id, $customer_id) {
         $current_date = date('Y-m-d');
         $penalties = $this->getPenalties();
+        $first_unpaid_bill_id = $this->first_unpaid_bill_for_reconnection($customer_id);
         $reconnectionFee = $this->getReconnectionFee();
         $isDisconnectionStatus = $this->getCustomerDisconnectionStatus($customer_id);
 
@@ -2111,26 +2090,8 @@ class Billing_m extends CI_Model {
         $this->db->where('status', 1);
         $query = $this->db->get();
 
-        // ==========================================================================
-        // Get total reconnection fee (first occurrence per bill_id) from payments
-        $subquery = "SELECT bill_id, account_id, MAX(reconnection_fee) AS reconnection_fee
-                    FROM hydra_billing.payments
-                    WHERE is_archive = 0
-                    GROUP BY bill_id, account_id";
-
-        $this->db->select('account_id, SUM(reconnection_fee) AS total_reconnection_fee');
-        $this->db->from("($subquery) AS sub");
-        $this->db->where('account_id', $customer_id);
-        // $this->db->where('bill_id', $bill_id);
-        $this->db->group_by('account_id');
-
-        $recon_query = $this->db->get();
-        $recon_result = $recon_query->row_array();
-        $total_reconnection_fee = isset($recon_result['total_reconnection_fee']) ? floatval($recon_result['total_reconnection_fee']) : 0.00;
-        // ==========================================================================
-
         $result = array();
-        $full_amount = 0; // accumulator
+        $pending_amount = 0; // accumulator
 
         foreach ($query->result_array() as $row) {
 
@@ -2145,26 +2106,27 @@ class Billing_m extends CI_Model {
             }
 
             // payments
-            $payments = (float)$this->getBillPayments($row['id']);
+            $total_payments = $this->totalPayments($row['id']);
+            $received_amount = (float)$total_payments['received_amount'];
+            $balance_covered = (float)$total_payments['balance_covered'];
+            $payments = $received_amount + $balance_covered;
 
             // reconnection fee logic (unified)
-            if ($isDisconnectionStatus == 1) {
+            if ($isDisconnectionStatus == 1 && $first_unpaid_bill_id == $row['id']) {
                 // customer is disconnected → apply fixed reconnection fee
                 $reconnection_fee = (float)$reconnectionFee['amount'];
             } else {
                 // customer is not disconnected → check if bill has unpaid reconnection fees
-                // $reconnection_fee = (float)$total_reconnection_fee;
                 $reconnection_fee = 0;
             }
 
              // Final Data
             $overdue = (float)number_format($overdue, 2, '.', '');
-            // $reconnection_fee = (float)$total_reconnection_fee;
             $bill_amount = (float)number_format($row['total_charges'], 2, '.', '');
             $total_amount = (float)number_format(($bill_amount + $overdue + $reconnection_fee) - $payments, 2, '.', '');
 
             // accumulate
-            $full_amount += $total_amount;
+            $pending_amount += $total_amount;
 
             // Result
             $result[] = array(
@@ -2174,13 +2136,25 @@ class Billing_m extends CI_Model {
                 'reconnection_fee' => $reconnection_fee,
                 'bill_amount' => $bill_amount,
                 'total_amount' => $total_amount,
-                'full_amount' => number_format($full_amount, 2, '.', ''),
+                'pending_amount' => number_format($pending_amount, 2, '.', ''),
             );
         }
         return [
             'bills' => $result,
-            'full_amount' => (float)number_format($full_amount, 2, '.', ''),
+            'pending_amount' => (float)number_format($pending_amount, 2, '.', ''),
         ];
+    }
+
+    public function first_unpaid_bill_for_reconnection($customer_id) {
+        $this->db->select('id');
+        $this->db->from('hydra_billing.bills');
+        $this->db->where('account_id', $customer_id);
+        $this->db->where('status', 1);
+        $this->db->where('is_paid', 0);
+        $this->db->order_by('id', 'DESC');
+        $this->db->limit(1);
+        $query = $this->db->get();
+        return $query->row_array()['id'];
     }
 
     function getReadingbyAccount(){
@@ -2378,7 +2352,7 @@ class Billing_m extends CI_Model {
 
         $post = $this->input->post();
 
-        $this->db->select("b.id, a.accountno, a.meterno, a.firstname, a.lastname, a.block, a.lot, a.street, a.brgy, a.city, a.province, b.ref_no, b.billing_from, b.billing_to, b.previous, b.current, b.usage, b.rate, b.total_charges, b.status, b.due_date, r.ref_no as reading_refno, b.print_count, b.is_paid");
+        $this->db->select("b.id, a.accountno, a.id as customer_id, a.meterno, a.firstname, a.lastname, a.block, a.lot, a.street, a.brgy, a.city, a.province, b.ref_no, b.billing_from, b.billing_to, b.previous, b.current, b.usage, b.rate, b.total_charges, b.status, b.due_date, r.ref_no as reading_refno, b.print_count, b.is_paid");
         $this->db->from("hydra_billing.bills b");
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.readings r", "r.id = b.reading_id", "LEFT");
@@ -2414,6 +2388,21 @@ class Billing_m extends CI_Model {
             $paid_status = 'On going';
         }
 
+        // Reconnection fee logic
+        $first_unpaid_bill_id = $this->first_unpaid_bill_for_reconnection($row['customer_id']);
+        $reconnectionFee = $this->getReconnectionFee();
+        $isDisconnectionStatus = $this->getCustomerDisconnectionStatus($row['customer_id']);
+
+        // reconnection fee logic (unified)
+        if ($isDisconnectionStatus == 1 && $first_unpaid_bill_id == $row['id']) {
+            // customer is disconnected → apply fixed reconnection fee
+            $reconnection_fee = (float)$reconnectionFee['amount'];
+        } else {
+            // customer is not disconnected → check if bill has unpaid reconnection fees
+            $reconnection_fee = 0;
+        }
+        
+        $row['reconnection_fee'] = (float)number_format($reconnection_fee, 2, '.', ',');
         $row['status'] = $paid_status;
         $row['overdue'] = (float)number_format($overdue, 2, '.', ',');
 
@@ -2450,41 +2439,35 @@ class Billing_m extends CI_Model {
         $this->db->where("b.id",$id);
         $query = $this->db->get()->row_array();
         $current_date = date("Y-m-d");
+
+        // Foe disconnection fee logic
+        $first_unpaid_bill_id = $this->first_unpaid_bill_for_reconnection($query["customer_id"]);
         $reconnectionFee = $this->getReconnectionFee()['amount'];
+
         $charges = $query["total_charges"];
         $due_date = $query["due_date"];
-        $balanceLastBill = $this->computeBalanceLastBill($query["customer_id"], $id, $due_date);
-        $balanceLastBill_unaccumulate = $this->computeBalanceLastBill_unaccumulative($query["customer_id"], $id);
 
         if($query["is_paid"] == 0){ // not paid
             $ar = '';
             $penalties = $this->getPenalties();
             $balance = $this->computeOverPayment($query["customer_id"]);
 
-            $total_amount = $charges;
-            $disconnectionFee = $query["is_disconnected"] == 1 ? $reconnectionFee : 0.00;
-
-            if($current_date > $due_date){ // overdue
+            // Apply reconnection fee only once on the first unpaid bill if the account is disconnected
+            if ($query["is_disconnected"] == 1 && $first_unpaid_bill_id == $query['id']) {
+                $disconnectionFee = $reconnectionFee;
+            } else {
+                $disconnectionFee = 0.00;
+            }
+                    
+            // overdue
+            if($current_date > $due_date){
                 if($penalties['type'] == 'percentage'){
-                    $overdue = ($penalties['amount'] / 100) * $total_amount;
-                    $total_amount = $overdue + $total_amount;
+                    $overdue = ($penalties['amount'] / 100) * $charges;
                 } else {
                     $overdue = $penalties['amount'];
-                    $total_amount = $penalties['amount'] + $total_amount;
                 }
             } else {
                 $overdue = 0.00;
-            }
-
-            $net_payment = ($total_amount + $disconnectionFee) - $balance;
-
-            // check if net_payment has remaining balance (ex value -100)
-            // then set the net_payment into zero else remaining payment
-            if($net_payment < 0){
-                $net_payment = 0.00;
-                // $overdue = 0.00;
-            } else {
-                $net_payment = $net_payment;
             }
 
         } else { // paid
@@ -2495,7 +2478,6 @@ class Billing_m extends CI_Model {
 
             $balance = $query_["balance_covered"];
             $overdue = $query_["is_penalty"] ? unserialize($query_["penalties"])[0]["overdue"] : 0.00;
-            $net_payment = $query_["net_payment"];
             $disconnectionFee = $query_["reconnection_fee"];
             $ar = $query_["acknowledgement_receipt"];
         }
@@ -2523,18 +2505,28 @@ class Billing_m extends CI_Model {
         $data["due_date"] = $query["due_date"];
         $data["reading_refno"] = $query["reading_refno"];
         $data["balance"] = $balance;
-        // $data["balanceLastBill"] = $balanceLastBill;
-        // $data["balanceLastBill"] = $balanceLastBill_unaccumulate;
+
+        // Payments
+        $total_payments = $this->totalPayments($query['id']);
+        $received_amount = (float)$total_payments['received_amount'];
+        $balance_covered = (float)$total_payments['balance_covered'];
+        $payments = $received_amount + $balance_covered;
+
+        // Current due
+        $pending_current_due = (float)$charges + (float)$overdue + (float)$disconnectionFee;
         
         // Exclude the current bill from the accumulative balance calculation
-        $full_amount_bill = $this->getAccumulatedFullAmount($query['id'], $query["customer_id"])['full_amount'];
-        $data["balanceLastBill"] =  $full_amount_bill - $charges - $overdue - $reconnectionFee; // Use the accumulative balance for display
+        $pending_amt = $this->getAccumulatedPendingAmount($query['id'], $query["customer_id"])['pending_amount'];
+        $pending_amount_bill = (float)$pending_amt;
+        $data['bills'] = $this->getAccumulatedPendingAmount($query['id'], $query["customer_id"]);
+        $data["balanceLastBill"] =  $pending_amount_bill - $pending_current_due; // Use the accumulative balance for display
 
+        $data['payments'] = $payments;
         $data["current_due"] = $charges;
-        $data["total_charges"] = $net_payment;
+        $data["pending_current_due"] = $pending_current_due;
         $data["overdue"] = $overdue;
-        $data["reconnection_fee"] = $reconnectionFee;
         $data["disconnection_fee"] = $disconnectionFee;
+        $data["reconnection_fee"] = $reconnectionFee;
         $data["is_paid"] = $query["is_paid"]; 
         return $data;
     }
@@ -2742,51 +2734,6 @@ class Billing_m extends CI_Model {
         $query = $this->db->get();
         return array("data"=>$query->row_array(),"balance"=>$this->computeOverPayment($post["customer_id"]));
     }
-
-    // function computeOverPayment($customer_id){
-    //     // Get total received amount
-    //     $this->db->select("SUM(received_amount) AS total_received_amount");
-    //     $this->db->from("hydra_billing.payments");
-    //     $this->db->where("account_id", $customer_id);
-    //     $this->db->where("is_archive", 0);
-    //     $total_received_amount = $this->db->get()->row()->total_received_amount;
-
-    //     // Get total net payment (first occurrence per bill_id)
-    //     $this->db->select("SUM(p.net_payment) AS total_net_payment");
-    //     $this->db->from("hydra_billing.payments p");
-    //     $this->db->join("(SELECT bill_id, MIN(id) AS min_id
-    //                     FROM hydra_billing.payments
-    //                     WHERE account_id = ?
-    //                     AND is_archive = 0
-    //                     GROUP BY bill_id) AS first_payments",
-    //                     "p.id = first_payments.min_id");
-    //     $this->db->where("account_id", $customer_id);
-    //     $this->db->where("is_archive", 0);
-    //     $query = $this->db->query($this->db->get_compiled_select(), array($customer_id));
-    //     $total_net_payment = $query->row()->total_net_payment;
-
-    //     // Get total balance covered (first occurrence per bill_id)
-    //     $this->db->select("SUM(p.balance_covered) AS total_balance_covered");
-    //     $this->db->from("hydra_billing.payments p");
-    //     $this->db->join("(SELECT bill_id, MIN(id) AS min_id
-    //                     FROM hydra_billing.payments
-    //                     WHERE account_id = ?
-    //                     AND is_archive = 0
-    //                     GROUP BY bill_id) AS first_payments",
-    //                     "p.id = first_payments.min_id");
-    //     $this->db->where("account_id", $customer_id);
-    //     $this->db->where("is_archive", 0);
-    //     $query = $this->db->query($this->db->get_compiled_select(), array($customer_id));
-    //     $total_balance_covered = $query->row()->total_balance_covered;
-
-    //     // Compute values
-    //     $received_net_payment = $total_received_amount - $total_net_payment;
-    //     $total = $received_net_payment - $total_balance_covered;
-    //     $total = $total < 0 ? 0 : $total;
-
-    //     // Return formatted value
-    //     return number_format($total, 2, '.', '');
-    // }
 
     function computeOverPayment($customer_id){
         // Get total received amount
@@ -5342,42 +5289,6 @@ class Billing_m extends CI_Model {
         $array['total_payments'] = $totalPayments;
         $array['bill_id'] = $b_id;
         return $array;
-    }
-
-    public function computeBalanceLastBill_unaccumulative($account_id, $bill_id){
-        $charges = 0;
-        $overdue = 0;
-        $current_date = date("Y-m-d");
-
-        $this->db->select("id, total_charges, due_date");
-        $this->db->from("hydra_billing.bills");
-        $this->db->where("id <", $bill_id);
-        $this->db->where("is_paid", 0);
-        $this->db->where("status", 1);
-        $this->db->where("account_id", $account_id);
-        $this->db->order_by("id", "DESC");
-        $this->db->limit(1);
-
-        $query = $this->db->get();
-
-        if($query->num_rows() > 0){
-            $row = $query->result_array();
-            $r = $row[0];
-        
-            $penalties = $this->getPenalties();
-
-            if ($current_date > $r['due_date']) {
-                if($penalties['type'] == 'percentage'){
-                    $overdue = ($penalties['amount'] / 100) * $r['total_charges'];
-                } else {
-                    $overdue = $penalties['amount'];
-                }
-            }
-
-            $charges = $r['total_charges'] + $overdue;
-        }
-
-        return $charges;
     }
 
     public function totalPayments($bill_id){

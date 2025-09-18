@@ -200,7 +200,7 @@ p,span{font-size: 12px;}
                 <td colspan="3" style="width: 300px;"><strong>Balance from last bill:</strong></td>
                 <td colspan="1" style="border-bottom: 1px solid;padding-left: 5px; width: 100px; text-align: right;">
                     <?php
-                        $balance = $data["balanceLastBill"] - $data["balance"];
+                        $balance = $data["balanceLastBill"];
                         echo number_format($balance < 0 ? 0 : $balance, 2, ".", ",");
                     ?>
                 </td>
@@ -242,7 +242,6 @@ p,span{font-size: 12px;}
             <tr>
                 <td width="12%"></td>
                 <td width="14%"><strong>Fines/Penalties:</strong></td>
-                <!-- <td style="border-bottom:1px solid;padding-left: 5px;"><div style="width: 100%; text-align: right;"><?php //echo number_format(($data["overdue"] + $data["balanceLastBill"]["total_penalty"]),2,".",",") ?></div></td> -->
                 <td style="border-bottom:1px solid;padding-left: 5px;"><div style="width: 100%; text-align: right;"><?php echo number_format($data["overdue"],2,".",",") ?></div></td>
                 <td width="12%"></td>
             </tr>
