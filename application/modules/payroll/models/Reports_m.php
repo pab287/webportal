@@ -2522,6 +2522,7 @@ class Reports_m extends CI_Model{
             $tempColumns = array();
             $tempHeaderColumns = array();
             $grandTotalFooter = array();
+            $tempArrData = array();
             if(is_array($arrPsData) && !empty($arrPsData)){
                 foreach ($arrPsData as $key => $value) {;
                     $tempKeys = array_keys($value);
