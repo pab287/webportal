@@ -2366,7 +2366,7 @@ class Reports_m extends CI_Model{
                 $sqlSelect = "ps.id, ps.emp_id, emp.idno, ps.basic_rate, ps.total_allowances, ps.ot_amount, ps.ot_ndiff_amount, ps.total_holiday_amount, ps.gross_pay, ps.net_pay, ps.sss, ps.sss_prov, ps.ph, ps.hdmf, ps.tax,
                 GROUP_CONCAT(DISTINCT(CONCAT(ps_custom_adj.particulars,'||',ps_custom_adj.amount, '||', ps_custom_adj.cadj_type))) custom_adjustments,
                 GROUP_CONCAT(DISTINCT(CONCAT(ps_created_adj.particulars,'||', ps_created_adj.amount, '||', ps_created_adj.adj_type, '||', ps_created_adj.description))) created_adjustments,
-                GROUP_CONCAT(DISTINCT(CONCAT(ps_loans.code,'||',ps_loan_payment.amount_due, '||', ps_loans.loan_class))) sss_hdmf_loan_deduction";
+                GROUP_CONCAT(DISTINCT(CONCAT(ps_loans.code,'||',ps_loan_payment.amount_due, '||', ps_loans.loan_class,'||',ps_loan_payment.id))) sss_hdmf_loan_deduction";
                 $this->db->select($sqlSelect);
                 $this->db->from($this->tbl_payroll_sheet." ps");
                 $this->db->join($this->tbl_employees." emp", "emp.id = ps.emp_id", "inner");
