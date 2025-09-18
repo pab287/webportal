@@ -4685,4 +4685,18 @@
             
             return $result;
         }
+
+        function get_selected_for_archive() {
+            $result = array();
+            $get = $this->input->get();
+
+            $this->db->select('id as asset_id, assetacode as code, name');
+            $this->db->where_in('id', $get['ids']);
+            $this->db->where('isComponent', $get['isComponent']);
+            $this->db->from('gccasset.assets');
+            $query = $this->db->get();
+
+            $result['data'] = $query->num_rows() > 0 ? $query->result() : array();
+            return $result;
+        }
     }

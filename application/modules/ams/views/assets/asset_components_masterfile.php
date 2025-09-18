@@ -524,7 +524,7 @@
                             <template v-if="!isEmpty(rows.accountability)">
                                 <h5>List of Mother and component asset(s) with active Accountability</h5>
 
-                                <table id="archive-accountability-table" class="table table-bordered" style="width:100%">
+                                <table id="archive-accountability-table" class="table table-bordered" style="width:100%" style="height: 250px" :style="rows.accountability.length < 6 ? 'border: 0px !important' : ''">
                                     <thead>
                                         <tr>
                                             <th>ASSET</th>
@@ -552,7 +552,7 @@
                             <template v-if="!isEmpty(rows.borrowing_history)">
                                 <h5 class="mt-4">List of component asset(s) in Possession</h5>
 
-                                <table id="archive-borrowing-table" class="table table-bordered" style="width:100%">
+                                <table id="archive-borrowing-table" class="table table-bordered" style="width:100%" :style="rows.borrowing_history.length < 6 ? 'border: 0px !important' : ''">
                                     <thead>
                                         <tr>
                                             <th>ASSET</th>
@@ -581,6 +581,29 @@
                             <template v-if="isAssetClear">
                                 <h5 class="m-0">You are about to mass archive the selected assets. Confirm mass archiving of component assets.</h5>
 
+                                <div class="mt-3" v-if="!isEmpty(selectedAssets)">
+                                    <table id="to-archive" class="table table-bordered table-stripped" width="100%" height="height: 250px" :style="selectedAssets.length < 4 ? 'border: 0px !important' : ''">
+                                        <thead>
+                                            <th width="30%">Code</th>
+                                            <th width="65%">Name</th>
+                                            <th width="5%"></th>
+                                        </thead>
+                                        <tbody>
+                                            <template v-for="(item, index) in selectedAssets">
+                                                <tr>
+                                                    <td>{{ item.code }}</td>
+                                                    <td>{{ item.name }}</td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-danger btn-sm" title="Remove from mass archive list" @click="removeArchive(index, item.asset_id)">
+                                                            <i class="fa fa-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+
                                 <!-- <div class="m-separator m-separator--dashed d-xl-12"></div> -->
 
                                 <div class="form-group m-form__group mt-3">
@@ -594,11 +617,11 @@
                                         <option value="junk">JUNK</option>
                                         <option value="others">OTHERS</option>
                                     </select>
-                            </div>
-                            <div class="form-group m-form__group">
-                                <label for="archive-remarks-text-area">Please leave a remark</label>
-                                <textarea name="mass_archive_remark" class="form-control m-input" id="mass-archive-remarks" rows="3" data-validation="required"></textarea>
-                            </div>
+                                </div>
+                                <div class="form-group m-form__group">
+                                    <label for="archive-remarks-text-area">Please leave a remark</label>
+                                    <textarea name="mass_archive_remark" class="form-control m-input" id="mass-archive-remarks" rows="3" data-validation="required"></textarea>
+                                </div>
                             </template>
                         </template>
                     </template>
@@ -627,3 +650,17 @@
         </form>
     </div>
 </div>
+
+<style>
+    table#archive-accountability-table, table#with-borrow, table#to-archive { 
+        margin-top:  20px; display: 
+        inline-block; 
+        overflow: auto; 
+        border-collapse: collapse; 
+    }
+
+    table#archive-accountability-table th div, table#with-borrow th div, table#to-archive th div { 
+        margin-top: -20px; 
+        position: absolute; 
+    }
+</style>

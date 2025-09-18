@@ -576,8 +576,8 @@
     
                             <template v-if="!isEmpty(rows.accountability)">
                                 <h5>List of Asset(s) with active Accountability</h5>
-                                <table width="100%" class="table table-bordered">
-                                    <thead>
+                                <table width="100%" id="with-account" class="table table-bordered" style="height: 250px" :style="rows.accountability.length < 4 ? 'border: 0px !important' : ''">
+                                    <thead> 
                                         <th>ASSET</th>
                                         <th>ISSUED TO</th>
                                         <th width="5%"></th>
@@ -602,7 +602,7 @@
                                 <div class="mt-3 m-separator m-separator--dashed d-xl-12"></div>
     
                                 <h5>List of Asset(s) in Possession</h5>
-                                <table width="100%" class="table table-bordered">
+                                <table width="100%" id="with-borrow" class="table table-bordered" style="height: 250px" :style="rows.borrowing_history.length < 4 ? 'border: 0px !important' : ''">
                                     <thead>
                                         <th>ASSET</th>
                                         <th>ISSUED TO</th>
@@ -627,6 +627,29 @@
                         <template v-else>
                             <template v-if="isAssetClear">
                                 <h5 class="m-0">You are about to mass archive the selected assets. Confirm mass archiving of assets.</h5>
+
+                                <div class="mt-3" v-if="!isEmpty(selectedAssets)">
+                                    <table id="to-archive" class="table table-bordered table-stripped" width="100%" height="height: 250px" :style="selectedAssets.length < 4 ? 'border: 0px !important' : ''">
+                                        <thead>
+                                            <th width="25%">Code</th>
+                                            <th width="70%">Name</th>
+                                            <th width="5%"></th>
+                                        </thead>
+                                        <tbody>
+                                            <template v-for="(item, index) in selectedAssets">
+                                                <tr>
+                                                    <td>{{ item.code }}</td>
+                                                    <td>{{ item.name }}</td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-danger btn-sm" title="Remove from mass archive list" @click="removeArchive(index, item.asset_id)">
+                                                            <i class="fa fa-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
 
                                 <!-- <div class="m-separator m-separator--dashed d-xl-12"></div> -->
 
@@ -674,3 +697,17 @@
         </form>
     </div>
 </div>
+
+<style>
+    table#with-account, table#with-borrow, table#to-archive { 
+        margin-top:  20px; display: 
+        inline-block; 
+        overflow: auto; 
+        border-collapse: collapse; 
+    }
+
+    table#with-account th div, table#with-borrow th div, table#to-archive th div { 
+        margin-top: -20px; 
+        position: absolute; 
+    }
+</style>

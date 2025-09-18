@@ -177,13 +177,19 @@ var tblFixedAsset = $("#table-fixed-asset")
                         closeButton: true,
                     });
             }
+
+            const allCheckboxes = $("#table-fixed-asset tbody input[type='checkbox']").length;
+            const checkedCheckboxes = $("#table-fixed-asset tbody input[type='checkbox']:checked").length;
+            const checked = allCheckboxes <= checkedCheckboxes;
+            $('#selectall').prop('checked', checked);
         },
         pageLength: 20
     });
 
 function formatcheck(data, row) {
     if (data) {
-        var _checkButton = "<label class='m-checkbox m-checkbox--state-primary'><input type='checkbox' name='asset_id' class='text-gray'  value='"+ data +"'><span></span><label>";
+        let isSelected = assets.includes(data) ? 'checked' : '';
+        var _checkButton = "<label class='m-checkbox m-checkbox--state-primary'><input type='checkbox' name='asset_id' class='text-gray'  value='"+ data +"' "+isSelected+"><span></span><label>";
         return _checkButton;
     } else {
         return false;
@@ -555,10 +561,10 @@ $("#modal-print-barcode").on("shown.bs.modal", function () {
     }
 });
 
-    $("#select2-status").select2({
-        placeholder: 'Select Status',
-        width: '100%'
-    });    
+$("#select2-status").select2({
+    placeholder: 'Select Status',
+    width: '100%'
+});
     
 $('body, .modal-body')
 .tooltip({
@@ -588,7 +594,7 @@ $("#modal-mass-archive").on("shown.bs.modal", function () {
                 vmData.isAssetClear = vmData.isEmpty(response.accountability) && vmData.isEmpty(response.borrowing_history) ? true : false;
                 vmData.rows = Object.assign({}, response);
 
-                if (vmData.isEmpty(response.accountability) && vmData.isEmpty(response.borrowing_history)) { 
+                if (vmData.isEmpty(response.accountability) && vmData.isEmpty(response.borrowing_history)) {
                     archiveSelect2();
                 }
             },
@@ -608,7 +614,7 @@ $("#modal-mass-archive").on("hidden.bs.modal", function () {
 
 const vmData = new Vue({
     el: "#archive-list",
-    data: { rows: {}, count: 0, assets: 0, isAssetClear: false },
+    data: { rows: {}, count: 0, assets: 0, isAssetClear: false, selectedAssets: {} },
     methods: {
         isEmpty(arr){
             return $.isEmptyObject(arr);
@@ -641,11 +647,44 @@ const vmData = new Vue({
             if (instance.isAssetClear) {
                 archiveSelect2();
             }
+        }, removeArchive(index, id) {
+            const instance = this;
+            const i = assets.indexOf(id);
+
+            if (i !== -1) {
+                assets.splice(i, 1);
+                $(`input[type=checkbox][value='${id}']`).prop('checked', false);
+            }
+
+            instance.selectedAssets.splice(index, 1);
+            instance.count = assets.length;
+            instance.assets = assets.length;
+            instance.isAssetClear = instance.selectedAssets.length > 0 ? true : false; 
+
+            $(".tooltip.bs-tooltip-top").empty();
+
+            const allCheckboxes = $("#table-fixed-asset tbody input[type='checkbox']").length;
+            const checkedCheckboxes = $("#table-fixed-asset tbody input[type='checkbox']:checked").length;
+            const checked = allCheckboxes <= checkedCheckboxes;
+            $('#selectall').prop('checked', checked);
         }
     }
 })
 
 function archiveSelect2(){
+    $.ajax({
+        url: baseUrl('ams/assets/get_selected_for_archive'),
+        dataType: "JSON",
+        type: "GET",
+        data: {
+            isComponent: 0,
+            ids : assets
+        },
+        success: function(response) {
+            vmData.selectedAssets = response.data;
+        }
+    })
+
     setTimeout( function() {
         $("#archive-select2-status").select2({
             dropdownParent: $("#modal-mass-archive"),

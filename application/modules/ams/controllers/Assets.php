@@ -586,4 +586,11 @@
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
         }
+        
+        function get_selected_for_archive(){
+            $data = $this->assets->get_selected_for_archive();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
     }

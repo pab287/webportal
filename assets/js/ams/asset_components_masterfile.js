@@ -157,7 +157,13 @@ var tblAssetComponents = $("#table-asset-components")
                 },
             }
         ],
-        pageLength: 20
+        pageLength: 20,
+        drawCallback: function () {
+            const allCheckboxes = $("#table-asset-components tbody input[type='checkbox']").length;
+            const checkedCheckboxes = $("#table-asset-components tbody input[type='checkbox']:checked").length;
+            const checked = allCheckboxes <= checkedCheckboxes;
+            $('#selectall').prop('checked', checked);
+        }
     });
 
 function itemDatatableActions($id, is_borrowed) {
@@ -190,7 +196,8 @@ function itemDatatableActions($id, is_borrowed) {
 
 function formatcheck(data, row) {
     if (data) {
-        var _checkButton = "<label class='m-checkbox m-checkbox--state-primary'><input type='checkbox' name='asset_id' class='text-gray'  value='"+ data +"'><span></span><label>";
+        let isSelected = assets_components.includes(data) ? 'checked' : '';
+        var _checkButton = "<label class='m-checkbox m-checkbox--state-primary'><input type='checkbox' name='asset_id' class='text-gray'  value='"+ data +"' "+isSelected+"><span></span><label>";
         return _checkButton;
     } else {
         return false;
@@ -538,6 +545,9 @@ $("#select2-status").select2({
 });  
 
 $("#modal-mass-archive").on("shown.bs.modal", function () {
+    $("#archive-accountability-table_wrapper:not(:first-child)").remove();
+    $("#archive-borrowing-table_wrapper:not(:first-child)").remove();
+
     if (assets_components.length > 0) {
         vmData.count = assets_components.length; //initial count of assets
         vmData.assets = assets_components.length; //count for assets after removing items with accountability, borrowing and mother assets
@@ -562,7 +572,9 @@ $("#modal-mass-archive").on("shown.bs.modal", function () {
                         searching: false,
                         ordering: false,
                         info: false,
-                        responsive: true
+                        responsive: true,
+                        scrollCollapse: true,
+                        scrollY: '200px'
                     });
 
                     acctTable.rows().every(function() {
@@ -598,7 +610,9 @@ $("#modal-mass-archive").on("shown.bs.modal", function () {
                         searching: false,
                         ordering: false,
                         info: false,
-                        responsive: true
+                        responsive: true,
+                        scrollCollapse: true,
+                        scrollY: '200px'
                     });
 
                     borrTable.rows().every(function() {
@@ -651,7 +665,7 @@ $("#modal-mass-archive").on("hidden.bs.modal", function () {
 
 const vmData = new Vue({
     el: "#archive-list",
-    data: { rows: {}, count: 0, assets: 0, isAssetClear: false },
+    data: { rows: {}, count: 0, assets: 0, isAssetClear: false, selectedAssets: {} },
     methods: {
         isEmpty(arr){
             return $.isEmptyObject(arr);
@@ -708,6 +722,14 @@ const vmData = new Vue({
             instance.assets = assets_components.length;
             /** removing to the list */
 
+            if (instance.isEmpty(instance.rows.accountability)) {
+                $("#archive-accountability-table_wrapper").remove();
+            }
+            
+            if (instance.isEmpty(instance.rows.borrowing_history)) {
+                $("#archive-borrowing-table_wrapper").remove();
+            }
+
             $(".tooltip.bs-tooltip-top").empty();
 
             const allCheckboxes = $("#table-asset-components tbody input[type='checkbox']").length;
@@ -718,11 +740,44 @@ const vmData = new Vue({
             if (instance.isAssetClear) {
                 archiveSelect2();
             }
+        }, removeArchive(index, id) {
+            const instance = this;
+            const i = assets_components.indexOf(id);
+
+            if (i !== -1) {
+                assets_components.splice(i, 1);
+                $(`input[type=checkbox][value='${id}']`).prop('checked', false);
+            }
+
+            instance.selectedAssets.splice(index, 1);
+            instance.count = assets_components.length;
+            instance.assets = assets_components.length;
+            instance.isAssetClear = instance.selectedAssets.length > 0 ? true : false; 
+
+            $(".tooltip.bs-tooltip-top").empty();
+
+            const allCheckboxes = $("#table-asset-components tbody input[type='checkbox']").length;
+            const checkedCheckboxes = $("#table-asset-components tbody input[type='checkbox']:checked").length;
+            const checked = allCheckboxes <= checkedCheckboxes;
+            $('#selectall').prop('checked', checked);
         }
     }
 })
 
 function archiveSelect2(){
+    $.ajax({
+        url: baseUrl('ams/assets/get_selected_for_archive'),
+        dataType: "JSON",
+        type: "GET",
+        data: {
+            isComponent: 1,
+            ids : assets_components
+        },
+        success: function(response) {
+            vmData.selectedAssets = response.data;
+        }
+    })
+
     setTimeout( function() {
         $("#archive-select2-status").select2({
             dropdownParent: $("#modal-mass-archive"),
