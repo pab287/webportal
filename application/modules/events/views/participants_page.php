@@ -223,7 +223,7 @@
                         <div class="row">
                             <div class="col-md-12 mb-3">
                                 <div class="form-group m-form__group">
-                                    <label class="form-control-label required">Employee</label>
+                                    <label for="employee-select" class="form-control-label required">Employee</label>
                                     <select id="employee-select" name="employee-select" placeholder="Select an option" data-validation="required">
                                         <option></option>
                                     </select>
@@ -231,46 +231,46 @@
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="form-control-label required">Participant Name</label>
-                                <div class="form-row">
-                                    <div class="col-md-4">
+                                <div class="row">
+                                    <div class="col-sm-12 col-md-4 mb-3">
                                         <input name="first_name" type="text" class="form-control m-input" placeholder="First Name" v-model="participantData.firstname" data-validation="required" maxlength="50">
                                     </div>
-                                    <div class="col-md-4">
-                                        <input name="middle_name" type="text" class="form-control m-input" placeholder="Middle Name" v-model="participantData.middlename" data-validation="required" maxlength="50">
+                                    <div class="col-sm-12 col-md-4 mb-3">
+                                        <input name="middle_name" type="text" class="form-control m-input" placeholder="Middle Name" v-model="participantData.middlename" maxlength="50">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-sm-12 col-md-4 mb-3">
                                         <input name="last_name" type="text" class="form-control m-input" placeholder="Last Name" v-model="participantData.lastname" data-validation="required" maxlength="50">
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-control-label required">Phone Number</label>
+                                <label for="new_phone" class="form-control-label required">Phone Number</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="la la-phone"></i></span>
                                     </div>
-                                    <input name="phone" type="text" class="form-control m-input" placeholder="e.g. 09XXXXXXXXX" v-model="participantData.mobile_no" data-validation="required" maxlength="13">
+                                    <input id="new_phone" name="phone" type="text" class="form-control m-input" placeholder="e.g. 09XXXXXXXXX" v-model="participantData.mobile_no" data-validation="required" maxlength="13">
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-control-label required">Email</label>
+                                <label for="new_email" class="form-control-label required">Email</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="la la-envelope"></i></span>
                                     </div>
-                                    <input name="email" type="email" class="form-control m-input" placeholder="example@domain.com" v-model="participantData.email" data-validation="required" maxlength="50">
+                                    <input id="new_email" name="email" type="email" class="form-control m-input" placeholder="example@domain.com" v-model="participantData.email" data-validation="required email" maxlength="50">
                                 </div>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-control-label required">Company</label>
+                                <label for="company" class="form-control-label required">Company</label>
                                 <input name="company" type="text" class="form-control m-input" placeholder="Company" v-model="participantData.company" data-validation="required" maxlength="50">
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-control-label required">Department</label>
-                                <input name="department" type="text" class="form-control m-input" placeholder="Department" v-model="participantData.department" data-validation="required" maxlength="50">
+                                <label for="department" class="form-control-label required">Department</label>
+                                <input for="department" name="department" type="text" class="form-control m-input" placeholder="Department" v-model="participantData.department" data-validation="required" maxlength="50">
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-control-label required">Position</label>
+                                <label for="position" class="form-control-label required">Position</label>
                                 <input name="position" type="text" class="form-control m-input" placeholder="Position" v-model="participantData.position" data-validation="required" maxlength="50">
                             </div>
                         </div>
@@ -309,34 +309,34 @@
                         <div class="row">
                             <div class="col-md-12 mb-3">
                                 <label class="form-control-label required">Participant Name</label>
-                                <div class="form-row">
-                                    <div class="col-md-4">
+                                <div class="row">
+                                    <div class="col-sm-12 col-md-4 mb-3">
                                         <input name="first_name" type="text" class="form-control m-input" placeholder="First Name" data-validation="required" v-model="participantDataSelected.firstname" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
                                     </div>
-                                    <div class="col-md-4">
-                                        <input name="middle_name" type="text" class="form-control m-input" placeholder="Middle Name" data-validation="required" v-model="participantDataSelected.middlename" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
+                                    <div class="col-sm-12 col-md-4 mb-3">
+                                        <input name="middle_name" type="text" class="form-control m-input" placeholder="Middle Name" v-model="participantDataSelected.middlename" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-sm-12 col-md-4 mb-3">
                                         <input name="last_name" type="text" class="form-control m-input" placeholder="Last Name" data-validation="required"  v-model="participantDataSelected.lastname" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-control-label required">Phone Number</label>
+                                <label for="phone" class="form-control-label required">Phone Number</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="la la-phone"></i></span>
                                     </div>
-                                    <input name="phone" type="text" class="form-control m-input" placeholder="e.g. 09XXXXXXXXX" data-validation="required"  v-model="participantDataSelected.mobile_no" maxlength="13">
+                                    <input id="phone" name="phone" type="text" class="form-control m-input" placeholder="e.g. 09XXXXXXXXX" data-validation="required"  v-model="participantDataSelected.mobile_no" maxlength="13">
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-control-label required">Email</label>
+                                <label for="email" class="form-control-label required">Email</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="la la-envelope"></i></span>
                                     </div>
-                                    <input name="email" type="email" class="form-control m-input" placeholder="example@domain.com" data-validation="required" v-model="participantDataSelected.email" maxlength="50">
+                                    <input id="email" name="email" type="text" class="form-control m-input" placeholder="example@domain.com" data-validation="required email" v-model="participantDataSelected.email" maxlength="50">
                                 </div>
                             </div>
                             <div class="col-md-4 mb-3">

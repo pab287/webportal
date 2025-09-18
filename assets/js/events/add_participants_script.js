@@ -126,7 +126,6 @@ let eventVue = new Vue({
                 $("#employee-select").val(empId).trigger('change');
                 $('#nonEmployeeToggle').prop('checked', toggle);
             }
-
         },
     },
 });
@@ -331,18 +330,18 @@ function itemDatatableActions(id, status, emp_id = null, awarded) {
     if (!isDone) {
         _actionButton += `
             <a href="javascript:void(0)" 
-                class="btn btn-default m-btn m-btn--icon m-btn--pill btnEdit" 
+                class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
                 onclick="onEditEvent(${id})" 
                 title="Edit Participant">
-                <i class="la la-eye"></i> Edit
+                <i class="la la-eye"></i>
             </a>`;
 
         _actionButton += `
             <a href="javascript:void(0)" 
-                class="btn btn-default m-btn m-btn--icon m-btn--pill btnArchive" 
+                class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
                 onclick="archiveParticipant(${id})" 
                 title="Archive Participant">
-                <i class="la la-file-archive-o"></i> Archive
+                <i class="la la-file-archive-o"></i>
             </a>`;
     }
 
@@ -594,9 +593,10 @@ $("#employee-select").select2({
     }
 });
 
-$.validate({
+let newValidation = $.validate({
     form : '#new_event_form',
     lang: 'en',
+    scrollToTopOnError: false,
     onSuccess : function(form) {
         let formData = eventVue.participantData;
         formData.csrf_token = $("#csrf_token").val();
@@ -614,8 +614,17 @@ $.validate({
             //     $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
             // },
             success: function(res) {
-                $('#new_event_form')[0].reset();
                 if(res.success){
+                    eventVue.participantData ={
+                        company: '',
+                        department: '',
+                        email: '',
+                        firstname: '',
+                        lastname: '',
+                        middlename: '',
+                        mobile_no: '',
+                        position: '',
+                    },
                     $("#addNewParticipant").modal('hide');
                     toastr.success(res.message, 'Success', 5000);
                     $("#employee-select option[value='" + empId + "']").remove();
@@ -628,10 +637,6 @@ $.validate({
         });
         return false;
     }
-});
-
-$('#addNewParticipant').on('hidden.bs.modal', function () {
-    $('#new_event_form')[0].reset();
 });
 
 function setParticipantsData(newData) {
