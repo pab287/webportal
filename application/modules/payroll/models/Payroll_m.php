@@ -5391,8 +5391,6 @@ class Payroll_m extends CI_Model{
                 $tempDeductionIndexes = array("sss", "sss_prov", "hdmf", "ph", "tax", "total_loans");
 
                 $tempRow = $qTemp->row();
-                $payrollType = $tempRow->payroll_type;
-                $basicRate = $tempRow->basic_rate;
 
                 $tempData = $this->core_layout->getEmployeeData($tempRow->emp_id);
                 $tempData = (object) $tempData;
@@ -5404,10 +5402,19 @@ class Payroll_m extends CI_Model{
                 /*** start computation ***/
                 $_target_hours_worked = ($tempRow->total_minutes_worked + $tempRow->total_unrendered_minutes) / 60;
                 $tempRow->target_hours = $_target_hours_worked;
+
+                $unpaidHolidayHrs = floatval($tempRow->unpaid_holiday_minutes) > 0 ? floatval($tempRow->unpaid_holiday_minutes) / 60: 0;
+                if($unpaidHolidayHrs > 0){
+                    $tempRow->target_hours -= $unpaidHolidayHrs;
+                }
+
                 $tempRow->target_hours = round($tempRow->target_hours, 2);
                 $tempRow->hours_worked = $tempRow->total_minutes_worked / 60;
                 $tempRow->hours_worked = round($tempRow->hours_worked, 2);
                 $tempEwd = $_target_hours_worked / 8;
+
+                
+
                 /*** $tempEwd = is_float($tempEwd) ? ceil($tempEwd): $tempEwd; ***/
                 $tempRow->ewd = $tempEwd;
                 $tempRow->ewd_decimal = $tempEwd;
@@ -5415,6 +5422,26 @@ class Payroll_m extends CI_Model{
                 $tempRow->target_payrate = $tempRow->daily * $tempRow->ewd;
                 if(strtolower($tempRow->payroll_type) == "monthly"){
                     $tempRow->target_payrate = (intval($tempRow->payroll_sched) == 2)? $tempRow->basic_rate / 2: $tempRow->basic_rate;
+                }
+
+                if(floatval($tempRow->unpaid_holiday_amount) > 0 && floatval($tempRow->target_payrate) >= floatval($tempRow->unpaid_holiday_amount)){
+                    $tempRow->target_payrate -= $tempRow->unpaid_holiday_amount;
+                }
+
+                if(floatval($tempRow->total_unrendered_minutes) > 0){
+                    $totalUnrenderedMinutes = floatval($tempRow->total_unrendered_minutes) + floatval($tempRow->unpaid_holiday_minutes);
+                    $toDeduct = floatval($totalUnrenderedMinutes) - floatval($tempRow->total_undertime_minutes);
+                    $inDays = (floatval($toDeduct) / 60) / 8;
+                    if(floatval($tempRow->ewd) > $inDays){ $tempRow->ewd -= $inDays; }
+                    if(floatval($tempRow->ewd_decimal) > $inDays){ $tempRow->ewd_decimal -= $inDays; }
+                }
+
+                if(floatval($tempRow->unpaid_holiday_minutes) > 0 && $tempRow->total_unrendered_minutes >= $tempRow->unpaid_holiday_minutes){
+                    $tempRow->total_unrendered_minutes -= $tempRow->unpaid_holiday_minutes;
+                }
+
+                if(floatval($tempRow->unpaid_holiday_amount) > 0 && $tempRow->total_unrendered_amount >= $tempRow->unpaid_holiday_amount){
+                    $tempRow->total_unrendered_amount -= $tempRow->unpaid_holiday_amount;
                 }
 
                 if(intval($tempRow->is_bonus) == 1){
@@ -5431,7 +5458,6 @@ class Payroll_m extends CI_Model{
                 $tempRow->absent_hours = number_format($absent_hours, 2, ".", ",");
                 $undertime_hours = $tempRow->total_undertime_minutes / 60;
                 $tempRow->undertime_hours = number_format($undertime_hours, 2, ".", ",");
-                $tempRow->total_unrendered_amount = $tempRow->total_unrendered_amount;
                 $tempRow->total_unrendered_amount = number_format($tempRow->total_unrendered_amount, 2, ".", ",");
 
                 /*** added holiday pay */
