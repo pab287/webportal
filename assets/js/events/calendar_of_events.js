@@ -66,9 +66,9 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
                         if (today.isBefore(fromDate, 'day')) {
                             statusTag = `<span class="badge badge-info">Upcoming</span>`;
                         } else if (today.isBetween(fromDate, toDate, 'day', '[]')) {
-                            statusTag = `<span class="badge badge-success">Ongoing</span>`;
+                            statusTag = `<span class="badge badge-warning">Ongoing</span>`;
                         } else if (today.isAfter(toDate, 'day')) {
-                            statusTag = `<span class="badge badge-secondary">Done</span>`;
+                            statusTag = `<span class="badge badge-success">Done</span>`;
                         }
                     }
             

@@ -82,12 +82,12 @@ let eventVue = new Vue({
             const start = new Date(date_from);
             const end = new Date(date_to);
             if (now < start) {
-                return { label: "Upcoming Event", class: "bg-warning text-dark" };
+                return { label: "Upcoming Event", class: "bg-info text-dark" };
             }
             if (now >= start && now <= end) {
-                return { label: "Ongoing Event", class: "bg-success" };
+                return { label: "Ongoing Event", class: "bg-warning text-dark" };
             }
-            return { label: "Event Done", class: "bg-secondary text-dark" };
+            return { label: "Event Done", class: "bg-success" };
         },
         formatDate(date_from, date_to) {
             const start = new Date(date_from), end = new Date(date_to);
@@ -169,7 +169,11 @@ const participantsTable = $('#participantsTable').DataTable({
                 ${row.mobile_no ? `<div> ${row.mobile_no}</div>` : ''}
             `
         },
-        { data: 'status', title: 'Status', className: "text-left", defaultContent: '',
+        { 
+            data: 'status', 
+            title: 'Status', 
+            className: "text-left", 
+            defaultContent: '',
             render: function (data, type, row, meta) {
                 const statusMap = {
                     pending: 'badge-warning',
@@ -177,12 +181,30 @@ const participantsTable = $('#participantsTable').DataTable({
                     confirmed: 'badge-success',
                     declined: 'badge-danger'
                 };
+        
+                let toDate   = moment(eventsDetails.event_to);
+                let today    = moment();
+                let isDone   = today.isAfter(toDate, 'day');
+        
+                if (isDone) {
+                    if (data === 'confirmed') {
+                        if (row.cert_awarded && row.cert_awarded != 0) {
+                            return `<span class="badge bg-success" >Certificate given</span>`;
+                        } else {
+                            return `<span class="badge badge-secondary">Certificate not given</span>`;
+                        }
+                    } 
+                    if (data === 'pending' || data === 'invited' || data === 'declined') {
+                        return `<span class="badge badge-dark">Did not attend</span>`;
+                    }
+                }
+        
                 return `<span class="badge ${statusMap[data] || 'badge-secondary'}">${data}</span>`;
             }
-        },
+        },        
         { data: null, title: 'Actions', className: "text-left", orderable: false, defaultContent: '',
             render: function (data, type, row, meta) {
-                return itemDatatableActions(row.id, row.status, row.emp_id);
+                return itemDatatableActions(row.id, row.status, row.emp_id, row.cert_awarded);
             }
         }
     ],
@@ -282,17 +304,14 @@ const participantsTable = $('#participantsTable').DataTable({
     ],
 });
 
-function itemDatatableActions(id, status, emp_id = null) {
+function itemDatatableActions(id, status, emp_id = null, awarded) {
     let _actionButton = "";
-
     let fromDate = moment(eventsDetails.event_from);
     let toDate   = moment(eventsDetails.event_to);
     let today    = moment();
-
     let isUpcoming = today.isBefore(fromDate, 'day');
     let isDone     = today.isAfter(toDate, 'day');
 
-    // Confirm / Decline (only if upcoming and still pending)
     if (isUpcoming && status === 'pending') {
         _actionButton += `
             <a href="javascript:void(0)" 
@@ -309,37 +328,53 @@ function itemDatatableActions(id, status, emp_id = null) {
             </a>`;
     }
 
-    // View/Edit
-    _actionButton += `
-        <a href="javascript:void(0)" 
-            class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
-            onclick="onEditEvent(${id})" 
-            title="Edit Participant">
-            <i class="la la-eye"></i>
-        </a>`;
-
-    // Archive
-    _actionButton += `
-        <a href="javascript:void(0)" 
-            class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
-            onclick="archiveParticipant(${id})" 
-            title="Archive Participant">
-            <i class="la la-file-archive-o"></i>
-        </a>`;
-
-    // Award Certificate (only if event is done & participant confirmed)
-    if (isDone && status == 'confirmed') {
+    if (!isDone) {
         _actionButton += `
             <a href="javascript:void(0)" 
-                class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
-                onclick="awardCertificate(${emp_id})" 
-                title="Award Certificate">
-                <i class="la la-certificate text-primary"></i>
+                class="btn btn-default m-btn m-btn--icon m-btn--pill btnEdit" 
+                onclick="onEditEvent(${id})" 
+                title="Edit Participant">
+                <i class="la la-eye"></i> Edit
             </a>`;
+
+        _actionButton += `
+            <a href="javascript:void(0)" 
+                class="btn btn-default m-btn m-btn--icon m-btn--pill btnArchive" 
+                onclick="archiveParticipant(${id})" 
+                title="Archive Participant">
+                <i class="la la-file-archive-o"></i> Archive
+            </a>`;
+    }
+
+    if (isDone) {
+        if (status === 'confirmed') {
+            if (!awarded || awarded == 0) {
+                _actionButton += `
+                    <a href="javascript:void(0)" 
+                        class="btn btn-primary btn-sm m-btn m-btn--pill btnSave" 
+                        onclick="awardCertificate(${emp_id})" 
+                        title="Award Certificate">
+                        <i class="la la-certificate"></i> Award Certificate
+                    </a>`;
+            } else {
+                _actionButton += `
+                    <button class="btn btn-secondary btn-sm m-btn m-btn--pill text-dark" disabled>
+                        <i class="la la-certificate"></i> Certificate Awarded
+                    </button>`;
+            }
+        } else {
+            _actionButton += `
+                <button class="btn btn-secondary btn-sm m-btn m-btn--pill text-dark" disabled>
+                    <i class="la la-certificate"></i> Not Eligible
+                </button>`;
+        }
     }
 
     return _actionButton;
 }
+
+
+
 
 function awardCertificate(id,rowId) {
         console.log(eventsDetails);
@@ -425,7 +460,7 @@ function awardCertificate(id,rowId) {
                 }
                 $("#train_venue").val(eventsDetails.event_venue);
 
-                let url = baseUrl("hris/masterfile/upload_employee_training");
+                let url = baseUrl("events/upload_employee_training");
                 $("#fileupload_training")
                     .fileupload({
                         url: url,

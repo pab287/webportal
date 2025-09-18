@@ -113,12 +113,12 @@ class Events extends MX_Controller {
             ->set_output(json_encode($data));
     }
 
-    // public function upload_employee_training() {
-    //     $data = $this->employee_model->uploadEmployeeTraining();
-    //     $this->output
-    //         ->set_content_type('json')
-    //         ->set_output(json_encode($data));
-    // }
+    public function upload_employee_training() {
+        $data = $this->employee_model->uploadEmployeeTraining();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 
     function set_modal_trainings() {
         $data = $this->em->setModalTrainings();
