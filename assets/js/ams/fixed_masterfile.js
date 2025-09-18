@@ -216,8 +216,6 @@ $("#selectall").click(function () {
         asset_ids.push($(this).val());
     });
     assets = assets.concat(asset_ids);
-
-    console.log(assets);
 });
 
 $("#table-fixed-asset").on("click", "tbody input[type='checkbox']", function () {
