@@ -50,7 +50,18 @@ var tblAssetComponents = $("#table-asset-components")
             },
             {
                 data: "assetacode",
-                width: "8%"
+                width: "8%",
+                render: function (data, type, row, meta) {
+                    let html = "";
+
+                    html += data;
+
+                    if (row.clear_accountability_borrowed == 0) {
+                        html += '<span style="margin-left: 3px" class="m--font-warning fa fa-exclamation-circle"></span>';
+                    }
+
+                    return html;
+                }
             },
             {data: "name", width: "15%"},
             {data: "description", width: "25%"},
@@ -211,7 +222,7 @@ $("#selectall").click(function () {
     $("input:checkbox[name=asset_id]:checked").each(function(){
         asset_ids.push($(this).val());
     });
-    assets_components = asset_ids;
+    assets_components = assets_components.concat(asset_ids);
 });
 
 $("#table-asset-components").on("click", "tbody input[type='checkbox']", function () {
@@ -224,7 +235,7 @@ $("#table-asset-components").on("click", "tbody input[type='checkbox']", functio
     $("input:checkbox[name=asset_id]:checked").each(function(){
         asset_id.push($(this).val());
     });
-    assets_components = asset_id;
+    assets_components = assets_components.concat(asset_ids);
 });
 
 //custom global search init

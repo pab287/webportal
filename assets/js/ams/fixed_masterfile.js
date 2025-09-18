@@ -12,6 +12,7 @@ var tblFixedAsset = $("#table-fixed-asset")
         processing: true,
         autoWidth: false,
         order: [[0, "asc"]],
+        container: 'body',
         ajax: {
             url: baseUrl("ams/assets/get_datatable_request"),
             type: "post",
@@ -50,7 +51,18 @@ var tblFixedAsset = $("#table-fixed-asset")
             },
             {
                 data: "assetacode",
-                width: "8%"
+                width: "8%",
+                render: function (data, type, row, meta) {
+                    let html = "";
+
+                    html += data;
+
+                    if (row.clear_accountability_borrowed == 0) {
+                        html += '<span style="margin-left: 3px" class="m--font-warning fa fa-exclamation-circle"></span>';
+                    }
+
+                    return html;
+                }
             },
             {data: "name", width: "15%"},
             {data: "description", width: "25%"},
@@ -203,7 +215,7 @@ $("#selectall").click(function () {
     $("input:checkbox[name=asset_id]:checked").each(function(){
         asset_ids.push($(this).val());
     });
-    assets = asset_ids;
+    assets = assets.concat(asset_id);
 });
 
 $("#table-fixed-asset").on("click", "tbody input[type='checkbox']", function () {
@@ -216,7 +228,8 @@ $("#table-fixed-asset").on("click", "tbody input[type='checkbox']", function () 
     $("input:checkbox[name=asset_id]:checked").each(function(){
         asset_id.push($(this).val());
     });
-    assets = asset_id;
+
+    assets = assets.concat(asset_id);
 });
 
 function showOrHideColumn(index, el) {

@@ -286,6 +286,10 @@
                     </div>
                     <!--begin: Datatable -->
                     <div class="table-responsive">
+                        <div class="">
+                            <label><b>LEGENDS:</b></label> 
+                            <span class="ml-2 m--font-warning fa fa-exclamation-circle"></span> MOTHER OR COMPONENT ASSET IS ACCOUNTED / BORROWED
+                        </div>
                         <table class="table table-striped table-bordered" id="table-asset-components" width="100%">
                             <thead>
                             <tr>

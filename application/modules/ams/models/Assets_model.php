@@ -149,6 +149,7 @@
 
                     $rs->accounted_to = strtoupper($this->getAssetAccountabilityByReturnStatus($id));
                     $rs->check_no = "<div style='text-overflow: ellipsis; overflow: hidden; max-width: 200px; white-space: nowrap;'>".$rs->check_no."</div>";
+                    $rs->clear_accountability_borrowed = $this->check_accountablity_borrowing($id, 'asset', 0);
                     array_push($data, $rs);
                 }
             }
@@ -653,6 +654,7 @@
                     $rs->is_accounted = $rs->accounted_to;
                     $rs->imagePath = $imagePath;
                     $rs->check_no = "<div style='text-overflow: ellipsis; overflow: hidden; max-width: 200px; white-space: nowrap;'>".$rs->check_no."</div>";
+                    $rs->clear_accountability_borrowed = $this->check_accountablity_borrowing($id, 'asset', 1);
                     array_push($data, $rs);
                 }
             }
@@ -4554,8 +4556,8 @@
 
                     $this->db->reset_query();
                     
+                    $_temp = array();
                     if (!empty($_result)) {
-                        $_temp = array();
                         $_temp = (array) $_result;
 
                         if (isset($value['components']) && !empty($value['components'])) {
@@ -4572,11 +4574,33 @@
 
                             $_temp['components'] = $component;
                         }
+                    } else {
+                        foreach($value['components'] as $k => $v) {
+                            if (in_array($v, $value['components'])){
+                                $this->db->select($selectAccountabilityFields);
+                                $this->db->join("gcceforms.accountability acct", "acct_body.accountability_id = acct.id AND LCASE(acct_body.`type`)='$type'", "inner");
+                                $this->db->join("gcchris.tblcontractor contractors", "contractors.id = acct.issued_to", "LEFT");
+                                $this->db->join("gccmaster.tblemployees employees", "employees.id = acct.issued_to", "LEFT");
+                                $this->db->join("gccasset.assets assets", "assets.id = acct_body.asset_id", "inner");
+                                $this->db->where_in("acct_body.asset_id", $value['components']);
+                                $this->db->where("acct_body.is_returned", 0);
+                                $this->db->where("acct.status !=", "Cancelled");
+                                $component = $this->db->get("gcceforms.accountability_body acct_body")->row();
+                                $this->db->reset_query();
 
+                                if (!empty($component)) {
+                                    $_temp = array("reference_no" => 'n/a');
+                                    $_temp['components'] = array($component);
+                                }
+                            }
+                        }
+                    }
+
+                    if (!empty($_temp)) {
                         $mother_asset_accountability[] = $_temp;
                     }
                 }
-                
+
                 $_tempArr = array();
                 foreach($mother_asset_accountability as $key => $value) {
                     $parentRef = $value['reference_no'];
@@ -4697,6 +4721,90 @@
             $query = $this->db->get();
 
             $result['data'] = $query->num_rows() > 0 ? $query->result() : array();
+            return $result;
+        }
+
+        function check_accountablity_borrowing($id, $type, $isComponent) {
+            $asset_id = $id;
+            $type = $type;
+            $isComponent = $isComponent;
+            $accountability = null;
+            $borrowing_history = null;
+            $has_mother_asset = FALSE;
+            $mother_asset_accountability = null;
+
+            $selectAccountabilityFields = "acct_body.asset_id, CONCAT('(',TRIM(assets.assetacode),')', if(assets.`name` IS NULL OR assets.`name`='',";
+            $selectAccountabilityFields .= "assets.assetname, assets.`name`)) asset_name, acct_body.is_returned, ";
+            $selectAccountabilityFields .= "acct.issued_to, IF(acct.is_contract=1, contractors.contractor, ";
+            $selectAccountabilityFields .= "CONCAT(employees.firstname, ' ', employees.lastname)) issued_to, acct.reference_no";
+
+            $selectBorrowingHistory = "CONCAT(employees.firstname, ' ', employees.lastname) borrower_name,";
+            $selectBorrowingHistory .= "if(assets.`name` IS NULL OR assets.`name`='', assets.assetname, assets.`name`) asset_name,";
+            $selectBorrowingHistory .= "br.borrower borrower_id, br_body.is_returned,";
+
+            if ($isComponent != 0) {
+                $mother_asset = $this->db->select("mother_asset")->where("id", $asset_id)->get("gccasset.assets")->row("mother_asset");
+
+                if ($mother_asset != 0) {
+                    $this->db->select($selectAccountabilityFields);
+                    $this->db->join("gcceforms.accountability acct", "acct_body.accountability_id = acct.id AND LCASE(acct_body.`type`)='$type'", "inner");
+                    $this->db->join("gcchris.tblcontractor contractors", "contractors.id = acct.issued_to", "LEFT");
+                    $this->db->join("gccmaster.tblemployees employees", "employees.id = acct.issued_to", "LEFT");
+                    $this->db->join("gccasset.assets assets", "assets.id = acct_body.asset_id", "inner");
+                    $this->db->where("acct_body.asset_id", $mother_asset);
+                    $this->db->where("acct_body.is_returned", 0);
+                    $this->db->where("acct.status !=", "Cancelled");
+                    $mother_asset_accountability = $this->db->get("gcceforms.accountability_body acct_body")->row();
+                    $this->db->reset_query();
+                }
+
+                $has_mother_asset = $mother_asset != 0;
+            }
+
+            $this->db->select($selectAccountabilityFields);
+            $this->db->join("gcceforms.accountability acct", "acct_body.accountability_id = acct.id AND LCASE(acct_body.`type`)='$type'", "inner");
+            $this->db->join("gcchris.tblcontractor contractors", "contractors.id = acct.issued_to", "LEFT");
+            $this->db->join("gccmaster.tblemployees employees", "employees.id = acct.issued_to", "LEFT");
+            $this->db->join("gccasset.assets assets", "assets.id = acct_body.asset_id", "inner");
+            $this->db->where("acct_body.asset_id", $asset_id);
+            $this->db->where("acct_body.is_returned", 0);
+            $this->db->where("acct.status !=", "Cancelled");
+            $accountability = $this->db->get("gcceforms.accountability_body acct_body")->row();
+
+            $this->db->reset_query();
+
+            $this->db->select($selectBorrowingHistory);
+            $this->db->join("gcceforms.borrowing br", "br_body.borrowing_id = br.id AND LCASE(br_body.`type`)='$type'", "inner");
+            $this->db->join("gccmaster.tblemployees employees", "employees.id = br.borrower", "INNER");
+            $this->db->join("gccasset.assets assets", "assets.id = br_body.asset_id", "INNER");
+            $this->db->where("br_body.asset_id", $asset_id);
+            $this->db->where("br_body.is_returned", 0);
+            $this->db->where("br.status !=", "Cancelled");
+            $borrowing_history = $this->db->get("gcceforms.borrowing_body br_body")->row();
+
+            $this->db->reset_query();
+
+            if ((!empty($accountability) && $has_mother_asset && $mother_asset_accountability) ) {
+                $accountability = $this->db
+                    ->select("CONCAT('(',TRIM(assets.assetacode),')', if(assets.`name` IS NULL OR assets.`name`='', assets.assetname, assets.`name`)) asset_name, acct.reference_no, CONCAT(employees.firstname, ' ', employees.lastname) issued_to")
+                    ->join("gcceforms.accountability_body acct_body", "acct_body.asset_id = assets.id", "inner")
+                    ->join("gcceforms.accountability acct", "acct_body.accountability_id = acct.id AND LCASE(acct_body.`type`)='$type'", "inner")
+                    ->join("gccmaster.tblemployees employees", "employees.id = acct.issued_to", "LEFT")
+                    ->where("assets.id", $asset_id)
+                    ->where('acct_body.is_returned', 0)
+                    ->where("acct.status !=", "Cancelled")
+                    ->get("gccasset.assets as assets")
+                    ->row();
+            }
+
+            $result = 0;
+
+            if ($isComponent == 0) {
+                $result = empty($accountability) && empty($borrowing_history) ? 1 : 0;
+            } else {
+                $result = empty($accountability) && empty($borrowing_history) && empty($mother_asset_accountability) ? 1 : 0;
+            }
+
             return $result;
         }
     }
