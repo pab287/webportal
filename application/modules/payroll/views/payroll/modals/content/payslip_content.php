@@ -51,23 +51,41 @@
     </div>
 
     <template v-if="parseInt(row.is_bonus) === 0">
-        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
-        <div class="row m--margin-bottom-5 m--margin-top-5" v-if="parseFloat(row.total_unrendered_amount) > 0">
-            <div class="col-md-8">
-                <span class="m--font-bolder">LATES/ABSENCES</span>
+        <template  v-if="parseFloat(row.total_unrendered_amount) > 0">
+            <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+            <div class="row m--margin-top-5">
+                <div class="col-md-8">
+                    <span class="m--font-bolder">LATES/ABSENCES</span>
+                </div>
+                <div class="col-md-4 text-right">
+                    <span class="m--font-boldest">( {{ row.total_unrendered_amount }} )</span>
+                </div>
             </div>
-            <div class="col-md-4 text-right">
-                <span class="m--font-boldest">( {{ row.total_unrendered_amount }} )</span>
+            <div class="row">
+                <div class="col-md-6 text-right" v-if="parseFloat(row.absent_hours) > 0">
+                    <small class="m--font-bold">ABSENT HRS:</small>&nbsp;<span class="m--font-bolder">{{row.absent_hours}}</span>
+                </div>
+                <div class="col-md-6" :class="parseFloat(row.absent_hours) > 0 ? 'text-left' : 'text-right'" v-if="parseFloat(row.undertime_hours) > 0">
+                    <small class="m--font-bold">UT HRS:</small>&nbsp;<span class="m--font-bolder">{{row.undertime_hours}}</span>
+                </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6 text-right" v-if="parseFloat(row.absent_hours) > 0">
-                <small class="m--font-bold">ABSENT HRS:</small>&nbsp;<span class="m--font-bolder">{{row.absent_hours}}</span>
+        </template>
+        <template v-if="parseFloat(row.unpaid_holiday_amount) > 0">
+            <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+            <div class="row m--margin-top-5">
+                <div class="col-md-8">
+                    <span class="m--font-bolder">UNPAID HOLIDAY</span>
+                </div>
+                <div class="col-md-4 text-right">
+                    <span class="m--font-boldest">( {{ row.unpaid_holiday_amount }} )</span>
+                </div>
             </div>
-            <div class="col-md-6" :class="parseFloat(row.absent_hours) > 0 ? 'text-left' : 'text-right'" v-if="parseFloat(row.undertime_hours) > 0">
-                <small class="m--font-bold">UT HRS:</small>&nbsp;<span class="m--font-bolder">{{row.undertime_hours}}</span>
+            <div class="row">
+                <div class="col-md-6 text-right" v-if="parseFloat(row.unpaid_holiday_minutes) > 0">
+                    <small class="m--font-bold">HOL HRS:</small>&nbsp;<span class="m--font-bolder">{{parseFloat(row.unpaid_holiday_minutes) / 60}}</span>
+                </div>
             </div>
-        </div>
+        </template>
         <template v-if="parseFloat(row.total_allowances) > 0">
         <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
         <div class="row">

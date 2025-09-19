@@ -5391,7 +5391,6 @@ class Payroll_m extends CI_Model{
                 $tempDeductionIndexes = array("sss", "sss_prov", "hdmf", "ph", "tax", "total_loans");
 
                 $tempRow = $qTemp->row();
-
                 $tempData = $this->core_layout->getEmployeeData($tempRow->emp_id);
                 $tempData = (object) $tempData;
                 $displayName = (isset($tempData->display_name_0) && $tempData->display_name_0)? $tempData->display_name_0: "No assigned name";
@@ -5413,8 +5412,6 @@ class Payroll_m extends CI_Model{
                 $tempRow->hours_worked = round($tempRow->hours_worked, 2);
                 $tempEwd = $_target_hours_worked / 8;
 
-                
-
                 /*** $tempEwd = is_float($tempEwd) ? ceil($tempEwd): $tempEwd; ***/
                 $tempRow->ewd = $tempEwd;
                 $tempRow->ewd_decimal = $tempEwd;
@@ -5424,12 +5421,12 @@ class Payroll_m extends CI_Model{
                     $tempRow->target_payrate = (intval($tempRow->payroll_sched) == 2)? $tempRow->basic_rate / 2: $tempRow->basic_rate;
                 }
 
-                if(floatval($tempRow->unpaid_holiday_amount) > 0 && floatval($tempRow->target_payrate) >= floatval($tempRow->unpaid_holiday_amount)){
+                /*** if(floatval($tempRow->unpaid_holiday_amount) > 0 && floatval($tempRow->target_payrate) >= floatval($tempRow->unpaid_holiday_amount)){
                     $tempRow->target_payrate -= $tempRow->unpaid_holiday_amount;
-                }
+                } ***/
 
                 if(floatval($tempRow->total_unrendered_minutes) > 0){
-                    $totalUnrenderedMinutes = floatval($tempRow->total_unrendered_minutes) + floatval($tempRow->unpaid_holiday_minutes);
+                    $totalUnrenderedMinutes = floatval($tempRow->total_unrendered_minutes);
                     $toDeduct = floatval($totalUnrenderedMinutes) - floatval($tempRow->total_undertime_minutes);
                     $inDays = (floatval($toDeduct) / 60) / 8;
                     if(floatval($tempRow->ewd) > $inDays){ $tempRow->ewd -= $inDays; }
