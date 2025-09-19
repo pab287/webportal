@@ -218,11 +218,23 @@ function formatcheck(data, row) {
 $("#selectall").click(function () {
     var asset_ids = [];
     $('#table-asset-components tbody input[type="checkbox"]').prop('checked', this.checked);
-    
-    $("input:checkbox[name=asset_id]:checked").each(function(){
-        asset_ids.push($(this).val());
-    });
-    assets_components = assets_components.concat(asset_ids);
+
+    if (!this.checked) {
+        $("input:checkbox[name=asset_id]:not(:checked)").each(function(){
+            const val = $(this).val();
+            const index = assets_components.indexOf(val);
+
+            // removing all the item that been displayed
+            if (index !== -1) {
+                assets_components.splice(index, 1);
+            }
+        });
+    } else {
+        $("input:checkbox[name=asset_id]:checked").each(function(){
+            asset_ids.push($(this).val());
+        });
+        assets_components = assets_components.concat(asset_ids);
+    }
 });
 
 $("#table-asset-components").on("click", "tbody input[type='checkbox']", function () {
@@ -231,11 +243,23 @@ $("#table-asset-components").on("click", "tbody input[type='checkbox']", functio
     const checkedCheckboxes = $("#table-asset-components tbody input[type='checkbox']:checked").length;
     const checked = allCheckboxes <= checkedCheckboxes;
     $('#selectall').prop('checked', checked);
-    
-    $("input:checkbox[name=asset_id]:checked").each(function(){
-        asset_id.push($(this).val());
-    });
-    assets_components = assets_components.concat(asset_id);
+
+    if (!this.checked) {
+        $("input:checkbox[name=asset_id]:not(:checked)").each(function(){
+            const val = $(this).val();
+            const index = assets_components.indexOf(val);
+
+            // removing all the item that been displayed
+            if (index !== -1) {
+                assets_components.splice(index, 1);
+            }
+        });
+    } else {
+        $("input:checkbox[name=asset_id]:checked").each(function(){
+            asset_id.push($(this).val());
+        });
+        assets_components = assets_components.concat(asset_id);
+    }
 });
 
 //custom global search init
