@@ -5456,7 +5456,10 @@ class Payroll_m extends CI_Model{
                 $undertime_hours = $tempRow->total_undertime_minutes / 60;
                 $tempRow->undertime_hours = number_format($undertime_hours, 2, ".", ",");
                 $tempRow->total_unrendered_amount = number_format($tempRow->total_unrendered_amount, 2, ".", ",");
-
+                $tempRow->unpaid_holiday_amount = number_format($tempRow->unpaid_holiday_amount, 2, ".", ",");
+                $unpaidHolidayHours = $tempRow->unpaid_holiday_minutes / 60;
+                $tempRow->unpaid_holiday_hours = number_format($unpaidHolidayHours, 2, ".", ",");
+                $tempRow->unpaid_holiday_minutes = number_format($tempRow->unpaid_holiday_minutes, 2, ".", ",");
                 /*** added holiday pay */
                 $tempRow->total_holiday_amount = number_format($tempRow->total_holiday_amount, 2, '.', ',');
                 $holiday_hours = $tempRow->total_holiday_minutes / 60;
@@ -5770,6 +5773,13 @@ class Payroll_m extends CI_Model{
             $msg .= "ABSENT HRS: " . $arrData[0]->absent_hours . "\t";
             $msg .= "\nUT HRS: " . $arrData[0]->undertime_hours . "\n";
             $msg .= "----------------------------------------------\n";
+            if(floatval($arrData[0]->unpaid_holiday_amount) > 0){
+                $unpaidDays = floatval($arrData[0]->unpaid_holiday_hours) / 8;
+                $msg .= "UNPAID HOLIDAY: " . $arrData[0]->unpaid_holiday_amount . "\n";
+                $msg .= "DAYS: " . $unpaidDays . "\t";
+                $msg .= "\nHRS: " . $arrData[0]->unpaid_holiday_hours . "\n";
+                $msg .= "----------------------------------------------\n";
+            }
         }
 
         $msg .= "ALLOWANCES: " . $arrData[0]->total_allowances . "\n";
@@ -6105,7 +6115,7 @@ class Payroll_m extends CI_Model{
         if (!empty($psData) && isset($psData[0])) {
           $result = (object) $this->getCurrentPayrollPayslip($psData[0]->payslip_id);
           if ($result->response == true) {
-            $tempEmployeeName = $result->data->employee_name;  
+            $tempEmployeeName = $result->data->employee_name;
             $module = "payroll_payslip";
             $email_title = "PAYROLL - Payslip Notification";
             $content_title = "Payroll Notification For ".$tempEmployeeName;

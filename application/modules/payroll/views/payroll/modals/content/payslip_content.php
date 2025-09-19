@@ -81,8 +81,11 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-6 text-right" v-if="parseFloat(row.unpaid_holiday_minutes) > 0">
-                    <small class="m--font-bold">HOL HRS:</small>&nbsp;<span class="m--font-bolder">{{parseFloat(row.unpaid_holiday_minutes) / 60}}</span>
+                <div class="col-md-6 text-right" v-if="parseFloat(row.unpaid_holiday_hours) > 0">
+                    <small class="m--font-bold">DAYS:</small>&nbsp;<span class="m--font-bolder">{{ parseFloat(row.unpaid_holiday_hours) / 8 }}</span>
+                </div>
+                <div class="col-md-6 text-left" v-if="parseFloat(row.unpaid_holiday_hours) > 0">
+                    <small class="m--font-bold">HRS:</small>&nbsp;<span class="m--font-bolder">{{ row.unpaid_holiday_hours }}</span>
                 </div>
             </div>
         </template>
