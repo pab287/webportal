@@ -416,7 +416,107 @@
                                 </div>
                                 <div class="tab-pane" id="m_user_profile_tab_4">
                                     <div class="row">
-                                        <div class="col-12 col-md-12 col-lg-12 col-xl-12"></div>
+                                        <div class="col-12 col-md-12 col-lg-12 col-xl-12">
+                                            <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
+                                                <table id="tbl-loans" class="table display table-bordered table-striped dataTable no-footer" width="100%">
+                                                    <thead>
+                                                        <th width="30%">Loan Name</th>
+                                                        <th>Loaned Amount</th>
+                                                        <th>Amt. Pd.</th>
+                                                        <th width="10%">Bal.</th>
+                                                        <th>
+                                                            <span data-toggle="m-tooltip"
+                                                                data-placement="top"
+                                                                data-original-title="DEDUCTION TYPE"
+                                                                data-skin="dark">
+                                                                TYPE
+                                                            </span>
+                                                        </th>
+                                                        <th>
+                                                            <span data-toggle="m-tooltip"
+                                                                data-placement="top"
+                                                                data-original-title="PERCENTAGE VALUE OR FIXED AMOUNT VALUE"
+                                                                data-skin="dark">
+                                                                VALUE
+                                                            </span>
+                                                        </th>
+                                                        <th>Status</th>
+                                                        <th>Action</th>
+                                                    </thead>
+                                                    <tbody>
+                                                        <?php if(isset($deductions) && is_array($deductions) && count($deductions) > 0): ?>
+                                                            <?php foreach($deductions as $key=> $rs): ?>
+                                                                <tr>
+                                                                    <td width="30%">
+                                                                        <?php 
+                                                                            $ref = ($rs->reference === '' || $rs->reference === null) ? '' : `<p class='m-0'><small><span class="m--font-bolder">Reference:</span>`.$rs->reference.`</small></p>`; 
+                                                                            $dnRefs = ($rs->debit_note === '' || $rs->debit_note === null) ? '' : "<span class='m--font-primary m--font-boldest m--margin-left-15 m--regular-font-size-lg1'>$rs->debit_note</span>";
+                                                                        ?>
+
+                                                                        <p class="mb-1 m--font-bolder"><?=$rs->loan_name ?> <?=$dnRefs ?></p><?=$ref ?>
+                                                                        <p class='m-0'><small><span class="m--font-bolder">Created By:</span> <?=$rs->created_by ?></small></p>
+                                                                        <p class='m-0'><small><span class="m--font-bolder">Created Date:</span><?=$rs->created_at ?></small></p>
+                                                                    </td>
+                                                                    <td class="text-right">
+                                                                        <span class="m--font-boldest"><?=number_format($rs->amount, 2) ?></span>
+                                                                    </td>
+                                                                    <td class="text-right m--padding-right-30">
+                                                                        <span class="m--font-boldest"><?=number_format($rs->total_amount_paid, 2) ?></span>
+                                                                    </td>
+                                                                    <td width="10%" class="text-right m--padding-right-30">
+                                                                        <?php $balance = floatval($rs->amount) - floatval($rs->total_amount_paid); ?>
+                                                                        <span class="m--font-boldest"><?=number_format($balance, 2) ?></span>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?=intval($rs->deduction_type) === 0 ? "Percentage" : "Fix Amount" ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?=(intval($rs->deduction_type) == 0) ? number_format($rs->percentage, 2).'%' : number_format($rs->fixed_deduction_amt, 2) ?>
+                                                                    </td>
+                                                                    <td  class="text-center">
+                                                                        <?php 
+                                                                            $tempStatus = intval($rs->active);
+                                                                            $badgeColor = "m-badge--warning";
+                                                                            $badgeText = "Suspended";
+
+                                                                            if($rs->paid == 1 && $tempStatus !== 2){ $tempStatus = 2; }
+                                                                            $_balance = floatval($rs->amount) - floatval($rs->total_amount_paid);
+                                                                            if($_balance <= 0){ $tempStatus = 2; }
+
+                                                                            switch($tempStatus) {
+                                                                                case 1:
+                                                                                    $badgeColor = "m-badge--info";
+                                                                                    $badgeText = "Active";
+                                                                                    break;
+                                                                                case 2:
+                                                                                    $badgeColor = "m-badge--success";
+                                                                                    $badgeText = "Paid";
+                                                                                    break;
+                                                                                default:
+                                                                                    $badgeColor = "m-badge--warning";
+                                                                                    $badgeText = "Suspended";
+                                                                                    break;
+                                                                            }
+
+                                                                            echo "<span class='m-badge m-badge--wide m--font-bolder $badgeColor'>$badgeText</span>";
+                                                                        ?>
+                                                                    </td>
+                                                                    <td class="text-center">
+                                                                        <?php 
+                                                                            echo $this->profile->renderLoanActions($rs);
+                                                                        ?>
+                                                                    </td>
+                                                                </tr>
+                                                            <?php endforeach; ?>
+                                                        <?php else: ?>
+                                                            <tr>
+                                                                <td class="text-center" colspan="8">No Data Found.</td>
+                                                            </tr>
+                                                        <?php endif; ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -598,5 +698,14 @@
         function formatNumber(value, decimals = 2) {
             return parseFloat(value).toLocaleString("en-US", { maximumFractionDigits: decimals });
         }
+    </script>
+<?php endif; ?>
+
+<?php if(isset($profile_deductions, $show_deductions) && $show_deductions && $profile_deductions && (isset($profile_deductions) && is_array($deductions) && count($deductions) > 0)): ?>
+    <script>
+        $(document).ready( function () {
+            $("#tbl-loans").DataTable({ ordering: false });
+            $("#tbl-loans input[type='search']").removeClass("form-control-sm");
+        });
     </script>
 <?php endif; ?>
