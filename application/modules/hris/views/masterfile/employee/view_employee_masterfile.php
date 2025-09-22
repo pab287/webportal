@@ -342,68 +342,89 @@
                 </div>
             </div>
 
-            <?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0)): ?>
-            <div class="m-portlet" id="payroll-sheet-payslip">
-                <div class="m-portlet__head pt-4 pb-4">
-                    <div class="m-portlet__head-caption">
-                        <div class="m-portlet__head-title">
-                            <span class="m-portlet__head-icon">
-                                <i class="flaticon-file-1"></i>
-                            </span>
-                            <h3 class="m-portlet__head-text">Payroll Data Sheet</h3>
-                        </div>
+            <!-- payroll sheet and deductions -->
+            <div class="m-portlet m-portlet--tabs" id="payroll-sheet-payslip">
+                <div class="m-portlet__head">
+                    <div class="m-portlet__head-tools">
+                        <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--left m-tabs-line--primary">
+                            <li class="nav-item m-tabs__item">
+                                <div class="row align-items-center justify-content-between">
+                                    <span class="m-portlet__head-icon mr-2">
+                                        <i class="flaticon-file-1"></i>
+                                    </span>
+                                    <a class="nav-link m-tabs__link active" data-toggle="tab" href="#m_user_profile_tab_3" role="tab" aria-expanded="true">Payroll Data Sheet</a>
+                                </div>
+                            </li>
+                            <li class="nav-item m-tabs__item">
+                                <a class="nav-link m-tabs__link" data-toggle="tab" href="#m_user_profile_tab_4" role="tab" aria-expanded="false">Deductions</a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
+
                 <div class="m-portlet__body">
-                <div class="row">
-                        <div class="col-12 col-md-12 col-lg-12 col-xl-12">
-                            <div class="table-responsive-sm">
-                                <table class="table table-bordered" id="table-payroll_sheet-payslip" style="width: 100%">
-                                    <thead>
-                                        <tr>
-                                            <th>Pay Date</th>
-                                            <th>Coverage Date</th>
-                                            <th class="text-right">Gross Pay</th>
-                                            <th class="text-right">Net Pay</th>
-                                            <th class="text-center">&nbsp;</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if(isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0): ?>
-                                            <?php foreach ($payroll_sheet_data as $key => $value): ?>
-                                                <tr class="<?php echo $value->id == $payroll_sheet_max_id ? "highlight":"" ?>">
-                                                    <td>
-                                                        <p class="mb-0">
-                                                            <span><?php echo date("F d, Y", strtotime($value->pay_date)); ?></span>
-                                                            <?php if($value->bonus_code): ?>
-                                                                <span class="m-badge m-badge--danger m-badge--wide ml-2 m--regular-font-size-sm5"><?php echo $value->bonus_code; ?></span>
-                                                            <?php endif; ?>
-                                                            <?php if($value->id == $payroll_sheet_max_id): ?>
-                                                                <span class="m-badge m-badge--success m-badge--wide ml-2 m--regular-font-size-sm5">CURRENT</span>
-                                                                <?php endif; ?>
-                                                        </p>
-                                                    </td>
-                                                    <td><?php echo date("F d, Y", strtotime($value->date_start)) ." ~ ". date("F d, Y", strtotime($value->date_end)); ?></td>
-                                                    <td class="text-right"><?php echo number_format($value->gross_pay, 2, ".", ","); ?></td>
-                                                    <td class="text-right"><?php echo number_format($value->net_pay, 2, ".", ","); ?></td>
-                                                    <td class="text-center">
-                                                    <?php if($value->is_bonus == 0): ?>
-                                                        <button type="button" class="btn btn-secondary btn-sm m-btn m-btn--icon m-btn--icon-only btnView_own_request" onClick="getPayrollSheetData(<?= $value->id; ?>)"><i class="la la-file-text"></i></button>
-                                                    <?php else: ?>
-                                                        <i class="la la-file-text"></i>
-                                                    <?php endif; ?>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="m_user_profile_tab_3">
+                                    <div class="row">
+                                        <div class="col-12 col-md-12 col-lg-12 col-xl-12">
+                                            <div class="table-responsive-sm">
+                                                <table class="table table-bordered" id="table-payroll_sheet-payslip" style="width: 100%">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Pay Date</th>
+                                                            <th>Coverage Date</th>
+                                                            <th class="text-right">Gross Pay</th>
+                                                            <th class="text-right">Net Pay</th>
+                                                            <th class="text-center">&nbsp;</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <?php if(isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0): ?>
+                                                            <?php foreach ($payroll_sheet_data as $key => $value): ?>
+                                                                <tr class="<?php echo $value->id == $payroll_sheet_max_id ? "highlight":"" ?>">
+                                                                    <td>
+                                                                        <p class="mb-0">
+                                                                            <span><?php echo date("F d, Y", strtotime($value->pay_date)); ?></span>
+                                                                            <?php if($value->bonus_code): ?>
+                                                                                <span class="m-badge m-badge--danger m-badge--wide ml-2 m--regular-font-size-sm5"><?php echo $value->bonus_code; ?></span>
+                                                                            <?php endif; ?>
+                                                                            <?php if($value->id == $payroll_sheet_max_id): ?>
+                                                                                <span class="m-badge m-badge--success m-badge--wide ml-2 m--regular-font-size-sm5">CURRENT</span>
+                                                                                <?php endif; ?>
+                                                                        </p>
+                                                                    </td>
+                                                                    <td><?php echo date("F d, Y", strtotime($value->date_start)) ." ~ ". date("F d, Y", strtotime($value->date_end)); ?></td>
+                                                                    <td class="text-right"><?php echo number_format($value->gross_pay, 2, ".", ","); ?></td>
+                                                                    <td class="text-right"><?php echo number_format($value->net_pay, 2, ".", ","); ?></td>
+                                                                    <td class="text-center">
+                                                                    <?php if($value->is_bonus == 0): ?>
+                                                                        <button type="button" class="btn btn-secondary btn-sm m-btn m-btn--icon m-btn--icon-only btnView_own_request" onClick="getPayrollSheetData(<?= $value->id; ?>)"><i class="la la-file-text"></i></button>
+                                                                    <?php else: ?>
+                                                                        <i class="la la-file-text"></i>
+                                                                    <?php endif; ?>
+                                                                    </td>
+                                                                </tr>
+                                                            <?php endforeach; ?>
+                                                        <?php endif; ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="m_user_profile_tab_4">
+                                    <div class="row">
+                                        <div class="col-12 col-md-12 col-lg-12 col-xl-12"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <?php endif; ?>
+            <!-- payroll sheet and deductions -->
         </div>
     </div>
 </div>
