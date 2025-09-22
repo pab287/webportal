@@ -343,21 +343,27 @@
             </div>
 
             <!-- payroll sheet and deductions -->
+            <?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0) || isset($profile_deductions, $show_deductions) && $show_deductions && $profile_deductions && (isset($profile_deductions) && is_array($deductions) && count($deductions) > 0)): ?>
             <div class="m-portlet m-portlet--tabs" id="payroll-sheet-payslip">
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-tools">
                         <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--left m-tabs-line--primary">
-                            <li class="nav-item m-tabs__item">
-                                <div class="row align-items-center justify-content-between">
-                                    <span class="m-portlet__head-icon mr-2">
-                                        <i class="flaticon-file-1"></i>
-                                    </span>
-                                    <a class="nav-link m-tabs__link active" data-toggle="tab" href="#m_user_profile_tab_3" role="tab" aria-expanded="true">Payroll Data Sheet</a>
-                                </div>
-                            </li>
-                            <li class="nav-item m-tabs__item">
-                                <a class="nav-link m-tabs__link" data-toggle="tab" href="#m_user_profile_tab_4" role="tab" aria-expanded="false">Deductions</a>
-                            </li>
+                            <?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0)): ?>
+                                <li class="nav-item m-tabs__item">
+                                    <div class="row align-items-center justify-content-between">
+                                        <span class="m-portlet__head-icon mr-2">
+                                            <i class="flaticon-file-1"></i>
+                                        </span>
+                                        <a class="nav-link m-tabs__link active" data-toggle="tab" href="#m_user_profile_tab_3" role="tab" aria-expanded="true">Payroll Data Sheet</a>
+                                    </div>
+                                </li>
+                            <?php endif; ?>
+
+                            <?php if(isset($profile_deductions, $show_deductions) && $show_deductions && $profile_deductions && (isset($profile_deductions) && is_array($deductions) && count($deductions) > 0)): ?>
+                                <li class="nav-item m-tabs__item">
+                                    <a class="nav-link m-tabs__link" data-toggle="tab" href="#m_user_profile_tab_4" role="tab" aria-expanded="false">Deductions</a>
+                                </li>
+                            <?php endif; ?>
                         </ul>
                     </div>
                 </div>
@@ -524,6 +530,7 @@
                     </div>
                 </div>
             </div>
+            <?php endif; ?>
             <!-- payroll sheet and deductions -->
         </div>
     </div>
