@@ -231,7 +231,10 @@ $("#selectall").click(function () {
         });
     } else {
         $("input:checkbox[name=asset_id]:checked").each(function(){
-            asset_ids.push($(this).val());
+            const val = $(this).val();
+            if (!assets_components.includes(val)) {
+                asset_ids.push($(this).val());
+            }
         });
         assets_components = assets_components.concat(asset_ids);
     }
@@ -256,7 +259,10 @@ $("#table-asset-components").on("click", "tbody input[type='checkbox']", functio
         });
     } else {
         $("input:checkbox[name=asset_id]:checked").each(function(){
-            asset_id.push($(this).val());
+            const val = $(this).val();
+            if (!assets_components.includes(val)) {
+                asset_id.push(val);
+            }
         });
         assets_components = assets_components.concat(asset_id);
     }

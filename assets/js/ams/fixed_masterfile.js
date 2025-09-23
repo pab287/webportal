@@ -208,7 +208,7 @@ function formatcheck(data, row) {
     }
 }
 
-$("#selectall").click(function () {
+$("#selectall").click( function () {
     var asset_ids = [];
     $('#table-fixed-asset tbody input[type="checkbox"]').prop('checked', this.checked);
 
@@ -222,9 +222,13 @@ $("#selectall").click(function () {
                 assets.splice(index, 1);
             }
         });
+        console.log(assets);
     } else {
         $("input:checkbox[name=asset_id]:checked").each(function(){
-            asset_ids.push($(this).val());
+            const val = $(this).val();
+            if (!assets.includes(val)) {
+                asset_ids.push(val);
+            }
         });
         assets = assets.concat(asset_ids);
     }
