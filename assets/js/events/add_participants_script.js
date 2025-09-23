@@ -79,12 +79,15 @@ let eventVue = new Vue({
     methods:{
         eventsStatus(date_from, date_to) {
             const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const start = new Date(date_from);
             const end = new Date(date_to);
-            if (now < start) {
+            const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+            const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+            if (today < startDate) {
                 return { label: "Upcoming Event", class: "bg-info text-dark" };
             }
-            if (now >= start && now <= end) {
+            if (today >= startDate && today <= endDate) {
                 return { label: "Ongoing Event", class: "bg-warning text-dark" };
             }
             return { label: "Event Done", class: "bg-success" };
