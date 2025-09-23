@@ -100,6 +100,23 @@
                                         </template>
                                     </div>
                                 </div>
+                                <div class="row mb-2">
+                                    <div class="col-sm-12 col-md-3 col-xl-3 col-lg-3">
+                                        <div class="form-group m-form__group has-success">
+                                            <label class="m--font-bolder" for="">Employee Status</label>
+                                            <div class="m-checkbox-inline">
+                                                <label class="m-checkbox">
+                                                    <input type="radio" id="active_emp" name="employee_status" value="active" data-validation="required" checked/>
+                                                    Active Employee <span></span>
+                                                </label>
+                                                <label class="m-checkbox">
+                                                    <input type="radio" id="inactive_emp" name="employee_status" value="inactive" data-validation="required" />
+                                                    Inactive Employee <span></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="row mb-3">
                                     <div class="col-sm-12 col-md-3 col-xl-3 col-lg-3">
                                         <div class="form-group m-form__group">

@@ -1275,12 +1275,16 @@ class Reports_model extends CI_Model{
         $resultarray = array();
         if(isset($get["company_id"]) && $get["company_id"]){
             $departmentId = (isset($get["department_id"]) && $get["department_id"])? $get["department_id"]: 0;
+            $emp_status = (isset($get["employee_status"]) && $get["employee_status"]) ? strtolower($get["employee_status"]) : null;
             $this->db->select("a.id, CONCAT(UPPER(TRIM(a.firstname)), ' ', CASE WHEN UPPER(TRIM(a.middlename)) != 'N/A' AND UPPER(TRIM(a.middlename)) != 'NONE' AND TRIM(a.middlename) !='' AND a.middlename IS NOT NULL
                 THEN CONCAT(UPPER(SUBSTR(a.middlename, 1, 1)), '.') ELSE '' END,' ', UPPER(TRIM(a.lastname)), CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
                 a.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(a.suffix))) ELSE '' END) as employee_name");
             $this->db->from("gccmaster.tblemployees a");
             $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
-            $this->db->where("a.employee_status", "Active");
+
+            if ($emp_status) {
+                $this->db->where("LOWER(a.employee_status) =", $emp_status);
+            }
             $this->db->where("a.company_id", $get["company_id"]);
             if($departmentId){ $this->db->where("a.department_id", $departmentId); }
 
@@ -1293,7 +1297,6 @@ class Reports_model extends CI_Model{
             $this->db->limit(25);
             $this->db->order_by("trim(a.firstname)", "ASC");
             $query = $this->db->get();
-
             if ($query->num_rows() > 0) {
                 foreach ($query->result_array() as $_query) {
                     $data = array();
