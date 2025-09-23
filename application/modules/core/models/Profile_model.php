@@ -22,6 +22,9 @@ class Profile_model extends CI_Model
     protected $employeeSalaryTable = "gcchris.tblsalaries";
     protected $tblPersonnelLocation = "gcctimeutility.personnel_locations";
     protected $tblPersonnel = "gcctimeutility.personnel";
+    protected $loggedinData;
+    protected $loggedInUsername;
+    protected $user_data;
 
     protected $defaultStationTable = "gcchris.default_station_location";
 
@@ -350,7 +353,7 @@ class Profile_model extends CI_Model
             $tempIsPaid = true;
         }
 
-        if (!empty($currentActions) && in_array('view_deductions', $currentActions)) {
+        if (!empty($currentActions) && in_array('view_own_deductions', $currentActions)) {
             $btn .= '<button title="View payment history"
                             class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
                             onclick="openLoanPaymentHistoryModal(' . $row->id . ')">

@@ -40,7 +40,12 @@ class Profile extends MY_Controller {
 
 		$currentActions = $this->core_layout->getCurrentActions();
 		$showPayrollPayslip = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_request", $currentActions);
-		$showDeductions =is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_deductions", $currentActions);
+		$showDeductions = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_deductions", $currentActions);
+		$deductions = array();
+
+		if ($showDeductions) {
+			$deductions = $this->profile->get_employee_deductions($employee_id);
+		}
 
 		$data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataDetails($employee_id),
 		"profile_payroll_sheet"=>true,
@@ -49,7 +54,7 @@ class Profile extends MY_Controller {
 		"show_payroll_payslip"=>$showPayrollPayslip,
 		'profile_deductions' => true,
 		"show_deductions" => $showDeductions,
-		"deductions" => $this->profile->get_employee_deductions($employee_id)));
+		"deductions" => $deductions));
 
 		$data->tab ='personalInfo';
 		$data->page = 'profile'; //added to display the sms notification to profile only because the 201 and profile shares the same view file
@@ -169,6 +174,23 @@ class Profile extends MY_Controller {
 
 	public function allow_sms($id) {
 		$data = $this->profile->allow_sms($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	function get_employee_loan_payment_history($id) {
+		$this->load->model("payroll/employee_m");
+		echo json_encode($this->employee_m->getEmployeeLoanPaymentHistory($id)); 
+	}
+
+	public function get_employee_loan_iterest_charge_history($id){
+		$this->load->model("payroll/employee_m", "payroll_employee");
+		$data = $this->payroll_employee->getEmployeeLoanInterestChargeHistory($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_employee_loan_remarks($id){
+		$this->load->model("payroll/employee_m", "payroll_employee");
+		$data = $this->payroll_employee->getLoanRemark($id);
 		$this->output->set_content_type('json')->set_output(json_encode($data));
 	}
 }
