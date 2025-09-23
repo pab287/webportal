@@ -1542,7 +1542,7 @@ class Curl_request extends MY_Controller {
 		$resultset = array();
 
 		if($token === $currentDate){
-			$this->db->select("biometricno, UPPER(lastname) as lastname, UPPER(firstname) as firstname, UPPER(middlename) as middlename, UPPER(suffix) as suffix, pic_filename, mobile_no as mobileno");
+			$this->db->select("biometricno, UPPER(lastname) as lastname, UPPER(firstname) as firstname, UPPER(middlename) as middlename, UPPER(suffix) as suffix, pic_filename, mobile_no as mobileno, id as employee_id");
 			$this->db->from("gccmaster.tblemployees");
 			$this->db->where("biometricno !=", "N/A");
 			$this->db->where("biometricno !=", "NONE");
