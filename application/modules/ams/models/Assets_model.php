@@ -4575,22 +4575,24 @@
                             $_temp['components'] = $component;
                         }
                     } else {
-                        foreach($value['components'] as $k => $v) {
-                            if (in_array($v, $value['components'])){
-                                $this->db->select($selectAccountabilityFields);
-                                $this->db->join("gcceforms.accountability acct", "acct_body.accountability_id = acct.id AND LCASE(acct_body.`type`)='$type'", "inner");
-                                $this->db->join("gcchris.tblcontractor contractors", "contractors.id = acct.issued_to", "LEFT");
-                                $this->db->join("gccmaster.tblemployees employees", "employees.id = acct.issued_to", "LEFT");
-                                $this->db->join("gccasset.assets assets", "assets.id = acct_body.asset_id", "inner");
-                                $this->db->where_in("acct_body.asset_id", $value['components']);
-                                $this->db->where("acct_body.is_returned", 0);
-                                $this->db->where("acct.status !=", "Cancelled");
-                                $component = $this->db->get("gcceforms.accountability_body acct_body")->row();
-                                $this->db->reset_query();
-
-                                if (!empty($component)) {
-                                    $_temp = array("reference_no" => 'n/a');
-                                    $_temp['components'] = array($component);
+                        if (isset($value['components']) && !empty($value['components'])) {
+                            foreach($value['components'] as $k => $v) {
+                                if (in_array($v, $value['components'])){
+                                    $this->db->select($selectAccountabilityFields);
+                                    $this->db->join("gcceforms.accountability acct", "acct_body.accountability_id = acct.id AND LCASE(acct_body.`type`)='$type'", "inner");
+                                    $this->db->join("gcchris.tblcontractor contractors", "contractors.id = acct.issued_to", "LEFT");
+                                    $this->db->join("gccmaster.tblemployees employees", "employees.id = acct.issued_to", "LEFT");
+                                    $this->db->join("gccasset.assets assets", "assets.id = acct_body.asset_id", "inner");
+                                    $this->db->where_in("acct_body.asset_id", $value['components']);
+                                    $this->db->where("acct_body.is_returned", 0);
+                                    $this->db->where("acct.status !=", "Cancelled");
+                                    $component = $this->db->get("gcceforms.accountability_body acct_body")->row();
+                                    $this->db->reset_query();
+    
+                                    if (!empty($component)) {
+                                        $_temp = array("reference_no" => 'n/a');
+                                        $_temp['components'] = array($component);
+                                    }
                                 }
                             }
                         }
