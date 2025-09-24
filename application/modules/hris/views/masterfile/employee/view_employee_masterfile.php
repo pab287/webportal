@@ -521,10 +521,6 @@
                                                                             </td>
                                                                         </tr>
                                                                     <?php endforeach; ?>
-                                                                <?php else: ?>
-                                                                    <tr>
-                                                                        <td class="text-center" colspan="8">No Data Found.</td>
-                                                                    </tr>
                                                                 <?php endif; ?>
                                                             </tbody>
                                                         </table>
