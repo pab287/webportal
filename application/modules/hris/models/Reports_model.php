@@ -1658,6 +1658,9 @@ class Reports_model extends CI_Model{
                 $this->db->join("gcctimeutility.personnel as pr", "pr.shift_id = ssr.shift_id", "left");
                 $this->db->join("gccmaster.tblemployees as emp", "emp.biometricno = pr.biometricno OR emp.biometricno = pr.biometric_id", "left");
                 $this->db->where_in("emp.id", $employeeIds);
+                if (isset($post['employee_status']) && !empty($post['employee_status'])) {
+                    $this->db->where('LOWER(emp.employee_status)', strtolower($post['employee_status']));
+                }
                 $qtemp = $this->db->get();
                 if ($qtemp->num_rows() > 0){
                     foreach ($qtemp->result() as $kv) {
