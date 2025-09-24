@@ -343,7 +343,7 @@
             </div>
 
             <!-- payroll sheet and deductions -->
-            <?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0) || isset($profile_deductions, $show_deductions) && $show_deductions && $profile_deductions && (isset($profile_deductions) && is_array($deductions) && count($deductions) > 0)): ?>
+            <?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0) || isset($profile_deductions, $show_deductions) && $show_deductions && $profile_deductions): ?>
 
                 <?php $isDeductionActive = !$show_payroll_payslip && $show_deductions ? 'active' : ''; ?>
 
@@ -362,7 +362,7 @@
                                     </li>
                                 <?php endif; ?>
 
-                                <?php if(isset($profile_deductions, $show_deductions) && $show_deductions && $profile_deductions && (isset($profile_deductions) && is_array($deductions) && count($deductions) > 0)): ?>
+                                <?php if(isset($profile_deductions, $show_deductions) && $show_deductions && $profile_deductions): ?>
                                     <li class="nav-item m-tabs__item" id="payroll-sheet-deductions">
                                         <a class="nav-link m-tabs__link <?=$isDeductionActive ?>" data-toggle="tab" href="#m_user_profile_tab_4" role="tab" aria-expanded="false">Deductions</a>
                                     </li>
@@ -426,7 +426,7 @@
                                         </div>
                                     <?php endif; ?>
 
-                                    <?php if(isset($profile_deductions, $show_deductions) && $show_deductions && $profile_deductions && (isset($profile_deductions) && is_array($deductions) && count($deductions) > 0)): ?>
+                                    <?php if(isset($profile_deductions, $show_deductions) && $show_deductions && $profile_deductions): ?>
                                         <div class="tab-pane <?=$isDeductionActive ?>" id="m_user_profile_tab_4">
                                             <div class="row">
                                                 <div class="col-12 col-md-12 col-lg-12 col-xl-12">
@@ -716,7 +716,7 @@
     </script>
 <?php endif; ?>
 
-<?php if(isset($profile_deductions, $show_deductions) && $show_deductions && $profile_deductions && (isset($profile_deductions) && is_array($deductions) && count($deductions) > 0)): ?>
+<?php if(isset($profile_deductions, $show_deductions) && $show_deductions && $profile_deductions): ?>
     <?php $this->load->view("payroll/employee_profile/modals/loan_payment_history_modal"); ?>
     <script>
         const loanPaymentHistoryModal = $("#loan-payment-history-modal");
