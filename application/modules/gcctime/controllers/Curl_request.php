@@ -1322,6 +1322,7 @@ class Curl_request extends MY_Controller {
 	private function sendTelegramPunchesByBiometricId($tempPost=array()){
 		$resultset = array();
 		$resultset["chat_id"] = 0;
+		$telegramResent = isset($tempPost["is_send"]) && intval($tempPost["is_send"]) === 2;
 		if(isset($tempPost["biometricno"], $tempPost["date"]) && $tempPost["biometricno"] && $tempPost["date"]){
 			$biometricId = trim($tempPost["biometricno"]);
 			$timeLog = strtoupper(date("D, M d, Y h:i A", strtotime(trim($tempPost["date"]))));
@@ -1354,7 +1355,12 @@ class Curl_request extends MY_Controller {
 				$tempChatId = $qTemp->row()->telegram_chat_id;
 				$employeeName = strtoupper($qTemp->row()->employee_name);
 				if($tempChatId){
-					$tempMessage = "<b>{$employeeName}</b>\nDateTime: {$timeLog}\nBiometric#: {$biometricId}\nVerifyMethod: {$verifyMethod}\nDeviceName: {$deviceName}";
+					$message = "";
+					if($telegramResent){
+						$tempDate = date("D, M d, Y h:i A");
+						$message = "Sorry for the inconvenience as of today `{$tempDate}` for the delayed message.\n\n";
+					}
+					$tempMessage = "{$message}<b>{$employeeName}</b>\nDateTime: {$timeLog}\nBiometric#: {$biometricId}\nVerifyMethod: {$verifyMethod}\nDeviceName: {$deviceName}";
 					$resultset = $this->sendTelegramMessage($tempMessage, $tempChatId);
 					$resultset["chat_id"] = $tempChatId;
 				}else{
