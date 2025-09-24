@@ -9580,7 +9580,7 @@ class Timesheet_model extends CI_Model{
 
                 $hasPreviousNightShift = strtotime($ot_start_dtr) >= strtotime($privNightShiftParams["start"]) && strtotime($ot_end_dtr) <= strtotime($privNightShiftParams["end"]);
             }
-        }
+        } 
 
         $ot_start = strtotime($ot_start_dtr) < strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from)))
             ? date('Y-m-d H:i', strtotime($_overtime->date_from)) : $ot_start_dtr;
