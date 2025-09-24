@@ -193,23 +193,23 @@
                             </div>
                             <div class="form-group">
                                 <label for="" class="form-control-label required">Event Speakers</label>
-                                <template v-for="(speaker, index) in speakers" :key="index">
+                                <template v-for="(speaker, index) in speakers" :key="speaker.id">
                                     <div class="border rounded p-3 mb-3 position-relative">
-                                        <button type="button" class="close" :class="{ 'd-none': speakers.length === 1 }" @click="removeSpeaker(index)">
+                                        <button type="button" class="close" :class="{ 'd-none': speakers.length === 1 }" @click="removeSpeaker(speaker.id)">
                                             <span aria-hidden="true">&times;</span>
                                         </button>
                                         <div class="row">
                                             <div class="col-md-4 col-sm-12 mb-2">
                                                 <label :for="`speakers[${index}][name]`" class="form-label required">Name</label>
-                                                <input :name="`speakers[${index}][name]`" type="text" class="form-control" placeholder="speaker name" data-validation="required">
+                                                <input :name="`speakers[${index}][name]`" type="text" class="form-control" placeholder="speaker name" data-validation="required" v-model="speaker.name">
                                             </div>
                                             <div class="col-md-4 col-sm-12 mb-2">
                                                 <label :for="`speakers[${index}][position]`" class="form-label required">Title/Position</label>
-                                                <input :name="`speakers[${index}][position]`"  type="text" class="form-control" placeholder="speaker position" data-validation="required">
+                                                <input :name="`speakers[${index}][position]`"  type="text" class="form-control" placeholder="speaker position" data-validation="required" v-model="speaker.position">
                                             </div>
                                             <div class="col-md-4 col-sm-12 mb-2">
                                                 <label :for="`speakers[${index}][company]`" class="form-label">Company/Organization</label>
-                                                <input :name="`speakers[${index}][company]`" type="text" class="form-control" placeholder="speaker company or organization">
+                                                <input :name="`speakers[${index}][company]`" type="text" class="form-control" placeholder="speaker company or organization" v-model="speaker.company">
                                             </div>
                                         </div>
                                     </div>

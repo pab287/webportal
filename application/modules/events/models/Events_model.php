@@ -159,7 +159,11 @@ class Events_model extends MX_Controller {
             e.description, 
             e.event_venue venue, 
             e.event_from start, 
-            e.event_to end,
+            CONCAT(e.event_to, ' 23:59:59') as end,
+            e.company_ids,
+            e.department_ids,
+            e.company_array,
+            e.department_array,
             GROUP_CONCAT(
                 JSON_OBJECT(
                     'id', s.id,
@@ -179,6 +183,9 @@ class Events_model extends MX_Controller {
             $event->speakers = $event->speakers_json ? 
                 json_decode('[' . $event->speakers_json . ']') : [];
             unset($event->speakers_json);
+
+            $event->company_ids = (!empty($event->company_ids) && ($tmp = @unserialize($event->company_ids)) !== false) ? $tmp: [];
+            $event->department_ids = (!empty($event->department_ids) && ($tmp = @unserialize($event->department_ids)) !== false) ? $tmp: [];
         }
         
         return $events;
@@ -349,6 +356,7 @@ class Events_model extends MX_Controller {
             "event_title"       => $post['event_title'] ?? null,
             "description"       => $post['event_description'] ?? null,
             "event_venue"       => $post['event_venue'] ?? null,
+            "events_by"         => $post['events_by'] ?? null,
             "event_from"        => $start_date,
             "event_to"          => $end_date,
             "company_ids"       => serialize($companyIds),
@@ -406,7 +414,8 @@ class Events_model extends MX_Controller {
         } else {
             $response = [
                 "success" => true,
-                "message" => "Company event was successfully saved."
+                "message" => "Company event was successfully saved.",
+                "events" => $this->getEvents(),
             ];
             $this->core_layout->setEventLog("Added new company event","insert", "success", "gcchris", "user");
         }
@@ -465,6 +474,7 @@ class Events_model extends MX_Controller {
             $this->core_layout->setEventLog("Updated company event","update", "success", "gcchris", "user");
             return [
                 "status"  => "success",
+                "events" => $this->getEvents(),
                 "message" => "Event updated successfully."
             ];
         }

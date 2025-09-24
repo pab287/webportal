@@ -155,21 +155,26 @@ $('#addNewEvent').on('shown.bs.modal', function () {
 
 let eventVue = new Vue({
     el: "#new_event_form",
-    data: {speakers: [{name: '', position: '', company: ''}], edit_speakers:[]},
+    data: {speakers: [{id: Date.now(), name: '', position: '', company: ''}], edit_speakers:[]},
     mounted: function () {
         this.initSelect2();
     },
     methods:{
         addNewSpeaker() {
             this.speakers.push({
+                id: Date.now(),
                 name: '',
                 position: '',
                 company: ''
             });
         },
-        removeSpeaker(index) {
+        removeSpeaker(speakerId) {
+            console.log(speakerId, this.speakers);
             if (this.speakers.length > 1) {
-                this.speakers.splice(index, 1);
+                const index = this.speakers.findIndex(speaker => speaker.id === speakerId);
+                if (index > -1) {
+                    this.speakers.splice(index, 1);
+                }
             }
         },
         initSelect2(){
@@ -225,6 +230,7 @@ $.validate({
                     selectedDepartments = [];
                     toastr.success(res.message, 'Success', 5000);
                     tblCalendarOfHolidays.ajax.reload();
+                    editEventVue.events = res.events;
                     // $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
                 }else{
                     toastr.error(res.message, 'Error', 5000);
@@ -298,10 +304,21 @@ function itemDatatableActions(id, status, from, to) {
 let editEventVue = new Vue({
     el: "#edit-events-modal",
     data: {
+        events:_tempContentData.events,
         eventsData:{
 
         },
         disabled:true,
+    },
+    watch: {
+        events: {
+            handler(newEvents) {
+                $('#m_calendar').fullCalendar('removeEvents');
+                $('#m_calendar').fullCalendar('addEventSource', newEvents);
+                $('#m_calendar').fullCalendar('rerenderEvents');
+            },
+            deep: true
+        }
     },
     mounted: function () {
         this.initSelect2();
@@ -400,6 +417,7 @@ $.validate({
                     $("#edit-events-modal").modal('hide');
                     toastr.success(res.message, 'Success', 5000);
                     tblCalendarOfHolidays.ajax.reload(null, false);
+                    editEventVue.events = res.events;
                     // $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
                 }else{
                     toastr.error(res.message, 'Error', 5000);
@@ -513,10 +531,10 @@ const CalendarBasic = function () {
                     },
                     displayEventTime: false,
                     
-                    events: _tempContentData.events,
+                    events: editEventVue.events,
 
                     eventClick: function (calEvent, jsEvent, view) {
-                        openEditHolidayModal(calEvent);
+                        openEditHolidayModal(calEvent,jsEvent);
                     },
 
                     eventRender: function(event, element) {
@@ -590,21 +608,26 @@ $('a[data-toggle="tab"][href="#calender-view-tab"]').on('shown.bs.tab', function
 function openEditHolidayModal(event) {
     const data = {
         id: event.id,
+        events_by: event.events_by,
+        company_ids: event.company_ids,
+        department_ids: event.department_ids,
         event_title: event.title,
         event_from: event.start ? event.start.format() : null,
-        event_to: event.end ? event.end.format() : null,
+        event_to: event.end ? event.end.format() : event.start.format(),
         description: event.description || "",
         event_venue: event.venue || "",
         speakers: event.speakers || [],
     };
+
     editEventVue.eventsData = JSON.parse(JSON.stringify(data));
+    $("#company_edit").val(data.company_ids).trigger('change');
+    $("#department_edit").val(data.department_ids).trigger('change');
     $("#edit-events-modal").modal("show");
     $("#btnEdit").hide();
 }
  
 function confirmParticipant(id) {
     let rowData = tblCalendarOfHolidays.row('#'+id).data();
-    console.log(rowData);
     let fullname = rowData.firstname + ' ' + rowData.middlename + ' ' + rowData.lastname;
     Swal.fire({
         title: 'Confirm Attendance?',
@@ -681,3 +704,10 @@ function declineParticipant(id) {
         }
     });
 }
+
+$('#addNewEvent').on('hidden.bs.modal', function () {
+    $("#new_event_form").trigger("reset");
+    eventVue.speakers = [{id: Date.now(), name: '', position: '', company: '' }];
+    $("#company").val(null).trigger("change");
+    $("#department").val(null).trigger("change");
+});
