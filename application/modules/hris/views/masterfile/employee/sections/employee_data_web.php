@@ -1030,6 +1030,9 @@
                                 <td data-label="ASSET INFO">
                                     <div><strong v-text="acct.asset_code"></strong></div>
                                     <div v-text="acct.aname"></div>
+                                    <div v-if="acct.date_received && acct.date_received !== '0000-00-00'">
+                                        ASSET AGE: {{ formatDate(acct.date_received) }}
+                                    </div>
                                 </td>
                                 <td data-label="AMOUNT" class="amount">{{ formatAmount(acct.amount) }}</td>
                                 <td data-label="RELEASE/RETURN DATES">
