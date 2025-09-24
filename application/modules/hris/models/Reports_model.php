@@ -1458,6 +1458,11 @@ class Reports_model extends CI_Model{
                 $this->db->where_in("ts.emp_id", $employeeIds);
                 $this->db->order_by("emp.lastname", "ASC");
                 $this->db->group_by("ts.emp_id");
+
+                if (isset($post['employee_status']) && !empty($post['employee_status'])) {
+                    $this->db->where('LOWER(emp.employee_status)', strtolower($post['employee_status']));
+                }
+
                 $qAttendance = $this->db->get();
                 $ctrCount = $qAttendance->num_rows();
                 if($filter == "Filters applied: "){
@@ -1520,6 +1525,7 @@ class Reports_model extends CI_Model{
         $arrData = array();
         $resultset = array();
         $companyId = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: 0;
+        $employeeStatus = (isset($get["employee_status"]) && $get["employee_status"])? strtolower($get["employee_status"]): false;
         if($companyId || $companyId == 0){
             $this->db->select("id, description as text, employee_id");
             $this->db->from("payroll.payroll_group");
@@ -1539,6 +1545,9 @@ class Reports_model extends CI_Model{
                     unset($vv->employee_id);
                     $this->db->from("gccmaster.tblemployees");
                     $this->db->where_in("id", $tempIds);
+                    if($employeeStatus){
+                        $this->db->where("LOWER(employee_status)", strtolower($employeeStatus));
+                    }
                     $this->db->order_by("lastname","ASC");
                     $qTempEmp = $this->db->get();
                     if($qTempEmp->num_rows() > 0){

@@ -277,6 +277,7 @@ if(typeof hrisFilterLateAbsenteeReport !== "undefined" && hrisFilterLateAbsentee
             global: false,
             data: function (params) {
                 params.company_id = hrisFilterLateAbsenteeReport.find("select#company").val();
+                params.employee_status = hrisFilterLateAbsenteeReport.find("input[name='employee_status']:checked").val();
                 return params;
             }, 
             processResults: function (data) {
