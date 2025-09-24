@@ -242,7 +242,7 @@ if(window.location == siteUrl("portal/index")){
         
                                     if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
                                         tempLoan.push({
-                                            'loan_name' : 'cash advance',
+                                            'loan_name' : 'CASH ADVANCE',
                                             'amount_due' : _temp,
                                             'loan_type' : adj_type
                                         });
