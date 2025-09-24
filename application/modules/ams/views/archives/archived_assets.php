@@ -46,7 +46,7 @@
                                     data-delay='{"show": 300}'
                                     type="button"
                                     class="btn btn-danger m-btn m-btn--icon m-btn--icon-only btn-delete-multiple btnMass_delete"
-                                    onclick="confirmDeleteSelections()" disabled>
+                                    onclick="confirmDeleteSelections()" disabled hidden>
                                 <i class="la la-trash-o"></i>
                             </button>
                         </div>

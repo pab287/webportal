@@ -1135,7 +1135,7 @@ function loadTable(tab, table) {
                         data: "status",
                         width: "20%",
                         render: function (data, type, row) {
-                            if (row.status === "Cancelled") {
+                            if (row.status === "Cancelled" || row.status === 'cancelled') {
                                 return "" +
                                 " <p class='mb-0'>Cancelled/Archived</p>" +
                                 " <p class='text-muted mb-0'>" +  row.module + "</p>";

@@ -10,6 +10,8 @@
 
         public function fixed_masterfile() {
             $this->core_layout->setPrivilegeName("fixed_masterfile");
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
             $this->core_layout->addJs("js/ams/fixed_masterfile.js", true);
             $this->core_layout->addCss("css/ams/ams_styles.css", true);
 
@@ -568,5 +570,27 @@
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
 
+        }
+        
+        function check_multiple_if_borrowed_or_accounted(){
+            $data = $this->assets->check_multiple_if_borrowed_or_accounted();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+
+        }
+        
+        function mass_archive_assets(){
+            $data = $this->assets->mass_archive_assets();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+        }
+        
+        function get_selected_for_archive(){
+            $data = $this->assets->get_selected_for_archive();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
         }
     }

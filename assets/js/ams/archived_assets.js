@@ -80,7 +80,8 @@ const tblArchivedAssets = $("#table-archived-assets")
                 defaultContent: '-',
                 orderable: false,
                 render: function (data, type, row) {
-                    if (row.status.toLowerCase() === "archived") {
+                    // if (row.status.toLowerCase() === "archived") { //changed to lost status
+                    if (row.status.toLowerCase() === "lost") {
                         return "<label class='m-checkbox'>" +
                             "<input type='checkbox' class='form-control' value='" + row.id + "'>" +
                             "<span></span>" +
@@ -147,7 +148,8 @@ const tblArchivedAssets = $("#table-archived-assets")
                 render: function (data, type, row) {
                     let actions = "";
 
-                    if (_currentActions.includes("restore") && (row.status.toLowerCase() === 'archived' || row.status.toLowerCase() === 'junk' || row.status.toLowerCase() === 'destructed' || row.status.toLowerCase() === 'sold' || row.status.toLowerCase() === 'lost' || row.status.toLowerCase() === 'others' )) {
+                    // if (_currentActions.includes("restore") && (row.status.toLowerCase() === 'archived' || row.status.toLowerCase() === 'junk' || row.status.toLowerCase() === 'destructed' || row.status.toLowerCase() === 'sold' || row.status.toLowerCase() === 'lost' || row.status.toLowerCase() === 'others' )) { // requested by the warehouse that the lost status is only the restorable item
+                    if (_currentActions.includes("restore") && row.status.toLowerCase() === 'lost') {
                         actions += " <button type='button' class='btn btn-sm btn-default m-btn m-btn--hover-primary m-btn--icon " +
                             "m-btn--icon-only m-btn--pill btnRestore' title='Restore'" +
                             "data-placement='bottom'>" +
@@ -157,13 +159,14 @@ const tblArchivedAssets = $("#table-archived-assets")
 
                     if (_currentActions.includes("view")) {
                         actions += ` <a class='btn btn-sm btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnView' 
-                                                              title='View Details' data-placement='bottom'
-                                                              href="${baseUrl('ams/assets/view_asset/' + row.id + '/' + (row.asset_type === 'Component' ? 1 : 0))}">
-                                           <i class='la la-eye'></i>
-                                        </a>`;
+                            title='View Details' data-placement='bottom'
+                            href="${baseUrl('ams/assets/view_asset/' + row.id + '/' + (row.asset_type === 'Component' ? 1 : 0))}">
+                            <i class='la la-eye'></i>
+                        </a>`;
                     }
 
-                    if (_currentActions.includes("delete") && (row.status.toLowerCase() === 'archived' || row.status.toLowerCase() === 'junk' || row.status.toLowerCase() === 'destructed' || row.status.toLowerCase() === 'sold' || row.status.toLowerCase() === 'lost' || row.status.toLowerCase() === 'others' )) {
+                    // if (_currentActions.includes("delete") && (row.status.toLowerCase() === 'archived' || row.status.toLowerCase() === 'junk' || row.status.toLowerCase() === 'destructed' || row.status.toLowerCase() === 'sold' || row.status.toLowerCase() === 'lost' || row.status.toLowerCase() === 'others' )) {
+                    if (_currentActions.includes("delete") && (row.status.toLowerCase() === 'archived' || row.status.toLowerCase() === 'junk' || row.status.toLowerCase() === 'destructed' || row.status.toLowerCase() === 'sold' || row.status.toLowerCase() === 'others' )) {
                         actions += " <button type='button' class='btn btn-sm btn-default m-btn m-btn--hover-danger m-btn--icon " +
                             "m-btn--icon-only m-btn--pill btnDelete' title='Delete Permanently'" +
                             "data-placement='bottom'>" +
@@ -209,6 +212,30 @@ function removeAsset(id) {
             const _modal = $(".document-modal-container");
             _modal.html(modal);
             _modal.modal("show");
+
+            $(".m-content").on("submit", "#confirmation-dialog", function (e) {
+                e.preventDefault();
+                e.preventDefault();
+                const form = $(this);
+                const url = form.attr("action");
+
+                $.ajax({
+                    url: baseUrl(url),
+                    type: "GET",
+                    dataType: "JSON",
+                    success: function (response) {
+                        if (response.success) {
+                            toastr.success(response.message, "", 5000);
+                            search_val = "";
+                            $("#search-archived-assets").val(search_val);
+                            filterArchivedAssets();
+                            closeModal();
+                        } else {
+                            toastr.error(response.message, "Error", 5000);
+                        }
+                    }
+                })
+            });
         }
     });
 }
@@ -234,7 +261,8 @@ function restoreAsset(id) {
                 title: "Confirm Restore",
                 message: "Are you sure to restore this item?",
                 action: "ams/assets/restore_archived_asset/" + id,
-                color: "btn-primary"
+                color: "btn-primary",
+                type: 'archive'
             },
             path: "confirmation_dialog",
             function_name: "pass_data_to_dialog"

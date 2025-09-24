@@ -1,7 +1,5 @@
-<form id="confirmation-dialog" action="<?= $action ?>"
-      data-table="<?= isset($table) ? $table : "" ?>">
-    <input type="hidden" name="csrf_token"
-           value="<?php echo $this->security->get_csrf_hash(); ?>">
+<form id="confirmation-dialog" action="<?= $action ?>" data-table="<?= isset($table) ? $table : "" ?>">
+    <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 
     <div class="modal-dialog" role="dialog">
         <div class="modal-content">
