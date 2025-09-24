@@ -1172,7 +1172,7 @@ class Portal_model extends CI_Model{
                     foreach ($tempDeductionIndexes as $key => $item) {
                         $tempValue = floatval($tempRow->{$item});
                         if($tempValue > 0){
-                            $tempRow->{$item} = number_format($tempRow->{$item}, 2, ".", ",");
+                            $tempRow->{$item} = $tempRow->{$item};
                             if($item == 'total_loans'){
                                 $_tempLoanValue += $tempValue;
                             }else{
@@ -1204,7 +1204,7 @@ class Portal_model extends CI_Model{
                     $tempLoansx = floatval($tempLoansx);
                     if($tempLoansx >= $deductInternalLoans){
                         $tempTotalLoanx = $tempLoansx - $deductInternalLoans;
-                        $tempRow->total_loans = number_format($tempTotalLoanx, 2, ".", ",");
+                        $tempRow->total_loans = $tempTotalLoanx;
                     }
                 }
 
