@@ -17,6 +17,9 @@ class Portal extends MY_Controller {
 
 	public function index(){
 		$data = array();
+
+		$this->core_layout->addExternalJs("https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js", false);
+
 		$portalContent = $this->portal_model->getPortalModules();
 		$this->core_layout->setPrivilegeName("core_profile_employee_data");
 		$currentActions = $this->core_layout->getCurrentActions();
