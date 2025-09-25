@@ -973,7 +973,10 @@ class Portal_model extends CI_Model{
             $this->db->limit(1); 
             $query   = $this->db->get("payroll.payroll_sheet");
     
-            $arrData = $query->row_array(); // single row
+            //$arrData = $query->row_array(); // single row
+
+            $arrData['data'] = $query->row_array();
+            $arrData['payslip_count'] = $this->db->get_where('payroll.payroll_sheet', array('emp_id' => $id, 'posted' => 1))->num_rows();
         }
     
         return $arrData;
@@ -1270,6 +1273,35 @@ class Portal_model extends CI_Model{
             }
         }
 
+        $arrData['deductions_loan_count'] = $this->get_loans_deduction_count($id);
+
         return (in_array("view_own_deductions", $actions[0])) ? $arrData : array();
+    }
+
+    function get_loans_deduction_count($id = 0) {
+        $count = 0;
+
+        if ($id) {
+            $this->db->select("emp_loans.*, master_loans.loan_name, ROUND(SUM(IFNULL(psloanpayments.amount_due, 0)),2) as total_amount_paid, 
+            GROUP_CONCAT(DISTINCT psloanpayments.amount_due, '||', ps.id) as temp_amount_paid, emp_loans.reference as ref, emp_loans.id as loan_id, 
+            merged_loans.amount as merged_amount, IFNULL(COUNT(mloans.id), 0) as merged_count");
+            $this->db->from("gcchris.loans emp_loans");
+            $this->db->join("payroll.loans master_loans", "master_loans.id = emp_loans.loan_id");
+            $this->db->join("payroll.payroll_sheet_loan_payments psloanpayments", "psloanpayments.loan_id = emp_loans.id", "LEFT");
+            $this->db->join("payroll.payroll_sheet ps", "ps.id = psloanpayments.payroll_sheet_id AND ps.posted = 1", "LEFT");
+            $this->db->join("gcchris.loans merged_loans", "merged_loans.id = emp_loans.merged_id", "LEFT");
+            $this->db->join("gcchris.loans mloans", "mloans.merged_id = emp_loans.id", "LEFT");
+            $this->db->where("emp_loans.emp_id", $id);
+            $this->db->where("emp_loans.active", 1);
+            $this->db->where('emp_loans.paid', 0);
+            $this->db->where("emp_loans.is_archived", 0);
+            $this->db->group_by("emp_loans.id, emp_loans.loan_id");
+            $this->db->order_by("emp_loans.id", "DESC");
+            $query = $this->db->get();
+
+            $count = $query->num_rows();
+        }
+
+        return $count;
     }
 }

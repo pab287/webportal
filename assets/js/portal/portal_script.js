@@ -36,8 +36,8 @@ if(window.location == siteUrl("portal/index")){
             vm_transmittal: {show:false,}, 
             vm_shipping : {show:false,},
             vm_ca : {show:false,},
-            payslip: {show:false,data:[]},
-            deductions: {show:false, data:[]}
+            payslip: {show:false,data:[], count: 0},
+            deductions: {show:false, data:[], count: 0}
         },
         mounted(){
             this.getPayslip();
@@ -135,8 +135,9 @@ if(window.location == siteUrl("portal/index")){
                     type: "get",
                     dataType: "json",
                     success: function (json) {
-                        vmTab1.payslip.data = Object.assign({}, json);
+                        vmTab1.payslip.data = Object.assign({}, json.data);
                         vmTab1.payslip.show = false;
+                        vmTab1.payslip.count = json.payslip_count;
                     }
                 });
             }, formatDate(date){
@@ -256,6 +257,9 @@ if(window.location == siteUrl("portal/index")){
                         json.data.loans = tempLoan;
                         vmTab1.deductions.data = Object.assign({}, json.data);
                         vmTab1.deductions.show = false;
+                        vmTab1.deductions.count = json.deductions_loan_count;
+
+                        console.log(json.count);
                     }
                 });
             }
