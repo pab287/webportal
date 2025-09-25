@@ -786,33 +786,43 @@
                 <table class="responsive">
                     <thead>
                         <tr>
-                            <th class="" scope="col">TRAINING</th>
-                            <th class="" scope="col" style="width: 10%">FROM</th>
-                            <th class="" scope="col" style="width: 10%">TO</th>
-                            <th class="" scope="col">INSTITUTION</th>
-                            <th class="" scope="col">CONDUCTOR</th>
-                            <th class="" scope="col">VENUE</th>
+                            <th scope="col">TRAINING</th>
+                            <th scope="col" style="width: 20%">DATE</th>
+                            <th scope="col">CONDUCTOR</th>
+                            <th scope="col">VENUE</th>
+                            <th scope="col">ATTACHMENT</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <template v-if="trainings == false">
+                        <template v-if="!trainings || trainings.length === 0">
                             <tr>
-                                <td data-label="TRAINING">None</td>
-                                <td data-label="FROM">None</td>
-                                <td data-label="TO">None</td>
-                                <td data-label="INSTITUTION">None</td>
+                                <td data-label="TRAINING">None<br><small>Institution: None</small></td>
+                                <td data-label="DATE">None - None</td>
                                 <td data-label="CONDUCTOR">None</td>
                                 <td data-label="VENUE">None</td>
+                                <td data-label="ATTACHMENT">None</td>
                             </tr>
                         </template>
                         <template v-else>
                             <tr v-for="training in trainings" :key="training.id">
-                                <td data-label="TRAINING" v-text="training.training"></td>
-                                <td data-label="FROM" v-text="training.train_from"></td>
-                                <td data-label="TO" v-text="training.train_to"></td>
-                                <td data-label="INSTITUTION" v-text="training.train_institution"></td>
+                                <td data-label="TRAINING">
+                                    <span v-text="training.training"></span>
+                                    <br>
+                                    <small>Institution: <span v-text="training.train_institution"></span></small>
+                                </td>
+                                <td data-label="DATE" 
+                                    v-text="formatDateRange(training.train_from, training.train_to)">
+                                </td>
                                 <td data-label="CONDUCTOR" v-text="training.train_conductor"></td>
                                 <td data-label="VENUE" v-text="training.train_venue"></td>
+                                <td data-label="ATTACHMENT">
+                                    <template v-if="training.attachment">
+                                        <a href="javascript:void(0)" 
+                                        @click="openFile(training.attachment, false, true)" 
+                                        v-text="training.attachment"></a>
+                                    </template>
+                                    <span v-else>---</span>
+                                </td>
                             </tr>
                         </template>
                     </tbody>

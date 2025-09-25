@@ -320,6 +320,24 @@ let employeeDataSheet = new Vue({
               });
         },
 
+        formatDateRange(from, to) {
+            if (!from || !to) return "";
+            const start = moment(from);
+            const end = moment(to);
+            if (start.isSame(end, "day")) {
+              return start.format("MMM DD, YYYY");
+            } 
+            else if (start.isSame(end, "month")) {
+              return `${start.format("MMM DD")}–${end.format("DD, YYYY")}`;
+            } 
+            else if (start.isSame(end, "year")) {
+              return `${start.format("MMM DD")} – ${end.format("MMM DD, YYYY")}`;
+            } 
+            else {
+              return `${start.format("MMM DD, YYYY")} – ${end.format("MMM DD, YYYY")}`;
+            }
+          },
+
         getExpirationClass(expirationDate) {
             const today = new Date();
             const expirationDateObj = new Date(expirationDate);
@@ -373,12 +391,15 @@ let employeeDataSheet = new Vue({
               ? data 
               : data.replace(/\n/g, '<br>');
           },
-          openFile(name,offense=true) {
+          openFile(name,offense=true,seminars=false) {
             let tab;
             if (offense){
                 tab = "offenses_commendation";
             }else{
                 tab = "licenses_certificates";
+            }
+            if(seminars){
+                tab = "trainings";
             }
             let fileUrl = baseUrl("uploads/files/documents/employee_files/empcode_" + id + "/"+tab+"/" + encodeURIComponent(name));
             console.log(fileUrl);
