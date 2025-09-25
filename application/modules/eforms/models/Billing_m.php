@@ -498,12 +498,6 @@ class Billing_m extends CI_Model {
         $post["updated_at"] = $current_date;
         unset($post["id"]);
 
-        // if(!isset($post["status"])){
-        //     $post["status"] = "0";
-        // }else{
-        //     $post["status"] = "1";
-        // }
-
         $customer_name = $this->nameFormat($post["firstname"], $post["middlename"], $post["lastname"]);
         $notification = "Update Customer details ";
 
@@ -677,28 +671,6 @@ class Billing_m extends CI_Model {
             FROM hydra_billing.accounts
             WHERE status='1' AND is_archive='0' AND (firstname LIKE '%{$get['q']}%' OR lastname LIKE '%{$get['q']}%' OR meterno LIKE '%{$get['q']}%' OR accountno LIKE '%{$get['q']}%') ORDER BY accountno ASC");
         }
-        // else{
-        //     $query = $this->db->query("SELECT id, CONCAT(accountno, ' | ', firstname, ' ', middlename, ' ', lastname, ' | Meterno: ', meterno) as customer
-        //     FROM hydra_billing.accounts
-        //     WHERE status='1' AND is_archive='0' ORDER BY accountno ASC LIMIT 10");
-        // }
-
-        // ===========================================
-        // OLD
-        // START
-        // if (isset($get['q'])) {
-        //     $query = $this->db->query("SELECT id, firstname, lastname, middlename, accountno, meterno 
-        //     FROM hydra_billing.accounts
-        //     WHERE status='1' AND is_archive='0' AND (firstname LIKE '%{$get['q']}%' OR lastname LIKE '%{$get['q']}%' OR meterno LIKE '%{$get['q']}%' OR accountno LIKE '%{$get['q']}%') ORDER BY accountno ASC");
-        // }else{
-        //     $query = $this->db->query("SELECT id, firstname, lastname, middlename, accountno, meterno 
-        //     FROM hydra_billing.accounts
-        //     WHERE status='1' AND is_archive='0' ORDER BY accountno ASC");
-        // }
-        // END
-        // ===========================================
-
-        $sql = $this->db->last_query();
 
         if ($query->num_rows() > 0) {
 
@@ -707,7 +679,6 @@ class Billing_m extends CI_Model {
 
                 if($this->checkPaymentsHasBill($_query["id"]) > 0){
                     $data["id"] = $_query["id"];
-                    // $data["text"] = $_query["accountno"] ." | ". $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]) . " | Meterno: " . $_query["meterno"];
                     $data["text"] = $_query["customer"];
                     $resultarray[] = $data;
                 }
@@ -1912,13 +1883,12 @@ class Billing_m extends CI_Model {
                 $bill_id = $_query['id'];
                 $data = array();
                 $due_date = $_query["due_date"];
+                $reconnectionFee = $this->getReconnectionFee()['amount'];
+                $first_unpaid_bill_id = $this->first_unpaid_bill_for_reconnection($_query["customer_id"]);
 
                 if ($_query["is_paid"] == 0) {
                     $penalties = $this->getPenalties();
                     $balance = $this->computeOverPayment($_query["customer_id"]);
-
-                    $first_unpaid_bill_id = $this->first_unpaid_bill_for_reconnection($_query["customer_id"]);
-                    $reconnectionFee = $this->getReconnectionFee()['amount'];
 
                     // Apply reconnection fee only once on the first unpaid bill if the account is disconnected
                     if ($_query["is_disconnected"] == 1 && $first_unpaid_bill_id == $_query['id']) {
@@ -1998,7 +1968,7 @@ class Billing_m extends CI_Model {
                 ];
 
                 $data['t'] = $t;
-                $data["pending_amount"] = $this->getAccumulatedPendingAmount($_query['id'], $_query["customer_id"]);
+                $data["pending_amount"] = $this->getAccumulatedPendingAmount($_query['id'], $_query["customer_id"], $_query['billing_to']);
                 $data["total_charges"] = $total_charges;
                 $data["solution"] = $_query['total_charges'] . " + " . $disconnectionFee . " + " . $data["overdue"] . " - " . $balance . " - " . $balanceCovered ." - " . $totalPayments . " = " . $total_charges;
                 $resultarray[] = $data;
@@ -2075,7 +2045,7 @@ class Billing_m extends CI_Model {
         return $query->num_rows();
     }
 
-    public function getAccumulatedPendingAmount($bill_id, $customer_id) {
+    public function getAccumulatedPendingAmount($bill_id, $customer_id, $billing_to) {
         $current_date = date('Y-m-d');
         $penalties = $this->getPenalties();
         $first_unpaid_bill_id = $this->first_unpaid_bill_for_reconnection($customer_id);
@@ -2085,9 +2055,10 @@ class Billing_m extends CI_Model {
         $this->db->select('id, total_charges, due_date');
         $this->db->from('hydra_billing.bills');
         $this->db->where('account_id', $customer_id);
-        $this->db->where('id <=', $bill_id);
+        $this->db->where('billing_to <=', $billing_to);
         $this->db->where('is_paid', 0);
         $this->db->where('status', 1);
+        $this->db->order_by('billing_to', 'ASC');
         $query = $this->db->get();
 
         $result = array();
@@ -2151,10 +2122,11 @@ class Billing_m extends CI_Model {
         $this->db->where('account_id', $customer_id);
         $this->db->where('status', 1);
         $this->db->where('is_paid', 0);
-        $this->db->order_by('id', 'DESC');
+        $this->db->order_by('billing_to', 'ASC');
         $this->db->limit(1);
         $query = $this->db->get();
-        return $query->row_array()['id'];
+        $row = $query->row_array();
+        return isset($row['id']) ? $row['id'] : 0;
     }
 
     function getReadingbyAccount(){
@@ -2516,9 +2488,9 @@ class Billing_m extends CI_Model {
         $pending_current_due = (float)$charges + (float)$overdue + (float)$disconnectionFee;
         
         // Exclude the current bill from the accumulative balance calculation
-        $pending_amt = $this->getAccumulatedPendingAmount($query['id'], $query["customer_id"])['pending_amount'];
+        $pending_amt = $this->getAccumulatedPendingAmount($query['id'], $query["customer_id"], $query['billing_to'])['pending_amount'];
         $pending_amount_bill = (float)$pending_amt;
-        $data['bills'] = $this->getAccumulatedPendingAmount($query['id'], $query["customer_id"]);
+        $data['bills'] = $this->getAccumulatedPendingAmount($query['id'], $query["customer_id"], $query['billing_to']);
         $data["balanceLastBill"] =  $pending_amount_bill - $pending_current_due; // Use the accumulative balance for display
 
         $data['payments'] = $payments;
