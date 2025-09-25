@@ -586,7 +586,7 @@
                                 <h5 class="m-0">You are about to mass archive the selected assets. Confirm mass archiving of component assets.</h5>
 
                                 <div class="mt-3" v-if="!isEmpty(selectedAssets)">
-                                    <table id="to-archive" class="table table-bordered table-stripped" width="100%" height="height: 250px" :style="selectedAssets.length < 4 ? 'border: 0px !important' : ''">
+                                    <table id="to-archive" class="table table-bordered table-stripped" width="100%" style="height: 250px" :style="selectedAssets.length < 4 ? 'border: 0px !important' : ''">
                                         <thead>
                                             <th width="30%">Code</th>
                                             <th width="65%">Name</th>
