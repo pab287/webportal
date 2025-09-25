@@ -6,6 +6,9 @@
         protected $shiftScheduleCalendarTable = "gcctimeutility.shift_schedule_calendar";
         protected $now = null;
         protected $user = null;
+        protected $loggedinData = null;
+        protected $loggedInUsername = null;
+        protected $user_data = null;
 
         function __construct() {
             parent::__construct();
@@ -460,4 +463,6 @@
             $q = $this->db->get($this->tblHolidays . " holidays");
             return $q->num_rows();
         }
+
     }
+
