@@ -4941,6 +4941,8 @@ class Accountability_m extends CI_Model {
         if ($view_by_company) {
             $this->db->where("id", $this->user_data['company']);
         }
+        $this->db->where("is_archived", 0);
+        $this->db->where("exclude", 0);
         $query = $this->db->get("gcchris.tblcompanies");
 
         return $query->result();

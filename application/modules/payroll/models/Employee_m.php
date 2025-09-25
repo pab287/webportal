@@ -214,9 +214,8 @@
         function getDropdownSelectData() {
             $resultset = array();
             $this->db->select("id, description as text");
-            $companies = $this->db->get($this->companyTable);
-
-            $this->db->select("id, description as text");
+            $this->db->where("is_archived", 0);
+            $this->db->where("excluude", 0);
             $companies = $this->db->get($this->companyTable);
 
             $this->db->select("id, description as text");

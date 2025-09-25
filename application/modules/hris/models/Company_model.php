@@ -16,7 +16,7 @@ class Company_model extends CI_Model{
         $post = $this->input->post();
 		if($post){
 			$orderx = (isset($post["order"]) && $post["order"])? $post["order"]: false;
-			$columns = array("logo", "code", "description", "id", "is_archived", "work_days_in_year", "sss_class", "email_to", "cc_to", "bcc_to");
+			$columns = array("logo", "code", "description", "id", "is_archived", "work_days_in_year", "sss_class", "exclude", "email_to", "cc_to", "bcc_to");
 			$dir = "DESC";
 			$order = "id";
 			if($orderx){
@@ -68,6 +68,7 @@ class Company_model extends CI_Model{
 					$nestedData['description'] = $pst->description;
 					$nestedData['work_days_in_year'] = $pst->work_days_in_year;
 					$nestedData['sss_class'] = $pst->sss_class;
+					$nestedData['exclude'] = $pst->exclude;
 					$nestedData['email_to'] = $email_to;
 					$nestedData['cc_to'] =  $cc_to;
 					$nestedData['bcc_to'] =  $bcc_to;
@@ -252,6 +253,8 @@ class Company_model extends CI_Model{
 			$post['email_to'] = isset($post['email_to']) ? serialize($post['email_to']) : "";
 			$post['cc_to'] = isset($post['cc_to']) ? serialize($post['cc_to']) : "";
 			$post['bcc_to'] = isset($post['bcc_to']) ? serialize($post['bcc_to']) : "";
+			$post["exclude"] = isset($post["exclude"]) && intval($post["exclude"]) === 1 ? 1 : 0;
+
 			$currentCompanyData = $this->getCompanyData($id);
 			$update = $this->db->update($this->companyTable, $post, array("id"=>$id));
 			if($update){
@@ -344,6 +347,7 @@ class Company_model extends CI_Model{
 		$this->db->select("id, description as text");
 		$this->db->from($this->companyTable);
 		$this->db->where("is_archived", 0);
+		$this->db->where("exclude", 0);
 		if(isset($get["term"]) && $get["term"]){ $this->db->like("description", trim($get["term"]), "both"); }
 		$query = $this->db->get();
 

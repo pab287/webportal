@@ -481,6 +481,8 @@ class Reports_model extends CI_Model{
         $q = isset($_GET['q']) ? $_GET['q'] : '';
         $this->db->select('id, code text');
         $this->db->like('CONCAT(description, code)', $q, 'both');
+        $this->db->where("is_archived", 0);
+        $this->db->where("exclude", 0);
         return array('results' => $this->db->get('gcchris.tblcompanies')->result());
     }
 
@@ -1225,6 +1227,7 @@ class Reports_model extends CI_Model{
         $this->db->join('gccmaster.tblemployees emp', 'emp.company_id = companies.id', "INNER");
         $this->db->where("emp.employee_status", "Active");
         $this->db->where('companies.is_archived', 0);
+        $this->db->where('companies.exclude', 0);
         $this->db->group_by("companies.id");
         $this->db->order_by("`code`", "ASC");
         return $this->db->get("gcchris.tblcompanies companies")->result();
@@ -1974,6 +1977,8 @@ class Reports_model extends CI_Model{
     public function getDropdownSelectData() {
         $resultset = array();
         $this->db->select("id, description as text");
+        $this->db->where("is_archived", 0);
+        $this->db->where("exclude", 0);
         $companies = $this->db->get($this->companyTable);
 
         $this->db->select("id, description as text");
@@ -1991,7 +1996,8 @@ class Reports_model extends CI_Model{
 
     public function getSelect2Companies(){
         $this->db->select('id, code text, description, company_address');
-        $this->db->where('is_archived', 0)        ;
+        $this->db->where('is_archived', 0);
+        $this->db->where('exclude', 0);
         return $this->db->get($this->companyTable)->result();
     }
     
