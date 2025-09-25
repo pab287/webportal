@@ -1143,4 +1143,21 @@ $('#offense-tabs .nav-link').on('click', function(e) {
     $(this).addClass('active');
     var targetId = $(this).attr('href');
     $(targetId).addClass('active show');
- });
+});
+
+const hash = window.location.hash.substring(1);
+
+if (typeof hash !== 'undefined' && hash) {
+    $("#"+hash).animate({
+        scrollTop: document.body.scrollHeight,
+    }, 1000);
+
+    if (hash == 'payroll-sheet-deductions') {
+        const deductions = $("#"+hash).find('a').attr("href");
+        const payslip = $("#payroll-sheet-payslip").find('a').attr("href");
+        $("#"+hash).find('a').addClass('active');
+        $("#payroll-sheet-payslip").find('a').removeClass('active');
+        $(deductions).addClass("active");
+        $(payslip).removeClass("active");
+    }
+}

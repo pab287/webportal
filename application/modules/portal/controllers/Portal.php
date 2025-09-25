@@ -17,10 +17,14 @@ class Portal extends MY_Controller {
 
 	public function index(){
 		$data = array();
+
+		$this->core_layout->addExternalJs("https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js", false);
+
 		$portalContent = $this->portal_model->getPortalModules();
 		$this->core_layout->setPrivilegeName("core_profile_employee_data");
 		$currentActions = $this->core_layout->getCurrentActions();
 		$data["showPayrollPayslip"] = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_request", $currentActions);
+		$data["showDeductions"] = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_deductions", $currentActions);
 
 		$data["portal_content"] = $portalContent;
 	    $this->load->view('portal/index', $data);
@@ -142,6 +146,13 @@ class Portal extends MY_Controller {
 
 	public function get_payslip(){
 		$data = $this->portal_model->getPayslip();
+		$this->output
+			->set_content_type('json')
+			->set_output(json_encode($data));
+	}
+	
+	public function get_deductions(){
+		$data = $this->portal_model->getDeductions();
 		$this->output
 			->set_content_type('json')
 			->set_output(json_encode($data));
