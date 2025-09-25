@@ -94,14 +94,12 @@
             $this->db->group_start();
             $this->db->where("emp.employee_status='Active' AND emp.employee_status IS NOT NULL", null, false);
             $this->db->group_end();
-
-            // $this->db->where("emp.work_status IN ('Regular', 'Probationary', 'Service contract', 'No contract')", NULL, FALSE);
-            // $this->db->where("emp.employee_status", 'Active');
+            $this->db->where("company.is_archived", 0, false);
+            $this->db->where("company.exclude", 0, false);
             $this->db->group_by('IF(company.id IS NULL, emp.company_id, company.code)');
             $this->db->join($this->tblCompanies . " company", 'emp.company_id = company.id', 'LEFT');
 
             /*** Supper Notty Was Here ***/
-            // $this->db->order_by('COUNT(*) '.$sort);
             $this->db->order_by('company.code '.$sort);
             /*** Supper Notty Was Here ***/
 

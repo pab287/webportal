@@ -330,7 +330,7 @@ class Company_model extends CI_Model{
 
 	public function getCompanyCodeList(){
 		$arrData = array();
-		$query = $this->db->get_where($this->companyTable, array("is_archived"=>0));
+		$query = $this->db->get_where($this->companyTable, array("is_archived"=>0, "exclude"=>0));
 		if($query->num_rows() > 0){
 			foreach($query->result() as $rs){
 				$arrData[] = $rs->code;
@@ -404,6 +404,7 @@ class Company_model extends CI_Model{
 		$this->db->from("gcchris.tblcompanies");
 
 		if($get && isset($get['term'])){
+			$this->db->group_start();
 			foreach($filterFields as $key => $field){
                 if($key == 0){
 					$this->db->like($field, $get['term'], "both");
@@ -411,9 +412,11 @@ class Company_model extends CI_Model{
 					$this->db->or_like($field, $get['term'], "both");
 				}
             }
+			$this->db->group_end();
 		}
 
 		$this->db->where('is_archived', 0);
+		$this->db->where('exclude', 0);
 		$this->db->order_by('code', 'asc');
 		$query = $this->db->get();
 		return  array(
@@ -423,7 +426,8 @@ class Company_model extends CI_Model{
 
 	public function select2CompanyData(){
         $this->db->select("companies.id, companies.`code` `text`, companies.*");
-		$this->db->where('companies.is_archived', 0);
+		$this->db->where('is_archived', 0);
+		$this->db->where('exclude', 0);
         $this->db->order_by("`code`", "ASC");
         $results = $this->db->get("gcchris.tblcompanies companies")->result();
         return $results;
