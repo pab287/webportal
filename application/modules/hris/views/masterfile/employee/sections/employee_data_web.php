@@ -1366,16 +1366,28 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="remarksModalLabel">Remarks</h5>
+                <!-- <h5 class="modal-title" id="remarksModalLabel">Remarks</h5> -->
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <p id="remarksText" class="text-center"></p>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="alert alert-light border-left border-primary mb-3" style="border-left-width: 4px !important;">
+                            <i class="la la-info-circle text-dark"></i>
+                            <strong class="text-dark">Remarks</strong>
+                        </div>
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <p id="remarksText" class="card-text mb-0 text-dark font-weight-normal" style="line-height: 1.6;"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
