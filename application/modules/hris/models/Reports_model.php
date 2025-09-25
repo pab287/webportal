@@ -1282,7 +1282,7 @@ class Reports_model extends CI_Model{
             $this->db->from("gccmaster.tblemployees a");
             $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
 
-            if ($emp_status) {
+            if ($emp_status != 'all' && $emp_status) {
                 $this->db->where("LOWER(a.employee_status) =", $emp_status);
             }
             $this->db->where("a.company_id", $get["company_id"]);
@@ -1459,7 +1459,7 @@ class Reports_model extends CI_Model{
                 $this->db->order_by("emp.lastname", "ASC");
                 $this->db->group_by("ts.emp_id");
 
-                if (isset($post['employee_status']) && !empty($post['employee_status'])) {
+                if (isset($post['employee_status']) && !empty($post['employee_status']) && strtolower($post['employee_status']) != 'all') {
                     $this->db->where('LOWER(emp.employee_status)', strtolower($post['employee_status']));
                 }
 
@@ -1545,7 +1545,7 @@ class Reports_model extends CI_Model{
                     unset($vv->employee_id);
                     $this->db->from("gccmaster.tblemployees");
                     $this->db->where_in("id", $tempIds);
-                    if($employeeStatus){
+                    if($employeeStatus && $employeeStatus != 'all'){
                         $this->db->where("LOWER(employee_status)", strtolower($employeeStatus));
                     }
                     $this->db->order_by("lastname","ASC");
@@ -1658,7 +1658,7 @@ class Reports_model extends CI_Model{
                 $this->db->join("gcctimeutility.personnel as pr", "pr.shift_id = ssr.shift_id", "left");
                 $this->db->join("gccmaster.tblemployees as emp", "emp.biometricno = pr.biometricno OR emp.biometricno = pr.biometric_id", "left");
                 $this->db->where_in("emp.id", $employeeIds);
-                if (isset($post['employee_status']) && !empty($post['employee_status'])) {
+                if (isset($post['employee_status']) && !empty($post['employee_status']) && strtolower($post['employee_status']) != 'all') {
                     $this->db->where('LOWER(emp.employee_status)', strtolower($post['employee_status']));
                 }
                 $qtemp = $this->db->get();

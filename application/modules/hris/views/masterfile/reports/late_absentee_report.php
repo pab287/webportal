@@ -101,17 +101,21 @@
                                     </div>
                                 </div>
                                 <div class="row mb-2">
-                                    <div class="col-sm-12 col-md-3 col-xl-3 col-lg-3">
+                                    <div class="col-sm-12 col-md-4 col-xl-4 col-lg-4">
                                         <div class="form-group m-form__group has-success">
                                             <label class="m--font-bolder" for="">Employee Status</label>
                                             <div class="m-checkbox-inline">
                                                 <label class="m-checkbox">
                                                     <input type="radio" id="active_emp" name="employee_status" value="active" data-validation="required" checked/>
-                                                    Active Employee <span></span>
+                                                    Active Employees <span></span>
                                                 </label>
                                                 <label class="m-checkbox">
                                                     <input type="radio" id="inactive_emp" name="employee_status" value="inactive" data-validation="required" />
-                                                    Inactive Employee <span></span>
+                                                    Inactive Employees <span></span>
+                                                </label>
+                                                <label class="m-checkbox">
+                                                    <input type="radio" id="all_emp" name="employee_status" value="all" data-validation="required" />
+                                                    All Employees <span></span>
                                                 </label>
                                             </div>
                                         </div>
