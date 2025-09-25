@@ -9558,6 +9558,7 @@ class Timesheet_model extends CI_Model{
             }
         }
 
+        $originalShiftBasis = $shift_basis;
         $hasPreviousNightShift = false;
         if($isNightShift){
             $previousDate = date("Y-m-d", strtotime("-1 day", strtotime($tempRow->date)));
@@ -9617,6 +9618,13 @@ class Timesheet_model extends CI_Model{
             $allowPreviousNightDiff = true;
         }
 
+        /*** before shift OT ***/
+        if($allowPreviousNightDiff === false && strtotime($ot_start) > strtotime($ot_end) && strtotime($ot_start) < strtotime($originalShiftBasis)){
+            $ot_end = $originalShiftBasis;
+            $isValidOvertime = strtotime($ot_end) > strtotime($ot_start);
+        }
+        /*** before shift OT ***/
+
         if($allowNightDiff && $hasPreviousShift && $isValidOvertime && strtotime($ot_start) >= strtotime($_previousNightDiff) && strtotime($ot_start) < strtotime($_nextNightDiff)){
             $tempOTE = 0;
             $tempRegularOT = 0;
@@ -9657,7 +9665,7 @@ class Timesheet_model extends CI_Model{
         $ot_night_diff = $this->otAfterShiftNightDiffScript($afterShiftParams);
 
         // END OVERTIME NIGHT DIFF CALCULATION
-        
+
         $ot_seconds = $isValidOvertime ? (strtotime($ot_end) - strtotime($ot_start)) : 0;
         $ot_minutes = doubleval($ot_seconds) < 0 ? 0 : (doubleval($ot_seconds) / 60);
         /** night shift **/
