@@ -1059,10 +1059,25 @@
                                     </span>
                                 </td> -->
                                 <td data-label="REMARKS">
-                                    <template v-if="hasRemarks(acct)">
-                                        <a href="javascript:void(0)" @click="showRemarks(acct.remarks_returned)" class="remarks-link">View Remarks</a>
+                                    <template v-if="acct.is_returned == '0' && acct.remarks && acct.remarks.trim() !== ''">
+                                        <a href="javascript:void(0)" 
+                                        @click="showRemarks(acct.remarks)" 
+                                        class="remarks-link">
+                                        View Remarks
+                                        </a>
                                     </template>
-                                    <template v-else>NO REMARKS</template>
+
+                                    <template v-else-if="acct.is_returned == '1' && acct.remarks_returned && acct.remarks_returned.trim() !== ''">
+                                        <a href="javascript:void(0)" 
+                                        @click="showRemarks(acct.remarks_returned)" 
+                                        class="remarks-link">
+                                        View Remarks
+                                        </a>
+                                    </template>
+
+                                    <template v-else>
+                                        NO REMARKS
+                                    </template>
                                 </td>
                             </tr>
                         </template>
