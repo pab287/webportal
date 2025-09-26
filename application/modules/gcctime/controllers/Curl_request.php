@@ -1622,7 +1622,8 @@ class Curl_request extends MY_Controller {
 				}
 
 				if(is_array($addedRecord) && !empty($addedRecord)){
-					$this->sendTelegramMessage("Device attendance record sync, successfully added `".count($addedRecord)."` new attendance records.");
+					$isWeekly = $weekly == 1 ? "weekly" : "daily";
+					$this->sendTelegramMessage("<b>Biometric Device Record Sync</b>\n\nDevice record sync `{$isWeekly}`, successfully added `".count($addedRecord)."` unsynced attendance records.");
 					return $addedRecord;
 				}else{
 					return false;
