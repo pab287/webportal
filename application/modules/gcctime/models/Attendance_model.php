@@ -1356,7 +1356,7 @@ class Attendance_model extends CI_Model {
             if ($maxPayrollDate !== false && strtotime($date) > strtotime($maxPayrollDate)) {
                 $this->db->where('biometric_id', $att->biometric_id);
                 $this->db->where('DATE(`datetime`)', $date);
-                $this->db->like('TIME(datetime)', $time, 'both');
+                $this->db->like('TIME(datetime)', $time, 'after');
                 $existingRecord = $this->db->get('gcctimeutility.attendance');
 
                 if ($existingRecord->num_rows() === 0) {
@@ -1366,6 +1366,34 @@ class Attendance_model extends CI_Model {
                         'datetime' => $att->datetime,
                         'verify_method' => $att->verify_method,
                         'is_custom' => $att->is_custom,
+                        'created_at' => date('Y-m-d H:i:s'),
+                    ]);
+                }
+            }
+        }
+        return $resultResponse;
+    }
+
+    protected function setAttendanceDeviceRecord($att = null){
+        $resultResponse = false;
+        if ($att->biometric_id) {
+            $date = (new DateTime($att->datetime))->format('Y-m-d');
+            $time = (new DateTime($att->datetime))->format('H:i');
+            $maxPayrollDate = $this->getPayrollMaxDate($att->biometric_id);
+
+            if ($maxPayrollDate !== false && strtotime($date) > strtotime($maxPayrollDate)) {
+                $this->db->where('biometric_id', $att->biometric_id);
+                $this->db->where('DATE(`datetime`)', $date);
+                $this->db->like('TIME(datetime)', $time, 'after');
+                $existingRecord = $this->db->get('gcctimeutility.attendance');
+
+                if ($existingRecord->num_rows() === 0) {
+                    $resultResponse = $this->db->insert('gcctimeutility.attendance', [
+                        'biometric_id' => $att->biometric_id,
+                        'state' => $att->state,
+                        'datetime' => $att->datetime,
+                        'verify_method' => $att->verify_method,
+                        'device_id' => $att->device_id,
                         'created_at' => date('Y-m-d H:i:s'),
                     ]);
                 }

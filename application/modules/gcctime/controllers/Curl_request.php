@@ -1572,4 +1572,153 @@ class Curl_request extends MY_Controller {
 	public function get_app_attendance_records(){
 		$this->attendance->syncAttendanceApp();
 	}
+
+	public function get_sycned_logs($weekly = 0){
+		$timeParams = $weekly == 1 ? "-1 week" : "-2 day";
+		$date = date("Y-m-d");
+		$weekAgo = date("Y-m-d", strtotime($timeParams));
+		$period = new DatePeriod(new DateTime($weekAgo), new DateInterval('P1D'), new DateTime($date));
+		$filepath = realpath("./uploads/data");
+		$files = $this->getScannedDirectoryFiles($filepath, $period);
+		if(is_array($files) && !empty($files)){
+			$nData = array();
+			foreach($files as $file){
+				$fileUpload = "{$filepath}/{$file}";
+				$xfiles = file_get_contents($fileUpload, true);
+				$_file = json_decode($xfiles, true);
+				$attendanceLogs = (isset($_file["attendance_log"]) && $_file["attendance_log"])? $_file["attendance_log"]: array();
+				$deviceId = (isset($_file["device_id"]) && $_file["device_id"])? $_file["device_id"]: 0;
+				if($attendanceLogs){
+					foreach ($period as $date) {
+						$currentDate = date("Y-m-d", strtotime($date->format("Y-m-d")));
+						foreach($attendanceLogs as $value){
+							$attDate = date("Y-m-d", strtotime($value[3]));
+							if($attDate === $currentDate){
+								$value[] = $deviceId;
+								$nData[] = $value;
+							}
+						}
+					}
+				}
+			}
+
+			if(is_array($nData) && !empty($nData)){
+				$addedRecord = array();
+				$newData = $this->uniqueBiometricArray($nData);
+				if(is_array($newData) && !empty($newData)){
+					foreach ($newData as $nValue) {
+						$attRecord = new stdClass();
+						$attRecord->biometric_id = $nValue[1];
+						$attRecord->state = $nValue[2];
+						$attRecord->datetime = $nValue[3];
+						$attRecord->verify_method = $nValue[4];
+						$attRecord->device_id = $nValue[5];
+						$attRecord->is_custom = 2;
+						$responseResult = $this->setAttendanceDeviceRecord($attRecord);
+						if($responseResult){
+							$addedRecord[] = $attRecord;
+						}
+					}
+				}
+
+				if(is_array($addedRecord) && !empty($addedRecord)){
+					$isWeekly = $weekly == 1 ? "weekly" : "daily";
+					$this->sendTelegramMessage("<b>Biometric Device Record Sync</b>\n\nDevice record sync `{$isWeekly}`, successfully added `".count($addedRecord)."` unsynced attendance records.");
+					return $addedRecord;
+				}else{
+					return false;
+				}
+			}else{
+				return false;
+			}
+		}else{
+			return false;
+		}
+	}
+
+	protected function getScannedDirectoryFiles($filepath, $period){
+		$files = array();
+		if($filepath){
+			$scanned_directory = array_diff(scandir($filepath), array('..', '.'));
+			$files = $this->getFilesInDirectoryByDatePeriod($scanned_directory, $period);
+		}
+		return $files;
+	}
+
+	protected function getFilesInDirectoryByDatePeriod(array $directory, DatePeriod $period): array {
+		$files = array();
+		foreach ($directory as $file) {
+			$filenameParts = explode('.', $file);
+			if (count($filenameParts) === 2) {
+				$filenameParts = explode('-', $filenameParts[0]);
+				if (count($filenameParts) === 2) {
+					foreach ($period as $date) {
+						$dateString = $date->format('dYm');
+						if ($filenameParts[1] === $dateString) {
+							$files[] = $file;
+						}
+					}
+				}
+			}
+		}
+		return $files;
+	}
+
+	protected function uniqueBiometricArray(array $data): array {
+		$unique = [];
+		$result = [];
+		if(is_array($data) && !empty($data)){
+			foreach ($data as $row) {
+				$key = $row[1] . '_' . $row[3];
+				if (!isset($unique[$key])) {
+					$unique[$key] = true;
+					$result[] = $row;
+				}
+			}
+		}
+		return $result;
+	}
+
+	protected function setAttendanceDeviceRecord($att = null){
+        $resultResponse = false;
+        if ($att->biometric_id) {
+            $date = (new DateTime($att->datetime))->format('Y-m-d');
+            $time = (new DateTime($att->datetime))->format('H:i');
+            $maxPayrollDate = $this->getPayrollMaxDate($att->biometric_id);
+            if ($maxPayrollDate !== false && strtotime($date) > strtotime($maxPayrollDate)) {
+				$this->db->select("id");
+                $this->db->where('biometric_id', $att->biometric_id);
+                $this->db->where('DATE(`datetime`)', $date);
+                $this->db->like('TIME(datetime)', $time, 'after');
+                $existingRecord = $this->db->get('gcctimeutility.attendance');
+
+                if ($existingRecord->num_rows() === 0) {
+                    $resultResponse = $this->db->insert('gcctimeutility.attendance', [
+                        'biometric_id' => $att->biometric_id,
+                        'state' => $att->state,
+                        'datetime' => $att->datetime,
+                        'verify_method' => $att->verify_method,
+                        'device_id' => $att->device_id,
+                        'is_custom' => $att->is_custom,
+                        'created_at' => date('Y-m-d H:i:s'),
+                    ]);
+                }
+            }
+        }
+        return $resultResponse;
+    }
+
+    protected function getPayrollMaxDate($biometric_id=null){
+        if($biometric_id){
+            $this->db->select("MAX(ps.date_end) as max_date");
+            $this->db->from("gccmaster.tblemployees emp");
+            $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+            $this->db->where("emp.biometricno", $biometric_id);
+            $this->db->group_by("emp.id");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() == 1){ return $qTemp->row()->max_date; }
+            else{ return false; }
+        }else{ return false; }
+        
+    }
 }
