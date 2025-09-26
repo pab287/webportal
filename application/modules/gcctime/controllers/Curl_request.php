@@ -1579,24 +1579,7 @@ class Curl_request extends MY_Controller {
 		$weekAgo = date("Y-m-d", strtotime($timeParams));
 		$period = new DatePeriod(new DateTime($weekAgo), new DateInterval('P1D'), new DateTime($date));
 		$filepath = realpath("./uploads/data");
-		
-		$scanned_directory = array_diff(scandir($filepath), array('..', '.'));
-		$files = array();
-		if($scanned_directory){
-			foreach($scanned_directory as $dfile){
-				$filename = explode(".", $dfile);
-				if(count($filename) == 2){
-					$fname = explode("-", $filename[0]);
-					if(count($fname) == 2){
-						foreach ($period as $date) {
-							$dateTime = date("dYm", strtotime($date->format("Y-m-d")));
-							if($dateTime == $fname[1]){ $files[] = $dfile; }
-						}
-					}
-				}
-			}
-		}
-
+		$files = $this->getScannedDirectoryFiles($filepath, $period);
 		if(is_array($files) && !empty($files)){
 			$nData = array();
 			foreach($files as $file){
@@ -1613,18 +1596,12 @@ class Curl_request extends MY_Controller {
 							if($attDate === $currentDate){
 								$value[] = $deviceId;
 								$nData[] = $value;
-
-								/*** $responseResult = $this->setAttendanceDeviceRecord($attRecord);
-								if($responseResult){
-									$nData[] = $attRecord;
-								} ***/
 							}
 						}
 					}
 				}
 			}
 
-			echo "<pre>";
 			if(is_array($nData) && !empty($nData)){
 				$addedRecord = array();
 				$newData = $this->uniqueBiometricArray($nData);
@@ -1636,31 +1613,68 @@ class Curl_request extends MY_Controller {
 						$attRecord->datetime = $nValue[3];
 						$attRecord->verify_method = $nValue[4];
 						$attRecord->device_id = $nValue[5];
+						$attRecord->is_custom = 2;
 						$responseResult = $this->setAttendanceDeviceRecord($attRecord);
 						if($responseResult){
 							$addedRecord[] = $attRecord;
 						}
 					}
 				}
-				var_dump($addedRecord);
+
+				if(is_array($addedRecord) && !empty($addedRecord)){
+					$this->sendTelegramMessage("Device attendance record sync, successfully added `".count($addedRecord)."` new attendance records.");
+					return $addedRecord;
+				}else{
+					return false;
+				}
 			}else{
-				echo "No Data";
+				return false;
+			}
+		}else{
+			return false;
+		}
+	}
+
+	protected function getScannedDirectoryFiles($filepath, $period){
+		$files = array();
+		if($filepath){
+			$scanned_directory = array_diff(scandir($filepath), array('..', '.'));
+			$files = $this->getFilesInDirectoryByDatePeriod($scanned_directory, $period);
+		}
+		return $files;
+	}
+
+	protected function getFilesInDirectoryByDatePeriod(array $directory, DatePeriod $period): array {
+		$files = array();
+		foreach ($directory as $file) {
+			$filenameParts = explode('.', $file);
+			if (count($filenameParts) === 2) {
+				$filenameParts = explode('-', $filenameParts[0]);
+				if (count($filenameParts) === 2) {
+					foreach ($period as $date) {
+						$dateString = $date->format('dYm');
+						if ($filenameParts[1] === $dateString) {
+							$files[] = $file;
+						}
+					}
+				}
 			}
 		}
+		return $files;
 	}
 
 	protected function uniqueBiometricArray(array $data): array {
 		$unique = [];
 		$result = [];
-
-		foreach ($data as $row) {
-			$key = $row[1] . '_' . $row[3];
-			if (!isset($unique[$key])) {
-				$unique[$key] = true;
-				$result[] = $row;
+		if(is_array($data) && !empty($data)){
+			foreach ($data as $row) {
+				$key = $row[1] . '_' . $row[3];
+				if (!isset($unique[$key])) {
+					$unique[$key] = true;
+					$result[] = $row;
+				}
 			}
 		}
-
 		return $result;
 	}
 
@@ -1671,7 +1685,7 @@ class Curl_request extends MY_Controller {
             $time = (new DateTime($att->datetime))->format('H:i');
             $maxPayrollDate = $this->getPayrollMaxDate($att->biometric_id);
             if ($maxPayrollDate !== false && strtotime($date) > strtotime($maxPayrollDate)) {
-				var_dump($att->biometric_id, "att-date: ", $att->datetime, $maxPayrollDate, $date);
+				$this->db->select("id");
                 $this->db->where('biometric_id', $att->biometric_id);
                 $this->db->where('DATE(`datetime`)', $date);
                 $this->db->like('TIME(datetime)', $time, 'after');
@@ -1684,6 +1698,7 @@ class Curl_request extends MY_Controller {
                         'datetime' => $att->datetime,
                         'verify_method' => $att->verify_method,
                         'device_id' => $att->device_id,
+                        'is_custom' => $att->is_custom,
                         'created_at' => date('Y-m-d H:i:s'),
                     ]);
                 }
