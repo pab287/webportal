@@ -100,23 +100,24 @@
                                         </template>
                                     </div>
                                 </div>
-                                <div class="row mb-2">
-                                    <div class="col-sm-12 col-md-4 col-xl-4 col-lg-4">
+                                <div class="row mb-3">
+                                    <div class="col-sm-12 col-md-6 col-xl-6 col-lg-6">
                                         <div class="form-group m-form__group has-success">
                                             <label class="m--font-bolder" for="">Employee Status</label>
                                             <div class="m-checkbox-inline">
                                                 <label class="m-checkbox">
-                                                    <input type="radio" id="active_emp" name="employee_status" value="active" data-validation="required" checked/>
+                                                    <input type="radio" id="all_emp" name="employee_status" value="all" data-validation="required" checked/>
+                                                    All Employees <span></span>
+                                                </label>
+                                                <label class="m-checkbox">
+                                                    <input type="radio" id="active_emp" name="employee_status" value="active" data-validation="required" />
                                                     Active Employees <span></span>
                                                 </label>
                                                 <label class="m-checkbox">
                                                     <input type="radio" id="inactive_emp" name="employee_status" value="inactive" data-validation="required" />
                                                     Inactive Employees <span></span>
                                                 </label>
-                                                <label class="m-checkbox">
-                                                    <input type="radio" id="all_emp" name="employee_status" value="all" data-validation="required" />
-                                                    All Employees <span></span>
-                                                </label>
+
                                             </div>
                                         </div>
                                     </div>
