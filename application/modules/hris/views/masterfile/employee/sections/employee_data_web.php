@@ -1020,11 +1020,13 @@
                                     <span 
                                         :class="[
                                             'm-badge px-2 m--font-bolder',
-                                            acct.status.toLowerCase() === 'released' ? 'm-badge--success' : 
-                                            acct.status.toLowerCase() === 'cancelled' ? 'm-badge--danger' : 
-                                            'm-badge--info'
-                                        ]" 
-                                        v-text="acct.status">
+                                            acct.is_returned == 1 
+                                                ? 'm-badge--danger' 
+                                                : (acct.status?.toLowerCase() === 'released' 
+                                                    ? 'm-badge--success' 
+                                                    : 'm-badge--info')
+                                        ]"
+                                        v-text="acct.is_returned == 1 ? 'Returned' : acct.status">
                                     </span>
                                 </td>
                                 <td data-label="ASSET INFO">
