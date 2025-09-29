@@ -1571,7 +1571,7 @@ class Reports_model extends CI_Model{
         return $resultset;
     }
 
-    public function generateAbsenteeReport($post = array()){
+    public function generateAbsenteeReport($post = array()){ 
         $this->load->model("gcctime/timesheet_model", "ts_model");
         $resultset = array();
         $arrFilter = array();
