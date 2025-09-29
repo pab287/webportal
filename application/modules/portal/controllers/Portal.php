@@ -17,17 +17,15 @@ class Portal extends MY_Controller {
 
 	public function index(){
 		$data = array();
-
-		$this->core_layout->addExternalJs("https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js", false);
+		$this->core_layout->addJs("plugins/masonry/masonry.pkgd.min.js");
 
 		$portalContent = $this->portal_model->getPortalModules();
 		$this->core_layout->setPrivilegeName("core_profile_employee_data");
 		$currentActions = $this->core_layout->getCurrentActions();
 		$data["showPayrollPayslip"] = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_request", $currentActions);
-		$data["showDeductions"] = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_deductions", $currentActions);
 
 		$data["portal_content"] = $portalContent;
-	    $this->load->view('portal/index', $data);
+		$this->load->view('portal/index', $data);
 	}
 
 	public function version_details(){

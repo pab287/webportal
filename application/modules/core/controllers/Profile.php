@@ -40,21 +40,13 @@ class Profile extends MY_Controller {
 
 		$currentActions = $this->core_layout->getCurrentActions();
 		$showPayrollPayslip = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_request", $currentActions);
-		$showDeductions = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_deductions", $currentActions);
-		$deductions = array();
-
-		if ($showDeductions) {
-			$deductions = $this->profile->get_employee_deductions($employee_id);
-		}
 
 		$data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataDetails($employee_id),
 		"profile_payroll_sheet"=>true,
 		"payroll_sheet_data"=>$this->get_employee_payroll_data($employee_id),
 		"payroll_sheet_max_id"=>$this->get_max_employee_payroll_data($employee_id),
 		"show_payroll_payslip"=>$showPayrollPayslip,
-		'profile_deductions' => true,
-		"show_deductions" => $showDeductions,
-		"deductions" => $deductions));
+		"deductions" => $this->profile->get_employee_deductions($employee_id)));
 
 		$data->tab ='personalInfo';
 		$data->page = 'profile'; //added to display the sms notification to profile only because the 201 and profile shares the same view file

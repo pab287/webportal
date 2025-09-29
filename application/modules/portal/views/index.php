@@ -480,10 +480,219 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                         </div>
                     </div>
                     <div class="m-content" id="portal_notifications">
-                        <div class="row" data-masonry='{"percentPosition": true }' style="position: relative">
-                            <div class="col-xs-12 col-sm-12 col-lg-5 mb-4"></div>
+                        <div class="row">
+                            <div class="grid-sizer"></div>
+                            <?php if ((isset($showPayrollPayslip) && $showPayrollPayslip)): ?>
+                                <div class="grid-item col-xs-12 col-sm-12 col-lg-3">
+                                    <div class="m-portlet m-portlet--head-sm ">
+                                        <div class="m-portlet__head">
+                                            <div class="m-portlet__head-caption">
+                                                <div class="m-portlet__head-title">
+                                                    <span class="m-portlet__head-icon">
+                                                        <i class="la la-money"></i>
+                                                    </span>
+                                                    <h4 class="m-portlet__head-text">PAYSLIP</h4>
+                                                </div>
+                                            </div>
+                                            <div class="m-portlet__head-tools">
+                                                <button href="javacscript:void(0)" @click="payslip.show = !payslip.show" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" :class="payslip.count > 0 ? 'mr-2' : ''">
+                                                    <i :class="payslip.show ? 'fa fa-eye' : 'fa fa-eye-slash'"></i>
+                                                </button>
+                                                <template v-if="payslip.count > 0">
+                                                    <a href="<?= base_url("core/profile/#payroll-sheet-payslip") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                        <div class="m-widget1">
+                                            <div class="m-widget1__item">
+                                                <div class="row m-row--no-padding align-items-center">
+                                                    <div class="col">
+                                                        <h3 class="m-widget1__title">
+                                                            PAY DATE
+                                                        </h3>
+                                                        <span class="m-widget1__desc" v-text="formatDate(payslip.data.pay_date).toUpperCase()"></span>
+                                                    </div>
+                                                    <div class="col m--align-right">
+                                                        <h3 class="m-widget1__title">
+                                                            COVERAGE DATE
+                                                        </h3>
+                                                        <span class="m-widget1__desc" v-text="formatDateCoverage(payslip.data.date_start, payslip.data.date_end).toUpperCase()"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="m-widget1__item">
+                                                <div class="row m-row--no-padding align-items-center">
+                                                    <div class="col">
+                                                        <h3 class="m-widget1__title">
+                                                            GROSS PAY
+                                                        </h3>
+                                                        <span class="m-widget1__desc">BEFORE DEDUCTIONS</span>
+                                                    </div>
+                                                    <div class="col m--align-right">
+                                                        <span class="m-widget1__number m--font-brand"
+                                                            v-text="payslip.show ? formatCurrency(payslip.data.gross_pay) : '*****'">
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <template v-if="!isEmpty(deductions.data)">
+                                                <template v-if="parseInt(deductions.data.is_bonus) === 0">
+                                                    <div class="m-widget1__item" v-if="parseFloat(deductions.data.sss_prov) != 0 || parseFloat(deductions.data.tax) != 0 || parseFloat(deductions.data.sss) != 0 || parseFloat(deductions.data.ph) != 0 || parseFloat(deductions.data.hdmf) != 0 || parseFloat(deductions.data.sss_loan) > 0 || parseFloat(deductions.data.hdmf_loan) > 0">
+                                                        <div class="row m-row--no-padding align-items-center">
+                                                            <div class="col-12">
+                                                                <h3 class="m-widget1__title">
+                                                                    DEDUCTIONS
+                                                                </h3>
+                                                            </div>
+                                                            <div class="col-12 pl-3 mt-3">
+                                                                <div class="row justify-content-between" v-if="deductions.data.sss && parseFloat(deductions.data.sss) > 0">
+                                                                    <div class="col-md-6 col-sm-12">
+                                                                        <span class="m-widget1__desc">SSS</span>
+                                                                    </div>
+                                                                    <div class="col-md-6 col-sm-12 text-right">
+                                                                        <span class="m--regular-font-size-lg3 m--font-brand m--font-bolder" v-text="payslip.show ? formatCurrency(deductions.data.sss) : '*****'"></span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row justify-content-between" v-if="deductions.data.sss_prov && parseFloat(deductions.data.sss_prov) > 0">
+                                                                    <div class="col-md-6 col-sm-12">
+                                                                        <span class="m-widget1__desc">SSS PROVIDENT</span>
+                                                                    </div>
+                                                                    <div class="col-md-6 col-sm-12 text-right">
+                                                                        <span class="m--regular-font-size-lg3 m--font-brand m--font-bolder" v-text="payslip.show ? formatCurrency(deductions.data.sss_prov) : '*****'"></span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row justify-content-between" v-if="deductions.data.ph && parseFloat(deductions.data.ph) > 0">
+                                                                    <div class="col-md-6 col-sm-12">
+                                                                        <span class="m-widget1__desc">PHILHEALTH</span>
+                                                                    </div>
+                                                                    <div class="col-md-6 col-sm-12 text-right ">
+                                                                        <span class="m--regular-font-size-lg3 m--font-brand m--font-bolder" v-text="payslip.show ? formatCurrency(deductions.data.ph) : '*****'"></span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row justify-content-between" v-if="deductions.data.hdmf && parseFloat(deductions.data.hdmf) > 0">
+                                                                    <div class="col-md-6 col-sm-12">
+                                                                        <span class="m-widget1__desc">HDMF</span>
+                                                                    </div>
+                                                                    <div class="col-md-6 col-sm-12 text-right">
+                                                                        <span class="m--regular-font-size-lg3 m--font-brand m--font-bolder" v-text="payslip.show ? formatCurrency(deductions.data.hdmf) : '*****'"></span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row justify-content-between" v-if="deductions.data.hdmf && parseFloat(deductions.data.TAX) > 0">
+                                                                    <div class="col-md-6 col-sm-12">
+                                                                        <span class="m-widget1__desc">TAX</span>
+                                                                    </div>
+                                                                    <div class="col-md-6 col-sm-12 text-right">
+                                                                        <span class="m--regular-font-size-lg3 m--font-brand m--font-bolder" v-text="payslip.show ? formatCurrency(deductions.data.TAX) : '*****'"></span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+    
+                                                    <template v-if="parseFloat(deductions.data.total_loans) > 0 || deductions.data.loans.length > 0">
+                                                        <div class="m-widget1__item">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col-12">
+                                                                    <h3 class="m-widget1__title">
+                                                                    LOANS
+                                                                    </h3>
+                                                                </div>
+                                                                <div class="col-12 pl-3 mt-3">
+                                                                    <div class="row justify-content-between" v-for="(item, index) in deductions.data.loans">
+                                                                        <template v-if="item.amount_due > 0">
+                                                                            <div class="col-md-6 col-sm-12">
+                                                                                <span class="m-widget1__desc">{{ item.loan_name }}</span>
+                                                                            </div>
+                                                                            <div class="col-md-6 col-sm-12 text-right">
+                                                                                <span class="m--regular-font-size-lg3 m--font-brand m--font-bolder" v-text="payslip.show ? formatCurrency(item.amount_due) : '*****'"></span>
+                                                                            </div>
+                                                                        </template>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                </template>
+    
+                                                <div v-if="deductions.data.adjustment_d_count > 0 && deductions.data.adjustment_deductions.length > 0">
+                                                    <div class="m-widget1__item">
+                                                        <div class="row m-row--no-padding align-items-center">
+                                                            <div class="col-12">
+                                                                <h3 class="m-widget1__title">
+                                                                OTHERS
+                                                                </h3>
+                                                            </div>
+                                                            <div class="col-12 pl-3 mt-3">
+                                                                <div class="row justify-content-between" v-for="(item, index) in deductions.data.adjustment_deductions">
+                                                                    <template v-if="item.value > 0">
+                                                                        <div class="col-md-6 col-sm-12">
+                                                                            <span class="m-widget1__desc">{{ item.label }}</span>
+                                                                        </div>
+                                                                        <div class="col-md-6 col-sm-12 text-right">
+                                                                            <span class="m--regular-font-size-lg3 m--font-brand m--font-bolder" v-text="payslip.show ? formatCurrency(item.display_value) : '*****'"></span>
+                                                                        </div>
+                                                                    </template>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+    
+                                                <div class="m-widget1__item" v-if="deductions.data.total_loans_interest && parseFloat(deductions.data.total_loans_interest) > 0">
+                                                    <div class="row m-row--no-padding align-items-center">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title">
+                                                            TOTAL LOAN INTEREST
+                                                            </h3>
+                                                        </div>
+                                                        <div class="col m--align-right">
+                                                            <span class="m-widget1__number m--font-brand"
+                                                                v-text="payslip.show ? formatCurrency(deductions.data.total_loans_interest) : '*****'">
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+    
+                                                <template v-if="parseInt(payslip.data.is_bonus) === 0 || parseFloat(deductions.data.deductions) > 0">
+                                                    <div class="m-widget1__item" v-if="deductions.data.deductions && parseFloat(deductions.data.deductions) > 0">
+                                                        <div class="row m-row--no-padding align-items-center">
+                                                            <div class="col">
+                                                                <h3 class="m-widget1__title">
+                                                                    LOANS & DEDUCTIONS
+                                                                </h3>
+                                                                <span class="m-widget1__desc">TOTAL DEDUCTIONS</span>
+                                                            </div>
+                                                            <div class="col m--align-right">
+                                                                <span class="m-widget1__number m--font-brand"
+                                                                    v-text="payslip.show ? formatCurrency(deductions.data.overall_total_deductions) : '*****'">
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </template>
+                                            <div class="m-widget1__item">
+                                                <div class="row m-row--no-padding align-items-center">
+                                                    <div class="col">
+                                                        <h3 class="m-widget1__title">
+                                                            NET PAY
+                                                        </h3>
+                                                        <span class="m-widget1__desc">TAKE HOME AMOUNT</span>
+                                                    </div>
+                                                    <div class="col m--align-right">
+                                                        <span class="m-widget1__number m--font-brand"
+                                                            v-text="payslip.show ? formatCurrency(payslip.data.net_pay) : '*****'">
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                             <?php if (isset($ca_module) && $ca_module): ?>
-                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                <div class="grid-item col-xs-12 col-sm-12 col-lg-3">
                                     <div class="m-portlet m-portlet--head-sm">
                                         <div class="m-portlet__head">
                                             <div class="m-portlet__head-caption">
@@ -744,7 +953,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                 </div>
                             <?php endif; ?>
                             <?php if (isset($loa_module) && $loa_module): ?>
-                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                <div class="grid-item col-xs-12 col-sm-12 col-lg-3">
                                     <div class="m-portlet m-portlet--head-sm ">
                                         <div class="m-portlet__head">
                                             <div class="m-portlet__head-caption">
@@ -813,7 +1022,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                 </div>
                             <?php endif; ?>
                             <?php if (isset($overtime_module) && $overtime_module): ?>
-                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                <div class="grid-item col-xs-12 col-sm-12 col-lg-3">
                                     <div class="m-portlet m-portlet--head-sm ">
                                         <div class="m-portlet__head">
                                             <div class="m-portlet__head-caption">
@@ -884,7 +1093,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                 </div>
                             <?php endif; ?>
                             <?php if (isset($to_module) && $to_module): ?>
-                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                <div class="grid-item col-xs-12 col-sm-12 col-lg-3">
                                     <div class="m-portlet m-portlet--head-sm ">
                                         <div class="m-portlet__head">
                                             <div class="m-portlet__head-caption">
@@ -1016,7 +1225,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                 </div>
                             <?php endif; ?>
                             <?php if (isset($accountability_module) && $accountability_module): ?>
-                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                <div class="grid-item col-xs-12 col-sm-12 col-lg-3">
                                     <div class="m-portlet m-portlet--head-sm ">
                                         <div class="m-portlet__head">
                                             <div class="m-portlet__head-caption">
@@ -1179,7 +1388,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                 </div>
                             <?php endif; ?>
                             <?php if (isset($borrowing_module) && $borrowing_module): ?>
-                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                <div class="grid-item col-xs-12 col-sm-12 col-lg-3">
                                     <div class="m-portlet m-portlet--head-sm ">
                                         <div class="m-portlet__head">
                                             <div class="m-portlet__head-caption">
@@ -1312,7 +1521,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                 </div>
                             <?php endif; ?>
                             <?php if (isset($tr_module) && $tr_module): ?>
-                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                <div class="grid-item col-xs-12 col-sm-12 col-lg-3">
                                     <div class="m-portlet m-portlet--head-sm ">
                                         <div class="m-portlet__head">
                                             <div class="m-portlet__head-caption">
@@ -1404,7 +1613,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                 </div>
                             <?php endif; ?>
                             <?php if (isset($ship_module) && $ship_module): ?>
-                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                <div class="grid-item col-xs-12 col-sm-12 col-lg-3">
                                     <div class="m-portlet m-portlet--head-sm ">
                                         <div class="m-portlet__head">
                                             <div class="m-portlet__head-caption">
