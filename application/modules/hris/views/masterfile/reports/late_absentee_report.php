@@ -161,7 +161,7 @@
                                     </div>
                                     <div class="col-sm-12 col-md-12 col-xl-12 col-lg-12">
                                         <div class="form-group m-form__group">
-                                            <label for="employee" class="m--font-bolder">Employee <small>( Optional )</small></label>
+                                            <label for="employee" class="m--font-bolder">Employee <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">(Optional)</span></label>
                                             <select id="employee" class="form-control" name="employee[]" multiple disabled>
                                                 <option></option>
                                             </select>
