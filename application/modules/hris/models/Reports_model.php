@@ -1585,7 +1585,9 @@ class Reports_model extends CI_Model{
             $this->db->join($this->companyTable." as comp", "comp.id = emp.company_id");
             $this->db->join($this->departmentTable.' as c', 'c.id = emp.department_id', 'LEFT');
             $this->db->where("emp.company_id", $post["company"]);
-
+            if (isset($post['employee_status']) && !empty($post['employee_status']) && strtolower($post['employee_status']) != 'all') {
+                $this->db->where('LOWER(emp.employee_status)', strtolower($post['employee_status']));
+            }
             if($hasDepartment){
                 $this->db->where("emp.department_id", $post["department"]);
             }
@@ -1658,9 +1660,6 @@ class Reports_model extends CI_Model{
                 $this->db->join("gcctimeutility.personnel as pr", "pr.shift_id = ssr.shift_id", "left");
                 $this->db->join("gccmaster.tblemployees as emp", "emp.biometricno = pr.biometricno OR emp.biometricno = pr.biometric_id", "left");
                 $this->db->where_in("emp.id", $employeeIds);
-                if (isset($post['employee_status']) && !empty($post['employee_status']) && strtolower($post['employee_status']) != 'all') {
-                    $this->db->where('LOWER(emp.employee_status)', strtolower($post['employee_status']));
-                }
                 $qtemp = $this->db->get();
                 if ($qtemp->num_rows() > 0){
                     foreach ($qtemp->result() as $kv) {
