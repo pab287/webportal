@@ -84,6 +84,7 @@ if(isset($has_template_js) && $has_template_js) $temp_template_js = true;
 			const idleTimerState = <?php echo json_encode($this->core_layout->getIdleTimerState()); ?>;
 		</script>
 		<link href="<?php echo base_url("assets/plugins/lightbox/css/lightbox.css"); ?>" rel="stylesheet" type="text/css" media="screen" />
+		
 		<!-- lightbox end -->
 	</head>
 	<!-- end::Head -->

@@ -480,1033 +480,1029 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                         </div>
                     </div>
                     <div class="m-content" id="portal_notifications">
-                        <div class="row">
-                            <div class="col-sm-12 col-md-5 col-lg-5 col-xl-5"></div>
-                            <div class="col-sm-12 col-md-7 col-lg-7 col-xl-7">
-                                <div class="row">
-                                    <?php if (isset($ca_module) && $ca_module): ?>
-                                        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
-                                            <div class="m-portlet m-portlet--head-sm">
-                                                <div class="m-portlet__head">
-                                                    <div class="m-portlet__head-caption">
-                                                        <div class="m-portlet__head-title">
-                                                            <span class="m-portlet__head-icon">
-                                                                <i class="fa fa-money"></i>
-                                                            </span>
-                                                            <h4 class="m-portlet__head-text">CASH ADVANCE</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="m-portlet__head-tools">
-                                                        <a href="<?= base_url("eforms/cash_advance/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;">
-                                                            <i class="fa fa-arrow-circle-right"></i>
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                                <div class="m-portlet__body m-portlet__body--no-padding" id="cash_advance">
-                                                    <div class="m-widget1" v-if="!vm_ca.show">
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center">
-                                                                <div class="col">
-                                                                    <button class="btn w-100 btn-brand" id="showCA" @click="getCashadvance">
-                                                                        <span style="font-size: 10px !important; color: white; color: white;">
-                                                                            SHOW DATA
-                                                                        </span>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="m-widget1" v-else>
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center" v-if="vm_ca.cash_advance_count == 0" style="padding-top: 3px !important;">
-                                                                <div class="col">
-                                                                    <h5 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR SUPERVISOR RECOMMENDATION
-                                                                    </h5>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('/eforms/cash_advance/masterfile') . '?status=sup_recoomendation' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                SUPERVISOR RECOMMENDATION
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                CA FOR SUPERVISOR RECOMMENDATION
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_ca.cash_advance_count}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_ca.progress_ca_approval"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_ca.ca_approval_count}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="m-widget1__item" v-if="vm_ca.ca_hr_note_priv">
-                                                            <div class="row align-items-center" v-if="vm_ca.hr_note == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR PAYROLL BALANCE PENDING
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('/eforms/cash_advance/masterfile') . '?status=payroll_balance_pending' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                PAYROLL BALANCE PENDING
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                CA FOR PAYROLL APPROVAL
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_ca.hr_note}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_ca.progress_ca_hr_note"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_ca.ca_hr_note_count}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center" v-if="vm_ca.acct_note == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR ACCTG. BALANCE PENDING
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('/eforms/cash_advance/masterfile') . '?status=accounting_balance_pending' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                ACCTG. BALANCE PENDING
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                CA FOR ACCOUNTING APPROVAL
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_ca.acct_note}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_ca.progress_ca_acct_note"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_ca.ca_acct_note_count}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center" v-if="vm_ca.awaiting_approval == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR AWAITING APPROVAL
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('/eforms/cash_advance/masterfile') . '?status=awaiting_approval' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                AWAITING APPROVAL
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                CA FOR APPROVAL
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_ca.awaiting_approval}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_ca.progress_ca_awaiting_approval"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_ca.ca_awaiting_approval_count}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center" v-if="vm_ca.for_posting == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR POSTING
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('/eforms/cash_advance/masterfile') . '?status=for_posting' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                FOR POSTING
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                CA FOR POSTING
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_ca.for_posting}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_ca.progress_ca_for_posting"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_ca.ca_for_posting_count}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center" v-if="vm_ca.posted == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING TO POSTED
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('/eforms/cash_advance/masterfile') . '?status=posted' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                POSTED
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                CA POSTED
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_ca.posted}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_ca.progress_ca_posted"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_ca.ca_posted_count}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center" v-if="vm_ca.final_approval == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING CA FOR FINAL APPROVAL
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('/eforms/cash_advance/masterfile') . '?status=for_final_approval' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                FOR FINAL APPROVAL
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                CA FOR FINAL APPROVAL
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_ca.final_approval}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_ca.progress_ca_final_approval"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_ca.ca_final_approval_count}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                        <div class="row" data-masonry='{"percentPosition": true }' style="position: relative">
+                            <div class="col-xs-12 col-sm-12 col-lg-5 mb-4"></div>
+                            <?php if (isset($ca_module) && $ca_module): ?>
+                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                    <div class="m-portlet m-portlet--head-sm">
+                                        <div class="m-portlet__head">
+                                            <div class="m-portlet__head-caption">
+                                                <div class="m-portlet__head-title">
+                                                    <span class="m-portlet__head-icon">
+                                                        <i class="fa fa-money"></i>
+                                                    </span>
+                                                    <h4 class="m-portlet__head-text">CASH ADVANCE</h4>
                                                 </div>
                                             </div>
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php if (isset($loa_module) && $loa_module): ?>
-                                        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
-                                            <div class="m-portlet m-portlet--head-sm ">
-                                                <div class="m-portlet__head">
-                                                    <div class="m-portlet__head-caption">
-                                                        <div class="m-portlet__head-title">
-                                                            <span class="m-portlet__head-icon">
-                                                                <i class="fa fa-calendar-check-o"></i>
-                                                            </span>
-                                                            <h4 class="m-portlet__head-text">LEAVE OF ABSENCE</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="m-portlet__head-tools">
-                                                        <a href="<?= base_url("eforms/loa/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
-                                                    </div>
-                                                </div>
-                                                <div class="m-portlet__body m-portlet__body-sm m-portlet__body--no-padding" id="loa">
-                                                    <div class="m-widget1" v-if="!vm_tab1.show">
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center">
-                                                                <div class="col">
-                                                                    <button class="btn w-100 btn-brand" id="showLoa" @click="getUnapprovedLoa()">
-                                                                        <h3 class="m-widget1__title text-muted">
-                                                                            <span style="font-size: 10px !important; color: white; color: white;">
-                                                                                SHOW DATA
-                                                                            </span>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="m-widget1" v-else>
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center" v-if="true">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING LOA FOR APPROVAL
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('eforms/loa/masterfile') . '?status=pending' ?>">
-                                                                    <div class="row align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                PENDING APPROVAL
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                LOA FOR APPROVAL
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_tab1.employee_count}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_tab1.progress_loa_pending"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_tab1.scroll_width}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                            <div class="m-portlet__head-tools">
+                                                <a href="<?= base_url("eforms/cash_advance/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;">
+                                                    <i class="fa fa-arrow-circle-right"></i>
+                                                </a>
                                             </div>
                                         </div>
-                                    <?php endif; ?>
-                                    <?php if (isset($overtime_module) && $overtime_module): ?>
-                                        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
-                                            <div class="m-portlet m-portlet--head-sm ">
-                                                <div class="m-portlet__head">
-                                                    <div class="m-portlet__head-caption">
-                                                        <div class="m-portlet__head-title">
-                                                            <span class="m-portlet__head-icon">
-                                                                <i class="fa fa-clock-o"></i>
-                                                            </span>
-                                                            <h4 class="m-portlet__head-text">OVERTIME</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="m-portlet__head-tools">
-                                                        <a href="<?= base_url("eforms/overtime/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;">
-                                                            <i class="fa fa-arrow-circle-right"></i>
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                                <div class="m-portlet__body m-portlet__body--no-padding" id="overtime">
-                                                    <div class="m-widget1" v-if="!vm_overtime.show">
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center">
-                                                                <div class="col">
-                                                                    <button class="btn w-100 btn-brand" id="showOT" @click="getOvertime()">
-                                                                        <h3 class="m-widget1__title text-muted">
-                                                                            <span style="font-size: 10px !important; color: white; color: white;">
-                                                                                SHOW DATA
-                                                                            </span>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="m-widget1" v-else>
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center" v-if="vm_overtime.for_approval == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING OVERTIME FOR APPROVAL
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('eforms/overtime/masterfile') . '?status=pending' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                PENDING APPROVAL
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                OVERTIME FOR APPROVAL
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_overtime.for_approval}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_overtime.progress_ot"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_overtime.pending_count}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php if (isset($to_module) && $to_module): ?>
-                                        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
-                                            <div class="m-portlet m-portlet--head-sm ">
-                                                <div class="m-portlet__head">
-                                                    <div class="m-portlet__head-caption">
-                                                        <div class="m-portlet__head-title">
-                                                            <span class="m-portlet__head-icon">
-                                                                <i class="fa fa-car"></i>
-                                                            </span>
-                                                            <h4 class="m-portlet__head-text">TRAVEL ORDER</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="m-portlet__head-tools">
-                                                        <a href="<?= base_url("eforms/travel_order/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
-                                                    </div>
-                                                </div>
-                                                <div class="m-portlet__body m-portlet__body--no-padding" id="travel_order">
-                                                    <div class="m-widget1" v-if="!vm_travel_order.show">
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center">
-                                                                <div class="col">
-                                                                    <button class="btn w-100 btn-brand" id="showTO" @click="getTravelOrder()">
-                                                                        <span style="font-size: 10px !important; color: white; color: white;">
-                                                                            SHOW DATA
-                                                                        </span>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="m-widget1" v-else>
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center" v-if="vm_travel_order.recommendation == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR RECOMMENDATION
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('eforms/travel_order/masterfile') . '?status=pending' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title" style="white-space: nowrap;">
-                                                                                SUPERVISOR RECOMMENDATION
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                TRAVEL ORDER RECOMMENDATION
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_travel_order.recommendation}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_travel_order.progress_to_recommendation"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_travel_order.to_recommendation_count}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center" v-if="vm_travel_order.for_approval == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR APPROVAL
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('eforms/travel_order/masterfile') . '?status=recommend_approved' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                PENDING APPROVAL
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                TRAVEL ORDER APPROVAL
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_travel_order.for_approval}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_travel_order.progress_to_approval"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{ vm_travel_order.to_approval_count }} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center" v-if="vm_travel_order.for_accomplishment == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR ACCOMPLISHMENT
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('eforms/travel_order/masterfile') . '?status=approved' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                ACCOMPLISHMENT
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                TRAVEL ORDER FOR ACCOMPLISHMENT
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_travel_order.for_accomplishment}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_travel_order.progress_to_accomplishment"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{ vm_travel_order.to_accomplishment_count }} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php if (isset($accountability_module) && $accountability_module): ?>
-                                        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
-                                            <div class="m-portlet m-portlet--head-sm ">
-                                                <div class="m-portlet__head">
-                                                    <div class="m-portlet__head-caption">
-                                                        <div class="m-portlet__head-title">
-                                                            <span class="m-portlet__head-icon">
-                                                                <i class="fa fa-book"></i>
-                                                            </span>
-                                                            <h4 class="m-portlet__head-text">ACCOUNTABILITY</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="m-portlet__head-tools">
-                                                        <a href="<?= base_url("eforms/accountability/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
-                                                    </div>
-                                                </div>
-                                                <div class="m-portlet__body m-portlet__body--no-padding" id="accountability">
-                                                    <div class="m-widget1" v-if="!vm_acct.show">
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center">
-                                                                <div class="col">
-                                                                    <button class="btn w-100 btn-brand" id="showACCT" @click="getAccountability()">
-                                                                        <span style="font-size: 10px !important; color: white; color: white;">
-                                                                            SHOW DATA
-                                                                        </span>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="m-widget1" style="max-height: 600px; overflow-y: auto;" v-else>
-                                                        <div class="m-widget1__item" style="background: none;">
-                                                            <div class="row align-items-center" v-if="vm_acct.acct_note == null || vm_acct.acct_note == 0 || vm_acct.acct_note == ''">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR ACCTG NOTE
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <div class="col text-center">
-                                                                    <h3 class="m-widget1__title">
-                                                                        ACCOUNTING NOTES
-                                                                    </h3>
-                                                                </div>
-
-                                                                <div v-for="(companyData, companyName) in vm_acct.acct_note" :key="companyName" v-if="companyData.accountability_acct_note_count > 0" class="company-section">
-                                                                    <a :href="`${baseUrl('eforms/accountability/masterfile')}?status=Pending_Accounting_Notes&company=${companyData.company}`">
-                                                                        <div>
-                                                                            <div class="row m-row--no-padding align-items-center">
-                                                                                <div class="col">
-                                                                                    <h3 class="m-widget1__title">
-                                                                                        {{ companyName }}
-                                                                                    </h3>
-                                                                                    <span class="m-widget1__desc">
-                                                                                        ACCOUNTABILITY FOR ACCTG. NOTES
-                                                                                    </span>
-                                                                                </div>
-                                                                                <div class="col m--align-right">
-                                                                                    <span class="m-widget1__number m--font-brand">
-                                                                                        {{ companyData.acct_note }}
-                                                                                    </span>
-                                                                                </div>
-                                                                            </div>
-                                                                            <div class="progress m-progress--sm" v-html="companyData.progress_accountability_acct_note"></div>
-                                                                            <span class="m--font-bolder m--font-metal">
-                                                                                {{ companyData.accountability_acct_note_count }} %
-                                                                            </span>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-
-                                                            </div>
-                                                        </div>
-                                                        <div class="m-widget1__item" style="background: none;">
-                                                            <div class="row align-items-center" v-if="vm_acct.hr_note == null || vm_acct.hr_note == 0 || vm_acct.hr_note == ''">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR HR NOTE
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <div class="col text-center">
-                                                                    <h3 class="m-widget1__title">
-                                                                        PENDING HR NOTES
-                                                                    </h3>
-                                                                </div>
-                                                                <div v-for="(companyData, companyName) in vm_acct.hr_note" :key="companyName" v-if="companyData.accountability_hr_note_count > 0" class="company-section">
-                                                                    <a :href="`${baseUrl('eforms/accountability/masterfile')}?status=Pending_Payroll_Notes&?company=${companyData.company}`">
-                                                                        <div>
-                                                                            <div class="row m-row--no-padding align-items-center">
-                                                                                <div class="col">
-                                                                                    <h3 class="m-widget1__title">
-                                                                                        {{ companyName }}
-                                                                                    </h3>
-                                                                                    <span class="m-widget1__desc">
-                                                                                        ACCOUNTABILITY FOR HR NOTES
-                                                                                    </span>
-                                                                                </div>
-                                                                                <div class="col m--align-right">
-                                                                                    <span class="m-widget1__number m--font-brand">
-                                                                                        {{ companyData.hr_note }}
-                                                                                    </span>
-                                                                                </div>
-                                                                            </div>
-                                                                            <div class="progress m-progress--sm" v-html="companyData.progress_accountability_hr_note"></div>
-                                                                            <span class="m--font-bolder m--font-metal">
-                                                                                {{ companyData.accountability_hr_note_count }} %
-                                                                            </span>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="m-widget1__item" style="background: none;">
-                                                            <div class="row align-items-center" v-if="vm_acct.acct_release == 0 || vm_acct.acct_release == null || vm_acct.acct_release == ''">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR RELEASING
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <div class="col text-center">
-                                                                    <h3 class="m-widget1__title">
-                                                                        FOR RELEASING
-                                                                    </h3>
-                                                                </div>
-
-                                                                <div v-for="(companyData, companyName) in vm_acct.acct_release" :key="companyName" v-if="companyData.accountability_releasing_count > 0" class="company-section">
-                                                                    <a :href="`${baseUrl('eforms/accountability/masterfile')}?status=For_Releasing&?company=${companyData.company}`">
-                                                                        <div>
-                                                                            <div class="row m-row--no-padding align-items-center">
-                                                                                <div class="col">
-                                                                                    <h3 class="m-widget1__title">
-                                                                                        {{companyName}}
-                                                                                    </h3>
-                                                                                    <span class="m-widget1__desc">
-                                                                                        ACCOUNTABILITY FOR RELEASING
-                                                                                    </span>
-                                                                                </div>
-                                                                                <div class="col m--align-right">
-                                                                                    <span class="m-widget1__number m--font-brand">
-                                                                                        {{ companyData.acct_release }}
-                                                                                    </span>
-                                                                                </div>
-                                                                            </div>
-                                                                            <div class="progress m-progress--sm" v-html="companyData.progress_accountability_releasing"></div>
-                                                                            <span class="m--font-bolder m--font-metal">
-                                                                                {{ companyData.accountability_releasing_count }} %
-                                                                            </span>
-                                                                        </div>
-                                                                    </a>
-                                                                </div>
-
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php if (isset($borrowing_module) && $borrowing_module): ?>
-                                        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
-                                            <div class="m-portlet m-portlet--head-sm ">
-                                                <div class="m-portlet__head">
-                                                    <div class="m-portlet__head-caption">
-                                                        <div class="m-portlet__head-title">
-                                                            <span class="m-portlet__head-icon">
-                                                                <i class="fa fa-handshake-o"></i>
-                                                            </span>
-                                                            <h4 class="m-portlet__head-text">BORROWING</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="m-portlet__head-tools">
-                                                        <a href="<?= base_url("eforms/borrowing/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
-                                                    </div>
-                                                </div>
-                                                <div class="m-portlet__body m-portlet__body--no-padding" id="borrowing">
-                                                    <div class="m-widget1" v-if="!vm_borrowing.show">
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center">
-                                                                <div class="col">
-                                                                    <button class="btn w-100 btn-brand" id="showBORR" @click="getBorrowing()">
-                                                                        <span style="font-size: 10px !important; color: white; color: white;">
-                                                                            SHOW DATA
-                                                                        </span>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="m-widget1" v-else>
-                                                        <div class="m-widget1__item" v-if="vm_borrowing.approval_priv">
-                                                            <div class="row align-items-center" v-if="vm_borrowing.for_approval == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR APPROVAL
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('eforms/accountability/masterfile') . '?status=pending' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                PENDING APPROVAL
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                BORROWING FORM FOR APPROVAL
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_borrowing.for_approval}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_borrowing.progress_borr_approval"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_borrowing.borr_approval_count}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="m-widget1__item" v-if="vm_borrowing.acct_release_priv">
-                                                            <div class="row align-items-center" v-if="vm_borrowing.acct_release == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR RELEASING
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('eforms/accountability/masterfile') . '?status=approved' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                RELEASING
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                BORROWING FORM FOR RELEASING
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_borrowing.acct_release}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_borrowing.progress_borr_releasing"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_borrowing.borr_releasing_count}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="m-widget1__item" v-if="vm_borrowing.acct_return_priv">
-                                                            <div class="row align-items-center" v-if="vm_borrowing.acct_return == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO UNRETURNED BORROWING
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('eforms/borrowing/masterfile') ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                UNRETURNED BORROWING
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                FOR RETURN BORROWING
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_borrowing.acct_return}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_borrowing.progress_borr_return"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_borrowing.borr_return_count}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php if (isset($tr_module) && $tr_module): ?>
-                                        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
-                                            <div class="m-portlet m-portlet--head-sm ">
-                                                <div class="m-portlet__head">
-                                                    <div class="m-portlet__head-caption">
-                                                        <div class="m-portlet__head-title">
-                                                            <span class="m-portlet__head-icon">
-                                                                <i class="fa fa-file-text"></i>
-                                                            </span>
-                                                            <h4 class="m-portlet__head-text">TRANSMITTAL</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="m-portlet__head-tools">
-                                                        <a href="<?= base_url("eforms/transmittal/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
-                                                    </div>
-                                                </div>
-                                                <div class="m-portlet__body m-portlet__body--no-padding" id="transmittal">
-                                                    <div class="m-widget1" v-if="!vm_transmittal.show">
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center">
-                                                                <div class="col">
-                                                                    <button class="btn w-100 btn-brand" id="showTRANS" @click="getTransmittal()">
-                                                                        <span style="font-size: 10px !important; color: white; color: white;">
-                                                                            SHOW DATA
-                                                                        </span>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="m-widget1" v-else>
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center" v-if="vm_transmittal.for_approval == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING TRANSMITTAL FOR APPROVAL
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('eforms/transmittal/masterfile') . '?status=pending' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                PENDING APPROVAL
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                TRANSMITTAL FOR APPROVAL
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_transmittal.for_approval}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_transmittal.progress_tr">
-                                                                    </div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_transmittal.pending_count}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="m-widget1__item" v-if="vm_transmittal.tr_receive_priv == true">
-                                                            <a href="<?= base_url('eforms/transmittal/masterfile') . '?status=approved' ?>">
-                                                                <div class="row m-row--no-padding align-items-center">
-                                                                    <div class="col">
-                                                                        <h3 class="m-widget1__title">
-                                                                            RECEIVE
-                                                                        </h3>
-                                                                        <span class="m-widget1__desc">
-                                                                            TRANSMITTAL TO RECEIVE
-                                                                        </span>
-                                                                    </div>
-                                                                    <div class="col m--align-right">
-                                                                        <span class="m-widget1__number m--font-brand">
-                                                                            {{vm_transmittal.receive}}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="progress m-progress--sm" v-html="vm_transmittal.progress_tr_rec"></div>
-                                                                <span class="m--font-bolder m--font-metal">
-                                                                    {{vm_transmittal.receive_count}} %
+                                        <div class="m-portlet__body m-portlet__body--no-padding" id="cash_advance">
+                                            <div class="m-widget1" v-if="!vm_ca.show">
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center">
+                                                        <div class="col">
+                                                            <button class="btn w-100 btn-brand" id="showCA" @click="getCashadvance">
+                                                                <span style="font-size: 10px !important; color: white; color: white;">
+                                                                    SHOW DATA
                                                                 </span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="m-widget1" v-else>
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center" v-if="vm_ca.cash_advance_count == 0" style="padding-top: 3px !important;">
+                                                        <div class="col">
+                                                            <h5 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR SUPERVISOR RECOMMENDATION
+                                                            </h5>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('/eforms/cash_advance/masterfile') . '?status=sup_recoomendation' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        SUPERVISOR RECOMMENDATION
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        CA FOR SUPERVISOR RECOMMENDATION
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_ca.cash_advance_count}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_ca.progress_ca_approval"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_ca.ca_approval_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="m-widget1__item" v-if="vm_ca.ca_hr_note_priv">
+                                                    <div class="row align-items-center" v-if="vm_ca.hr_note == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR PAYROLL BALANCE PENDING
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('/eforms/cash_advance/masterfile') . '?status=payroll_balance_pending' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        PAYROLL BALANCE PENDING
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        CA FOR PAYROLL APPROVAL
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_ca.hr_note}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_ca.progress_ca_hr_note"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_ca.ca_hr_note_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center" v-if="vm_ca.acct_note == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR ACCTG. BALANCE PENDING
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('/eforms/cash_advance/masterfile') . '?status=accounting_balance_pending' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        ACCTG. BALANCE PENDING
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        CA FOR ACCOUNTING APPROVAL
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_ca.acct_note}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_ca.progress_ca_acct_note"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_ca.ca_acct_note_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center" v-if="vm_ca.awaiting_approval == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR AWAITING APPROVAL
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('/eforms/cash_advance/masterfile') . '?status=awaiting_approval' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        AWAITING APPROVAL
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        CA FOR APPROVAL
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_ca.awaiting_approval}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_ca.progress_ca_awaiting_approval"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_ca.ca_awaiting_approval_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center" v-if="vm_ca.for_posting == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR POSTING
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('/eforms/cash_advance/masterfile') . '?status=for_posting' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        FOR POSTING
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        CA FOR POSTING
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_ca.for_posting}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_ca.progress_ca_for_posting"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_ca.ca_for_posting_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center" v-if="vm_ca.posted == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING TO POSTED
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('/eforms/cash_advance/masterfile') . '?status=posted' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        POSTED
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        CA POSTED
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_ca.posted}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_ca.progress_ca_posted"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_ca.ca_posted_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center" v-if="vm_ca.final_approval == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING CA FOR FINAL APPROVAL
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('/eforms/cash_advance/masterfile') . '?status=for_final_approval' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        FOR FINAL APPROVAL
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        CA FOR FINAL APPROVAL
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_ca.final_approval}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_ca.progress_ca_final_approval"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_ca.ca_final_approval_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (isset($loa_module) && $loa_module): ?>
+                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                    <div class="m-portlet m-portlet--head-sm ">
+                                        <div class="m-portlet__head">
+                                            <div class="m-portlet__head-caption">
+                                                <div class="m-portlet__head-title">
+                                                    <span class="m-portlet__head-icon">
+                                                        <i class="fa fa-calendar-check-o"></i>
+                                                    </span>
+                                                    <h4 class="m-portlet__head-text">LEAVE OF ABSENCE</h4>
+                                                </div>
+                                            </div>
+                                            <div class="m-portlet__head-tools">
+                                                <a href="<?= base_url("eforms/loa/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
+                                            </div>
+                                        </div>
+                                        <div class="m-portlet__body m-portlet__body-sm m-portlet__body--no-padding" id="loa">
+                                            <div class="m-widget1" v-if="!vm_tab1.show">
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center">
+                                                        <div class="col">
+                                                            <button class="btn w-100 btn-brand" id="showLoa" @click="getUnapprovedLoa()">
+                                                                <h3 class="m-widget1__title text-muted">
+                                                                    <span style="font-size: 10px !important; color: white; color: white;">
+                                                                        SHOW DATA
+                                                                    </span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="m-widget1" v-else>
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center" v-if="true">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING LOA FOR APPROVAL
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('eforms/loa/masterfile') . '?status=pending' ?>">
+                                                            <div class="row align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        PENDING APPROVAL
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        LOA FOR APPROVAL
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_tab1.employee_count}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_tab1.progress_loa_pending"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_tab1.scroll_width}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (isset($overtime_module) && $overtime_module): ?>
+                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                    <div class="m-portlet m-portlet--head-sm ">
+                                        <div class="m-portlet__head">
+                                            <div class="m-portlet__head-caption">
+                                                <div class="m-portlet__head-title">
+                                                    <span class="m-portlet__head-icon">
+                                                        <i class="fa fa-clock-o"></i>
+                                                    </span>
+                                                    <h4 class="m-portlet__head-text">OVERTIME</h4>
+                                                </div>
+                                            </div>
+                                            <div class="m-portlet__head-tools">
+                                                <a href="<?= base_url("eforms/overtime/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;">
+                                                    <i class="fa fa-arrow-circle-right"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div class="m-portlet__body m-portlet__body--no-padding" id="overtime">
+                                            <div class="m-widget1" v-if="!vm_overtime.show">
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center">
+                                                        <div class="col">
+                                                            <button class="btn w-100 btn-brand" id="showOT" @click="getOvertime()">
+                                                                <h3 class="m-widget1__title text-muted">
+                                                                    <span style="font-size: 10px !important; color: white; color: white;">
+                                                                        SHOW DATA
+                                                                    </span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="m-widget1" v-else>
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center" v-if="vm_overtime.for_approval == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING OVERTIME FOR APPROVAL
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('eforms/overtime/masterfile') . '?status=pending' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        PENDING APPROVAL
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        OVERTIME FOR APPROVAL
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_overtime.for_approval}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_overtime.progress_ot"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_overtime.pending_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (isset($to_module) && $to_module): ?>
+                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                    <div class="m-portlet m-portlet--head-sm ">
+                                        <div class="m-portlet__head">
+                                            <div class="m-portlet__head-caption">
+                                                <div class="m-portlet__head-title">
+                                                    <span class="m-portlet__head-icon">
+                                                        <i class="fa fa-car"></i>
+                                                    </span>
+                                                    <h4 class="m-portlet__head-text">TRAVEL ORDER</h4>
+                                                </div>
+                                            </div>
+                                            <div class="m-portlet__head-tools">
+                                                <a href="<?= base_url("eforms/travel_order/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
+                                            </div>
+                                        </div>
+                                        <div class="m-portlet__body m-portlet__body--no-padding" id="travel_order">
+                                            <div class="m-widget1" v-if="!vm_travel_order.show">
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center">
+                                                        <div class="col">
+                                                            <button class="btn w-100 btn-brand" id="showTO" @click="getTravelOrder()">
+                                                                <span style="font-size: 10px !important; color: white; color: white;">
+                                                                    SHOW DATA
+                                                                </span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="m-widget1" v-else>
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center" v-if="vm_travel_order.recommendation == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR RECOMMENDATION
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('eforms/travel_order/masterfile') . '?status=pending' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title" style="white-space: nowrap;">
+                                                                        SUPERVISOR RECOMMENDATION
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        TRAVEL ORDER RECOMMENDATION
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_travel_order.recommendation}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_travel_order.progress_to_recommendation"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_travel_order.to_recommendation_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center" v-if="vm_travel_order.for_approval == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR APPROVAL
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('eforms/travel_order/masterfile') . '?status=recommend_approved' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        PENDING APPROVAL
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        TRAVEL ORDER APPROVAL
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_travel_order.for_approval}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_travel_order.progress_to_approval"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{ vm_travel_order.to_approval_count }} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center" v-if="vm_travel_order.for_accomplishment == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR ACCOMPLISHMENT
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('eforms/travel_order/masterfile') . '?status=approved' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        ACCOMPLISHMENT
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        TRAVEL ORDER FOR ACCOMPLISHMENT
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_travel_order.for_accomplishment}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_travel_order.progress_to_accomplishment"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{ vm_travel_order.to_accomplishment_count }} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (isset($accountability_module) && $accountability_module): ?>
+                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                    <div class="m-portlet m-portlet--head-sm ">
+                                        <div class="m-portlet__head">
+                                            <div class="m-portlet__head-caption">
+                                                <div class="m-portlet__head-title">
+                                                    <span class="m-portlet__head-icon">
+                                                        <i class="fa fa-book"></i>
+                                                    </span>
+                                                    <h4 class="m-portlet__head-text">ACCOUNTABILITY</h4>
+                                                </div>
+                                            </div>
+                                            <div class="m-portlet__head-tools">
+                                                <a href="<?= base_url("eforms/accountability/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
+                                            </div>
+                                        </div>
+                                        <div class="m-portlet__body m-portlet__body--no-padding" id="accountability">
+                                            <div class="m-widget1" v-if="!vm_acct.show">
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center">
+                                                        <div class="col">
+                                                            <button class="btn w-100 btn-brand" id="showACCT" @click="getAccountability()">
+                                                                <span style="font-size: 10px !important; color: white; color: white;">
+                                                                    SHOW DATA
+                                                                </span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="m-widget1" style="max-height: 600px; overflow-y: auto;" v-else>
+                                                <div class="m-widget1__item" style="background: none;">
+                                                    <div class="row align-items-center" v-if="vm_acct.acct_note == null || vm_acct.acct_note == 0 || vm_acct.acct_note == ''">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR ACCTG NOTE
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <div class="col text-center">
+                                                            <h3 class="m-widget1__title">
+                                                                ACCOUNTING NOTES
+                                                            </h3>
+                                                        </div>
+
+                                                        <div v-for="(companyData, companyName) in vm_acct.acct_note" :key="companyName" v-if="companyData.accountability_acct_note_count > 0" class="company-section">
+                                                            <a :href="`${baseUrl('eforms/accountability/masterfile')}?status=Pending_Accounting_Notes&company=${companyData.company}`">
+                                                                <div>
+                                                                    <div class="row m-row--no-padding align-items-center">
+                                                                        <div class="col">
+                                                                            <h3 class="m-widget1__title">
+                                                                                {{ companyName }}
+                                                                            </h3>
+                                                                            <span class="m-widget1__desc">
+                                                                                ACCOUNTABILITY FOR ACCTG. NOTES
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="col m--align-right">
+                                                                            <span class="m-widget1__number m--font-brand">
+                                                                                {{ companyData.acct_note }}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="progress m-progress--sm" v-html="companyData.progress_accountability_acct_note"></div>
+                                                                    <span class="m--font-bolder m--font-metal">
+                                                                        {{ companyData.accountability_acct_note_count }} %
+                                                                    </span>
+                                                                </div>
+                                                            </a>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                                <div class="m-widget1__item" style="background: none;">
+                                                    <div class="row align-items-center" v-if="vm_acct.hr_note == null || vm_acct.hr_note == 0 || vm_acct.hr_note == ''">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR HR NOTE
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <div class="col text-center">
+                                                            <h3 class="m-widget1__title">
+                                                                PENDING HR NOTES
+                                                            </h3>
+                                                        </div>
+                                                        <div v-for="(companyData, companyName) in vm_acct.hr_note" :key="companyName" v-if="companyData.accountability_hr_note_count > 0" class="company-section">
+                                                            <a :href="`${baseUrl('eforms/accountability/masterfile')}?status=Pending_Payroll_Notes&?company=${companyData.company}`">
+                                                                <div>
+                                                                    <div class="row m-row--no-padding align-items-center">
+                                                                        <div class="col">
+                                                                            <h3 class="m-widget1__title">
+                                                                                {{ companyName }}
+                                                                            </h3>
+                                                                            <span class="m-widget1__desc">
+                                                                                ACCOUNTABILITY FOR HR NOTES
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="col m--align-right">
+                                                                            <span class="m-widget1__number m--font-brand">
+                                                                                {{ companyData.hr_note }}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="progress m-progress--sm" v-html="companyData.progress_accountability_hr_note"></div>
+                                                                    <span class="m--font-bolder m--font-metal">
+                                                                        {{ companyData.accountability_hr_note_count }} %
+                                                                    </span>
+                                                                </div>
                                                             </a>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php if (isset($ship_module) && $ship_module): ?>
-                                        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
-                                            <div class="m-portlet m-portlet--head-sm ">
-                                                <div class="m-portlet__head">
-                                                    <div class="m-portlet__head-caption">
-                                                        <div class="m-portlet__head-title">
-                                                            <span class="m-portlet__head-icon">
-                                                                <i class="fa fa-truck"></i>
-                                                            </span>
-                                                            <h4 class="m-portlet__head-text">SHIPPING ADVICE</h4>
+                                                <div class="m-widget1__item" style="background: none;">
+                                                    <div class="row align-items-center" v-if="vm_acct.acct_release == 0 || vm_acct.acct_release == null || vm_acct.acct_release == ''">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR RELEASING
+                                                            </h3>
                                                         </div>
                                                     </div>
-                                                    <div class="m-portlet__head-tools">
-                                                        <a href="<?= base_url("eforms/shipping/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
-                                                    </div>
-                                                </div>
-                                                <div class="m-portlet__body m-portlet__body--no-padding" id="shipping">
-                                                    <div class="m-widget1" v-if="!vm_shipping.show">
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center">
-                                                                <div class="col">
-                                                                    <button class="btn w-100 btn-brand" id="showSA" @click="getShipping()">
-                                                                        <span style="font-size: 10px !important; color: white; color: white;">
-                                                                            SHOW DATA
-                                                                        </span>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
+                                                    <div v-else>
+                                                        <div class="col text-center">
+                                                            <h3 class="m-widget1__title">
+                                                                FOR RELEASING
+                                                            </h3>
                                                         </div>
-                                                    </div>
-                                                    <div class="m-widget1" v-else>
-                                                        <div class="m-widget1__item">
-                                                            <div class="row align-items-center" v-if="vm_shipping.for_approval == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR APPROVAL
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('eforms/shipping/masterfile') . '?status=pending' ?>">
+
+                                                        <div v-for="(companyData, companyName) in vm_acct.acct_release" :key="companyName" v-if="companyData.accountability_releasing_count > 0" class="company-section">
+                                                            <a :href="`${baseUrl('eforms/accountability/masterfile')}?status=For_Releasing&?company=${companyData.company}`">
+                                                                <div>
                                                                     <div class="row m-row--no-padding align-items-center">
                                                                         <div class="col">
                                                                             <h3 class="m-widget1__title">
-                                                                                PENDING APPROVAL
+                                                                                {{companyName}}
                                                                             </h3>
                                                                             <span class="m-widget1__desc">
-                                                                                SHIPPING ADVICE FOR APPROVAL
+                                                                                ACCOUNTABILITY FOR RELEASING
                                                                             </span>
                                                                         </div>
                                                                         <div class="col m--align-right">
                                                                             <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_shipping.for_approval}}
+                                                                                {{ companyData.acct_release }}
                                                                             </span>
                                                                         </div>
                                                                     </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_shipping.progress_sa_pending"></div>
+                                                                    <div class="progress m-progress--sm" v-html="companyData.progress_accountability_releasing"></div>
                                                                     <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_shipping.pending_count}} %
+                                                                        {{ companyData.accountability_releasing_count }} %
                                                                     </span>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="m-widget1__item" v-if="vm_shipping.sa_receive_priv">
-                                                            <div class="row align-items-center" v-if="vm_shipping.receive == 0">
-                                                                <div class="col">
-                                                                    <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
-                                                                        NO PENDING FOR RECEIVING
-                                                                    </h3>
                                                                 </div>
-                                                            </div>
-                                                            <div v-else>
-                                                                <a href="<?= base_url('eforms/shipping/masterfile') . '?status=approved' ?>">
-                                                                    <div class="row m-row--no-padding align-items-center">
-                                                                        <div class="col">
-                                                                            <h3 class="m-widget1__title">
-                                                                                RECEIVE
-                                                                            </h3>
-                                                                            <span class="m-widget1__desc">
-                                                                                SHIPPING ADVICE TO RECEIVE
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col m--align-right">
-                                                                            <span class="m-widget1__number m--font-brand">
-                                                                                {{vm_shipping.receive}}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="progress m-progress--sm" v-html="vm_shipping.progress_sa_receive"></div>
-                                                                    <span class="m--font-bolder m--font-metal">
-                                                                        {{vm_shipping.receive_count}} %
-                                                                    </span>
-                                                                </a>
-                                                            </div>
+                                                            </a>
                                                         </div>
+
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    <?php endif; ?>
+                                    </div>
                                 </div>
-                            </div>
+                            <?php endif; ?>
+                            <?php if (isset($borrowing_module) && $borrowing_module): ?>
+                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                    <div class="m-portlet m-portlet--head-sm ">
+                                        <div class="m-portlet__head">
+                                            <div class="m-portlet__head-caption">
+                                                <div class="m-portlet__head-title">
+                                                    <span class="m-portlet__head-icon">
+                                                        <i class="fa fa-handshake-o"></i>
+                                                    </span>
+                                                    <h4 class="m-portlet__head-text">BORROWING</h4>
+                                                </div>
+                                            </div>
+                                            <div class="m-portlet__head-tools">
+                                                <a href="<?= base_url("eforms/borrowing/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
+                                            </div>
+                                        </div>
+                                        <div class="m-portlet__body m-portlet__body--no-padding" id="borrowing">
+                                            <div class="m-widget1" v-if="!vm_borrowing.show">
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center">
+                                                        <div class="col">
+                                                            <button class="btn w-100 btn-brand" id="showBORR" @click="getBorrowing()">
+                                                                <span style="font-size: 10px !important; color: white; color: white;">
+                                                                    SHOW DATA
+                                                                </span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="m-widget1" v-else>
+                                                <div class="m-widget1__item" v-if="vm_borrowing.approval_priv">
+                                                    <div class="row align-items-center" v-if="vm_borrowing.for_approval == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR APPROVAL
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('eforms/accountability/masterfile') . '?status=pending' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        PENDING APPROVAL
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        BORROWING FORM FOR APPROVAL
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_borrowing.for_approval}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_borrowing.progress_borr_approval"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_borrowing.borr_approval_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="m-widget1__item" v-if="vm_borrowing.acct_release_priv">
+                                                    <div class="row align-items-center" v-if="vm_borrowing.acct_release == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR RELEASING
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('eforms/accountability/masterfile') . '?status=approved' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        RELEASING
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        BORROWING FORM FOR RELEASING
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_borrowing.acct_release}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_borrowing.progress_borr_releasing"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_borrowing.borr_releasing_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="m-widget1__item" v-if="vm_borrowing.acct_return_priv">
+                                                    <div class="row align-items-center" v-if="vm_borrowing.acct_return == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO UNRETURNED BORROWING
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('eforms/borrowing/masterfile') ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        UNRETURNED BORROWING
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        FOR RETURN BORROWING
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_borrowing.acct_return}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_borrowing.progress_borr_return"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_borrowing.borr_return_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (isset($tr_module) && $tr_module): ?>
+                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                    <div class="m-portlet m-portlet--head-sm ">
+                                        <div class="m-portlet__head">
+                                            <div class="m-portlet__head-caption">
+                                                <div class="m-portlet__head-title">
+                                                    <span class="m-portlet__head-icon">
+                                                        <i class="fa fa-file-text"></i>
+                                                    </span>
+                                                    <h4 class="m-portlet__head-text">TRANSMITTAL</h4>
+                                                </div>
+                                            </div>
+                                            <div class="m-portlet__head-tools">
+                                                <a href="<?= base_url("eforms/transmittal/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
+                                            </div>
+                                        </div>
+                                        <div class="m-portlet__body m-portlet__body--no-padding" id="transmittal">
+                                            <div class="m-widget1" v-if="!vm_transmittal.show">
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center">
+                                                        <div class="col">
+                                                            <button class="btn w-100 btn-brand" id="showTRANS" @click="getTransmittal()">
+                                                                <span style="font-size: 10px !important; color: white; color: white;">
+                                                                    SHOW DATA
+                                                                </span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="m-widget1" v-else>
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center" v-if="vm_transmittal.for_approval == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING TRANSMITTAL FOR APPROVAL
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('eforms/transmittal/masterfile') . '?status=pending' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        PENDING APPROVAL
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        TRANSMITTAL FOR APPROVAL
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_transmittal.for_approval}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_transmittal.progress_tr">
+                                                            </div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_transmittal.pending_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="m-widget1__item" v-if="vm_transmittal.tr_receive_priv == true">
+                                                    <a href="<?= base_url('eforms/transmittal/masterfile') . '?status=approved' ?>">
+                                                        <div class="row m-row--no-padding align-items-center">
+                                                            <div class="col">
+                                                                <h3 class="m-widget1__title">
+                                                                    RECEIVE
+                                                                </h3>
+                                                                <span class="m-widget1__desc">
+                                                                    TRANSMITTAL TO RECEIVE
+                                                                </span>
+                                                            </div>
+                                                            <div class="col m--align-right">
+                                                                <span class="m-widget1__number m--font-brand">
+                                                                    {{vm_transmittal.receive}}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="progress m-progress--sm" v-html="vm_transmittal.progress_tr_rec"></div>
+                                                        <span class="m--font-bolder m--font-metal">
+                                                            {{vm_transmittal.receive_count}} %
+                                                        </span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (isset($ship_module) && $ship_module): ?>
+                                <div class="col-xs-12 col-sm-12 col-lg-3 mb-4">
+                                    <div class="m-portlet m-portlet--head-sm ">
+                                        <div class="m-portlet__head">
+                                            <div class="m-portlet__head-caption">
+                                                <div class="m-portlet__head-title">
+                                                    <span class="m-portlet__head-icon">
+                                                        <i class="fa fa-truck"></i>
+                                                    </span>
+                                                    <h4 class="m-portlet__head-text">SHIPPING ADVICE</h4>
+                                                </div>
+                                            </div>
+                                            <div class="m-portlet__head-tools">
+                                                <a href="<?= base_url("eforms/shipping/masterfile") ?>" class="btn btn-brand btn-sm m-btn m-btn--icon btn-lg m-btn--icon-only" style="float: right;"><i class="fa fa-arrow-circle-right"></i></a>
+                                            </div>
+                                        </div>
+                                        <div class="m-portlet__body m-portlet__body--no-padding" id="shipping">
+                                            <div class="m-widget1" v-if="!vm_shipping.show">
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center">
+                                                        <div class="col">
+                                                            <button class="btn w-100 btn-brand" id="showSA" @click="getShipping()">
+                                                                <span style="font-size: 10px !important; color: white; color: white;">
+                                                                    SHOW DATA
+                                                                </span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="m-widget1" v-else>
+                                                <div class="m-widget1__item">
+                                                    <div class="row align-items-center" v-if="vm_shipping.for_approval == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR APPROVAL
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('eforms/shipping/masterfile') . '?status=pending' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        PENDING APPROVAL
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        SHIPPING ADVICE FOR APPROVAL
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_shipping.for_approval}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_shipping.progress_sa_pending"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_shipping.pending_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="m-widget1__item" v-if="vm_shipping.sa_receive_priv">
+                                                    <div class="row align-items-center" v-if="vm_shipping.receive == 0">
+                                                        <div class="col">
+                                                            <h3 class="m-widget1__title text-muted" style="font-size: 10px !important;">
+                                                                NO PENDING FOR RECEIVING
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else>
+                                                        <a href="<?= base_url('eforms/shipping/masterfile') . '?status=approved' ?>">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col">
+                                                                    <h3 class="m-widget1__title">
+                                                                        RECEIVE
+                                                                    </h3>
+                                                                    <span class="m-widget1__desc">
+                                                                        SHIPPING ADVICE TO RECEIVE
+                                                                    </span>
+                                                                </div>
+                                                                <div class="col m--align-right">
+                                                                    <span class="m-widget1__number m--font-brand">
+                                                                        {{vm_shipping.receive}}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="progress m-progress--sm" v-html="vm_shipping.progress_sa_receive"></div>
+                                                            <span class="m--font-bolder m--font-metal">
+                                                                {{vm_shipping.receive_count}} %
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
