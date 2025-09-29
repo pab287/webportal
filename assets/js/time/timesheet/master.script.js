@@ -660,7 +660,7 @@ $(document)
                                     ctrNullData++;
                                 }
                             });
-                            if (hasPunches && nullData && propChecker.length == ctrNullData) { regenerateRow = true; }
+                            if (hasPunches && nullData && propChecker.length == ctrNullData && pendingAdjustment === false) { regenerateRow = true; }
 
                             if (verified === 1 || isMonthlyPaid) {
                                 return `<i class="fa fa-check m--font-success m--regular-font-size-lg3"
@@ -684,7 +684,7 @@ $(document)
                                         id="cb${row.id}" class="cb-emp-${row._emp_id}"><span></span>
                                 </label>`;
 
-                                if (regenerateRow === true || ctrAttendanceEntries == 1) {
+                                if (regenerateRow === true || (pendingAdjustment === false && ctrAttendanceEntries == 1)) {
                                     tempHtml = `<i class="fa fa-refresh m--font-warning m--regular-font-size-lg3"
                                         data-toggle="m-tooltip" data-original-title="Re-generate Row"
                                         data-skin="dark"
@@ -722,9 +722,9 @@ $(document)
                             const icon_list = ["fa-car", "fa-calendar", "fa-clock-o"];
 
                             if (typeof row.datelist !== "undefined") {
-                                var i1 = row.datelist[0] + '', i2 = row.datelist[1] + '', i3 = row.datelist[2] + '';
-                                var f1 = "", f2 = "", f3 = "";
-                                var t1 = "", t2 = "", t3 = "";
+                                const i1 = row.datelist[0] + '', i2 = row.datelist[1] + '', i3 = row.datelist[2] + '';
+                                let f1 = "", f2 = "", f3 = "";
+                                let t1 = "", t2 = "", t3 = "";
                                 if (i1.split(",")[1] != "0") {
                                     if (i1.split(",")[0] == "TO") { f1 = icon_list[0]; t1 = "TO"; }
                                     else if (i1.split(",")[0] == "LOA") { f1 = icon_list[1]; t1 = "LOA"; }
@@ -890,7 +890,6 @@ $(document)
                         data: 'total_time_rendered',
                         className: 'text-center',
                         render: function (data, type, row, meta) {
-                            let tempHtml = ``;
                             let attCount = 0;
                             const arrInOut = ['am_in', 'am_out', 'pm_in', 'pm_out', 'total_accredited_ot_hrs'];
                             $.each(arrInOut, function (ii, vv) {
@@ -904,8 +903,22 @@ $(document)
                             const tempData = (typeof data !== "undefined" && data !== null) ? parseFloat(data) : 0;
                             const focusClass = (tempLate > 0 || tempUt > 0) ? 'm--font-boldest2 m--font-danger' : 'm--font-bolder';
                             const hrs = (tempData / 60).toFixed(2);
-                            tempHtml = data ? `<span class="${focusClass}" style="cursor: pointer;" data-toggle="m-tooltip" data-html="true"
-                                                 data-original-title="<strong>${hrs}</strong> hours" data-delay='{"show": 150}'>${hrs}</span>` : ``;
+
+                            const totalNdiffMinutes = row.total_ndiff_rendered ? row.total_ndiff_rendered : 0;
+                            const totalNdiffHours = (totalNdiffMinutes / 60).toFixed(2);
+                            const tooltip = parseFloat(totalNdiffHours) > 0 ? `<div>
+                                <div class='text-left'>
+                                    <span>Reg. Hrs.: </span>
+                                    <span class='m--font-boldest'>${hrs}</span>
+                                </div>
+                                <div class='text-left'>
+                                    <span>Night Diff. Hrs.: </span>
+                                    <span class='m--font-boldest'>${totalNdiffHours}</span>
+                                </div>
+                            </div>` : `<strong>${hrs}</strong> hours`;
+
+                            let tempHtml = data ? `<span class="${focusClass}" style="cursor: pointer;" data-toggle="m-tooltip" data-html="true"
+                                                 data-original-title="${tooltip}" data-delay='{"show": 150}'>${hrs}</span>` : ``;
                             if (attCount > 0 && parseInt(row.verified) == 0 && tempHtml == '') { tempHtml = '0.00'; }
                             if (parseInt(row.verified) == 1 && tempHtml == '') { tempHtml = '0.00'; }
                             return tempHtml;
@@ -915,8 +928,8 @@ $(document)
                         width: '8%',
                         data: 'total_accredited_ot_hrs',
                         className: 'text-center',
-                        render: function (data, type, row, meta) {
-                            const hasShift = parseInt(row.has_shift) == 1 && parseFloat(row.total_time_rendered) > 0 ? true : false;
+                        render: function (data, _type, row, _meta) {
+                            const hasShift = parseInt(row.has_shift) == 1 && parseFloat(row.total_time_rendered) > 0;
                             const totalOTHrs = data && row.id ? parseFloat(data) + parseFloat(row.total_accredited_ndiff_ot_hrs) : 0;
                             const diff = Math.ceil(totalOTHrs) - Math.floor(totalOTHrs);
                             const totalOTHrsFormmatted = parseFloat(diff) >= 1 ? totalOTHrs.toFixed(2) : totalOTHrs;
@@ -928,7 +941,7 @@ $(document)
                             const nDiffOTHrs = data && row.id ? parseFloat(row.total_accredited_ndiff_ot_hrs) : 0;
                             const diffNDiffOTHrs = Math.ceil(nDiffOTHrs) - Math.floor(nDiffOTHrs);
                             const nDiffOTHrsFormmatted = parseFloat(diffNDiffOTHrs) >= 1 ? nDiffOTHrs.toFixed(2) : nDiffOTHrs;
-
+                            const hasShiftValue = hasShift === true ? '0' : '';
                             const tooltip = parseFloat(totalOTHrs) > 0 ? `<div>
                                 <div class='text-left'>
                                     <span>Reg. Hrs.: </span>
@@ -938,10 +951,10 @@ $(document)
                                     <span>Night Diff. Hrs.: </span>
                                     <span class='m--font-boldest'>${nDiffOTHrsFormmatted}</span>
                                 </div>
-                            </div>` : (hasShift === true) ? `0` : ``;
+                            </div>` : hasShiftValue;
 
                             return data ? `<span class="" style="cursor: pointer;" data-toggle="m-tooltip" data-html="true"
-                                                 data-original-title="${tooltip}" data-delay='{"show": 150}'>${totalOTHrsFormmatted}</span>` : (hasShift === true) ? `0` : ``;
+                                                 data-original-title="${tooltip}" data-delay='{"show": 150}'>${totalOTHrsFormmatted}</span>` : hasShiftValue;
                         }
                     },
                     {
@@ -955,8 +968,9 @@ $(document)
                         className: 'text-center',
                         render: function (data, type, row, meta) {
                             const allowPaidHoliday = row.allow_paid_holiday;
-                            const hasOvertime = typeof row.has_overtime !== "undefined" && parseInt(row.has_overtime) === 1 ? true : false;
-                            const scrub_status = parseInt(row.scrub_status);
+                            /*** const hasOvertime = typeof row.has_overtime !== "undefined" && parseInt(row.has_overtime) === 1 ? true : false;
+                            const scrub_status = parseInt(row.scrub_status); ***/
+                            const pendingAdjustment = row.has_pending_adjustment;
                             const widthAdjustment = parseInt(row.with_adjustment);
                             const id = row.id ? parseInt(row.id) : null;
 
@@ -970,23 +984,10 @@ $(document)
                             let hideTimeAdjustmentClass = false;
                             hideTimeAdjustmentClass = parseInt(row.verified) === 1;
 
-                            let template = ``;
-
-                            let hideOptions = '';
                             let undoVerification = ``,
                                 createTimeAdjustment = ``,
                                 regenerateRecord = ``,
                                 timeAdjustmentDetails = ``;
-
-                            if (!row.id && parseInt(row.has_LOA) <= 0 && (row.has_TO) <= 0) {
-                                hideOptions = 'm--hide';
-                            } else {
-                                if (parseInt(row.has_LOA) >= 1 && parseInt(row.has_whole_day_LOA) >= 1) {
-                                    hideOptions = 'm--hide';
-                                } else {
-                                    hideOptions = '';
-                                }
-                            }
 
                             let isHolidayAction = ``;
                             /*** if (allowPaidHoliday && hasOvertime == false) { ***/
@@ -1024,6 +1025,7 @@ $(document)
                                 hideTimeAdjustmentClass = true;
                             }
 
+                            let tempTemplate = ``;
                             if (row.is_posted === false) {
                                 if (hideTimeAdjustmentClass === false) {
                                     createTimeAdjustment = `<li class="m-nav__item create-time-adjustment-link ${hideTimeAdjustmentClass == true ? 'm--hide' : ''}">
@@ -1048,8 +1050,8 @@ $(document)
                                         </a>
                                     </li>`;
                                 }
-
-                                if (regenHiddenClass === false) {
+                                
+                                if (regenHiddenClass === false && pendingAdjustment === false) {
                                     regenerateRecord = `<li class="m-nav__item re-generate-button">
                                         <a href="javascript:void(0)" class="m-nav__link"
                                             onclick="confirmRegenerateRow('${row._date}', ${row._emp_id}, '${row.employee_name}', ${meta.row}, ${row.id})">
@@ -1071,7 +1073,7 @@ $(document)
                                     </li>`;
                                 }
 
-                                template = `
+                                tempTemplate = `
                                     <div class="m-dropdown m-dropdown--inline m-dropdown--align-right m-dropdown--large"
                                         data-dropdown-toggle="click" aria-expanded="true">
                                         <a href="#" class="m-dropdown__toggle btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill"
@@ -1108,7 +1110,7 @@ $(document)
                                     </div>`;
 
                             } else {
-                                template = `<a href="javascript:void(0)" 
+                                tempTemplate = `<a href="javascript:void(0)" 
                                     class="m-portlet__nav-link m-btn--icon m-btn--icon-only btn-sm m-btn--pill" 
                                     data-toggle="m-tooltip" data-original-title="More Details" data-skin="dark" data-delay="{&quot;show&quot;: 500}" 
                                     onclick="openMoreDetailsModal(${row.id}, ${row._emp_id}, '${row._date}')">
@@ -1116,7 +1118,7 @@ $(document)
                                 </a>`;
                             }
 
-                            return isMonthlyPaid === false ? template: ``;
+                            return isMonthlyPaid === false ? tempTemplate: ``;
                         }
                     }
                 ],
@@ -1155,22 +1157,45 @@ $(document)
                         if(arrEmpRecord.length > 0){
                             let _arrIds = [];
                             const ctr = arrEmpRecord.length;
-                            let tempHtml = `<ul class='mt-2'>`;
+                            let tempHtml = `<div class='row swal--custom-list'>`;
                             arrEmpRecord.forEach((row, _index) => {
-                                tempHtml += `<li class='m--font-bolder text-left ml-1'>${row.employee_name}</li>`;
+                                tempHtml += `<div class='col-6 col-md-6 col-lg-6 col-sm-12'><span class='m--font-bolder text-left ml-1'>${row.employee_name}</span></div>`;
                                 _arrIds.push(row.emp_id);
                             });
-                            tempHtml += `</ul>`;
+                            tempHtml += `</div>`;
                             Swal.fire({
                                 title: 'Default Shift Record/s?',
                                 html: `A TOTAL OF <b>${ctr}</b> DEFAULT SHIFT RECORD/s FOUND!<br>${tempHtml}<br>WOULD YOU LIKE TO GENERATE TIMESHEET RECORD/s?`,
                                 icon: 'question',
+                                width: '800px',
+                                showCloseButton: true,
                                 showCancelButton: true,
                                 confirmButtonColor: '#3085d6',
                                 cancelButtonColor: '#d33',
-                                confirmButtonText: 'Yes, Generate it!'
+                                confirmButtonText: 'Yes, Generate it!',
+                                timer: 10000,
+                                timerProgressBar: true,
+                                didOpen: () => {
+                                    setTimeout(() => {
+                                        const popup = Swal.getPopup();
+                                        popup.classList.add('swal2-fade-out');
+                                    }, 9500);
+
+                                    const confirmBtn = Swal.getConfirmButton();
+                                    confirmBtn.addEventListener('click', () => {
+                                    const popup = Swal.getPopup();
+                                    popup.classList.add('swal2-fade-out');
+                                        setTimeout(Swal.close(), 500);
+                                    });
+                                }, willClose: () => {
+                                    return new Promise((resolve) => {
+                                    setTimeout(resolve, 500);
+                                    });
+                                }
                             }).then((result) => {
-                                if (result.isConfirmed) {
+                                if (result.dismiss === Swal.DismissReason.timer) {
+                                    toastr.info("Default shift record/s automatic generation has closed.", "Default Shift Record/s");
+                                } else if (result.isConfirmed) {
                                     $.ajax({
                                         url: siteUrl("gcctime/timesheet/generate_default_timesheet"),
                                         type: "POST",
@@ -2428,7 +2453,7 @@ function initCreateTimeAdjustmentModal(response, id, employee_id, employee_name,
 
     $('#has-shift').val(has_shift);
 
-    if (hasOvertimeRequest == false) {
+    if (hasOvertimeRequest === false) {
         createTimeAdjustmentModal.find("#temp_overtime_in").text("");
         createTimeAdjustmentModal.find("#temp_overtime_out").text("");
         createTimeAdjustmentModal.find("#overtime_in").val("");
@@ -2744,11 +2769,17 @@ function openTimeAdjustmentListModal(el, employee_id) {
         type: 'GET',
         dataType: 'JSON',
         success: function (response) {
+            const { data } = response;
             $('.modal-dialog', modalContainer).css('max-width', '80%');
             $('.modal-content', modalContainer).empty().append(response.modal);
+            const dtTempTable = dtTimesheetAdjustment();
+            dtTempTable.clear().rows.add(data).draw(false);
+            dtTimeAdjustmentsListEvent(dtTempTable);
+            setTimeout(() => {
+                modalContainer.modal('show');
+            }, 750);
         }
     });
-    modalContainer.modal('show');
 }
 
 function openTimeAdjustmentListModalByVarId(timesheet_id, employee_id) {
@@ -2757,14 +2788,264 @@ function openTimeAdjustmentListModalByVarId(timesheet_id, employee_id) {
         type: 'GET',
         dataType: 'JSON',
         success: function (response) {
+            const { data } = response;
             $('.modal-dialog', modalContainer).css('max-width', '70%');
             $('.modal-content', modalContainer).empty().append(response.modal);
+            const dtTempTable = dtTimesheetAdjustment();
+            dtTempTable.clear().rows.add(data).draw(false);
+            dtTimeAdjustmentsListEvent(dtTempTable);
+            setTimeout(() => {
+                modalContainer.modal('show');
+            }, 750);
         }
     });
-    modalContainer.modal('show');
 }
 
-modalContainer.on('shown.bs.modal', function (e) {
+const dtTimeAdjustmentsListEvent = function (dtTable) {
+    if(typeof dtTable !== 'undefined'){
+        $('#tbl-time-adjustments-list').on('click', 'tbody tr', function (e) {
+            const row = dtTable.row($(this));
+            const data = row.data();
+            openTimeAdjustmentDetailsModal(data.time_adjustment_id);
+        });
+    }
+}
+
+const dtTimesheetAdjustment = function(){
+    return $('#tbl-time-adjustments-list').DataTable({
+        dom: '<\'row\'<\'col-12\' rt>><\'row\'<\'col-6\' l><\'col-6\' p>>',
+        serverSide: false,
+        destroy: true,
+        columns: [{
+                width: '8%',
+                data: 'am_in',
+                className: 'text-center',
+                render: function (data, type, row) {
+                    let style = 'm--font-bolder text-muted';
+                    let tooltipText = '';
+
+                    if (parseInt(row.am_in_is_requested) === 1) {
+                        style = 'm--font-boldest2 m--font-danger';
+                        tooltipText = row.am_in_prev ? `Previous: ${moment(row.am_in_prev, 'HH:mm:ss').format('hh:mm A')}` : 'No previous value.';
+                    }
+
+                    return data && data !== "empty" ? `<span data-toggle="m-tooltip" data-original-title="${tooltipText}" data-skin="dark"
+                        class="${style} time-records">${moment(data, 'HH:mm:ss').format('hh:mm A')}</span>` : '--:--';
+                }
+            }, {
+                width: '8%',
+                data: 'am_out',
+                className: 'text-center',
+                render: function (data, type, row) {
+                    let style = 'm--font-bolder text-muted';
+                    let tooltipText = '';
+
+                    if (parseInt(row.am_out_is_requested) === 1) {
+                        style = 'm--font-boldest2 m--font-danger';
+                        tooltipText = row.am_out_prev ? `Previous: ${moment(row.am_out_prev, 'HH:mm:ss').format('hh:mm A')}` : 'No previous value.';
+                    }
+
+                    return data && data !== "empty" ? `<span data-toggle="m-tooltip" data-original-title="${tooltipText}" data-skin="dark"
+                                    class="${style} time-records">${moment(data, 'HH:mm:ss').format('hh:mm A')}</span>` : '--:--';
+                }
+            }, {
+                width: '8%',
+                data: 'pm_in',
+                className: 'text-center',
+                render: function (data, type, row) {
+                    let style = 'm--font-bolder text-muted';
+                    let tooltipText = '';
+
+                    if (parseInt(row.pm_in_is_requested) === 1) {
+                        style = 'm--font-boldest2 m--font-danger';
+                        tooltipText = row.pm_in_prev ? `Previous: ${moment(row.pm_in_prev, 'HH:mm:ss').format('hh:mm A')}` : 'No previous value.';
+                    }
+
+                    return data && data !== "empty" ? `<span data-toggle="m-tooltip" data-original-title="${tooltipText}" data-skin="dark"
+                                    class="${style} time-records">${moment(data, 'HH:mm:ss').format('hh:mm A')}</span>` : '--:--';
+                }
+            }, {
+                width: '8%',
+                data: 'pm_out',
+                className: 'text-center',
+                render: function (data, type, row) {
+                    let style = 'm--font-bolder text-muted';
+                    let tooltipText = '';
+
+                    if (parseInt(row.pm_out_is_requested) === 1) {
+                        style = 'm--font-boldest2 m--font-danger';
+                        tooltipText = row.pm_out_prev ? `Previous: ${moment(row.pm_out_prev, 'HH:mm:ss').format('hh:mm A')}` : 'No previous value.';
+                    }
+
+                    return data && data !== "empty" ? `<span data-toggle="m-tooltip" data-original-title="${tooltipText}" data-skin="dark"
+                                    class="${style} time-records">${moment(data, 'HH:mm:ss').format('hh:mm A')}</span>` : '--:--';
+                }
+            }, {
+                width: '8%',
+                data: 'am_start',
+                className: 'text-center',
+                render: function (data, type, row) {
+                    const style = parseInt(row.has_shift) === 0 ? 'm--font-boldest2 m--font-danger': 'm--font-bolder text-muted';
+                    if ((data && data === null) || !data) {
+                        return `<span class="text-muted">N/A</span>`;
+                    }
+
+                    return data ? `<span class="${style}">${moment(data, 'HH:mm:ss').format('hh:mm A')}</span>` : '';
+                }
+            }, {
+                width: '8%',
+                data: 'am_end',
+                className: 'text-center',
+                render: function (data, type, row) {
+                    const style = parseInt(row.has_shift) === 0 ? 'm--font-boldest2 m--font-danger': 'm--font-bolder text-muted';
+                    if ((data && data === null) || !data) {
+                        return `<span class="text-muted">N/A</span>`;
+                    }
+
+                    return data ? `<span class="${style}">${moment(data, 'HH:mm:ss').format('hh:mm A')}</span>` : '';
+                }
+            }, {
+                width: '8%',
+                data: 'pm_start',
+                className: 'text-center',
+                render: function (data, type, row) {
+                    const style = parseInt(row.has_shift) === 0 ? 'm--font-boldest2 m--font-danger': 'm--font-bolder text-muted';
+                    if ((data && data === null) || !data) {
+                        return `<span class="text-muted">N/A</span>`;
+                    }
+
+                    return data ? `<span class="${style}">${moment(data, 'HH:mm:ss').format('hh:mm A')}</span>` : '';
+                }
+            }, {
+                width: '8%',
+                data: 'pm_end',
+                className: 'text-center',
+                render: function (data, type, row) {
+                    const style = parseInt(row.has_shift) === 0 ? 'm--font-boldest2 m--font-danger': 'm--font-bolder text-muted';
+                    if ((data && data === null) || !data) {
+                        return `<span class="text-muted">N/A</span>`;
+                    }
+
+                    return data ? `<span class="${style}">${moment(data, 'HH:mm:ss').format('hh:mm A')}</span>` : '';
+                }
+            }, {
+                width: '7%', // LATE
+                data: null,
+                className: 'text-center',
+                render: function (data, type, row) {
+                    let total_late = 0;
+                    total_late = calc_late(row);
+                    return `<span class="${total_late > 0 ? 'm--font-boldest' : 'm--font-bolder'}">${total_late}</span>`;
+                }
+            }, {
+                width: '7%',
+                data: null,
+                className: 'text-center',
+                render: function (data, type, row) {
+                    let total_ut = 0;
+                    total_ut = calc_ut(row);
+                    return `<span class="${total_ut > 0 ? 'm--font-boldest' : 'm--font-bolder'}">${total_ut}</span>`;
+                }
+            }, {
+                width: '7%',
+                data: null,
+                className: 'text-center',
+                render: function (data, type, row) {
+                    const total = calc_reghr(row);
+
+                    return `<div class="m--font-boldest">
+                                ${total.split(",")[0]}
+                            </div>
+                            <div class="m--regular-font-size-sm1 text-muted">
+                                <span>${total.split(",")[1]}</span>
+                                <span style="text-transform: none;">mins.</span>
+                            </div>`;
+                }
+            }, {
+                width: '7%',
+                data: 'ot_adj_value',
+                className: 'text-center',
+                render: function (data, type, row, meta) {
+                    /*** let originalRegOTHrs = parseFloat(row.ot_original_value) || 0;
+                    originalRegOTHrs = formatDecimal(originalRegOTHrs, 2);
+                    let originalNDiffOTHrs = parseFloat(row.ot_ndiff_original_value) || 0;
+                    originalNDiffOTHrs = formatDecimal(originalNDiffOTHrs, 2);
+
+                    let originalTotalOTHrs = parseFloat(originalRegOTHrs) + parseFloat(originalNDiffOTHrs);
+                    originalTotalOTHrs = formatDecimal(originalTotalOTHrs, 2);
+                    const originalTotalOTHrs_inMinutes = formatDecimal(originalTotalOTHrs * 60, 2); ***/
+
+                    let adjRegOTHrs = parseFloat(row.ot_adj_value) || 0;
+                    adjRegOTHrs = formatDecimal(adjRegOTHrs, 2);
+                    let adjNDiffOTHrs = parseFloat(row.ot_ndiff_adj_value) || 0;
+                    adjNDiffOTHrs = formatDecimal(adjNDiffOTHrs, 2);
+
+                    let adjTotalOTHrs = parseFloat(adjRegOTHrs) + parseFloat(adjNDiffOTHrs);
+                    adjTotalOTHrs = formatDecimal(adjTotalOTHrs, 2);
+                    const adjTotalOTHrs_inMinutes = formatDecimal(adjTotalOTHrs * 60, 2);
+
+                    let tooltipTemplate = ``;
+                    const highlightClass = row.has_overtime_request ? `m--font-danger` : ``;
+
+                    tooltipTemplate += `<div class='text-left'>
+                                            <div>
+                                                <span>Reg.Hrs: </span>
+                                                <span class='m--font-boldest'>${adjRegOTHrs}</span>
+                                            </div>
+                                            <div>
+                                                <span>Night Diff. Hrs: </span>
+                                                <span class='m--font-boldest'>${adjNDiffOTHrs}</span>
+                                            </div>
+                                        </div>`;
+
+                    return `<div data-toggle="m-tooltip"
+                            data-html="true"
+                            data-original-title="${parseFloat(adjTotalOTHrs) > 0 ? tooltipTemplate : ``}"
+                            style="cursor: pointer;">
+                        <div class="m--font-boldest ${highlightClass}">
+                                ${adjTotalOTHrs}
+                        </div>
+                        <div class="m--regular-font-size-sm1 text-muted ${highlightClass}"
+                                style="text-transform: none;">
+                            ${adjTotalOTHrs_inMinutes} mins.
+                        </div>
+                    </div>`;
+                }
+            }, {
+                data: 'status',
+                className: 'text-center',
+                render: function (data, type, row, meta) {
+                    let status = null;
+                    switch (parseInt(data)) {
+                        case 1:
+                            status = { class: 'm-badge--success', text: 'Approved' };
+                            break;
+                        case 2:
+                            status = { class: 'm-badge--danger', text: 'Declined' };
+                            break;
+                        case 3:
+                            status = { class: 'm-badge--metal', text: 'Cancelled' };
+                            break;
+                        default:
+                            status = { class: 'm-badge--warning', text: 'Pending' };
+                            break;
+                    }
+
+                    return `<span class="m-badge m-badge--wide m--font-boldest ${status.class}">${status.text}</span>`;
+                }
+            }
+        ], columnDefs: [{
+            targets: "_all",
+            defaultContent: "",
+        }],
+        ordering: false,
+        pageLength: 15,
+        autoWidth: false,
+        lengthMenu: [[15, 25, 50, 100, 200, -1], [15, 25, 50, 100, 200, 'All']],
+    });
+}
+
+/*** modalContainer.on('shown.bs.modal', function (e) {
     if ($('#tbl-time-adjustments-list', this).length >= 1) {
         const employee_id = $('#employee_id', this).val();
         const timesheet_id = $('#timesheet_id', this).val();
@@ -3038,16 +3319,8 @@ modalContainer.on('shown.bs.modal', function (e) {
             autoWidth: false,
             lengthMenu: [[15, 25, 50, 100, 200, -1], [15, 25, 50, 100, 200, 'All']],
         });
-
-        $('#tbl-time-adjustments-list')
-            .on('click', 'tbody tr', function (e) {
-                const row = dtTimeAdjustmentsList.row($(this));
-                const data = row.data();
-                openTimeAdjustmentDetailsModal(data.time_adjustment_id);
-            });
     }
-});
-
+}); ***/
 
 function calc_late(row) {
     let am_late = 0;
@@ -3400,11 +3673,11 @@ function generateAttendanceShiftRecord(row) {
         let hasNextDay = false;
 
         if ((row.am_in || row.am_in !== null || row.am_in !== "empty") && (row.am_out || row.am_out !== null || row.am_out !== "empty")) {
-            var temp0 = moment(_date + " " + row.am_in);
-            var temp1 = moment(_date + " " + row.am_out);
+            const temp0 = moment(_date + " " + row.am_in, "YYYY-MM-DD HH:mm");
+            const temp1 = moment(_date + " " + row.am_out, "YYYY-MM-DD HH:mm");
 
             if (temp1.unix() < temp0.unix()) {
-                var tempDate = moment(_date).add(1, 'd').format("YYYY-MM-DD");
+                const tempDate = moment(_date).add(1, 'd').format("YYYY-MM-DD");
                 _tempDate0 = tempDate;
                 hasNextDay = true;
             }
@@ -3414,8 +3687,8 @@ function generateAttendanceShiftRecord(row) {
         am_out = row.am_out && row.am_out !== "empty" ? _tempDate0 + " " + row.am_out : null;
 
         if ((row.am_out || row.am_out !== null || row.am_out !== "empty") && (row.pm_in || row.pm_in !== null || row.pm_in !== "empty")) {
-            const temp0 = moment(_date + " " + row.am_out);
-            const temp1 = moment(_date + " " + row.pm_in);
+            const temp0 = moment(_date + " " + row.am_out, "YYYY-MM-DD HH:mm");
+            const temp1 = moment(_date + " " + row.pm_in, "YYYY-MM-DD HH:mm");
             if (temp1.unix() < temp0.unix() || hasNextDay) {
                 const tempDate = moment(_date).add(1, 'd').format("YYYY-MM-DD");
                 _tempDate1 = tempDate;
@@ -3427,8 +3700,8 @@ function generateAttendanceShiftRecord(row) {
         pm_in = row.pm_in && row.pm_in !== "empty" ? _tempDate1 + " " + row.pm_in : null;
 
         if ((row.pm_in || row.pm_in !== null || row.pm_in !== "empty") && (row.pm_out || row.pm_out !== null || row.pm_out !== "empty")) {
-            const temp0 = moment(_date + " " + row.pm_in);
-            const temp1 = moment(_date + " " + row.pm_out);
+            const temp0 = moment(_date + " " + row.pm_in, "YYYY-MM-DD HH:mm");
+            const temp1 = moment(_date + " " + row.pm_out, "YYYY-MM-DD HH:mm");
             if (temp1.unix() < temp0.unix() || hasNextDay) {
                 const tempDate = moment(_date).add(1, 'd').format("YYYY-MM-DD");
                 _tempDate2 = tempDate;
@@ -3449,8 +3722,8 @@ function generateAttendanceShiftRecord(row) {
         let am_end = !row.am_end || row.am_end == null ? null : _date + " " + row.am_end;
 
         if ((row.am_start || row.am_start !== null || row.am_start !== "empty") && (row.am_end || row.am_end !== null || row.am_end !== "empty")) {
-            const temp0 = moment(_date + " " + row.am_start);
-            const temp1 = moment(_date + " " + row.am_end);
+            const temp0 = moment(_date + " " + row.am_start, "YYYY-MM-DD HH:mm");
+            const temp1 = moment(_date + " " + row.am_end, "YYYY-MM-DD HH:mm");
 
             if (temp1.unix() < temp0.unix()) {
                 const tempDate = moment(_date).add(1, 'd').format("YYYY-MM-DD");
@@ -3462,8 +3735,8 @@ function generateAttendanceShiftRecord(row) {
         am_end = row.am_end && row.am_end !== "empty" && row.am_end !== null ? _temp_Date0 + " " + row.am_end : null;
 
         if ((row.am_end || row.am_end !== null || row.am_end !== "empty") && (row.pm_start || row.pm_start !== null || row.pm_start !== "empty")) {
-            const temp0 = moment(_date + " " + row.am_end);
-            const temp1 = moment(_date + " " + row.pm_start);
+            const temp0 = moment(_date + " " + row.am_end, "YYYY-MM-DD HH:mm");
+            const temp1 = moment(_date + " " + row.pm_start, "YYYY-MM-DD HH:mm");
             if (temp1.unix() < temp0.unix() || hasNextDayShift) {
                 const tempDate = moment(_date).add(1, 'd').format("YYYY-MM-DD");
                 _temp_Date1 = tempDate;
@@ -3474,8 +3747,8 @@ function generateAttendanceShiftRecord(row) {
         _temp_Date1 = _temp_Date1 !== _date ? _temp_Date1 : _date;
         let pm_start = row.pm_start && row.pm_start !== "empty" && row.pm_start !== null ? _temp_Date1 + " " + row.pm_start : null;
         if ((row.pm_start || row.pm_start !== null || row.pm_start !== "empty") && (row.pm_end || row.pm_end !== null || row.pm_end !== "empty")) {
-            var temp0 = moment(_date + " " + row.pm_start);
-            var temp1 = moment(_date + " " + row.pm_end);
+            var temp0 = moment(_date + " " + row.pm_start, "YYYY-MM-DD HH:mm");
+            var temp1 = moment(_date + " " + row.pm_end, "YYYY-MM-DD HH:mm");
 
             if (temp1.unix() < temp0.unix() || hasNextDayShift) {
                 var tempDate = moment(_date).add(1, 'd').format("YYYY-MM-DD");

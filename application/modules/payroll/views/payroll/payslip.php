@@ -41,18 +41,17 @@
                     <div class="row">
                         <div class="col-12 col-md-12 col-lg-12 col-xl-12">
                             <div class="table-responsive-sm">
-                                <table class="table table-bordered" id="table-payroll-payslip"
-                                    width="100%">
+                                <table class="table table-bordered" id="table-payroll-payslip" style="width: 100%">
                                     <thead>
                                     <tr>
-                                        <th class="no-sort">
+                                        <th scope="col" class="no-sort">
                                             <label class="m-checkbox m-checkbox--bold m-checkbox--state-brand table-cb">
                                                 <input type="checkbox" id="cb-select-all"><span></span>
                                             </label>
                                         </th>
-                                        <th>EMPLOYEE</th>
-                                        <th>RATE</th>
-                                        <th>
+                                        <th scope="col">EMPLOYEE</th>
+                                        <th scope="col">RATE</th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="DAYS"
@@ -60,15 +59,7 @@
                                                 DAYS
                                             </span>
                                         </th>
-                                        <!-- th>
-                                            <span data-toggle="m-tooltip"
-                                                data-placement="top"
-                                                data-original-title="PAY HOURS"
-                                                data-skin="dark">
-                                                HOURS
-                                            </span>
-                                        </th -->
-                                        <th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="BASIC PAY"
@@ -76,7 +67,7 @@
                                                 BASIC PAY
                                             </span>
                                         </th>
-                                        <th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="UNDERTIME"
@@ -84,7 +75,7 @@
                                                 UT
                                             </span>
                                         </th>
-                                        <th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="OVERTIME"
@@ -92,7 +83,7 @@
                                                 OT
                                             </span>
                                         </th>
-                                        <th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="OVERTIME NIGHT DIFFERENTIAL"
@@ -100,7 +91,7 @@
                                                 OT.ND
                                             </span>
                                         </th>
-                                        <th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="HOLIDAY"
@@ -108,7 +99,15 @@
                                                 HOL
                                             </span>
                                         </th>
-                                        <th>
+                                        <th scope="col">
+                                            <span data-toggle="m-tooltip"
+                                                data-placement="top"
+                                                data-original-title="REGULAR NIGHT DIFFERENTIAL"
+                                                data-skin="dark">
+                                                REG.ND
+                                            </span>
+                                        </th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="ADJUSTMENTS"
@@ -116,7 +115,7 @@
                                                 ADJUSTMENTS
                                             </span>
                                         </th>
-                                        <th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="ALLOWANCE"
@@ -124,7 +123,7 @@
                                                 ALLOWANCE
                                             </span>
                                         </th>
-                                        <th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="GROSS PAY"
@@ -132,8 +131,8 @@
                                                 GROSS PAY
                                             </span>
                                         </th>
-                                        <th>SSS</th>
-                                        <th>
+                                        <th scope="col">SSS</th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="SSS Provident"
@@ -141,7 +140,7 @@
                                                 SSS PROV
                                             </span>
                                         </th>
-                                        <th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="PHILHEALTH"
@@ -149,7 +148,7 @@
                                                 PHIC
                                             </span>
                                         </th>
-                                        <th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="PAG-IBIG"
@@ -157,8 +156,8 @@
                                                 HDMF
                                             </span>
                                         </th>
-                                        <th>TAX</th>
-                                        <th>
+                                        <th scope="col">TAX</th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="CASH ADVANCE"
@@ -166,7 +165,7 @@
                                                 C.A
                                             </span>
                                         </th>
-                                        <th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="CHARGES"
@@ -174,7 +173,7 @@
                                                 CHRG
                                             </span>
                                         </th>
-                                        <th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="SSS LOAN"
@@ -182,7 +181,7 @@
                                                 SSS LOAN
                                             </span>
                                         </th>
-                                        <th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="HDMF LOAN"
@@ -190,7 +189,7 @@
                                                 HDMF LOAN
                                             </span>
                                         </th>
-                                        <th>
+                                        <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
                                                 data-original-title="NET PAY"
@@ -198,34 +197,16 @@
                                                 NET PAY
                                             </span>
                                         </th>
-                                        <th></th>
+                                        <th scope="col"></th>
                                     </tr>
                                     </thead>
                                     <tbody></tbody>
                                     <tfoot>
                                         <tr>
-                                            <th></th>
-                                            <th colspan='20' style='text-align: right !important;'></th>
-                                            <!-- <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th> -->
-                                            <th></th>
-                                            <th></th>
+                                            <th scope="col"></th>
+                                            <th scope="col" colspan='21' style='text-align: right !important;'></th>
+                                            <th scope="col"></th>
+                                            <th scope="col"></th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -238,8 +219,8 @@
     </div>
 </div>
 
-<div class="modal fade" tabindex="-1" role="dialog" id="payroll-payslip-modal">
-    <div class="modal-dialog modal-md" role="document">
+<div class="modal fade" tabindex="-1" id="payroll-payslip-modal">
+    <div class="modal-dialog modal-md">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Generate Payslip</h5>
@@ -254,7 +235,7 @@
                     <div class="row">
                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 mt-2">
                             <div class="form-group m-form__group">
-                                <label class="required mb-1" style="font-weight: 600;">Pay Date</label>
+                                <label for="" class="required mb-1" style="font-weight: 600;">Pay Date</label>
                                 <div class="input-group date" id="pay-date">
                                     <input type="text" class="form-control m-input"
                                             name="pay_date" autocomplete="off"
@@ -267,10 +248,10 @@
                         </div>
                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 mt-2">
                             <div class="form-group m-form__group">
-                                <label class="mb-1" style="font-weight: 600;">&nbsp;</label>
+                                <label for="" class="mb-1" style="font-weight: 600;">&nbsp;</label>
                                 <div class="m-checkbox-list">
                                     <label class="m-checkbox">
-                                        <input type="checkbox" name="is_bonus" value="1" /><label class="m--font-bolder">Bonus Filter</label><span></span>
+                                        <input type="checkbox" name="is_bonus" value="1" /><label for="" class="m--font-bolder">Bonus Filter</label><span></span>
                                     </label>
                                 </div>
                             </div>
@@ -279,7 +260,7 @@
                     <div class="row">
                         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                             <div class="form-group m-form__group">
-                                <label class="required mb-1" style="font-weight: 600;">Company</label>
+                                <label for="company" class="required mb-1" style="font-weight: 600;">Company</label>
                                 <select name="company" id="company"
                                         class="form-control" data-validation="required"></select>
                                 <p class="form-control m-0" id="has_privi_company-text" disabled></p>
@@ -299,7 +280,7 @@
                     <div class="row">
                         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mt-4">
                             <div class="form-group m-form__group">
-                                <label class="mb-1" style="font-weight: 600;">Employee <span class="m-form__help" style="text-transform: none; font-width: 600;">( Optional )</span></label>
+                                <label for="employees" class="mb-1" style="font-weight: 600;">Employee <span class="m-form__help" style="text-transform: none; font-width: 600;">( Optional )</span></label>
                                 <select name="employees[]" id="employees" class="form-control" multiple="multiple"></select>
                             </div>
                         </div>
@@ -325,8 +306,8 @@
     </div>
 </div>
 
-<div class="modal fade" tabindex="-1" role="dialog" id="view-payroll-payslip-modal">
-    <div class="modal-dialog" role="document">
+<div class="modal fade" tabindex="-1" id="view-payroll-payslip-modal">
+    <div class="modal-dialog">
         <div class="modal-content" id="temp-payslip_content">
             <div class="modal-header">
                 <h5 class="modal-title">Payslip</h5>
@@ -402,101 +383,95 @@
                             </div>
                         </div>
                     </template>
-                    <!-- div class="row">
-                        <div class="col-md-5 text-right">
-                            <small class="m--font-bold">WORKING DAYS </small>
-                        </div>
-                        <div class="col-md-7 text-left">
-                            <span class="m--font-bold">{{row.ewd_decimal}}</span>
-                        </div>
-                    </div -->
-
-                    <!-- div class="row">
-                        <div class="col-md-5 text-right">
-                            <small class="m--font-bold">WORKING HOURS </small>
-                        </div>
-                        <div class="col-md-7 text-left">
-                            <span class="m--font-bold">{{row.target_hours}}</span>
-                        </div>
-                    </div -->
                     <template v-if="parseInt(row.is_bonus) === 0">
                         <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
-                        <div class="row m--margin-bottom-5 m--margin-top-5">
-                            <div class="col-md-8">
-                                <span class="m--font-bolder">LATES/ABSENCES</span>
+                        <template v-if="parseFloat(row.total_unrendered_amount) > 0">
+                            <div class="row m--margin-top-5">
+                                <div class="col-md-8">
+                                    <span class="m--font-bolder">LATES/ABSENCES</span>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <span class="m--font-boldest">( {{row.total_unrendered_amount}} )</span>
+                                    <span class="m--font-boldest">&nbsp;</span>
+                                </div>
                             </div>
-                            <div class="col-md-4 text-right">
-                                <span class="m--font-boldest">( {{row.total_unrendered_amount}} )</span>
-                                <span class="m--font-boldest">&nbsp;</span>
+                            <div class="row">
+                                <div class="col-md-6 text-right">
+                                    <small class="m--font-bold">ABSENT HRS:</small>&nbsp;<span class="m--font-bolder">{{parseFloat(row.absent_hours) > 0 ? row.absent_hours : "0.00"}}</span>
+                                </div>
+                                <div class="col-md-6 text-left">
+                                    <small class="m--font-bold">UT HRS:</small>&nbsp;<span class="m--font-bolder">{{parseFloat(row.undertime_hours) > 0 ? row.undertime_hours : "0.00"}}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 text-right">
-                                <small class="m--font-bold">ABSENT HRS:</small>&nbsp;<span class="m--font-bolder">{{row.absent_hours}}</span>
-                            </div>
-                            <div class="col-md-6 text-left">
-                                <small class="m--font-bold">UT HRS:</small>&nbsp;<span class="m--font-bolder">{{row.undertime_hours}}</span>
-                            </div>
-                        </div>
+                            <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+                        </template>
 
-                        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
-
-                        <div class="row">
-                            <div class="col-md-8">
-                                <span class="m--font-bolder">ALLOWANCES </span>
+                        <template v-if="parseFloat(row.total_allowances) > 0">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <span class="m--font-bolder">ALLOWANCES </span>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <span class="m--font-boldest">{{row.total_allowances}}</span>
+                                </div>
                             </div>
-                            <div class="col-md-4 text-right">
-                                <!-- span class="m--font-boldest">{{row.psa_total}}</span -->
-                                <span class="m--font-boldest">{{row.total_allowances}}</span>
+                            <div class="row text-right">
+                                <div class="col-md-5">
+                                    <small class="m--font-bold">ABSENT HOURS</small>
+                                </div>
+                                <div class="col-md-7 text-left">
+                                    <span class="m--font-bold">{{parseFloat(row.absent_hours) > 0 ? row.absent_hours : "0.00"}}</span>
+                                </div>
                             </div>
-                        </div>
-
-                        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5 m--margin-top-5"></div>
-
-                        <div class="row text-right">
-                            <div class="col-md-5">
-                                <small class="m--font-bold">UT HOURS</small>
+                            <div class="row">
+                                <div class="col-md-5 text-right">
+                                    <small class="m--font-bold">UT HOURS</small>
+                                </div>
+                                <div class="col-md-7 text-left">
+                                    <span class="m--font-bold">{{parseFloat(row.undertime_hours) > 0 ? row.undertime_hours : "0.00"}}</span>
+                                </div>
                             </div>
-                            <div class="col-md-7 text-left">
-                                <span class="m--font-bold">{{row.undertime_hours}}</span>
-                            </div>
-                        </div>
-
-                        <div class="row text-right">
-                            <div class="col-md-5">
-                                <small class="m--font-bold">ABSENT HOURS</small>
-                            </div>
-                            <div class="col-md-7 text-left">
-                                <span class="m--font-bold">{{row.absent_hours}}</span>
-                            </div>
-                        </div>
-                    
-                    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+                            <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+                        </template>
 
                         <template v-if="row.ot_amount > 0">
                         <div class="row m--margin-top-5">
                             <div class="col-md-5">
                                 <span class="m--font-bolder">OVERTIME </span>
                             </div>
-                            <div class="col-md-3 text-left">
-                                <span class="m--font-bold">{{ ot_hrs }}</span>
-                            </div>
-                            <div class="col-md-4 text-right">
+                            <div class="col-md-7 text-right">
                                 <span class="m--font-boldest">{{ ot_computation }}</span>
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 text-right">
+                            <div class="col-md-6 text-right" v-if="parseFloat(row.ot_minutes) > 0">
                                 <small class="m--font-bold">OT HRS:</small>&nbsp;<span class="m--font-bolder">{{ ot_hrs }}</span>
                             </div>
-                            <div class="col-md-6 text-left">
+                            <div class="col-md-6 text-left" v-if="parseFloat(row.ot_ndiff_minutes) > 0">
                                 <small class="m--font-bold">OT NDIFF HRS:</small>&nbsp;<span class="m--font-bolder">{{ ot_ndiff_hrs }}</span>
                             </div>
                         </div>
+                        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+                        </template>
+
+                        <template v-if="parseFloat(row.total_ndiff_amount) > 0">
+                        <div class="row m--margin-top-5">
+                            <div class="col-md-5">
+                                <span class="m--font-bolder">REGULAR NDIFF. </span>
+                            </div>
+                            <div class="col-md-7 text-right">
+                                <span class="m--font-boldest">{{ total_ndiff_computation }}</span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 text-right" v-if="parseFloat(row.total_ndiff_minutes) > 0">
+                                <small class="m--font-bold">NDIFF HRS:</small>&nbsp;<span class="m--font-bolder">{{ total_ndiff_hrs }}</span>
+                            </div>
+                        </div>
+                        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
                         </template>
                     </template>
-                    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
-
+                    
                     <template v-if="row.adjustment_e_count > 0">
                     <h6>ADJUSTMENTS</h6>
                     <div class="row text-right" v-for="(item, index) in row.adjustment_earnings">
@@ -523,9 +498,7 @@
                     </template>
                     
                     <template v-if="parseInt(row.is_bonus) === 0">
-                        <!-- <template v-if="parseFloat(row.sss_prov) != 0 || parseFloat(row.tax) != 0 || parseFloat(row.sss) != 0 || parseFloat(row.ph) != 0 || parseFloat(row.hdmf) != 0 || parseFloat(row.total_loans) > 0 || parseFloat(row.sss_loan) > 0 || parseFloat(row.hdmf_loan) > 0 || row.loans.length > 0"> -->
                         <template v-if="parseFloat(row.sss_prov) != 0 || parseFloat(row.tax) != 0 || parseFloat(row.sss) != 0 || parseFloat(row.ph) != 0 || parseFloat(row.hdmf) != 0 || parseFloat(row.sss_loan) > 0 || parseFloat(row.hdmf_loan) > 0">
-                            <!-- <h6 class="m--margin-left-15">DEDUCTIONS</h6> -->
                             <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
                             <div class="row mt-3">
                                 <div class="col-md-8">
@@ -589,19 +562,7 @@
                                     </div>
                                 </div>
                             </template>
-                            <!-- <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div> -->
                         </template>
-
-                        <!-- <div class="row text-right" v-if="row.total_loans && parseFloat(row.total_loans) > 0">
-                            <div class="col-md-5">
-                                <small class="m--font-bold">LOAN </small>
-                            </div>
-                            <div class="col-md-7 text-left">
-                                <span class="m--font-bold">{{row.total_loans}}</span>
-                            </div>
-                        </div> -->
-
-                        <!-- <template v-if="parseFloat(row.total_loans) > 0 || parseFloat(row.sss_loan) > 0 || parseFloat(row.hdmf_loan) > 0 || row.loans.length > 0"> -->
                         <template v-if="parseFloat(row.total_loans) > 0 || row.loans.length > 0">
                             <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
 
@@ -664,8 +625,8 @@
                         </div>
                     </template>
 
-                    <template v-if="row.overall_total_deductions && parseFloat(row.overall_total_deductions) > 0">
-                        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>  
+                    <template v-if="row.overall_total_deductions && parseFloat(row.overall_total_deductions) > 0 && (raw_tl > 0 || raw_tod > 0 || raw_tli > 0)">
+                        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
                         <div class="row m--margin-top-10 m--margin-bottom-5 mt-3">
                             <div class="col-md-8">
                                 <span class="m--font-bolder">TOTAL LOANS & DEDUCTIONS</span>
@@ -675,21 +636,6 @@
                             </div>
                         </div>
                     </template>
-                    <!-- commented out as loans and cash advance is seperated -->
-                    <!-- <template v-if="parseInt(row.is_bonus) === 0 || parseFloat(row.deductions) > 0">
-                    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
-                        <template v-if="parseFloat(row.deductions) > 0">
-                            <div class="row m--margin-top-10 m--margin-bottom-5">
-                                <div class="col-md-8">
-                                    <span class="m--font-bolder">TOTAL LOANS & DEDUCTIONS</span>
-                                </div>
-                                <div class="col-md-4 text-right">
-                                    <span class="m--font-boldest">( {{row.deductions}} )</span>
-                                </div>
-                            </div>
-                        </template>
-                    </template> -->
-                    <!-- commented out as loans and cash advance is seperated -->
                     <div class="m-portlet m-portlet--bordered mt-3">
                         <div class="m-portlet__body m-portlet__body--no-padding">
                             <div class="row m-row--col-separator-xl">

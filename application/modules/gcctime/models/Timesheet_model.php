@@ -1,4 +1,4 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed');
+<?php defined('BASEPATH') || exit('No direct script access allowed');
 class Timesheet_model extends CI_Model{
     protected $tbl_employees = "gccmaster.tblemployees";
     protected $tbl_tblcompanies = "gcchris.tblcompanies";
@@ -34,6 +34,7 @@ class Timesheet_model extends CI_Model{
 
     protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
     protected $tbl_payroll_sheet = "payroll.payroll_sheet";
+    protected $tbl_ps_employee_regular_ndiff = "payroll.employee_regular_ndiff";
 
     private $db_debug;
     private $logged_in_user;
@@ -57,7 +58,6 @@ class Timesheet_model extends CI_Model{
         // $is_custom = identifier if attendance record is direct from device or manual e.g. imported
         $employees = $this->getEmployeesWithAttendance($date, $is_custom, $emp);
         $weekday = strtolower(date("l", strtotime($date)));
-        $time_sheet = array();
         $resultSet = array();
         $hasOT = 0;
         $updatedTimesheets = array();
@@ -66,7 +66,7 @@ class Timesheet_model extends CI_Model{
         $night_diff_cfg = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "NIGHT_DIFF_PARAMS"))->row();
         $tempEmployeeIds = array();
         
-        $tempOvertimeRecords = $this->getOvertimeRecordByDateRange($date);
+        $tempOvertimeRecords = $this->getOvertimeRecordByDateRange($date, $emp);
         if (sizeof($employees) >= 1) {
             $this->db->trans_begin();
             foreach ($employees as $employee) {
@@ -94,8 +94,52 @@ class Timesheet_model extends CI_Model{
                     }
                 }
 
+                $updatedSchedule = $this->getCurrentShiftSchedule($date, $employee);
+                $schedule = $updatedSchedule->schedule;
+                
+                /*** detect night shift ***/
+                $activeSchedule = [];
+                $schedule_props = array("am_start", "am_end", "pm_start", "pm_end");
+                foreach ($schedule_props as $nKey => $sProps) {
+                    if($schedule->{$sProps}){
+                        if($nKey > 0){
+                            $prevKey = $schedule_props[$nKey - 1];
+                            if($prevKey && $schedule->{$prevKey}){
+                                $prevTime = date("H:i:s", strtotime($schedule->{$prevKey}));
+                                $tempTime = date("H:i:s", strtotime($schedule->{$sProps}));
+                                if(strtotime($prevTime) > strtotime($tempTime)){
+                                    $nextDate = date("Y-m-d", strtotime("+1 day", strtotime($date)));
+                                    $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($nextDate ." ".$schedule->{$sProps}));
+                                }else{
+                                    $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($date ." ".$schedule->{$sProps}));
+                                }
+                            }
+                        }else{
+                            $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($date ." ".$schedule->{$sProps}));
+                        }
+                    }
+                }
+
+                $tempActiveSchedule = array();
+                foreach ($activeSchedule as $sched) { $tempActiveSchedule[] = $sched; }
+
+                $nightShiftLastRecord = null;
+                /*** check night shift schedule **/
+                $isNightShift = $this->checkNightShiftSchedule($date, $tempActiveSchedule);
+                $nshiftParams = $this->nightshiftParams($date);
+                /*** check night shift schedule **/
+
+                if($isNightShift){
+                    $prevDate = date("Y-m-d", strtotime("-1 day", strtotime($date)));
+                    $prev_attendance = array_map(function ($_attendance) {
+                        return date("Y-m-d H:i", strtotime($_attendance->datetime));
+                    }, $this->getAttendance($prevDate, $employee->id, $nshiftParams["start"]));
+                    $nightShiftLastRecord = end($prev_attendance);
+                }
+                /*** detect night shift ***/
+
                 $payrollType = $employee->payroll_type;
-                $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $employee->id);
+                /*** $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $employee->id); ***/
 
                 $ts_exist = $this->db
                 ->where("emp_id", $employee->id)
@@ -116,10 +160,8 @@ class Timesheet_model extends CI_Model{
 
                 $hasOT = sizeof($overtime) >= 1 ? 1 : 0; // true/1 and false/0 if date determined with overtime
                 $this->db->reset_query();
-
                 $flexible = intval($employee->is_flexi) !== 0;
                 $flexibleEmployee = intval($employee->is_flexi) === 1;
-                $flexibleOneInOut = intval($employee->is_flexi) === 4;
                 $shift_id = $employee->shift_id;
 
                 /* CONCATENATE DATE + START TIME OF TIME PARAMS start_time ex. [2020-07-24 06:01] AS START DATE PARAMETER TO DETERMINE ATTENDANCES
@@ -130,61 +172,38 @@ class Timesheet_model extends CI_Model{
                 $att_next_day = $_date->modify("+1 day");
                 $att_next_day = date('Y-m-d H:i:s', strtotime($att_next_day->format('Y-m-d') . " " . $attendance_params->end_time));
                 /* END CONCATENATE DATE */
-
+                
+                /*** nextday shift schedule checker ***/
+                $att_next_day = $this->nextDayShiftCheker($date, $employee, $att_next_day);
+                /*** nextday shift schedule checker ***/
+                
+                $att_next_day = $isNightShift ? date("Y-m-d H:i:s", strtotime("+1 day", strtotime($nshiftParams["start"]))) : $att_next_day;
                 $attendance = array_map(function ($_attendance) {
                     return date("Y-m-d H:i", strtotime($_attendance->datetime));
-                }, $this->getAttendance($att_curr_day, $is_custom, $employee->id, $att_next_day));
-
+                }, $this->getAttendance($att_curr_day, $employee->id, $att_next_day, $nightShiftLastRecord));
                 $attendance = array_values(array_unique($attendance));
-
-                $attendance_log_ctr = sizeof($attendance);
-
-                $tempResource = array();
-                $shift_resource_array = array();
-
-                $shift_resource = $this->getShiftResource($shift_id);
-                if(isset($shift_resource->shift_resource) && $shift_resource->shift_resource){
-                    $tempResource = $shift_resource->shift_resource;
-                    $tempResource = unserialize($tempResource);
-
-                    $shift_resource_array = array_map(function ($item) {
-                        return intval($item);
-                    }, $tempResource);
-                }
-
-                /*** $shift_resource = $this->getShiftResource($shift_id);
-                $shift_resource_array = array_map(function ($item) {
-                    return intval($item);
-                }, unserialize($shift_resource->shift_resource)); ***/
-
-                $schedule = $this->getScheduleList($weekday, $shift_resource_array);
-                /*** altered shift schedule from custom shift `start` ***/
-                /*** $tempAlteredIndexId = "shift-id_{$shift_id}"; ***/
-                $alteredCustomShiftId = 0;
-                $alteredHasShiftSchedule = 1;
-
-                if(isset($alteredShifts) && $alteredShifts && count(get_object_vars($alteredShifts)) > 0){
-                    if(isset($alteredShifts->has_shift)){
-                        $ctrAlteredSchedule = false;
-                        $tempHasShift = $alteredShifts->has_shift;
-                        $alteredHasShiftSchedule = intval($tempHasShift);
-
-                        foreach ($alteredShifts->schedule as $kkx => $vvx) {
-                            if(isset($schedule->{$kkx}) && $schedule->{$kkx} && $schedule->{$kkx} !== $vvx && $vvx !== null && intval($tempHasShift) == 1){
-                                $schedule->{$kkx} = $vvx;
-                                $ctrAlteredSchedule = true;
-                            }
-                            if(intval($tempHasShift) == 0){
-                                $schedule->{$kkx} = null;
-                                $ctrAlteredSchedule = true;
+                
+                if($ts_exist->num_rows() == 1){
+                    $timesheetRow = $ts_exist->row();
+                    $attrAttendances = array();
+                    $attDate = date("Y-m-d", strtotime($date));
+                    $propAttr = array("am_in", "am_out", "pm_in", "pm_out");
+                    foreach ($propAttr as $key => $value) {
+                        if($key > 0){
+                            $tempKey = $propAttr[$key-1];
+                            if($timesheetRow->{$value} != null && $timesheetRow->{$tempKey} != null &&
+                                strtotime($timesheetRow->{$value}) < strtotime($timesheetRow->{$tempKey})){
+                                $attDate = date("Y-m-d", strtotime("+1 day", strtotime($date)));
                             }
                         }
-                        if($ctrAlteredSchedule === true && $alteredShifts->custom_shift_id !== "0"){
-                            $alteredCustomShiftId = $alteredShifts->custom_shift_id;
+
+                        if($timesheetRow->{$value} != null){
+                            $attrAttendances[] = date("Y-m-d H:i", strtotime($attDate . " " . $timesheetRow->{$value}));
                         }
                     }
+
+                    $attendance = array_values(array_unique(array_merge($attendance, $attrAttendances)));
                 }
-                /*** altered shift schedule from custom shift `end` ***/
 
                 $am_start = !empty($schedule) ? $schedule->am_start : null;
                 $am_end = !empty($schedule) ? $schedule->am_end : null;
@@ -196,13 +215,13 @@ class Timesheet_model extends CI_Model{
                     $no_shift_schedule = true;
                 }
                 
-                $am_shift_only = (($am_start !== null && $am_end !== null) && (($pm_start === null || $pm_start == "00:00:00") && ($pm_end === null || $pm_end == "00:00:00")) && $no_shift_schedule == false);
-                $pm_shift_only = ((($am_start === null || $am_start == "00:00:00") && ($am_end === null || $am_end == "00:00:00")) && ($pm_start !== null && $pm_end !== null) && $no_shift_schedule == false);
+                $am_shift_only = (($am_start !== null && $am_end !== null) && (($pm_start === null || $pm_start == "00:00:00") && ($pm_end === null || $pm_end == "00:00:00")) && $no_shift_schedule === false);
+                $pm_shift_only = ((($am_start === null || $am_start == "00:00:00") && ($am_end === null || $am_end == "00:00:00")) && ($pm_start !== null && $pm_end !== null) && $no_shift_schedule === false);
                 $isWholeDay = ($am_shift_only === false && $pm_shift_only === false && $no_shift_schedule === false);
 
                 $tempHoliday = (object) $this->getCurrentDateIsHoliday($date);
-                $isHoliday = ($tempHoliday->is_holiday == true)? 1: 0;
-                $payRateId = ($tempHoliday->is_holiday == true && $tempHoliday->payrate_id)? $tempHoliday->payrate_id: 0;
+                $isHoliday = ($tempHoliday->is_holiday === true)? 1: 0;
+                $payRateId = ($tempHoliday->is_holiday === true && $tempHoliday->payrate_id)? $tempHoliday->payrate_id: 0;
 
                 $employee_time_sheet = new StdClass();
                 $employee_time_sheet->emp_id = $employee->id;
@@ -210,7 +229,7 @@ class Timesheet_model extends CI_Model{
                 $employee_time_sheet->weekday = $weekday;
                 $employee_time_sheet->is_holiday = $isHoliday;
                 $employee_time_sheet->payrate_id = $payRateId;
-                $employee_time_sheet->custom_shift_id = $alteredCustomShiftId;
+                $employee_time_sheet->custom_shift_id = $updatedSchedule->custom_shift_id;
 
                 $employee_time_sheet->am_in = null;
                 $employee_time_sheet->am_out = null;
@@ -232,9 +251,10 @@ class Timesheet_model extends CI_Model{
                 $employee_time_sheet->scrub_status = 0;
                 $employee_time_sheet->comments = null;
 
-                $_has_shift = $alteredCustomShiftId !== 0? intval($alteredHasShiftSchedule): 1;
-
-                $employee_time_sheet->has_shift = $_has_shift;
+                /*** $_has_shift = $alteredCustomShiftId !== 0? intval($alteredHasShiftSchedule): 1;
+                $employee_time_sheet->has_shift = $_has_shift; ***/
+                
+                $employee_time_sheet->has_shift = $updatedSchedule->has_shift;
                 $employee_time_sheet->shift_am_start = null;
                 $employee_time_sheet->shift_am_end = null;
                 $employee_time_sheet->shift_pm_start = null;
@@ -265,17 +285,17 @@ class Timesheet_model extends CI_Model{
                         if($am_end !== $timesheet_exist->shift_am_end){ $hasShiftUpdate = true; }
                         if($pm_start !== $timesheet_exist->shift_pm_start){ $hasShiftUpdate = true; }
                         if($pm_end !== $timesheet_exist->shift_pm_end){ $hasShiftUpdate = true; }
-                    }else if($am_shift_only){
+                    }elseif ($am_shift_only){
                         if($am_start !== $timesheet_exist->shift_am_start){ $hasShiftUpdate = true; }
                         if($am_end !== $timesheet_exist->shift_am_end){ $hasShiftUpdate = true; }
-                    }else if($pm_shift_only){
+                    }elseif ($pm_shift_only){
                         if($pm_start !== $timesheet_exist->shift_pm_start){ $hasShiftUpdate = true; }
                         if($pm_end !== $timesheet_exist->shift_pm_end){ $hasShiftUpdate = true; }
                     }
 
                     if($hasShiftUpdate && intval($timesheet_exist->verified) !== 1){
-                        $timesheet_exist->has_shift = $_has_shift;
-                        foreach($tempShiftProps as $kk => $vv){
+                        $timesheet_exist->has_shift = $updatedSchedule->has_shift;
+                        foreach($tempShiftProps as $vv){
                             $shiftRecord = ${$vv};
                             $tempShiftKey = "shift_{$vv}";
                             if(isset($timesheet_exist->$tempShiftKey) && $timesheet_exist->$tempShiftKey){
@@ -283,7 +303,7 @@ class Timesheet_model extends CI_Model{
                             }
                         }
                     }
-                    
+
                     $timesheetUpdate = $this->generateTimesheetComputation($timesheet_exist, $employee_time_sheet, $updatedTimesheets, $attendance, $date,
                     $no_shift_schedule, $am_start, $am_end, $pm_start, $pm_end, $am_shift_only, $pm_shift_only, $props, $flexibleEmployee, $payrollType);
 
@@ -295,13 +315,14 @@ class Timesheet_model extends CI_Model{
                     }
 
                     $noBreakOvertime = intval($timesheet_exist->has_overtime) == 2;
-                    if(intval($timesheet_exist->has_overtime) == 1 || ($hasOvertimeRequest && $noBreakOvertime == false)){
+                    if(intval($timesheet_exist->has_overtime) == 1 || ($hasOvertimeRequest && $noBreakOvertime === false)){
                         $total_accredited_ot_hrs = 0;
                         $ot_night_diff = 0;
                         $overtime_start = null;
                         $overtime_end = null;
 
                         $response = $this->generateTimesheetOvertime($timesheet_exist, $generated_manually, $overtime, $date, $am_end, $pm_end, $am_shift_only, $attendance, $night_diff_cfg);
+                        $allowOvertimeRequest = $response["allow_overtime_request"] ?? false;
 
                         if(isset($response["total_accredited_ot_hrs"]) && $response["total_accredited_ot_hrs"]){
                             $total_accredited_ot_hrs = floatval($response["total_accredited_ot_hrs"]);
@@ -316,54 +337,14 @@ class Timesheet_model extends CI_Model{
                             $overtime_end = $response["overtime_out"];
                         }
 
-                        /*** $hasRenderedOT = ($total_accredited_ot_hrs > 0 || $ot_night_diff > 0)? true: false;
-                        $payrateResult = (object) $this->getPayrateSettingsById($timesheet_exist->payrate_id); ***/
-
                         $this->db->where("id", $timesheet_exist->id);
                         $this->db->where("verified", 0);
 
-                        /*** if(isset($timesheet_exist->is_holiday) && intval($timesheet_exist->is_holiday) == 1){
-                            if($hasRenderedOT == true){
-                                $totalOTHours = floatval($total_accredited_ot_hrs) + floatval($ot_night_diff);
-                                $holidayAccreditedHours = $totalOTHours > 8? 8: $totalOTHours;
-                                if(isset($payrateResult->response) && $payrateResult->response == true){
-                                    $tempRow = $payrateResult->row;
-                                    if(is_numeric($tempRow->is_holiday) && intval($tempRow->is_holiday) == 1){
-                                        $tempHours = 8; ***/
-                                        /*** default holiday paid hours ***/
-                                        /*** $tempValue = $tempRow->regular_rate + 0;
+                        if($allowOvertimeRequest && intval($timesheet_exist->has_overtime) == 0){ $this->db->set("has_overtime", 1); }
+                        $tempHasOvertime = $allowOvertimeRequest ? 1 : 0;
+                        $tempHasOvertime = ($overtime_start && $overtime_end) && strtotime($overtime_end) > strtotime($overtime_start) ? 1 : $tempHasOvertime;
 
-                                        if($tempValue !== 0 && $tempValue > 1){
-                                            $isFloat = is_float($tempValue);
-                                            $arrTemp = explode(".", $tempValue);
-                                            if($isFloat == true && count($arrTemp) == 2){
-                                                $tempValuex = 0;
-                                                if(intval($arrTemp[0]) > 0){
-                                                    $tempValuex = intval($arrTemp[0]) - 1;
-                                                    if(intval($arrTemp[1]) > 0){
-                                                        $tempValuex = $tempValuex.".".$arrTemp[1];
-                                                        $tempValuex = $tempValuex + 0;
-                                                        $tempValue = $tempValuex;
-                                                    }
-                                                }
-                                            }else{
-                                                $tempValuex = 0;
-                                                $tempValuex = intval($tempValue) - 1;
-                                                $tempValue = $tempValuex;
-                                            }
-                                        }
-
-                                        $tempHours = $holidayAccreditedHours > 0? $holidayAccreditedHours: $tempHours;
-                                        $tempTimeRendered = $tempValue * $tempHours;
-
-                                        $total_time_rendered = $tempTimeRendered * 60;
-                                        $this->db->set("total_time_rendered", $total_time_rendered);
-                                    }
-                                }
-                            }
-                        } ***/
-
-                        if(intval($timesheet_exist->has_overtime) == 0){ $this->db->set("has_overtime", 1); }
+                        $this->db->set("has_overtime", $tempHasOvertime);
                         $this->db->set("total_accredited_ot_hrs", $total_accredited_ot_hrs);
                         $this->db->set("total_accredited_ndiff_ot_hrs", $ot_night_diff);
                         $this->db->set("overtime_in", $overtime_start);
@@ -383,13 +364,13 @@ class Timesheet_model extends CI_Model{
                             $toArray = (array) $timesheetHourlyPartimer;
                             if(is_array($toArray) && count($toArray) > 0){ $tempRow->is_tagged_hourly = true; }
                             
-                            $updatedRow = $this->updateTimesheetShiftComputation($tempRow);
+                            $updatedRow = $this->updateTimesheetShiftComputation($tempRow, false, $night_diff_cfg);
                             $updatedTimesheet = (array) $updatedRow;
                             if(is_array($toArray) && count($toArray) > 0){
                                 $updatedTimesheet = array_merge($updatedTimesheet, $toArray);
                             }
                             
-                            $updatedRecord = $this->db->update($this->tbl_timesheet, $updatedTimesheet, array("id" => $tempRowId));
+                            $this->db->update($this->tbl_timesheet, $updatedTimesheet, array("id" => $tempRowId));
                             $this->db->reset_query();
                         }
                     }
@@ -405,7 +386,7 @@ class Timesheet_model extends CI_Model{
                     if (intval($timesheet_exist->verified) === 1) { continue; }
                 } /*** end timesheet_exist ***/
 
-                if (intval($shift_id) === 0) continue;
+                if (intval($shift_id) === 0) { continue; }
                 /*** insert timesheet record start ***/
                 if(sizeof((array) $timesheet_exist) == 0){
                     $timesheetUpdate = $this->generateTimesheetComputation($timesheet_exist, $employee_time_sheet, $updatedTimesheets, $attendance, $date,
@@ -430,7 +411,7 @@ class Timesheet_model extends CI_Model{
                             $overtime_end = null;
                             
                             $noBreakOvertime = intval($timesheet_exist->has_overtime) == 2;
-                            if (intval($timesheet_exist->has_overtime) == 1 || ($hasOvertimeRequest && $noBreakOvertime == false)) {
+                            if (intval($timesheet_exist->has_overtime) == 1 || ($hasOvertimeRequest && $noBreakOvertime === false)) {
                                 $response = $this->generateTimesheetOvertime($timesheet_exist, $generated_manually, $overtime, $date, $am_end, $pm_end, $am_shift_only, $attendance, $night_diff_cfg);
                                 if(isset($response["total_accredited_ot_hrs"]) && $response["total_accredited_ot_hrs"]){
                                     $total_accredited_ot_hrs = floatval($response["total_accredited_ot_hrs"]);
@@ -444,53 +425,9 @@ class Timesheet_model extends CI_Model{
                                 if(isset($response["overtime_out"]) && $response["overtime_out"]){
                                     $overtime_end = $response["overtime_out"];
                                 }
-        
-                                /*** $hasRenderedOT = ($total_accredited_ot_hrs > 0 || $ot_night_diff > 0)? true: false;
-                                $payrateResult = (object) $this->getPayrateSettingsById($timesheet_exist->payrate_id); ***/
 
                                 $this->db->where("id", $timesheet_exist->id);
                                 $this->db->where("verified", 0);
-        
-                                /*** if(isset($timesheet_exist->is_holiday) && intval($timesheet_exist->is_holiday) == 1){
-                                    if($hasRenderedOT == true){
-                                        $totalOTHours = floatval($total_accredited_ot_hrs) + floatval($ot_night_diff);
-                                        $holidayAccreditedHours = $totalOTHours > 8? 8: $totalOTHours;
-                                        if(isset($payrateResult->response) && $payrateResult->response == true){
-                                            $tempRow = $payrateResult->row;
-                                            if(is_numeric($tempRow->is_holiday) && intval($tempRow->is_holiday) == 1){
-                                                $tempHours = 8; ***/
-                                                /*** default holiday paid hours ***/
-                                                /*** $tempValue = $tempRow->regular_rate + 0;
-        
-                                                if($tempValue !== 0 && $tempValue > 1){
-                                                    $isFloat = is_float($tempValue);
-                                                    $arrTemp = explode(".", $tempValue);
-                                                    if($isFloat == true && count($arrTemp) == 2){
-                                                        $tempValuex = 0;
-                                                        if(intval($arrTemp[0]) > 0){
-                                                            $tempValuex = intval($arrTemp[0]) - 1;
-                                                            if(intval($arrTemp[1]) > 0){
-                                                                $tempValuex = $tempValuex.".".$arrTemp[1];
-                                                                $tempValuex = $tempValuex + 0;
-                                                                $tempValue = $tempValuex;
-                                                            }
-                                                        }
-                                                    }else{
-                                                        $tempValuex = 0;
-                                                        $tempValuex = intval($tempValue) - 1;
-                                                        $tempValue = $tempValuex;
-                                                    }
-                                                }
-        
-                                                $tempHours = $holidayAccreditedHours > 0? $holidayAccreditedHours: $tempHours;
-                                                $tempTimeRendered = $tempValue * $tempHours;
-        
-                                                $total_time_rendered = $tempTimeRendered * 60;
-                                                $this->db->set("total_time_rendered", $total_time_rendered);
-                                            }
-                                        }
-                                    }
-                                } ***/
                                 if(intval($timesheet_exist->has_overtime) == 0){ $this->db->set("has_overtime", 1); }
                                 $this->db->set("total_accredited_ot_hrs", $total_accredited_ot_hrs);
                                 $this->db->set("total_accredited_ndiff_ot_hrs", $ot_night_diff);
@@ -510,13 +447,13 @@ class Timesheet_model extends CI_Model{
                                     $toArray = (array) $timesheetHourlyPartimer;
                                     if(is_array($toArray) && count($toArray) > 0){ $tempRow->is_tagged_hourly = true; }
                                     
-                                    $updatedRow = $this->updateTimesheetShiftComputation($tempRow);
+                                    $updatedRow = $this->updateTimesheetShiftComputation($tempRow, false, $night_diff_cfg);
                                     $updatedTimesheet = (array) $updatedRow;
                                     if(is_array($toArray) && count($toArray) > 0){
                                         $updatedTimesheet = array_merge($updatedTimesheet, $toArray);
                                     }
                                     
-                                    $updatedRecord = $this->db->update($this->tbl_timesheet, $updatedTimesheet, array("id" => $tempRowId));
+                                    $this->db->update($this->tbl_timesheet, $updatedTimesheet, array("id" => $tempRowId));
                                     $this->db->reset_query();
                                 }
                             }
@@ -548,79 +485,32 @@ class Timesheet_model extends CI_Model{
                         if($tempTblTimesheet->num_rows() == 1){
                             $tempComments = "";
                             $tempRow = $tempTblTimesheet->row();
-                            $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $tempRow->emp_id);
+                            /*** $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $tempRow->emp_id); ***/
+                            /*** $shift_id = 0; ***/
 
-                            $shift_id = 0;
-                            $this->db->select("b.shift_id");
+                            $this->db->select("a.id, b.shift_id");
                             $this->db->from($this->tbl_employees." a");
                             $this->db->join($this->tbl_personnel." b", "b.biometric_id = a.biometricno OR b.biometricno = a.biometricno");
                             $this->db->where("a.id", $tempRow->emp_id);
                             $queryTempx = $this->db->get();
+                            if($queryTempx->num_rows() == 1){
+                                /*** $shift_id = $queryTempx->row()->shift_id; ***/
+                                $employee = $queryTempx->row();
 
-                            if($queryTempx->num_rows() == 1){ $shift_id = $queryTempx->row()->shift_id; }
-                            $shift_resource = $this->getShiftResource($shift_id);
-                            if(isset($shift_resource->shift_resource) && $shift_resource->shift_resource){
-                                $tempResource = $shift_resource->shift_resource;
-                                $tempResource = unserialize($tempResource);
-
-                                $shift_resource_array = array_map(function ($item) {
-                                    return intval($item);
-                                }, $tempResource);
-                            }
-
-                            $_shiftSchedule = $this->generateShiftScheduleResource($tempRow->emp_id, $tempRow->weekday);
-                            if(isset($_shiftSchedule) && $_shiftSchedule && count($_shiftSchedule) > 0){
-                                $_shiftSchedule = $this->arrayToStdClass($_shiftSchedule);
-                                $tempRow->has_shift = 1;
-                                $tempRow->shift_am_start = $_shiftSchedule->shift_am_start;
-                                $tempRow->shift_am_end = $_shiftSchedule->shift_am_end;
-                                $tempRow->shift_pm_start = $_shiftSchedule->shift_pm_start;
-                                $tempRow->shift_pm_end = $_shiftSchedule->shift_pm_end;
-                            }
-
-                            $schedule = $this->getScheduleList($weekday, $shift_resource_array);
-                            $am_start = !empty($schedule) ? $schedule->am_start : null;
-                            $am_end = !empty($schedule) ? $schedule->am_end : null;
-                            $pm_start = !empty($schedule) ? $schedule->pm_start : null;
-                            $pm_end = !empty($schedule) ? $schedule->pm_end : null;
-                            
-                            $alteredCustomShiftId = 0;
-                            $alteredHasShiftSchedule = $tempRow->has_shift == 1 ? 1 : 0;
-
-                            if(isset($alteredShifts) && $alteredShifts && count(get_object_vars($alteredShifts)) > 0){
-                                if(isset($alteredShifts->has_shift)){
-                                    $ctrAlteredSchedule = false;
-                                    $tempHasShift = $alteredShifts->has_shift;
-                                    $alteredHasShiftSchedule = intval($tempHasShift);
-
-                                    foreach ($alteredShifts->schedule as $kkx => $vvx) {
-                                        if(isset($schedule->{$kkx}) && $schedule->{$kkx} && $schedule->{$kkx} !== $vvx && $vvx !== null && intval($tempHasShift) == 1){
-                                            $schedule->{$kkx} = $vvx;
-                                            $ctrAlteredSchedule = true;
-                                        }
-                                        if(intval($tempHasShift) == 0){
-                                            $schedule->{$kkx} = null;
-                                            $ctrAlteredSchedule = true;
-                                        }
-                                    }
-                                    if($ctrAlteredSchedule === true && $alteredShifts->custom_shift_id !== "0"){
-                                        $alteredCustomShiftId = $alteredShifts->custom_shift_id;
-                                    }
-                                }
-                                $tempRow->custom_shift_id = $alteredCustomShiftId;
-                                $_has_shift = $alteredCustomShiftId !== 0? intval($alteredHasShiftSchedule): intval($tempRow->has_shift);
-                                $tempRow->has_shift = $_has_shift;
-
-                                $_temp_schedule = $schedule;
+                                $updatedSchedule = $this->getCurrentShiftSchedule($date, $employee);
+                                $schedule = $updatedSchedule->schedule;
                                 $prop_schedule = array("am_start", "am_end", "pm_start", "pm_end");
                                 foreach ($prop_schedule as $prop) {
                                     $tempSchedule = "shift_{$prop}";
-                                    if(isset($_temp_schedule->$prop)){
-                                        $tempRow->$tempSchedule = $_temp_schedule->$prop !== null ? $_temp_schedule->$prop: null;
+                                    if(isset($schedule->$prop)){
+                                        $tempRow->$tempSchedule = $schedule->$prop !== null ? $schedule->$prop: null;
                                     }
                                 }
+
+                                $tempRow->has_shift = $updatedSchedule->has_shift;
+                                $tempRow->custom_shift_id = $updatedSchedule->custom_shift_id;
                             }
-                            $tempRow->has_shift = $schedule !== null ? $tempRow->has_shift: 0;
+
                             $temp_overtime = $this->db
                             ->get_where($this->tbl_overtime,
                                 array(
@@ -629,7 +519,7 @@ class Timesheet_model extends CI_Model{
                                     "status" => "Approved"
                                 )
                             );
-
+                                
                             $hasApprovedOvertimeRequest = $temp_overtime->num_rows() == 1;
 
                             if((intval($tempRow->has_overtime) == 1 || $hasApprovedOvertimeRequest) && intval($tempRow->verified) !== 1){
@@ -637,8 +527,9 @@ class Timesheet_model extends CI_Model{
                                 $ot_night_diff = 0;
                                 $overtime_start = null;
                                 $overtime_end = null;
-                                
                                 $response = $this->generateNoShiftOvertime($tempRow, $night_diff_cfg, $date, $generated_manually);
+                                $allowOvertimeRequest = $response["allow_overtime_request"] ?? false;
+
                                 if(isset($response["total_accredited_ot_hrs"]) && $response["total_accredited_ot_hrs"]){
                                     $total_accredited_ot_hrs = floatval($response["total_accredited_ot_hrs"]);
                                 }
@@ -655,7 +546,11 @@ class Timesheet_model extends CI_Model{
                                 $this->db->where("id", $tempRow->id);
                                 $this->db->where("verified", 0);
                                 
-                                if(isset($tempRow->has_overtime) && intval($tempRow->has_overtime) == 0){ $this->db->set("has_overtime", 1); }
+                                if($allowOvertimeRequest && isset($tempRow->has_overtime) && intval($tempRow->has_overtime) == 0){ $this->db->set("has_overtime", 1); }
+                                $tempHasOvertime = $hasApprovedOvertimeRequest || $allowOvertimeRequest ? 1 : 0;
+                                $tempHasOvertime = ($overtime_start && $overtime_end) && strtotime($overtime_end) > strtotime($overtime_start) ? 1 : $tempHasOvertime;
+
+                                $this->db->set("has_overtime", $tempHasOvertime);
                                 $this->db->set("total_accredited_ot_hrs", $total_accredited_ot_hrs);
                                 $this->db->set("total_accredited_ndiff_ot_hrs", $ot_night_diff);
                                 $this->db->set("overtime_in", $overtime_start);
@@ -675,17 +570,7 @@ class Timesheet_model extends CI_Model{
                             if(intval($tempRow->verified) !== 1){
                                 $tempRowId = $tempRow->id;
                                 $tempDatax = $tempRow;
-
-                                $tempDatax->has_shift = $alteredHasShiftSchedule;
-                                $tempDatax->custom_shift_id = $alteredCustomShiftId;
                                 
-                                $tempProps = array("am_start", "am_end", "pm_start", "pm_end");
-                                foreach ($tempProps as $value) {
-                                    $tempValue = ${$value} ? ${$value}: null;
-                                    $tempKey = "shift_{$value}";
-                                    $tempDatax->$tempKey = $tempValue;
-                                }
-
                                 if(isset($tempDatax->shift_am_start, $tempDatax->shift_am_end) && ($tempDatax->shift_am_start === "00:00:00" && $tempDatax->shift_am_end === "00:00:00")){
                                     $tempDatax->shift_am_start = null;
                                     $tempDatax->shift_am_end = null;
@@ -698,14 +583,12 @@ class Timesheet_model extends CI_Model{
                                 $timesheetHourlyPartimer = $this->generatePerHourSlashPartimer($tempRowId);
                                 $toArray = (array) $timesheetHourlyPartimer;
                                 if(is_array($toArray) && count($toArray) > 0){ $tempDatax->is_tagged_hourly = true; }
-
-                                $updatedRow = $this->updateTimesheetShiftComputation($tempDatax);
+                                $updatedRow = $this->updateTimesheetShiftComputation($tempDatax, false, $night_diff_cfg);
                                 $updatedTimesheet = (array) $updatedRow;
                                 if(is_array($toArray) && count($toArray) > 0){
                                     $updatedTimesheet = array_merge($updatedTimesheet, $toArray);
                                 }
-
-                                $updatedRecord = $this->db->update($this->tbl_timesheet, $updatedTimesheet, array("id" => $tempRowId));
+                                $this->db->update($this->tbl_timesheet, $updatedTimesheet, array("id" => $tempRowId));
                             }
 
                             if(!$tempRow->has_shift && !$tempRow->has_overtime){
@@ -785,7 +668,8 @@ class Timesheet_model extends CI_Model{
                                 if($qTempEmployee->num_rows() == 1){
                                     $employee = $qTempEmployee->row();
                                     $payrollType = $employee->payroll_type;
-                                    $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $employee->id);
+                                    $updatedSchedule = $this->getCurrentShiftSchedule($date, $employee);
+                                    $schedule = $updatedSchedule->schedule;
 
                                     $overtime = $this->db
                                     ->get_where($this->tbl_overtime,
@@ -802,50 +686,6 @@ class Timesheet_model extends CI_Model{
                                     $flexible = intval($employee->is_flexi) !== 0;
                                     $flexibleEmployee = intval($employee->is_flexi) === 3 || intval($employee->is_flexi) === 4;
 
-                                    $shift_id = $employee->shift_id;
-
-                                    $tempResource = array();
-                                    $shift_resource_array = array();
-
-                                    $shift_resource = $this->getShiftResource($shift_id);
-                                    if(isset($shift_resource->shift_resource) && $shift_resource->shift_resource){
-                                        $tempResource = $shift_resource->shift_resource;
-                                        $tempResource = unserialize($tempResource);
-
-                                        $shift_resource_array = array_map(function ($item) {
-                                            return intval($item);
-                                        }, $tempResource);
-                                    }
-
-                                    $schedule = $this->getScheduleList($weekday, $shift_resource_array);
-                                    /*** altered shift schedule from custom shift `start` ***/
-                                    /*** $tempAlteredIndexId = "shift-id_{$shift_id}"; ***/
-                                    $alteredCustomShiftId = 0;
-                                    $alteredHasShiftSchedule = 1;
-
-                                    if(isset($alteredShifts) && $alteredShifts && count(get_object_vars($alteredShifts)) > 0){
-                                        if(isset($alteredShifts->has_shift)){
-                                            $ctrAlteredSchedule = false;
-                                            $tempHasShift = $alteredShifts->has_shift;
-                                            $alteredHasShiftSchedule = intval($tempHasShift);
-
-                                            foreach ($alteredShifts->schedule as $kkx => $vvx) {
-                                                if(isset($schedule->{$kkx}) && $schedule->{$kkx} && $schedule->{$kkx} !== $vvx && $vvx !== null && intval($tempHasShift) == 1){
-                                                    $schedule->{$kkx} = $vvx;
-                                                    $ctrAlteredSchedule = true;
-                                                }
-                                                if(intval($tempHasShift) == 0){
-                                                    $schedule->{$kkx} = null;
-                                                    $ctrAlteredSchedule = true;
-                                                }
-                                            }
-                                            if($ctrAlteredSchedule === true && $alteredShifts->custom_shift_id !== "0"){
-                                                $alteredCustomShiftId = $alteredShifts->custom_shift_id;
-                                            }
-                                        }
-                                    }
-                                    /*** altered shift schedule from custom shift `end` ***/
-
                                     $am_start = !empty($schedule) ? $schedule->am_start : null;
                                     $am_end = !empty($schedule) ? $schedule->am_end : null;
                                     $pm_start = !empty($schedule) ? $schedule->pm_start : null;
@@ -856,9 +696,8 @@ class Timesheet_model extends CI_Model{
                                         $no_shift_schedule = true;
                                     }
 
-                                    $am_shift_only = (($am_start !== null && $am_end !== null) && (($pm_start === null || $pm_start == "00:00:00") && ($pm_end === null || $pm_end == "00:00:00")) && $no_shift_schedule == false);
-                                    $pm_shift_only = ((($am_start === null || $am_start == "00:00:00") && ($am_end === null || $am_end == "00:00:00")) && ($pm_start !== null && $pm_end !== null) && $no_shift_schedule == false);
-                                    $isWholeDay = ($am_shift_only == false && $pm_shift_only == false && $no_shift_schedule == false);
+                                    $am_shift_only = (($am_start !== null && $am_end !== null) && (($pm_start === null || $pm_start == "00:00:00") && ($pm_end === null || $pm_end == "00:00:00")) && $no_shift_schedule === false);
+                                    $pm_shift_only = ((($am_start === null || $am_start == "00:00:00") && ($am_end === null || $am_end == "00:00:00")) && ($pm_start !== null && $pm_end !== null) && $no_shift_schedule === false);
 
                                     $tempHoliday = (object) $this->getCurrentDateIsHoliday($date);
                                     $isHoliday = ($tempHoliday->is_holiday === true)? 1: 0;
@@ -870,7 +709,7 @@ class Timesheet_model extends CI_Model{
                                     $employee_time_sheet->weekday = $weekday;
                                     $employee_time_sheet->is_holiday = $isHoliday;
                                     $employee_time_sheet->payrate_id = $payRateId;
-                                    $employee_time_sheet->custom_shift_id = $alteredCustomShiftId;
+                                    $employee_time_sheet->custom_shift_id = $updatedSchedule->custom_shift_id;
                                     
                                     $employee_time_sheet->am_in = null;
                                     $employee_time_sheet->am_out = null;
@@ -892,9 +731,7 @@ class Timesheet_model extends CI_Model{
                                     $employee_time_sheet->scrub_status = 0;
                                     $employee_time_sheet->comments = null;
 
-                                    $_has_shift = $alteredCustomShiftId !== 0? intval($alteredHasShiftSchedule): 1;
-
-                                    $employee_time_sheet->has_shift = $_has_shift;
+                                    $employee_time_sheet->has_shift = $updatedSchedule->has_shift;
                                     $employee_time_sheet->shift_am_start = null;
                                     $employee_time_sheet->shift_am_end = null;
                                     $employee_time_sheet->shift_pm_start = null;
@@ -1000,13 +837,13 @@ class Timesheet_model extends CI_Model{
                                                     $toArray = (array) $timesheetHourlyPartimer;
                                                     if(is_array($toArray) && count($toArray) > 0){ $tempRow->is_tagged_hourly = true; }
                                                     
-                                                    $updatedRow = $this->updateTimesheetShiftComputation($tempRow);
+                                                    $updatedRow = $this->updateTimesheetShiftComputation($tempRow, false, $night_diff_cfg);
                                                     $updatedTimesheet = (array) $updatedRow;
                                                     if(is_array($toArray) && count($toArray) > 0){
                                                         $updatedTimesheet = array_merge($updatedTimesheet, $toArray);
                                                     }
                                                     
-                                                    $updatedRecord = $this->db->update($this->tbl_timesheet, $updatedTimesheet, array("id" => $tempRowId));
+                                                    $this->db->update($this->tbl_timesheet, $updatedTimesheet, array("id" => $tempRowId));
                                                     $this->db->reset_query();
                                                 }
                                             }
@@ -1033,6 +870,83 @@ class Timesheet_model extends CI_Model{
         return $resultSet;
     }
 
+    protected function getCurrentShiftSchedule($date=null, $employee=null){
+        $updatedSchedule = new StdClass();
+        $updatedSchedule->schedule = array();
+        $updatedSchedule->custom_shift_id = 0;
+        $updatedSchedule->shift_id = $employee->shift_id;
+        $updatedSchedule->has_shift = $employee->shift_id ? 1 : 0;
+        $updatedSchedule->date = $date ? date("Y-m-d", strtotime($date)) : null;
+        if($date && $employee->id && $employee->shift_id){
+            $currentDate = date("Y-m-d", strtotime($date));
+            $weekday = strtolower(date("l", strtotime($currentDate)));
+            $shift_resource_array = $this->getShiftResources($employee->shift_id);
+            $schedule = $this->getScheduleList($weekday, $shift_resource_array);
+            $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $employee->id);
+            $updatedSchedule->schedule = $schedule;
+            $updatedSchedule = $this->getAlteredShiftSchedule($updatedSchedule, $schedule, $alteredShifts);
+        }
+        return $updatedSchedule;
+    }
+
+    protected function getShiftResources($shift_id){
+        $shift_resource_array = array();
+        $shift_resource = $this->getShiftResource($shift_id);
+        if(isset($shift_resource->shift_resource) && $shift_resource->shift_resource){
+            $tempResource = $shift_resource->shift_resource;
+            $tempResource = unserialize($tempResource);
+
+            $shift_resource_array = array_map(function ($item) {
+                return intval($item);
+            }, $tempResource);
+        }
+        return $shift_resource_array;
+    }
+    
+    protected function getAlteredShiftSchedule($updatedSchedule=null, $schedule=null, $alteredShifts=null){
+        if(isset($schedule, $alteredShifts, $alteredShifts->has_shift) && $schedule && $alteredShifts && count(get_object_vars($alteredShifts)) > 0){
+            $alteredCustomShiftId = 0;
+            $ctrAlteredSchedule = false;
+            $alteredHasShiftSchedule = intval($alteredShifts->has_shift);
+            foreach ($alteredShifts->schedule as $kkx => $vvx) {
+                if(isset($schedule->{$kkx}) && $schedule->{$kkx} && $schedule->{$kkx} !== $vvx && $vvx !== null && $alteredHasShiftSchedule === 1){
+                    $schedule->{$kkx} = $vvx;
+                    $ctrAlteredSchedule = true;
+                }
+                if($alteredHasShiftSchedule === 0){
+                    $schedule->{$kkx} = null;
+                    $ctrAlteredSchedule = true;
+                }
+            }
+            if($ctrAlteredSchedule === true && $alteredShifts->custom_shift_id !== "0"){ $alteredCustomShiftId = $alteredShifts->custom_shift_id; }
+
+            $updatedSchedule->schedule = $schedule;
+            $updatedSchedule->has_shift = $alteredHasShiftSchedule;
+            $updatedSchedule->custom_shift_id = $alteredCustomShiftId;
+        }
+        return $updatedSchedule;
+    }
+
+    protected function nextDayShiftCheker($date=null, $employee=null, $att_next_day=null){
+        if($date && $employee && $att_next_day){
+            $nextDate = date("Y-m-d", strtotime("+1 day", strtotime($date)));
+            $nextShiftSchedule = $this->getCurrentShiftSchedule($nextDate, $employee);
+            if(isset($nextShiftSchedule->has_shift) && intval($nextShiftSchedule->has_shift) == 1 &&
+                (isset($nextShiftSchedule->schedule->am_start) && $nextShiftSchedule->schedule->am_start != null)){
+                    $tempShiftStart = date("Y-m-d H:i:s", strtotime($nextShiftSchedule->date . " " . $nextShiftSchedule->schedule->am_start));
+                    if(strtotime($tempShiftStart) > strtotime($att_next_day)){ $att_next_day = $tempShiftStart; }
+            }elseif(isset($nextShiftSchedule->has_shift) && intval($nextShiftSchedule->has_shift) == 0){
+                $_nextDate = date("Y-m-d", strtotime("+1 day", strtotime($nextDate)));
+                $_nextShiftSchedule = $this->getCurrentShiftSchedule($_nextDate, $employee);
+                if(isset($_nextShiftSchedule->has_shift) && intval($_nextShiftSchedule->has_shift) == 1 &&
+                    (isset($_nextShiftSchedule->schedule->am_start) && $_nextShiftSchedule->schedule->am_start != null)){
+                        $_tempShiftStart = date("Y-m-d H:i:s", strtotime($_nextShiftSchedule->date . " " . $_nextShiftSchedule->schedule->am_start));
+                        if(strtotime($_tempShiftStart) > strtotime($att_next_day)){ $att_next_day = $_tempShiftStart; }
+                }
+            }
+        }
+        return $att_next_day;
+    }
     public function generateTimesheetRecords($tempRow, $date, $weekday){
         $arrData = array();
         $updatedTimesheets = array();
@@ -1097,19 +1011,17 @@ class Timesheet_model extends CI_Model{
 
     public function generateNoShiftOvertime($tempRow, $night_diff_cfg, $date, $generated_manually){
         $arrData = array();
+        $hasOvertimeRequest = false;
         $total_accredited_ot_hrs = 0;
         $total_accredited_ot_nightdiff_hrs = 0;
         $ot_night_diff = 0;
         $overtime_start = null;
         $overtime_end = null;
-        $hasAttendance = false;
 
+        $nshiftParams = $this->nightshiftParams($date);
+        $_nightShiftStart = $nshiftParams["start"];
+        $_nightShiftEnd = $nshiftParams["end"];
         $hasShiftSchedule = $tempRow->has_shift == 1;
-
-        $am_start = $tempRow->am_in ? date("H:i:s", strtotime($tempRow->am_in)): null;
-        $am_end = $tempRow->am_out ? date("H:i:s", strtotime($tempRow->am_out)): null;
-        $pm_start = $tempRow->pm_in ? date("H:i:s", strtotime($tempRow->pm_in)): null;
-        $pm_end = $tempRow->pm_out ? date("H:i:s", strtotime($tempRow->pm_out)): null;
         
         /** start shift schedule ***/
         $shift_am_start = $tempRow->shift_am_start ? date("H:i:s", strtotime($tempRow->shift_am_start)): null;
@@ -1117,14 +1029,8 @@ class Timesheet_model extends CI_Model{
         $shift_pm_start = $tempRow->shift_pm_start ? date("H:i:s", strtotime($tempRow->shift_pm_start)): null;
         $shift_pm_end = $tempRow->shift_pm_end ? date("H:i:s", strtotime($tempRow->shift_pm_end)): null;
         /** end shift schedule ***/
-
-        $tempProps = array("am_start", "am_end", "pm_start", "pm_end");
-        foreach ($tempProps as $prop) {
-            if(${$prop}){ $hasAttendance = true; break; }
-        }
         
         $am_shift_only = (($shift_am_start !== null && $shift_am_end !== null) && ($shift_pm_start === null && $shift_pm_end === null));
-
         $overtime = $this->db
             ->get_where($this->tbl_overtime,
                 array(
@@ -1138,18 +1044,22 @@ class Timesheet_model extends CI_Model{
         $hasOT = sizeof((array) $overtime) >= 1 ? 1 : 0;
         if (intval($hasOT) >= 1) {
             foreach ($overtime as $_overtime) {
-                $hasNextDayAttendance = false;
-
-                $ndiff_start = null;
-                $ndiff_end = null;
-
                 $regularOTHours = 0;
                 $nDiffOTHours = 0;
-                $otAfterShift = false;
+                $ot_hrs = 0;
+                $ot_night_diff = 0;
 
                 $_otStartDate = date("Y-m-d", strtotime($_overtime->date_from));
                 $_otStart = date('Y-m-d H:i', strtotime($_overtime->date_from));
                 $_otEnd = date('Y-m-d H:i', strtotime($_overtime->date_to));
+
+                $ot_start_dtr = date("Y-m-d H:i", strtotime($tempRow->date." ".$tempRow->shift_pm_end));
+                $ot_end_dtr = date("Y-m-d H:i", strtotime($tempRow->date." ".$tempRow->pm_out));
+
+                $ot_start = strtotime($ot_start_dtr) < strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from)))
+                ? date('Y-m-d H:i', strtotime($_overtime->date_from)) : $ot_start_dtr;
+                $ot_end = strtotime($ot_end_dtr) > strtotime(date('Y-m-d H:i', strtotime($_overtime->date_to)))
+                    ? date('Y-m-d H:i', strtotime($_overtime->date_to)) : $ot_end_dtr;
 
                 $_otNdiffStart = date("Y-m-d H:i", strtotime($_otStartDate." 22:00:00"));
                 $_otNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($_otStartDate." 05:00:00")));
@@ -1162,9 +1072,6 @@ class Timesheet_model extends CI_Model{
                     $_otNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($_otStartDate." ".$night_diff_cfg->end_time)));
                 }
 
-                $_previousNightDiff = date("Y-m-d H:i", strtotime("-1 day", strtotime($_otNdiffStart)));
-                $_nextNightDiff = date("Y-m-d H:i", strtotime("-1 day", strtotime($_otNdiffEnd)));
-
                 if($_otEnd && strtotime($_otEnd) > 0 && strtotime($_otEnd) > strtotime($_otNdiffStart)){
                     $regularOTHours = strtotime($_otNdiffStart) - strtotime($_otStart);
                     $regularOTHours = ($regularOTHours / 3600);
@@ -1176,164 +1083,58 @@ class Timesheet_model extends CI_Model{
                     $regularOTHours = ($regularOTHours / 3600);
                 }
 
-                $_attendance_am_start = $am_start ? date("Y-m-d H:i", strtotime("{$date} {$am_start}")): null;
-                $_attendance_am_end = $am_end ? date("Y-m-d H:i", strtotime("{$date} {$am_end}")): null;
-                $_attendance_pm_start = $pm_start ? date("Y-m-d H:i", strtotime("{$date} {$pm_start}")): null;
-                $_attendance_pm_end = $pm_end ? date("Y-m-d H:i", strtotime("{$date} {$pm_end}")): null;
-
-                if(($_attendance_am_start && $_attendance_am_end) && (strtotime($_attendance_am_end) < strtotime($_attendance_am_start))){
-                    $_attendance_am_end = date("Y-m-d H:i", strtotime("+1 day", strtotime($_attendance_am_end)));
-                    $hasNextDayAttendance = true;
-                }
-                if(($_attendance_am_end && $_attendance_pm_start) && (strtotime($_attendance_pm_start) < strtotime($_attendance_am_end) || ($hasNextDayAttendance && $_attendance_pm_start))){
-                    $_attendance_pm_start = date("Y-m-d H:i", strtotime("+1 day", strtotime($_attendance_pm_start)));
-                    $hasNextDayAttendance = true;
-                }
-                if(($_attendance_pm_start && $_attendance_pm_end) && (strtotime($_attendance_pm_end) < strtotime($_attendance_pm_start) || ($hasNextDayAttendance && $_attendance_pm_end))){
-                    $_attendance_pm_end = date("Y-m-d H:i", strtotime("+1 day", strtotime($_attendance_pm_end)));
-                    $hasNextDayAttendance = true;
-                }
-
-                $tempAttrAttendance = array();
-                $tempAttrProps = array("_attendance_am_start", "_attendance_am_end", "_attendance_pm_start", "_attendance_pm_end");
-                foreach ($tempAttrProps as $prop) {
-                    if(isset(${$prop}) && ${$prop}){
-                        $tempValuex = ${$prop};
-                        $tempAttrAttendance[] = $tempValuex;
+                $collectionScript = $this->attendanceCollectionScript($tempRow);
+                $tempAttrAttendance = $collectionScript["arrAttendance"];
+                if(is_array($collectionScript["attendance"]) && !empty($collectionScript["attendance"])){
+                    foreach ($collectionScript["attendance"] as $key => $value) {
+                        $tempKey = "_attendance_{$key}";
+                        ${$tempKey} = $value;
                     }
                 }
 
                 $shift_basis = $am_shift_only ? date("Y-m-d H:i", strtotime($_attendance_am_end)) : date("Y-m-d H:i", strtotime($_attendance_pm_end));
-                if($hasShiftSchedule == false && count($tempAttrAttendance) > 1 && end($tempAttrAttendance)){
+                if($hasShiftSchedule === false && count($tempAttrAttendance) > 1 && end($tempAttrAttendance)){
                     $shift_basis = end($tempAttrAttendance);
                 }
 
-                if(count($tempAttrAttendance) > 1){
-                    $otNightDiffOnly = new stdClass();
-                    $otNightDiffOnly->is_night_diff = false;
-                    $otNightDiffOnly->ot_regular = 0;
-                    $otNightDiffOnly->ot_night_diff = 0;
-                    $isNightDiffOnly = false;
-
-                    $ot_start_dtr = date("Y-m-d H:i", strtotime($tempAttrAttendance[0]));
-		            $ot_end_dtr = date("Y-m-d H:i", strtotime($tempAttrAttendance[sizeof($tempAttrAttendance) - 1]));
+                $startOfShift = reset($tempAttrAttendance);
+                $isNightShift = strtotime($startOfShift) >= strtotime($_nightShiftStart) && strtotime($startOfShift) <= strtotime($_nightShiftEnd);
+                if($isNightShift){ $shift_basis = $_otStart; }
                 
-                    $ot_start = strtotime($ot_start_dtr) < strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from)))
-                        ? date('Y-m-d H:i', strtotime($_overtime->date_from)) : $ot_start_dtr;
-
-                    $ot_end = strtotime($ot_end_dtr) > strtotime(date('Y-m-d H:i', strtotime($_overtime->date_to)))
-                        ? date('Y-m-d H:i', strtotime($_overtime->date_to)): $ot_end_dtr;
-
-                    if(strtotime($ot_start) >= strtotime($_previousNightDiff)
-                        && strtotime($ot_start) < strtotime($_nextNightDiff)){
-                        $tempOTE = 0;
-                        $tempRegularOT = 0;
-                        if(strtotime($ot_end) > strtotime($_previousNightDiff) && strtotime($ot_end) <= strtotime($_nextNightDiff)){
-                            $tempOTE = strtotime($ot_end) - strtotime($ot_start);
-                        }else{
-                            $tempOTE = strtotime($_nextNightDiff) - strtotime($ot_start);
-                            $tempRegularOT = strtotime($ot_end) - strtotime($_nextNightDiff);
+                $arrShifts = array();
+                $shiftProps = array("shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end");
+                $tempShiftDate = date("Y-m-d", strtotime($date));
+                foreach ($shiftProps as $key => $value) {
+                    if(${$value}){
+                        if($key > 0 ){
+                            $prevValue = ${$shiftProps[$key-1]};
+                            if(strtotime(${$value}) < strtotime($prevValue)){ $tempShiftDate = date("Y-m-d", strtotime("+1 day", strtotime($tempShiftDate))); }
                         }
-                        $otNightDiffOnly->ot_regular = ($tempRegularOT > 0)? $tempRegularOT / 3600: $tempRegularOT;
-                        $otNightDiffOnly->ot_night_diff = ($tempOTE > 0)? $tempOTE / 3600: $tempOTE;
-                        $otNightDiffOnly->is_night_diff = true;
+                        $nValue = date("Y-m-d H:i", strtotime($tempShiftDate." ".${$value}));
+                        $arrShifts[] = $nValue;
                     }
+                }
 
-                    if((strtotime($ot_start) >= strtotime($shift_basis)) && $hasShiftSchedule){ $otAfterShift = true; }
-
-                    if($otAfterShift){
-                        $init_start_date = new DateTime($ot_start);
-                        $start_ndiff_date = $init_start_date->format('Y-m-d');
-                        $start_ndiff_time = $night_diff_cfg->start_time;
-                        $start_ndiff_date_time = date('Y-m-d H:i', strtotime($start_ndiff_date . " " . $start_ndiff_time));
-    
-                        $init_end_date = new DateTime($ot_end);
-                        $end_ndiff_date = $init_end_date->format('Y-m-d');
-                        $end_ndiff_time = $night_diff_cfg->end_time;
-                        $end_ndiff_date_time = date("Y-m-d H:i", strtotime($end_ndiff_date . " " . $end_ndiff_time));
-    
-                        $ndiff_start = $start_ndiff_date_time;
-                        $ndiff_end = $end_ndiff_date_time;
-
-                        if (strtotime(date('Y-m-d', strtotime($ot_start)))
-                            === strtotime(date('Y-m-d', strtotime($ot_end)))) {
-                            $init_end_date = new DateTime($ot_start);
-                            $end_ndiff_date = $init_end_date->modify("+1 day")->format('Y-m-d');
-                            $end_ndiff_time = $night_diff_cfg->end_time;
-                            $end_ndiff_date_time = date("Y-m-d H:i", strtotime($end_ndiff_date . " " . $end_ndiff_time));
-    
-                            $ndiff_start = $start_ndiff_date_time;
-                            $ndiff_end = $end_ndiff_date_time;
-                        }
-    
-                        if (strtotime($ndiff_start) >= strtotime($ot_start)) {
-                            if (strtotime($ot_end) >= strtotime($ndiff_end)) {
-                                $ot_night_diff = strtotime($ndiff_end) - strtotime($ndiff_start);
-                                $ot_night_diff = $ot_night_diff / 3600;
-                            } else {
-                                $ot_night_diff = strtotime($ot_end) - strtotime($ndiff_start);
-                                $ot_night_diff = $ot_night_diff / 3600;
-                            }
-                        } else {
-                            $ot_night_diff = strtotime($ndiff_end) - strtotime($ot_start);
-                            $ot_night_diff = $ot_night_diff / 3600;
-                        }
-                        $ot_night_diff = ($ot_night_diff < 0) ? 0 : $ot_night_diff;
+                if($isNightShift === false && is_array($arrShifts) && !empty($arrShifts)){
+                    $firstShift = reset($arrShifts);
+                    if(strtotime($startOfShift) < strtotime($firstShift)){
+                        $shift_basis = $firstShift;
                     }
-                    // END OVERTIME NIGHT DIFF CALCULATION
+                }
 
-                    $ot_seconds = (strtotime($ot_end) - strtotime($ot_start));
-                    $ot_minutes = doubleval($ot_seconds) < 0 ? 0 : (doubleval($ot_seconds) / 60);
-                    
-                    /*** START OVERTIME W/ NIGHT DIFF COMPUTATION REG OT ***/
-                    if($ot_night_diff > 0){
-                        $_ot_seconds = (strtotime($_otNdiffStart) - strtotime($ot_start));
-                        $ot_minutes = doubleval($_ot_seconds) < 0 ? 0 : (doubleval($_ot_seconds) / 60);
-                    }
-                    /*** END OVERTIME W/ NIGHT DIFF COMPUTATION REG OT ***/
+                if(count($tempAttrAttendance) > 1){
+                    $parameters = array("hasShiftSchedule" => $hasShiftSchedule, "overtime" => $_overtime, "timesheetExist" => $tempRow,
+                        "otAttendances" => $tempAttrAttendance, "nightDiffCfg" => $night_diff_cfg, "shiftBasis" => $shift_basis, "otNdiffStart" => $_otNdiffStart,
+                        "otNdiffEnd" => $_otNdiffEnd, "nDiffOTHours" => $nDiffOTHours, "isNightShift" => $isNightShift,
+                        "regularOTHours" => $regularOTHours, "otNightDiff"=>$ot_night_diff);
+                    $otScript = $this->overtimeComputationScript($parameters);
 
-                    $regularOvertimeTotal = $ot_minutes / 60;
-                    $otTotal = $regularOvertimeTotal + $ot_night_diff;
-
-                    /*** deduct 1 hour on overtime with night differential ***/
-                    if(floatval($otTotal) >= 5 && $nDiffOTHours > 0){
-                        $ot_night_diff = $ot_night_diff - 1;
-                    }
-                    /*** deduct 1 hour on overtime with night differential ***/
-
-                    $ot_night_diff = doubleval($ot_night_diff);
-                    $ot_hrs = number_format($regularOvertimeTotal, 2, '.', '');
-                    if($otNightDiffOnly->is_night_diff){
-                        $ot_hrs = number_format($otNightDiffOnly->ot_regular, 2, '.', '');
-                        $ot_night_diff = number_format($otNightDiffOnly->ot_night_diff, 2, '.', '');
-                        $regularOTHours = $ot_hrs;
-                        $nDiffOTHours = $ot_night_diff;
-                    }
-
-                    if($ot_hrs >= 5){ $ot_hrs = $ot_hrs - 1; }
-                    
-                    if($regularOTHours > 0 && floatval($ot_hrs) > $regularOTHours && $otAfterShift){
-                        $tempOTDiff = 0;
-                        $tempOTDiff = floatval($ot_hrs) - $regularOTHours;
-                        $ot_hrs = $regularOTHours;
-                        $ot_night_diff = $ot_night_diff + $tempOTDiff;
-                    }
-                    
-                    /*** start after night diff regular hours inclusion ***/
-                    if(($ot_end && $ndiff_end) && floatval($ot_hrs) > 0 && strtotime($ot_end) > strtotime($ndiff_end)){
-                        $ext_ot_seconds = strtotime($ot_end) - strtotime($ndiff_end);
-                        $ext_ot_minutes = doubleval($ext_ot_seconds) < 0 ? 0 : (doubleval($ext_ot_seconds) / 60);
-                        $ext_regularOvertimeTotal = $ext_ot_minutes / 60;
-                        $ot_hrs = $ot_hrs + $ext_regularOvertimeTotal;
-
-                        if(($regularOTHours > 0 && $nDiffOTHours > 0) && $nDiffOTHours > $ext_regularOvertimeTotal ){
-                            $regularOTHours = $regularOTHours + $ext_regularOvertimeTotal;
-                            $nDiffOTHours = $nDiffOTHours - $ext_regularOvertimeTotal;
-                        }
-                    }
-                    /*** end after night diff regular hours inclusion ***/
-                    
-                    $ot_night_diff = number_format($ot_night_diff, 2, '.', '');
+                    $regularOTHours = $otScript["regularOTHours"];
+                    $nDiffOTHours = $otScript["nDiffOTHours"];
+                    $ot_hrs = $otScript["ot_hrs"];
+                    $ot_night_diff = number_format($otScript["ot_night_diff"], 2, '.', '');
+                    $ot_start = $otScript["ot_start"];
+                    $ot_end = $otScript["ot_end"];
 
                     $overtime_start = date("Y-m-d H:i", strtotime($ot_start));
                     $overtime_end = date("Y-m-d H:i", strtotime($ot_end));
@@ -1375,33 +1176,23 @@ class Timesheet_model extends CI_Model{
                 $regularOTHours = round($regularOTHours, 2);
                 $nDiffOTHours = round($nDiffOTHours, 2);
 
-                /*** if($ot_hrs > 0 && floatval($ot_hrs % 0.50) > 0){ $ot_hrs = floor($ot_hrs); }
-                if($ot_night_diff > 0 && floatval($ot_night_diff % 0.50) > 0){ $ot_night_diff = floor($ot_night_diff); } ***/
-
+                if($ot_end == $ot_start || strtotime($ot_end) < strtotime($ot_start)){
+                    $overtime_start = date("Y-m-d H:i", strtotime($_overtime->date_from));
+                    $overtime_end = date("Y-m-d H:i", strtotime($_overtime->date_to));
+                    $regularOTHours = 0;
+                }
+                
                 if (sizeof((array) $tempRow) >= 1 && intval($generated_manually) <= 0) {
-                    $this->db->where("timesheet_id", $tempRow->id);
-                    $this->db->update($this->tbl_timesheet_overtime,
-                        array(
-                            "overtime_id" => $_overtime->id,
-                            "overtime_in" => $overtime_start,
-                            "overtime_out" => $overtime_end,
-                            "total_hrs" => $regularOTHours,
-                            "accredited_hrs" => $ot_hrs,
-                            "ndiff_hrs" => $nDiffOTHours,
-                            "accredited_ndiff_hrs" => $ot_night_diff,
-                        ));
-                    $this->db->reset_query();
-                } else {
-                    $ts_ot_exist = $this->db
-                        ->where("timesheet_id", $tempRow->id)
-                        ->where("overtime_id", $_overtime->id)
-                        ->get($this->tbl_timesheet_overtime)
-                        ->row();
-
-                    if (sizeof((array) $ts_ot_exist) >= 1) {
-                        $this->db->where("id", $ts_ot_exist->id);
+                    if($regularOTHours == 0 && $ot_hrs == 0 && $nDiffOTHours == 0 && $ot_night_diff == 0){
+                        $this->db->where("timesheet_id", $tempRow->id);
+                        $this->db->delete($this->tbl_timesheet_overtime);
+                        $this->db->reset_query();
+                        $hasOvertimeRequest = false;
+                    }else{
+                        $this->db->where("timesheet_id", $tempRow->id);
                         $this->db->update($this->tbl_timesheet_overtime,
                             array(
+                                "overtime_id" => $_overtime->id,
                                 "overtime_in" => $overtime_start,
                                 "overtime_out" => $overtime_end,
                                 "total_hrs" => $regularOTHours,
@@ -1410,6 +1201,35 @@ class Timesheet_model extends CI_Model{
                                 "accredited_ndiff_hrs" => $ot_night_diff,
                             ));
                         $this->db->reset_query();
+                        $hasOvertimeRequest = true;
+                    }
+                } else {
+                    $ts_ot_exist = $this->db
+                        ->where("timesheet_id", $tempRow->id)
+                        ->where("overtime_id", $_overtime->id)
+                        ->get($this->tbl_timesheet_overtime)
+                        ->row();
+
+                    if (sizeof((array) $ts_ot_exist) >= 1) {
+                        if($regularOTHours == 0 && $ot_hrs == 0 && $nDiffOTHours == 0 && $ot_night_diff == 0){
+                            $this->db->where("id", $ts_ot_exist->id);
+                            $this->db->delete($this->tbl_timesheet_overtime);
+                            $this->db->reset_query();
+                            $hasOvertimeRequest = false;
+                        }else{
+                            $this->db->where("id", $ts_ot_exist->id);
+                            $this->db->update($this->tbl_timesheet_overtime,
+                                array(
+                                    "overtime_in" => $overtime_start,
+                                    "overtime_out" => $overtime_end,
+                                    "total_hrs" => $regularOTHours,
+                                    "accredited_hrs" => $ot_hrs,
+                                    "ndiff_hrs" => $nDiffOTHours,
+                                    "accredited_ndiff_hrs" => $ot_night_diff,
+                                ));
+                            $this->db->reset_query();
+                            $hasOvertimeRequest = true;
+                        }
                     } else {
                         $this->db->insert($this->tbl_timesheet_overtime,
                             array(
@@ -1422,6 +1242,7 @@ class Timesheet_model extends CI_Model{
                                 "ndiff_hrs" => $nDiffOTHours,
                                 "accredited_ndiff_hrs" => $ot_night_diff,
                             ));
+                        $hasOvertimeRequest = true;
                     }
                 }
 
@@ -1434,6 +1255,7 @@ class Timesheet_model extends CI_Model{
         $arrData["ot_night_diff"] = $total_accredited_ot_nightdiff_hrs;
         $arrData["overtime_in"] = $overtime_start;
         $arrData["overtime_out"] = $overtime_end;
+        $arrData["allow_overtime_request"] = $hasOvertimeRequest; 
 
         return $arrData;
     }
@@ -1445,16 +1267,14 @@ class Timesheet_model extends CI_Model{
         $arrData = array();
         $flexibleEmployee = $flexibleEmployee ? true: false;
         $logged_in_user_emp_id = $this->logged_in_user["emp_id"];
-        $attendance_log_ctr = sizeof($attendance);
         $flexible = $employee_time_sheet->is_flexi;
         $flexibleEmployee = $flexibleEmployee && $flexible ? true: false;
 
         $timesheet_id = null;
         $hasNextDayDate = false;
-        
-        if(strtotime($am_start) > strtotime($am_end) && $hasNextDayDate === false){ $hasNextDayDate = true; }
-        if($pm_shift_only && strtotime($am_start) > strtotime($pm_start) && $hasNextDayDate === false){ $hasNextDayDate = true; }
-        if($pm_shift_only && strtotime($am_start) > strtotime($pm_end) && $hasNextDayDate === false){ $hasNextDayDate = true; }
+        if(($am_start && $am_end) && (strtotime($am_end) < strtotime($am_start)) && $hasNextDayDate === false){ $hasNextDayDate = true; }
+        if(($am_end && $pm_start) && (strtotime($pm_start) < strtotime($am_end) && $hasNextDayDate === false)){ $hasNextDayDate = true; }
+        if(($pm_start && $pm_end) && (strtotime($pm_end) < strtotime($pm_start) && $hasNextDayDate === false)){ $hasNextDayDate = true; }
 
         /*** super flexible employee ***/
         $superFlexibleEmployee = false;
@@ -1472,37 +1292,35 @@ class Timesheet_model extends CI_Model{
         if($qTempEmployee->num_rows() == 1){ $superFlexibleEmployee = true; }
         $this->db->reset_query();
         /*** super flexible employee ***/
-        
         foreach ($attendance as $key => $value) {
             $tempDate = date("Y-m-d", strtotime($value));
-            if($tempDate !== $date && $hasNextDayDate == false){ unset($attendance[$key]); }
+            if($tempDate !== $date && $hasNextDayDate === false){ unset($attendance[$key]); }
         }
 
         $attendance_log_ctr = sizeof($attendance);
-
         /*** super flexible employee script function ***/
         if($attendance_log_ctr === 1 && $superFlexibleEmployee){
             $singleAttRecord = $attendance[0];
             $_hasNextDayDate = false;
-            $_amStart = $am_start ? date("Y-m-d H:i:s", strtotime($date." ".$am_start)): null; 
-            $_amEnd = $am_end ? date("Y-m-d H:i:s", strtotime($date." ".$am_end)): null; 
-            $_pmStart = $pm_start ? date("Y-m-d H:i:s", strtotime($date." ".$pm_start)): null; 
-            $_pmEnd = $pm_end ? date("Y-m-d H:i:s", strtotime($date." ".$pm_end)): null; 
+            $_amStart = $am_start ? date("Y-m-d H:i:s", strtotime($date." ".$am_start)): null;
+            $_amEnd = $am_end ? date("Y-m-d H:i:s", strtotime($date." ".$am_end)): null;
+            $_pmStart = $pm_start ? date("Y-m-d H:i:s", strtotime($date." ".$pm_start)): null;
+            $_pmEnd = $pm_end ? date("Y-m-d H:i:s", strtotime($date." ".$pm_end)): null;
             
             if(($_amStart && $_amEnd) && (strtotime($_amEnd) < strtotime($_amStart))){
                 $_amEnd = date("Y-m-d H:i:s", strtotime("+1 day", strtotime($_amEnd)));
                 $_hasNextDayDate = true;
             }
             
-            if(($_amEnd && $_pmStart) && (strtotime($_pmStart) < strtotime($_amEnd) || $hasNextDayDate)){
+            if(($_amEnd && $_pmStart) && (strtotime($_pmStart) < strtotime($_amEnd) || $_hasNextDayDate)){
                 $_pmStart = date("Y-m-d H:i:s", strtotime("+1 day", strtotime($_pmStart)));
                 $_hasNextDayDate = true;
             }
             
-            if(($_pmStart && $_pmEnd) && (strtotime($_pmEnd) < strtotime($_pmStart) || $hasNextDayDate)){
+            if(($_pmStart && $_pmEnd) && (strtotime($_pmEnd) < strtotime($_pmStart) || $_hasNextDayDate)){
                 $_pmEnd = date("Y-m-d H:i:s", strtotime("+1 day", strtotime($_pmEnd)));
-                $_hasNextDayDate = true;
             }
+
             if(strtotime($singleAttRecord) < strtotime($_amStart)){ $_amStart = date("Y-m-d H:i:s", strtotime($singleAttRecord)); }
 
             /*** reset attendance record ***/
@@ -1545,7 +1363,6 @@ class Timesheet_model extends CI_Model{
             }
         }
         /*** approved Travel order tagging ***/
-
         if ($attendance_log_ctr === 4) {
             foreach ($attendance as $i => $time) {
                 $prop = $props[$i];
@@ -1553,17 +1370,16 @@ class Timesheet_model extends CI_Model{
             }
         } else {
             if ($flexible) { // fore employee with 1 in and out
-                if ($attendance_log_ctr > 2) {
+                if ($attendance_log_ctr > 2 || $attendance_log_ctr > 4) {
                     $employee_time_sheet->scrub_status = 2;
                     $employee_time_sheet->comments = "[System Generated]: Multiple entry detected for flexi-time employees.";
 
                     foreach ($attendance as $i => $time) {
-                        if (($i + 1) > 4) break;
-
+                        if (($i + 1) > 4){ break; }
                         $prop = $props[$i];
                         $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
                     }
-                } else if ($attendance_log_ctr < 2) {
+                } elseif ($attendance_log_ctr < 2) {
                     $employee_time_sheet->scrub_status = 1;
                     $employee_time_sheet->comments = "[System Generated]: Lacking entry detected.";
                     foreach ($attendance as $i => $time) {
@@ -1654,12 +1470,12 @@ class Timesheet_model extends CI_Model{
                     }
 
                     foreach ($attendance as $i => $time) {
-                        if (($i + 1) > 4) break;
+                        if (($i + 1) > 4){ break; }
 
                         $prop = $props[$i];
                         $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
                     }
-                } else if ($attendance_log_ctr < 4) {
+                } elseif ($attendance_log_ctr < 4) {
                     $employee_time_sheet->scrub_status = 1;
                     $employee_time_sheet->comments = "[System Generated]: Lacking entry detected.";
 
@@ -1670,7 +1486,6 @@ class Timesheet_model extends CI_Model{
                         $tempAmStart = date("Y-m-d H:i", strtotime($date." ".$am_start));
                         $tempAmEnd = date("Y-m-d H:i", strtotime($date." ".$am_end));
                         $tempPmStart = date("Y-m-d H:i", strtotime($date." ".$pm_start));
-                        $tempPmEnd = date("Y-m-d H:i", strtotime($date." ".$pm_end));
 
                         $tempNextDate = date("Y-m-d", strtotime("+1 day", strtotime($date)));
                         $xxHasNextDayShift = false;
@@ -1681,10 +1496,6 @@ class Timesheet_model extends CI_Model{
                         }
                         if(($am_end && $pm_start) && (strtotime($pm_start) < strtotime($am_end) || $xxHasNextDayShift)){
                             $tempPmStart = strtotime(date('Y-m-d H:i', strtotime($tempNextDate . " " . $pm_start)));
-                            $xxHasNextDayShift = true;
-                        }
-                        if(($pm_start && $pm_end) && (strtotime($pm_end) < strtotime($pm_start) || $xxHasNextDayShift)){
-                            $tempPmEnd = strtotime(date('Y-m-d H:i', strtotime($tempNextDate . " " . $pm_end)));
                         }
 
                         $temp2hrsAmStart = date("Y-m-d H:i", strtotime("+2 hours", strtotime($tempAmStart)));
@@ -1692,12 +1503,12 @@ class Timesheet_model extends CI_Model{
 
                         if (strtotime($first_record) <= strtotime($tempAmEnd)) {
                             $employee_time_sheet->am_in = $first_record;
-                        } 
+                        }
                         if ((strtotime($first_record) >= strtotime($temp2hrsAmStart)) && (strtotime($first_record) <= strtotime($tempAmEnd))) {
                             $employee_time_sheet->am_out = $first_record;
                             $employee_time_sheet->am_in = null;
-                        } 
-                        if ((strtotime($first_record) >= strtotime($temp2hrsAmStart)) 
+                        }
+                        if ((strtotime($first_record) >= strtotime($temp2hrsAmStart))
                             && (strtotime($first_record) >= strtotime($tempAmEnd) || strtotime($first_record) <= strtotime($tempPmStart))) {
                             $employee_time_sheet->pm_in = $first_record;
                             $employee_time_sheet->am_in = null;
@@ -1710,7 +1521,7 @@ class Timesheet_model extends CI_Model{
                             $employee_time_sheet->comments = null;
 
                             $employee_time_sheet->am_out = $end_record;
-                        } else if ($pm_shift_only) {
+                        } elseif ($pm_shift_only) {
                             // reset scrub_status for with half day schedule only to unmark them for lacking entry
                             $employee_time_sheet->scrub_status = 0;
                             $employee_time_sheet->comments = null;
@@ -1719,11 +1530,11 @@ class Timesheet_model extends CI_Model{
                         } else {
                             $hasAmEntry = $employee_time_sheet->am_in || $employee_time_sheet->am_out;
                             if($hasAmEntry){
-                                if ((strtotime($end_record) > strtotime($employee_time_sheet->am_out)) && 
+                                if ((strtotime($end_record) > strtotime($employee_time_sheet->am_out)) &&
                                 ((strtotime($end_record) > strtotime($temp2hrsAmStart)) && (strtotime($end_record) < strtotime($temp2hrsPmStart)))) {
                                     $employee_time_sheet->pm_in = $end_record;
                                     $employee_time_sheet->pm_out = null;
-                                }else if((strtotime($end_record) > strtotime($employee_time_sheet->pm_in)) && 
+                                }elseif((strtotime($end_record) > strtotime($employee_time_sheet->pm_in)) &&
                                 ((strtotime($end_record) > strtotime($temp2hrsAmStart)) && (strtotime($end_record) > strtotime($temp2hrsPmStart)))){
                                     $employee_time_sheet->am_out = null;
                                     $employee_time_sheet->pm_in = null;
@@ -1734,7 +1545,7 @@ class Timesheet_model extends CI_Model{
                                     $employee_time_sheet->am_out = $end_record;
                                     $employee_time_sheet->pm_in = null;
                                     $employee_time_sheet->pm_out = null;
-                                } else if((strtotime($end_record) > strtotime($employee_time_sheet->pm_in)) && 
+                                } elseif((strtotime($end_record) > strtotime($employee_time_sheet->pm_in)) &&
                                 ((strtotime($end_record) > strtotime($temp2hrsAmStart)) && (strtotime($end_record) > strtotime($tempPmStart)))){
                                     $employee_time_sheet->pm_out = $end_record;
                                 }
@@ -1758,7 +1569,7 @@ class Timesheet_model extends CI_Model{
             $pm_in = strtotime($employee_time_sheet->pm_in);
             $pm_out = strtotime($employee_time_sheet->pm_out);
 
-            if(is_array($props) && count($props) > 0){ foreach ($props as $prop) { if(${$prop}){$currentAttLogs++; } } }
+            if(is_array($props) && !empty($props)){ foreach ($props as $prop) { if(${$prop}){$currentAttLogs++; } } }
 
             $nextDayDate = date("Y-m-d", strtotime("+1 day", strtotime($date)));
             $hasNextDayShift = false;
@@ -1776,14 +1587,14 @@ class Timesheet_model extends CI_Model{
             if($_pm_start < $_am_end && ($am_end !== null && $pm_start !== null)){
                 $_pm_start = strtotime(date('Y-m-d H:i', strtotime($nextDayDate . " " . $pm_start)));
                 $hasNextDayShift = true;
-            }else if(($am_end !== null && $pm_start !== null) && $hasNextDayShift == true){
+            }elseif(($am_end !== null && $pm_start !== null) && $hasNextDayShift === true){
                 $_pm_start = strtotime(date('Y-m-d H:i', strtotime($nextDayDate . " " . $pm_start)));
             }
 
             if($_pm_end < $_pm_start && ($pm_end !== null && $pm_start !== null)){
                 $_pm_end = strtotime(date('Y-m-d H:i', strtotime($nextDayDate . " " . $pm_end)));
                 $hasNextDayShift = true;
-            }else if(($pm_end !== null && $pm_start !== null) && $hasNextDayShift == true){
+            }elseif(($pm_end !== null && $pm_start !== null) && $hasNextDayShift === true){
                 $_pm_end = strtotime(date('Y-m-d H:i', strtotime($nextDayDate . " " . $pm_end)));
             }
 
@@ -1797,13 +1608,13 @@ class Timesheet_model extends CI_Model{
             if($flexible && $currentAttLogs === 1 && $tempAttendance){
                 if (($_am_start && $_am_end) && $tempAttendance <= $_am_end) {
                     $employee_time_sheet->am_in = date("Y-m-d H:i", $tempAttendance);
-                } 
+                }
                 if ($tempAttendance >= $am2hrsDeduction && $tempAttendance <= $_am_end) {
                     $employee_time_sheet->am_out = date("Y-m-d H:i", $tempAttendance);
                     $employee_time_sheet->am_in = null;
                     $am_in = null;
                     $am_out = $tempAttendance;
-                } 
+                }
                 if (($tempAttendance >= $am2hrsDeduction) 
                     && ($tempAttendance >= $_am_end || $tempAttendance <= $_pm_start)) {
                     $employee_time_sheet->pm_in = date("Y-m-d H:i", $tempAttendance);
@@ -1816,13 +1627,13 @@ class Timesheet_model extends CI_Model{
 
                 $hasAmEntry = $employee_time_sheet->am_in || $employee_time_sheet->am_out;
                 if($hasAmEntry === false){
-                    if ($am_out && $tempAttendance > $am_out && 
+                    if ($am_out && $tempAttendance > $am_out &&
                     ($tempAttendance > $am2hrsDeduction && $tempAttendance < $pmHalfDayAbsent)) {
                         $employee_time_sheet->pm_in = date("Y-m-d H:i", $tempAttendance);
                         $employee_time_sheet->pm_out = null;
                         $pm_out = null;
                         $pm_in = $tempAttendance;
-                    } elseif ($pm_in && $tempAttendance > $pm_in && 
+                    } elseif ($pm_in && $tempAttendance > $pm_in &&
                     ($tempAttendance > $am2hrsDeduction && $tempAttendance > $pmHalfDayAbsent)){
                         $employee_time_sheet->pm_out = date("Y-m-d H:i", $tempAttendance);
                         $employee_time_sheet->pm_in = null;
@@ -1837,43 +1648,41 @@ class Timesheet_model extends CI_Model{
                     $_TOuptoDate = strtotime($toDetails->date_to);
                     if(($_TOuptoDate && $_am_end) && $_TOuptoDate < $_am_end){
                         $tempDates[] = $_TOuptoDate;
-                        /*** $employee_time_sheet->am_out = date("Y-m-d H:i", $_TOuptoDate); 
+                        /*** $employee_time_sheet->am_out = date("Y-m-d H:i", $_TOuptoDate);
                         $am_out = $_TOuptoDate; ***/
-                    }else if(($_TOuptoDate && $_am_end) && $_TOuptoDate >= $_am_end){
-                        /*** $employee_time_sheet->am_out = date("Y-m-d H:i", $_am_end); 
+                    }elseif(($_TOuptoDate && $_am_end) && $_TOuptoDate >= $_am_end){
+                        /*** $employee_time_sheet->am_out = date("Y-m-d H:i", $_am_end);
                         $am_out = $_am_end; ***/
                         $tempDates[] = $_am_end;
                     }
                     
                     if(($_TOuptoDate && $_pm_start) && $_TOuptoDate < $_pm_start){
                         $tempDates[] = $_TOuptoDate;
-                       /*** $employee_time_sheet->pm_in = date("Y-m-d H:i", $_TOuptoDate); 
-                        $pm_in = $_TOuptoDate; 
+                       /*** $employee_time_sheet->pm_in = date("Y-m-d H:i", $_TOuptoDate);
+                        $pm_in = $_TOuptoDate;
                         ***/ 
-                    }else if(($_TOuptoDate && $_pm_start) && $_TOuptoDate >= $_pm_start){
+                    }elseif(($_TOuptoDate && $_pm_start) && $_TOuptoDate >= $_pm_start){
                         $tempDates[] = $_pm_start;
-                        /*** $employee_time_sheet->pm_in = date("Y-m-d H:i", $_pm_start); 
+                        /*** $employee_time_sheet->pm_in = date("Y-m-d H:i", $_pm_start);
                         $pm_in = $_pm_start; ***/
                     }
                     
                     if(($_TOuptoDate && $_pm_end && $pmHalfDayAbsent) && ($_TOuptoDate >= $pmHalfDayAbsent && $_TOuptoDate <= $_pm_end)){
                         $tempDates[] = $_TOuptoDate;
-                       /*** $employee_time_sheet->pm_out = date("Y-m-d H:i", $_pm_end); 
+                       /*** $employee_time_sheet->pm_out = date("Y-m-d H:i", $_pm_end);
                         $pm_out = $_pm_end; ***/
-                    }else if(($_TOuptoDate && $_pm_end) && $_TOuptoDate >= $_pm_end){
+                    }elseif(($_TOuptoDate && $_pm_end) && $_TOuptoDate >= $_pm_end){
                         $tempDates[] = $_pm_end;
-                        /*** $employee_time_sheet->pm_out = date("Y-m-d H:i", $_pm_end); 
+                        /*** $employee_time_sheet->pm_out = date("Y-m-d H:i", $_pm_end);
                         $pm_out = $_pm_end; ***/
                     }
 
-                    if(is_array($tempDates) && count($tempDates) === 4){
-                        if(is_array($props) && count($props) > 0){ 
-                            foreach ($props as $key => $prop) { 
-                                if(isset($tempDates[$key]) && $tempDates[$key]){
-                                    $employee_time_sheet->{$prop} = date("Y-m-d H:i", $tempDates[$key]);
-                                    ${$prop} = $tempDates[$key];
-                                } 
-                            } 
+                    if(is_array($tempDates) && count($tempDates) === 4 && (is_array($props) && !empty($props))){
+                        foreach ($props as $key => $prop) {
+                            if(isset($tempDates[$key]) && $tempDates[$key]){
+                                $employee_time_sheet->{$prop} = date("Y-m-d H:i", $tempDates[$key]);
+                                ${$prop} = $tempDates[$key];
+                            }
                         }
                     }
                 }
@@ -1890,13 +1699,13 @@ class Timesheet_model extends CI_Model{
                 }
                 /*** am 2hrs deduction custom ***/
                 $has2hrsDeduction = false;
-                if(($am_in > $am2hrsDeduction) && $am_in && $isHoliday == false){
+                if(($am_in > $am2hrsDeduction) && $am_in && $isHoliday === false){
                     $amPlus2hrs = strtotime(date("Y-m-d H:i", strtotime("+2 hours", strtotime($date . " " . $am_start))));
                     $employee_time_sheet->am_late = round(($amPlus2hrs - $_am_start) / 60, 2);
                     $has2hrsDeduction = true;
                 }
 
-                if($flexibleEmployee && $has2hrsDeduction == false){
+                if($flexibleEmployee && $has2hrsDeduction === false){
                     $employee_time_sheet->am_late = 0;
                 }
 
@@ -1925,11 +1734,11 @@ class Timesheet_model extends CI_Model{
                     $tempAmOutx = ($am_out > $_am_end) ? $_am_end : $am_out;
 
                     /*** am 2hrs deduction custom ***/
-                    if(($am_in > $am2hrsDeduction) && $am_in && $isHoliday == false){
+                    if(($am_in > $am2hrsDeduction) && $am_in && $isHoliday === false){
                         $tempAmInx = strtotime(date("Y-m-d H:i", strtotime("+2 hours", strtotime($date . " " . $am_start))));
                         $has2hrsDeduction = true;
                     }
-                    if($flexibleEmployee && $has2hrsDeduction == false){ $tempAmInx = $_am_start; }
+                    if($flexibleEmployee && $has2hrsDeduction === false){ $tempAmInx = $_am_start; }
                     /*** am 2hrs deduction custom ***/
 
                     /*** super flexible employee ***/
@@ -1945,7 +1754,7 @@ class Timesheet_model extends CI_Model{
             }
 
             /*** am half day deduction custom ***/
-            if(($am_in > $amHalfDayAbsent) && $am_in && $isHoliday == false){
+            if(($am_in > $amHalfDayAbsent) && $am_in && $isHoliday === false){
                 $employee_time_sheet->am_late = 0;
                 $employee_time_sheet->am_time_rendered = 0;
                 $employee_time_sheet->am_ut = round(($_am_end - $_am_start) / 60, 2);
@@ -1970,14 +1779,14 @@ class Timesheet_model extends CI_Model{
             if ($pm_in >= $_pm_end) {
                 $employee_time_sheet->pm_late = 0;
             } else {
-                if (($pm_in > $_pm_start) && $pm_in && $isHoliday == false) {
+                if (($pm_in > $_pm_start) && $pm_in && $isHoliday === false) {
                     $employee_time_sheet->pm_late = round(($pm_in - $_pm_start) / 60, 2);
                 }
                 if($isHoliday){ $employee_time_sheet->pm_late = 0; }
             }
 
             if(($pm_in > $pmHalfDayAbsent) && $pm_in){ $hasHalfDayDeduction = true; }
-            if($flexibleEmployee && $hasHalfDayDeduction == false){ $employee_time_sheet->pm_late = 0; }
+            if($flexibleEmployee && $hasHalfDayDeduction === false){ $employee_time_sheet->pm_late = 0; }
 
             if ($pm_in >= $_pm_end) {
                 $employee_time_sheet->pm_ut = round(($_pm_end - $_pm_start) / 60, 2);;
@@ -1998,10 +1807,10 @@ class Timesheet_model extends CI_Model{
                     $tempPmInx = ($pm_in < $_pm_start) ? $_pm_start : $pm_in;
                     $tempPmOutx = ($pm_out > $_pm_end) ? $_pm_end : $pm_out;
 
-                    if($flexibleEmployee && $hasHalfDayDeduction == false){ $tempPmInx = $_pm_start; }
+                    if($flexibleEmployee && $hasHalfDayDeduction === false){ $tempPmInx = $_pm_start; }
 
                     /*** super flexible employee ***/
-                    if($superFlexibleEmployee){ 
+                    if($superFlexibleEmployee){
                         $tempPmInx = $_pm_start;
                         $tempPmOutx = $_pm_end;
                     }
@@ -2013,7 +1822,7 @@ class Timesheet_model extends CI_Model{
             }
 
             /*** pm half day deduction custom ***/
-            if(($pm_in > $pmHalfDayAbsent) && $pm_in && $isHoliday == false){
+            if(($pm_in > $pmHalfDayAbsent) && $pm_in && $isHoliday === false){
                 $employee_time_sheet->pm_late = 0;
                 $employee_time_sheet->pm_time_rendered = 0;
                 $employee_time_sheet->pm_ut = round(($_pm_end - $_pm_start) / 60, 2);
@@ -2045,18 +1854,7 @@ class Timesheet_model extends CI_Model{
 
             $employee_time_sheet->total_late = $employee_time_sheet->am_late + $employee_time_sheet->pm_late;
             $employee_time_sheet->total_ut = $employee_time_sheet->am_ut + $employee_time_sheet->pm_ut;
-
             $employee_time_sheet->total_time_rendered = $employee_time_sheet->am_time_rendered + $employee_time_sheet->pm_time_rendered;
-
-                /*** $qTempAdjustment = $this->db->get_where($this->tbl_time_adjustments, array("id" => $timesheet_exist->id));
-                if($qTempAdjustment->num_rows() == 1){
-                    $allow_late_adjustment = intval($qTempAdjustment->row()->adjustment_override) == 1;
-                }else{
-                    $allow_late_adjustment = false;
-                }
-
-
-            $employee_time_sheet = $this->updateTimesheetShiftComputation($timesheet_exist, $allow_late_adjustment );  ***/
         }
 
         if ($no_shift_schedule === true) {
@@ -2283,8 +2081,8 @@ class Timesheet_model extends CI_Model{
         return $employee_time_sheet;
     }
 
-    public function updateTimesheetShiftComputation($employee_time_sheet, $allow_late_adjustment=false){
-        /*** reset late, undertime and time rendered ***/
+    public function updateTimesheetShiftComputation($employee_time_sheet, $allow_late_adjustment=false, $night_diff_cfg=null){
+        /*** reset late, undertime and time rendered also nightdiff rendered ***/
         $employee_time_sheet->am_ut = 0;
         $employee_time_sheet->pm_ut = 0;
         $employee_time_sheet->total_ut = 0;
@@ -2295,7 +2093,11 @@ class Timesheet_model extends CI_Model{
         $employee_time_sheet->am_time_rendered = 0;
         $employee_time_sheet->pm_time_rendered = 0;
         $employee_time_sheet->total_time_rendered = 0;
-        /*** reset late, undertime and time rendered ***/
+
+        $employee_time_sheet->am_ndiff_rendered = 0;
+        $employee_time_sheet->pm_ndiff_rendered = 0;
+        $employee_time_sheet->total_ndiff_rendered = 0;
+        /*** reset late, undertime and time rendered also nightdiff rendered ***/
 
         $isFlexibleEmployee = false;
         $this->db->select("per.is_flexi");
@@ -2330,8 +2132,13 @@ class Timesheet_model extends CI_Model{
         }
         $this->db->reset_query();
 
+        /** night diff switch here **/
+        $allowNdiff = $this->db->get_where($this->tbl_ps_employee_regular_ndiff, array("employee_id"=>$employee_time_sheet->emp_id, "allow_ndiff"=>1));
+        $allowRegularNightDiff = $allowNdiff->num_rows() === 1;
+        $this->db->reset_query();
+        /** night diff switch here **/
+
         /*** altered section allowedPaidHoliday ***/
-        
         $tempPayrollType = null;
         $allowedPaidHoliday = false;
         
@@ -2512,6 +2319,8 @@ class Timesheet_model extends CI_Model{
 
         if (($am_in && $_am_end) && ($am_in >= $_am_end)) {
             $employee_time_sheet->am_time_rendered = 0;
+            $employee_time_sheet->am_ndiff_rendered = 0;
+
         } else {
             if (($am_in && $am_out) && ($_am_start && $_am_end)) {
                 $has2hrsDeduction = false;
@@ -2533,9 +2342,35 @@ class Timesheet_model extends CI_Model{
 
                 $am_time_rendered = $tempAmOutx - $tempAmInx;
                 $employee_time_sheet->am_time_rendered = round(($am_time_rendered) / 60, 2);
+
+                /*** regular ndiff am rendered computation ***/
+                if($allowRegularNightDiff){
+                    $currentAmDate = date("Y-m-d", strtotime($employee_time_sheet->date));
+                    $amNdiffStart = date("Y-m-d H:i", strtotime($currentAmDate." 22:00:00"));
+                    $amNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentAmDate." 05:00:00")));
+    
+                    if(isset($night_diff_cfg->start_time) && $night_diff_cfg->start_time){
+                        $amNdiffStart = date("Y-m-d H:i", strtotime($currentAmDate." ".$night_diff_cfg->start_time));
+                    }
+                    if(isset($night_diff_cfg->end_time) && $night_diff_cfg->end_time){
+                        $amNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentAmDate." ".$night_diff_cfg->end_time)));
+                    }
+                    
+                    $_amNdiffStart = strtotime($amNdiffStart);
+                    $_amNdiffEnd = strtotime($amNdiffStart) <= $_am_end && strtotime($amNdiffEnd) >= $_am_end ? $_am_end : strtotime($amNdiffEnd);
+    
+                    $tempAmNdiffStart = $tempAmInx >= $_amNdiffStart && $tempAmInx <= $_amNdiffEnd ? $tempAmInx : $_amNdiffStart;
+                    $tempAmNdiffEnd = $tempAmOutx >= $_amNdiffStart && $tempAmOutx <= $_amNdiffEnd ? $tempAmOutx : $_amNdiffEnd;
+    
+                    $am_ndiff_rendered = $tempAmNdiffEnd - $tempAmNdiffStart;
+                    $employee_time_sheet->am_ndiff_rendered = round(($am_ndiff_rendered) / 60, 2);
+                }
+                /*** regular ndiff am rendered computation ***/
             }
+
             if(($am_in == null || $am_out == null) && ($_am_start && $_am_end)){
                 $employee_time_sheet->am_time_rendered = 0;
+                $employee_time_sheet->am_ndiff_rendered = 0;
             }
             /*** if($isHoliday){ $employee_time_sheet->am_time_rendered = 0; } ***/
         }
@@ -2543,8 +2378,9 @@ class Timesheet_model extends CI_Model{
         /*** am half day deduction custom ***/
         if(($am_in && $amHalfDayAbsent) && ($am_in >= $amHalfDayAbsent) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
             $employee_time_sheet->am_late = 0;
-            $employee_time_sheet->am_time_rendered = 0;
             $employee_time_sheet->am_ut = round(($_am_end - $_am_start) / 60, 2);
+            $employee_time_sheet->am_time_rendered = 0;
+            $employee_time_sheet->am_ndiff_rendered = 0;
         }
         /*** am half day deduction custom ***/
         // END AM CALCULATION
@@ -2578,6 +2414,7 @@ class Timesheet_model extends CI_Model{
         
         if ($pm_in >= $_pm_end) {
             $employee_time_sheet->pm_time_rendered = 0;
+            $employee_time_sheet->pm_ndiff_rendered = 0;
         } else {
             if (($pm_in && $pm_out) && ($pm_out > $pm_in) && ($_pm_start && $_pm_end)) {
                 $tempPmInx = ($pm_in < $_pm_start) ? $_pm_start : $pm_in;
@@ -2592,6 +2429,29 @@ class Timesheet_model extends CI_Model{
 
                 $pm_time_rendered = $tempPmOutx - $tempPmInx;
                 $employee_time_sheet->pm_time_rendered = round(($pm_time_rendered) / 60, 2);
+
+                /*** regular ndiff pm rendered computation ***/
+                if($allowRegularNightDiff){
+                    $currentPmDate = date("Y-m-d", strtotime($employee_time_sheet->date));
+                    $pmNdiffStart = date("Y-m-d H:i", strtotime($currentPmDate." 22:00:00"));
+                    $pmNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentPmDate." 05:00:00")));
+    
+                    if(isset($night_diff_cfg->start_time) && $night_diff_cfg->start_time){
+                        $pmNdiffStart = date("Y-m-d H:i", strtotime($currentPmDate." ".$night_diff_cfg->start_time));
+                    }
+                    if(isset($night_diff_cfg->end_time) && $night_diff_cfg->end_time){
+                        $pmNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentPmDate." ".$night_diff_cfg->end_time)));
+                    }
+    
+                    $_pmNdiffStart = $_pm_start >= strtotime($pmNdiffStart) && $_pm_start <= strtotime($pmNdiffEnd) ? $_pm_start : strtotime($pmNdiffStart);
+                    $_pmNdiffEnd = $_pm_end >= strtotime($pmNdiffStart) && $_pm_end <= strtotime($pmNdiffEnd) ? $_pm_end : strtotime($pmNdiffEnd);
+    
+                    $tempPmNdiffStart = $tempPmInx >= $_pmNdiffStart && $tempPmInx <= $_pmNdiffEnd ? $tempPmInx : $_pmNdiffStart;
+                    $tempPmNdiffEnd = $tempPmOutx >= $_pmNdiffStart && $tempPmOutx <= $_pmNdiffEnd ? $tempPmOutx : $_pmNdiffEnd;
+                    $pm_ndiff_rendered = $tempPmNdiffEnd - $tempPmNdiffStart;
+                    $employee_time_sheet->pm_ndiff_rendered = round(($pm_ndiff_rendered) / 60, 2);
+                }
+                /*** regular ndiff pm rendered computation ***/
             }
             if(($pm_in == null || $pm_out == null) && ($_pm_start && $_pm_end)){
                 $employee_time_sheet->pm_time_rendered = 0;
@@ -2634,15 +2494,32 @@ class Timesheet_model extends CI_Model{
         $employee_time_sheet->total_late = $employee_time_sheet->am_late + $employee_time_sheet->pm_late;
         $employee_time_sheet->total_ut = $employee_time_sheet->am_ut + $employee_time_sheet->pm_ut;
         $employee_time_sheet->total_time_rendered = $employee_time_sheet->am_time_rendered + $employee_time_sheet->pm_time_rendered;
-
+        $employee_time_sheet->total_ndiff_rendered = $employee_time_sheet->am_ndiff_rendered + $employee_time_sheet->pm_ndiff_rendered;
+        
         return $employee_time_sheet;
     }
 
     public function generateTimesheetOvertime($timesheet_exist, $generated_manually, $overtime, $date, $am_end, $pm_end, $am_shift_only, $attendance, $night_diff_cfg){
         $resultset = array();
+        $hasOvertimeRequest = false;
+        
         $total_accredited_ot_hrs = 0;
         $total_accredited_ot_nightdiff_hrs = 0;
         $hasShiftSchedule = $timesheet_exist->has_shift == 1;
+
+        $nshiftParams = $this->nightshiftParams($date);
+        $_nightShiftStart = $nshiftParams["start"];
+        $_nightShiftEnd = $nshiftParams["end"];
+
+        /** start shift schedule ***/
+        $shift_am_start = $timesheet_exist->shift_am_start ? date("H:i:s", strtotime($timesheet_exist->shift_am_start)): null;
+        $shift_am_end = $timesheet_exist->shift_am_end ? date("H:i:s", strtotime($timesheet_exist->shift_am_end)): null;
+        $shift_pm_start = $timesheet_exist->shift_pm_start ? date("H:i:s", strtotime($timesheet_exist->shift_pm_start)): null;
+        $shift_pm_end = $timesheet_exist->shift_pm_end ? date("H:i:s", strtotime($timesheet_exist->shift_pm_end)): null;
+        /** end shift schedule ***/
+
+        $am_shift_only = $am_shift_only || (($shift_am_start !== null && $shift_am_end !== null) &&
+        ($shift_pm_start === null || $shift_am_start == "00:00:00" && $shift_pm_end === null || $shift_am_end == "00:00:00"));
 
         $shift_basis = $am_shift_only ? date("Y-m-d H:i", strtotime($date . " " . $am_end)) : date("Y-m-d H:i", strtotime($date . " " . $pm_end));
         $ot_attendances = array_values(
@@ -2654,7 +2531,7 @@ class Timesheet_model extends CI_Model{
         $temp_ot_attendances = $ot_attendances;
         if(count($temp_ot_attendances) > 1 && $hasShiftSchedule){
             $_ot_attendances = array();
-            foreach ($temp_ot_attendances as $key => $value) {
+            foreach ($temp_ot_attendances as $value) {
                 $tempDate = date("Y-m-d H:i", strtotime($timesheet_exist->date." ".$timesheet_exist->pm_out));
                 if(strtotime($value) !== strtotime($tempDate)){
                     $_ot_attendances[] = $value;
@@ -2670,19 +2547,13 @@ class Timesheet_model extends CI_Model{
                 $ot_attendances = $attendance;
         }
 
-        if($hasShiftSchedule == false && count($ot_attendances) > 1 && end($ot_attendances)){
+        if($hasShiftSchedule === false && count($ot_attendances) > 1 && end($ot_attendances)){
             $shift_basis = end($ot_attendances);
         }
 
         foreach ($overtime as $_overtime) {
-            $otAfterShift = false;
-
             $overtime_start = null;
             $overtime_end = null;
-
-            $ndiff_start = null;
-            $ndiff_end = null;
-
             $regularOTHours = 0;
             $nDiffOTHours = 0;
 
@@ -2694,7 +2565,7 @@ class Timesheet_model extends CI_Model{
             $_otEnd = date('Y-m-d H:i', strtotime($_overtime->date_to));
 
             $_otNdiffStart = date("Y-m-d H:i", strtotime($_otStartDate." 22:00:00"));
-            $_otNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($_otStartDate." 05:00:00")));
+            $_otNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($_otStartDate." 06:00:00")));
 
             if(isset($night_diff_cfg->start_time) && $night_diff_cfg->start_time){
                 $_otNdiffStart = date("Y-m-d H:i", strtotime($_otStartDate." ".$night_diff_cfg->start_time));
@@ -2703,9 +2574,6 @@ class Timesheet_model extends CI_Model{
             if(isset($night_diff_cfg->end_time) && $night_diff_cfg->end_time){
                 $_otNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($_otStartDate." ".$night_diff_cfg->end_time)));
             }
-
-            $_previousNightDiff = date("Y-m-d H:i", strtotime("-1 day", strtotime($_otNdiffStart)));
-            $_nextNightDiff = date("Y-m-d H:i", strtotime("-1 day", strtotime($_otNdiffEnd)));
 
             if($_otEnd && strtotime($_otEnd) > 0 && strtotime($_otEnd) > strtotime($_otNdiffStart)){
                 $regularOTHours = strtotime($_otNdiffStart) - strtotime($_otStart);
@@ -2720,149 +2588,46 @@ class Timesheet_model extends CI_Model{
 
             $overtime_start = $_otStart;
             $overtime_end = $_otEnd;
-            
+
+            $startOfShift = reset($ot_attendances);
+            $isNightShift = strtotime($startOfShift) >= strtotime($_nightShiftStart) && strtotime($startOfShift) <= strtotime($_nightShiftEnd);
+            if($isNightShift){ $shift_basis = $_otStart; }
+            $arrShifts = array();
+            $shiftProps = array("shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end");
+            $tempShiftDate = date("Y-m-d", strtotime($date));
+            foreach ($shiftProps as $key => $value) {
+                if(${$value}){
+                    if($key > 0 ){
+                        $prevValue = ${$shiftProps[$key-1]};
+                        if(strtotime(${$value}) < strtotime($prevValue)){ $tempShiftDate = date("Y-m-d", strtotime("+1 day", strtotime($tempShiftDate))); }
+                    }
+                    $nValue = date("Y-m-d H:i", strtotime($tempShiftDate." ".${$value}));
+                    $arrShifts[] = $nValue;
+                }
+            }
+
+            if(is_array($arrShifts) && !empty($arrShifts)){
+                $firstShift = reset($arrShifts);
+                if(strtotime($startOfShift) < strtotime($firstShift)){
+                    $shift_basis = $firstShift;
+                }
+            }
+
             if (sizeof($ot_attendances) > 1) {
-                $otNightDiffOnly = new stdClass();
-                $otNightDiffOnly->is_night_diff = false;
-                $otNightDiffOnly->ot_regular = 0;
-                $otNightDiffOnly->ot_night_diff = 0;
-                $isNightDiffOnly = false;
+                $parameters = array("hasShiftSchedule" => $hasShiftSchedule, "overtime" => $_overtime, "timesheetExist" => $timesheet_exist,
+                    "otAttendances" => $ot_attendances, "nightDiffCfg" => $night_diff_cfg, "shiftBasis" => $shift_basis, "otNdiffStart" => $_otNdiffStart,
+                    "otNdiffEnd" => $_otNdiffEnd, "nDiffOTHours" => $nDiffOTHours, "isNightShift" => $isNightShift,
+                    "regularOTHours" => $regularOTHours, "otNightDiff"=>$ot_night_diff);
+                $otScript = $this->overtimeComputationScript($parameters);
+                $regularOTHours = $otScript["regularOTHours"];
+                $nDiffOTHours = $otScript["nDiffOTHours"];
+                $ot_hrs = $otScript["ot_hrs"];
+                $ot_night_diff = number_format($otScript["ot_night_diff"], 2, '.', '');
+                $_otStart = $otScript["ot_start"];
+                $_otEnd = $otScript["ot_end"];
 
-                $ot_start_dtr = date("Y-m-d H:i", strtotime($ot_attendances[0]));
-                $ot_end_dtr = date("Y-m-d H:i", strtotime($ot_attendances[sizeof($ot_attendances) - 1]));
-
-                if(strtotime($ot_end_dtr) < strtotime($ot_start_dtr)){ $ot_end_dtr = date("Y-m-d H:i", strtotime("+1 day", strtotime($ot_end_dtr))); }
-
-                $ot_start = strtotime($ot_start_dtr) < strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from)))
-                    ? date('Y-m-d H:i', strtotime($_overtime->date_from)) : $ot_start_dtr;
-                $ot_end = strtotime($ot_end_dtr) > strtotime(date('Y-m-d H:i', strtotime($_overtime->date_to)))
-                    ? date('Y-m-d H:i', strtotime($_overtime->date_to)) : $ot_end_dtr;
-
-                if (sizeof($ot_attendances) < 2) {
-                    if (strtotime($ot_start_dtr) > strtotime($shift_basis) &&
-                        strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from))) < strtotime($ot_end_dtr)) {
-                        $_ot_start = new DateTime($_overtime->date_from);
-                        /*** remove the +1 minute overtime start data ***/
-                        if (strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from))) <= strtotime($shift_basis)) { /*** $_ot_start->modify("+1 minutes"); ***/ }
-                        $ot_start = $_ot_start->format("Y-m-d H:i");
-                    }
-                }
-
-                if((strtotime($ot_start) >= strtotime($shift_basis)) && $hasShiftSchedule){ $otAfterShift = true; }
-
-                if($otAfterShift == true){
-                    if(strtotime($ot_start) >= strtotime($_previousNightDiff)
-                        && strtotime($ot_start) < strtotime($_nextNightDiff)){
-                        $tempOTE = 0;
-                        $tempRegularOT = 0;
-                        if(strtotime($ot_end) > strtotime($_previousNightDiff) && strtotime($ot_end) <= strtotime($_nextNightDiff)){
-                            $tempOTE = strtotime($ot_end) - strtotime($ot_start);
-                        }else{
-                            $tempOTE = strtotime($_nextNightDiff) - strtotime($ot_start);
-                            $tempRegularOT = strtotime($ot_end) - strtotime($_nextNightDiff);
-                        }
-                        $otNightDiffOnly->ot_regular = ($tempRegularOT > 0)? $tempRegularOT / 3600: $tempRegularOT;
-                        $otNightDiffOnly->ot_night_diff = ($tempOTE > 0)? $tempOTE / 3600: $tempOTE;
-                        $otNightDiffOnly->is_night_diff = true;
-                    }
-                        
-                    $init_start_date = new DateTime($ot_start);
-                    $start_ndiff_date = $init_start_date->format('Y-m-d');
-                    $start_ndiff_time = $night_diff_cfg->start_time;
-                    $start_ndiff_date_time = date('Y-m-d H:i', strtotime($start_ndiff_date . " " . $start_ndiff_time));
-    
-                    $init_end_date = new DateTime($ot_end);
-                    $end_ndiff_date = $init_end_date->format('Y-m-d');
-                    $end_ndiff_time = $night_diff_cfg->end_time;
-                    $end_ndiff_date_time = date("Y-m-d H:i", strtotime($end_ndiff_date . " " . $end_ndiff_time));
-                    
-                    $ndiff_start = $start_ndiff_date_time;
-                    $ndiff_end = $end_ndiff_date_time;
-    
-                    if (strtotime(date('Y-m-d', strtotime($ot_start)))
-                        === strtotime(date('Y-m-d', strtotime($ot_end)))) {
-                        $init_end_date = new DateTime($ot_start);
-                        $end_ndiff_date = $init_end_date->modify("+1 day")->format('Y-m-d');
-                        $end_ndiff_time = $night_diff_cfg->end_time;
-                        $end_ndiff_date_time = date("Y-m-d H:i", strtotime($end_ndiff_date . " " . $end_ndiff_time));
-    
-                        $ndiff_start = $start_ndiff_date_time;
-                        $ndiff_end = $end_ndiff_date_time;
-                    }
-
-                    if (strtotime($ndiff_start) >= strtotime($ot_start)) {
-                        if (strtotime($ot_end) >= strtotime($ndiff_end)) {
-                            $ot_night_diff = strtotime($ndiff_end) - strtotime($ndiff_start);
-                            $ot_night_diff = $ot_night_diff / 3600;
-                        } else {
-                            $ot_night_diff = strtotime($ot_end) - strtotime($ndiff_start);
-                            $ot_night_diff = $ot_night_diff / 3600;
-                        }
-                    } else {
-                        $ot_night_diff = strtotime($ndiff_end) - strtotime($ot_start);
-                        $ot_night_diff = $ot_night_diff / 3600;
-                    }
-    
-                    $ot_night_diff = ($ot_night_diff < 0) ? 0 : $ot_night_diff;
-                }
-
-
-                $ot_seconds = (strtotime($ot_end) - strtotime($ot_start));
-                $ot_minutes = doubleval($ot_seconds) < 0 ? 0 : (doubleval($ot_seconds) / 60);
-
-                /*** START OVERTIME W/ NIGHT DIFF COMPUTATION REG OT ***/
-                if($ot_night_diff > 0){
-                    $_ot_seconds = (strtotime($_otNdiffStart) - strtotime($ot_start));
-                    $ot_minutes = doubleval($_ot_seconds) < 0 ? 0 : (doubleval($_ot_seconds) / 60);
-                }
-                /*** END OVERTIME W/ NIGHT DIFF COMPUTATION REG OT ***/
-                $regularOvertimeTotal = $ot_minutes / 60;
-                $otTotal = $regularOvertimeTotal + $ot_night_diff;
-
-                /*** deduct 1 hour on overtime with night differential ***/
-                if(floatval($otTotal) >= 5 && $ot_night_diff > 0 && $otAfterShift == true){
-                    $ot_night_diff = $ot_night_diff - 1;
-                }
-                /*** deduct 1 hour on overtime with night differential ***/
-
-                $ot_night_diff = doubleval($ot_night_diff);
-                $ot_hrs = number_format($regularOvertimeTotal, 2, '.', '');
-
-                if($otNightDiffOnly->is_night_diff){
-                    $ot_hrs = number_format($otNightDiffOnly->ot_regular, 2, '.', '');
-                    $ot_night_diff = number_format($otNightDiffOnly->ot_night_diff, 2, '.', '');
-
-                    $regularOTHours = $ot_hrs;
-                    $nDiffOTHours = $ot_night_diff;
-                }
-
-                if($ot_hrs >= 5){ $ot_hrs = $ot_hrs - 1; }
-
-                if(floatval($ot_hrs) > $regularOTHours && $otAfterShift){
-                    $tempOTDiff = 0;
-                    $tempOTDiff = floatval($ot_hrs) - $regularOTHours;
-                    $ot_hrs = $regularOTHours;
-                    $ot_night_diff = $ot_night_diff + $tempOTDiff;
-                }
-
-                /*** start after night diff regular hours inclusion ***/
-                if(($ot_end && $ndiff_end) && floatval($ot_hrs) > 0 && strtotime($ot_end) > strtotime($ndiff_end)){
-                    $ext_ot_seconds = strtotime($ot_end) - strtotime($ndiff_end);
-                    $ext_ot_minutes = doubleval($ext_ot_seconds) < 0 ? 0 : (doubleval($ext_ot_seconds) / 60);
-                    $ext_regularOvertimeTotal = $ext_ot_minutes / 60;
-                    $ot_hrs = $ot_hrs + $ext_regularOvertimeTotal;
-
-                    if(($regularOTHours > 0 && $nDiffOTHours > 0) && $nDiffOTHours > $ext_regularOvertimeTotal ){
-                        $regularOTHours = $regularOTHours + $ext_regularOvertimeTotal;
-                        $nDiffOTHours = $nDiffOTHours - $ext_regularOvertimeTotal;
-                    }
-                }
-                /*** end after night diff regular hours inclusion ***/
-
-                $ot_night_diff = number_format($ot_night_diff, 2, '.', '');
-
-                $overtime_start = date("Y-m-d H:i", strtotime($ot_start));
-                $overtime_end = date("Y-m-d H:i", strtotime($ot_end));
+                $overtime_start = date("Y-m-d H:i", strtotime($_otStart));
+                $overtime_end = date("Y-m-d H:i", strtotime($_otEnd));
             }else{
                 $tempRegOtHours = $regularOTHours;
                 if($tempRegOtHours >= 5){
@@ -2871,7 +2636,6 @@ class Timesheet_model extends CI_Model{
                 $ot_hrs = $tempRegOtHours;
                 $ot_night_diff = $nDiffOTHours;
             }
-
 
             $regularOTHours = floatval($regularOTHours) > 0 ? $regularOTHours: 0;
             $nDiffOTHours = floatval($nDiffOTHours) > 0 ? $nDiffOTHours: 0;
@@ -2899,33 +2663,23 @@ class Timesheet_model extends CI_Model{
             $regularOTHours = round($regularOTHours, 2);
             $nDiffOTHours = round($nDiffOTHours, 2);
 
-            /*** if($ot_hrs > 0 && floatval($ot_hrs % 0.50) > 0){ $ot_hrs = floor($ot_hrs); }
-            if($ot_night_diff > 0 && floatval($ot_night_diff % 0.50) > 0){ $ot_night_diff = floor($ot_night_diff); } ***/
+            if($_otEnd == $_otStart || strtotime($_otEnd) < strtotime($_otStart)){
+                $overtime_start = date("Y-m-d H:i", strtotime($_overtime->date_from));
+                $overtime_end = date("Y-m-d H:i", strtotime($_overtime->date_to));
+                $regularOTHours = 0;
+            }
 
             if (sizeof((array) $timesheet_exist) >= 1 && intval($generated_manually) <= 0) {
-                $this->db->where("timesheet_id", $timesheet_exist->id);
-                $this->db->update($this->tbl_timesheet_overtime,
-                    array(
-                        "overtime_id" => $_overtime->id,
-                        "overtime_in" => $overtime_start,
-                        "overtime_out" => $overtime_end,
-                        "total_hrs" => $regularOTHours,
-                        "accredited_hrs" => $ot_hrs,
-                        "ndiff_hrs" => $nDiffOTHours,
-                        "accredited_ndiff_hrs" => $ot_night_diff,
-                    ));
-                $this->db->reset_query();
-            } else {
-                $ts_ot_exist = $this->db
-                    ->where("timesheet_id", $timesheet_exist->id)
-                    ->where("overtime_id", $_overtime->id)
-                    ->get($this->tbl_timesheet_overtime)
-                    ->row();
-
-                if (sizeof((array) $ts_ot_exist) >= 1) {
-                    $this->db->where("id", $ts_ot_exist->id);
+                if($regularOTHours == 0 && $ot_hrs == 0 && $nDiffOTHours == 0 && $ot_night_diff == 0){
+                    $this->db->where("timesheet_id", $timesheet_exist->id);
+                    $this->db->delete($this->tbl_timesheet_overtime);
+                    $this->db->reset_query();
+                    $hasOvertimeRequest = false;
+                }else{
+                    $this->db->where("timesheet_id", $timesheet_exist->id);
                     $this->db->update($this->tbl_timesheet_overtime,
                         array(
+                            "overtime_id" => $_overtime->id,
                             "overtime_in" => $overtime_start,
                             "overtime_out" => $overtime_end,
                             "total_hrs" => $regularOTHours,
@@ -2934,6 +2688,35 @@ class Timesheet_model extends CI_Model{
                             "accredited_ndiff_hrs" => $ot_night_diff,
                         ));
                     $this->db->reset_query();
+                    $hasOvertimeRequest = true;
+                }
+            } else {
+                $ts_ot_exist = $this->db
+                    ->where("timesheet_id", $timesheet_exist->id)
+                    ->where("overtime_id", $_overtime->id)
+                    ->get($this->tbl_timesheet_overtime)
+                    ->row();
+
+                if (sizeof((array) $ts_ot_exist) >= 1) {
+                    if($regularOTHours == 0 && $ot_hrs == 0 && $nDiffOTHours == 0 && $ot_night_diff == 0){
+                        $this->db->where("id", $ts_ot_exist->id);
+                        $this->db->delete($this->tbl_timesheet_overtime);
+                        $this->db->reset_query();
+                        $hasOvertimeRequest = false;
+                    }else{
+                        $this->db->where("id", $ts_ot_exist->id);
+                        $this->db->update($this->tbl_timesheet_overtime,
+                            array(
+                                "overtime_in" => $overtime_start,
+                                "overtime_out" => $overtime_end,
+                                "total_hrs" => $regularOTHours,
+                                "accredited_hrs" => $ot_hrs,
+                                "ndiff_hrs" => $nDiffOTHours,
+                                "accredited_ndiff_hrs" => $ot_night_diff,
+                            ));
+                        $this->db->reset_query();
+                        $hasOvertimeRequest = true;
+                    }
                 } else {
                     $this->db->insert($this->tbl_timesheet_overtime,
                         array(
@@ -2946,19 +2729,19 @@ class Timesheet_model extends CI_Model{
                             "ndiff_hrs" => $nDiffOTHours,
                             "accredited_ndiff_hrs" => $ot_night_diff,
                         ));
+                    $hasOvertimeRequest = true;
                 }
             }
 
             $total_accredited_ot_hrs += $ot_hrs;
             $total_accredited_ot_nightdiff_hrs += $ot_night_diff;
-
         }
 
         $resultset["total_accredited_ot_hrs"] = $total_accredited_ot_hrs;
         $resultset["ot_night_diff"] = $total_accredited_ot_nightdiff_hrs;
         $resultset["overtime_in"] = $overtime_start ? $overtime_start: null;
         $resultset["overtime_out"] = $overtime_end ? $overtime_end: null;
-
+        $resultset["allow_overtime_request"] = $hasOvertimeRequest;
         return $resultset;
     }
 
@@ -3066,11 +2849,8 @@ class Timesheet_model extends CI_Model{
         }
     }
 
-    private function getAttendance($date, $is_custom, $employees = array(), $end_date)
-    {
+    private function getAttendance($date=null, $employees=[], $end_date=null, $nightShiftRecord=null){
         $date = date("Y-m-d H:i:s", strtotime("-30 minutes", strtotime($date)));
-        /*** if has overtime include code here ***/
-
         $select = "employees.id, employees.lastname, employees.firstname, DATE_FORMAT('$date', '%W') `weekday`,";
         $select .= "DATE_FORMAT('$date', '%w') `day`, attendance.*, personnel.shift_id";
 
@@ -3079,14 +2859,12 @@ class Timesheet_model extends CI_Model{
         $this->db->join($this->tbl_employees . " employees", "employees.biometricno = personnel.biometricno", "INNER");
         $this->db->where("attendance.`datetime` >= ", $date);
         $this->db->where("attendance.`datetime` <= ", $end_date);
-        // $this->db->where("attendance.is_custom", $is_custom);
-
+        if($nightShiftRecord){ $this->db->where("attendance.`datetime` != ", $nightShiftRecord); }
         if (!empty($employees)) {
             $this->db->where_in("employees.id", $employees);
         }
         $this->db->order_by("employees.lastname, attendance.`datetime`", "ASC");
-        $result = $this->db->get($this->tbl_attendance . " attendance")->result();
-        return $result;
+        return $this->db->get($this->tbl_attendance . " attendance")->result();
     }
 
     private function getEmployeesWithAttendance($date, $is_custom, $employees = array())
@@ -3263,7 +3041,7 @@ class Timesheet_model extends CI_Model{
                         $tempPostedPayrollRecord[] = $tempValue;
                     }
                 }
-            } 
+            }
         }
 
         $arrMonthlyEmployeeIds = array();
@@ -3304,9 +3082,11 @@ class Timesheet_model extends CI_Model{
                 }
             }
 
+            $empIds = array_unique($empIds);
+
             $tempToRecord = $this->getToRecordByDateRange($start);
             $tempLoaRecord = $this->getLoaRecordByDateRange($start);
-            $tempOvertimeRecord = $this->getOvertimeRecordByDateRange($start);
+            $tempOvertimeRecord = $this->getOvertimeRecordByDateRange($start, $empIds);
             $alteredShiftRecords = $this->getAlteredShiftRecordByDateRange($start, $end);
             
             foreach ($employees->result() as $employee) {
@@ -3361,6 +3141,9 @@ class Timesheet_model extends CI_Model{
                             $queryTimesheet .= " AND ts.verified=1";
                             break;
                         case "unverified":
+                            $queryTimesheet .= " AND ts.verified=0";
+                            break;
+                        default:
                             $queryTimesheet .= " AND ts.verified=0";
                             break;
                     }
@@ -3527,13 +3310,18 @@ class Timesheet_model extends CI_Model{
                                 $tempDate0001 = strtotime(date("Y-m-d", strtotime($tempDTxxx[1])));
                                 $ccDatexxxx = strtotime(date("Y-m-d", strtotime($timesheet->_date)));
 
-                                if($ccDatexxxx >= $tempDate0000 && $ccDatexxxx <= $tempDate0001){
+                                $diffStart = new DateTime($tempDTxxx[0]);
+                                $diffEnd = new DateTime($tempDTxxx[1]);
+                                $overtimeDays = $diffStart->diff($diffEnd)->days;
+                                $showOtInfo = $overtimeDays === 1 && $ccDatexxxx > $tempDate0000 ? false: true;
+
+                                if($showOtInfo && $ccDatexxxx >= $tempDate0000 && $ccDatexxxx <= $tempDate0001){
                                     if($timesheet->tsID && $timesheet->has_overtime && $timesheet->verified == 0){
                                         $overtimeIn = date("m/d/Y h:i A", strtotime($timesheet->overtime_in));
                                         $overtimeOut = date("m/d/Y h:i A", strtotime($timesheet->overtime_out));
                                         $tempOtDate = date("m/d/Y", strtotime($timesheet->_date));
 
-                                        $tempOvertimeData = array("tsID"=>$timesheet->tsID,"date"=>$tempOtDate, 
+                                        $tempOvertimeData = array("tsID"=>$timesheet->tsID,"date"=>$tempOtDate,
                                             "employee_name"=>$timesheet->employee_name, "reference_no"=>$xxxxz1233[0],
                                             "overtime_in"=>$overtimeIn, "overtime_out"=>$overtimeOut,
                                             "accredited_ot_hrs"=>$timesheet->total_accredited_ot_hrs,
@@ -3552,9 +3340,10 @@ class Timesheet_model extends CI_Model{
                                             $ndiffHrs = floatval($tsRow->ndiff_hrs);
                                             $ndiffAccHrs = floatval($tsRow->accredited_ndiff_hrs);
 
-                                            
-                                            if(($totHrs > 0 && $totAccHrs >= 0) && ($totHrs != $totAccHrs)){ $flagOtHrs = true; }
-                                            if(($ndiffHrs > 0 && $ndiffAccHrs >= 0) && ($ndiffHrs != $ndiffAccHrs)){ $flagOtHrs = true; }
+                                            if($totHrs != 0 && $totAccHrs != 0 && $ndiffHrs != 0 && $ndiffAccHrs != 0){
+                                                if(($totHrs > 0 && $totAccHrs >= 0) && ($totHrs != $totAccHrs)){ $flagOtHrs = true; }
+                                                if(($ndiffHrs > 0 && $ndiffAccHrs >= 0) && ($ndiffHrs != $ndiffAccHrs)){ $flagOtHrs = true; }
+                                            }
                                         }
                                         $this->db->reset_query();
 
@@ -3710,7 +3499,7 @@ class Timesheet_model extends CI_Model{
         return $results;
     }
     
-    private function getOvertimeRecordByDateRange($startDate=null){
+    private function getOvertimeRecordByDateRange($startDate=null, $empId=[]){
         $results = array();
         if($startDate){
             $this->db->select("date_from, date_to, employee, reference_no");
@@ -3719,6 +3508,7 @@ class Timesheet_model extends CI_Model{
             $this->db->where("'{$startDate}' BETWEEN DATE(date_from) AND DATE(date_to)", null, false);
             $this->db->or_where("DATE(date_from) >=", $startDate);
             $this->db->group_end();
+            if(is_array($empId) && !empty($empId)){ $this->db->where_in("employee", $empId); }
             $this->db->where("status", "Approved");
             $this->db->order_by("date_from", "ASC");
             $qOvertime = $this->db->get();
@@ -4215,7 +4005,7 @@ class Timesheet_model extends CI_Model{
                                 DATE_FORMAT(ts.date, '%a') _weekday,
                                 lcase(DATE_FORMAT(ts.date, '%W')) _weekday_full,
                                 $id _emp_id,
-                                ts.*, '$biometricno' biometricno", FALSE)
+                                ts.*, '$biometricno' biometricno", false)
                     ->get_where($this->tbl_timesheet . " ts", array("ts.id" => $timesheet_id))
                     ->row();
 
@@ -4237,6 +4027,7 @@ class Timesheet_model extends CI_Model{
                 if($qTempEmployee->num_rows() == 1){
                     $timesheet->payroll_type = strtolower($qTempEmployee->row()->payroll_type);
                 }
+                $timesheet->has_pending_adjustment = false;
                 $timesheet->allow_paid_holiday = false;
                 $timesheet->has_TO = 0;
                 $timesheet->has_LOA = 0;
@@ -4256,6 +4047,13 @@ class Timesheet_model extends CI_Model{
                 if (!empty($schedule_list)) {
                     $timesheet->has_shift = ($schedule_list->am_start === null && $schedule_list->am_end === null
                         && $schedule_list->pm_start === null && $schedule_list->pm_end === null) ? 0 : 1;
+                }
+
+                if (intval($timesheet->with_adjustment) === 1) {
+                    $adjustmentTemp = $this->db->get_where($this->tbl_time_adjustments, array("timesheet_id"=>$timesheet->id, "status"=>0));
+                    if($adjustmentTemp->num_rows() > 0){
+                        $timesheet->has_pending_adjustment = true;
+                    }
                 }
 
                 if ((is_null($timesheet->scrub_status) || intval($timesheet->scrub_status) === 1) || (intval($timesheet->scrub_status) === 0 && $timesheet->has_shift === 1)) {
@@ -5015,6 +4813,105 @@ class Timesheet_model extends CI_Model{
         return $resultSet;
     }
 
+    protected function getTimeAdjustmentRequestData($employee_id, $timesheet_id) {
+        if($employee_id && $timesheet_id) {
+            $this->db->select("timesheet.emp_id AS t_empID, timesheet.id AS tID,
+            mn.id time_adjustment_id,
+            mn.timesheet_id,
+            mn.entry_type,
+            mn.with_shift_adjustment,
+            mn.`status`,
+            mn.remarks,
+            mn.confirmed_at,
+            mn.created_at,
+            (SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='am_in' AND time_adjustments_id = mn.id) as adj_am_in,
+            (SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='am_out' AND time_adjustments_id = mn.id) as adj_am_out,
+            (SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='pm_in' AND time_adjustments_id = mn.id) as adj_pm_in,
+            (SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='pm_out' AND time_adjustments_id = mn.id) as adj_pm_out,
+            (SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='am_in' AND time_adjustments_id = mn.id) as test_am_in,
+            COALESCE(
+            IFNULL((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='am_in' AND time_adjustments_id = mn.id),
+                IF((SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='am_in' AND time_adjustments_id = mn.id) = '1', 'empty', timesheet.am_in)),
+            timesheet.am_in) am_in,
+            (SELECT `prev_value` FROM $this->tbl_time_adjustments_meta WHERE field='am_in' AND time_adjustments_id = mn.id) am_in_prev,
+            IF((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='am_in' AND time_adjustments_id = mn.id) IS NULL, 0, 1) am_in_is_requested,
+            COALESCE(
+            IFNULL((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='am_out' AND time_adjustments_id = mn.id),
+                IF((SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='am_out' AND time_adjustments_id = mn.id) = '1', 'empty', timesheet.am_out)),
+            timesheet.am_out) am_out,
+            (SELECT `prev_value` FROM $this->tbl_time_adjustments_meta WHERE field='am_out' AND time_adjustments_id = mn.id) am_out_prev,
+            IF((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='am_out' AND time_adjustments_id = mn.id) IS NULL, 0, 1) am_out_is_requested,
+            COALESCE(
+            IFNULL((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='pm_in' AND time_adjustments_id = mn.id),
+                IF((SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='pm_in' AND time_adjustments_id = mn.id) = '1', 'empty', timesheet.pm_in)),
+            timesheet.pm_in) pm_in,
+            (SELECT `prev_value` FROM $this->tbl_time_adjustments_meta WHERE field='pm_in' AND time_adjustments_id = mn.id) pm_in_prev,
+            IF((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='pm_in' AND time_adjustments_id = mn.id) IS NULL, 0, 1) pm_in_is_requested,
+            COALESCE(
+            IFNULL((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='pm_out' AND time_adjustments_id = mn.id),
+            IF((SELECT COUNT(`id`) FROM $this->tbl_time_adjustments_meta WHERE field='pm_out' AND time_adjustments_id = mn.id) = '1', 'empty', timesheet.pm_out)),
+            timesheet.pm_out) pm_out,
+            (SELECT `prev_value` FROM $this->tbl_time_adjustments_meta WHERE field='pm_out' AND time_adjustments_id = mn.id) pm_out_prev,
+            IF((SELECT `value` FROM $this->tbl_time_adjustments_meta WHERE field='pm_out' AND time_adjustments_id = mn.id) IS NULL, 0, 1) pm_out_is_requested,
+            IF(timesheet.has_shift = 1, timesheet.shift_am_start, shift.am_start) am_start,
+            IF(timesheet.has_shift = 1, timesheet.shift_am_end, shift.am_end) am_end,
+            IF(timesheet.has_shift = 1, timesheet.shift_pm_start, shift.pm_start) pm_start,
+            IF(timesheet.has_shift = 1, timesheet.shift_pm_end, shift.pm_end) pm_end,
+            CONCAT(emp.lastname,
+                CASE
+                    WHEN emp.suffix != 'N/A' AND emp.suffix != 'NONE' AND emp.suffix != '' AND emp.suffix IS NOT NULL
+                        THEN CONCAT(' ', emp.suffix)
+                    ELSE '' END, ', ',
+                emp.firstname, ' ', CASE
+                    WHEN emp.middlename != 'N/A' AND emp.middlename != 'NONE'
+                        AND emp.middlename != '' AND emp.middlename IS NOT NULL
+                        THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.')
+                    ELSE '' END) `employee_name`,
+            CONCAT(emp2.lastname,
+                CASE
+                    WHEN emp2.suffix != 'N/A' AND emp2.suffix != 'NONE' AND emp2.suffix != '' AND emp2.suffix IS NOT NULL
+                        THEN CONCAT(' ', emp2.suffix)
+                    ELSE '' END, ', ',
+                emp2.firstname, ' ', CASE
+                    WHEN emp2.middlename != 'N/A' AND emp2.middlename != 'NONE'
+                        AND emp2.middlename != '' AND emp2.middlename IS NOT NULL
+                        THEN CONCAT(SUBSTR(emp2.middlename, 1, 1), '.')
+                    ELSE '' END) `_created_by`,
+            CONCAT(emp3.lastname,
+                CASE
+                    WHEN emp3.suffix != 'N/A' AND emp3.suffix != 'NONE' AND emp3.suffix != '' AND emp3.suffix IS NOT NULL
+                        THEN CONCAT(' ', emp3.suffix)
+                    ELSE '' END, ', ',
+                emp3.firstname, ' ', CASE
+                    WHEN emp3.middlename != 'N/A' AND emp3.middlename != 'NONE'
+                        AND emp3.middlename != '' AND emp3.middlename IS NOT NULL
+                        THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.')
+                    ELSE '' END) `_confirmed_by`,
+            emp.id,
+            timesheet.date,
+            timesheet.weekday,
+            timesheet.has_shift,
+            time_adj_m_ot.overtime_in,
+            time_adj_m_ot.overtime_out,
+            time_adj_m_ot.regular_hrs as mn_ot_reg_hrs,
+            time_adj_m_ot.ndiff_hrs as mn_ot_ndiff_hrs,
+            time_adj_m_ot.requested_by");
+            $this->db->join($this->tbl_time_adjustments_shift_schedule . " shift", "shift.time_adjustments_id = mn.id", "LEFT");
+            $this->db->join($this->tbl_timesheet . " timesheet", "timesheet.id = mn.timesheet_id", "INNER");
+            $this->db->join($this->tbl_employees . " emp", "emp.id = timesheet.emp_id", "INNER");
+            $this->db->join($this->tbl_employees . " emp2", "emp2.id = mn.created_by", "LEFT");
+            $this->db->join($this->tbl_employees . " emp3", "emp3.id = mn.confirmed_by", "LEFT");
+            $this->db->join($this->tbl_tblcompanies . " companies", "companies.id = emp.company_id", "LEFT");
+            $this->db->join($this->tbl_time_adjustments_manual_overtime . " time_adj_m_ot", "time_adj_m_ot.time_adjustments_id = mn.id", "LEFT");
+            $this->db->where("emp.id", $employee_id);
+            $this->db->where("mn.timesheet_id", $timesheet_id);
+            $query = $this->db->get($this->tbl_time_adjustments . " mn");
+            return $query->result();
+        }else{
+            return array();
+        }
+    }
+
     public function getTimeAdjustmentRequests($employee_id, $timesheet_id)
     {
         $post = $this->arrayToStdClass($this->input->post());
@@ -5721,6 +5618,7 @@ class Timesheet_model extends CI_Model{
             if($qTimeSheet->num_rows() == 1){
                 $qTempRow = $qTimeSheet->row();
                 $date = date("Y-m-d", strtotime($qTempRow->date));
+
                 $overtime = $this->db
                     ->get_where($this->tbl_overtime,
                         array(
@@ -6049,7 +5947,7 @@ class Timesheet_model extends CI_Model{
 
         $attendance = array_map(function ($_attendance) {
             return date("h:i A", strtotime($_attendance->datetime));
-        }, $this->getAttendance($att_curr_day, 0, $employee_id, $att_next_day));
+        }, $this->getAttendance($att_curr_day, $employee_id, $att_next_day));
 
         $attendance = array_values(array_unique($attendance));
         $resultSet = array("row" => $row, "loa_list" => $date_loa_list, "travel_order_list" => $date_travel_order_list, "attendance" => $attendance);
@@ -6241,7 +6139,7 @@ class Timesheet_model extends CI_Model{
         
         $toReferenceNo = null;
         if(is_array($hasToRecords) && count($hasToRecords) > 0){
-            foreach ($hasToRecords as $keyLoa => $valueLoa) {
+            foreach ($hasToRecords as $valueLoa) {
                 $_tempTo = explode("::", $valueLoa);
                 if(is_array($_tempTo) && count($_tempTo) == 2){
                     $tempDTx = explode("__", $_tempTo[1]);
@@ -6279,6 +6177,7 @@ class Timesheet_model extends CI_Model{
                 ->where("to.driver_id", $employee_id)
                 ->or_where("tp.employee_id", $employee_id)
             ->group_end()
+            ->where("to.status", "Approved")
             ->group_by("to.id")
             ->get()
             ->result();
@@ -6555,7 +6454,8 @@ class Timesheet_model extends CI_Model{
             ->get_where($this->tbl_employees . " emp", array("emp.id" => $employee_id))
             ->row();
 
-        $resultSet["modal"] = $this->load->view('gcctime/timesheet/master/modals/time_adjustments_list_modal', $resultSet, TRUE);
+        $resultSet["data"] = $this->getTimeAdjustmentRequestData($employee_id, $timesheet_id);
+        $resultSet["modal"] = $this->load->view('gcctime/timesheet/master/modals/time_adjustments_list_modal', $resultSet, true);
         return $resultSet;
     }
 
@@ -6566,8 +6466,28 @@ class Timesheet_model extends CI_Model{
         $resultSet["shift_count"] = 0;
         $resultSet["shift_schedule"] = array();
 
-        $resultSet["timesheet"] = $this->db->get_where($this->tbl_timesheet, array("id" => $timesheet_id))->row();
-        $resultSet["employee"] = $this->db->select("emp.*, CONCAT(emp.lastname,
+        $this->db->select("ts.*, CONCAT(cemp.lastname,
+            CASE WHEN cemp.suffix != 'N/A' AND cemp.suffix != 'NONE' AND cemp.suffix != ''
+            AND cemp.suffix IS NOT NULL THEN CONCAT(' ', cemp.suffix) ELSE '' END, ', ',
+            cemp.firstname, ' ', CASE
+            WHEN cemp.middlename != 'N/A' AND cemp.middlename != 'NONE'
+            AND cemp.middlename != '' AND cemp.middlename IS NOT NULL
+            THEN CONCAT(SUBSTR(cemp.middlename, 1, 1), '.')
+            ELSE '' END) as last_updated_by_name, CONCAT(vemp.lastname,
+            CASE WHEN vemp.suffix != 'N/A' AND vemp.suffix != 'NONE' AND vemp.suffix != ''
+            AND vemp.suffix IS NOT NULL THEN CONCAT(' ', vemp.suffix) ELSE '' END, ', ',
+            vemp.firstname, ' ', CASE
+            WHEN vemp.middlename != 'N/A' AND vemp.middlename != 'NONE'
+            AND vemp.middlename != '' AND vemp.middlename IS NOT NULL
+            THEN CONCAT(SUBSTR(vemp.middlename, 1, 1), '.')
+            ELSE '' END) as verified_by_name");
+        $this->db->from($this->tbl_timesheet . " ts");
+        $this->db->join($this->tbl_employees . " cemp", "cemp.id = ts.last_updated_by", "left");
+        $this->db->join($this->tbl_employees . " vemp", "vemp.id = ts.verified_by", "left");
+        $this->db->where("ts.id", $timesheet_id);
+        $timesheetRow = $this->db->get();
+        $resultSet["timesheet"] = $timesheetRow->row();
+        $resultSet["employee"] = $this->db->select("CONCAT(emp.lastname,
             CASE WHEN emp.suffix != 'N/A' AND emp.suffix != 'NONE' AND emp.suffix != ''
             AND emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE '' END, ', ',
             emp.firstname, ' ', CASE
@@ -6589,17 +6509,6 @@ class Timesheet_model extends CI_Model{
         $this->db->group_end();
         $tempLoaReference = $this->db->get();
         $resultSet["loa_references"] = $tempLoaReference->result();
-
-        /*** $resultSet["loa_references"] = $this->db
-            ->where(array(
-                "employee" => $employee_id,
-                "DATE(date_from) <=" => $date,
-                "DATE(date_to) >=" => $date,
-                "status" => "Approved"
-            ))
-            ->get($this->tbl_loa)
-            ->result(); ***/
-
         $resultSet["to_references"] = $this->db
             ->select("travel_order.reference_no, GROUP_CONCAT(TRIM(destination.destination) SEPARATOR '||') `destination`, GROUP_CONCAT(TRIM(destination.purpose) SEPARATOR '||') purpose, GROUP_CONCAT(CONCAT(DATE_FORMAT(destination.date_from, '%m/%d/%Y %h:%i%p'), ' - ', DATE_FORMAT(destination.date_to, '%m/%d/%Y %h:%i%p')) SEPARATOR '||') as to_dates")
             ->join("gcceforms.travel_destination destination", "destination.travel_order_id = travel_order.id")
@@ -6613,10 +6522,8 @@ class Timesheet_model extends CI_Model{
             ->group_by("travel_order.id")
             ->get($this->tbl_TO . " travel_order")
             ->result();
-        
         $resultSet["date"] = $date;
         $resultSet["overtime"] = array();
-
         if($timesheet_id && $timesheet_id > 0){
             $resultSet["overtime"] = $this->db
             ->select("ts_ot.*,
@@ -6735,7 +6642,7 @@ class Timesheet_model extends CI_Model{
         $start = date('Y-m-d', strtotime($inclusive_dates[0]));
         $end = date('Y-m-d', strtotime($inclusive_dates[1]));
         $file = $this->arrayToStdClass($_FILES['file_import']);
-        $non_existing = array(); 
+        $non_existing = array();
 
         $not_in_personnel = array();
         $no_shifts = array();
@@ -6946,6 +6853,9 @@ class Timesheet_model extends CI_Model{
             $timesheet = array();
             $tempAttendanceData = array();
 
+            $night_diff_cfg = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "NIGHT_DIFF_PARAMS"))->row();
+            $this->db->reset_query();
+
             if (intval($rows_count) >= 2) {
                 for ($i = 2; $i <= $rows_count; $i++) {
                     if(isset($rows[$i]["A"], $rows[$i]["B"]) && ($rows[$i]["A"] && $rows[$i]["B"])){
@@ -7153,7 +7063,7 @@ class Timesheet_model extends CI_Model{
                             $toArray = (array) $getHourlyTimeSheet;
                             if(is_array($toArray) && count($toArray) > 0){ $employee_time_sheet->is_tagged_hourly = true; }
 
-                            $updatedTimeSheet = $this->updateTimesheetShiftComputation($employee_time_sheet);
+                            $updatedTimeSheet = $this->updateTimesheetShiftComputation($employee_time_sheet, false, $night_diff_cfg);
                             if(is_array($toArray) && count($toArray) > 0){
                                 if(isset($employee_time_sheet->is_tagged_hourly)){ unset($employee_time_sheet->is_tagged_hourly); }
                                 $updatedTimeSheet = array_merge((array) $updatedTimeSheet, $toArray);
@@ -8896,7 +8806,7 @@ class Timesheet_model extends CI_Model{
 
             $qTemp = $this->db->get_where($this->tbl_timesheet_customized_shift_schedule, array("scheduled_date"=>$date));
             if($qTemp->num_rows() > 0){
-                foreach ($qTemp->result() as $index => $row) {
+                foreach ($qTemp->result() as $row) {
                     $shiftIndexes = array("shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end");
                     $alterShiftIndexes = array("am_start", "am_end", "pm_start", "pm_end");
                     $tempRow = $row;
@@ -9574,6 +9484,341 @@ class Timesheet_model extends CI_Model{
         $resultset["generate_timesheet_errors"] = $errors;
         return $resultset;
     }
-}
 
-/* End of file .php */
+    protected function checkNightShiftSchedule($date=null, $schedule=[]){
+        if($date && is_array($schedule) && !empty($schedule)){
+            $nightShiftParams = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "NIGHT_SHIFT_PARAMS"))->row();
+            $nShiftStartTime = isset($nightShiftParams->start_time) ? $nightShiftParams->start_time: "16:00:00";
+            $nShiftEndTime = isset($nightShiftParams->end_time) ? $nightShiftParams->end_time: "12:00:00";
+            $_nightShiftStart = date("Y-m-d H:i:s", strtotime($date . " " . $nShiftStartTime));
+            $_nightShiftEnd = strtotime($nShiftStartTime) > strtotime($nShiftEndTime) ? date("Y-m-d H:i:s", strtotime("+1 day", strtotime($date . " " . $nShiftEndTime))): date("Y-m-d H:i:s", strtotime($date . " " . $nShiftEndTime));
+            $startOfShift = reset($schedule);
+            return strtotime($startOfShift) >= strtotime($_nightShiftStart) && strtotime($startOfShift) <= strtotime($_nightShiftEnd);
+        }else{ return false; }
+    }
+
+    protected function nightshiftParams($date=null){
+        $date = $date ?? date("Y-m-d");
+        $nightShiftParams = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "NIGHT_SHIFT_PARAMS"))->row();
+        $nShiftStartTime = isset($nightShiftParams->start_time) ? $nightShiftParams->start_time: "12:01:00";
+        $nShiftEndTime = isset($nightShiftParams->end_time) ? $nightShiftParams->end_time: "12:00:00";
+        $_nightShiftStart = date("Y-m-d H:i:s", strtotime($date . " " . $nShiftStartTime));
+        $_nightShiftEnd = strtotime($nShiftStartTime) > strtotime($nShiftEndTime) ? date("Y-m-d H:i:s", strtotime("+1 day", strtotime($date . " " . $nShiftEndTime))): date("Y-m-d H:i:s", strtotime($date . " " . $nShiftEndTime));
+        return array("start" => $_nightShiftStart, "end" => $_nightShiftEnd);
+    }
+
+    protected function overtimeComputationScript($parameters=[]){
+        $hasShiftSchedule = $parameters["hasShiftSchedule"] ?? false;
+        $_overtime = $parameters["overtime"] ?? null;
+        $tempRow = $parameters["timesheetExist"] ?? null;
+        $tempAttrAttendance = $parameters["otAttendances"] ?? [];
+        $night_diff_cfg = $parameters["nightDiffCfg"] ?? null;
+        $shift_basis = $parameters["shiftBasis"] ?? null;
+        $_otNdiffStart = $parameters["otNdiffStart"] ?? null;
+        $_otNdiffEnd = $parameters["otNdiffEnd"] ?? null;
+        $nDiffOTHours = $parameters["nDiffOTHours"] ?? 0;
+        $isNightShift = $parameters["isNightShift"] ?? false;
+
+        $regularOTHours = $parameters["regularOTHours"] ?? 0;
+        $ot_night_diff = $parameters["otNightDiff"] ?? 0;
+
+        $ndiff_end = null;
+        $otAfterShift = false;
+        $hasPreviousShift = true;
+
+        $otNightDiffOnly = new stdClass();
+        $otNightDiffOnly->is_night_diff = false;
+        $otNightDiffOnly->ot_regular = 0;
+        $otNightDiffOnly->ot_night_diff = 0;
+
+        $_previousNightDiff = date("Y-m-d H:i", strtotime("-1 day", strtotime($_otNdiffStart)));
+        $_nextNightDiff = date("Y-m-d H:i", strtotime("-1 day", strtotime($_otNdiffEnd)));
+
+        $ot_start_dtr = date("Y-m-d H:i", strtotime($tempAttrAttendance[0]));
+        $ot_end_dtr = date("Y-m-d H:i", strtotime($tempAttrAttendance[sizeof($tempAttrAttendance) - 1]));
+
+        $arrShifts = array();
+        $shiftProps = array("shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end");
+        $tempShiftDate = date("Y-m-d", strtotime($tempRow->date));
+        foreach ($shiftProps as $key => $value) {
+            if($tempRow->{$value}){
+                if($key > 0 ){
+                    $prevValue = $tempRow->{$shiftProps[$key-1]};
+                    if(strtotime($tempRow->{$value}) < strtotime($prevValue)){ $tempShiftDate = date("Y-m-d", strtotime("+1 day", strtotime($tempShiftDate))); }
+                }
+                $nValue = date("Y-m-d H:i", strtotime($tempShiftDate." ".$tempRow->{$value}));
+                $arrShifts[] = $nValue;
+            }
+        }
+
+        if(is_array($arrShifts) && !empty($arrShifts)){
+            $firstShift = reset($arrShifts);
+            if(strtotime($ot_start_dtr) < strtotime($firstShift)){
+                $shift_basis = $firstShift;
+            }
+        }
+
+        $originalShiftBasis = $shift_basis;
+        $hasPreviousNightShift = false;
+        if($isNightShift){
+            $previousDate = date("Y-m-d", strtotime("-1 day", strtotime($tempRow->date)));
+            $previousTs = $this->db->get_where($this->tbl_timesheet, array(
+                "emp_id" => $tempRow->emp_id,
+                "date" => $previousDate
+            ));
+
+            if($previousTs->num_rows() == 1){
+                $prevRow = $previousTs->row();
+                
+                $privDate = date("Y-m-d", strtotime($prevRow->date));
+                $privNightShiftParams = $this->nightshiftParams($privDate);
+
+                $hasPreviousShift = intval($prevRow->has_shift) === 1;
+                $collectionScript = $this->attendanceCollectionScript($prevRow);
+                $_tempAttrAttendance = $collectionScript["arrAttendance"];
+                $ot_start_dtr = date("Y-m-d H:i", strtotime($_tempAttrAttendance[0]));
+                $ot_end_dtr = date("Y-m-d H:i", strtotime($_tempAttrAttendance[sizeof($_tempAttrAttendance) - 1]));
+
+                $hasPreviousNightShift = strtotime($ot_start_dtr) >= strtotime($privNightShiftParams["start"]) && strtotime($ot_end_dtr) <= strtotime($privNightShiftParams["end"]);
+            }
+        } 
+
+        $ot_start = strtotime($ot_start_dtr) < strtotime(date('Y-m-d H:i', strtotime($_overtime->date_from)))
+            ? date('Y-m-d H:i', strtotime($_overtime->date_from)) : $ot_start_dtr;
+
+        $ot_end = strtotime($ot_end_dtr) > strtotime(date('Y-m-d H:i', strtotime($_overtime->date_to)))
+            ? date('Y-m-d H:i', strtotime($_overtime->date_to)): $ot_end_dtr;
+
+        if(strtotime($shift_basis) > strtotime($ot_start) && strtotime($shift_basis) < strtotime($ot_end)){
+            $ot_end = $shift_basis;
+        }
+        
+        if($hasPreviousNightShift){
+            $shift_basis = strtotime($shift_basis) > strtotime($_nextNightDiff) ? date("Y-m-d H:i", strtotime("-1 day", strtotime($shift_basis))) : $shift_basis;
+            $ot_end = strtotime($shift_basis) > strtotime($ot_start) && strtotime($shift_basis) > strtotime($_nextNightDiff) ? $shift_basis : $_nextNightDiff;
+        }
+        
+        $isValidOvertime = strtotime($ot_end) > strtotime($ot_start);
+        $allowNightDiff = strtotime($ot_end) >= strtotime($_otNdiffStart) && strtotime($ot_end) <= strtotime($_otNdiffEnd);
+        if($isNightShift && $isValidOvertime){
+            $_ndiffStart = date("Y-m-d H:i", strtotime("-1 day", strtotime($_otNdiffStart)));
+            $_ndiffEnd = date("Y-m-d H:i", strtotime("-1 day", strtotime($_otNdiffEnd)));
+            $allowNightDiff = strtotime($ot_end) >= strtotime($_ndiffStart) && strtotime($ot_end) <= strtotime($_ndiffEnd);
+        }
+
+        if($isNightShift === false && $isValidOvertime && $allowNightDiff){
+            $_previousNightDiff = $_otNdiffStart;
+            $_nextNightDiff = $_otNdiffEnd;
+        }
+
+        $allowPreviousNightDiff = false;
+        if($isNightShift === false && $isValidOvertime && $hasPreviousNightShift === false
+            && (strtotime($ot_start) < strtotime($shift_basis) && strtotime($ot_start) > strtotime($_previousNightDiff) && strtotime($ot_start) < strtotime($_nextNightDiff))){
+            $allowNightDiff = true;
+            $allowPreviousNightDiff = true;
+        }
+
+        /*** before shift OT ***/
+        if($allowPreviousNightDiff === false && strtotime($ot_start) > strtotime($ot_end) && strtotime($ot_start) < strtotime($originalShiftBasis)){
+            $ot_end = $originalShiftBasis;
+            $isValidOvertime = strtotime($ot_end) > strtotime($ot_start);
+        }
+        /*** before shift OT ***/
+
+        if($allowNightDiff && $hasPreviousShift && $isValidOvertime && strtotime($ot_start) >= strtotime($_previousNightDiff) && strtotime($ot_start) < strtotime($_nextNightDiff)){
+            $tempOTE = 0;
+            $tempRegularOT = 0;
+            if(strtotime($ot_end) > strtotime($_previousNightDiff) && strtotime($ot_end) <= strtotime($_nextNightDiff)){
+                $tempOTE = strtotime($ot_end) - strtotime($ot_start);
+            }else{
+                $tempOTE = strtotime($_nextNightDiff) - strtotime($ot_start);
+                if(strtotime($ot_end) < strtotime($_nextNightDiff) || ($allowPreviousNightDiff && strtotime($ot_end) > strtotime($_nextNightDiff))){
+                    $tempRegularOT = strtotime($ot_end) - strtotime($_nextNightDiff);
+                }
+            }
+            $otNightDiffOnly->ot_regular = ($tempRegularOT > 0)? $tempRegularOT / 3600: $tempRegularOT;
+            $otNightDiffOnly->ot_night_diff = ($tempOTE > 0)? $tempOTE / 3600: $tempOTE;
+            $otNightDiffOnly->is_night_diff = true;
+        }elseif($allowNightDiff && $hasPreviousShift && $isValidOvertime && strtotime($ot_end) >= strtotime($_previousNightDiff) && strtotime($ot_end) < strtotime($_nextNightDiff)){
+            $tempOTE = 0;
+            $tempRegularOT = 0;
+            if($ot_start <= $_previousNightDiff && $ot_end > $_previousNightDiff){
+                $tempOTE = strtotime($ot_end) - strtotime($_previousNightDiff);
+                $tempRegularOT = strtotime($_previousNightDiff) - strtotime($ot_start);
+            }
+
+            $otNightDiffOnly->ot_regular = ($tempRegularOT > 0)? $tempRegularOT / 3600: $tempRegularOT;
+            $otNightDiffOnly->ot_night_diff = ($tempOTE > 0)? $tempOTE / 3600: $tempOTE;
+            $otNightDiffOnly->is_night_diff = true;
+        }
+
+        if($isValidOvertime && (strtotime($ot_start) >= strtotime($shift_basis)) && $hasShiftSchedule){ $otAfterShift = true; }
+        // START OVERTIME NIGHT DIFF CALCULATION
+        $afterShiftParams = array(
+            "otAfterShift" => $otAfterShift,
+            "otStart" => $ot_start,
+            "otEnd" => $ot_end,
+            "isNightShift" => $isNightShift,
+            "nightDiffCfg" => $night_diff_cfg,
+            "otNightDiff" => $ot_night_diff
+        );
+        $ot_night_diff = $this->otAfterShiftNightDiffScript($afterShiftParams);
+
+        // END OVERTIME NIGHT DIFF CALCULATION
+
+        $ot_seconds = $isValidOvertime ? (strtotime($ot_end) - strtotime($ot_start)) : 0;
+        $ot_minutes = doubleval($ot_seconds) < 0 ? 0 : (doubleval($ot_seconds) / 60);
+        /** night shift **/
+        $tempNdiffStart = $isNightShift ? $_previousNightDiff: $_otNdiffStart;
+        /** night shift **/
+
+        /*** START OVERTIME W/ NIGHT DIFF COMPUTATION REG OT ***/
+        if($ot_night_diff > 0){
+            $_ot_seconds = (strtotime($tempNdiffStart) - strtotime($ot_start));
+            $ot_minutes = doubleval($_ot_seconds) < 0 ? 0 : (doubleval($_ot_seconds) / 60);
+        }
+        /*** END OVERTIME W/ NIGHT DIFF COMPUTATION REG OT ***/
+
+        
+        $regularOvertimeTotal = $ot_minutes / 60;
+        $otTotal = $regularOvertimeTotal + $ot_night_diff;
+        /*** deduct 1 hour on overtime with night differential ***/
+        if(floatval($otTotal) >= 5 && $nDiffOTHours > 0){
+            $ot_night_diff = $ot_night_diff - 1;
+        }
+        /*** deduct 1 hour on overtime with night differential ***/
+
+        $ot_night_diff = doubleval($ot_night_diff);
+        $ot_hrs = number_format($regularOvertimeTotal, 2, '.', '');
+
+        if($otNightDiffOnly->is_night_diff){
+            $ot_hrs = number_format($otNightDiffOnly->ot_regular, 2, '.', '');
+            $ot_night_diff = number_format($otNightDiffOnly->ot_night_diff, 2, '.', '');
+            $regularOTHours = $ot_hrs;
+            $nDiffOTHours = $ot_night_diff;
+        }
+        
+        if($ot_hrs >= 5){ $ot_hrs = $ot_hrs - 1; }
+        
+        if($regularOTHours > 0 && floatval($ot_hrs) > $regularOTHours && $otAfterShift){
+            $tempOTDiff = 0;
+            $tempOTDiff = floatval($ot_hrs) - $regularOTHours;
+            $ot_hrs = $regularOTHours;
+            $ot_night_diff = $ot_night_diff + $tempOTDiff;
+        }
+        
+        
+        /*** start after night diff regular hours inclusion ***/
+        if(($ot_end && $ndiff_end) && floatval($ot_hrs) > 0 && strtotime($ot_end) > strtotime($ndiff_end)){
+            $ext_ot_seconds = strtotime($ot_end) - strtotime($ndiff_end);
+            $ext_ot_minutes = doubleval($ext_ot_seconds) < 0 ? 0 : (doubleval($ext_ot_seconds) / 60);
+            $ext_regularOvertimeTotal = $ext_ot_minutes / 60;
+            $ot_hrs = $ot_hrs + $ext_regularOvertimeTotal;
+
+            if(($regularOTHours > 0 && $nDiffOTHours > 0) && $nDiffOTHours > $ext_regularOvertimeTotal ){
+                $regularOTHours = $regularOTHours + $ext_regularOvertimeTotal;
+                $nDiffOTHours = $nDiffOTHours - $ext_regularOvertimeTotal;
+            }
+        }
+        /*** end after night diff regular hours inclusion ***/
+        
+        
+        $ot_night_diff = number_format($ot_night_diff, 2, '.', '');
+        return array('ot_hrs' => $ot_hrs, 'ot_night_diff' => $ot_night_diff,
+        'regularOTHours' => $regularOTHours, 'nDiffOTHours' => $nDiffOTHours,
+        "ot_start" => $ot_start, "ot_end" => $ot_end);
+    }
+
+    protected function attendanceCollectionScript($prevRow=null){
+        $am_start = $prevRow->am_in ? date("H:i:s", strtotime($prevRow->am_in)): null;
+        $am_end = $prevRow->am_out ? date("H:i:s", strtotime($prevRow->am_out)): null;
+        $pm_start = $prevRow->pm_in ? date("H:i:s", strtotime($prevRow->pm_in)): null;
+        $pm_end = $prevRow->pm_out ? date("H:i:s", strtotime($prevRow->pm_out)): null;
+        
+        $_attendance_am_start = $am_start ? date("Y-m-d H:i", strtotime("{$prevRow->date} {$am_start}")): null;
+        $_attendance_am_end = $am_end ? date("Y-m-d H:i", strtotime("{$prevRow->date} {$am_end}")): null;
+        $_attendance_pm_start = $pm_start ? date("Y-m-d H:i", strtotime("{$prevRow->date} {$pm_start}")): null;
+        $_attendance_pm_end = $pm_end ? date("Y-m-d H:i", strtotime("{$prevRow->date} {$pm_end}")): null;
+        
+        $_tempAttrAttendance = array();
+        $arrAttendance = $this->nextDayAttendanceScript($_attendance_am_start, $_attendance_am_end, $_attendance_pm_start, $_attendance_pm_end);
+        if(is_array($arrAttendance) && !empty($arrAttendance)){
+            foreach ($arrAttendance as $key => $value) {
+                if($value){
+                    $tempKey = "_attendance_{$key}";
+                    ${$tempKey} = $value;
+                    $_tempAttrAttendance[] = $value;
+                }
+            }
+        }
+        
+        return array("arrAttendance" => $_tempAttrAttendance,
+        "attendance" => array("am_start" => $_attendance_am_start, "am_end" => $_attendance_am_end, "pm_start" => $_attendance_pm_start, "pm_end" => $_attendance_pm_end));
+    }
+
+    protected function nextDayAttendanceScript($am_start=null, $am_end=null, $pm_start=null, $pm_end=null){
+        $_hasNextDayAttendance = false;
+        if(($am_start && $am_end) && (strtotime($am_end) < strtotime($am_start))){
+            $am_end = date("Y-m-d H:i", strtotime("+1 day", strtotime($am_end)));
+            $_hasNextDayAttendance = true;
+        }
+        if(($am_end && $pm_start) && (strtotime($pm_start) < strtotime($am_end) || ($_hasNextDayAttendance && $pm_start))){
+            $pm_start = date("Y-m-d H:i", strtotime("+1 day", strtotime($pm_start)));
+            $_hasNextDayAttendance = true;
+        }
+        if(($pm_start && $pm_end) && (strtotime($pm_end) < strtotime($pm_start) || ($_hasNextDayAttendance && $pm_end))){
+            $pm_end = date("Y-m-d H:i", strtotime("+1 day", strtotime($pm_end)));
+        }
+
+        return array("am_start" => $am_start, "am_end" => $am_end, "pm_start" => $pm_start, "pm_end" => $pm_end);
+    }
+
+
+    protected function otAfterShiftNightDiffScript($parameters = []){
+        $otAfterShift = $parameters['otAfterShift'] ?? false;
+        $ot_start = $parameters['otStart'] ?? null;
+        $ot_end = $parameters['otEnd'] ?? null;
+        $isNightShift = $parameters['isNightShift'] ?? false;
+        $night_diff_cfg = $parameters['nightDiffCfg'] ?? null;
+        $ot_night_diff = $parameters['otNightDiff'] ?? 0;
+        
+        if($otAfterShift){
+            $init_start_date = new DateTime($ot_start);
+            $start_ndiff_date = $isNightShift ? $init_start_date->modify("-1 day")->format('Y-m-d') : $init_start_date->format('Y-m-d');
+            $start_ndiff_time = $night_diff_cfg->start_time;
+            $start_ndiff_date_time = date('Y-m-d H:i', strtotime($start_ndiff_date . " " . $start_ndiff_time));
+
+            $init_end_date = new DateTime($ot_end);
+            $end_ndiff_date = $init_end_date->format('Y-m-d');
+            $end_ndiff_time = $night_diff_cfg->end_time;
+            $end_ndiff_date_time = date("Y-m-d H:i", strtotime($end_ndiff_date . " " . $end_ndiff_time));
+
+            $ndiff_start = $start_ndiff_date_time;
+            $ndiff_end = $end_ndiff_date_time;
+            if (strtotime(date('Y-m-d', strtotime($ot_start)))
+                === strtotime(date('Y-m-d', strtotime($ot_end)))) {
+                $init_end_date = new DateTime($ot_start);
+                $end_ndiff_date = $isNightShift ? $init_end_date->modify("-1 day")->format('Y-m-d') : $init_end_date->modify("+1 day")->format('Y-m-d');
+                $end_ndiff_time = $night_diff_cfg->end_time;
+                $end_ndiff_date_time = date("Y-m-d H:i", strtotime($end_ndiff_date . " " . $end_ndiff_time));
+                $ndiff_start = $start_ndiff_date_time;
+                $ndiff_end = $end_ndiff_date_time;
+            }
+            if (strtotime($ndiff_start) >= strtotime($ot_start)) {
+                if (strtotime($ot_end) >= strtotime($ndiff_end)) {
+                    $ot_night_diff = strtotime($ndiff_end) - strtotime($ndiff_start);
+                    $ot_night_diff = $ot_night_diff / 3600;
+                } else {
+                    $ot_night_diff = strtotime($ot_end) - strtotime($ndiff_start);
+                    $ot_night_diff = $ot_night_diff / 3600;
+                }
+            } elseif (strtotime($ot_end) > strtotime($ot_start)){
+                $ot_night_diff = strtotime($ndiff_end) - strtotime($ot_start);
+                $ot_night_diff = $ot_night_diff / 3600;
+            }
+            $ot_night_diff = ($ot_night_diff < 0) ? 0 : $ot_night_diff;
+        }
+
+        return $ot_night_diff;
+    }
+}

@@ -335,26 +335,25 @@
                         </div>
                         <br>
                         <div class="table-responsive-sm">
-                            <table class="table table-bordered" id="table-payroll-sheet"
-                                   width="100%">
+                            <table class="table table-bordered" id="table-payroll-sheet" style="width: 100%">
                                 <thead>
                                 <tr>
-                                    <th class="no-sort align-middle" rowspan="2">
-                                        <label class="m-checkbox m-checkbox--bold m-checkbox--state-brand table-cb">
+                                    <th scope="col" class="no-sort align-middle" rowspan="2">
+                                        <label for="" class="m-checkbox m-checkbox--bold m-checkbox--state-brand table-cb">
                                             <input type="checkbox" id="cb-select-all"><span></span>
                                         </label>
                                     </th>
-                                    <th class="text-center align-middle" rowspan="2">#</th>
-                                    <th class="text-center align-middle" rowspan="2">EMPLOYEE</th>
-                                    <th class="text-center align-middle" rowspan="2">RATE</th>
-                                    <th class="text-center align-middle" rowspan="2">
+                                    <th scope="col" class="text-center align-middle" rowspan="2">#</th>
+                                    <th scope="col" class="text-center align-middle" rowspan="2">EMPLOYEE</th>
+                                    <th scope="col" class="text-center align-middle" rowspan="2">RATE</th>
+                                    <th scope="col" class="text-center align-middle" rowspan="2">
                                         <span data-toggle="m-tooltip" id="allow"
                                             data-placement="top"
                                             data-original-title="STANDARD ALLOWANCE"
                                             data-skin="dark">
                                             ALLOW
                                         </span></th>
-                                    <th class="text-center align-middle" rowspan="2">
+                                    <th scope="col" class="text-center align-middle" rowspan="2">
                                         <span data-toggle="m-tooltip"
                                             data-placement="top"
                                             data-original-title="DAYS WORKED"
@@ -362,7 +361,7 @@
                                             DAYS
                                         </span>
                                     </th>
-                                    <th rowspan="2" class="align-middle">
+                                    <th scope="col" rowspan="2" class="align-middle">
                                         <span data-toggle="m-tooltip"
                                               data-placement="top"
                                               data-original-title="OVERTIME (AMT)"
@@ -370,15 +369,15 @@
                                             OT
                                         </span>
                                     </th>
-                                    <th class="text-center align-middle" rowspan="2">
+                                    <th scope="col" class="text-center align-middle" rowspan="2">
                                         <span data-toggle="m-tooltip"
                                               data-placement="top"
                                               data-original-title="OVERTIME NIGHT DIFFERENTIAL (AMT)"
                                               data-skin="dark">
-                                            ND
+                                            OT.ND
                                         </span>
                                     </th>
-                                    <th class="text-center align-middle" rowspan="2">
+                                    <th scope="col" class="text-center align-middle" rowspan="2">
                                         <span data-toggle="m-tooltip"
                                               data-placement="top"
                                               data-original-title="HOLIDAY"
@@ -386,7 +385,15 @@
                                             HOL
                                         </span>
                                     </th>
-                                    <th class="text-center align-middle" rowspan="2">
+                                    <th scope="col" class="text-center align-middle" rowspan="2">
+                                        <span data-toggle="m-tooltip"
+                                              data-placement="top"
+                                              data-original-title="REGULAR NIGHT DIFFERENTIAL (AMT)"
+                                              data-skin="dark">
+                                            REG.ND
+                                        </span>
+                                    </th>
+                                    <th scope="col" class="text-center align-middle" rowspan="2">
                                         <span data-toggle="m-tooltip"
                                               data-placement="top"
                                               data-original-title="BASIC PAY"
@@ -394,7 +401,7 @@
                                             BASIC
                                         </span>
                                     </th>
-                                    <th class="text-center align-middle" rowspan="2">
+                                    <th scope="col" class="text-center align-middle" rowspan="2">
                                         <span data-toggle="m-tooltip"
                                               data-placement="top"
                                               data-original-title="ALLOWANCE"
@@ -402,7 +409,7 @@
                                             ALLOWANCE
                                         </span>
                                     </th>
-                                    <th class="text-center align-middle" rowspan="2">
+                                    <th scope="col" class="text-center align-middle" rowspan="2">
                                         <span data-toggle="m-tooltip"
                                               data-placement="top"
                                               data-original-title="ADJUSTMENTS"
@@ -410,7 +417,7 @@
                                             ADJUSTMENTS
                                         </span>
                                     </th>
-                                    <th class="text-center align-middle" rowspan="2">
+                                    <th scope="col" class="text-center align-middle" rowspan="2">
                                         <span data-toggle="m-tooltip"
                                               data-placement="top"
                                               data-original-title="GROSS PAY"
@@ -418,15 +425,15 @@
                                             GROSS
                                         </span>
                                     </th>
-                                    <th class="align-middle" rowspan="2">SSS</th>
-                                    <th class="align-middle" rowspan="2">
+                                    <th scope="col" class="align-middle" rowspan="2">SSS</th>
+                                    <th scope="col" class="align-middle" rowspan="2">
                                         <span data-toggle="m-tooltip"
                                               data-placement="top"
                                               data-original-title="SSS PROVIDENT"
                                               data-skin="dark">
                                               S.PROV
                                         </span></th>
-                                    <th class="text-center align-middle" rowspan="2">
+                                    <th scope="col" class="text-center align-middle" rowspan="2">
                                         <span data-toggle="m-tooltip"
                                               data-placement="top"
                                               data-original-title="PHILHEALTH"
@@ -434,7 +441,7 @@
                                             PHIC
                                         </span>
                                     </th>
-                                    <th class="text-center align-middle" rowspan="2">
+                                    <th scope="col" class="text-center align-middle" rowspan="2">
                                         <span data-toggle="m-tooltip"
                                               data-placement="top"
                                               data-original-title="PAG-IBIG"
@@ -442,8 +449,8 @@
                                             HDMF
                                         </span>
                                     </th>
-                                    <th class="text-center align-middle" rowspan="2">TAX</th>
-                                    <th class="text-center" colspan="4">
+                                    <th scope="col" class="text-center align-middle" rowspan="2">TAX</th>
+                                    <th scope="col" class="text-center" colspan="4">
                                         <span data-toggle="m-tooltip"
                                               data-placement="top"
                                               data-original-title="LOANS"
@@ -451,7 +458,7 @@
                                                 LOANS
                                         </span>
                                     </th>
-                                    <th class="text-center align-middle" rowspan="2">
+                                    <th scope="col" class="text-center align-middle" rowspan="2">
                                         <span data-toggle="m-tooltip"
                                               data-placement="top"
                                               data-original-title="NET PAY"
@@ -459,10 +466,10 @@
                                             NET PAY
                                         </span>
                                     </th>
-                                    <th rowspan="2"></th>
+                                    <th scope="col" rowspan="2"></th>
                                 </tr>
                                 <tr>
-                                    <th class="text-center">
+                                    <th scope="col" class="text-center">
                                         <span data-toggle="m-tooltip"
                                               data-placement="top"
                                               data-original-title="COMPANY LOANS"
@@ -470,7 +477,7 @@
                                             C.A.
                                         </span>
                                     </th>
-                                    <th class="text-center">
+                                    <th scope="col" class="text-center">
                                         <span data-toggle="m-tooltip"
                                               data-placement="top"
                                               data-original-title="TOTAL CHARGES"
@@ -478,7 +485,7 @@
                                             CHRG
                                         </span>
                                     </th>
-                                    <th class="text-center">
+                                    <th scope="col" class="text-center">
                                         <span data-toggle="m-tooltip"
                                             data-placement="top"
                                             data-original-title="SSS LOANS"
@@ -486,38 +493,39 @@
                                             SSS
                                         </span>
                                     </th>
-                                    <th class="text-center">
+                                    <th scope="col" class="text-center">
                                         <span data-toggle="m-tooltip"
                                             data-placement="top"
                                             data-original-title="HDMF LOANS"
                                             data-skin="dark">
                                             HDMF
-                                        </span></th>
+                                        </span>
+                                    </th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 </tbody>
                                 <tfoot class="m--hide">
                                     <tr>
-                                        <th class="m--font-boldest" colspan="5">GRAND TOTAL</th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th colspan="2"></th>
+                                        <th scope="col" class="m--font-boldest" colspan="6">GRAND TOTAL</th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col" colspan="2"></th>
                                     </tr>
                                 </tfoot>
                             </table>

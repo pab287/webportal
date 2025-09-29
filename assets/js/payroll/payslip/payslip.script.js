@@ -13,26 +13,30 @@ let dtPayslipTable;
 let dtPayrollIds = [];
 let _company = [];
 let _companyId = 0;
+let dropdownCompany = [];
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0) {
     if (jQuery.inArray("view_by_company", _currentActions) !== -1) {
         if(typeof _tempContentData.company !== "undefined" && _tempContentData.company){ _company = _tempContentData.company; _companyId = _tempContentData.company.id; }
     }
+    if(typeof _tempContentData.dropdown_company !== "undefined" && _tempContentData.dropdown_company){ dropdownCompany = _tempContentData.dropdown_company; }
 }
 
-var vmPayslip = new Vue({
+const vmPayslip = new Vue({
     el: "#generated-payslip",
     data: { request: {}, has_request: false, rows: {}, row_count: 0 }
 });
 
 
-var vmPayslipContent = new Vue({
+const vmPayslipContent = new Vue({
     el: "#temp-payslip_content",
-    data: { row: {} },
+    data: { row: {}, ot_computation: {}, 
+    total_ot_hrs: 0, ot_hrs: 0, ot_ndiff_hrs: 0, ot_ndiff_computation: 0,
+    total_ndiff_hrs: 0, total_ndiff_computation: 0, raw_tl: 0, raw_tod: 0, raw_tli: 0 },
     methods: {
         printCurrentPayslip: function (id) {
             if (parseInt(id) > 0) {
-                var tempId = [];
+                let tempId = [];
                 tempId.push(id);
                 return triggerPrintable(tempId);
             } else {
@@ -107,7 +111,8 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
         width: '100%',
         allowClear: true,
         dropdownParent: modalGeneratePayslip,
-        ajax: {
+        data: dropdownCompany,
+        /*** ajax: {
             url: baseUrl("payroll/select_company"),
             dataType: "json",
             delay: 250,
@@ -115,7 +120,7 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
             processResults: function (data) {
                 return data;
             }
-        }
+        } ***/
     }).on("select2:select", function (data) {
         selectedCompany = data.params.data;
     });
@@ -476,7 +481,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                 data: "rate", // rate
                 className: "text-right",
                 render: function (data) {
-                    return formatNumber(data);
+                    return numberFormat(data);
                 }
             },
             {
@@ -498,7 +503,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                 data: "basic_rate",
                 className: "text-right",
                 render: function (data) {
-                    return formatNumber(data);
+                    return numberFormat(data);
                 }
             },
             /*** data: "total_undertime_amount", // undertime, // unrendered ***/
@@ -506,28 +511,35 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                 data: "total_unrendered_amount",
                 className: "text-right",
                 render: function (data) {
-                    return formatNumber(data);
+                    return numberFormat(data);
                 }
             },
             {
                 data: "ot_amount", // OT
                 className: "text-right",
                 render: function (data, type, row) {
-                    return parseFloat(data).toLocaleString('en-US', { maximumFractionDigits: 2 });
+                    return numberFormat(data);
                 }
             },
             {
                 data: "ot_ndiff_amount", // n_diff
                 className: "text-right",
                 render: function (data, type, row) {
-                    return parseFloat(data).toLocaleString('en-US', { maximumFractionDigits: 2 });
+                    return numberFormat(data);
                 }
             },
             {
                 data: "total_holiday_amount", // holidays
                 className: "text-right",
                 render: function (data) {
-                    return formatNumber(data);
+                    return numberFormat(data);
+                }
+            },
+            {
+                data: "total_ndiff_amount", // reg_n_diff
+                className: "text-right",
+                render: function (data, type, row) {
+                    return numberFormat(data);
                 }
             },
             {
@@ -564,7 +576,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                 data: "total_allowances", // allowances
                 className: "text-right",
                 render: function (data, type, row) {
-                    const tempData = formatNumber(data);
+                    const tempData = numberFormat(data);
                     let template = ``;
                     template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
@@ -580,7 +592,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                             } else {
                                 temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
                             }
-                            temp_amount = formatNumber(temp_amount);
+                            temp_amount = numberFormat(temp_amount);
 
                             if (temp_adjustment[0] == "ALLOWANCE" && temp_status === 0) {
                                 template = `<div class="mb-0 m--font-bolder m--font-accent">
@@ -603,14 +615,14 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                 data: "gross_pay", // gross pay
                 className: "text-right",
                 render: function (data) {
-                    return formatNumber(data);
+                    return numberFormat(data);
                 }
             },
             {
                 data: "sss", // sss
                 className: "text-right",
                 render: function (data, type, row) {
-                    const tempData = formatNumber(data);
+                    const tempData = numberFormat(data);
                     let template = ``;
                     template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
@@ -626,7 +638,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                             } else {
                                 temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
                             }
-                            temp_amount = formatNumber(temp_amount);
+                            temp_amount = numberFormat(temp_amount);
 
                             if (temp_adjustment[0] == "SSS" && temp_status === 0) {
                                 template = `<div class="mb-0 m--font-bolder m--font-accent">
@@ -649,7 +661,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                 data: "sss_prov", // sss
                 className: "text-right",
                 render: function (data, type, row) {
-                    const tempData = formatNumber(data);
+                    const tempData = numberFormat(data);
                     let template = ``;
                     template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
@@ -665,7 +677,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                             } else {
                                 temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
                             }
-                            temp_amount = formatNumber(temp_amount);
+                            temp_amount = numberFormat(temp_amount);
 
                             if (temp_adjustment[0] == "SSS_PROV" && temp_status === 0) {
                                 template = `<div class="mb-0 m--font-bolder m--font-accent">
@@ -688,7 +700,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                 data: "ph", // phic
                 className: "text-right",
                 render: function (data, type, row) {
-                    const tempData = formatNumber(data);
+                    const tempData = numberFormat(data);
                     let template = ``;
                     template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
@@ -704,7 +716,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                             } else {
                                 temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
                             }
-                            temp_amount = formatNumber(temp_amount);
+                            temp_amount = numberFormat(temp_amount);
 
                             if (temp_adjustment[0] == "PHIC" && temp_status === 0) {
                                 template = `<div class="mb-0 m--font-bolder m--font-accent">
@@ -727,7 +739,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                 data: "hdmf", // hdmf
                 className: "text-right",
                 render: function (data, type, row) {
-                    const tempData = formatNumber(data);
+                    const tempData = numberFormat(data);
                     let template = ``;
                     template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
@@ -743,7 +755,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                             } else {
                                 temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
                             }
-                            temp_amount = formatNumber(temp_amount);
+                            temp_amount = numberFormat(temp_amount);
 
                             if (temp_adjustment[0] == "HDMF" && temp_status === 0) {
                                 template = `<div class="mb-0 m--font-bolder m--font-accent">
@@ -766,7 +778,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                 data: "tax", // tax
                 className: "text-right",
                 render: function (data, type, row) {
-                    const tempData = formatNumber(data);
+                    const tempData = numberFormat(data);
                     let template = ``;
                     template = tempData;
                     const tempCreatedAdjustments = row.created_adjustments;
@@ -782,7 +794,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                             } else {
                                 temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
                             }
-                            temp_amount = formatNumber(temp_amount);
+                            temp_amount = numberFormat(temp_amount);
 
                             if (temp_adjustment[0] == "TAX" && temp_status === 0) {
                                 template = `<div class="mb-0 m--font-bolder m--font-accent">
@@ -805,7 +817,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                 data: "total_loans", // cash advance
                 className: "text-right",
                 render: function (data, type, row) {
-                    const tempData = formatNumber(data);
+                    const tempData = numberFormat(data);
                     let template = ``;
                     template = tempData;
                     let approvedAmount = parseFloat(data);
@@ -834,7 +846,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                                 temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
                             }
                             tempAdj = temp_amount;
-                            temp_amount = formatNumber(temp_amount);
+                            temp_amount = numberFormat(temp_amount);
 
                             if (temp_adjustment[0] == "LOAN" && temp_status === 0) {
                                 template = `<div class="mb-0 m--font-bolder m--font-accent">
@@ -864,7 +876,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                             if ((_adj_type === 0 && _adj_details.toLowerCase() == 'chrge') || (_adj_type === 0 && _adj_details.toLowerCase() == 'ud')) {
                                 approvedAmount = approvedAmount - custom_deduction[1];
                             }
-                            template = approvedAmount <= 0 ? 0 : formatNumber(approvedAmount);
+                            template = approvedAmount <= 0 ? 0 : numberFormat(approvedAmount);
                         });
                     }
                     // deducted charges to total loans as this column is for cash advance only
@@ -892,28 +904,28 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                         });
                     }
 
-                    return formatNumber(charge);
+                    return numberFormat(charge);
                 }
             },
             {
                 data: "sss_loan", // sss loan
                 className: "text-right",
                 render: function (data) {
-                    return formatNumber(data);
+                    return numberFormat(data);
                 }
             },
             {
                 data: "hdmf_loan", // hdmf loan
                 className: "text-right",
                 render: function (data) {
-                    return formatNumber(data);
+                    return numberFormat(data);
                 }
             },
             {
                 data: "net_pay", // net pay
                 className: "text-right",
                 render: function (data) {
-                    return formatNumber(data);
+                    return numberFormat(data);
                 }
             },
             {
@@ -1027,13 +1039,13 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
             };
 
             let totalNet = api
-                .column(21)
+                .column(22)
                 .data()
                 .reduce(function (a, b) {
                     return intVal(a) + intVal(b);
                 }, 0);
             $(api.column(1).footer()).html("<span class='m--font-boldest'>&nbsp;&nbsp;GRANDTOTAL</span>");
-            $(api.column(21).footer()).html("<span class='m--font-boldest'>&#8369;&nbsp;&nbsp;" + numberFormat(totalNet) + "</span>");
+            $(api.column(22).footer()).html("<span class='m--font-boldest'>&#8369;&nbsp;&nbsp;" + numberFormat(totalNet) + "</span>");
         }
     });
 
@@ -1058,14 +1070,17 @@ function viewPayslip(rowId) {
                     var data = json.data;
                     var totalOT = parseFloat(vmPayslipContent.row.ot_amount) + parseFloat(vmPayslipContent.row.ot_ndiff_amount);
                     var totalOTHrs = (parseFloat(vmPayslipContent.row.ot_minutes) + parseFloat(vmPayslipContent.row.ot_ndiff_minutes)) / 60;
+
                     vmPayslipContent.total_ot_hrs = numberFormat(totalOTHrs);
                     vmPayslipContent.ot_hrs = numberFormat(parseFloat(vmPayslipContent.row.ot_minutes)/60);
                     vmPayslipContent.ot_computation = numberFormat(totalOT);
                     vmPayslipContent.ot_ndiff_hrs = numberFormat(parseFloat(vmPayslipContent.row.ot_ndiff_minutes) / 60);
                     vmPayslipContent.ot_ndiff_computation = numberFormat(parseFloat(vmPayslipContent.row.ot_ndiff_amount));
+                    
+                    vmPayslipContent.total_ndiff_hrs = numberFormat(parseFloat(vmPayslipContent.row.total_ndiff_minutes) / 60);
+                    vmPayslipContent.total_ndiff_computation = numberFormat(parseFloat(vmPayslipContent.row.total_ndiff_amount));
 
                     let tempLoan = [];
-                    let tempOthers = [];
                     let totalLoan = parseFloat(vmPayslipContent.row.totalLoan.replace(/,/g, ''));
                     let totalDeduction = 0;
                     let totalOthersDeductions = 0;
@@ -1191,6 +1206,9 @@ function viewPayslip(rowId) {
                     vmPayslipContent.row.overall_total_deductions = numberFormat(overAllTotal);
                     vmPayslipContent.row.adjustment_d_count = vmPayslipContent.row.adjustment_deductions.length;
 
+                    vmPayslipContent.raw_tl = parseFloat(totalLoan);
+                    vmPayslipContent.raw_tod = parseFloat(totalOthersDeductions);
+                    vmPayslipContent.raw_tli = parseFloat(vmPayslipContent.row.total_loans_interest);
                     viewPayrollPayslipModal.modal("show");
                 }
             }
