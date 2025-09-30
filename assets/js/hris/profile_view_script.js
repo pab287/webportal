@@ -1143,4 +1143,4 @@ $('#offense-tabs .nav-link').on('click', function(e) {
     $(this).addClass('active');
     var targetId = $(this).attr('href');
     $(targetId).addClass('active show');
- });
+});

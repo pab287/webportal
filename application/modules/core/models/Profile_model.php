@@ -22,6 +22,9 @@ class Profile_model extends CI_Model
     protected $employeeSalaryTable = "gcchris.tblsalaries";
     protected $tblPersonnelLocation = "gcctimeutility.personnel_locations";
     protected $tblPersonnel = "gcctimeutility.personnel";
+    protected $loggedinData;
+    protected $loggedInUsername;
+    protected $user_data;
 
     protected $defaultStationTable = "gcchris.default_station_location";
 
@@ -276,5 +279,127 @@ class Profile_model extends CI_Model
         }
 
         return $result;
+    }
+
+    public function get_employee_deductions($id) {
+        $result = array();
+
+        $this->db->select("emp_loans.*, master_loans.loan_name, ROUND(SUM(IFNULL(psloanpayments.amount_due, 0)),2) as total_amount_paid, 
+        GROUP_CONCAT(DISTINCT psloanpayments.amount_due, '||', ps.id) as temp_amount_paid, emp_loans.reference as ref, emp_loans.id as loan_id, 
+        merged_loans.amount as merged_amount, IFNULL(COUNT(mloans.id), 0) as merged_count");
+        $this->db->from("gcchris.loans emp_loans");
+        $this->db->join("payroll.loans master_loans", "master_loans.id = emp_loans.loan_id");
+        $this->db->join("payroll.payroll_sheet_loan_payments psloanpayments", "psloanpayments.loan_id = emp_loans.id", "LEFT");
+        $this->db->join("payroll.payroll_sheet ps", "ps.id = psloanpayments.payroll_sheet_id AND ps.posted = 1", "LEFT");
+        $this->db->join("gcchris.loans merged_loans", "merged_loans.id = emp_loans.merged_id", "LEFT");
+        $this->db->join("gcchris.loans mloans", "mloans.merged_id = emp_loans.id", "LEFT");
+        $this->db->where("emp_loans.emp_id", $id);
+        $this->db->where("emp_loans.active", 1);
+        $this->db->where('emp_loans.paid', 0);
+        $this->db->where("emp_loans.is_archived", 0);
+        $this->db->group_by("emp_loans.id, emp_loans.loan_id");
+        $this->db->order_by("emp_loans.id", "DESC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result() as $key => $value) {
+                $tempStatus = intval($value->active);
+                $tempTotal = 0;
+                $tempAmount = $value->temp_amount_paid;
+                $tempAmount = explode(",", $tempAmount);
+                foreach ($tempAmount as $kk => $vv) {
+                    $tempDD = explode("||", $vv);
+                    $tempTotal += floatval($tempDD[0]);
+                }
+                $tempTotal = round($tempTotal, 2);
+                if($tempTotal !== floatval($value->total_amount_paid)){ $value->total_amount_paid = $tempTotal; }
+                $tempCreatedBy = intval($value->created_by) > 0 ? 
+                    $this->core_layout->getEmployeeData($value->created_by)['display_name_1']: "[ System Generated: Cash Advance ]";
+                $value->created_by = $tempCreatedBy;
+                $value->created_at = date('Y-m-d', strtotime($value->created_at));
+
+                $tempbalance = floatval($value->amount) - floatval($value->total_amount_paid);
+                $value->tempbalance = $tempbalance;
+
+                $value->image = ($this->checkLoanAttachment($value->loan_id));
+
+                if (floatval($tempbalance) > 0) {
+                    $result[] = $value;
+                }
+            }
+        }
+        
+        return $result;
+    }
+
+    function checkLoanAttachment($id){
+        $this->db->where('loan_id', $id);
+        $this->db->from('gcchris.loans_images');
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
+    function renderLoanActions($row){
+        $btn = '';
+        $ctrActions = 0;
+        $listActions = '';
+        $currentActions = $this->core_layout->getCurrentActions();
+    
+        $isPaid = (int)$row->paid;
+        $tempIsPaid = false;
+    
+        $balance = (float)$row->amount - (float)$row->total_amount_paid;
+        if ($balance <= 0) {
+            $tempIsPaid = true;
+        }
+
+        if (!empty($currentActions) && in_array('view_own_request', $currentActions)) {
+            $btn .= '<button title="View payment history"
+                            class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary"
+                            onclick="openLoanPaymentHistoryModal(' . $row->id . ')">
+                            <i class="fa fa-list-ol"></i>
+                        </button> ';
+            $listActions .= '<li class="m-nav__item">
+                    <a href="javascript:void(0)" class="m-nav__link"
+                    onclick="openLoanPaymentHistoryModal(' . $row->id . ')">
+                        <i class="m-nav__link-icon flaticon-list"></i>
+                        <span class="m-nav__link-text">PAYMENT HISTORY</span>
+                    </a>
+                </li>';
+            $ctrActions++;
+        }
+    
+        $tempAction = '<div class="m-dropdown m-dropdown--inline m-dropdown--align-right m-dropdown--large"
+                data-dropdown-toggle="click" aria-expanded="true">
+            <a href="#" class="m-dropdown__toggle btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill"
+                data-toggle="m-tooltip" data-original-title="More Options" data-skin="dark"
+                data-delay=\'{"show": 500}\'>
+                <i class="fa fa-ellipsis-v"></i>
+            </a>
+            <div class="m-dropdown__wrapper">
+                <span class="m-dropdown__arrow m-dropdown__arrow--right"></span>
+                <div class="m-dropdown__inner">
+                    <div class="m-dropdown__body">
+                        <div class="m-dropdown__content">
+                            <ul class="m-nav">
+                                <li class="m-nav__section m-nav__section--first">
+                                    <span class="m-nav__section-text">OPTIONS</span>
+                                </li>'
+                                . $listActions .
+                            '</ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>';
+    
+        if ($ctrActions > 1) {
+            $btn = $tempAction;
+        }
+        if ($ctrActions == 0) {
+            $btn = '--';
+        }
+    
+        return $btn;
     }
 }
