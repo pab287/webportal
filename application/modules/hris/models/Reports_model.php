@@ -1640,7 +1640,7 @@ class Reports_model extends CI_Model{
                 }
                 
                 $arrFilter["filter_by"] = "Date Range";
-                $filter .= "Date Range: {$post[$filterBy]} ";
+                // $filter .= "Date Range: {$post[$filterBy]} ";
             }else{
                 $tempDatex = $post["filter_year"]."-".$post["filter_month"]."-01";
                 $timeStamp = strtotime($tempDatex);
