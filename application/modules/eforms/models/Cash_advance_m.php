@@ -876,6 +876,13 @@ class Cash_advance_m extends CI_Model {
                 }
                 $data[] = $v;
             }
+            $payments = $this->getEmployeeLoanPaymentHistory($data[0]->reference_no);
+            if (count($payments['data']) > 0) {
+                $data[0]->has_payment = true;
+            }else{
+                $data[0]->has_payment = false;
+            }
+
             return $data[0];
         }else{
             return array();
