@@ -246,12 +246,8 @@ if(window.location == siteUrl("portal/index")){
                             json.data.loans = tempLoan;
                             vmTab1.payslip.data = Object.assign({}, json.data);
                             vmTab1.payslip.show = false;
-
-                            console.log(vmTab1.payslip);
                             
-                            if (window.innerWidth <= 590) {
-                                vmTab1.updateMasonryLayout();
-                            }
+                            vmTab1.updateMasonryLayout();
                         }
                     }
                 });
