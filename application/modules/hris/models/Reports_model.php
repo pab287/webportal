@@ -1360,7 +1360,7 @@ class Reports_model extends CI_Model{
             $this->db->select("emp.id, dept.code");
             $this->db->from($this->tblEmployees." as emp");
             $this->db->join($this->companyTable." as comp", "comp.id = emp.company_id");
-            $this->db->join($this->departmentTable." as dept", "dept.id = emp.company_id");
+            $this->db->join($this->departmentTable." as dept", "dept.id = emp.department_id", "LEFT");
             $this->db->where("emp.company_id", $post["company"]);
             if($hasDepartment){
                 $this->db->where("emp.department_id", $post["department"]);
