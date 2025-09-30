@@ -154,9 +154,9 @@ class Profile_model extends CI_Model
         $searchValue = (isset($post["search"]["value"]) && $post["search"]["value"]) ? $post["search"]["value"] : "";
 
         $this->db->select("`acct_body`.asset_id,
-                           `acct`.`reference_no`, `acct_body`.`asset_code`,
+                           `acct`.`reference_no`, `acct_body`.`asset_code`, `assets`.`date_received`, `acct_body`.`remarks`,
                            `acct_body`.`description`, `acct_body`.`amount`, `acct_body`.`is_returned`,`acct_body`.`remarks_returned`,
-                           `acct_body`.`date_returned`, `acct`.`status`,
+                           `acct_body`.`date_returned`, `acct`.`status`,`acct`.`released_dt`,
                            `acct_body`.`type`,
                            CASE
                               WHEN assets.name IS NULL THEN vehicles.name
