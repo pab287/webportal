@@ -513,7 +513,7 @@ if (typeof _tempContentData !== "undefined") {
             const radioPtSingle = _formAdditionalInformation.find("#pt_single");
             const radioPtMarried = _formAdditionalInformation.find("#pt_married");
             const radioPtPartner = _formAdditionalInformation.find("#pt_partner");
-          
+        
         }, methods: {
             dateFormat(str){
                 return (str) ? moment(str).format('LLL') : "No added Date";
@@ -530,7 +530,6 @@ if (typeof _tempContentData !== "undefined") {
 
             const employee_status = vmData.employee_status ? vmData.employee_status.toLowerCase() : "";
             const work_status = vmData.work_status ? vmData.work_status.toLowerCase() : "";
-            // const idno = vmData.idno="asdasdas";
             const activateRehireStatuses = ["inactive", "resign",
                 "terminated", "awol", "blacklisted",
                 "black listed", "end of contract", "retired"];
@@ -641,7 +640,6 @@ if (typeof _tempContentData !== "undefined") {
                 .trigger("change")
                 .on("select2:select", function (e) {
                     const data = e.params.data;
-                    // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { department_id: data.id });
                     vmData = Object.assign({}, vmData, { department_id: data.id });
                 });
 
@@ -658,111 +656,55 @@ if (typeof _tempContentData !== "undefined") {
                 .val(-1)
                 .trigger("change");
 
-            // $("#m--input-supervisor_id").select2({
-            //     data: tempDropdownData.dropdown_supervisory,
-            //     allowClear: true,
-            //     placeholder: {
-            //         id: "-1",
-            //         text: "Select an option"
-            //     },
-            //     width: '100%'
-            // })
-            // .val(vmData.supervisor)
-            // .trigger("change")
-            // .on('select2:select', function (e) {
-            //     var data = e.params.data;
-            //     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { supervisor: data.id });
-            //     _data = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, data.id);
-            // });
-
             this.supervisorySelect2('#m--input-supervisor_id', true, _supData, vmData.supervisor);
 
             if (vmData.current_tl_supervisory == 1) {
                 this.managerialSelect2('#m--input-manager_id', true, _data, vmData.manager);
             }
 
-            $("#m--input-position_id")
-                .select2({
-                    data: tempDropdownData.dropdown_position,
-                    placeholder: {
-                        id: "-1",
-                        text: "Select an option"
-                    },
-                    width: '100%'
-                })
-                .val(vmData.position)
-                .trigger("change")
-                .on("select2:select", function (e) {
-                    const data = e.params.data;
-                    // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { position: data.id });
-                    vmData = Object.assign({}, vmData, { position: data.id });
-                });
-                //--------add update salary in updating employee position---//
-                $("#m--input-position_id").change(function(){
-                    var dis = $("#m--input-position_id").select2('data');
-                    
-                    $("#salary_employee_id").val($(".employee_id").val());
-                    $("#salary_employee_position").val(dis[0].id);
-                    $("#salary_current_position").val($(".current_position").val());
-                    // $("#update_salary_history").modal();
-                    getLatestSalaryRate();
-                });
-                //--------add update salary in updating employee position---//
-                //-------- enable date regularized, separation date----//
-                $("#status").change(function(){
-                    const status = $("#status").val();
-                    const classification = $("#classification").val();
+            //here
+            this.positionSelect2('#m--input-position_id', true, tempDropdownData.dropdown_position, vmData.position_id);
 
-                    if(classification.toLowerCase() == 'active'){
-                        if(status == 'REGULAR'){
-                            const tempState = shouldEnableProbationEndDate(vmData) === false;
-                            $("#m_datepicker-date_regular").attr("disabled", false);
-                            $("#m_datepicker-date_end").attr("disabled", true);
-                            $("#m_datepicker-date_end_prob").prop('disabled', tempState);
+            //-------- enable date regularized, separation date----//
+            $("#status").change(function(){
+                const status = $("#status").val();
+                const classification = $("#classification").val();
 
-                            const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
-                            setTimeout(function () { $("#m_datepicker-date_regular").datepicker("setStartDate", startDateMin); }, 250);
-                            if(tempState === false){
-                                const endDateMax = moment(new Date(vmData.date_start), "YYYY-MM-DD").add(180, 'days').format("YYYY-MM-DD");
-                                setTimeout(function () {
-                                    $("#m_datepicker-date_end_prob").datepicker("setStartDate", startDateMin);
-                                    $("#m_datepicker-date_end_prob").datepicker("setEndDate", endDateMax);
-                                }, 250);
-                            }
-                        }else{
-                            $("#m_datepicker-date_regular").attr("disabled", true);
-                            $("#m_datepicker-date_end").attr("disabled", true);
-                            $("#m_datepicker-date_end_prob").prop('disabled', false);
+                if(classification.toLowerCase() == 'active'){
+                    if(status == 'REGULAR'){
+                        const tempState = shouldEnableProbationEndDate(vmData) === false;
+                        $("#m_datepicker-date_regular").attr("disabled", false);
+                        $("#m_datepicker-date_end").attr("disabled", true);
+                        $("#m_datepicker-date_end_prob").prop('disabled', tempState);
+
+                        const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
+                        setTimeout(function () { $("#m_datepicker-date_regular").datepicker("setStartDate", startDateMin); }, 250);
+                        if(tempState === false){
+                            const endDateMax = moment(new Date(vmData.date_start), "YYYY-MM-DD").add(180, 'days').format("YYYY-MM-DD");
+                            setTimeout(function () {
+                                $("#m_datepicker-date_end_prob").datepicker("setStartDate", startDateMin);
+                                $("#m_datepicker-date_end_prob").datepicker("setEndDate", endDateMax);
+                            }, 250);
                         }
                     }else{
-                        $("#m_datepicker-date_end").attr("disabled", false);
-                        $("#m_datepicker-date_end_prob").prop('disabled', true);
-
-                        if(vmData.date_end == "0000-00-00" || vmData.date_end == ""){ 
-                            const currentDateEnd = moment().format("YYYY-MM-DD");
-                            const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
-                            setTimeout(function(){ 
-                                $("#m_datepicker-date_end").datepicker('setStartDate', startDateMin); 
-                                $("#m_datepicker-date_end").datepicker('setDate', currentDateEnd); 
-                            }, 250); 
-                        }
+                        $("#m_datepicker-date_regular").attr("disabled", true);
+                        $("#m_datepicker-date_end").attr("disabled", true);
+                        $("#m_datepicker-date_end_prob").prop('disabled', false);
                     }
+                }else{
+                    $("#m_datepicker-date_end").attr("disabled", false);
+                    $("#m_datepicker-date_end_prob").prop('disabled', true);
 
-                    /** original source code to disable regularized probee end end and seperated */
-                    // if(status == "REGULAR"){
-                    //     $("#m_datepicker-date_regular").attr("disabled", false);
-                    //     $("#m_datepicker-date_end").attr("disabled", true);
-                    //     $("#m_datepicker-date_end_prob").prop('disabled', true);
-                    // }else if(status == "RESIGNED" || status == "TERMINATED" || status == "BLACKLISTED"){
-                    //     $("#m_datepicker-date_end").attr("disabled", false);
-                    //     $("#m_datepicker-date_end_prob").prop('disabled', true);
-                    // }else{
-                    //     $("#m_datepicker-date_regular").attr("disabled", true);
-                    //     $("#m_datepicker-date_end").attr("disabled", true);
-                    //     $("#m_datepicker-date_end_prob").prop('disabled', false);
-                    // }
-                    /** original source code to disable regularized probee end end and seperated */
-                });
+                    if(vmData.date_end == "0000-00-00" || vmData.date_end == ""){ 
+                        const currentDateEnd = moment().format("YYYY-MM-DD");
+                        const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
+                        setTimeout(function(){ 
+                            $("#m_datepicker-date_end").datepicker('setStartDate', startDateMin); 
+                            $("#m_datepicker-date_end").datepicker('setDate', currentDateEnd); 
+                        }, 250); 
+                    }
+                }
+            });
 
             $('#change-company-position')
                 .select2({
@@ -790,7 +732,6 @@ if (typeof _tempContentData !== "undefined") {
             .trigger("change")
             .on("select2:select", function (e) {
                 const data = e.params.data;
-                // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { work_mode: data.id });
                 vmData = Object.assign({}, vmData, { work_mode: data.id });
             });
 
@@ -807,7 +748,6 @@ if (typeof _tempContentData !== "undefined") {
                 .trigger("change")
                 .on("select2:select", function (e) {
                     const data = e.params.data;
-                    // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { payroll_type: data.id });
                     vmData = Object.assign({}, vmData, { payroll_type: data.id });
                 });
 
@@ -866,7 +806,6 @@ if (typeof _tempContentData !== "undefined") {
                     }
                 });
                 
-            // const site = vmData.location_name;
             if(typeof vmData.location_name != 'undefined' && vmData.location_name.length > 0){
                 setTimeout(function(){ $('#station').val(vmData.location_name).trigger('change'); }, 750);
             }
@@ -876,13 +815,6 @@ if (typeof _tempContentData !== "undefined") {
                     placeholder: "Select Option",
                     width: "100%",
                     data: tempDropdownData.dropdown_station,
-                    // ajax: {
-                    // dataType: 'json',
-                    // url: baseUrl("hris/masterfile/get_all_site_points"),
-                    // processResults: function (data) {
-                    //         return data;
-                    //     }
-                    // }
                 });
                 
                 $("#station").on("select2:select", function (evt) {
@@ -893,16 +825,6 @@ if (typeof _tempContentData !== "undefined") {
                     $(this).append($element);
                     $(this).trigger("change");
                 });
-
-                // $("#station").empty();
-            
-                // if(site != null){
-                //     $.each(site.split(","), function(i, v){
-                //         var tempOption = new Option(v, v, true, true);
-                //         $("#station").append(tempOption);
-                //         console.log(tempOption);
-                //     });
-                // }
                 
                 if(typeof vmData.default_station != 'undefined' && parseInt(vmData.default_station) > 0){
                     setTimeout(function(){ 
@@ -942,7 +864,6 @@ if (typeof _tempContentData !== "undefined") {
             .on("select2:select", function (e) {
                 const data = e.params.data;
                 vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { level: data.id });
-                // vmData = Object.assign({}, vmData, { level: data.id });
 
                 if (data.id === "MANAGERIAL" || data.id === "EXECUTIVE") {
                     $('#is_two_level').trigger('change', function() {
@@ -1100,6 +1021,75 @@ if (typeof _tempContentData !== "undefined") {
                 });
 
                 return _data;
+            }, changeTOMultiple(e) {
+                let vmData = this.vm_tab3;
+                if ($(e.target).is(':checked')) {
+                    $("#m--input-position_id").prop("multiple", true);
+
+                    this.positionSelect2('#m--input-position_id', true, tempDropdownData.dropdown_position, vmData.position_id, vmData);
+                } else {
+                    $("#m--input-position_id").prop("multiple", false);
+                    this.positionSelect2('#m--input-position_id', true, tempDropdownData.dropdown_position, vmData.position_id, false);
+                }
+                
+                vmData = Object.assign({}, vmData, { is_multiple_position: $(e.target).is(':checked') ? 1 : 0 });
+            }, positionSelect2 (target , destroy = false, data = {}, id = 0, isMultiple = false) {
+                let vmData = this.vm_tab3;
+                $("#m--input-position_id").select2({
+                    data: tempDropdownData.dropdown_position,
+                    placeholder: {
+                        id: "-1",
+                        text: "Select an option"
+                    },
+                    width: '100%',
+                })
+                .val(vmData.position)
+                .trigger("change")
+                .on("select2:select", function (e) {
+                    const data = e.params.data;
+
+                    if(isMultiple){
+                        var element = e.params.data.element;
+                        var $element = $(element);
+                    
+                        $element.detach();
+                        $(this).append($element);
+                        $(this).trigger("change");
+
+                        let newData = [];
+                        const tempData = $(this).select2("data");
+                        tempData.forEach((value) => { newData.push({ id: value.id }); });
+
+                        vmData = Object.assign({}, vmData, { multiple_position: newData });
+
+                        console.log(newData);
+                    } else {
+                        vmData = Object.assign({}, vmData, { position: data.id });
+                    }
+                }).on('select2:unselect', function (e) {
+                    if(isMultiple){
+                        var element = e.params.data.element;
+                        var $element = $(element);
+                        $element.detach();
+                        $(this).trigger("change"); 
+
+                        let newData = [];
+                        const tempData = $(this).select2("data");
+                        tempData.forEach((value) => { newData.push({ id: value.id }); });
+
+                        vmData = Object.assign({}, vmData, { multiple_position: newData });
+                    }
+                });
+                //--------add update salary in updating employee position---//
+                // $("#m--input-position_id").change(function(){
+                //     var dis = $("#m--input-position_id").select2('data');
+                    
+                //     $("#salary_employee_id").val($(".employee_id").val());
+                //     $("#salary_employee_position").val(dis[0].id);
+                //     $("#salary_current_position").val($(".current_position").val());
+                //     getLatestSalaryRate();
+                // });
+                //--------add update salary in updating employee position---//
             }
         }
     });
@@ -1204,11 +1194,6 @@ if (typeof _tempContentData !== "undefined") {
         function dependentsDataTableActions($id) {
             if ($id) {
                 var _actionButton = "";
-                // _actionButton += " <button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit btnEditDependents' data-id='" + $id + "'><i class='la la-edit'></i></button>";
-                // _actionButton +=
-                // " <button type='button' class='btn btn-default m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill btnArchive btnRemoveDependents' data-id='" +
-                // $id +
-                // "'><i class='la la-file-archive-o'></i></button>";
 
                 if (jQuery.inArray("edit", _currentActions) !== -1) {
                     _actionButton +=
@@ -1527,22 +1512,22 @@ if (typeof _tempContentData !== "undefined") {
                 { data: "expiration_date", title: "Expiry Date", className: "text-center" },
                 { data: "remarks", title: "Remarks", className: "text-center",
                     render: function(data, type, row) {
-                      return data && data.trim() !== '' ? data : 'none';
+                        return data && data.trim() !== '' ? data : 'none';
                     }
-                  },
-                  {
+                },
+                {
                     data: "liscert_attachment", 
                     title: "Attachment", 
                     className: "text-center",
                     render: function(data, type, row) {
-                      if (!data || data.trim() === '') {
-                        return 'none';
-                      }
-                      
-                      const truncated = data.length > 15 ? data.substring(0, 15) + '...' : data;
-                      return `<span style="cursor: pointer; color: #007bff; text-decoration: underline;" onclick="openCert('${data}')">${truncated}</span>`;
+                        if (!data || data.trim() === '') {
+                            return 'none';
+                        }
+                    
+                        const truncated = data.length > 15 ? data.substring(0, 15) + '...' : data;
+                        return `<span style="cursor: pointer; color: #007bff; text-decoration: underline;" onclick="openCert('${data}')">${truncated}</span>`;
                     }
-                  },
+                },
                 { data: null, title: "Action", width: "8%", className: "text-center" }
             ],
             columnDefs: [
@@ -1639,18 +1624,6 @@ if (typeof _tempContentData !== "undefined") {
                                 url: baseUrl('hris/masterfile/get_license_type'),
                                 method: "GET",
                                 delay: 250,
-                                // processResults: function(data, params) {
-                                //     const cert = {
-                                //         id: 'Certificate',
-                                //         text: 'Certificate'
-                                //     }
-                            
-                                //     var newOption = new Option(cert.text, cert.id, false, false);
-                                //     // console.log($(''));
-                                //     $('#form-licensure #license_type').append(newOption).trigger('change');
-
-                                //     return data;
-                                // }
                             }
                         }).on('select2:select', function (e) {
                             var data = e.params.data;
@@ -1714,21 +1687,6 @@ if (typeof _tempContentData !== "undefined") {
                             var self = $(e.target);
                             self.validate();
                         });
-
-                        // var dtSelectLicenseType = modalContent.find('#license_type').select2({
-                        //     placeholder: { id: '-1', text: 'Select an option' },
-                        //     // minimumResultsForSearch: Infinity,
-                        //     width: '100%',
-                        //     dropdownParent: "#modalTempContent",
-                        //     ajax:{
-                        //         url: baseUrl('hris/masterfile/get_license_type'),
-                        //         method: "GET",
-                        //         delay: 250,
-                        //         processResults: function (data) {
-                        //             return { results: data };
-                        //         }
-                        //     }
-                        // });
 
                         modalContent.find("#expiry-switch input").on('click', function(){
                             if(typeof $("#expiry-switch input:checked").val() != 'undefined'){
@@ -2957,9 +2915,7 @@ if (typeof _tempContentData !== "undefined") {
         });
     }
 
-    // function openFile($employeeId, $name) {
-    //     
-    // }
+    // Function to open file based on its type
     function openFile(employeeId, name) {
         // Construct the full URL of the file
         var fileUrl = baseUrl("uploads/files/documents/employee_files/empcode_" + employeeId + "/offenses_commendation/" + encodeURIComponent(name));
@@ -6380,7 +6336,7 @@ var employee_document_upload = function(){
     var val = [];
     var files = [];
     $("#documentupload")
-      .fileupload({
+    .fileupload({
         url: url,
         dataType: "json",
         formData: { csrf_token: _csrf_hash, emp_id : emp_id },
@@ -6395,18 +6351,18 @@ var employee_document_upload = function(){
                 if(result.extension=="jpg" || result.extension=="png" || result.extension=="JPG" || result.extension=="PNG" || result.extension=="jpeg"){
                     
                 }else{
-                  $("#picture").attr("src", "");
+                    $("#picture").attr("src", "");
                 }
                 val.push(renderFile);
                 $("#document_names").val(val);
                 $("#picture").html($("#document_names").val());
             } else {
-              toastr.error(result.toastr_msg, "File error", 5000);
+                toastr.error(result.toastr_msg, "File error", 5000);
             }
         }
         
     });
-  }
+}
 
 
 function displayDriversLicense(){
@@ -6537,7 +6493,7 @@ $("#view-btn button").on('click', function(){
         }else{
             $('#list').removeClass('active').removeClass('btn-accent').addClass('btn-default');
             $('#grid').addClass('active');
- 
+
             $("#table-employee").addClass('grid').removeClass('list');
             $("#table-employee tbody").addClass('grid').removeClass('list');
             $("#table-employee tbody td #details #grid").css('display', 'flex');
@@ -6594,9 +6550,9 @@ $('#offense-tabs .nav-link').on('click', function(e) {
     $(this).addClass('active');
     var targetId = $(this).attr('href');
     $(targetId).addClass('active show');
- });
+});
 
- $('#collapseOffenses').on('shown.bs.collapse', function() {
+$('#collapseOffenses').on('shown.bs.collapse', function() {
     $('#offense-tabs .nav-link').removeClass('active');
     $('#offense-content .tab-pane').removeClass('active show');
     $('#collapseOffenses .nav-tabs .nav-link:first').tab('show');

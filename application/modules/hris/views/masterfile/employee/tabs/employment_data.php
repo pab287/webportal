@@ -77,6 +77,18 @@
         </div>
         <div class="row m--margin-bottom-10">
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+                <div class="form-group m-form__group row align-items-center pb-0">
+                    <label class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Multiple Position: </label>
+                    <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7 row align-items-center">
+                        <span class="m-switch m-switch--sm m-switch--icon ml-3 mr-1">
+                            <label class="m-0">
+                                <input type="checkbox" name="is_multiple_position" @click="changeTOMultiple">
+                                <span></span>
+                            </label>
+                        </span>
+                        <i class="flaticon-questions-circular-button" data-toggle="m-tooltip" data-skin="dark" data-original-title="Toggle switch to change it to multiple position(s)"></i>
+                    </div>
+                </div>
                 <div class="form-group m-form__group row">
                     <label for="position" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label required">Position:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
@@ -93,7 +105,7 @@
 						<i class="la la-warning"></i>
 					</div>
 					<div class="m-alert__text">
-					  	<strong>REHIRE OPTION IS AVAILABLE!</strong>
+					    <strong>REHIRE OPTION IS AVAILABLE!</strong>
 					</div>
                 </a>
             </div>
