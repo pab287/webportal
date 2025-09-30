@@ -19,7 +19,9 @@ $("#date-picker").daterangepicker({
   cancelClass: 'btn-secondary',
   locale: {
       format: 'MM/DD/YYYY'
-  }
+  },
+  endDate: moment(),
+  maxDate: moment()
 })
 .on('apply.daterangepicker', function (ev, picker) {
   var tempStartDate = picker.startDate.format('MMM DD, YYYY');
@@ -70,17 +72,31 @@ var tbl_payment_collection = $("#tbl-payment_collection").DataTable({
       { 
         data: "type", orderable: false, className: "text-center",
       },
-      { data: "amount", orderable: false, className: "text-right", render: function (data){
-        return parseFloat(data).toFixed(2);
-      }
+      { 
+        data: "received_amount", orderable: false, className: "text-right", render: function(data) {
+            return parseFloat(data).toFixed(2);
+        }
       },
       { 
-        data: "created_date", className: "text-center",
+        data: "balance_covered", orderable: false, className: "text-right", render: function(data) {
+            return parseFloat(data).toFixed(2);
+        }
+      },
+      { 
+        data: "payment_date", className: "text-center", render: function(data) {
+            return data ? moment(data).format('MMM DD, YYYY') : '';
+        }
+      },
+      { 
+        data: "applied_payment_date", className: "text-center", render: function(data) {
+            return data ? moment(data).format('MMM DD, YYYY') : '';
+        }
       },
       { 
         data: "cashier", orderable: false, className: "text-center",
       },
   ],
+  order: [[ 8, "desc" ]],
   buttons: [
       { 
           extend: 'csv',
