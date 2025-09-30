@@ -149,10 +149,10 @@ class Portal extends MY_Controller {
 			->set_output(json_encode($data));
 	}
 	
-	public function get_deductions(){
-		$data = $this->portal_model->getDeductions();
-		$this->output
-			->set_content_type('json')
-			->set_output(json_encode($data));
-	}
+	// public function get_deductions(){
+	// 	$data = $this->portal_model->getDeductions();
+	// 	$this->output
+	// 		->set_content_type('json')
+	// 		->set_output(json_encode($data));
+	// }
 }
