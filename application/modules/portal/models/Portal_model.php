@@ -1250,9 +1250,9 @@ class Portal_model extends CI_Model{
                 $tempRow->net_to_text = strtoupper($tempRow->net_to_text);
 
                 $tempRow->deductions = number_format($tempDeductionValue, 2, ".", ",");
-                $tempRow->basic_rate = number_format($tempRow->basic_rate, 2, ".", ",");
-                $tempRow->gross_pay = number_format($tempRow->gross_pay, 2, ".", ",");
-                $tempRow->net_pay = number_format($tempRow->net_pay, 2, ".", ",");
+                $tempRow->basic_rate = $tempRow->basic_rate;
+                $tempRow->gross_pay = $tempRow->gross_pay;
+                $tempRow->net_pay = $tempRow->net_pay;
                 $tempRow->totalLoan = number_format($_tempLoanValue, 2, ".", ",");
 
                 $overall = floatval($tempDeductionValue) + floatval($_tempLoanValue) + floatval($tempRow->total_loans_interest);
