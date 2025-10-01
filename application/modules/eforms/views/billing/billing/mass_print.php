@@ -200,7 +200,7 @@ p,span{font-size: 12px;}
                 <td colspan="3" style="width: 300px;"><strong>Balance from last bill:</strong></td>
                 <td colspan="1" style="border-bottom: 1px solid;padding-left: 5px; width: 100px; text-align: right;">
                     <?php
-                        $balance = $data["balanceLastBill"] - $data["balance"];
+                        $balance = $data["balanceLastBill"];
                         echo number_format($balance < 0 ? 0 : $balance, 2, ".", ",");
                     ?>
                 </td>
@@ -242,7 +242,6 @@ p,span{font-size: 12px;}
             <tr>
                 <td width="12%"></td>
                 <td width="14%"><strong>Fines/Penalties:</strong></td>
-                <!-- <td style="border-bottom:1px solid;padding-left: 5px;"><div style="width: 100%; text-align: right;"><?php //echo number_format(($data["overdue"] + $data["balanceLastBill"]["total_penalty"]),2,".",",") ?></div></td> -->
                 <td style="border-bottom:1px solid;padding-left: 5px;"><div style="width: 100%; text-align: right;"><?php echo number_format($data["overdue"],2,".",",") ?></div></td>
                 <td width="12%"></td>
             </tr>
@@ -263,9 +262,17 @@ p,span{font-size: 12px;}
     <table width="500">
         <tbody style="padding-bottom: 10px;">
             <tr>
-            <!-- <td colspan="4" style="padding: 5px 10px;border: 2px solid;"><div style="width: 80%;float: left;"><strong>Total Charges: </strong></div> <div style="text-align: center;width: 20%;float:right;text-align: right;"><strong><?php // echo $data["current_due"]."|".$data["balanceLastBill"]["total_amount"]."|".$data["balance"] ?></strong></div><div style="clear:both;"></div></td> -->
-            <!-- <td colspan="4" style="padding: 5px 10px;border: 2px solid;"><div style="width: 80%;float: left;"><strong>Total Charges: </strong></div> <div style="text-align: center;width: 20%;float:right;text-align: right;"><strong><?php //echo number_format((($data["current_due"] + $data["balanceLastBill"]["total_balance"] + $data['overdue'] + $data["balanceLastBill"]["total_penalty"] + $data['disconnection_fee']) - $data["balance"]),2,".",","); ?></strong></div><div style="clear:both;"></div> -->
-             <td colspan="4" style="padding: 5px 10px;border: 2px solid;"><div style="width: 80%;float: left;"><strong>Total Charges: </strong></div> <div style="text-align: center;width: 20%;float:right;text-align: right;"><strong><?php echo number_format((($data["current_due"] +  $data['overdue'] + $data['disconnection_fee']) - $data["balance"]),2,".",","); ?></strong></div><div style="clear:both;"></div>
+                <td colspan="4" style="padding: 5px 10px;border: 2px solid;">
+                    <div style="width: 80%;float: left;">
+                        <strong>Total Charges: </strong>
+                    </div> 
+
+                    <div style="text-align: center;width: 20%;float:right;text-align: right;">
+                        <strong><?php echo number_format((($data["balanceLastBill"] + $data['current_due'] + $data['overdue'] + $data['disconnection_fee']) - $data["balance"]),2,".",","); ?></strong>
+                    </div>
+                    
+                    <div style="clear:both;"></div>
+                </td>
             </tr>
             <tr>
                 <td colspan="4" style="padding-top: 10px;">
