@@ -42,7 +42,7 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
 
 const vmLateAbsenteeReport = new Vue({
     el: "#tempFilterByLateAbsenteeReport",
-    data: { filter_by: "date_range", report_type: "late" },
+    data: { filter_by: "date_range", report_type: "late", active_employee: false },
     watch: {
         filter_by(value) {
             const currentElement = this.$el;
@@ -255,6 +255,7 @@ if(typeof hrisFilterLateAbsenteeReport !== "undefined" && hrisFilterLateAbsentee
                 params.q = params.term;
                 params.company_id = hrisFilterLateAbsenteeReport.find("select#company").val();
                 params.department_id = hrisFilterLateAbsenteeReport.find("select#department").val(); 
+                params.employee_status = hrisFilterLateAbsenteeReport.find("input[name='employee_status']:checked").val();
                 return params;
             },
             processResults: function (data) {
@@ -276,6 +277,7 @@ if(typeof hrisFilterLateAbsenteeReport !== "undefined" && hrisFilterLateAbsentee
             global: false,
             data: function (params) {
                 params.company_id = hrisFilterLateAbsenteeReport.find("select#company").val();
+                params.employee_status = hrisFilterLateAbsenteeReport.find("input[name='employee_status']:checked").val();
                 return params;
             }, 
             processResults: function (data) {
