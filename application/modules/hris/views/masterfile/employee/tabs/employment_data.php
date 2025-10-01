@@ -82,7 +82,7 @@
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7 row align-items-center">
                         <span class="m-switch m-switch--sm m-switch--icon ml-3 mr-1">
                             <label class="m-0">
-                                <input type="checkbox" name="is_multiple_position" @click="changeTOMultiple">
+                                <input type="checkbox" :multiple="vm_tab3.is_multiple_position === 1" @change="changeTOMultiple" :checked="vm_tab3.is_multiple_position === 1" value="1" id="is_multiple_position">
                                 <span></span>
                             </label>
                         </span>
@@ -389,51 +389,67 @@
     <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-0x"></div>
 </form>
 <div class="modal fade" tabindex="-1" role="dialog" id="update_salary_history">
-    
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="la la-edit mr-2"></i>Update Salary History</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="la la-edit mr-2"></i>Update Salary History</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="updateSalaryModalForm">
+            <div class="modal-body">
+            
+            <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <input type="hidden" name="salary_employee_id" id="salary_employee_id">
+            <input type="hidden" name="salary_employee_position" id="salary_employee_position">
+            <!-- <input type="text" id="salary_current_position"> -->
+                <div class="form-group mt-3">
+                    <label for="purpose">Effective Date</label>
+                    <div class="input-group">
+                        <span class="input-group-addon">
+                            <i class="la la-calendar"></i>
+                        </span>
+                        <input type="text" id="m_datepicker-salary_effective_date" name="salary_effective_date" class="form-control m-input" maxlength="12" size="12"
+                        autocomplete="off" data-validation="required" placeholder="Select Date" />
+                    </div>
                 </div>
-                <form id="updateSalaryModalForm">
-                <div class="modal-body">
-                
-                <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-                <input type="hidden" name="salary_employee_id" id="salary_employee_id">
-                <input type="hidden" name="salary_employee_position" id="salary_employee_position">
-                <!-- <input type="text" id="salary_current_position"> -->
-                    <div class="form-group mt-3">
-                        <label for="purpose">Effective Date</label>
-                        <div class="input-group">
-                            <span class="input-group-addon">
-                                <i class="la la-calendar"></i>
-                            </span>
-                            <input type="text" id="m_datepicker-salary_effective_date" name="salary_effective_date" class="form-control m-input" maxlength="12" size="12"
-                            autocomplete="off" data-validation="required" placeholder="Select Date" />
-                        </div>
-                    </div>
-                    <div class="form-group mt-3">
-                        <label for="purpose">Salary Rate</label>
-                        <input type="text" class="form-control money text-left" id="salary_rate" name="salary_rate">
-                    </div>
+                <div class="form-group mt-3">
+                    <label for="purpose">Salary Rate</label>
+                    <input type="text" class="form-control money text-left" id="salary_rate" name="salary_rate">
+                </div>
 
-                    <div class="form-group mt-4">
-                        <label for="remarks">Remarks</label>
-                        <textarea class="form-control" id="salary_remarks" name="salary_remarks" autocomplete="off"></textarea>
-                    </div>
+                <div class="form-group mt-4">
+                    <label for="remarks">Remarks</label>
+                    <textarea class="form-control" id="salary_remarks" name="salary_remarks" autocomplete="off"></textarea>
                 </div>
-                
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary btnAdd_performance_rating" id="save_salary_rating">Save</button>
-                    <button type="button" class="btn btn-danger btnAdd_performance_rating" data-dismiss="modal">Close</button>
-                </div>
-                </form>
-                
+            </div>
+            
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary btnAdd_performance_rating" id="save_salary_rating">Save</button>
+                <button type="button" class="btn btn-danger btnAdd_performance_rating" data-dismiss="modal">Close</button>
+            </div>
+            </form>
+            
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" tabindex="-1" role="dialog" id="set_primary_position">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="la la-edit mr-2"></i>Set Primary Position</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
             </div>
         </div>
     </div>
+</div>
+
 <?php $this->load->view("masterfile/employee/modals/change_employee_company"); ?>
 <input type="hidden" id="change_employment_info">
