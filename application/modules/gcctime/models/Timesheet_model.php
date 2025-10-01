@@ -1365,8 +1365,10 @@ class Timesheet_model extends CI_Model{
         /*** approved Travel order tagging ***/
         if ($attendance_log_ctr === 4) {
             foreach ($attendance as $i => $time) {
-                $prop = $props[$i];
-                $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                if(isset($props[$i]) && $props[$i]){
+                    $prop = $props[$i];
+                    $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                }
             }
         } else {
             if ($flexible) { // fore employee with 1 in and out
@@ -1376,15 +1378,19 @@ class Timesheet_model extends CI_Model{
 
                     foreach ($attendance as $i => $time) {
                         if (($i + 1) > 4){ break; }
-                        $prop = $props[$i];
-                        $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                        if(isset($props[$i]) && $props[$i]){
+                            $prop = $props[$i];
+                            $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                        }
                     }
                 } elseif ($attendance_log_ctr < 2) {
                     $employee_time_sheet->scrub_status = 1;
                     $employee_time_sheet->comments = "[System Generated]: Lacking entry detected.";
                     foreach ($attendance as $i => $time) {
-                        $prop = $props[$i];
-                        $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                        if(isset($props[$i]) && $props[$i]){
+                            $prop = $props[$i];
+                            $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                        }
                     }
                 } else {
                     if ($no_shift_schedule === false) {
@@ -1457,8 +1463,10 @@ class Timesheet_model extends CI_Model{
                         }
                     } else {
                         foreach ($attendance as $i => $time) {
-                            $prop = $props[$i];
-                            $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                            if(isset($props[$i]) && $props[$i]){
+                                $prop = $props[$i];
+                                $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                            }
                         }
                     }
                 }
@@ -1471,9 +1479,10 @@ class Timesheet_model extends CI_Model{
 
                     foreach ($attendance as $i => $time) {
                         if (($i + 1) > 4){ break; }
-
-                        $prop = $props[$i];
-                        $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                        if(isset($props[$i]) && $props[$i]){
+                            $prop = $props[$i];
+                            $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                        }
                     }
                 } elseif ($attendance_log_ctr < 4) {
                     $employee_time_sheet->scrub_status = 1;
@@ -1553,8 +1562,10 @@ class Timesheet_model extends CI_Model{
                         }
                     } else {
                         foreach ($attendance as $i => $time) {
-                            $prop = $props[$i];
-                            $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                            if(isset($props[$i]) && $props[$i]){
+                                $prop = $props[$i];
+                                $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                            }
                         }
                     }
                 }
