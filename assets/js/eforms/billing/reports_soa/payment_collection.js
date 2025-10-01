@@ -34,14 +34,17 @@ function numberWithCommas(x) {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-var total_amount;
-var render_datetime = moment();
-var tbl_payment_collection = $("#tbl-payment_collection").DataTable({
+let total_amount = 0;
+let total_balance_covered = 0;
+const tbl_payment_collection = $("#tbl-payment_collection").DataTable({
   dom: '<"toolbar">t',
   destroy: true,
   serverSide: true,
   processing: true,
   aaSorting: [],
+  scrollY: "440px",
+  paging: false,
+  scrollCollapse: true,
   ajax: {
        url: baseUrl("eforms/billing/get_payment_collection_report/"),
        type: "post",
@@ -57,28 +60,18 @@ var tbl_payment_collection = $("#tbl-payment_collection").DataTable({
       }
   },
   columns: [
-      {
-        data: "account", orderable: false, className: "text-center",
-      },
+      { data: "account" },
+      { data: "bill_ref" },
+      { data: "acknowledgement_receipt" },
+      { data: "payment_ref" },
+      { data: "type" },
       { 
-        data: "bill_ref", orderable: false, className: "text-center",
-      },
-      { 
-        data: "acknowledgement_receipt", orderable: false, className: "text-center",
-      },
-      { 
-        data: "payment_ref", orderable: false, className: "text-center"
-      },
-      { 
-        data: "type", orderable: false, className: "text-center",
-      },
-      { 
-        data: "received_amount", orderable: false, className: "text-right", render: function(data) {
+        data: "received_amount", render: function(data) {
             return parseFloat(data).toFixed(2);
         }
       },
       { 
-        data: "balance_covered", orderable: false, className: "text-right", render: function(data) {
+        data: "balance_covered", render: function(data) {
             return parseFloat(data).toFixed(2);
         }
       },
@@ -92,11 +85,30 @@ var tbl_payment_collection = $("#tbl-payment_collection").DataTable({
             return data ? moment(data).format('MMM DD, YYYY') : '';
         }
       },
-      { 
-        data: "cashier", orderable: false, className: "text-center",
-      },
+      { data: "cashier" },
   ],
   order: [[ 8, "desc" ]],
+  columnDefs: [
+    {
+      targets: [0, 1, 2, 3, 4, 5, 7, 8],
+      orderable: false,
+    },
+    {
+      targets: [0, 1, 2, 3, 4, 7, 8, 9],
+      className: "text-center",
+    },
+    {
+      targets: [5, 6],
+      className: "text-right",
+    }
+  ],
+  createdRow: function( row, data, dataIndex ) {
+      const is_archived = data.is_archived;
+
+      if ( is_archived == 1 ) {
+          $(row).addClass('table-danger');
+      }
+  },
   buttons: [
       { 
           extend: 'csv',
@@ -124,18 +136,12 @@ var tbl_payment_collection = $("#tbl-payment_collection").DataTable({
           }
       }, { 
           extend: 'pdfHtml5',
+          orientation: 'landscape',
+          pageSize: 'LEGAL',
           title: function() {
             return `GC&C Portal | Hydra - Payment Collection`;
           },
           messageTop: function (data, type, row) {
-            var today = new Date();
-            var hours = today.getHours();
-            var minutes = today.getMinutes();
-            var time = hours + ":" + (minutes < 10 ? "0": "") + minutes;
-            var datetoday = moment().format('MM/D/YYYY');
-            var timetoday = moment().format('h:mm A');
-            var dateTimeToday = datetoday + " " + timetoday;
-
             var total_count = 0;
             var table = $('#tbl-payment_collection').DataTable();
 
@@ -145,13 +151,10 @@ var tbl_payment_collection = $("#tbl-payment_collection").DataTable({
             });
 
             var html = `Total Number of Entries: ${total_count}
-                  Generated as of: ${dateTimeToday}
+                  Generated as of: ${moment().format('MMM DD, YYYY')}
                   Coverage Date: ${tempFormat}`;
 
             return html;
-          },
-          messageBottom: function () {
-            // return 'Generated on '+ new Date();
           },
           footer: true,
           exportOptions: {
@@ -160,16 +163,59 @@ var tbl_payment_collection = $("#tbl-payment_collection").DataTable({
           customize: function(doc) {
             doc.styles.message = {
               alignment: 'center',
-              margin: [0, 0, -50, 0] // <-- not working
             }
-            doc.defaultStyle.fontSize = 10; //<-- set fontsize to 16 instead of 10 
-            doc.styles.tableHeader.fontSize = 10; //<-- set fontsize to 16 instead of 10
+
+            doc.defaultStyle.fontSize = 10;
+            doc.styles.tableHeader.fontSize = 10;
+            doc.styles.tableFooter.fontSize = 10;
+
+            // Set dynamic widths for all columns
+            let columnWidths = new Array(doc.content[2].table.body[0].length).fill('*');
+
+            // Define custom widths for specific columns (adjust index as needed)
+            columnWidths[0] = '20%';
+
+            // Apply column widths
+            doc.content[2].table.widths = columnWidths;
+
+            // Loop through table body and target specific column
+            doc.content[2].table.body.forEach(function (row, rowIndex) {
+                if (rowIndex === 0) { return; }
+
+                let targetUppercase = []; // Columns to make uppercase
+                let targetCenter = [0, 1, 2, 3, 4, 7]; // Columns to center align
+                let targetRight = [5, 6]; // Column to right align
+
+                row.forEach((cell, columnIndex) => {
+                    // normalize if a plain string cell (robustness)
+                    if (typeof cell === 'string') {
+                      cell = { text: cell };
+                      row[columnIndex] = cell;
+                    }
+
+                    if (!cell || cell.text === undefined) return;
+
+                    // Uppercase if needed
+                    if (targetUppercase.includes(columnIndex)) {
+                      cell.text = String(cell.text).toUpperCase();
+                    }
+
+                    // Alignment: right takes precedence over center
+                    if (targetRight.includes(columnIndex)) {
+                      cell.alignment = 'right';
+                    } else if (targetCenter.includes(columnIndex)) {
+                      cell.alignment = 'center';
+                    }
+                });
+            });
           }
       }
   ],
   "footerCallback": function ( row, data, start, end, display ) {
     var api = this.api(), data;
-    var totalPayment = api
+
+    // Total Payment
+    const totalPayment = api
         .column( 5 )
         .data()
         .reduce( function (a, b) {
@@ -178,6 +224,16 @@ var tbl_payment_collection = $("#tbl-payment_collection").DataTable({
         total_amount = totalPayment;
     $( api.column( 4 ).footer() ).html('<b>Total</b>');
     $( api.column( 5 ).footer() ).html('<b>'+numberWithCommas(parseFloat(totalPayment).toFixed(2))+'</b>');
+
+    // Total Balance Covered
+    const totalBalanceCovered = api
+        .column( 6 )
+        .data()
+        .reduce( function (a, b) {
+            return parseFloat(a) + parseFloat(b);
+        }, 0 );
+    total_balance_covered = totalBalanceCovered;
+    $( api.column( 6 ).footer() ).html('<b>'+numberWithCommas(parseFloat(total_balance_covered).toFixed(2))+'</b>');
   },
 });
 

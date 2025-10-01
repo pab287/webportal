@@ -144,14 +144,14 @@
                         <tr>
                             <th width="18%">Account</th>
                             <th>Bill #</th>
-                            <th>AR #</th>
+                            <th width="5%">AR #</th>
                             <th>Payment #</th>
                             <th width="5%">Type</th>
                             <th title="Receive Payment" width="5%">Amount</th>
-                            <th width="7%">Bal. Covered</th>
+                            <th width="8%">Bal. Covered</th>
                             <th width="10%" title="Payment Date">Payment Date</th>
                             <th width="10%" title="Applied Payment Date">AP Date</th>
-                            <th>Collected By</th>
+                            <th width="15%">Collected By</th>
                         </tr>
                     </thead>
 

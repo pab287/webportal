@@ -6688,7 +6688,7 @@ class Billing_m extends CI_Model {
             $data["payment_date"] = date("Y-m-d", strtotime($_query["payment_date"]));
             $data["applied_payment_date"] = date("Y-m-d", strtotime($_query["applied_payment_date"]));
             $data["cashier"] = $_query["cashier"];
-            $data["is_archive"] = $is_archive;
+            $data["is_archived"] = $is_archive;
             $data["total_count"] = $query->num_rows();
             $resultarray[] = $data;
         }
@@ -6764,29 +6764,4 @@ class Billing_m extends CI_Model {
 
     return array("results" => $resultarray);
 }
-
-//   function getEmployeeCollector(){
-//     $get = $this->input->get();
-//     $resultarray = array();
-//     if (isset($get['q'])) {
-//         $query = $this->db->query("SELECT id, firstname, lastname, middlename
-//         FROM gccmaster.tblemployees
-//         WHERE employee_status='Active' AND (firstname LIKE '%{$get['q']}%' OR lastname LIKE '%{$get['q']}%') ORDER BY id ASC");
-//     }else{
-//         $query = $this->db->query("SELECT id, firstname, lastname, middlename
-//         FROM gccmaster.tblemployees
-//         WHERE employee_status='Active' ORDER BY id ASC");
-//     }
-
-//     if ($query->num_rows() > 0) {
-//         foreach ($query->result_array() as $_query) {
-//             $data = array();
-//             $data["id"] = $_query["id"];
-//             $data["text"] = $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
-//             $resultarray[] = $data;
-//         }
-//     }
-
-//     return array("results" => $resultarray);
-// }
 }
