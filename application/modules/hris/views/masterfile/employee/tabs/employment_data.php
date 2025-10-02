@@ -82,7 +82,7 @@
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7 row align-items-center">
                         <span class="m-switch m-switch--sm m-switch--icon ml-3 mr-1">
                             <label class="m-0">
-                                <input type="checkbox" :multiple="vm_tab3.is_multiple_position === 1" @change="changeTOMultiple" :checked="vm_tab3.is_multiple_position === 1" value="1" id="is_multiple_position">
+                                <input type="checkbox" @change="changeTOMultiple" :checked="vm_tab3.is_multiple_position === 1" name="is_multiple_position" value="1" id="is_multiple_position">
                                 <span></span>
                             </label>
                         </span>
@@ -92,7 +92,7 @@
                 <div class="form-group m-form__group row">
                     <label for="position" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label required">Position:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
-                        <select id="m--input-position_id" class="form-control m-input select2" name="position" placeholder="Select an option"  data-validation="required"
+                        <select id="m--input-position_id" class="form-control m-input select2" name="position" :multiple="vm_tab3.is_multiple_position === 1" placeholder="Select an option"  data-validation="required"
                         v-model="vm_tab3.position"></select>
                     </div>
                 </div>
@@ -104,9 +104,7 @@
 					<div class="m-alert__icon">
 						<i class="la la-warning"></i>
 					</div>
-					<div class="m-alert__text">
-					    <strong>REHIRE OPTION IS AVAILABLE!</strong>
-					</div>
+					<div class="m-alert__text"><strong>REHIRE OPTION IS AVAILABLE!</strong></div>
                 </a>
             </div>
         </div>
@@ -435,6 +433,9 @@
     </div>
 </div>
 
+<?php $this->load->view("masterfile/employee/modals/change_employee_company"); ?>
+<input type="hidden" id="change_employment_info">
+
 <div class="modal fade" tabindex="-1" role="dialog" id="set_primary_position">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -445,11 +446,47 @@
                 </button>
             </div>
             <div class="modal-body">
-
+                <div class="row">
+                    <div class="col-md-12">
+                        <p><i class="m--font-danger m--font-boldest">Note:</i> Drag position to top to set it as primary position.</p>
+                    </div>
+                </div>
+                <div id="m_sortable_portlets">
+                    <template v-if="positions.length > 0">
+                        <template v-for="(item, index) in positions">
+                            <div class="m-portlet m-portlet--bordered m-portlet--head-sm m-portlet--mobile m-portlet--sortable mb-1" :key="item.id" data-portlet="true" :data-id="item.id">
+                                <div class="m-portlet__head ui-sortable-handle">
+                                    <div class="m-portlet__head-caption">
+                                        <div class="m-portlet__head-title">
+                                            <h3 class="m-portlet__head-text m--font-success">
+                                                Position <small v-if="item.primary == 1" class="ml-3 text-white m-badge m-badge--success m-badge--wide">Primary</small>
+                                            </h3>
+                                        </div>
+                                    </div>
+                                    <div class="m-portlet__head-tools"></div>
+                                </div>
+                                <div class="m-portlet__body">
+                                    <div class="row">
+                                        <div class="col-9">
+                                            <div class="form-group m-form__group">
+                                                <label class="m-0 position-text">{{ item.text }}</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-3">
+                                            <div class="form-group m-form__group">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button @click="savePrimaryPosition" type="button" class="btn btn-primary btnSave" id="save_primary_position">Save</button>
+                <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
-
-<?php $this->load->view("masterfile/employee/modals/change_employee_company"); ?>
-<input type="hidden" id="change_employment_info">

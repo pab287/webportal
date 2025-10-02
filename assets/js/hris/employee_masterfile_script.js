@@ -56,6 +56,7 @@ let selectedTable="";
 let _user = [];
 let acctgStatus = 2; // assigned as 2 to not trigger the 0 is_returned status to the first trigger of datatable;
 let exported_acctg = null;
+let multiPosition = [];
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.data !== "undefined" && _tempContentData.data){ _user = _tempContentData.data; }
@@ -662,22 +663,7 @@ if (typeof _tempContentData !== "undefined") {
                 this.managerialSelect2('#m--input-manager_id', true, _data, vmData.manager);
             }
 
-            // changeTOMultiple(e) {
-            //     let vmData = this.vm_tab3;
-            //     let isMultiple = $(e.target).is(':checked');
-
-            //     if (isMultiple) {
-            //         $("#m--input-position_id").prop("multiple", true);
-
-            //         this.positionSelect2('#m--input-position_id', true, tempDropdownData.dropdown_position, vmData.position, true);
-            //     } else {
-            //         $("#m--input-position_id").prop("multiple", false);
-            //         this.positionSelect2('#m--input-position_id', true, tempDropdownData.dropdown_position, vmData.position);
-            //     }
-            //     vmData = Object.assign({}, vmData, { is_multiple_position: isMultiple ? 1 : 0 });
-            // }
-
-            this.positionSelect2('#m--input-position_id', true, tempDropdownData.dropdown_position, vmData.position);
+            this.positionSelect2('#m--input-position_id', true, vmData.position, false);
 
             //-------- enable date regularized, separation date----//
             $("#status").change(function(){
@@ -1034,7 +1020,7 @@ if (typeof _tempContentData !== "undefined") {
                 });
 
                 return _data;
-            }, positionSelect2 (target , destroy = false, data = {}, id = 0, isMultiple = false) {
+            }, positionSelect2 (target , destroy = false, id = 0, isMultiple = false, multiPosition = []) {
                 let vmData = this.vm_tab3;
                 const currentTarget = $(target);
 
@@ -1048,6 +1034,14 @@ if (typeof _tempContentData !== "undefined") {
                 }
 
                 setTimeout(() => {
+                    if (multiPosition.length > 0) {
+                        multiPosition.forEach(pos => {
+                            var option = new Option(pos.text, pos.id, true, true);
+                            currentTarget.append(option).trigger('change');
+                        });
+                    }
+                    
+
                     currentTarget.select2({
                         data: tempDropdownData.dropdown_position,
                         placeholder: {
@@ -1055,8 +1049,7 @@ if (typeof _tempContentData !== "undefined") {
                             text: "Select an option"
                         },
                         width: '100%',
-                    }).val(id).trigger("change")
-                    .on('select2:select', function (e) {
+                    }).on('select2:select', function (e) {
                         const data = e.params.data;
 
                         if(isMultiple){
@@ -1073,22 +1066,53 @@ if (typeof _tempContentData !== "undefined") {
                                 newData.push({ id: value.id, text: value.text, primary: index === 0 ? 1 : 0 }); 
                             });
 
-                            console.log({ newData });
+                            vmData = Object.assign({}, vmData, { multiple_position: newData });
+                            multiPosition = newData;
+                            vmPrimary.positions = newData;
 
-                            // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { multiple_position: newData });
+                            const selectedValues = $(this).val() || [];
                         } else {
-                            // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { position: data.id });
+                            vmData.position = data.id;
+                        }
+                    }).on('select2:unselect', function (e) {
+                        if(isMultiple){
+                            var element = e.params.data.element;
+                            var $element = $(element);
+                            $element.detach();
+                            $(this).trigger("change"); 
+
+                            let newData = [];
+                            const tempData = $(this).select2("data");
+                            tempData.forEach((value, index) => { 
+                                newData.push({ id: value.id, text: value.text, primary: index === 0 ? 1 : 0 }); 
+                            });
+
+                            vmData = Object.assign({}, vmData, { multiple_position: newData });
+                            multiPosition = newData;
+                            vmPrimary.positions = newData;
+
+                            const selectedValues = $(this).val() || [];
                         }
                     });
+
+                    if (!isMultiple) {
+                        currentTarget.val(id).trigger("change");
+                    } else {
+                        if (multiPosition.length == 0) {
+                            currentTarget.val(id).trigger("change");
+                        }
+                    }
                 }, 250);
+
             }, changeTOMultiple(e) {
                 const instance = this;
                 let isMultiple = $(e.target).is(':checked');
                 const selectEl = $("#m--input-position_id");
 
                 selectEl.prop("multiple", isMultiple);
+                selectEl.attr('name', isMultiple ? 'position[]' : 'position');
 
-                this.positionSelect2('#m--input-position_id', true, tempDropdownData.dropdown_position, instance.vm_tab3.position, isMultiple);
+                this.positionSelect2('#m--input-position_id', true, instance.vm_tab3.position, isMultiple);
                 this.vm_tab3.is_multiple_position = this.vm_tab3.is_multiple_position === 1 ? 0 : 1;
             }
         }
@@ -4664,86 +4688,22 @@ var validatePersonalEmployeeData = function () {
             var formUrl = currentForm.action;
             var formData = $(currentForm).serialize();
 
-            const isMultiple = $("input[name=is_multiple_position]").is(":checked");
-            let hasSetPrimary = false;
-
-            console.log(vmTab3.vm_tab3);
+            const isMultiple = $("#is_multiple_position").is(":checked");
 
             if (isMultiple) {
-                vmPrimary.position = {...vmTab3.vm_tab3.multiple_position }
+                $("#set_primary_position").modal('show');
+                PortletDraggable.init();
 
-                console.log(vmTab3.vm_tab3);
+                $('#set_primary_position').data('formUrl', formUrl);
+                $('#set_primary_position').data('formData', formData);
+                $('#set_primary_position').data('formElement', currentForm);
+
+                return false;
             } else {
-                hasSetPrimary = true;
+                saveEmploymentData(formUrl, formData, currentForm);
+                return false;
             }
 
-            if (hasSetPrimary) {
-                // $.ajax({
-                //     url: formUrl,
-                //     type: "post",
-                //     dataType: "json",
-                //     data: formData,
-                //     beforeSend: function () {
-                //         $(currentForm)
-                //             .find(".btn-submit")
-                //             .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                //     },
-                //     success: function (json) {
-                //         if (json.response) {
-                //             toastr.success(
-                //                 json.toastr_msg,
-                //                 "Employee data has been updated.",
-                //                 5000
-                //             );
-                //             var _respData = json.data;
-                //             var _newData = Object.assign(
-                //                 {},
-                //                 {
-                //                     display_name: _respData.display_name,
-                //                     display_email: _respData.display_email,
-                //                     display_avatar: _respData.pic_filename
-                //                 }
-                //             );
-                //             leftPanel.left_pane = _newData;
-                //             _tempContentData.data = Object.assign({}, json.data);
-
-                //             if(typeof vmTab3.vm_tab3 != 'undefined' && Object.keys(vmTab3.vm_tab3).length > 0){
-                //                 let { vm_tab3 } = vmTab3;
-                //                 vm_tab3 = Object.assign({}, vm_tab3, json.data);
-                //             }
-                //             // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, json.data);
-                //             getJobDescription();
-                //             getEmployeePerformanceRating();
-                //             $("#change_employment_info").val(0);
-                //             $("#employment_information i").remove();
-                //         } else {
-                //             toastr.error(
-                //                 json.toastr_msg,
-                //                 "Error updating employee data!",
-                //                 5000
-                //             );
-                //         }
-
-                //         $(currentForm)
-                //             .find(".btn-submit")
-                //             .removeClass(
-                //                 "m-btn--custom m-loader m-loader--light m-loader--right"
-                //             );
-                //     },
-                //     error: function (jqXHR, textStatus, errorThrown) {
-                //         console.error("AJAX Error:", textStatus, errorThrown);
-                //         toastr.error(errorThrown);
-                //     }
-                // });
-            } else {
-                Swal.fire({
-                    title: "Error!",
-                    text: "Please set a primary position.",
-                    icon: "error",
-                })
-            }
-
-            return false;
         }
     });
 };
@@ -6628,7 +6588,137 @@ function openCert(name) {
 
 const vmPrimary = new Vue({
     el: "#set_primary_position",
-    data: { position: {} },
+    data: { positions: {} },
     methods: {
+        savePrimaryPosition(){
+            const formUrl = $('#set_primary_position').data('formUrl');
+            const formData = $('#set_primary_position').data('formData');
+            const currentForm = $('#set_primary_position').data('formElement');
+
+            if ( typeof vmTab3.vm_tab3.multiple_position !== 'undefined' && vmTab3.vm_tab3.multiple_position.length > 0 && this.positions.length == 0) {
+                saveEmploymentData(formUrl, formData, currentForm);
+            } else {
+                Swal.fire({
+                    title: "Save Changes?",
+                    text: "Are you sure you want to save changes?",
+                    icon: "question",
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    showCancelButton: false,
+                    confirmButtonText: "Submit"
+                }).then(response => {
+                    if (response.isConfirmed) {
+                        $("#set_primary_position").modal('hide');
+                        saveEmploymentData(formUrl, formData, currentForm);
+                    }
+                });
+            }
+
+        }
     },
 });
+
+var PortletDraggable = function () {
+    return {
+        init: function () {
+            $("#m_sortable_portlets").sortable({
+                connectWith: ".m-portlet__head",
+                items: ".m-portlet",
+                opacity: 0.8,
+                handle: '.m-portlet__head',
+                coneHelperSize: true,
+                placeholder: 'm-portlet--sortable-placeholder',
+                forcePlaceholderSize: true,
+                tolerance: "pointer",
+                helper: "clone",
+                tolerance: "pointer",
+                forcePlaceholderSize: !0,
+                helper: "clone",
+                cancel: ".m-portlet--sortable-empty",
+                revert: 250,
+                start: function (event, ui) {
+                    originalIndex = ui.item.index();
+                },
+                update: function (b, c) {
+                    const newData = [];
+                    $('#m_sortable_portlets .m-portlet').each(function (index) {
+                        const id = $(this).data('id');
+                        const text = $(this).find('.position-text').text().trim();
+
+                        newData.push({
+                            id,
+                            text,
+                            primary: index === 0 ? 1 : 0
+                        });
+                    });
+
+                    vmPrimary.positions = [...newData];
+
+                    vmTab3.positionSelect2('#m--input-position_id', true, vmTab3.vm_tab3.position, true, vmPrimary.positions);
+                }
+            });
+        }
+    };
+}();
+
+function saveEmploymentData(formUrl, formData, currentForm) {
+    $.ajax({
+        url: formUrl,
+        type: "post",
+        dataType: "json",
+        data: formData,
+        beforeSend: function () {
+            $(currentForm)
+                .find(".btn-submit")
+                .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+        },
+        success: function (json) {
+            if (json.response) {
+                toastr.success(
+                    json.toastr_msg,
+                    "Employee data has been updated.",
+                    5000
+                );
+                var _respData = json.data;
+                var _newData = Object.assign(
+                    {},
+                    {
+                        display_name: _respData.display_name,
+                        display_email: _respData.display_email,
+                        display_avatar: _respData.pic_filename
+                    }
+                );
+                leftPanel.left_pane = _newData;
+                _tempContentData.data = Object.assign({}, json.data);
+
+                if(typeof vmTab3.vm_tab3 != 'undefined' && Object.keys(vmTab3.vm_tab3).length > 0){
+                    let { vm_tab3 } = vmTab3;
+                    vm_tab3 = Object.assign({}, vm_tab3, json.data);
+                }
+                // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, json.data);
+                getJobDescription();
+                getEmployeePerformanceRating();
+                $("#change_employment_info").val(0);
+                $("#employment_information i").remove();
+            } else {
+                toastr.error(
+                    json.toastr_msg,
+                    "Error updating employee data!",
+                    5000
+                );
+            }
+
+            $(currentForm)
+                .find(".btn-submit")
+                .removeClass(
+                    "m-btn--custom m-loader m-loader--light m-loader--right"
+                );
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            console.error("AJAX Error:", textStatus, errorThrown);
+            toastr.error(errorThrown);
+        }
+    });
+}

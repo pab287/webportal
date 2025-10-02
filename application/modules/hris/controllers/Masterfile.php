@@ -260,6 +260,7 @@
                 $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
                 $this->core_layout->addJs("js/buttons.print.min.js", true);
 
+                $this->core_layout->addJs("vendors/custom/jquery-ui/jquery-ui.bundle.js");
                 $this->core_layout->addJs("js/ams/jquery.maskMoney.min.js", true);
                 $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
                 $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
