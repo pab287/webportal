@@ -87,33 +87,6 @@
 
         <div class="m-portlet__body">
             <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
-                <!-- <div class="row">
-                    <div class="col-md-10">
-                        <div class="form-group m-form__group row">
-                          <label class="col-1 col-form-label text-right">Employee</label>
-                          <div class="col-3">
-                              <select name="employee" id="employee" data-validation="required"></select>
-                          </div>
-
-                          <label class="col-1 col-form-label text-right">DATE</label>
-                          <div class="col-3">
-                            <div class="input-group" id="date-picker">
-                                <input type="text" class="form-control m-input" placeholder="MMM DD, YYYY - MMM DD, YYYY" id="date-range" name="date_range" data-validation="required" autocomplete='off'>
-                                <span class="input-group-addon">
-                                    <i class="la la-calendar-check-o"></i>
-                                </span>
-                            </div>
-                          </div>
-
-                          <div class="col-4">
-                              <button class="btn btn-info" onclick="generateReport()">
-                                  <span><i class="fa fa-gears pr-2"></i>GENERATE</span>
-                              </button>
-                          </div>
-                        </div>
-                    </div>
-                </div> -->
-
                 <div id="pc_inputs_wrapper" class="row justify-content-between align-items-end mb-0 mx-0">
                     <div class="col-6 px-0">
                         <div class="row justify-content-between align-items-end alert m-alert m-alert--default mx-0 mb-0">
