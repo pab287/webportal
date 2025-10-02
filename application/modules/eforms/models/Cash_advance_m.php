@@ -2249,7 +2249,7 @@ class Cash_advance_m extends CI_Model {
         $this->db->select("psloanpayments.*, ps.date_start, ps.date_end, ps.posted_by, ps.posted_at, emp.firstname, emp.lastname");
         $this->db->join("payroll.payroll_sheet ps", "ps.id = psloanpayments.payroll_sheet_id", "INNER");
         $this->db->join("gccmaster.tblemployees emp", "ps.posted_by = emp.id", "LEFT");
-        $this->db->where("psloanpayments.loan_id", $q['id']);
+        $this->db->where("psloanpayments.loan_id", $q['id'] ?? 0);
         $this->db->where("ps.posted", 1);
         $resultSet["data"] = $this->db->get("payroll.payroll_sheet_loan_payments psloanpayments")->result();
         $resultSet['count'] = $this->db->get("payroll.payroll_sheet_loan_payments psloanpayments")->num_rows();
