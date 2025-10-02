@@ -6692,8 +6692,12 @@ class Billing_m extends CI_Model {
             $data["total_count"] = $query->num_rows();
             $resultarray[] = $data;
         }
+
+        return array("data" => $resultarray, "recordsTotal" => $query->num_rows(), "recordsFiltered" => $query->num_rows());
+    } else {
+        return array("data" => [], "recordsTotal" => 0, "recordsFiltered" => 0);
     }
-    return array("data"=>$resultarray, "recordsTotal"=>$query->num_rows(), "recordsFiltered"=>$query->num_rows());
+    
   }
 
   function getSalesReport(){
