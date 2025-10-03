@@ -91,7 +91,12 @@
                                             <span>Position:</span>
                                         </div>
                                         <div class="col-xl-8 text-xl-right text-lg-right text-sm-center">
-                                            <span class="m--font-bolder" v-text="main.position"></span>
+                                            <template v-if="main.is_multiple_position == 1">
+                                                <span class="m--font-bolder">{{ formatPosition(main.position) }}</span>
+                                            </template>
+                                            <template v-else>
+                                                <span class="m--font-bolder" v-text="main.position"></span>
+                                            </template>
                                         </div>
                                     </div>
                                     <div class="mt-1 text-sm-center text-xl-left text-lg-left row">

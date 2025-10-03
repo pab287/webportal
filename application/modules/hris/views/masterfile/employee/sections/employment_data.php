@@ -815,25 +815,37 @@
 </table> -->
 <table class="responsive">
     <thead class="customsalary">
-    <tr>
-        <th scope="col" colspan="4">JOB DETAIL</th>
-    </tr>
+        <tr>
+            <th scope="col" colspan="4">JOB DETAIL</th>
+        </tr>
     </thead>
     <thead>
-    <tr>
-        <th class="" scope="col">POSITION</th>
-        <th class="" scope="col">TYPE</th>
-        <th class="" scope="col">DEPARTMENT</th>
-        <th class="" scope="col">COMPANY</th>
-    </tr>
+        <tr>
+            <th class="" scope="col">POSITION</th>
+            <th class="" scope="col">TYPE</th>
+            <th class="" scope="col">DEPARTMENT</th>
+            <th class="" scope="col">COMPANY</th>
+        </tr>
     </thead>
     <tbody>
-        <tr>
-            <td data-label="POSITION" v-text="printData.main.position ? main.position : 'N/A'"></td>
-            <td data-label="TYPE" v-text="printData.main.level ? main.level : 'N/A'"></td>
-            <td data-label="DEPARTMENT" v-text="printData.main.department_description ? main.department_description : 'N/A'"></td>
-            <td data-label="COMPANY" v-text="printData.main.company_id ? main.company_id : 'N/A'"></td>
-        </tr>
+        <template v-if="main.is_multiple_position == 1">
+            <template v-for="(item, index) in main.position">
+                <tr>
+                    <td data-label="POSITION" v-text="item.position ? item.position : 'N/A'"></td>
+                    <td data-label="TYPE" v-text="main.level ? main.level : 'N/A'"></td>
+                    <td data-label="DEPARTMENT" v-text="main.department_description ? main.department_description : 'N/A'"></td>
+                    <td data-label="COMPANY" v-text="main.company_id ? main.company_id : 'N/A'"></td>
+                </tr>
+            </template>
+        </template>
+        <template v-else>
+            <tr>
+                <td data-label="POSITION" v-text="printData.main.position ? main.position : 'N/A'"></td>
+                <td data-label="TYPE" v-text="printData.main.level ? main.level : 'N/A'"></td>
+                <td data-label="DEPARTMENT" v-text="printData.main.department_description ? main.department_description : 'N/A'"></td>
+                <td data-label="COMPANY" v-text="printData.main.company_id ? main.company_id : 'N/A'"></td>
+            </tr>
+        </template>
     </tbody>
 </table>
 <!-- JOB DETAIL -->
@@ -841,36 +853,61 @@
 <!-- START JOB DESCRIPTION -->
 <table class="responsive">
     <thead class="customsalary">
-    <tr>
-        <th class="custom-head_bg--primary" scope="col" colspan="1">
-            <span>JOB DESCRIPTION</span>
-        </th>
-    </tr>
+        <tr>
+            <th class="custom-head_bg--primary" scope="col" colspan="1">
+                <span>JOB DESCRIPTION</span>
+            </th>
+        </tr>
     </thead>
     <tbody>
+        <tr>
+            <template v-if="printData.is_multiple_position == 1">
+                <template v-if="printData.multiple_position.length > 0">
+                    <template v-for="(item, index) in printData.multiple_position">
+                        <tr :key="index">
+                            <td id="job_desc" class="text-left">
+                                <h5 class="d-flex align-items-center">
+                                    {{ item.position_description }}
+                                </h5>
+
+                                <template v-if="item.data != ' '">
+                                    <label class="ml-2" v-if="item.data && item.data !== 'NONE'" v-html="formattedJobDescPrint(item.data)"></label>
+                                </template>
+                                <template v-else>
+                                    <label class="ml-2"> No Job Description Available! </label>
+                                </template>
+                            </td>
+                        </tr>
+                    </template>
+                </template>
+                <template v-else>
                     <tr>
                         <td id="job_desc" class="text-left">
-                        <label v-html="formattedJobDescPrint(printData.main.job_desc)"></label>
+                            <label for="">No Job Description Available!</label>
                         </td>
                     </tr>
-                    </tbody>
+                </template>
+            </template>
+            <template v-else>
+                <td id="job_desc" class="text-left">
+                    <label v-html="formattedJobDescPrint(printData.main.job_desc)"></label>
+                </td>
+            </template>
+        </tr>
+    </tbody>
 </table>
 <!-- JOB DESCRIPTION -->
 <script type="text/javascript">
 $(document).ready(function(){
-    
     if(screen.width <= 450){
         $("#accountability_table #returned").removeClass("text-center");
-      
     }
+
     $(window).resize(function(){
         if(screen.width <= 450){
             $("#accountability_table #returned").removeClass("text-center");
-         
-            
         }
     });
-    
 
 });
 

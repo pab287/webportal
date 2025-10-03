@@ -1974,8 +1974,8 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
-        public function get_job_description($id){
-            $data = $this->employee_model->getEmpJobDescription($id);
+        public function get_job_description(){
+            $data = $this->employee_model->getEmpJobDescription();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 

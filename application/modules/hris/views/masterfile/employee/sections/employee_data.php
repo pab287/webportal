@@ -1219,29 +1219,40 @@
                     </tbody>
                 </table>
                 <!-- WORK STATUS -->
-
                 <table class="responsive">
                     <thead class="customsalary">
-                    <tr>
-                        <th scope="col" colspan="4">JOB DETAIL</th>
-                    </tr>
+                        <tr>
+                            <th scope="col" colspan="4">JOB DETAIL {{ main.is_multiple_position }}</th>
+                        </tr>
                     </thead>
                     <thead>
-                    <tr>
-                        <th class="" scope="col">POSITION</th>
-                        <th class="" scope="col">TYPE</th>
-                        <th class="" scope="col">DEPARTMENT</th>
-                        <th class="" scope="col">COMPANY</th>
-                    </tr>
+                        <tr>
+                            <th class="" scope="col">POSITION</th>
+                            <th class="" scope="col">TYPE</th>
+                            <th class="" scope="col">DEPARTMENT</th>
+                            <th class="" scope="col">COMPANY</th>
+                        </tr>
                     </thead>
                     <tbody>
-
-                    <tr>
-                        <td data-label="POSITION" v-text="main.position ? main.position : 'N/A'"></td>
-                        <td data-label="TYPE" v-text="main.level ? main.level : 'N/A'"></td>
-                        <td data-label="DEPARTMENT" v-text="main.department_description ? main.department_description : 'N/A'"></td>
-                        <td data-label="COMPANY" v-text="main.company_id ? main.company_id : 'N/A'"></td>
-                    </tr>
+                        
+                        <template v-if="main.is_multiple_position">
+                            <template v-for="(item, index) in main.position">
+                                <tr>
+                                    <td data-label="POSITION" v-text="item.position ? item.position : 'N/A'"></td>
+                                    <td data-label="TYPE" v-text="main.level ? main.level : 'N/A'"></td>
+                                    <td data-label="DEPARTMENT" v-text="main.department_description ? main.department_description : 'N/A'"></td>
+                                    <td data-label="COMPANY" v-text="main.company_id ? main.company_id : 'N/A'"></td>
+                                </tr>
+                            </template>
+                        </template>
+                        <template v-else>
+                            <tr>
+                                <td data-label="POSITION" v-text="main.position ? main.position : 'N/A'"></td>
+                                <td data-label="TYPE" v-text="main.level ? main.level : 'N/A'"></td>
+                                <td data-label="DEPARTMENT" v-text="main.department_description ? main.department_description : 'N/A'"></td>
+                                <td data-label="COMPANY" v-text="main.company_id ? main.company_id : 'N/A'"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
                 <!-- JOB DETAIL -->

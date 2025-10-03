@@ -1847,7 +1847,6 @@ class Employee_model extends CI_Model {
                 $row = $query->row();
 
                 if ($row->is_multiple_position) {
-                    // $this->db->select("")
                     $this->db->select("a.is_primary, a.sort, b.id as position_id, b.name as position_description, b.job_desc as data");
                     $this->db->from($this->multiplePositionTable.' as a');
                     $this->db->join($this->positionTable.' as b', 'b.id = a.position', 'LEFT');
@@ -4470,6 +4469,18 @@ class Employee_model extends CI_Model {
                 END AS name
             ")->from($this->employeeTable)->where("id", $managerId)->get()->result();
             $managerName = empty($_result)? false : $_result[0]->name;
+        }
+
+        if ($main->is_multiple_position) {
+            $this->db->select('b.name as position');
+            $this->db->join($this->positionTable.' as b', 'b.id = a.position', 'left');
+            $this->db->where('a.emp_id', $employee_id);
+            $this->db->from($this->multiplePositionTable.' as a');
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                $main->position = $query->result();
+            }
         }
 
         return
@@ -12173,7 +12184,7 @@ class Employee_model extends CI_Model {
         emp.pic_filename, emp.idno, emp.biometricno, pos.name as position ,pos.id as position_id, emp.work_status, emp.employee_status, emp.date_start, emp.date_end, com.code as company_id, emp.level, emp.date_regular, emp.date_end_prob, emp.resign_reason, pos.job_desc, emp.tl_supervisory, emp.supervisor_meta, emp.ques1, emp.ques2, emp.ques3, emp.ques4, emp.ques5, emp.ques6, emp.ques7, emp.ques8, emp.ques9,
         emp.email, emp.tax_status, emp.tin_no, emp.phealth_no, emp.pagibig_no, emp.sss_no,
         emp.fat_name, emp.mot_name, emp.partner_type, emp.spo_deceased, emp.partners_deceased, emp.spo_name, emp.partners_name, emp.fat_addr, emp.mot_addr, emp.spo_addr, emp.partners_addr, emp.fat_company, emp.mot_company, emp.spo_company, emp.partners_company, emp.fat_occupation, emp.mot_occupation, emp.spo_occupation, emp.partners_occupation, emp.fat_contact, emp.mot_contact, emp.spo_contact, emp.partners_contact, emp.emer_addr, emp.emer_contact, emp.emer_name, 
-        dept.description as department_description, emp.work_mode, emp.payroll_type, emp.allow_sms_notification
+        dept.description as department_description, emp.work_mode, emp.payroll_type, emp.allow_sms_notification, emp.is_multiple_position
         ");
         $this->db->from($this->employeeTable." as emp");
         $this->db->join($this->positionTable." as pos", "pos.id = emp.position", "LEFT");
@@ -12202,8 +12213,46 @@ class Employee_model extends CI_Model {
         return $data;
     }
 
-    public function getEmpJobDescription($id){
-        $data = $this->db->select('job_desc')->get_where($this->positionTable, array("id" => $id))->row();
+    public function getEmpJobDescription(){
+        // $data = $this->db->select('job_desc')->get_where($this->positionTable, array("id" => $id))->row();
+        // return $data;
+        $get = $this->input->get();
+        $position = isset($get['position_id']) && $get['position_id'] ? $get['position_id'] : 0;
+        $emp_id = isset($get['emp_id']) && $get['emp_id'] ? $get['emp_id'] : 0;
+        $is_multiple_position = isset($get['is_multiple']) && $get['is_multiple'] ? $get['is_multiple'] : 0;
+        $data = array();
+
+        if ($is_multiple_position) {
+            $this->db->select("a.is_primary, a.sort, b.id as position_id, b.name as position_description, b.job_desc as data");
+            $this->db->from($this->multiplePositionTable.' as a');
+            $this->db->join($this->positionTable.' as b', 'b.id = a.position', 'LEFT');
+            $this->db->where('a.emp_id', $emp_id);
+            $q = $this->db->get();
+
+            if ($q->num_rows() > 0) {
+                $_temp = array();
+                foreach ($q->result() as $r) {
+                    if ($r->data) {
+                        $_temp[] = array(
+                            "is_primary" => $r->is_primary,
+                            "sort" => $r->sort,
+                            "position_id" => $r->position_id,
+                            "position_description" => $r->position_description,
+                            "data" => $r->data
+                        );
+                    }
+                }
+
+                if ($_temp) {
+                    $data['data'] = $_temp;
+                }
+            }
+        } else {
+            $data['data'] = $this->db->select('job_desc')->get_where($this->positionTable, array("id" => $position))->row();
+        }
+
+        $data['is_multiple'] = $is_multiple_position;
+
         return $data;
     }
 

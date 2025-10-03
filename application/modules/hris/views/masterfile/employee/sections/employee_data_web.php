@@ -1300,26 +1300,37 @@
 
                 <table class="responsive">
                     <thead class="customsalary">
-                    <tr>
-                        <th scope="col" colspan="4">JOB DETAIL</th>
-                    </tr>
+                        <tr>
+                            <th scope="col" colspan="4">JOB DETAIL</th>
+                        </tr>
                     </thead>
                     <thead>
-                    <tr>
-                        <th class="" scope="col">POSITION</th>
-                        <th class="" scope="col">TYPE</th>
-                        <th class="" scope="col">DEPARTMENT</th>
-                        <th class="" scope="col">COMPANY</th>
-                    </tr>
+                        <tr>
+                            <th class="" scope="col">POSITION</th>
+                            <th class="" scope="col">TYPE</th>
+                            <th class="" scope="col">DEPARTMENT</th>
+                            <th class="" scope="col">COMPANY</th>
+                        </tr>
                     </thead>
                     <tbody>
-
-                    <tr>
-                        <td data-label="POSITION" v-text="main.position ? main.position : 'N/A'"></td>
-                        <td data-label="TYPE" v-text="main.level ? main.level : 'N/A'"></td>
-                        <td data-label="DEPARTMENT" v-text="main.department_description ? main.department_description : 'N/A'"></td>
-                        <td data-label="COMPANY" v-text="main.company_id ? main.company_id : 'N/A'"></td>
-                    </tr>
+                        <template v-if="main.is_multiple_position == 1">
+                            <template v-for="(item, index) in main.position">
+                                <tr>
+                                    <td data-label="POSITION" v-text="item.position ? item.position : 'N/A'"></td>
+                                    <td data-label="TYPE" v-text="main.level ? main.level : 'N/A'"></td>
+                                    <td data-label="DEPARTMENT" v-text="main.department_description ? main.department_description : 'N/A'"></td>
+                                    <td data-label="COMPANY" v-text="main.company_id ? main.company_id : 'N/A'"></td>
+                                </tr>
+                            </template>
+                        </template>
+                        <template v-else>
+                            <tr>
+                                <td data-label="POSITION" v-text="main.position ? main.position : 'N/A'"></td>
+                                <td data-label="TYPE" v-text="main.level ? main.level : 'N/A'"></td>
+                                <td data-label="DEPARTMENT" v-text="main.department_description ? main.department_description : 'N/A'"></td>
+                                <td data-label="COMPANY" v-text="main.company_id ? main.company_id : 'N/A'"></td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
 
@@ -1344,11 +1355,41 @@
             <div class="card-body">
                 <table class="responsive">
                     <tbody>
-                    <tr>
-                        <td id="job_desc" class="text-left">
-                        <label v-if="job_desc && job_desc !== 'NONE'" v-html="formattedJobDesc()"></label>
-                        </td>
-                    </tr>
+                        <template v-if="is_multiple_position == 1">
+                            <template v-if="multiple_position.length > 0">
+                                <template v-for="(item, index) in multiple_position">
+                                    <tr :key="index">
+                                        <td id="job_desc" class="text-left">
+                                            <h5 class="d-flex align-items-center">
+                                                {{ item.position_description }} 
+                                                <small class="ml-2" v-if="item.is_primary == 1"><span class="m-badge m-badge--success m-badge--wide">Primary</span></small>
+                                            </h5>
+
+                                            <template v-if="item.data != ' '">
+                                                <label class="ml-2" v-if="item.data && item.data !== 'NONE'" v-html="formattedJobDesc(item.data)"></label>
+                                            </template>
+                                            <template v-else>
+                                                <label class="ml-2"> No Job Description Available! </label>
+                                            </template>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </template>
+                            <template v-else>
+                                <tr>
+                                    <td id="job_desc" class="text-left">
+                                        <label for="">No Job Description Available!</label>
+                                    </td>
+                                </tr>
+                            </template>
+                        </template>
+                        <template v-else>
+                            <tr>
+                                <td id="job_desc" class="text-left">
+                                    <label v-if="job_desc && job_desc !== 'NONE'" v-html="formattedJobDesc()"></label>
+                                </td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
 			</div>
