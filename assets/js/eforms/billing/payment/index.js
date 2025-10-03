@@ -29,7 +29,7 @@ const tblPayment = $("#table-payment").DataTable({
             }
        }
    },
-   order: [[10, "desc"]],
+   order: [[11, "desc"]],
    searching: true,
    columns: [
         { data: "checkbox"},
@@ -49,6 +49,7 @@ const tblPayment = $("#table-payment").DataTable({
         },
         { data: "acknowledgement_receipt", className: "text-center"},
         { data: "payment_date", className: "text-center"},
+        { data: "created_date", className: "text-center"},
         { data: null, className: "text-center"},
    ],
    columnDefs: [
@@ -250,9 +251,13 @@ const tblPayment = $("#table-payment").DataTable({
        }
    ],
    createdRow: function(row, data, dataIndex) {
-        $(row).find('td')
-        .addClass('v-middle')
-        .attr('data-id-print', data.id);
+        $(row).find('td').addClass('v-middle').attr('data-id-print', data.id);
+
+        const is_archive = data.is_archive;
+                console.log(is_archive);
+        if ( is_archive == 1 ) {
+            $(row).addClass('table-danger');
+        }
    }
 });
 
@@ -371,7 +376,7 @@ function itemDatatableActions(row) {
                                     tempHtml += `<a class="dropdown-item " data-toggle='modal' data-target='#m_viewPayment' href="javascript:void(0);" id='viewPayment' data-id='`+row.id+`'><i class="la la-eye"></i> View</a>`;
                                 break;
                                 case "delete":
-                                    if(!row.isArchiveHide){
+                                    if(!row.isArchiveHide && row.is_archive != 1) {
                                         tempHtml += `<a class="dropdown-item" style="color: #FF8383;" data-toggle='modal' data-target='#delete_modal' href="javascript:void(0);" onclick='modalArchive(`+ row.id +`,`+`\"` + row.account_name + `\",`+`\"` + row.payment_ref_no + `\")'><i class="la la-trash" style="color: #FF8383;"></i> Archive</a>`;
                                     }
                                 break;

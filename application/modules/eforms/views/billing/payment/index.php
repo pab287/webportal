@@ -115,16 +115,17 @@
 									<th class="toggle-all notExport">
 										<input type="checkbox" id="cb-select-all"> <span></span>
 									</th>
-									<th>Reference No.</th>
-									<th>Account Name</th>
+									<th title="Reference No.">Ref No.</th>
+									<th title="Account Name">Acc. Name</th>
 									<th>Bill</th>
-									<th>Payment Type</th>
+									<th title="Payment Type">Pay Type</th>
 									<th>Due Date</th>
-									<th>Overdue Fee</th>
-									<th>Net Payment</th>
-									<th>Received Amount</th>
+									<th>Penalty</th>
+									<th title="Net Payment">Net Pay</th>
+									<th title="Received Amount">Rec. Amount</th>
 									<th>AR</th>
 									<th>Payment Date</th>
+									<th title="Applied Payment Date">AP. Date</th>
 									<th class="notExport">Action</th>
 								</tr>
 							</thead>
