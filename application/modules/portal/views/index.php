@@ -550,7 +550,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                                     </div>
                                                     <div class="col m--align-right">
                                                         <span class="m-widget1__number m--font-brand"
-                                                            v-text="payslip.show ? payslip.data.gross_pay : '*****'">
+                                                            v-text="payslip.show ? formatCurrency(payslip.data.gross_pay) : '*****'">
                                                         </span>
                                                     </div>
                                                 </div>
@@ -596,12 +596,12 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                                                     <span class="m--regular-font-size-lg3 m--font-brand m--font-bolder" v-text="payslip.show ? formatCurrency(payslip.data.hdmf) : '*****'"></span>
                                                                 </div>
                                                             </div>
-                                                            <div class="row justify-content-between" v-if="payslip.data.hdmf && parseFloat(payslip.data.TAX) > 0">
+                                                            <div class="row justify-content-between" v-if="payslip.data.hdmf && parseFloat(payslip.data.tax) > 0">
                                                                 <div class="col-md-6 col-sm-12">
                                                                     <span class="m-widget1__desc">TAX</span>
                                                                 </div>
                                                                 <div class="col-md-6 col-sm-12 text-right">
-                                                                    <span class="m--regular-font-size-lg3 m--font-brand m--font-bolder" v-text="payslip.show ? formatCurrency(payslip.data.TAX) : '*****'"></span>
+                                                                    <span class="m--regular-font-size-lg3 m--font-brand m--font-bolder" v-text="payslip.show ? formatCurrency(payslip.data.tax) : '*****'"></span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -699,7 +699,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                                     </div>
                                                     <div class="col m--align-right">
                                                         <span class="m-widget1__number m--font-brand"
-                                                            v-text="payslip.show ? payslip.data.net_pay : '*****'">
+                                                            v-text="payslip.show ? formatCurrency(payslip.data.net_pay) : '*****'">
                                                         </span>
                                                     </div>
                                                 </div>
