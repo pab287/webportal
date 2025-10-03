@@ -255,29 +255,78 @@
                          data-parent="#accordionOtherEmploymentData">
                         <div class="card-body m-portlet__body--custom">
                             <div id="job_description-content">
-                                <div class="m-portlet m-portlet--bordered m-portlet--rounded m-portlet--unair m--margin-bottom-15">
-                                    <div class="m-portlet__head">
-                                        <div class="m-portlet__head-caption">
-                                            <div class="m-portlet__head-title">
-                                                <h3 class="m-portlet__head-text">
-                                                    Current Job Description
-                                                </h3>
+                                <template v-if="is_multiple_position">
+                                    <template v-for="(item, index) in row">
+                                        <div class="m-portlet m-portlet--bordered m-portlet--rounded m-portlet--unair m--margin-bottom-15" :key="index">
+                                            <div class="m-portlet__head">
+                                                <div class="m-portlet__head-caption">
+                                                    <div class="m-portlet__head-title">
+                                                        <h3 class="m-portlet__head-text">
+                                                            Current Job Description <small v-if="item.is_primary == 1"><span class="m-badge m-badge--success m-badge--wide">Primary</span></small>
+                                                        </h3>
+                                                    </div>
+                                                </div>
+                                                <div class="m-portlet__head-tools"></div>
+                                            </div>
+                                            <div class="m-portlet__body">
+                                                <div id="current-job_description">
+                                                    <template v-if="!isEmpty(item)">
+                                                        <h5 id='jobTitle'>Job Description for {{ item.position_description }}</h5>
+
+                                                        <template v-if="item.data != ' '">
+                                                            <div id='jobDescription' v-html="item.data"></div>
+                                                        </template>
+                                                        <template v-else>
+                                                            No job description available!
+                                                        </template>
+                                                    </template>
+                                                    <template v-else>
+                                                        No job description available!
+                                                    </template>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="m-portlet__head-tools">
-                                            <ul class="m-portlet__nav">
-                                                <li class="m-portlet__nav-item">
-                                                    <button class="m-portlet__nav-link btn btn-sm btn-success m-btn btnSave btnUpdateJobDescription">
-                                                        <i class="fa fa-pencil"></i> Update
-                                                    </button>
-                                                </li>
-                                            </ul>
+                                    </template>
+                                </template>
+                                <template v-else>
+                                    <div class="m-portlet m-portlet--bordered m-portlet--rounded m-portlet--unair m--margin-bottom-15">
+                                        <div class="m-portlet__head">
+                                            <div class="m-portlet__head-caption">
+                                                <div class="m-portlet__head-title">
+                                                    <h3 class="m-portlet__head-text">
+                                                        Current Job Description
+                                                    </h3>
+                                                </div>
+                                            </div>
+                                            <div class="m-portlet__head-tools">
+                                                <ul class="m-portlet__nav">
+                                                    <li class="m-portlet__nav-item">
+                                                        <button class="m-portlet__nav-link btn btn-sm btn-success m-btn btnSave btnUpdateJobDescription">
+                                                            <i class="fa fa-pencil"></i> Update
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="m-portlet__body">
+                                            <div id="current-job_description">
+                                                <template v-if="!isEmpty(row)">
+                                                    <h5 id='jobTitle'>Job Description for {{ row.position_description }}</h5>
+
+                                                    <template v-if="item.data != ' '">
+                                                        <div id='jobDescription' v-html="item.data"></div>
+                                                    </template>
+                                                    <template v-else>
+                                                        No job description available!
+                                                    </template>
+                                                </template>
+                                                <template v-else>
+                                                    No job description available!
+                                                </template>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="m-portlet__body">
-                                        <div id="current-job_description">No job description available!</div>
-                                    </div>
-                                </div>
+                                </template>
                             </div>
                         </div>
                     </div>

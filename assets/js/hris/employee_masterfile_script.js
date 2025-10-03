@@ -663,7 +663,26 @@ if (typeof _tempContentData !== "undefined") {
                 this.managerialSelect2('#m--input-manager_id', true, _data, vmData.manager);
             }
 
-            this.positionSelect2('#m--input-position_id', true, vmData.position, false);
+            if (vmData.is_multiple_position == 1) {
+                let isMultiple = $("#is_multiple_position").is(':checked');
+                const selectEl = $("#m--input-position_id");
+
+                const sortMap = new Map();
+                vmData.multiple_position.forEach(p => sortMap.set(p.position, parseInt(p.sort)));
+
+                selectEl.prop("multiple", isMultiple);
+                selectEl.attr('name', isMultiple ? 'position[]' : 'position');
+
+                console.log(vmData.multiple_position)
+                // intersect 2 array and get the matched data by position id
+                const intersection = tempDropdownData.dropdown_position.filter(a1 =>
+                    vmData.multiple_position.some(a2 => a2.position === a1.id)
+                ).sort((a, b) => sortMap.get(a.id) - sortMap.get(b.id));
+
+                this.positionSelect2('#m--input-position_id', true, vmData.position, true, intersection);
+            } else {
+                this.positionSelect2('#m--input-position_id', true, vmData.position, false);
+            }
 
             //-------- enable date regularized, separation date----//
             $("#status").change(function(){
@@ -1023,6 +1042,7 @@ if (typeof _tempContentData !== "undefined") {
             }, positionSelect2 (target , destroy = false, id = 0, isMultiple = false, multiPosition = []) {
                 let vmData = this.vm_tab3;
                 const currentTarget = $(target);
+                let _temp = [];
 
                 if (destroy) {
                     currentTarget.empty();
@@ -1031,6 +1051,16 @@ if (typeof _tempContentData !== "undefined") {
                     if (currentTarget.hasClass('select2-hidden-accessible')) {
                         currentTarget.select2('destroy');
                     }
+
+                    if (!isMultiple) {
+                        currentTarget.val('').trigger("change");
+                    } else {
+                        if (multiPosition.length == 0) {
+                            currentTarget.val('').trigger("change");
+                        } else {
+                            currentTarget.val([]).trigger("change");
+                        }
+                    }
                 }
 
                 setTimeout(() => {
@@ -1038,9 +1068,10 @@ if (typeof _tempContentData !== "undefined") {
                         multiPosition.forEach(pos => {
                             var option = new Option(pos.text, pos.id, true, true);
                             currentTarget.append(option).trigger('change');
+
+                            _temp.push(pos.id);
                         });
                     }
-                    
 
                     currentTarget.select2({
                         data: tempDropdownData.dropdown_position,
@@ -1069,8 +1100,6 @@ if (typeof _tempContentData !== "undefined") {
                             vmData = Object.assign({}, vmData, { multiple_position: newData });
                             multiPosition = newData;
                             vmPrimary.positions = newData;
-
-                            const selectedValues = $(this).val() || [];
                         } else {
                             vmData.position = data.id;
                         }
@@ -1090,8 +1119,6 @@ if (typeof _tempContentData !== "undefined") {
                             vmData = Object.assign({}, vmData, { multiple_position: newData });
                             multiPosition = newData;
                             vmPrimary.positions = newData;
-
-                            const selectedValues = $(this).val() || [];
                         }
                     });
 
@@ -1100,20 +1127,30 @@ if (typeof _tempContentData !== "undefined") {
                     } else {
                         if (multiPosition.length == 0) {
                             currentTarget.val(id).trigger("change");
+                        } else {
+                            currentTarget.val(_temp).trigger("change");
                         }
                     }
                 }, 250);
 
             }, changeTOMultiple(e) {
                 const instance = this;
+                let vmData = instance.vm_tab3;
                 let isMultiple = $(e.target).is(':checked');
                 const selectEl = $("#m--input-position_id");
+                let intersection = [];
 
                 selectEl.prop("multiple", isMultiple);
                 selectEl.attr('name', isMultiple ? 'position[]' : 'position');
 
-                this.positionSelect2('#m--input-position_id', true, instance.vm_tab3.position, isMultiple);
-                this.vm_tab3.is_multiple_position = this.vm_tab3.is_multiple_position === 1 ? 0 : 1;
+                if (instance.vm_tab3.multiple_position.length > 0){
+                    intersection = tempDropdownData.dropdown_position.filter(a1 =>
+                        instance.vm_tab3.multiple_position.some(a2 => a2.position === a1.id)
+                    );
+                }
+
+                this.positionSelect2('#m--input-position_id', true, instance.vm_tab3.position, isMultiple, intersection);
+                vmData = Object.assign({}, vmData, { is_multiple_position: isMultiple == 0 ? 1 : 0 });
             }
         }
     });
@@ -3946,6 +3983,24 @@ if (typeof _tempContentData !== "undefined") {
 
     function getJobDescription() {
         if (typeof currentJobDescription !== "undefined") {
+            $.ajax({
+                url: baseUrl("hris/masterfile/get_current_job_description/" + tempDataId),
+                dataType: "json",
+                success: function (json) {
+                    vmJobDesc.row = {};
+                    vmJobDesc.is_multiple_position = false;
+
+                    if (json.response) {
+                        vmJobDesc.row = json.is_multiple_position == 1 ? {...json.data} : json;
+                        vmJobDesc.is_multiple_position = json.is_multiple_position == 1 ? true : false;
+                    }
+                }
+            });
+        }
+    }
+
+    function getJobDescriptionv1() {
+        if (typeof currentJobDescription !== "undefined") {
             var cJobDescription = currentJobDescription.find("#current-job_description");
             if (typeof cJobDescription !== "undefined" && cJobDescription.length == 1) {
                 var tempJobDescription = function () {
@@ -4690,7 +4745,7 @@ var validatePersonalEmployeeData = function () {
 
             const isMultiple = $("#is_multiple_position").is(":checked");
 
-            if (isMultiple) {
+            if (isMultiple && vmPrimary.positions.length > 0) {
                 $("#set_primary_position").modal('show');
                 PortletDraggable.init();
 
@@ -6592,7 +6647,7 @@ const vmPrimary = new Vue({
     methods: {
         savePrimaryPosition(){
             const formUrl = $('#set_primary_position').data('formUrl');
-            const formData = $('#set_primary_position').data('formData');
+            const formData = $('#frmEditEmploymentData').serialize(); // retrieve the latest changes in multiple position
             const currentForm = $('#set_primary_position').data('formElement');
 
             if ( typeof vmTab3.vm_tab3.multiple_position !== 'undefined' && vmTab3.vm_tab3.multiple_position.length > 0 && this.positions.length == 0) {
@@ -6611,7 +6666,10 @@ const vmPrimary = new Vue({
                 }).then(response => {
                     if (response.isConfirmed) {
                         $("#set_primary_position").modal('hide');
-                        saveEmploymentData(formUrl, formData, currentForm);
+
+                        setTimeout( function () {
+                            saveEmploymentData(formUrl, formData, currentForm);
+                        }, 750)
                     }
                 });
             }
@@ -6643,6 +6701,7 @@ var PortletDraggable = function () {
                 },
                 update: function (b, c) {
                     const newData = [];
+                    const _temp = [];
                     $('#m_sortable_portlets .m-portlet').each(function (index) {
                         const id = $(this).data('id');
                         const text = $(this).find('.position-text').text().trim();
@@ -6654,8 +6713,8 @@ var PortletDraggable = function () {
                         });
                     });
 
-                    vmPrimary.positions = [...newData];
 
+                    vmPrimary.positions = [...newData];
                     vmTab3.positionSelect2('#m--input-position_id', true, vmTab3.vm_tab3.position, true, vmPrimary.positions);
                 }
             });
@@ -6722,3 +6781,13 @@ function saveEmploymentData(formUrl, formData, currentForm) {
         }
     });
 }
+
+const vmJobDesc = new Vue({
+    el: "#job_description-content",
+    data: { row: {}, is_multiple_position: false },
+    methods: {
+        isEmpty(arr) {
+            return $.isEmptyObject(arr)
+        }
+    }
+});

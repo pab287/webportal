@@ -82,7 +82,7 @@
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7 row align-items-center">
                         <span class="m-switch m-switch--sm m-switch--icon ml-3 mr-1">
                             <label class="m-0">
-                                <input type="checkbox" @change="changeTOMultiple" :checked="vm_tab3.is_multiple_position === 1" name="is_multiple_position" value="1" id="is_multiple_position">
+                                <input type="checkbox" @change="changeTOMultiple" :checked="vm_tab3.is_multiple_position == 1" name="is_multiple_position" value="1" id="is_multiple_position">
                                 <span></span>
                             </label>
                         </span>
@@ -463,7 +463,9 @@
                                             </h3>
                                         </div>
                                     </div>
-                                    <div class="m-portlet__head-tools"></div>
+                                    <div class="m-portlet__head-tools">
+                                        <span class="fa fa-ellipsis-v"></span>
+                                    </div>
                                 </div>
                                 <div class="m-portlet__body">
                                     <div class="row">
@@ -485,7 +487,7 @@
             </div>
             <div class="modal-footer">
                 <button @click="savePrimaryPosition" type="button" class="btn btn-primary btnSave" id="save_primary_position">Save</button>
-                <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Close</button>
+                <!-- <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Close</button> -->
             </div>
         </div>
     </div>
