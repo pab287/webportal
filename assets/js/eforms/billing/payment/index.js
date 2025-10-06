@@ -254,7 +254,6 @@ const tblPayment = $("#table-payment").DataTable({
         $(row).find('td').addClass('v-middle').attr('data-id-print', data.id);
 
         const is_archive = data.is_archive;
-                console.log(is_archive);
         if ( is_archive == 1 ) {
             $(row).addClass('table-danger');
         }
@@ -419,26 +418,28 @@ $('#table-payment').on("click","#viewPayment",function() {
         url: baseUrl("eforms/billing/get_payment"),
         type: 'post',
         data: {csrf_token: _csrf_hash, payment_id: payment_id},
-        success: function(response){
-            $("#m_viewPayment .created_date").val(response.created_date);
-            $("#m_viewPayment .created_by").val(response.created_by);
-            $("#m_viewPayment .overdue_fee").val(response.is_penalty=='1' ? response.penalties[0].overdue : 0);
-            $("#m_viewPayment .account_no").val(response.accountno);
-            $("#m_viewPayment .bill").val(response.bill_ref_no);
-            $("#m_viewPayment .meter_no").val(response.meter_no);
-            $("#m_viewPayment .block_no").val(response.block_no);
-            $("#m_viewPayment .lot_no").val(response.lot_no);
-            $("#m_viewPayment .payment_type").val(response.payment_type);
-            $("#m_viewPayment .payment_details").val(response.payment_details);
-            $("#m_viewPayment .reconnection_fee").val(response.reconnection_fee);
-            $("#m_viewPayment .sub_total").val(response.sub_total);
-            $("#m_viewPayment .balance_covered").val(response.balance_covered);
-            $("#m_viewPayment .net_payment").val(response.net_payment);
-            $("#m_viewPayment .received_amount").val(response.received_amount);
-            $("#m_viewPayment .payment_date").val(response.payment_date);
-            $("#m_viewPayment .customer_name").val(response.customer_name);
-            $("#m_viewPayment .bill_amount").val(response.total_charges);
-            $("#m_viewPayment .acknowledgement_receipt").val(response.acknowledgement_receipt);
+        success: function(d){
+            $(".mv_cashier").text(d.cashier);
+            $(".mv_applied_payment_date").text(d.applied_payment_date);
+            $(".mv_ar").text(d.acknowledgement_receipt);
+            $(".mv_ref_no").text(d.ref_no);
+            $(".mv_bill_ref_no").text(d.bill_ref_no);
+            $(".mv_read_ref_no").text(d.reading_ref_no);
+            $(".mv_payment_date").text(d.payment_date);
+            $(".mv_payment_type").text(d.payment_type);
+            $(".mv_payment_details").text(d.payment_details);
+
+            $(".mv_account_no").text(d.accountno);
+            $(".mv_name").text(d.customer_name);
+            $(".mv_meter_no").text(d.meter_no);
+            $(".mv_address").text(d.address);
+
+            $(".mv_bill_amount").text(d.bill_amount);
+            $(".mv_overdue_fee").text(d.is_penalty == 1 ? d.penalties[0].overdue : 0);
+            $(".mv_reconnection_fee").text(d.reconnection_fee);
+            $(".mv_balance_covered").text(d.balance_covered);
+            $(".mv_net_payment").text(d.net_payment);
+            $(".mv_received_amount").text(d.received_amount);
         },
         error: function (request, status, error) {
             $('#m_viewPayment').modal('hide');
@@ -448,7 +449,7 @@ $('#table-payment').on("click","#viewPayment",function() {
 });
 
 $('#m_viewPayment').on('hide.bs.modal', function () {
-    $(this).find("input").val('').end();
+    $(this).find(".info-val").text('').end();
 });
 
 function modalArchive(id,name,payment_ref_no) {

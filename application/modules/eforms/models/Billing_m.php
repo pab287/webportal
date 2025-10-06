@@ -4469,37 +4469,37 @@ class Billing_m extends CI_Model {
     function get_PaymentDetails(){
         $post = $this->input->post();
         $this->db->select("a.*, b.firstname, b.middlename, b.lastname, b.meterno, b.block, b.lot, b.accountno, c.total_charges, c.ref_no as bill_ref_no,
-                            CONCAT(d.firstname, ' ',d.lastname) as created_by, a.acknowledgement_receipt as acknowledgement_receipt");
+                            CONCAT(d.firstname, ' ',d.lastname) as cashier, a.acknowledgement_receipt as acknowledgement_receipt, e.ref_no as reading_ref_no");
         $this->db->from("hydra_billing.payments a");
         $this->db->join("hydra_billing.accounts b","b.id = a.account_id", "LEFT");
         $this->db->join("hydra_billing.bills c","c.id = a.bill_id", "LEFT");
+        $this->db->join("hydra_billing.readings e","e.id = c.reading_id", "LEFT");
         $this->db->join("gccmaster.tblemployees d","d.id = a.created_by", "LEFT");
         $this->db->where("a.id",$post["payment_id"]);
         $query = $this->db->get()->row_array();
 
         $data = array();
         $data["id"] = $query["id"];
-        $data["ref_no"] = $query["ref_no"];
-        $data["payment_type"] = $query["payment_type"];
-        $data["payment_details"] = $query["payment_details"];
-        $data["received_amount"] = $query["received_amount"];
-        $data["payment_date"] = $query["payment_date"];
-        $data["net_payment"] = $query["net_payment"];
-        $data["sub_total"] = $query["sub_total"];
-        $data["penalties"] = unserialize($query["penalties"]);
-        $data["bill_ref_no"] = $query["bill_ref_no"];
-        $data["accountno"] = $query["accountno"];
-        $data["balance_covered"] = $query["balance_covered"];
-        $data["reconnection_fee"] = $query["reconnection_fee"];
-        $data["total_charges"] = $query["total_charges"];
-        $data["lot_no"] = $query["lot"];
-        $data["meter_no"] = $query["meterno"];
-        $data["block_no"] = $query["block"];
-        $data["is_penalty"] = $query["is_penalty"];
-        $data["created_by"] = $query["created_by"];
+        $data["cashier"] = $query["cashier"];
+        $data["applied_payment_date"] = date('M d, Y ● g:i A', strtotime($query["created_date"]));
         $data["acknowledgement_receipt"] = $query["acknowledgement_receipt"];
+        $data["ref_no"] = $query["ref_no"];
+        $data["bill_ref_no"] = $query["bill_ref_no"];
+        $data["reading_ref_no"] = $query["reading_ref_no"];
+        $data["payment_date"] = date('M d, Y', strtotime($query["payment_date"]));
+        $data["payment_type"] = $query["payment_type"];
+        $data["payment_details"] = $query["payment_details"] != '' ? $query["payment_details"]: 'N/A';
+        $data["accountno"] = $query["accountno"];
         $data["customer_name"] = $this->nameFormat($query["firstname"], $query["middlename"], $query["lastname"]);
-        $data["created_date"] = date('Y-m-d g:i A', strtotime($query["created_date"]));
+        $data["meter_no"] = $query["meterno"];
+        $data["address"] = "L".$query["lot"] . " - " . "B".$query["block"];
+        $data["bill_amount"] = $query["total_charges"];        
+        $data["penalties"] = unserialize($query["penalties"]);
+        $data["is_penalty"] = $query["is_penalty"];
+        $data["reconnection_fee"] = $query["reconnection_fee"];
+        $data["balance_covered"] = $query["balance_covered"];
+        $data["net_payment"] = $query["net_payment"];
+        $data["received_amount"] = $query["received_amount"];   
 
         return $data;
     }

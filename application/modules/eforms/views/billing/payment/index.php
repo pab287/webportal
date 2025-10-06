@@ -151,66 +151,117 @@
 				</button>
 			</div>
 
-			<div class="modal-body" style="pointer-events: none;">
+			<div class="modal-body">
 				<div class="section-area">
 					<div class="bg-card mb-4">
-						<h4 class="info-label mb-4">Account Information</h4>
+						<!-- <h4 class="info-label mb-4">Account Information</h4> -->
 
 						<div class="group">
 							<div class="info-group">
-								<p class="info-label">Acc No.:</p>
-								<p class="info-val account_id"></p>
+								<p class="info-label">Cashier</p>
+								<p class="info-val mv_cashier"></p>
 							</div>
 
 							<div class="info-group">
-								<p class="info-label">Name:</p>
-								<p class="info-val customer_name"></p>
+								<p class="info-label">Applied Payment Date</p>
+								<p class="info-val mv_applied_payment_date"></p>
 							</div>
 
 							<div class="info-group">
-								<p class="info-label">Meter No.:</p>
-								<p class="info-val meter_no"></p>
+								<p class="info-label">AR. #</p>
+								<p class="info-val mv_ar"></p>
 							</div>
 
 							<div class="info-group">
-								<p class="info-label">Block No.:</p>
-								<p class="info-val block_no"></p>
+								<p class="info-label">REF. #</p>
+								<p class="info-val mv_ref_no"></p>
 							</div>
 
 							<div class="info-group">
-								<p class="info-label">Lot No.:</p>
-								<p class="info-val lot_no"></p>
+								<p class="info-label">BILL REF. #</p>
+								<p class="info-val mv_bill_ref_no"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">READ. REF. #</p>
+								<p class="info-val mv_read_ref_no"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">PAYMENT DATE</p>
+								<p class="info-val mv_payment_date"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">PAYMENT TYPE</p>
+								<p class="info-val mv_payment_type"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">PAYMENT DETAILS</p>
+								<p class="info-val mv_payment_details"></p>
 							</div>
 						</div>
 					</div>
 					
-					<div class="bg-card">
-						<h4 class="info-label mb-4">Billing / Payment Info</h4>
+					<div class="bg-card mb-4">
+						<!-- <h4 class="info-label mb-4">Billing / Payment Info</h4> -->
 
 						<div class="group">
 							<div class="info-group">
-								<p class="info-label">Ref no:</p>
-								<p class="info-val reading_id"></p>
+								<p class="info-label">ACC. NO.</p>
+								<p class="info-val mv_account_no"></p>
 							</div>
 
 							<div class="info-group">
-								<p class="info-label">Previous:</p>
-								<p class="info-val previous"></p>
+								<p class="info-label">NAME</p>
+								<p class="info-val mv_name"></p>
 							</div>
 
 							<div class="info-group">
-								<p class="info-label">Current:</p>
-								<p class="info-val current"></p>
+								<p class="info-label">METER NO.</p>
+								<p class="info-val mv_meter_no"></p>
 							</div>
 
 							<div class="info-group">
-								<p class="info-label">Usage:</p>
-								<p class="info-val usage"></p>
+								<p class="info-label">ADDRESS</p>
+								<p class="info-val mv_address"></p>
+							</div>
+						</div>
+					</div>
+
+					<div class="bg-card">
+						<!-- <h4 class="info-label mb-4">Billing / Payment Info</h4> -->
+
+						<div class="group">
+							<div class="info-group">
+								<p class="info-label">BILL AMOUNT</p>
+								<p class="info-val mv_bill_amount"></p>
 							</div>
 
 							<div class="info-group">
-								<p class="info-label">Rate:</p>
-								<p class="info-val rate"></p>
+								<p class="info-label">OVERDUE FEE</p>
+								<p class="info-val mv_overdue_fee"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">RECONNECTION FEE:</p>
+								<p class="info-val mv_reconnection_fee"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">BALANCE COVERED</p>
+								<p class="info-val mv_balance_covered"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">NET PAYMENT</p>
+								<p class="info-val mv_net_payment"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">RECEIVED AMOUNT</p>
+								<p class="info-val mv_received_amount"></p>
 							</div>
 						</div>
 					</div>
@@ -474,5 +525,24 @@
 
 	#m_viewPayment .info-label {
 		color: #71737b;
+	}
+	
+	#m_viewPayment .info-val {
+		color: #535353;
+		font-weight: 600;
+	}
+
+	#m_viewPayment .info-group {
+		display: flex;
+		justify-content: space-between;
+		align-items: start;
+	}
+
+	#m_viewPayment .info-group p {
+		margin: 0;
+	}
+
+	#m_viewPayment .info-group:not(:last-child) {
+		margin: 0 0 10px;
 	}
 </style>
