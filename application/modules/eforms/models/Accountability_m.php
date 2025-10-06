@@ -1689,6 +1689,7 @@ class Accountability_m extends CI_Model {
         $this->db->where_not_in('a.status', ['archived', 'lost', 'junk', 'tradein', 'destructed', 'sold','repair','fordestruction','damage','destruction','others']);
         $this->db->or_where('a.status IS NULL', null, false);
         $this->db->group_end();
+        $this->db->where('a.status !=', '');
         $this->db->where("a.is_borrowed", "0");
         $this->db->where("a.is_archived", "0");
 
