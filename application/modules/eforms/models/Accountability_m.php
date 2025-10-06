@@ -1632,9 +1632,12 @@ class Accountability_m extends CI_Model {
         $this->db->where('a.status !=', 'archived');
         $this->db->where('a.status !=', 'junk');
         $this->db->where('a.status !=', 'repair');
+
         $this->db->where('a.status !=', '');
         $this->db->where("a.is_borrowed", "0");
         $this->db->where("a.is_archived", "0");
+        $this->db->where('a.status =', 'operational');
+        $this->db->or_where('a.status =', 'brandnew');
 
         if ($accountability_id) {
             $this->db->where_not_in("a.id", $asset_ids_array);
@@ -1690,6 +1693,8 @@ class Accountability_m extends CI_Model {
         $this->db->where('a.status !=', '');
         $this->db->where("a.is_borrowed", "0");
         $this->db->where("a.is_archived", "0");
+        $this->db->where('a.status =', 'operational');
+        $this->db->or_where('a.status =', 'brandnew');
 
         if ($accountability_id) {
             $this->db->where_not_in("a.id", $asset_ids_array);
