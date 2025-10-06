@@ -142,6 +142,89 @@
 </div>
 
 <div class="modal fade" id="m_viewPayment" tabindex="-1" role="dialog">
+	<div class="modal-dialog modal-dialog-centered" role="document" style="min-width: 500px;">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModalLabel">View Payment</h5>
+				<button type="button" class="close" data-dismiss="modal">
+					<span aria-hidden="true">×</span>
+				</button>
+			</div>
+
+			<div class="modal-body" style="pointer-events: none;">
+				<div class="section-area">
+					<div class="bg-card mb-4">
+						<h4 class="info-label mb-4">Account Information</h4>
+
+						<div class="group">
+							<div class="info-group">
+								<p class="info-label">Acc No.:</p>
+								<p class="info-val account_id"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">Name:</p>
+								<p class="info-val customer_name"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">Meter No.:</p>
+								<p class="info-val meter_no"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">Block No.:</p>
+								<p class="info-val block_no"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">Lot No.:</p>
+								<p class="info-val lot_no"></p>
+							</div>
+						</div>
+					</div>
+					
+					<div class="bg-card">
+						<h4 class="info-label mb-4">Billing / Payment Info</h4>
+
+						<div class="group">
+							<div class="info-group">
+								<p class="info-label">Ref no:</p>
+								<p class="info-val reading_id"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">Previous:</p>
+								<p class="info-val previous"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">Current:</p>
+								<p class="info-val current"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">Usage:</p>
+								<p class="info-val usage"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">Rate:</p>
+								<p class="info-val rate"></p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="m_viewPayment_old" tabindex="-1" role="dialog">
 	<div class="modal-dialog modal-dialog-centered" role="document" style="min-width: 80%">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -377,5 +460,19 @@
 
 	#table-payment tbody tr.selected td.select-checkbox:before {
 		border: 1px solid #ffffff !important;
+	}
+
+	#m_viewPayment .section-area .bg-card {
+		border-radius: 5px;
+		padding: 20px;
+		background: #f2f3f8;
+	}
+
+	#m_viewPayment h4.info-label {
+		font-size: 15px;
+	}
+
+	#m_viewPayment .info-label {
+		color: #71737b;
 	}
 </style>
