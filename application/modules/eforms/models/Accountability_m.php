@@ -1629,15 +1629,13 @@ class Accountability_m extends CI_Model {
         $this->db->select("a.*, TRIM(a.assetacode) as assetacode, b.id as temp_id");
         $this->db->from("gccasset.assets a");
         $this->db->join("gcceforms.accountability_body_temp b", "b.asset_id = a.id AND b.type='Asset'", "left");
-        $this->db->where('a.status !=', 'archived');
-        $this->db->where('a.status !=', 'junk');
-        $this->db->where('a.status !=', 'repair');
-
+        $this->db->group_start();
+        $this->db->where_not_in('a.status', ['archived', 'lost', 'junk', 'tradein', 'destructed', 'sold','repair','fordestruction','damage','destruction','others']);
+        $this->db->or_where('a.status IS NULL', null, false);
+        $this->db->group_end();
         $this->db->where('a.status !=', '');
         $this->db->where("a.is_borrowed", "0");
         $this->db->where("a.is_archived", "0");
-        $this->db->where('a.status =', 'operational');
-        $this->db->or_where('a.status =', 'brandnew');
 
         if ($accountability_id) {
             $this->db->where_not_in("a.id", $asset_ids_array);
@@ -1687,14 +1685,12 @@ class Accountability_m extends CI_Model {
 
         $this->db->from("gccasset.assets a");
         $this->db->join("gcceforms.accountability_body_temp b", "b.asset_id = a.id AND b.type='Asset'", "left");
-        $this->db->where('a.status !=', 'archived');
-        $this->db->where('a.status !=', 'junk');
-        $this->db->where('a.status !=', 'repair');
-        $this->db->where('a.status !=', '');
+        $this->db->group_start();
+        $this->db->where_not_in('a.status', ['archived', 'lost', 'junk', 'tradein', 'destructed', 'sold','repair','fordestruction','damage','destruction','others']);
+        $this->db->or_where('a.status IS NULL', null, false);
+        $this->db->group_end();
         $this->db->where("a.is_borrowed", "0");
         $this->db->where("a.is_archived", "0");
-        $this->db->where('a.status =', 'operational');
-        $this->db->or_where('a.status =', 'brandnew');
 
         if ($accountability_id) {
             $this->db->where_not_in("a.id", $asset_ids_array);
