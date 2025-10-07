@@ -6801,34 +6801,6 @@ function saveEmploymentData(formUrl, formData, currentForm) {
                 if(typeof vmTab3.vm_tab3 != 'undefined' && Object.keys(vmTab3.vm_tab3).length > 0){
                     let { vm_tab3 } = vmTab3;
 
-                    try {
-                        if (json.data.is_multiple_position == 1) {
-                            let isMultiple = $("#is_multiple_position").is(':checked');
-                            const selectEl = $("#m--input-position_id");
-
-                            const sortMap = new Map();
-                            json.data.multiple_position.forEach(p => sortMap.set(p.position, parseInt(p.sort)));
-
-                            selectEl.prop("multiple", isMultiple);
-                            selectEl.attr('name', isMultiple ? 'position[]' : 'position');
-
-                            const intersection = tempDropdownData.dropdown_position.filter(a1 =>
-                                json.data.multiple_position.some(a2 => a2.position === a1.id)
-                            ).sort((a, b) => sortMap.get(a.id) - sortMap.get(b.id));
-
-                            vmTab3.positionSelect2('#m--input-position_id', true, json.data.position, true, intersection);
-                        } else {
-                            vmTab3.positionSelect2('#m--input-position_id', true, json.data.position, false);
-                        }
-                        
-                    } catch (err) {
-                        if (err.message.includes('some is not a function')) {
-                            console.warn('⚠️ Ignored Select2 internal error:', err.message);
-                        } else {
-                            throw err;
-                        }
-                    }
-
                     // vm_tab3 = Object.assign({}, vm_tab3, json.data); -> commented as it doesnt overwrite the old the after updating the record
                     vmTab3.vm_tab3 = Object.assign({}, vm_tab3, json.data);
                 }

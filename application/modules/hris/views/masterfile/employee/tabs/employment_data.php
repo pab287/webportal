@@ -97,8 +97,7 @@
                 <div class="form-group m-form__group row">
                     <label for="position" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label required">Position:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
-                        <select id="m--input-position_id" class="form-control m-input select2" name="position" :multiple="vm_tab3.is_multiple_position === 1" placeholder="Select an option"  data-validation="required"
-                        v-model="vm_tab3.position"></select>
+                        <select id="m--input-position_id" class="form-control m-input select2" name="position" :multiple="vm_tab3.is_multiple_position === 1" placeholder="Select an option"  data-validation="required"></select>
                     </div>
                 </div>
             </div>
