@@ -158,22 +158,24 @@ const tbl_payment_collection = $("#tbl-payment_collection").DataTable({
           },
           footer: true,
           exportOptions: {
-            columns: [0, 1, 2, 3, 4, 5, 6, 7]
+            columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
           },
           customize: function(doc) {
             doc.styles.message = {
               alignment: 'center',
             }
 
-            doc.defaultStyle.fontSize = 10;
-            doc.styles.tableHeader.fontSize = 10;
-            doc.styles.tableFooter.fontSize = 10;
+            doc.defaultStyle.fontSize = 9;
+            doc.styles.tableHeader.fontSize = 9;
+            doc.styles.tableFooter.fontSize = 9;
 
             // Set dynamic widths for all columns
             let columnWidths = new Array(doc.content[2].table.body[0].length).fill('*');
 
             // Define custom widths for specific columns (adjust index as needed)
             columnWidths[0] = '20%';
+            columnWidths[5, 6] = '10%';
+            columnWidths[9] = '15%';
 
             // Apply column widths
             doc.content[2].table.widths = columnWidths;
@@ -183,7 +185,7 @@ const tbl_payment_collection = $("#tbl-payment_collection").DataTable({
                 if (rowIndex === 0) { return; }
 
                 let targetUppercase = []; // Columns to make uppercase
-                let targetCenter = [0, 1, 2, 3, 4, 7]; // Columns to center align
+                let targetCenter = [0, 1, 2, 3, 4, 7, 8, 9]; // Columns to center align
                 let targetRight = [5, 6]; // Column to right align
 
                 row.forEach((cell, columnIndex) => {
@@ -238,27 +240,30 @@ const tbl_payment_collection = $("#tbl-payment_collection").DataTable({
 });
 
 $("#ExportExcel").on("click", function() {
-  if(parseFloat(total_amount) == 0){
+  var tbl_payment_collection_count = $('#tbl-payment_collection').DataTable().rows().count();
+  if(tbl_payment_collection_count == 0) {
     toastr.error("No data selected.", "Warning");
-  }else{
+  } else {
     tbl_payment_collection.button( '.buttons-excel' ).trigger();
     saveExportLogs('Accounts - Export Excel');
   }
 });
 
 $("#ExportCSV").on("click", function() {
-  if(parseFloat(total_amount) == 0){
+  var tbl_payment_collection_count = $('#tbl-payment_collection').DataTable().rows().count();
+  if(tbl_payment_collection_count == 0) {
     toastr.error("No data selected.", "Warning");
-  }else{
+  } else {
     tbl_payment_collection.button( '.buttons-csv' ).trigger();
     saveExportLogs('Accounts - Export CSV');
   }
 });
 
 $("#ExportPDF").on("click", function() {
-  if(parseFloat(total_amount) == 0){
+  var tbl_payment_collection_count = $('#tbl-payment_collection').DataTable().rows().count();
+  if(tbl_payment_collection_count == 0) {
     toastr.error("No data selected.", "Warning");
-  }else{
+  } else {
     tbl_payment_collection.button( '.buttons-pdf' ).trigger();
     saveExportLogs('Accounts - Export PDF');
   }
