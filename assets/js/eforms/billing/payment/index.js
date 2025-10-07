@@ -435,11 +435,17 @@ $('#table-payment').on("click","#viewPayment",function() {
             $(".mv_address").text(d.address);
 
             $(".mv_bill_amount").text(d.bill_amount);
-            $(".mv_overdue_fee").text(d.is_penalty == 1 ? d.penalties[0].overdue : 0);
+            $(".mv_overdue_fee").text(d.is_penalty == 1 ? "₱ " + d.penalties[0].overdue : "₱ " + 0);
             $(".mv_reconnection_fee").text(d.reconnection_fee);
             $(".mv_balance_covered").text(d.balance_covered);
             $(".mv_net_payment").text(d.net_payment);
             $(".mv_received_amount").text(d.received_amount);
+
+            if(d.is_archive == 1) {
+                $("#m_viewPayment .section-area .bg-card").css("background-color", "#fcced6");
+            } else {
+                $("#m_viewPayment .section-area .bg-card").css("background-color", "#f2f3f8");
+            }
         },
         error: function (request, status, error) {
             $('#m_viewPayment').modal('hide');
@@ -450,6 +456,7 @@ $('#table-payment').on("click","#viewPayment",function() {
 
 $('#m_viewPayment').on('hide.bs.modal', function () {
     $(this).find(".info-val").text('').end();
+    $("#m_viewPayment .section-area .bg-card").css("background-color", "#fff");
 });
 
 function modalArchive(id,name,payment_ref_no) {

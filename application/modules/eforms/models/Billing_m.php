@@ -4469,7 +4469,7 @@ class Billing_m extends CI_Model {
     function get_PaymentDetails(){
         $post = $this->input->post();
         $this->db->select("a.*, b.firstname, b.middlename, b.lastname, b.meterno, b.block, b.lot, b.accountno, c.total_charges, c.ref_no as bill_ref_no,
-                            CONCAT(d.firstname, ' ',d.lastname) as cashier, a.acknowledgement_receipt as acknowledgement_receipt, e.ref_no as reading_ref_no");
+                            CONCAT(d.firstname, ' ',d.lastname) as cashier, a.acknowledgement_receipt as acknowledgement_receipt, e.ref_no as reading_ref_no, a.is_archive");
         $this->db->from("hydra_billing.payments a");
         $this->db->join("hydra_billing.accounts b","b.id = a.account_id", "LEFT");
         $this->db->join("hydra_billing.bills c","c.id = a.bill_id", "LEFT");
@@ -4493,13 +4493,14 @@ class Billing_m extends CI_Model {
         $data["customer_name"] = $this->nameFormat($query["firstname"], $query["middlename"], $query["lastname"]);
         $data["meter_no"] = $query["meterno"];
         $data["address"] = "L".$query["lot"] . " - " . "B".$query["block"];
-        $data["bill_amount"] = $query["total_charges"];        
+        $data["bill_amount"] = "₱ " . number_format($query["total_charges"],2,'.','');
         $data["penalties"] = unserialize($query["penalties"]);
         $data["is_penalty"] = $query["is_penalty"];
-        $data["reconnection_fee"] = $query["reconnection_fee"];
-        $data["balance_covered"] = $query["balance_covered"];
-        $data["net_payment"] = $query["net_payment"];
-        $data["received_amount"] = $query["received_amount"];   
+        $data["reconnection_fee"] = "₱ " . number_format($query["reconnection_fee"],2,'.','');
+        $data["balance_covered"] = "₱ " . number_format($query["balance_covered"],2,'.','');
+        $data["net_payment"] = "₱ " . number_format($query["net_payment"],2,'.','');
+        $data["received_amount"] = "₱ " . number_format($query["received_amount"],2,'.','');
+        $data["is_archive"] = $query["is_archive"];
 
         return $data;
     }

@@ -255,12 +255,12 @@
 							</div>
 
 							<div class="info-group">
-								<p class="info-label">NET PAYMENT</p>
+								<p class="info-label font-weight-bold">NET PAYMENT</p>
 								<p class="info-val mv_net_payment"></p>
 							</div>
 
 							<div class="info-group">
-								<p class="info-label">RECEIVED AMOUNT</p>
+								<p class="info-label font-weight-bold">RECEIVED AMOUNT</p>
 								<p class="info-val mv_received_amount"></p>
 							</div>
 						</div>
@@ -516,7 +516,8 @@
 	#m_viewPayment .section-area .bg-card {
 		border-radius: 5px;
 		padding: 20px;
-		background: #f2f3f8;
+		/* background: #f2f3f8; */
+		transition: .2s ease-in-out;
 	}
 
 	#m_viewPayment h4.info-label {
