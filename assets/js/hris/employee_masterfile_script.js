@@ -35,7 +35,7 @@ var mcompany = $("#m--input-company_id");
 var dtEmployee = null;
 let dtPerformanceRating = null;
 var dtReturnToWork = null;
-var companyExceptCurrent, tempData;
+var companyExceptCurrent, tempData = { is_multiple_position: 0, multiple_position: [] };
 var tempDataId = 0;
 let questions_list = [];
 let clickedView = 'grid';
@@ -673,7 +673,6 @@ if (typeof _tempContentData !== "undefined") {
                 selectEl.prop("multiple", isMultiple);
                 selectEl.attr('name', isMultiple ? 'position[]' : 'position');
 
-                console.log(vmData.multiple_position)
                 // intersect 2 array and get the matched data by position id
                 const intersection = tempDropdownData.dropdown_position.filter(a1 =>
                     vmData.multiple_position.some(a2 => a2.position === a1.id)
@@ -1144,13 +1143,40 @@ if (typeof _tempContentData !== "undefined") {
                 selectEl.attr('name', isMultiple ? 'position[]' : 'position');
 
                 if (instance.vm_tab3.multiple_position.length > 0){
+                    const sortMap = new Map();
+                    instance.vm_tab3.multiple_position.forEach(p => sortMap.set(p.position, parseInt(p.sort)));
+
                     intersection = tempDropdownData.dropdown_position.filter(a1 =>
                         instance.vm_tab3.multiple_position.some(a2 => a2.position === a1.id)
-                    );
+                    ).sort((a, b) => sortMap.get(a.id) - sortMap.get(b.id));
                 }
 
                 this.positionSelect2('#m--input-position_id', true, instance.vm_tab3.position, isMultiple, intersection);
-                vmData = Object.assign({}, vmData, { is_multiple_position: isMultiple == 0 ? 1 : 0 });
+                vmData = Object.assign({}, vmData, { is_multiple_position: isMultiple ? 1 : 0 });
+
+                if (isMultiple) {
+                    $("#sort_position").show();
+                } else {
+                    $("#sort_position").hide();
+                }
+            }, sortPosition(e) {
+                const instance = this;
+                let newData = [];
+
+                vmPrimary.isSortOnly = true;
+
+                if (instance.vm_tab3.multiple_position.length > 0){
+                    const tempData = $("#m--input-position_id").select2("data");
+                    tempData.forEach((value, index) => { 
+                        newData.push({ id: value.id, text: value.text, primary: index === 0 ? 1 : 0 }); 
+                    });
+                }
+
+                vmPrimary.positions = newData;
+
+                $("#set_primary_position").modal('show');
+                PortletDraggable.init();
+
             }
         }
     });
@@ -4745,7 +4771,7 @@ var validatePersonalEmployeeData = function () {
 
             const isMultiple = $("#is_multiple_position").is(":checked");
 
-            if (isMultiple && vmPrimary.positions.length > 0) {
+            if (isMultiple && vmPrimary.positions.length > 0 && !vmPrimary.isSortOnly) {
                 $("#set_primary_position").modal('show');
                 PortletDraggable.init();
 
@@ -4756,6 +4782,8 @@ var validatePersonalEmployeeData = function () {
                 return false;
             } else {
                 saveEmploymentData(formUrl, formData, currentForm);
+
+                vmPrimary.isSortOnly = false;
                 return false;
             }
 
@@ -6643,15 +6671,37 @@ function openCert(name) {
 
 const vmPrimary = new Vue({
     el: "#set_primary_position",
-    data: { positions: {} },
+    data: { positions: {}, isSortOnly: false },
     methods: {
         savePrimaryPosition(){
             const formUrl = $('#set_primary_position').data('formUrl');
             const formData = $('#frmEditEmploymentData').serialize(); // retrieve the latest changes in multiple position
             const currentForm = $('#set_primary_position').data('formElement');
 
-            if ( typeof vmTab3.vm_tab3.multiple_position !== 'undefined' && vmTab3.vm_tab3.multiple_position.length > 0 && this.positions.length == 0) {
-                saveEmploymentData(formUrl, formData, currentForm);
+            if (!this.isSortOnly && this.positions.length > 0) {
+                if ( typeof vmTab3.vm_tab3.multiple_position !== 'undefined' && vmTab3.vm_tab3.multiple_position.length > 0 && this.positions.length == 0) {
+                    saveEmploymentData(formUrl, formData, currentForm);
+                } else {
+                    Swal.fire({
+                        title: "Save Changes?",
+                        text: "Are you sure you want to save changes?",
+                        icon: "question",
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        showCancelButton: false,
+                        confirmButtonText: "Submit"
+                    }).then(response => {
+                        if (response.isConfirmed) {
+                            $("#set_primary_position").modal('hide');
+    
+                            setTimeout( function () {
+                                saveEmploymentData(formUrl, formData, currentForm);
+                            }, 750)
+                        }
+                    });
+                }
             } else {
                 Swal.fire({
                     title: "Save Changes?",
@@ -6666,10 +6716,6 @@ const vmPrimary = new Vue({
                 }).then(response => {
                     if (response.isConfirmed) {
                         $("#set_primary_position").modal('hide');
-
-                        setTimeout( function () {
-                            saveEmploymentData(formUrl, formData, currentForm);
-                        }, 750)
                     }
                 });
             }
@@ -6754,7 +6800,37 @@ function saveEmploymentData(formUrl, formData, currentForm) {
 
                 if(typeof vmTab3.vm_tab3 != 'undefined' && Object.keys(vmTab3.vm_tab3).length > 0){
                     let { vm_tab3 } = vmTab3;
-                    vm_tab3 = Object.assign({}, vm_tab3, json.data);
+
+                    try {
+                        if (json.data.is_multiple_position == 1) {
+                            let isMultiple = $("#is_multiple_position").is(':checked');
+                            const selectEl = $("#m--input-position_id");
+
+                            const sortMap = new Map();
+                            json.data.multiple_position.forEach(p => sortMap.set(p.position, parseInt(p.sort)));
+
+                            selectEl.prop("multiple", isMultiple);
+                            selectEl.attr('name', isMultiple ? 'position[]' : 'position');
+
+                            const intersection = tempDropdownData.dropdown_position.filter(a1 =>
+                                json.data.multiple_position.some(a2 => a2.position === a1.id)
+                            ).sort((a, b) => sortMap.get(a.id) - sortMap.get(b.id));
+
+                            vmTab3.positionSelect2('#m--input-position_id', true, json.data.position, true, intersection);
+                        } else {
+                            vmTab3.positionSelect2('#m--input-position_id', true, json.data.position, false);
+                        }
+                        
+                    } catch (err) {
+                        if (err.message.includes('some is not a function')) {
+                            console.warn('⚠️ Ignored Select2 internal error:', err.message);
+                        } else {
+                            throw err;
+                        }
+                    }
+
+                    // vm_tab3 = Object.assign({}, vm_tab3, json.data); -> commented as it doesnt overwrite the old the after updating the record
+                    vmTab3.vm_tab3 = Object.assign({}, vm_tab3, json.data);
                 }
                 // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, json.data);
                 getJobDescription();
@@ -6774,6 +6850,10 @@ function saveEmploymentData(formUrl, formData, currentForm) {
                 .removeClass(
                     "m-btn--custom m-loader m-loader--light m-loader--right"
                 );
+
+            if (vmPrimary.positions.length > 0) {
+                vmPrimary.positions = {};
+            }
         },
         error: function (jqXHR, textStatus, errorThrown) {
             console.error("AJAX Error:", textStatus, errorThrown);

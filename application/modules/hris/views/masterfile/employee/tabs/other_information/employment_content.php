@@ -313,8 +313,8 @@
                                                 <template v-if="!isEmpty(row)">
                                                     <h5 id='jobTitle'>Job Description for {{ row.position_description }}</h5>
 
-                                                    <template v-if="item.data != ' '">
-                                                        <div id='jobDescription' v-html="item.data"></div>
+                                                    <template v-if="row.data != ' '">
+                                                        <div id='jobDescription' v-html="row.data"></div>
                                                     </template>
                                                     <template v-else>
                                                         No job description available!

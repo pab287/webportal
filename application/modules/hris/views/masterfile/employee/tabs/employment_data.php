@@ -87,6 +87,11 @@
                             </label>
                         </span>
                         <i class="flaticon-questions-circular-button" data-toggle="m-tooltip" data-skin="dark" data-original-title="Toggle switch to change it to multiple position(s)"></i>
+                        <template v-if="vm_tab3.is_multiple_position == 1 && vm_tab3.multiple_position.length > 1">
+                            <button type="button" @click="sortPosition" id="sort_position" class="btn m-btn--pill btn-secondary btn-sm btnSave ml-2" data-toggle="m-tooltip" data-skin="dark" data-original-title="Toggle to sort position(s)">
+                                <i class="flaticon-refresh"></i>
+                            </button>
+                        </template>
                     </div>
                 </div>
                 <div class="form-group m-form__group row">

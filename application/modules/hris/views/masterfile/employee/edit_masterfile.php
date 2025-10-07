@@ -148,14 +148,14 @@
                     </div>
                 </div>
                 <div class="tab-content">
-                    <div class="tab-pane " id="m_user_profile_tab_1" aria-expanded="true">
+                    <div class="tab-pane active" id="m_user_profile_tab_1" aria-expanded="true">
                         <?php echo $this->load->view("hris/masterfile/employee/tabs/personal_information"); ?>
                     </div>
                     <div class="tab-pane" id="m_user_profile_tab_2" aria-expanded="true">
                         <?php echo $this->load->view("hris/masterfile/employee/tabs/additional_information"); ?>
                         <?php echo $this->load->view("hris/masterfile/employee/tabs/other_information/additional_content"); ?>
                     </div>
-                    <div class="tab-pane active" id="m_user_profile_tab_3" aria-expanded="true">
+                    <div class="tab-pane" id="m_user_profile_tab_3" aria-expanded="true">
                         <?php echo $this->load->view("hris/masterfile/employee/tabs/employment_data"); ?>
                         <?php echo $this->load->view("hris/masterfile/employee/tabs/other_information/employment_content"); ?>
                     </div>

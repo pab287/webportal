@@ -174,7 +174,7 @@
                             <li class="m-nav__separator m-nav__separator--fit"></li>
                             <li class="m-nav__item">
                                 <a class="m-nav__link btnEdit"
-                                :href="baseUrl() + '/hris/masterfile/edit_employee_masterfile/' + main.id">
+                                :href="baseUrl('hris/masterfile/edit_employee_masterfile/') + main.id">
                                     <i class="m-nav__link-icon flaticon-edit"></i>
                                     <span class="m-nav__link-text">Edit Employee Profile</span>
                                 </a>

@@ -890,7 +890,12 @@
             </template>
             <template v-else>
                 <td id="job_desc" class="text-left">
-                    <label v-html="formattedJobDescPrint(printData.main.job_desc)"></label>
+                    <template v-if="printData.main.job_desc && printData.main.job_desc != ' ' && printData.main.job_desc != 'NONE'">
+                        <label v-html="formattedJobDescPrint(printData.main.job_desc)"></label>
+                    </template>
+                    <template v-else>
+                        <label for="">No Job Description Available!</label>
+                    </template>
                 </td>
             </template>
         </tr>
