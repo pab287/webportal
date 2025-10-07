@@ -63,11 +63,12 @@ class Sms_Configuration extends CI_Model{
                 $data["sms_ip"] = $_query["sms_ip"];
                 $data["sms_port"] = $_query["sms_port"];
                 $data["sms_user"] = $_query["sms_user"];
+                $data["modem"] = $_query["modem"];
                 $data["sms_pass"] = $_query["sms_pass"];
                 $data["exclude"] = $_query["exclude"];
                 $data["sms_footer"] = $_query["sms_footer"];
                 $data["department_id"] = $_query["department_id"];
-                $data["department"] = $this->is_serial($_query["department_id"]) ? $this->getDepartmentListName(unserialize($_query["department_id"])) : "";
+                $data["department"] = !empty($_query["department_id"]) ? $this->getDepartmentListName(unserialize($_query["department_id"])) : "";
                 $data["is_connected"] = $_query["is_connected"];
                 $data["role"] = $this->authenticate->getRoleId();
                 $resultarray[] = $data;
@@ -116,11 +117,12 @@ class Sms_Configuration extends CI_Model{
                     $data["sms_ip"] = $_query["sms_ip"];
                     $data["sms_port"] = $_query["sms_port"];
                     $data["sms_user"] = $_query["sms_user"];
+                    $data["modem"] = $_query["modem"];
                     $data["sms_pass"] = $_query["sms_pass"];
                     $data["exclude"] = $_query["exclude"];
                     $data["sms_footer"] = $_query["sms_footer"];
                     $data["department_id"] = $_query["department_id"];
-                    $data["department"] = $this->is_serial($_query["department_id"]) ? $this->getDepartmentListName(unserialize($_query["department_id"])) : "";
+                    $data["department"] = !empty($_query["department_id"]) ? $this->getDepartmentListName(unserialize($_query["department_id"])) : "";
                     $data["is_connected"] = $_query["is_connected"];
                     $data["role"] = $this->authenticate->getRoleId();
                     $resultarray[] = $data;
@@ -155,11 +157,12 @@ class Sms_Configuration extends CI_Model{
     function setSmsProtocolSettings(){
         $resultset = array();
         $post = $this->input->post();
-        $post["department_id"] = serialize($post["department_id"]);
+        $post['department_id'] = isset($post['department_id']) && !empty($post['department_id']) ? serialize($post['department_id']) : '';
         if(isset($post) && $post){
 
             $inserted = $this->db->insert("gccsms.tblsms", $post);
             if($inserted){
+                $resultset["departments_select"] = $this->select2DepartmentData();
                 $resultset["response"] = true;
                 $resultset["toastr_msg"] = "Protocol data has been added.";
             }else{
@@ -186,11 +189,13 @@ class Sms_Configuration extends CI_Model{
                     $data["sms_ip"] = $_query["sms_ip"];
                     $data["sms_port"] = $_query["sms_port"];
                     $data["sms_user"] = $_query["sms_user"];
+                    $data["modem"] = $_query["modem"];
                     $data["sms_pass"] = $_query["sms_pass"];
                     $data["sms_footer"] = $_query["sms_footer"];
-                    $data["department_id"] = $this->is_serial($_query["department_id"]) ? $this->getDepartmentList(unserialize($_query["department_id"])) : array();
+                    $data["department_id"] = !empty($_query["department_id"]) ? $this->getDepartmentListName(unserialize($_query["department_id"])) : "";
+                    $data["department"] = !empty($_query["department_id"]) ? unserialize($_query["department_id"]) : "";
                     $data["is_connected"] = $_query["is_connected"];
-                    
+                    $resultset["departments_select"] = $this->select2DepartmentData($id);
                     $resultset["response"] = true;
                     $resultset["row"] = $data;
                 }
@@ -234,7 +239,7 @@ class Sms_Configuration extends CI_Model{
     function updateSmsProtocolSettings(){
         $resultset = array();
         $post = $this->input->post();
-        $post["department_id"] = serialize($post["department_id"]);
+        $post['department_id'] = isset($post['department_id']) && !empty($post['department_id']) ? serialize($post['department_id']): '';
         if(isset($post) && $post){
             if(isset($post["id"]) && $post["id"]){
                 $tempWhere = array();
@@ -243,6 +248,7 @@ class Sms_Configuration extends CI_Model{
                 
                 $updated = $this->db->update("gccsms.tblsms", $post, $tempWhere);
                 if($updated){
+                    $resultset["departments_select"] = $this->select2DepartmentData();
                     $resultset["response"] = true;
                     $resultset["toastr_msg"] = "Protocol data has been updated.";
                 }else{
@@ -366,11 +372,40 @@ class Sms_Configuration extends CI_Model{
         return false;
     }
 
-    public function select2DepartmentData(){
-        $this->db->select("departments.id, UPPER(CONCAT(departments.`code`,' | ', departments.`description`)) `text`, departments.*");
-        $this->db->order_by("`code`", "ASC");
-        $results = $this->db->get("gcchris.tbldepartments departments")->result();
-        return $results;
+    public function select2DepartmentData($protocol_id = null){
+        $this->db->select("id, department_id");
+        $this->db->from("gccsms.tblsms");
+        $query = $this->db->get();
+    
+        $id = [];
+    
+        foreach ($query->result_array() as $_query) {
+            if (!empty($_query["department_id"]) && $_query['id'] != $protocol_id) {
+                $dept_ids = @unserialize($_query["department_id"]);
+    
+                if (is_array($dept_ids)) {
+                    $id = array_merge($id, $dept_ids);
+                }
+            }
+        }
+    //     var_dump("To be removed",$id
+    //     ,!empty($id), !$edit
+    // ); die();
+        $id = array_filter(array_unique($id));
+        
+        if (!empty($id)) {
+            $this->db->where_not_in("departments.id", $id);
+        }
+    
+        $this->db->select("
+            departments.id,
+            UPPER(CONCAT(departments.code, ' | ', departments.description)) AS text,
+            departments.*
+        ");
+        $this->db->from("gcchris.tbldepartments departments");
+        $this->db->where("departments.is_archived", 0);
+        $this->db->order_by("departments.code", "ASC");
+        return $this->db->get()->result();
     }
 
 }
