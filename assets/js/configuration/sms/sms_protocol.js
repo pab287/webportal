@@ -18,10 +18,12 @@ dtTableProtocol = dtProtocol.DataTable({
     dom: '<"toolbar">frtlip',
     serverSide: true,
     processing: true,
+    ordering: false,
     ajax: {
         url: baseUrl("configuration/sms_protocol_datatable_request"),
         type: "post",
         dataType: "json",
+        global: false,
         data: function (d) {
             d.csrf_token = _csrf_hash;
             d.search['value'] = search_val;
@@ -39,7 +41,7 @@ dtTableProtocol = dtProtocol.DataTable({
                 return renderStatus(data)
             }
         },
-        { data: null, width: "3%", className: "text-center" },
+        { data: null, width: "3%", className: "text-center",orderable: false },
     ],
     columnDefs: [
         {
