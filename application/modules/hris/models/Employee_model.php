@@ -2113,7 +2113,7 @@ class Employee_model extends CI_Model {
                 /*** modified to array data ***/
 
                 $data->added_by =  (is_numeric($data->add_by)) ? $this->core_layout->getEmployeeData($data->add_by)['display_name_1'] : $data->add_by;
-                $data->multiple_position = $data->is_multiple_position == 1 ? $this->db->select('position, is_primary, sort')->get_where($this->multiplePositionTable, array('emp_id' => $id))->result() : array();
+                $data->multiple_position = $data->is_multiple_position == 1 ? $this->db->select('position as id, is_primary, sort')->get_where($this->multiplePositionTable, array('emp_id' => $id))->result() : array();
             }
         }
         return $data;

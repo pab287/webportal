@@ -35,7 +35,7 @@ var mcompany = $("#m--input-company_id");
 var dtEmployee = null;
 let dtPerformanceRating = null;
 var dtReturnToWork = null;
-var companyExceptCurrent, tempData = { is_multiple_position: 0, multiple_position: [] };
+var companyExceptCurrent, tempData;
 var tempDataId = 0;
 let questions_list = [];
 let clickedView = 'grid';
@@ -56,7 +56,6 @@ let selectedTable="";
 let _user = [];
 let acctgStatus = 2; // assigned as 2 to not trigger the 0 is_returned status to the first trigger of datatable;
 let exported_acctg = null;
-let multiPosition = [];
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.data !== "undefined" && _tempContentData.data){ _user = _tempContentData.data; }
@@ -525,7 +524,7 @@ if (typeof _tempContentData !== "undefined") {
     });
     var vmTab3 = new Vue({
         el: "#frmEditEmploymentData",
-        data: { vm_tab3: tempData },
+        data: { vm_tab3: tempData, multiple_position: [] },
         mounted: function () {
             var vmData = this.vm_tab3;
 
@@ -668,19 +667,21 @@ if (typeof _tempContentData !== "undefined") {
                 const selectEl = $("#m--input-position_id");
 
                 const sortMap = new Map();
-                vmData.multiple_position.forEach(p => sortMap.set(p.position, parseInt(p.sort)));
+                vmData.multiple_position.forEach(p => sortMap.set(p.id, parseInt(p.sort)));
 
                 selectEl.prop("multiple", isMultiple);
                 selectEl.attr('name', isMultiple ? 'position[]' : 'position');
 
                 // intersect 2 array and get the matched data by position id
                 const intersection = tempDropdownData.dropdown_position.filter(a1 =>
-                    vmData.multiple_position.some(a2 => a2.position === a1.id)
+                    vmData.multiple_position.some(a2 => a2.id === a1.id)
                 ).sort((a, b) => sortMap.get(a.id) - sortMap.get(b.id));
 
                 this.positionSelect2('#m--input-position_id', true, vmData.position, true, intersection);
+                this.multiple_position = [...intersection];
             } else {
                 this.positionSelect2('#m--input-position_id', true, vmData.position, false);
+                this.multiple_position = [];
             }
 
             //-------- enable date regularized, separation date----//
@@ -1062,6 +1063,9 @@ if (typeof _tempContentData !== "undefined") {
                     }
                 }
 
+                currentTarget.prop("multiple", isMultiple);
+                currentTarget.attr('name', isMultiple ? 'position[]' : 'position');
+
                 setTimeout(() => {
                     if (multiPosition.length > 0) {
                         multiPosition.forEach(pos => {
@@ -1093,12 +1097,13 @@ if (typeof _tempContentData !== "undefined") {
                             let newData = [];
                             const tempData = $(this).select2("data");
                             tempData.forEach((value, index) => { 
-                                newData.push({ id: value.id, text: value.text, primary: index === 0 ? 1 : 0 }); 
+                                newData.push({ id: value.id, text: value.text, primary: index === 0 ? 1 : 0, sort: index }); 
                             });
 
-                            vmData = Object.assign({}, vmData, { multiple_position: newData });
+                            vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { multiple_position: newData });
+
                             multiPosition = newData;
-                            vmPrimary.positions = newData;
+                            vmPrimary.positions = [...newData];
                         } else {
                             vmData.position = data.id;
                         }
@@ -1107,12 +1112,12 @@ if (typeof _tempContentData !== "undefined") {
                             let newData = [];
                             const tempData = $(this).select2("data");
                             tempData.forEach((value, index) => { 
-                                newData.push({ id: value.id, text: value.text, primary: index === 0 ? 1 : 0 }); 
+                                newData.push({ id: value.id, text: value.text, primary: index === 0 ? 1 : 0, sort: index }); 
                             });
 
-                            vmData = Object.assign({}, vmData, { multiple_position: newData });
+                            vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { multiple_position: newData });
                             multiPosition = newData;
-                            vmPrimary.positions = newData;
+                            vmPrimary.positions = [...newData];
                         }
                     });
 
@@ -1139,15 +1144,16 @@ if (typeof _tempContentData !== "undefined") {
 
                 if (instance.vm_tab3.multiple_position.length > 0){
                     const sortMap = new Map();
-                    instance.vm_tab3.multiple_position.forEach(p => sortMap.set(p.position, parseInt(p.sort)));
+                    instance.vm_tab3.multiple_position.forEach(p => sortMap.set(p.id, parseInt(p.sort)));
 
                     intersection = tempDropdownData.dropdown_position.filter(a1 =>
-                        instance.vm_tab3.multiple_position.some(a2 => a2.position === a1.id)
+                        instance.vm_tab3.multiple_position.some(a2 => a2.id === a1.id)
                     ).sort((a, b) => sortMap.get(a.id) - sortMap.get(b.id));
                 }
 
-                this.positionSelect2('#m--input-position_id', true, instance.vm_tab3.position, isMultiple, intersection);
-                vmData = Object.assign({}, vmData, { is_multiple_position: isMultiple ? 1 : 0 });
+                this.positionSelect2('#m--input-position_id', true, instance.vm_tab3.position, isMultiple, isMultiple ? intersection : []);
+                vmPrimary.positions = [...intersection];
+                vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { is_multiple_position: isMultiple ? 1 : 0 });
 
                 if (isMultiple) {
                     $("#sort_position").show();
@@ -1156,19 +1162,21 @@ if (typeof _tempContentData !== "undefined") {
                 }
             }, sortPosition(e) {
                 const instance = this;
-                let newData = [];
+                let intersection = [];
 
                 vmPrimary.isSortOnly = true;
-
                 if (instance.vm_tab3.multiple_position.length > 0){
-                    const tempData = $("#m--input-position_id").select2("data");
-                    tempData.forEach((value, index) => { 
-                        newData.push({ id: value.id, text: value.text, primary: index === 0 ? 1 : 0 }); 
-                    });
+                    const sortMap = new Map();
+                    instance.vm_tab3.multiple_position.forEach(p => sortMap.set(p.id, parseInt(p.sort)));
+
+                    intersection = tempDropdownData.dropdown_position.filter(a1 =>
+                        instance.vm_tab3.multiple_position.some(a2 => a2.id === a1.id)
+                    ).sort((a, b) => sortMap.get(a.id) - sortMap.get(b.id));
                 }
 
-                vmPrimary.positions = newData;
+                console.log(intersection)
 
+                vmPrimary.positions = [...intersection];
                 $("#set_primary_position").modal('show');
                 PortletDraggable.init();
 
@@ -6715,6 +6723,9 @@ const vmPrimary = new Vue({
                 });
             }
 
+        },
+        isEmpty(arr) {
+            return $.isEmptyObject(arr)
         }
     },
 });
@@ -6756,7 +6767,9 @@ var PortletDraggable = function () {
 
 
                     vmPrimary.positions = [...newData];
-                    vmTab3.positionSelect2('#m--input-position_id', true, vmTab3.vm_tab3.position, true, vmPrimary.positions);
+                    vmTab3.multiple_position = [...newData];
+                    vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { multiple_position: newData });
+                    vmTab3.positionSelect2('#m--input-position_id', true, vmTab3.vm_tab3.position, true, newData);
                 }
             });
         }
@@ -6795,9 +6808,21 @@ function saveEmploymentData(formUrl, formData, currentForm) {
 
                 if(typeof vmTab3.vm_tab3 != 'undefined' && Object.keys(vmTab3.vm_tab3).length > 0){
                     let { vm_tab3 } = vmTab3;
-
                     // vm_tab3 = Object.assign({}, vm_tab3, json.data); -> commented as it doesnt overwrite the old the after updating the record
                     vmTab3.vm_tab3 = Object.assign({}, vm_tab3, json.data);
+
+                    if (json.data.is_multiple_position == 1) {
+                        const sortMap = new Map();
+                        vmTab3.vm_tab3.multiple_position.forEach(p => sortMap.set(p.id, parseInt(p.sort)));
+
+                        const intersection = tempDropdownData.dropdown_position.filter(a1 =>
+                            vmTab3.vm_tab3.multiple_position.some(a2 => a2.id === a1.id)
+                        ).sort((a, b) => sortMap.get(a.id) - sortMap.get(b.id));
+
+                        vmTab3.multiple_position = [...intersection];
+                    } else {
+                        vmTab3.multiple_position = [];
+                    }
                 }
                 // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, json.data);
                 getJobDescription();
@@ -6819,7 +6844,7 @@ function saveEmploymentData(formUrl, formData, currentForm) {
                 );
 
             if (vmPrimary.positions.length > 0) {
-                vmPrimary.positions = {};
+                vmPrimary.positions = [];
             }
         },
         error: function (jqXHR, textStatus, errorThrown) {
