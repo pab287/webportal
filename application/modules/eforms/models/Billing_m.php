@@ -3154,7 +3154,7 @@ class Billing_m extends CI_Model {
                 $data["checkbox"] = '';
                 $data["penalties"] = unserialize($_query["penalties"]);
                 $data["payment_ref_no"] = $_query['payment_ref_no'];
-                $data["due_date"] = $_query['due_date'];
+                $data["due_date"] = date('M d, Y', strtotime($_query["due_date"]));
                 $data["name"] = $_query["name"];
                 $data["id"] = $_query["id"];
                 $data["ref_no"] = $_query["ref_no"];

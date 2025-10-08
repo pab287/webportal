@@ -341,6 +341,10 @@
 		border: 1px solid #ffffff !important;
 	}
 
+	#table-payment tbody > *{
+		font-size: 12px;
+	}
+
 	#m_viewPayment .section-area .bg-card {
 		border-radius: 5px;
 		padding: 20px;

@@ -9,7 +9,6 @@ const tblPayment = $("#table-payment").DataTable({
    dom: '<"toolbar">rtlip',
    serverSide: true,
    processing: true,
-//    aaSorting: [],
    ajax: {
         url: baseUrl("eforms/billing/get_billing_payment/"),
         type: "post",
@@ -64,14 +63,7 @@ const tblPayment = $("#table-payment").DataTable({
         { data: null, className: "text-center"},
    ],
    columnDefs: [
-        // {
-        //     orderable: false,
-        //     className: 'select-checkbox',
-        //     targets: 0
-        // },
         {
-            // data: null,
-            // defaultContent: "",
             targets: -1,
             orderable: false,
             render: function ( data, type, row, meta ) { 
@@ -79,8 +71,6 @@ const tblPayment = $("#table-payment").DataTable({
             },
         }, 
         {
-            // data: null,
-            // defaultContent: "",
             targets: 6,
             orderable: false,
             render: function (data, type, row, meta) {
@@ -128,54 +118,56 @@ const tblPayment = $("#table-payment").DataTable({
     },
     buttons: [
         { 
-                extend: 'csv',
-                exportOptions: {
-                    columns: "thead th:not(.notExport)"
-                },
-                customize: function(csv) {
-                    let data = csv.split('\n');
+            extend: 'csv',
+            exportOptions: {
+                columns: "thead th:not(.notExport)"
+            },
+            customize: function(csv) {
+                let data = csv.split('\n');
 
-                    let targetUppercase = [1, 3]; // Columns to make uppercase
-                    let removeSpecialChar = [5, 6, 7]; // Remove special characters from these columns like peso sign
-                    let removeComma = [5, 6, 7]; // Column to remove commas
+                let targetUppercase = [1, 3, 9, 10]; // Columns to make uppercase
+                let removeSpecialChar = [5, 6, 7]; // Remove special characters from these columns like peso sign
+                let removeComma = [5, 6, 7]; // Column to remove commas
 
-                    // Loop through each row
-                    data = data.map((row, rowIndex) => {  
-                        // Split row into columns, considering quoted fields
-                        let columns = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+                // Loop through each row
+                data = data.map((row, rowIndex) => {  
+                    // Split row into columns, considering quoted fields
+                    let columns = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
 
-                        columns = columns.map((col, columnIndex) => {
-                            col = col.trim(); // Remove extra spaces
-                    
-                            if (rowIndex === 0) { 
-                                return col.replace(/\b\w/g, char => char.toUpperCase());
-                            }
-                    
-                            // Convert to uppercase for specific columns
-                            if (targetUppercase.includes(columnIndex)) {
-                                col = col.toUpperCase();
-                            }
+                    if (!columns) return row; // Skip empty lines
 
-                            // Remove special characters from specific columns
-                            if (removeSpecialChar.includes(columnIndex)) {
-                                col = col.replace(/[^\w\s.]/gi, '');
-                            }
-                    
-                            // Remove commas from specific columns
-                            if (columnIndex === removeComma) {
-                                col = col.replace(/,/g, '');
-                            }
-                    
-                            return col;
-                        });
+                    columns = columns.map((col, columnIndex) => {
+                        col = col.trim(); // Clean quotes and spaces
+                
+                        if (rowIndex === 0) { 
+                            return col.replace(/\b\w/g, char => char.toUpperCase());
+                        }
 
-                        return columns.join(","); // Join modified columns
+                        // Convert to uppercase for specific columns
+                        if (targetUppercase.includes(columnIndex)) {
+                            col = col.toUpperCase();
+                        }
+
+                        // Remove special characters from specific columns
+                        if (removeSpecialChar.includes(columnIndex)) {
+                            col = col.replace(/[^\w\s.]/gi, '');
+                        }
+                
+                        // Remove commas from specific columns
+                        if (columnIndex === removeComma) {
+                            col = col.replace(/,/g, '');
+                        }
+                
+                        return col;
                     });
 
-                    // Add UTF-8 BOM to the beginning of the CSV data for letter "ñ" to appear correctly
-                    const utf8BOM = '\uFEFF';
-                    return utf8BOM + data.join("\n"); // Reassemble CSV
-                }
+                    return columns.join(","); // Join modified columns
+                });
+
+                // Add UTF-8 BOM to the beginning of the CSV data for letter "ñ" to appear correctly
+                const utf8BOM = '\uFEFF';
+                return utf8BOM + data.join("\n"); // Reassemble CSV
+            }
         },
         { 
                 extend: 'excel',
@@ -186,7 +178,7 @@ const tblPayment = $("#table-payment").DataTable({
                     let sheet = xlsx.xl.worksheets['sheet1.xml'];
 
                     // Convert Column B to Uppercase
-                    $('row:not(:nth-child(2)) c[r^="B"], row:not(:nth-child(2)) c[r^="D"]', sheet).each(function () {
+                    $('row:not(:nth-child(2)) c[r^="B"], row:not(:nth-child(2)) c[r^="D"], row:not(:nth-child(2)) c[r^="E"], row:not(:nth-child(2)) c[r^="J"], row:not(:nth-child(2)) c[r^="K"]', sheet).each(function () {
                         let cell = $(this).find('is t, v'); // Find the text inside
                         let text = cell.text().trim(); // Get the existing text
 
@@ -236,7 +228,7 @@ const tblPayment = $("#table-payment").DataTable({
                         // Skip header row from all styles
                         if (rowIndex === 0) { return; }
 
-                        let targetUppercase = [1, 3, 5]; // Columns to make uppercase
+                        let targetUppercase = [1, 3, 4, 5, 9, 10]; // Columns to make uppercase
                         let targetCenter = [0, 2, 3, 4, 8, 9]; // Columns to center align
                         let targetRight = [5, 6, 7]; // Column to right align
                         let removeSpecialChar = [5, 6, 7]; // Remove special characters from these columns like peso sign
