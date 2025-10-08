@@ -40,7 +40,7 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
                     `;
                 }
             },
-            { data: 'description' },
+            // { data: 'description' },
             { 
                 data: "event_venue", 
                 name: 'event_venue',
@@ -288,7 +288,7 @@ function itemDatatableActions(id, status, from, to) {
         <a 
             href="${baseUrl('events/add_participants/') + id}" 
             class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnNew" 
-            data-toggle="m-tooltip" data-placement="bottom" title="Manage Participants" 
+            data-toggle="m-tooltip" data-placement="bottom" title="Manage Event" 
             data-skin="dark">
             <i class="la la-user"></i>
         </a>

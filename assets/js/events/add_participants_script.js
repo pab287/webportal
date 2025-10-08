@@ -826,3 +826,21 @@ $.validate({
         return false; 
     }
 });
+
+const expandedButtons = $('button[aria-expanded="true"]');
+expandedButtons.each(function (i, el) {
+    $(el).css('transform', 'rotate(90deg)');
+})
+
+$('.accordion').on('hide.bs.collapse', function (e) {
+    const el = $(e.target)
+        .prev('.accordion-header')
+        .find(".btn");
+    el.css('transform', 'rotate(0deg)');
+});
+$('.accordion').on('show.bs.collapse', function (e) {
+    const el = $(e.target)
+        .prev('.accordion-header')
+        .find(".btn");
+    el.css('transform', 'rotate(90deg)');
+});

@@ -28,9 +28,10 @@ class Events_model extends MX_Controller {
         $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
         $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
+        $is_archived = (isset($post["is_archived"]) && $post["is_archived"]) ? $post["is_archived"] : 0;
         $rowData = array();
-        $rowData = $this->getEventsData($limit, $offset, $sortBy, $sortOrder, $search,$year);
-        $rowCount = $this->getEventsDataCount($search,$year);
+        $rowData = $this->getEventsData($limit, $offset, $sortBy, $sortOrder, $search,$year, $is_archived);
+        $rowCount = $this->getEventsDataCount($search,$year, $is_archived);
       
         $data["recordsTotal"] = $rowCount;
         $data["recordsFiltered"] = $rowCount;
@@ -38,7 +39,7 @@ class Events_model extends MX_Controller {
         return $data;
     }
 
-    private function getEventsData($limit, $offset, $sortBy, $sortOrder, $search , $year){
+    private function getEventsData($limit, $offset, $sortBy, $sortOrder, $search , $year,$is_archived){
         $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to","b.speaker_name","b.position","b.company","a.company_array","a.department_array","a.events_by");
         $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by,
             GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
@@ -55,8 +56,7 @@ class Events_model extends MX_Controller {
         $this->db->join($this->eventsSpeakersTable . " b", "a.id = b.event_id", "left");
 
         $this->db->where("YEAR(a.event_to)", $year);
-        $this->db->where("a.is_archive", 0);
-
+        $this->db->where("a.is_archive", $is_archived ? 1 : 0);
         if (in_array("view_own_request", $this->actions)) {
             $this->db->join($this->eventsParticipantsTable . " c", "a.id = c.event_id", "left");
             $this->db->join($this->employeesTable." d", "c.emp_id = d.id", "left");
@@ -112,7 +112,7 @@ class Events_model extends MX_Controller {
         return $result;
     }
 
-    private function getEventsDataCount($search,$year){
+    private function getEventsDataCount($search,$year,$is_archived){
         $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to","b.speaker_name","b.position","b.company","a.company_array","a.department_array");
         $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_array, a.department_array, a.company_array, a.department_array,
         GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
@@ -128,7 +128,7 @@ class Events_model extends MX_Controller {
         $this->db->from($this->eventsCalendarTable . " a");
         $this->db->join($this->eventsSpeakersTable . " b", "a.id = b.event_id", "left");
         $this->db->where("YEAR(a.event_to)", $year);
-        $this->db->where("a.is_archive", 0);
+        $this->db->where("a.is_archive", $is_archived ? 1 : 0);
         if (in_array("view_own_request", $this->actions)) {
             $this->db->join($this->eventsParticipantsTable . " c", "a.id = c.event_id", "left");
             $this->db->join($this->employeesTable." d", "c.emp_id = d.id", "left");
@@ -501,6 +501,31 @@ class Events_model extends MX_Controller {
             return [
                 "status"  => "success",
                 "message" => "Event archived successfully."
+            ];
+        }
+    }
+
+    public function restoreEvent(){
+        $post = $this->input->post();
+        $id = $post['id'];
+        $this->db->trans_start();
+        $this->db->where("id", $id);
+        $this->db->update($this->eventsCalendarTable, ["is_archive" => 0]);
+        $this->db->where("event_id", $id);
+        $this->db->update($this->eventsSpeakersTable, ["is_archive" => 0]);
+        $this->db->trans_complete();
+    
+        if ($this->db->trans_status() === FALSE) {
+            $this->core_layout->setEventLog("Failed to restore company event ID: {$id}.","restore","error","gcchris","system");
+            return [
+                "status"  => "error",
+                "message" => "Failed to restore event. Please try again."
+            ];
+        } else {
+            $this->core_layout->setEventLog("Restore company event ID: {$id}.","restore","success","gcchris","user");
+            return [
+                "status"  => "success",
+                "message" => "Event restored successfully."
             ];
         }
     }

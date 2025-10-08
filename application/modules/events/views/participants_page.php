@@ -108,19 +108,19 @@
                             </div>
                             <div class="m-separator m-separator--dashed d-xl-12"></div>
                             <div class="row text-center bg-light rounded p-3 mx-1 mb-4 text-uppercase">
-                                <div class="col-3">
+                                <div class="col-4">
                                     <small class="text-uppercase text-muted m--font-boldest d-block">Invited</small>
                                     <div class="m--font-boldest text-dark" v-text="participantsCount.invited"></div>
                                 </div>
-                                <div class="col-3">
+                                <!-- <div class="col-3">
                                     <small class="text-uppercase text-muted m--font-boldest d-block">pending</small>
                                     <div class="m--font-boldest text-dark" v-text="participantsCount.pending"></div>
-                                </div>
-                                <div class="col-3">
+                                </div> -->
+                                <div class="col-4">
                                     <small class="text-uppercase text-muted m--font-boldest d-block">Confirmed</small>
                                     <div class="m--font-boldest text-dark"  v-text="participantsCount.confirmed"></div>
                                 </div>
-                                <div class="col-3">
+                                <div class="col-4">
                                     <small class="text-uppercase text-muted m--font-boldest d-block" >Declined</small>
                                     <div class="m--font-boldest text-dark" v-text="participantsCount.declined"></div>
                                 </div>
@@ -129,7 +129,7 @@
                             <div class="row">
                                 <div class="col-12">
                                     <div class="d-flex flex-column align-items-center text-uppercase">
-                                    <h3 class="m-widget1__title m--font-boldest">Guest Speakers</h3>
+                                    <h3 class="m-widget1__title m--font-boldest">RESOURCE PERSON</h3>
                                     </div>
                                 </div>
                             </div>
@@ -151,9 +151,23 @@
                     </div>
                 </div>
                 <div class="col-md-8 col-sm-12">
-                    <div class="m-portlet" id="m_portlet">
+                    <div class="m-portlet m-portlet--tabs" id="m_portlet">
                         <div class="m-portlet__head">
-                            <div class="m-portlet__head-caption">
+                            <div class="m-portlet__head-tools">
+                                <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--left m-tabs-line--primary" role="tablist">
+                                    <li class="nav-item m-tabs__item">
+                                        <a class="nav-link m-tabs__link active" data-toggle="tab" href="#participantTab" role="tab">
+                                            Participants
+                                        </a>
+                                    </li>
+                                    <li class="nav-item m-tabs__item">
+                                        <a class="nav-link m-tabs__link" data-toggle="tab" href="#attachmentTab" role="tab">
+                                            Attachments
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <!-- <div class="m-portlet__head-caption">
                                 <div class="m-portlet__head-title">
                                     <span class="m-portlet__head-icon">
                                         <i class="la la-user"></i>
@@ -162,33 +176,71 @@
                                         Event Participants
                                     </h3>
                                 </div>
-                            </div>
+                            </div> -->
                         </div>
                         <div class="m-portlet__body">
-                            <div class="row">
-                                <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
-                                    <button type="button" v-if="!eventAlreadyHappened" class="btn m-btn m-btn--sm btn-success m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#addNewParticipant">
-                                        <i class="la la-user-plus"></i>
-                                        ADD PARTICIPANT
-                                    </button>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="participantTab">
+                                    <div class="row">
+                                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                                            <button type="button" v-if="!eventAlreadyHappened" class="btn m-btn m-btn--sm btn-success m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#addNewParticipant">
+                                                <i class="la la-user-plus"></i>
+                                                ADD PARTICIPANT
+                                            </button>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="table-responsive">
+                                                <table class="table display table-bordered table-striped dataTable no-footer" id="participantsTable">
+                                                    <thead>
+                                                        <!-- <tr>
+                                                            <th></th>
+                                                            <th></th>
+                                                            <th></th>
+                                                            <th></th>
+                                                            <th></th>
+                                                            <th></th>
+                                                            <th></th>
+                                                        </tr> -->
+                                                    </thead>
+                                                    <tbody>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-12">
-                                    <div class="table-responsive">
-                                        <table class="table display table-bordered table-striped dataTable no-footer" id="participantsTable">
-                                            <thead>
-                                                <!-- <tr>
-                                                    <th></th>
-                                                    <th></th>
-                                                    <th></th>
-                                                    <th></th>
-                                                    <th></th>
-                                                    <th></th>
-                                                    <th></th>
-                                                </tr> -->
-                                            </thead>
-                                            <tbody>
-                                            </tbody>
-                                        </table>
+                                <div class="tab-pane" id="attachmentTab">
+                                    <div class="row mb-3">
+                                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                                            <button type="button" class="btn m-btn m-btn--sm btn-success m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#newAttachment">
+                                                <i class="la la-user-plus"></i>
+                                                ADD ATTACHMENT
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <hr/>
+                                    <div class="accordion">
+                                        <div class="m-widget2">
+                                            <div class="mb-4 d-flex flex-row align-items-center accordion-header">
+                                                <button class="btn btn-default m-btn--icon m-btn--icon-only m-btn--pill"
+                                                        data-toggle="collapse"
+                                                        data-target="#collapsibleDocuments"
+                                                        aria-expanded="true" aria-controls="collapsibleDocuments">
+                                                    <i class="more-less fa fa-chevron-right"></i>
+                                                </button>
+                                                <h5 class="ml-3 mb-0">Training Documents</h5>
+                                                <span class="pl-2 m-menu__link-badge">
+                                                    <span class="m-badge m-badge--success" id="documents-total-badge">0</span>
+                                                </span>
+                                            </div>
+                                            <div id="collapsibleDocuments" class="collapse show">
+                                                <div id="alert-no-document-yet">
+                                                    <h6 class="mt-2 text-muted" style="padding-left: 48px;">No record(s) to show.</h6>
+                                                </div>
+                                                <div class="row"></div>
+                                            </div>
+                                        </div>
+                                        <hr/>
                                     </div>
                                 </div>
                             </div>
@@ -362,20 +414,6 @@
         </div>
     </div>
 
-    <div class="modal fade show" id="modalTempContent" tabindex="-1">
-        <div class="modal-dialog modal-md">
-            <div class="modal-content" id="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Temp Title</h5>
-                    <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">test</div>
-            </div>
-        </div>
-    </div>
-
     <div class="modal fade show" id="attendanceSheet" tabindex="-1">
         <div class="modal-dialog modal-md">
             <div class="modal-content">
@@ -426,4 +464,30 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade show" id="newAttachment" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">UPLOAD ATTACHMENT</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-control-label required">Title</label>
+                            <input name="title" type="text" class="form-control m-input" placeholder="Title" data-validation="required">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-control-label required">File</label>
+                            <input name="attachment" type="file" class="form-control m-input" placeholder="File" data-validation="required">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>

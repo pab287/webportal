@@ -116,11 +116,11 @@
                             <thead>
                             <tr>
                                 <th></th>
-                                <th>TITLE</th>
-                                <th>DESCRIPTION</th>
+                                <th>TRAINING TITLE</th>
+                                <!-- <th>DESCRIPTION</th> -->
                                 <th>VENUE</th>
-                                <th>SPEAKERS</th>
-                                <th>ACTIONS</th>
+                                <th>RESOURCE PERSON</th>
+                                <th>ACTION ITEMS</th>
                             </tr>
                             </thead>
                             <tbody></tbody>
@@ -273,7 +273,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="event_description" class="form-control-label required">Event description</label>
-                                <input name="event_description" type="text" class="form-control m-input" placeholder="event description" v-model="eventsData.description" data-validation="required" :disabled="disabled">
+                                <textarea name="event_description" type="text" class="form-control m-input" placeholder="event description" v-model="eventsData.description" data-validation="required" :disabled="disabled"></textarea>
                             </div>
                             <div class="form-group">
                                 <label for="events_by" class="form-control-label required">Institution</label>
