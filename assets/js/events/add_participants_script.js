@@ -2,6 +2,25 @@ let eventsDetails = null;
 let participants = null;
 let employees = null;
 let empId = null;
+const maxFileSize = 50 * 1024 * 1024; // 50MB
+const allowedTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/jpeg'
+  ];
+
+const mimeMap = {
+    "application/pdf": "pdf",
+    "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "image/jpeg": "jpg"
+};
+const attachmentTypes = [
+    { id: 'training_document', text: 'Training Document' },
+    { id: 'training_evaluation', text: 'Training Evaluation' },
+    { id: 'resource_evaluation', text: 'Resource Evaluation' },
+];
 let selectedData = {
     company: '',
     department: '',
@@ -48,6 +67,7 @@ let eventVue = new Vue({
             position: '',
         },
         participantDataSelected:{},
+        uploadedFiles:[],
 
     },
     mounted: function () {
@@ -129,6 +149,37 @@ let eventVue = new Vue({
                 $("#employee-select").val(empId).trigger('change');
                 $('#nonEmployeeToggle').prop('checked', toggle);
             }
+        },
+        getExtension: function(type) {
+            let extension = mimeMap[type] || (type.includes('/') ? type.split('/').pop() : type);
+            extension = extension.toLowerCase();
+            const iconMap = {
+                "doc": "doc.svg",
+                "docx": "doc.svg",
+                "pdf": "pdf.svg",
+                "jpg": "jpg.svg",
+                "jpeg": "jpg.svg"
+            };
+        
+            const fileName = iconMap[extension] || "default.svg";
+            return baseUrl(`assets/images/file_icons/${fileName}`);
+        },
+        getClass: function(type) {        
+            let extension = mimeMap[type] || (type.includes('/') ? type.split('/').pop() : type);
+            extension = extension.toLowerCase();
+            const classMap = {
+                "doc": "m-widget4 m-widget2__item m-widget2__item--primary col-12",
+                "docx": "m-widget4 m-widget2__item m-widget2__item--primary col-12",
+                "pdf": "m-widget4 m-widget2__item m-widget2__item--danger col-12",
+                "jpg": "m-widget4 m-widget2__item m-widget2__item--success col-12",
+                "jpeg": "m-widget4 m-widget2__item m-widget2__item--success col-12"
+            };
+        
+            return classMap[extension] || "m-widget4 m-widget2__item m-widget2__item--default col-12";
+        },
+        fileDelete: function(id){
+            this.uploadedFiles.pop(id);
+            this.count = this.uploadedFiles.length;
         },
     },
 });
@@ -843,4 +894,87 @@ $('.accordion').on('show.bs.collapse', function (e) {
         .prev('.accordion-header')
         .find(".btn");
     el.css('transform', 'rotate(90deg)');
+});
+
+
+$('#fileupload').on('change', function(e) {
+    handleFiles(e.target.files);
+});
+
+function handleFiles(fileList) {
+    $.each(fileList, function(index, file) {
+        if (validateFile(file)) {
+            addFile(file);
+        }
+    });
+}
+
+
+function validateFile(file) {
+    if (file.size > maxFileSize) {
+        toastr.error(`File "${file.name}" is too large. Maximum size is 10MB.`);
+        return false;
+    }
+    
+    if (!allowedTypes.includes(file.type)) {
+        toastr.error(`File "${file.name}" has an unsupported format. Only PDF and DOCX files are allowed.`, 'danger');
+        return false;
+    }
+    
+    const exists = eventVue.uploadedFiles.some(f => f.name === file.name);
+    if (exists) {
+        toastr.error(`File "${file.name}" is already selected.`);
+        return false;
+    }
+    
+    return true;
+}
+
+function addFile(file) {
+    const fileObj = {
+        id: 'f' + Math.floor(1000 + Math.random() * 9000),
+        name: file.name,
+        type: file.type,
+        size: file.size,
+    };
+    eventVue.uploadedFiles.push(fileObj);
+}
+
+$('#attachment_type').select2({
+    placeholder: "Select Attachment Type",
+    width: '100%',
+    data: attachmentTypes,
+});
+
+$('#New_Add_File').on('submit', function(e) {
+    e.preventDefault();
+    const form = $('#New_Add_File');
+    const formData = new FormData(form[0]);
+    formData.append('events_id', eventsDetails.id);
+    if (form.isValid()) {
+        $.ajax({
+            url: baseUrl('events/upload_documents'),
+            dataType: "JSON",
+            type: "POST",
+            processData: false,
+            contentType: false,
+            data: formData,
+            success: function (response) {
+                // if (response.success) {
+                //     search_val = response.data;
+                //     $("#generalSearch").val(search_val);
+                //     toastr.success(response.message, "New Resume Saved.", 10000);
+                //     $("#modal_form_document").modal("hide");
+                //     if(response.upload_errors){
+                //         toastr.error(response.upload_errors, "File Upload Error", 10000);
+                //     }
+                //     setTimeout(function () {
+                //         location.href = baseUrl("crs/resume");
+                //     }, 2000);
+                // }else{
+                //     toastr.error(response.message, "New Resume Not Saved.", 10000);
+                // }
+            }
+        });
+    }
 });

@@ -4,6 +4,7 @@ class Events_model extends MX_Controller {
     protected $eventsCalendarTable = "gcchris.events_calendar";
     protected $eventsSpeakersTable = "gcchris.events_speakers";
     protected $eventsParticipantsTable = "gcchris.events_participants";
+    protected $eventsAttachmentsTable = "gcchris.events_attachments";
     protected $employeesTable = "gccmaster.tblemployees";
     protected $departmentTable = "gcchris.tbldepartments";
     protected $companyTable = "gcchris.tblcompanies";
@@ -695,6 +696,106 @@ class Events_model extends MX_Controller {
         $this->db->where("id", $id);
         $query = $this->db->get();
         return $query->num_rows() === 1 && $query->row()->display_name != '' ? $query->row()->display_name : "No Assigned Name";
+    }
+
+    public function uploadDocuments(){
+        $resultset = array();
+        $post = $this->input->post();
+        $event = $post['events_id'];
+        $type = $post['attachment_type'];
+        $filePath = "./uploads/files/documents/event_{$event}/$type";
+    
+        $createFilePath = false;
+    
+        if (!file_exists($filePath)) {
+            $mkdir = mkdir($filePath, 0777, true);
+            if ($mkdir){ $createFilePath = true; }
+        }else{ $createFilePath = true; }
+    
+        if(!$createFilePath){
+            $resultset["response"] = false;
+            $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
+            $resultset["toastr_state"] = "warning";
+            return $resultset;
+        }
+    
+        $config = array();
+        $config['upload_path']          = $filePath;
+        $config['allowed_types']        = 'pdf|docx|jpg|jpeg';
+        $config['max_size']             = 100000;
+        $config['create_thumbnail']     = true;
+    
+        $uploadedFiles = array();
+        $failedFiles = array();
+        var_Dump($_FILES['files']);
+        // Check if files were uploaded
+        if(!isset($_FILES['files']) || empty($_FILES['files']['name'][0])){
+            $resultset["response"] = false;
+            $resultset["toastr_msg"] = "No files selected!";
+            $resultset["toastr_state"] = "warning";
+            return $resultset;
+        }
+        
+        $fileCount = count($_FILES['files']['name']);
+    
+        for($i = 0; $i < $fileCount; $i++){
+            if(empty($_FILES['files']['name'][$i])){
+                continue;
+            }
+            
+            $_FILES['file']['name']     = $_FILES['files']['name'][$i];
+            $_FILES['file']['type']     = $_FILES['files']['type'][$i];
+    
+            $data = $this->file_upload->uploadFile($config);
+            
+            if($data["response"]){
+                $files = $data["files"][0];
+                $filename = $files["file_name"];
+                
+                $insertData = array(
+                    'filename' => $filename,
+                    'type' => $type,
+                    'events_id' => $event,
+                    'created_by' => $this->user_data['emp_id'],
+                );
+                
+                $insert = $this->db->insert($this->eventsAttachmentsTable, $insertData);
+                
+                if($insert){
+                    $uploadedFiles[] = array(
+                        'file_name' => $filename,
+                        'original_name' => $_FILES['files']['name'][$i],
+                        'type' => $type
+                    );
+                }else{
+                    $failedFiles[] = $_FILES['files']['name'][$i] . ' (DB error)';
+                }
+            }else{
+                $failedFiles[] = $_FILES['files']['name'][$i];
+            }
+        }
+    
+        if(count($uploadedFiles) > 0){
+            $resultset["response"] = true;
+            $resultset["uploaded_files"] = $uploadedFiles;
+            $resultset["file_count"] = count($uploadedFiles);
+            
+            if(count($failedFiles) > 0){
+                $resultset["toastr_msg"] = count($uploadedFiles) . " file(s) uploaded successfully. " . count($failedFiles) . " file(s) failed.";
+                $resultset["toastr_state"] = "warning";
+                $resultset["failed_files"] = $failedFiles;
+            }else{
+                $resultset["toastr_msg"] = "All " . count($uploadedFiles) . " file(s) uploaded successfully!";
+                $resultset["toastr_state"] = "success";
+            }
+        }else{
+            $resultset["response"] = false;
+            $resultset["toastr_msg"] = "Failed to upload all files!";
+            $resultset["toastr_state"] = "error";
+            $resultset["failed_files"] = $failedFiles;
+        }
+        
+        return $resultset;
     }
 
 }

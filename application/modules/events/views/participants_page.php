@@ -466,28 +466,73 @@
     </div>
 
     <div class="modal fade show" id="newAttachment" tabindex="-1">
-        <div class="modal-dialog modal-md">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">UPLOAD ATTACHMENT</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label class="form-control-label required">Title</label>
-                            <input name="title" type="text" class="form-control m-input" placeholder="Title" data-validation="required">
+        <form id="New_Add_File" onsubmit="return false;" onkeydown="return event.key !== 'Enter';" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <div class="modal-dialog modal-md">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">UPLOAD ATTACHMENT</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="attachment_type" class="form-control-label required">Attachment Type</label>
+                                <select id="attachment_type" name="attachment_type" class="form-control m-input select2" data-validation="required"></select>
+                            </div>
+                            <div class="form-group col-12">
+                                <div class=" mt-4">
+                                    <span class="btn btn-success fileinput-button">
+                                        <i class="glyphicon glyphicon-plus"></i>
+                                        <span>Select file</span>
+                                        <input type="file" id="fileupload" name="files[]" accept=".pdf, .docx, application/pdf, .jpg" data-validation="required" multiple>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                            <div id="new_preview" class="m-widget2 row">
+                                <template v-if="uploadedFiles.length >= 1">
+                                    <div class="m-portlet m-portlet--rounded col-lg-12">
+                                        <div class="m-portlet__body row" style="max-height: 300px; overflow-y: auto;">
+                                            <template v-for="(item, index) in uploadedFiles">
+                                                <div v-bind:class="getClass(item.type)">
+                                                    <div class="m-widget4__item m-0 p-0">
+                                                        <div class="m-widget4__img m-widget4__img--icon">
+                                                            <img v-bind:src="getExtension(item.type)" alt="" height="50" width="50">
+                                                        </div>
+                                                        <div class="m-widget2__desc">
+                                                        <span class="m-widget4__text">{{ item.name.length > 20 ? item.name.slice(0, 20) + '...' : item.name }}</span>
+                                                        </div>
+                                                        <div class="m-widget2__actions">
+                                                            <button type="button" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView" v-on:click="fileDelete(item.id)">
+                                                                <i class="m-nav__link-icon flaticon-circle"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template v-else>
+                                    <div class="m-portlet m-portlet--rounded col-lg-12">
+                                        <div class="m-portlet__body row">
+                                            <strong><h5>NO ATTACHMENTS</h5></strong>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            </div>
                         </div>
-                        <div class="col-md-12 mb-3">
-                            <label class="form-control-label required">File</label>
-                            <input name="attachment" type="file" class="form-control m-input" placeholder="File" data-validation="required">
-                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary btnSave"><i class="la la-check mr-2"></i>UPLOAD</button>
+                        <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
-
 </div>

@@ -136,11 +136,16 @@ class Events extends MX_Controller {
             ->set_output(json_encode($data));
     }
 
-    function set_modal_trainings() {
+    public function set_modal_trainings() {
         $data = $this->em->setModalTrainings();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
+    }
+
+    public function upload_documents(){
+        $data = $this->em->uploadDocuments();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
 
