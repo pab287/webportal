@@ -1104,11 +1104,6 @@ if (typeof _tempContentData !== "undefined") {
                         }
                     }).on('select2:unselect', function (e) {
                         if(isMultiple){
-                            var element = e.params.data.element;
-                            var $element = $(element);
-                            $element.detach();
-                            $(this).trigger("change"); 
-
                             let newData = [];
                             const tempData = $(this).select2("data");
                             tempData.forEach((value, index) => { 
