@@ -121,6 +121,50 @@ const tbl_payment_collection = $("#tbl-payment_collection").DataTable({
           footer: true,
           exportOptions: {
               columns: "thead th:not(.notExport)"
+          },
+          customize: function(csv) {
+              let data = csv.split('\n');
+
+              let targetUppercase = [7, 8, 9]; // Columns to make uppercase
+              let removeSpecialChar = []; // Remove special characters from these columns like peso sign
+              let removeComma = []; // Column to remove commas
+
+              // Loop through each row
+              data = data.map((row, rowIndex) => {  
+                  // Split row into columns, considering quoted fields
+                  let columns = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+
+                  columns = columns.map((col, columnIndex) => {
+                      col = col.trim(); // Remove extra spaces
+              
+                      if (rowIndex === 0) { 
+                          return col.replace(/\b\w/g, char => char.toUpperCase());
+                      }
+              
+                      // Convert to uppercase for specific columns
+                      if (targetUppercase.includes(columnIndex)) {
+                          col = col.toUpperCase();
+                      }
+
+                      // Remove special characters from specific columns
+                      if (removeSpecialChar.includes(columnIndex)) {
+                          col = col.replace(/[^\w\s.]/gi, '');
+                      }
+              
+                        // Remove commas from specific columns
+                      if (columnIndex === removeComma) {
+                          col = col.replace(/,/g, '');
+                      }
+              
+                      return col;
+                  });
+
+                  return columns.join(","); // Join modified columns
+              });
+
+              // Add UTF-8 BOM to the beginning of the CSV data for letter "ñ" to appear correctly
+              const utf8BOM = '\uFEFF';
+              return utf8BOM + data.join("\n"); // Reassemble CSV
           }
       }, { 
           extend: 'excelHtml5',
@@ -133,6 +177,19 @@ const tbl_payment_collection = $("#tbl-payment_collection").DataTable({
           footer: true,
           exportOptions: {
               columns: "thead th:not(.notExport)"
+          },
+          customize: function(xlsx) {
+            let sheet = xlsx.xl.worksheets['sheet1.xml'];
+
+            // Convert Column to Uppercase
+            $('row:not(:nth-child(2)) c[r^="H"], row:not(:nth-child(2)) c[r^="I"], row:not(:nth-child(2)) c[r^="J"]', sheet).each(function () {
+                let cell = $(this).find('is t, v'); // Find the text inside
+                let text = cell.text().trim(); // Get the existing text
+
+                if (text) {
+                    cell.text(text.toUpperCase()); // Convert to uppercase
+                }
+            });
           }
       }, { 
           extend: 'pdfHtml5',
