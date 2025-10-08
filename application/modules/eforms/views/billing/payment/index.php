@@ -374,4 +374,8 @@
 	#m_viewPayment .info-group:not(:last-child) {
 		margin: 0 0 10px;
 	}
+
+	.table-archived {
+		pointer-events: none; /* optional if you want them totally inert */
+	}
 </style>

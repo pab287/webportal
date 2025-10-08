@@ -32,7 +32,18 @@ const tblPayment = $("#table-payment").DataTable({
    order: [[11, "desc"]],
    searching: true,
    columns: [
-        { data: "checkbox"},
+        { 
+            data: null, 
+            orderable: false,
+            className: "text-center",
+            render: function (data, type, row) {
+                if (row.is_archive == 1) {
+                    return ""; // hide for archived
+                } else {
+                    return row.checkbox;
+                }
+            }
+        },
         { data: "payment_ref_no", render: function (data) { return "<span class='m--font-boldest'>"+data+"</span>";} },
         { data: "name"},
         { data: "ref_no"},
@@ -53,14 +64,14 @@ const tblPayment = $("#table-payment").DataTable({
         { data: null, className: "text-center"},
    ],
    columnDefs: [
+        // {
+        //     orderable: false,
+        //     className: 'select-checkbox',
+        //     targets: 0
+        // },
         {
-            orderable: false,
-            className: 'select-checkbox',
-            targets: 0
-        },
-        {
-            data: null,
-            defaultContent: "",
+            // data: null,
+            // defaultContent: "",
             targets: -1,
             orderable: false,
             render: function ( data, type, row, meta ) { 
@@ -68,8 +79,8 @@ const tblPayment = $("#table-payment").DataTable({
             },
         }, 
         {
-            data: null,
-            defaultContent: "",
+            // data: null,
+            // defaultContent: "",
             targets: 6,
             orderable: false,
             render: function (data, type, row, meta) {
@@ -98,166 +109,175 @@ const tblPayment = $("#table-payment").DataTable({
         style:    'multi',
         selector: 'td:first-child'
    },
-   buttons: [
-       { 
-            extend: 'csv',
-            exportOptions: {
-                columns: "thead th:not(.notExport)"
-            },
-            customize: function(csv) {
-                let data = csv.split('\n');
-
-                let targetUppercase = [1, 3]; // Columns to make uppercase
-                let removeSpecialChar = [5, 6, 7]; // Remove special characters from these columns like peso sign
-                let removeComma = [5, 6, 7]; // Column to remove commas
-
-                // Loop through each row
-                data = data.map((row, rowIndex) => {  
-                    // Split row into columns, considering quoted fields
-                    let columns = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-
-                    columns = columns.map((col, columnIndex) => {
-                        col = col.trim(); // Remove extra spaces
-                
-                        if (rowIndex === 0) { 
-                            return col.replace(/\b\w/g, char => char.toUpperCase());
-                        }
-                
-                        // Convert to uppercase for specific columns
-                        if (targetUppercase.includes(columnIndex)) {
-                            col = col.toUpperCase();
-                        }
-
-                        // Remove special characters from specific columns
-                        if (removeSpecialChar.includes(columnIndex)) {
-                            col = col.replace(/[^\w\s.]/gi, '');
-                        }
-                
-                         // Remove commas from specific columns
-                        if (columnIndex === removeComma) {
-                            col = col.replace(/,/g, '');
-                        }
-                
-                        return col;
-                    });
-
-                    return columns.join(","); // Join modified columns
-                });
-
-                // Add UTF-8 BOM to the beginning of the CSV data for letter "ñ" to appear correctly
-                const utf8BOM = '\uFEFF';
-                return utf8BOM + data.join("\n"); // Reassemble CSV
-            }
-       },
-       { 
-            extend: 'excel',
-            exportOptions: {
-                columns: "thead th:not(.notExport)"
-            },
-            customize: function(xlsx) {
-                let sheet = xlsx.xl.worksheets['sheet1.xml'];
-
-                // Convert Column B to Uppercase
-                $('row:not(:nth-child(2)) c[r^="B"], row:not(:nth-child(2)) c[r^="D"]', sheet).each(function () {
-                    let cell = $(this).find('is t, v'); // Find the text inside
-                    let text = cell.text().trim(); // Get the existing text
-
-                    if (text) {
-                        cell.text(text.toUpperCase()); // Convert to uppercase
-                    }
-                });
-
-                // Remove special characters from specific columns
-                $('row:not(:nth-child(2)) c[r^="F"], row:not(:nth-child(2)) c[r^="G"], row:not(:nth-child(2)) c[r^="H"]', sheet).each(function () {
-                    let cell = $(this).find('is t, v'); // Find the text inside
-                    let text = cell.text().trim(); // Get the existing text
-
-                    if (text) {
-                        let numericValue = parseFloat(text.replace(/[^\d.-]/g, ''));
-                        cell.text(numericValue);
-                    }
-                });
-            }
-       },
-       { 
-            extend: 'pdf',
-            exportOptions: {
-                columns: "thead th:not(.notExport)"
-            },
-            orientation: 'landscape',
-            pageSize: 'LEGAL',
-            customize: function(doc) {
-                // Set dynamic widths for all columns
-                let columnWidths = new Array(doc.content[1].table.body[0].length).fill('*');
-
-                // Define custom widths for specific columns (adjust index as needed)
-                columnWidths[1] = '18%';
-                
-                // Set font size for header row
-                doc.styles = doc.styles || {};
-                doc.styles.tableHeader = doc.styles.tableHeader || {};
-                doc.styles.tableHeader.fontSize = 9; 
-                doc.styles.tableHeader.fillColor = '#2d4154'; // Set header background color
-
-                // Apply column widths
-                doc.content[1].table.widths = columnWidths;
-
-                // Loop through table body and target specific column
-                doc.content[1].table.body.forEach(function (row, rowIndex) {
-
-                    // Skip header row from all styles
-                    if (rowIndex === 0) { return; }
-
-                    let targetUppercase = [1, 3, 5]; // Columns to make uppercase
-                    let targetCenter = [0, 2, 3, 4, 8, 9]; // Columns to center align
-                    let targetRight = [5, 6, 7]; // Column to right align
-                    let removeSpecialChar = [5, 6, 7]; // Remove special characters from these columns like peso sign
-
-                    row.forEach((cell, columnIndex) => {
-                        if (!cell.text) { return; }
-
-                        // Set font size for other rows
-                        cell.style = { fontSize: 9 }; 
-
-                        // Background color for even and odd rows
-                        if (rowIndex % 2 === 0) {
-                            cell.fillColor = '#f9f9f9'; // Light gray for even rows
-                        } else {
-                            cell.fillColor = '#ffffff'; // White for odd rows
-                        }
-
-                        // Set text to uppercase for specific columns
-                        if (targetUppercase.includes(columnIndex)) {
-                            cell.text = cell.text.toUpperCase();
-                        }
-
-                        // Center align specific columns
-                        if (targetCenter.includes(columnIndex)) {
-                            cell.alignment = 'center';
-                        } 
-                        
-                        // Right align specific columns
-                        if (targetRight.includes(columnIndex)) {
-                            cell.alignment = 'right';
-                        }
-
-                        // Remove special characters from specific columns
-                        if (removeSpecialChar.includes(columnIndex)) {
-                            cell.text = cell.text.replace(/[^\w\s,.]/gi, '');
-                        }
-                    });
-                });
-            }
-       }
-   ],
-   createdRow: function(row, data, dataIndex) {
+   rowCallback: function(row, data) {
+        if (data.is_archive == 1) {
+            // Remove the select class and disable click
+            $(row).find('td:first-child').removeClass('select-checkbox').off('click');
+            $(row).addClass('table-archived');
+        } else {
+            $(row).find('td:first-child').addClass('select-checkbox');
+        }
+    },
+    createdRow: function(row, data, dataIndex) {
         $(row).find('td').addClass('v-middle').attr('data-id-print', data.id);
 
         const is_archive = data.is_archive;
         if ( is_archive == 1 ) {
             $(row).addClass('table-danger');
         }
-   }
+    },
+    buttons: [
+        { 
+                extend: 'csv',
+                exportOptions: {
+                    columns: "thead th:not(.notExport)"
+                },
+                customize: function(csv) {
+                    let data = csv.split('\n');
+
+                    let targetUppercase = [1, 3]; // Columns to make uppercase
+                    let removeSpecialChar = [5, 6, 7]; // Remove special characters from these columns like peso sign
+                    let removeComma = [5, 6, 7]; // Column to remove commas
+
+                    // Loop through each row
+                    data = data.map((row, rowIndex) => {  
+                        // Split row into columns, considering quoted fields
+                        let columns = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+
+                        columns = columns.map((col, columnIndex) => {
+                            col = col.trim(); // Remove extra spaces
+                    
+                            if (rowIndex === 0) { 
+                                return col.replace(/\b\w/g, char => char.toUpperCase());
+                            }
+                    
+                            // Convert to uppercase for specific columns
+                            if (targetUppercase.includes(columnIndex)) {
+                                col = col.toUpperCase();
+                            }
+
+                            // Remove special characters from specific columns
+                            if (removeSpecialChar.includes(columnIndex)) {
+                                col = col.replace(/[^\w\s.]/gi, '');
+                            }
+                    
+                            // Remove commas from specific columns
+                            if (columnIndex === removeComma) {
+                                col = col.replace(/,/g, '');
+                            }
+                    
+                            return col;
+                        });
+
+                        return columns.join(","); // Join modified columns
+                    });
+
+                    // Add UTF-8 BOM to the beginning of the CSV data for letter "ñ" to appear correctly
+                    const utf8BOM = '\uFEFF';
+                    return utf8BOM + data.join("\n"); // Reassemble CSV
+                }
+        },
+        { 
+                extend: 'excel',
+                exportOptions: {
+                    columns: "thead th:not(.notExport)"
+                },
+                customize: function(xlsx) {
+                    let sheet = xlsx.xl.worksheets['sheet1.xml'];
+
+                    // Convert Column B to Uppercase
+                    $('row:not(:nth-child(2)) c[r^="B"], row:not(:nth-child(2)) c[r^="D"]', sheet).each(function () {
+                        let cell = $(this).find('is t, v'); // Find the text inside
+                        let text = cell.text().trim(); // Get the existing text
+
+                        if (text) {
+                            cell.text(text.toUpperCase()); // Convert to uppercase
+                        }
+                    });
+
+                    // Remove special characters from specific columns
+                    $('row:not(:nth-child(2)) c[r^="F"], row:not(:nth-child(2)) c[r^="G"], row:not(:nth-child(2)) c[r^="H"]', sheet).each(function () {
+                        let cell = $(this).find('is t, v'); // Find the text inside
+                        let text = cell.text().trim(); // Get the existing text
+
+                        if (text) {
+                            let numericValue = parseFloat(text.replace(/[^\d.-]/g, ''));
+                            cell.text(numericValue);
+                        }
+                    });
+                }
+        },
+        { 
+                extend: 'pdf',
+                exportOptions: {
+                    columns: "thead th:not(.notExport)"
+                },
+                orientation: 'landscape',
+                pageSize: 'LEGAL',
+                customize: function(doc) {
+                    // Set dynamic widths for all columns
+                    let columnWidths = new Array(doc.content[1].table.body[0].length).fill('*');
+
+                    // Define custom widths for specific columns (adjust index as needed)
+                    columnWidths[1] = '18%';
+                    
+                    // Set font size for header row
+                    doc.styles = doc.styles || {};
+                    doc.styles.tableHeader = doc.styles.tableHeader || {};
+                    doc.styles.tableHeader.fontSize = 9; 
+                    doc.styles.tableHeader.fillColor = '#2d4154'; // Set header background color
+
+                    // Apply column widths
+                    doc.content[1].table.widths = columnWidths;
+
+                    // Loop through table body and target specific column
+                    doc.content[1].table.body.forEach(function (row, rowIndex) {
+
+                        // Skip header row from all styles
+                        if (rowIndex === 0) { return; }
+
+                        let targetUppercase = [1, 3, 5]; // Columns to make uppercase
+                        let targetCenter = [0, 2, 3, 4, 8, 9]; // Columns to center align
+                        let targetRight = [5, 6, 7]; // Column to right align
+                        let removeSpecialChar = [5, 6, 7]; // Remove special characters from these columns like peso sign
+
+                        row.forEach((cell, columnIndex) => {
+                            if (!cell.text) { return; }
+
+                            // Set font size for other rows
+                            cell.style = { fontSize: 9 }; 
+
+                            // Background color for even and odd rows
+                            if (rowIndex % 2 === 0) {
+                                cell.fillColor = '#f9f9f9'; // Light gray for even rows
+                            } else {
+                                cell.fillColor = '#ffffff'; // White for odd rows
+                            }
+
+                            // Set text to uppercase for specific columns
+                            if (targetUppercase.includes(columnIndex)) {
+                                cell.text = cell.text.toUpperCase();
+                            }
+
+                            // Center align specific columns
+                            if (targetCenter.includes(columnIndex)) {
+                                cell.alignment = 'center';
+                            } 
+                            
+                            // Right align specific columns
+                            if (targetRight.includes(columnIndex)) {
+                                cell.alignment = 'right';
+                            }
+
+                            // Remove special characters from specific columns
+                            if (removeSpecialChar.includes(columnIndex)) {
+                                cell.text = cell.text.replace(/[^\w\s,.]/gi, '');
+                            }
+                        });
+                    });
+                }
+        }
+    ]
 });
 
 // =============== Payment Date Range Picker ===============
@@ -281,9 +301,14 @@ $('#payment-date-picker').daterangepicker({
 
 $('#cb-select-all').on('change', function() {
     if (this.checked) {
-        tblPayment.rows().select();
+        tblPayment.rows({page:'current'}).every(function() {
+            let data = this.data();
+            if(data.is_archive != 1) {
+                this.select();
+            }
+        });
     } else {
-        tblPayment.rows().deselect();
+        tblPayment.rows({page:'current'}).deselect();
     }
 });
 
@@ -293,8 +318,17 @@ tblPayment.on('select deselect', function() {
     } else {
         $('#cb-select-all').prop('checked', true);
     }
+
+    const totalSelected = tblPayment.rows({page: 'current'}).data().toArray().filter(row => row.is_archive != 1).length;
+    const selectedCount = tblPayment.rows({ selected: true, page: 'current' }).count();
+
+    $('#cb-select-all').prop('checked', selectedCount === totalSelected && totalSelected > 0);
 });
-  
+
+// Uncheck checkbox when table is redrawn or page is changed
+tblPayment.on('draw', function() {
+    $('#cb-select-all').prop('checked', false);
+});
 // =============== Payment Date Range Picker ===============
 
 Inputmask.extendAliases({
