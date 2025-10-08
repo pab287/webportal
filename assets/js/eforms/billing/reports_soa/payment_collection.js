@@ -241,7 +241,7 @@ const tbl_payment_collection = $("#tbl-payment_collection").DataTable({
             doc.content[2].table.body.forEach(function (row, rowIndex) {
                 if (rowIndex === 0) { return; }
 
-                let targetUppercase = [0, 9]; // Columns to make uppercase
+                let targetUppercase = [0, 7, 8, 9]; // Columns to make uppercase
                 let targetCenter = [0, 1, 2, 3, 4, 7, 8, 9]; // Columns to center align
                 let targetRight = [5, 6]; // Column to right align
 
