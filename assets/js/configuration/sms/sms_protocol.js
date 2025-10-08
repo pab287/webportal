@@ -1,9 +1,9 @@
-var dtProtocol = $("#table-sms-protocol");
-var dtTableProtocol;
-var search_val = "";
-var modalNewProtocol = $("#new_modal");
-var modalEditProtocol = $("#edit_modal");
-var modalRemoveProtocol = $("#delete_modal");
+let dtProtocol = $("#table-sms-protocol");
+let dtTableProtocol;
+let search_val = "";
+let modalNewProtocol = $("#new_modal");
+let modalEditProtocol = $("#edit_modal");
+let modalRemoveProtocol = $("#delete_modal");
 let _departments = [];
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.department !== "undefined" && _tempContentData.department.length > 0){ _departments = _tempContentData.department; }
@@ -18,10 +18,12 @@ dtTableProtocol = dtProtocol.DataTable({
     dom: '<"toolbar">frtlip',
     serverSide: true,
     processing: true,
+    ordering: false,
     ajax: {
         url: baseUrl("configuration/sms_protocol_datatable_request"),
         type: "post",
         dataType: "json",
+        global: false,
         data: function (d) {
             d.csrf_token = _csrf_hash;
             d.search['value'] = search_val;
@@ -30,15 +32,16 @@ dtTableProtocol = dtProtocol.DataTable({
     },
     searching: false,
     columns: [
-        { data: "sms_ip", width: "5%" },
-        { data: "sms_port", width: "5%" },
-        { data: "sms_user", width: "5%" },
-        { data: "department", width: "25%" },
-        { data: "is_connected", width: "3%", className: "text-center", render: function (data) {
+        { data: "sms_ip", width: "5%", orderable: false },
+        { data: "sms_port", width: "5%", orderable: false },
+        { data: "sms_user", width: "5%", orderable: false },
+        { data: "modem", width: "5%", orderable: false },
+        { data: "department", width: "25%", orderable: false },
+        { data: "is_connected", width: "3%", orderable: false, className: "text-center", render: function (data) {
                 return renderStatus(data)
             }
         },
-        { data: null, width: "3%", className: "text-center" },
+        { data: null, width: "3%", className: "text-center",orderable: false },
     ],
     columnDefs: [
         {
@@ -47,9 +50,9 @@ dtTableProtocol = dtProtocol.DataTable({
             targets: -1,
             orderable: false,
             render: function (data, type, row, meta) {
-                var tempHtml = "---";
-				var tempActions = [];
-				var currentActions = ["edit", "delete", "connect", "exclude"];
+                let tempHtml = "---";
+				let tempActions = [];
+				let currentActions = ["edit", "delete", "connect", "exclude"];
 				$.each(currentActions, function(index, value){
                     tempActions.push(value);
                 });
@@ -68,9 +71,9 @@ dtTableProtocol = dtProtocol.DataTable({
 							tempHtml += `<a class="dropdown-item " data-toggle='modal' data-target='#delete_modal' href="javascript:void(0);" onclick='delete_protocol(`+row.id+`)'><i class="la la-trash"></i> Remove</a>`;
 							break;
 							case "connect":
-								var tempLabel = "Deactivate";
-								var tempIconClass = "la la-unlink";
-								var tempEvent = 'toggle_connect_modal('+row.id +','+ row.is_connected +',\"'+ row.sms_ip+'\")';
+								let tempLabel = "Deactivate";
+								let tempIconClass = "la la-unlink";
+								let tempEvent = 'toggle_connect_modal('+row.id +','+ row.is_connected +',\"'+ row.sms_ip+'\")';
 								if(row.is_connected == 0){
 									tempLabel = "Activate";
 									tempIconClass = "la la-link";
@@ -80,9 +83,9 @@ dtTableProtocol = dtProtocol.DataTable({
 							break;
                             case "exclude":
                                 if(row.role == 1){
-                                    var tempLabel = "Include (Admin only)";
-                                    var tempIconClass = "la la-unlink";
-                                    var tempEvent = 'toggle_exclude_modal('+row.id +','+ row.exclude +',\"'+ row.sms_ip+'\")';
+                                    let tempLabel = "Include (Admin only)";
+                                    let tempIconClass = "la la-unlink";
+                                    let tempEvent = 'toggle_exclude_modal('+row.id +','+ row.exclude +',\"'+ row.sms_ip+'\")';
                                     if(row.exclude == 0){
                                         tempLabel = "Exclude (Admin only)";
                                         tempIconClass = "la la-link";
@@ -122,8 +125,8 @@ function toggle_exclude_modal(id,exclude,sms_ip){
 }
 
 function toggle_exclude(){
-    var id = document.getElementById('exclude_protocol_id').value;
-    var exclude = document.getElementById('exclude').value;
+    let id = document.getElementById('exclude_protocol_id').value;
+    let exclude = document.getElementById('exclude').value;
     $.ajax({
         url: baseUrl("configuration/sms_protocol_exclude"),
         type: 'post',
@@ -148,8 +151,8 @@ function toggle_connect_modal(id,is_connected,sms_ip){
 }
 
 function toggle_connect(){
-    var id = document.getElementById('protocol_id').value;
-    var is_connected = document.getElementById('is_connected').value;
+    let id = document.getElementById('protocol_id').value;
+    let is_connected = document.getElementById('is_connected').value;
     $.ajax({
         url: baseUrl("configuration/sms_protocol_connect"),
         type: 'post',
@@ -163,7 +166,7 @@ function toggle_connect(){
     });
 }
 
-var delete_protocol = function (id) {
+let delete_protocol = function (id) {
     if (id) {
         return $.ajax({
             url: siteUrl("configuration/get_sms_protocol_by_id/" + id),
@@ -179,19 +182,26 @@ var delete_protocol = function (id) {
     }
 }
 
-var edit_protocol = function (id) {
+let edit_protocol = function (id) {
     if (id) {
         return $.ajax({
             url: siteUrl("configuration/get_sms_protocol_by_id/" + id),
             dataType: "json",
             success: function (json) {
                 if (json.response) {
-                    vmEditModal.row = Object.assign({}, json.row);
-                    var dpartment = json.row.department_id;
-                    var departmentIds = dpartment.map(function(department) {
-                        return department.id;
+                    vmEditModal.row = JSON.parse(JSON.stringify(json.row));
+                    _departments_edit = json.departments_select;
+                    $('#select2_dprtmnt_edit').empty() 
+                    .select2({
+                        placeholder: 'SELECT AN OPTION',
+                        dropdownParent: $("#edit_modal"),
+                        width: '100%',
+                        multiple: true,
+                        dataType: "json",
+                        data: _departments_edit
                     });
-                    $('#select2_dprtmnt_edit').val(departmentIds).trigger('change');
+                    let dpartment = json.row.department;
+                    $('#select2_dprtmnt_edit').val(dpartment).trigger('change');
                 }
             }
         });
@@ -204,9 +214,9 @@ $.validate({
     form: "#new_form",
     lang: 'en',
     onSuccess: function (form) {
-        var currentForm = form[0];
-        var formUrl = currentForm.action;
-        var formData = $(currentForm).serialize();
+        let currentForm = form[0];
+        let formUrl = currentForm.action;
+        let formData = $(currentForm).serialize();
         $.ajax({
             url: formUrl,
             type: "POST",
@@ -219,6 +229,20 @@ $.validate({
             },
             success: function (json) {
                 if (json.response) {
+                    let selectedIds = $('#select2_dprtmnt').val() || [];
+
+                    if (Array.isArray(_departments) && selectedIds.length > 0) {
+                        _departments = _departments.filter(function (dept) {
+                            return !selectedIds.includes(dept.id.toString());
+                        });
+                    }
+
+                    $("#select2_dprtmnt").empty().select2({
+                        placeholder: 'SELECT AN OPTION',
+                        dropdownParent: $("#new_modal"),
+                        width: '100%',
+                        data: _departments,
+                    });
                     currentForm.reset();
                     dtTableProtocol.ajax.reload();
                     modalNewProtocol.modal("hide");
@@ -241,9 +265,9 @@ $.validate({
     form: "#edit_form",
     lang: 'en',
     onSuccess: function (form) {
-        var currentForm = form[0];
-        var formUrl = currentForm.action;
-        var formData = $(currentForm).serialize();
+        let currentForm = form[0];
+        let formUrl = currentForm.action;
+        let formData = $(currentForm).serialize();
         $.ajax({
             url: formUrl,
             type: "POST",
@@ -256,6 +280,13 @@ $.validate({
             },
             success: function (json) {
                 if (json.response) {
+                    _departments = json.departments_select || [];
+                    $("#select2_dprtmnt").empty().select2({
+                        placeholder: 'SELECT AN OPTION',
+                        dropdownParent: $("#new_modal"),
+                        width: '100%',
+                        data: _departments,
+                    });
                     currentForm.reset();
                     dtTableProtocol.ajax.reload();
                     modalEditProtocol.modal("hide");
@@ -263,13 +294,13 @@ $.validate({
                 } else {
                     toastr.error(json.toastr_msg, "Protocol Settings", 5000);
                 }
+
                 $(form[0])
                     .find(".btn-submit")
-                    .removeClass(
-                        "m-btn--custom m-loader m-loader--light m-loader--right"
-                    );
+                    .removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
             }
         });
+
         return false;
     },
 });
@@ -302,12 +333,12 @@ $(document).on("submit", "#remove_form", function (e) {
     console.log(e.target.action);
 });
 
-var vmEditModal = new Vue({
+let vmEditModal = new Vue({
     el: "#edit-modal_body",
-    data: { row: {} }
+    data: { row: {} },
 });
 
-var vmDeleteModal = new Vue({
+let vmDeleteModal = new Vue({
     el: "#delete-modal_body",
     data: { row: {} }
 });
@@ -317,27 +348,4 @@ $("#select2_dprtmnt").select2({
     dropdownParent: $("#new_modal"),
     width: '100%',
     data: _departments,
-    // ajax: {
-    //   url: baseUrl("configuration/sms_fetch_department"),
-    //   global: false,
-    //   processResults: function (data) {
-    //     return data;
-    //   }
-    // }
-});
-
-$("#select2_dprtmnt_edit").select2({
-    placeholder: 'SELECT AN OPTION',
-    dropdownParent: $("#edit_modal"),
-    width: '100%',
-    multiple: true,
-    dataType: "json",
-    data: _departments,
-    // ajax: {
-    //   url: baseUrl("configuration/sms_fetch_department"),
-    //   global: false,
-    //   processResults: function (data) {
-    //     return data;
-    //   }
-    // }
 });

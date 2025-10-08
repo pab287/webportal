@@ -49,6 +49,7 @@
                                     <th>Server Name</th>
                                     <th>Port</th>
                                     <th>Username</th>
+                                    <th>Modem</th>
                                     <th>Department</th>
                                     <th>Active</th>
                                     <th>Action</th>
@@ -95,6 +96,14 @@
                     </div>
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
+                            Modem
+                        </label>
+                        <div class="col-12">
+                            <input type="text" class="form-control" name="modem" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row">
+                        <label class="col-6 col-form-label form-control-label">
                             Username *
                         </label>
                         <div class="col-12">
@@ -111,10 +120,10 @@
                     </div>
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
-                            Department *
+                            Department
                         </label>
                         <div class="col-12">
-                            <select id="select2_dprtmnt" name="department_id[]" class="form-control m-select2" multiple="multiple" data-validation="required"></select>
+                            <select id="select2_dprtmnt" name="department_id[]" class="form-control m-select2" multiple="multiple"></select>
                         </div>
                     </div>
                 </div>
@@ -158,6 +167,14 @@
                     </div>
                     <div class="form-group m-form__group row">
                         <label class="col-6 col-form-label form-control-label">
+                            Modem
+                        </label>
+                        <div class="col-12">
+                            <input type="text" class="form-control" name="modem"  v-model="row.modem" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row">
+                        <label class="col-6 col-form-label form-control-label">
                             Username *
                         </label>
                         <div class="col-12">
@@ -177,7 +194,7 @@
                             Department *
                         </label>
                         <div class="col-12">
-                            <select id="select2_dprtmnt_edit" name="department_id[]" class="form-control m-select2" multiple="multiple" data-validation="required"></select>
+                            <select id="select2_dprtmnt_edit" name="department_id[]" class="form-control m-select2" multiple="multiple"></select>
                         </div>
                     </div>
                 </div>
