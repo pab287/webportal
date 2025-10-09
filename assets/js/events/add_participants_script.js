@@ -960,7 +960,15 @@ $('#New_Add_File').on('submit', function(e) {
             contentType: false,
             data: formData,
             success: function (response) {
+                if (response.success) {
+                    toastr.success(response.toastr_msg, 'Success', 5000);
 
+                    eventVue.uploadedFiles = [];
+                    $('#fileupload').val(null);
+                }else{
+                    toastr.error(response.toastr_msg, 'Error', 5000);
+                }
+                $('#New_Add_File')[0].reset();
             }
         });
     }

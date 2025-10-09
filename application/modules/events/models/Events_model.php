@@ -17,7 +17,6 @@ class Events_model extends MX_Controller {
         parent::__construct();
         $this->user_data = $this->session->userdata("logged_in");
         $this->core_layout->setPrivilegeName("company_events");
-        $this->load->model("core/upload_model", "file_upload");
         $this->actions = $this->core_layout->getCurrentActions();
     }
 
@@ -705,36 +704,79 @@ class Events_model extends MX_Controller {
         $event = $post['events_id'];
         $type = $post['attachment_type'];
         $filePath = "./uploads/files/documents/event_{$event}/$type";
-    
-        $createFilePath = false;
-    
+        
         if (!file_exists($filePath)) {
-            $mkdir = mkdir($filePath, 0777, true);
-            if ($mkdir){ $createFilePath = true; }
-        }else{ $createFilePath = true; }
-    
-        if(!$createFilePath){
+            if (!mkdir($filePath, 0777, true)) {
+                $resultset["response"] = false;
+                $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
+                $resultset["toastr_state"] = "warning";
+                return $resultset;
+            }
+        }
+        
+        if (empty($_FILES['files']['name'])) {
             $resultset["response"] = false;
-            $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
+            $resultset["toastr_msg"] = "No files selected!";
             $resultset["toastr_state"] = "warning";
             return $resultset;
         }
-    
-        $config = array();
-        $config['upload_path']          = $filePath;
-        $config['allowed_types']        = 'pdf|docx|jpg|jpeg';
-        $config['max_size']             = 100000;
-        $config['create_thumbnail']     = true;
-    
-        $files = $_FILES["files"];
-        var_dump($files);
-        foreach($files["name"] as $key => $name){
-            var_dump( $name);
-        }
-        // $data = $this->file_upload->uploadFile($config);
-
         
-
+        $uploaded = array();
+        $failed = array();
+        
+        $config = array(
+            'upload_path'   => $filePath,
+            'allowed_types' => 'pdf|doc|docx|jpg|jpeg|png',
+            'max_size'      => 51200, // 50MB in KB
+            'remove_spaces' => false
+        );
+        
+        foreach ($_FILES['files']['name'] as $key => $name) {
+            $_FILES['file']['name']     = $_FILES['files']['name'][$key];
+            $_FILES['file']['type']     = $_FILES['files']['type'][$key];
+            $_FILES['file']['tmp_name'] = $_FILES['files']['tmp_name'][$key];
+            $_FILES['file']['error']    = $_FILES['files']['error'][$key];
+            $_FILES['file']['size']     = $_FILES['files']['size'][$key];
+            
+            $config['file_name'] = $name;
+            $this->upload->initialize($config);
+            
+            if ($this->upload->do_upload('file')) {
+                $data = array(
+                    'events_id'  => $event,
+                    'type'      => $type,
+                    'filename' => $name,
+                    'created_by' => $this->user_data['emp_id'],
+                );
+                
+                if ($this->db->insert($this->eventsAttachmentsTable, $data)) {
+                    $uploaded[] = $name;
+                } else {
+                    $failed[] = $name . " (database error)";
+                    @unlink($filePath . '/' . $name);
+                }
+            } else {
+                $failed[] = $name . " (" . $this->upload->display_errors('', '') . ")";
+            }
+        }
+        
+        if (count($uploaded) > 0 && count($failed) == 0) {
+            $resultset["response"] = true;
+            $resultset["toastr_msg"] = count($uploaded) . " file(s) uploaded successfully!";
+            $resultset["uploaded_files"] = $uploaded;
+            $this->core_layout->setEventLog("filename uploaded","insert", "success", "gcchris", "user");
+        } elseif (count($uploaded) > 0 && count($failed) > 0) {
+            $resultset["response"] = true;
+            $resultset["toastr_msg"] = count($uploaded) . " uploaded, " . count($failed) . " failed";
+            $resultset["uploaded_files"] = $uploaded;
+            $resultset["failed_files"] = $failed;
+            $this->core_layout->setEventLog("filename uploaded","insert", "success", "gcchris", "user");
+        } else {
+            $resultset["response"] = false;
+            $resultset["toastr_msg"] = "All files failed to upload!";
+            $resultset["failed_files"] = $failed;
+            $this->core_layout->setEventLog("filename uploaded","insert", "success", "gcchris", "user");
+        }
         
         return $resultset;
     }
