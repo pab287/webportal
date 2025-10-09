@@ -220,8 +220,8 @@
                 <div class="form-group m-form__group row">
                     <label for="payroll_type" class="col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label required">Work Schedule:</label>
                     <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
-                        <select class="form-control m-input select2" name="work_schedule"
-                            placeholder="Select an option" data-validation="required" v-model="vm_tab3.work_schedule">
+                        <select class="form-control m-input select2" id="work_schedule" name="work_schedule"
+                            placeholder="Select an option" data-validation="required" v-model.lazy="vm_tab3.work_schedule">
                             <option value="4">Default - NO TIME IN OR OUT</option>
                             <option value="3">Super Flexi - 1 IN OR 1 OUT</option>
                             <option value="2">Drivers - 1 IN AND 1 OUT</option>
@@ -244,7 +244,7 @@
                                 <i class="la la-calendar"></i>
                             </span>
                             <input type="text" id="m_datepicker-date_hired" name="date_start" class="form-control m-input" maxlength="12" size="12"
-                                   autocomplete="off" data-validation="required" v-model="vm_tab3.date_start" readOnly={true}/>
+                                   autocomplete="off" data-validation="required" v-model.lazy="vm_tab3.date_start" readOnly={true}/>
                         </div>
                         <span class="m-form__help pull-right">Date Format: YYYY-MM-DD</span>
                     </div>
@@ -259,7 +259,7 @@
                                 <i class="la la-calendar"></i>
                             </span>
                             <input type="text" id="m_datepicker-date_end_prob" name="date_end_prob" class="form-control m-input" maxlength="12"
-                                   size="12" autocomplete="off" v-model="vm_tab3.date_end_prob"/>
+                                   size="12" autocomplete="off" v-model.lazy="vm_tab3.date_end_prob"/>
                                    
                         </div>
                         <span class="m-form__help pull-right">Date Format: YYYY-MM-DD</span>
@@ -277,7 +277,7 @@
                                 <i class="la la-calendar"></i>
                             </span>
                             <input type="text" id="m_datepicker-date_regular" name="date_regular" class="form-control m-input" maxlength="12"
-                                   size="12" autocomplete="off" v-model="vm_tab3.date_regular" disabled/>
+                                   size="12" autocomplete="off" v-model.lazy="vm_tab3.date_regular" disabled/>
                         </div>
                         <span class="m-form__help pull-right">Date Format: YYYY-MM-DD</span>
                     </div>

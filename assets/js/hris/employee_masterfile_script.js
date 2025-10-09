@@ -751,7 +751,8 @@ if (typeof _tempContentData !== "undefined") {
             .trigger("change")
             .on("select2:select", function (e) {
                 const data = e.params.data;
-                vmData = Object.assign({}, vmData, { work_mode: data.id });
+                // vmData = Object.assign({}, vmData, { work_mode: data.id });
+                vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { work_mode: data.id });
             });
 
             $("#m--input-payroll_type_id")
@@ -767,7 +768,9 @@ if (typeof _tempContentData !== "undefined") {
                 .trigger("change")
                 .on("select2:select", function (e) {
                     const data = e.params.data;
-                    vmData = Object.assign({}, vmData, { payroll_type: data.id });
+                    //vmData = Object.assign({}, vmData, { payroll_type: data.id });
+
+                    vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { payroll_type: data.id });
                 });
 
                 //--------for reason for separation input to show---///
@@ -811,14 +814,14 @@ if (typeof _tempContentData !== "undefined") {
                         status.attr('readonly');
                     }
 
-                    vmTab3.vm_tab3 = Object.assign({}, vmData, { employee_status: data.id });
+                    vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { employee_status: data.id });
                     if(typeof this.vm_tab3 != 'undefined' && Object.keys(this.vm_tab3).length > 0){
                         let { vm_tab3 } = this;
-                        vmData = Object.assign({}, vmData, { employee_status: data.id });
+                        vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { employee_status: data.id });
                         // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { employee_status: data.id });
     
                         if (data.id === 'Contractor') {
-                            vmData = Object.assign({}, vmData, { work_status: 'N/A' });
+                            vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { work_status: 'N/A' });
                             // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { work_status: 'N/A' });
                         }
                         // vmData = Object.assign({}, vmData);
@@ -966,6 +969,17 @@ if (typeof _tempContentData !== "undefined") {
 
                     $("#m--input-manager_id").val('').trigger('change');
                 }
+            });
+
+            $("#work_schedule").select2({
+                placeholder: 'Select an option',
+                width: '100%',
+            })
+            .val(vmData.work_schedule)
+            .trigger('change')
+            .on('select2:select', function(e) {
+                const data = e.params.data;
+                vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { work_schedule: data.id });
             });
         },
         methods: {
@@ -4828,6 +4842,9 @@ $("#m_datepicker-date_hired")
     }).on("changeDate", function (e) {
         const probeeEndDate = moment(e.date).add(180, 'days').format('YYYY-MM-DD');
         $("#m_datepicker-date_end_prob").val(probeeEndDate).datepicker('update');
+        $("#m_datepicker-date_hired").val(e.date).datepicker('update');
+
+        vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { date_start: moment(e.date).format('YYYY-MM-DD'), date_end_prob: probeeEndDate });
         setTimeout(() => { $(e.target).validate(); }, 250);
     });
 
