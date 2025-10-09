@@ -42,9 +42,9 @@ class Events extends MX_Controller {
         $data['employees'] = $this->em->getEmployeeSelection($id);
         $this->core_layout->addCss("css/buttons.dataTables.min.css", true);
         $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
-        $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
-        $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
-        $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
+        // $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
+        // $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
+        // $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
         $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
         $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.min.js', true);

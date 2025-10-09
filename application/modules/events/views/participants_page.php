@@ -259,7 +259,7 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form id='new_event_form' onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
+                <form id='new_event_form' onsubmit="return false;" onkeydown="return event.key !== 'Enter';" enctype="multipart/form-data">
                     <div class="modal-body" id="event_calendar_body">
                         <div class="row">
                             <div class="col-md-12">
@@ -487,7 +487,7 @@
                                     <span class="btn btn-success fileinput-button">
                                         <i class="glyphicon glyphicon-plus"></i>
                                         <span>Select file</span>
-                                        <input type="file" id="fileupload" name="files[]" accept=".pdf, .docx, application/pdf, .jpg" data-validation="required" multiple>
+                                        <input type="file" id="fileupload" name="files[]" accept=".pdf, .docx, application/pdf, .jpg" data-validation="required" multiple="multiple">
                                     </span>
                                 </div>
                             </div>

@@ -960,20 +960,7 @@ $('#New_Add_File').on('submit', function(e) {
             contentType: false,
             data: formData,
             success: function (response) {
-                // if (response.success) {
-                //     search_val = response.data;
-                //     $("#generalSearch").val(search_val);
-                //     toastr.success(response.message, "New Resume Saved.", 10000);
-                //     $("#modal_form_document").modal("hide");
-                //     if(response.upload_errors){
-                //         toastr.error(response.upload_errors, "File Upload Error", 10000);
-                //     }
-                //     setTimeout(function () {
-                //         location.href = baseUrl("crs/resume");
-                //     }, 2000);
-                // }else{
-                //     toastr.error(response.message, "New Resume Not Saved.", 10000);
-                // }
+
             }
         });
     }

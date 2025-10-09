@@ -17,6 +17,7 @@ class Events_model extends MX_Controller {
         parent::__construct();
         $this->user_data = $this->session->userdata("logged_in");
         $this->core_layout->setPrivilegeName("company_events");
+        $this->load->model("core/upload_model", "file_upload");
         $this->actions = $this->core_layout->getCurrentActions();
     }
 
@@ -725,75 +726,15 @@ class Events_model extends MX_Controller {
         $config['max_size']             = 100000;
         $config['create_thumbnail']     = true;
     
-        $uploadedFiles = array();
-        $failedFiles = array();
-        var_Dump($_FILES['files']);
-        // Check if files were uploaded
-        if(!isset($_FILES['files']) || empty($_FILES['files']['name'][0])){
-            $resultset["response"] = false;
-            $resultset["toastr_msg"] = "No files selected!";
-            $resultset["toastr_state"] = "warning";
-            return $resultset;
+        $files = $_FILES["files"];
+        var_dump($files);
+        foreach($files["name"] as $key => $name){
+            var_dump( $name);
         }
+        // $data = $this->file_upload->uploadFile($config);
+
         
-        $fileCount = count($_FILES['files']['name']);
-    
-        for($i = 0; $i < $fileCount; $i++){
-            if(empty($_FILES['files']['name'][$i])){
-                continue;
-            }
-            
-            $_FILES['file']['name']     = $_FILES['files']['name'][$i];
-            $_FILES['file']['type']     = $_FILES['files']['type'][$i];
-    
-            $data = $this->file_upload->uploadFile($config);
-            
-            if($data["response"]){
-                $files = $data["files"][0];
-                $filename = $files["file_name"];
-                
-                $insertData = array(
-                    'filename' => $filename,
-                    'type' => $type,
-                    'events_id' => $event,
-                    'created_by' => $this->user_data['emp_id'],
-                );
-                
-                $insert = $this->db->insert($this->eventsAttachmentsTable, $insertData);
-                
-                if($insert){
-                    $uploadedFiles[] = array(
-                        'file_name' => $filename,
-                        'original_name' => $_FILES['files']['name'][$i],
-                        'type' => $type
-                    );
-                }else{
-                    $failedFiles[] = $_FILES['files']['name'][$i] . ' (DB error)';
-                }
-            }else{
-                $failedFiles[] = $_FILES['files']['name'][$i];
-            }
-        }
-    
-        if(count($uploadedFiles) > 0){
-            $resultset["response"] = true;
-            $resultset["uploaded_files"] = $uploadedFiles;
-            $resultset["file_count"] = count($uploadedFiles);
-            
-            if(count($failedFiles) > 0){
-                $resultset["toastr_msg"] = count($uploadedFiles) . " file(s) uploaded successfully. " . count($failedFiles) . " file(s) failed.";
-                $resultset["toastr_state"] = "warning";
-                $resultset["failed_files"] = $failedFiles;
-            }else{
-                $resultset["toastr_msg"] = "All " . count($uploadedFiles) . " file(s) uploaded successfully!";
-                $resultset["toastr_state"] = "success";
-            }
-        }else{
-            $resultset["response"] = false;
-            $resultset["toastr_msg"] = "Failed to upload all files!";
-            $resultset["toastr_state"] = "error";
-            $resultset["failed_files"] = $failedFiles;
-        }
+
         
         return $resultset;
     }
