@@ -34,7 +34,7 @@ const tblPayment = $("#table-payment").DataTable({
         { 
             data: null, 
             orderable: false,
-            className: "text-center",
+            className: "text-center checkbox-col",
             render: function (data, type, row) {
                 if (row.is_archive == 1) {
                     return ""; // hide for archived
@@ -102,7 +102,7 @@ const tblPayment = $("#table-payment").DataTable({
    rowCallback: function(row, data) {
         if (data.is_archive == 1) {
             // Remove the select class and disable click
-            $(row).find('td:first-child').removeClass('select-checkbox').off('click');
+            $(row).find('td:first-child').removeClass('select-checkbox');
             $(row).addClass('table-archived');
         } else {
             $(row).find('td:first-child').addClass('select-checkbox');
@@ -229,7 +229,7 @@ const tblPayment = $("#table-payment").DataTable({
                         if (rowIndex === 0) { return; }
 
                         let targetUppercase = [1, 3, 4, 5, 9, 10]; // Columns to make uppercase
-                        let targetCenter = [0, 2, 3, 4, 8, 9]; // Columns to center align
+                        let targetCenter = [0, 1, 2, 3, 4, 8, 9]; // Columns to center align
                         let targetRight = [5, 6, 7]; // Column to right align
                         let removeSpecialChar = [5, 6, 7]; // Remove special characters from these columns like peso sign
 

@@ -379,7 +379,11 @@
 		margin: 0 0 10px;
 	}
 
-	.table-archived {
-		pointer-events: none; /* optional if you want them totally inert */
+	.table-archived .checkbox-col {
+		pointer-events: none; 
+	}
+
+	#table-payment tbody tr.selected a#viewPayment {
+		color: #575962;
 	}
 </style>
