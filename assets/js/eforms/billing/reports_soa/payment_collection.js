@@ -338,6 +338,13 @@ function saveExportLogs(export_){
 }
 
 function generateReport(){
-  selected_date = $("input[name='date_range']").val();
-  tbl_payment_collection.ajax.reload();
+    selected_date = $("input[name='date_range']").val();
+    const employee = $('#employee').val();
+    const dateRange = $('#date-range').val();
+
+    if (!employee || !dateRange) {
+        toastr.error('Please select Employee and Date Range.', 'Input Required');
+        return;
+    }
+    tbl_payment_collection.ajax.reload();
 }
