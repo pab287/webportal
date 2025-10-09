@@ -452,7 +452,7 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-12">
-                        <p><i class="m--font-danger m--font-boldest">Note:</i> Drag position to top to set it as primary position.</p>
+                        <p><i class="m--font-danger m--font-boldest">Note:</i> Drag the position to the top to set it as the primary position.</p>
                     </div>
                 </div>
                 <div id="m_sortable_portlets">
