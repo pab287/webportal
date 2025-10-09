@@ -90,7 +90,7 @@ const tbl_payment_collection = $("#tbl-payment_collection").DataTable({
   order: [[ 8, "desc" ]],
   columnDefs: [
     {
-      targets: [0, 1, 2, 3, 4, 9],
+      targets: [0, 1, 2, 3, 4, 5, 6, 9],
       orderable: false,
     },
     {
