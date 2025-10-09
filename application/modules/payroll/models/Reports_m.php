@@ -5279,6 +5279,8 @@ class Reports_m extends CI_Model{
             $tempFilter = array();
             $tempFilter["is_bonus"] = isset($post['is_bonus']) ? intval($post['is_bonus']) : 0;
             $tempRange = "";
+            $option = isset($post['option']) && $post['option'] ? $post['option'] : 1; // 1 = all; 2 = earners; 3 = no earners
+
             if(isset($post["group"]) && intval($post["group"]) === 1){
                 $tempPayDate = date("Y-m-d", strtotime($post["pay_date"]));
                 $tempFilter["pay_date"] = $tempPayDate;
@@ -5318,7 +5320,7 @@ class Reports_m extends CI_Model{
                 $sqlSelect = "a.*, SUM(a.basic_rate) as basic_rate, SUM(a.no_of_days) as no_of_days, SUM(a.total_undertime_amount) as total_undertime_amount,
                 SUM(a.ot_amount) as ot_amount, SUM(a.total_ndiff_amount) as total_ndiff_amount, SUM(a.ot_ndiff_amount) as ot_ndiff_amount, SUM(a.total_holiday_amount) as total_holiday_amount,
                 SUM(a.total_allowances) as total_allowances, SUM(a.gross_pay) as gross_pay, SUM(a.net_pay) as net_pay, b.lastname, b.firstname, b.middlename, b.suffix,
-                UPPER(c.code) as company_description, IF(d.name IS NULL, b.position, d.name) as position, UPPER(b.work_status) as work_status, b.date_start,
+                UPPER(c.code) as company_description, UPPER(IF(d.name IS NULL, b.position, d.name)) as position, UPPER(b.work_status) as work_status, b.date_start,
                 UPPER(e.code) as department_description";
 
                 $this->db->select($sqlSelect);
@@ -5327,6 +5329,15 @@ class Reports_m extends CI_Model{
                 $this->db->join($this->tbl_tblcompanies." c", "c.id = a.company_id");
                 $this->db->join($this->tbl_tblposition." d", "d.id = b.position", "left");
                 $this->db->join($this->tbl_tbldepartment.' e', 'e.id = b.department_id OR e.code = b.department_id', 'LEFT');
+
+                if ($option == 2) {
+                    $this->db->where('a.gross_pay >', 0);
+                }
+
+                if ($option == 3) {
+                    $this->db->where('a.gross_pay <=', 0);
+                }
+
                 $this->db->where("a.posted", 1);
                 foreach ($tempFilter as $key => $value) {
                     $this->db->where("a.{$key}", $value);
@@ -5378,6 +5389,7 @@ class Reports_m extends CI_Model{
                 $resultset["gross_total_decimal"] = number_format($grossTotal, 2, ".", ",");
                 $resultset["grand_total"] = $grandTotal;
                 $resultset["grand_total_decimal"] = number_format($grandTotal, 2, ".", ",");
+                $resultset['payroll_option'] = $option == 2 ? 'earners' : ($option == 3 ? 'no earners' : 'all');
             }
             $resultset["filter"] = $tempFilter;
             if(is_array($arrData) && !empty($arrData)){ $resultset["response"] = true;
