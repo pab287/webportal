@@ -53,7 +53,7 @@ const tblPayment = $("#table-payment").DataTable({
                 return "<span class='m--font-boldest'>"+numberWithCommas(data)+"</span>";
             }
         },
-        { data: "received_amount", className: "text-right", render: function (data) {
+        { data: "received_amount", className: "text-right", orderable: false, render: function (data) {
                 return "<span class='m--font-boldest'>"+numberWithCommas(data)+"</span>";
             }
         },
