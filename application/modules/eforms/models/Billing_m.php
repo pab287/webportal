@@ -2848,10 +2848,10 @@ class Billing_m extends CI_Model {
         $net_payment = $isDisconnection ? ($total_amount + $reconnectionFee['amount']) : $total_amount;
     
         $penalty_overdue = $list['overdue'] ?? 0.00;
-
+        $disconnectionFee = $isDisconnection ? (float)$reconnectionFee['amount'] : 0.00;
         $bill_amount = 0;
         if ($previous_payments) {
-            $bill_amount = (float)number_format(($billing_amount + $penalty_overdue) - $totalBalanceCover - $previous_payments, 2, '.', '');
+            $bill_amount = (float)number_format(($billing_amount + $penalty_overdue + $disconnectionFee) - $totalBalanceCover - $previous_payments, 2, '.', '');
         } else {
             $bill_amount = (float)number_format($billing_amount, 2, '.', '');
         }
