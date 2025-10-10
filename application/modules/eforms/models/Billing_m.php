@@ -3105,11 +3105,11 @@ class Billing_m extends CI_Model {
         if ($has_valid_date) {
             $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
             $end_date = date('Y-m-d 23:59:59', strtotime($post['endDate']));
-            $this->db->where("b.payment_date >=", $start_date);
-            $this->db->where("b.payment_date <=", $end_date);
+            $this->db->where("b.created_date >=", $start_date);
+            $this->db->where("b.created_date <=", $end_date);
         }
         if (!$has_search && !$has_valid_date) {
-            $this->db->where("YEAR(b.payment_date)", $current_year); // Defaults to the current year
+            $this->db->where("YEAR(b.created_date)", $current_year); // Defaults to the current year
         }
         
         if($has_search){
@@ -3126,7 +3126,7 @@ class Billing_m extends CI_Model {
             }
             $this->db->group_end();
         } else {
-            $this->db->where("YEAR(b.payment_date)", $current_year);
+            $this->db->where("YEAR(b.created_date)", $current_year);
         }
 
         // Sort Column
@@ -3247,11 +3247,11 @@ class Billing_m extends CI_Model {
         if ($has_valid_date) {
             $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
             $end_date = date('Y-m-d 23:59:59', strtotime($post['endDate']));
-            $this->db->where("b.payment_date >=", $start_date);
-            $this->db->where("b.payment_date <=", $end_date);
+            $this->db->where("b.created_date >=", $start_date);
+            $this->db->where("b.created_date <=", $end_date);
         }
         if (!$has_search && !$has_valid_date) {
-            $this->db->where("YEAR(b.payment_date)", $current_year); // Defaults to the current year
+            $this->db->where("YEAR(b.created_date)", $current_year); // Defaults to the current year
         }
         
         if($has_search){
@@ -3268,7 +3268,7 @@ class Billing_m extends CI_Model {
             }
             $this->db->group_end();
         } else {
-            $this->db->where("YEAR(b.payment_date)", $current_year);
+            $this->db->where("YEAR(b.created_date)", $current_year);
         }
 
         $query = $this->db->get();
