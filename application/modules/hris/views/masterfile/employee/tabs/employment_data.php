@@ -491,7 +491,6 @@
             </div>
             <div class="modal-footer">
                 <button @click="savePrimaryPosition" type="button" class="btn btn-primary btnSave" id="save_primary_position">Save</button>
-                <!-- <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Close</button> -->
             </div>
         </div>
     </div>
