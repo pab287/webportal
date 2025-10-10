@@ -40,11 +40,11 @@ class Events extends MX_Controller {
         $data['event_details'] = $this->em->getEventDetails($id);
         $data['participants'] = $this->em->getEventParticipants($id);
         $data['employees'] = $this->em->getEmployeeSelection($id);
+        $data['attachments'] = $this->em->getEventAttachments($id);
+        $data['schedule'] = $this->em->getEventSchedule($id);
         $this->core_layout->addCss("css/buttons.dataTables.min.css", true);
-        $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
-        // $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
-        // $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
         // $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
+        $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
         $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
         $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.min.js', true);
@@ -148,5 +148,19 @@ class Events extends MX_Controller {
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
+    public function remove_file(){
+        $data = $this->em->removeFile();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function new_event_sched(){
+        $data = $this->em->newEventSched();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function assign_schedule(){
+        $data = $this->em->assignEventSched();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
 
 }

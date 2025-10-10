@@ -2,6 +2,8 @@ let eventsDetails = null;
 let participants = null;
 let employees = null;
 let empId = null;
+let attachments = null;
+let schedule = null;
 const maxFileSize = 50 * 1024 * 1024; // 50MB
 const allowedTypes = [
     'application/pdf',
@@ -45,7 +47,9 @@ if (_tempContentData !== undefined && _tempContentData !== null && _tempContentD
     eventsDetails = {..._tempContentData.event_details};
     participants = {..._tempContentData.participants};
     employees =_tempContentData.employees;
-    console.log(participants);
+    attachments = _tempContentData.attachments;
+    schedule = _tempContentData.schedule;
+    console.log(schedule);
 }
 
 
@@ -68,7 +72,9 @@ let eventVue = new Vue({
         },
         participantDataSelected:{},
         uploadedFiles:[],
-
+        attachments:attachments,
+        schedule:schedule,
+        selectedSched:[],
     },
     mounted: function () {
         this.eventsData = JSON.parse(JSON.stringify(eventsDetails));
@@ -177,16 +183,116 @@ let eventVue = new Vue({
         
             return classMap[extension] || "m-widget4 m-widget2__item m-widget2__item--default col-12";
         },
+        getAttachmentExtension: function(filename) {
+            if (!filename) return '';
+            const parts = filename.split('.');
+            return parts.length > 1 ? parts.pop().toLowerCase() : '';
+        },
         fileDelete: function(id){
             this.uploadedFiles.pop(id);
             this.count = this.uploadedFiles.length;
+        },
+        openFile(name,type) {
+            let fileUrl = baseUrl("uploads/files/documents/event_" + eventsDetails.id + "/"+type+"/" + encodeURIComponent(name));
+            function checkFileExists(url, callback) {
+                $.ajax({
+                    url: url,
+                    type: 'HEAD',
+                    success: function(response, status, xhr) {
+                        var mimeType = xhr.getResponseHeader("Content-Type");
+                        callback(true, mimeType);
+                    },
+                    error: function(xhr, status, error) {
+                        callback(false, null);
+                    }
+                });
+            }
+        
+            checkFileExists(fileUrl, function(exists, mimeType) {
+                if (!exists) {
+                    $('#pdfViewerModal .modal-body').html('<p class="text-danger">Error: File not found.</p>');
+                    $('#pdfViewerModal').modal('show');
+                } else if (mimeType && mimeType.startsWith('application/pdf')) {
+                    $('#pdfViewerModal .modal-body').html('<iframe id="pdfFrame" style="width: 100%; height: 600px;" frameborder="0"></iframe>');
+                    $('#pdfViewerModal').modal('show');
+                    $('#pdfFrame').attr('src', fileUrl);
+                } else {
+                    window.open(fileUrl, '_blank');
+                }
+            });
+        },
+        removeAttachment: function(id, type, filename) {
+            const self = this;
+            const fileUrl = baseUrl("uploads/files/documents/event_" + eventsDetails.id + "/" + type + "/" + encodeURIComponent(filename));
+        
+            Swal.fire({
+                title: "Are you sure?",
+                text: "This file will be permanently deleted.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Yes, delete it",
+                cancelButtonText: "Cancel"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: baseUrl("events/remove_file"),
+                        type: "POST",
+                        dataType: "json",
+                        data: {
+                            csrf_token : _csrf_hash,
+                            file_path: fileUrl,
+                            id: id
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                toastr.success(response.message || "File deleted successfully.");
+                                if (self.attachments[type]) {
+                                    self.attachments[type] = self.attachments[type].filter(item => item.id !== id);
+                                }
+                                if (self.attachments[type] && self.attachments[type].length === 0) {
+                                    delete self.attachments[type];
+                                }
+                            } else {
+                                toastr.error(response.message || "Failed to remove attachment.");
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            toastr.error("Error removing attachment: " + error);
+                        }
+                    });
+                }
+            });
+        },
+        formatTypeLabel(type) {
+            if (!type) return '';
+            let formatted = type.replace(/_/g, ' ');
+            formatted = formatted.replace(/\b\w/g, c => c.toUpperCase());
+            return formatted;
+        },
+        formatTime(start_time, end_time) {
+            const format = (time) => {
+                const [hour, minute] = time.split(":");
+                const date = new Date();
+                date.setHours(hour, minute);
+                return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
+            };
+            return `${format(start_time)} - ${format(end_time)}`;
+        },
+        viewSched(item){
+             this.selectedSched = item;
+             $('#scheduleModal').modal('show');
+        },
+        removeSched(id){
+            console.log(id);
         },
     },
 });
 
 let participantsArray = Object.values(participants);
 const participantsTable = $('#participantsTable').DataTable({
-    dom: 'Bfrtlip',
+    dom: 'frtlip',
     data: participantsArray,
     // scrollX: true,
     responsive: true,
@@ -261,100 +367,15 @@ const participantsTable = $('#participantsTable').DataTable({
             }
         }
     ],
-    initComplete: function () {
-        var btns = $('.dt-buttons').detach();
-        $('#participantsTable_filter').append(btns);
-        $('#participantsTable_filter .dt-button').removeClass('dt-button');
+    // initComplete: function () {
+    //     var btns = $('.dt-buttons').detach();
+    //     $('#participantsTable_filter').append(btns);
+    //     $('#participantsTable_filter .dt-button').removeClass('dt-button');
 
-        // Apply Metronic styles
-        $(".btnAdvanceSearch").addClass("btn m-btn--square btn-warning text-white mb-2 mt-2");
-        $(".btnPdfAction").addClass("btn m-btn--square btn-warning text-white ml-2");
-        $(".btnExcelAction").addClass("btn m-btn--square btn-info text-white ml-2");
-    },
-    buttons: [
-        // {
-        //     text: 'GENERATE ATTENDANCE SHEET',
-        //     title: 'CRS REPORTS',
-        //     className: 'btnAdvanceSearch btnSave',
-        //     action: function ( e, dt, node, config ){
-        //         console.log(eventVue.eventsData);
-        //         if ($('#attendanceDate').data('daterangepicker')) {
-        //             $('#attendanceDate').data('daterangepicker').remove();
-        //         }
-        //         $('#attendanceDate').daterangepicker({
-        //             showDropdowns: true,
-        //             autoUpdateInput: false,
-        //             singleDatePicker: true,
-        //             startDate: moment(),
-        //             parentElement: $('#attendanceSheet .modal-body'),
-        //             locale: {
-        //                 format: 'MMM DD, YYYY',
-        //                 cancelLabel: 'Clear'
-        //             }
-        //         });
-        //         $('#attendanceDate').on('apply.daterangepicker', function(ev, picker) {
-        //             $(this).val(picker.startDate.format('MMM DD, YYYY'));
-        //         });
-            
-        //         $('#attendanceDate').on('cancel.daterangepicker', function(ev, picker) {
-        //             $(this).val('');
-        //         });
-
-        //         $('#startTime').timepicker({
-        //             timeFormat: 'h:mm p',
-        //             interval: 30,
-        //             minTime: '8',
-        //             defaultTime: '8',
-        //             startTime: '8:00',
-        //         });
-
-        //         $('#endTime').timepicker({
-        //             timeFormat: 'h:mm p',
-        //             interval: 30,
-        //             minTime: '8',
-        //             defaultTime: '12p',
-        //             startTime: '8:00',
-        //         });
-        //         $("#attendanceSheet").modal('show');
-        //     }
-        // },
-        // {
-        //     extend: 'excelHtml5',
-        //     title: 'Attendance Sheet',
-        //     className: 'd-none btnSave buttons-excel',
-        //     filename: function() {
-        //         return 'attendance_sheet_' + moment().format('YYYY-MM-DD');
-        //     },
-        //     messageTop: function() {
-        //         var attendanceDate = $('#attendanceDate').val() || moment().format('MMM DD, YYYY');
-        //         var startTime = $('#startTime').val() || '9:00 AM';
-        //         var endTime = $('#endTime').val() || '12:00 PM';
-        //         var eventTitle = (eventVue && eventVue.eventsData && eventVue.eventsData.title) ? 
-        //             eventVue.eventsData.title.toUpperCase() : 'TRAINING EVENT';
-                
-        //         return eventTitle + '\n' + 
-        //                'Date: ' + attendanceDate + '\n' + 
-        //                'Time: ' + startTime + ' - ' + endTime + '\n\n';
-        //     },
-        //     exportOptions: {
-        //         columns: [1,2,3,4] ,
-        //       },
-        //     action: function ( e, dt, node, config ){
-        //         $.fn.dataTable.ext.buttons.excelHtml5.action.call(this, e, dt, node, config);
-        //     },
-        //     customize: function(xlsx) {
-        //         var sheet = xlsx.xl.worksheets['sheet1.xml'];
-        //         $('row', sheet).each(function(index) {
-        //             var rowNum = index + 1;
-        //             if (index === 0) {
-        //                 $(this).append('<c r="E1" t="inlineStr" s="2"><is><t>Signature</t></is></c>');
-        //             } else {
-        //                 $(this).append('<c r="E' + rowNum + '" t="inlineStr"><is><t></t></is></c>');
-        //             }
-        //         });
-        //     }
-        // }
-    ],
+    //     $(".btnAdvanceSearch").addClass("btn m-btn--square btn-warning text-white mb-2 mt-2");
+    //     $(".btnPdfAction").addClass("btn m-btn--square btn-warning text-white ml-2");
+    //     $(".btnExcelAction").addClass("btn m-btn--square btn-info text-white ml-2");
+    // },
 });
 
 function itemDatatableActions(id, status, emp_id = null, awarded) {
@@ -397,6 +418,16 @@ function itemDatatableActions(id, status, emp_id = null, awarded) {
                 title="Archive Participant">
                 <i class="la la-file-archive-o"></i>
             </a>`;
+        
+        if(status == 'confirmed'){
+            _actionButton += `
+            <a href="javascript:void(0)" 
+                class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
+                onclick="assignSchedule(${id})" 
+                title="Assign Schedule">
+                <i class="la 	la-calendar-plus-o"></i>
+            </a>`;
+        }
     }
 
     if (isDone) {
@@ -868,16 +899,6 @@ function declineParticipant(id) {
     });
 }
 
-$.validate({
-    form : '#attendance_sheet_form',
-    lang: 'en',
-    onSuccess : function(form) {
-        console.log(participantsTable.buttons().count()); 
-        participantsTable.button(1).trigger();
-        return false; 
-    }
-});
-
 const expandedButtons = $('button[aria-expanded="true"]');
 expandedButtons.each(function (i, el) {
     $(el).css('transform', 'rotate(90deg)');
@@ -962,14 +983,92 @@ $('#New_Add_File').on('submit', function(e) {
             success: function (response) {
                 if (response.success) {
                     toastr.success(response.toastr_msg, 'Success', 5000);
-
                     eventVue.uploadedFiles = [];
                     $('#fileupload').val(null);
+                    eventVue.attachments = response.attachments;
                 }else{
                     toastr.error(response.toastr_msg, 'Error', 5000);
                 }
                 $('#New_Add_File')[0].reset();
+                $('#newAttachment').modal('hide');
             }
         });
     }
 });
+
+$('#schedule_date').datepicker({ 
+    todayHighlight: true,
+    autoclose: true,
+    pickerPosition: 'bottom left',
+    todayBtn: true,
+    format: 'yyyy-mm-dd',
+});
+
+$('#schedule_start').timepicker({
+    timeFormat: 'HH:mm:ss',
+    interval: 30,
+    minTime: '00:00:00',
+    maxTime: '23:59:59',
+    defaultTime: '00:00:00',
+    startTime: '00:00:00',
+    dynamic: false,
+    dropdown: true,
+    scrollbar: true
+});
+
+$('#schedule_end').timepicker({
+    timeFormat: 'HH:mm:ss',
+    interval: 30,
+    minTime: '00:00:00',
+    maxTime: '23:59:59',
+    defaultTime: '00:00:00',
+    startTime: '00:00:00',
+    dynamic: false,
+    dropdown: true,
+    scrollbar: true
+});
+
+$.validate({
+    form: "#new_event_sched",
+    lang: "en",
+    onSuccess: function (form) {
+        let currentForm = form[0];
+        let url = baseUrl("events/new_event_sched");
+        let formData = $(currentForm).serialize();
+        formData += "&events_id=" + encodeURIComponent(eventsDetails.id);
+        $.ajax({
+            url: url,
+            type: "POST",
+            dataType: "JSON",
+            data: formData,
+            success: function (response) {
+                if (response.success) {
+                    toastr.success(response.toastr_msg, 'Success', 5000);
+                    eventVue.trainings = response.trainings;
+                    $('#new_event_sched').modal('hide');
+                } else {
+                    toastr.error(response.toastr_msg, 'Error', 5000);
+                }
+            }
+        });
+    }
+});
+
+function assignSchedule(participant){
+    $('#attendanceSheet').modal('show');
+    // $.ajax({
+    //     url: baseUrl("events/assign_schedule"),
+    //     type: "POST",
+    //     data: {
+    //         csrf_token : _csrf_hash,
+    //         events_participants_id: participant,
+    //         events_id: eventsDetails.id,
+    //     },
+    //     dataType: "JSON",
+    //     success: function(res) {
+
+    //     }    
+    // });
+}
+
+// const attendanceTable = $

@@ -60,9 +60,20 @@
             color: #333;
             font-size: 14px;
         }
+
+        .m-widget2__desc {
+            line-height: 50px; /* Match the height of the parent */
+        }
+
+        .btn-xs {
+            padding: 0.15rem 0.3rem;
+            font-size: 0.65rem;
+            line-height: 1;
+            border-radius: 0.2rem;
+        }
 </style>
 <div class="row" id="events-content">
-<input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+    <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
     <div class="col-12">
         <div class="m-content">
             <div class="row">
@@ -151,7 +162,7 @@
                     </div>
                 </div>
                 <div class="col-md-8 col-sm-12">
-                    <div class="m-portlet m-portlet--tabs" id="m_portlet">
+                    <div class="m-portlet m-portlet--tabs" id="m_portlet_2">
                         <div class="m-portlet__head">
                             <div class="m-portlet__head-tools">
                                 <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--left m-tabs-line--primary" role="tablist">
@@ -161,32 +172,29 @@
                                         </a>
                                     </li>
                                     <li class="nav-item m-tabs__item">
+                                        <a class="nav-link m-tabs__link" data-toggle="tab" href="#scheduleTab" role="tab">
+                                            Schedule
+                                        </a>
+                                    </li>
+                                    <li class="nav-item m-tabs__item">
                                         <a class="nav-link m-tabs__link" data-toggle="tab" href="#attachmentTab" role="tab">
                                             Attachments
                                         </a>
                                     </li>
                                 </ul>
                             </div>
-                            <!-- <div class="m-portlet__head-caption">
-                                <div class="m-portlet__head-title">
-                                    <span class="m-portlet__head-icon">
-                                        <i class="la la-user"></i>
-                                    </span>
-                                    <h3 class="m-portlet__head-text">
-                                        Event Participants
-                                    </h3>
-                                </div>
-                            </div> -->
                         </div>
                         <div class="m-portlet__body">
                             <div class="tab-content">
                                 <div class="tab-pane active" id="participantTab">
                                     <div class="row">
                                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
-                                            <button type="button" v-if="!eventAlreadyHappened" class="btn m-btn m-btn--sm btn-success m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#addNewParticipant">
-                                                <i class="la la-user-plus"></i>
+                                            <button type="button" v-if="!eventAlreadyHappened" class="btn m-btn m-btn--sm btn-success mb-2 btnNew" data-toggle="modal" data-target="#addNewParticipant">
                                                 ADD PARTICIPANT
                                             </button>
+                                            <!-- <button type="button" v-if="eventAlreadyHappened" class="btn m-btn m-btn--sm btn-warning mb-2 text-white btnNew" data-toggle="modal" data-target="#attendanceSheet">
+                                                GENERATE ATTENDANCE
+                                            </button> -->
                                         </div>
                                         <div class="col-12">
                                             <div class="table-responsive">
@@ -209,38 +217,208 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="tab-pane" id="scheduleTab">
+                                    <div class="m-portlet m-portlet--collapsed" data-portlet="true" id="m_portlet_schedule">
+                                        <div class="m-portlet__head" style="height: 3rem;">
+                                            <div class="m-portlet__head-caption">
+                                                <div class="m-portlet__head-title">
+                                                    <h3 class="m-portlet__head-text">
+                                                        MANAGE SCHEDULE
+                                                    </h3>
+                                                </div>
+                                            </div>
+                                            <div class="m-portlet__head-tools">
+                                                <ul class="m-portlet__nav">
+                                                    <li class="m-portlet__nav-item">
+                                                        <a href="javascript:void(0);"  data-portlet-tool="toggle" class="m-portlet__nav-link m-portlet__nav-link--icon">
+                                                            <i class="la la-angle-down"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="m-portlet__body">
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <form  id="new_event_sched" onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
+                                                        <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                                                        <div class="row">
+                                                            <div class="col-4 align-self-end">
+                                                                <button type="submit" class="btn m-btn m-btn--sm btn-success mb-2 btnNew">
+                                                                    ADD SCHEDULE
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-12">
+                                                                <div class="form-group m-form__group">
+                                                                    <label class="form-control-label required" for="title">TITLE</label>
+                                                                    <input type="text" id="title" name="title" class="form-control m-input" placeholder="Title" data-validation="required" >
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <div class="form-group m-form__group">
+                                                                    <label class="form-control-label required" for="description">DESCRIPTION</label>
+                                                                    <textarea type="text" id="description" name="description" class="form-control m-input" placeholder="Description" data-validation="required" ></textarea>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-4">
+                                                                <div class="form-group m-form__group">
+                                                                <label for="schedule_start">Inclusive Date</label>
+                                                                    <div class="input-group">
+                                                                        <div class="input-group-prepend">
+                                                                            <span class="input-group-text"><i class="la la-clock-o"></i></span>
+                                                                        </div>
+                                                                        <input id="schedule_date" name="start" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-4">
+                                                                <div class="form-group m-form__group">
+                                                                <label for="schedule_start">Start Time</label>
+                                                                    <div class="input-group">
+                                                                        <div class="input-group-prepend">
+                                                                            <span class="input-group-text"><i class="la la-clock-o"></i></span>
+                                                                        </div>
+                                                                        <input id="schedule_start" name="start" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-4">
+                                                                <div class="form-group m-form__group">
+                                                                    <label for="schedule_end">End Time</label>
+                                                                    <div class="input-group">
+                                                                        <div class="input-group-prepend">
+                                                                            <span class="input-group-text"><i class="la la-clock-o"></i></span>
+                                                                        </div>
+                                                                        <input id="schedule_end" name="end" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-12 mb-3">
+                                            <h5>EVENT TIMELINE</h5>
+                                        </div>
+                                        <template v-for="(item, index) in schedule">
+                                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                                <div class="card p-3">
+                                                    <div class="card-body pb-0">
+                                                        <div class="row mb-3">
+                                                            <div class="col-12">
+                                                            <h4 class="m--font-transform-u font-weight-bold"  v-text="item.title">
+                                                            </h4>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-12 mb-3">
+                                                                <span class="col-12 badge badge-primary" v-text="formatTime(item.start,item.end)" style="font-size: 12px;"></span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row mb-3">
+                                                            <div class="col-12">
+                                                                <div class="row">
+                                                                    <span class="col-12 m--font-transform-u font-weight-bold">description: </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row mb-3">
+                                                            <div class="col-12">
+                                                                <div class="row">
+                                                                    <textarea class="form-control m-input col-12 text-uppercase" v-text="item.description" rows="3" style="resize: none; overflow-y: auto;" readonly></textarea>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <hr>
+                                                        <div class="row">
+                                                            <div class="col-12">
+                                                                <div class="row text-center">
+                                                                <span class="col-4 p-1">
+                                                                    <button class="btn btn-info m-btn m-btn--icon m-btn--icon-only text-white w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Take Attendance">
+                                                                        <i class="la la-calendar"></i>
+                                                                    </button>
+                                                                </span>
+                                                                <span class="col-4 p-1">
+                                                                    <button class="btn btn-warning m-btn m-btn--icon m-btn--icon-only text-white w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Schedule">
+                                                                        <i class="la la-pencil"></i>
+                                                                    </button>
+                                                                </span>
+                                                                <span class="col-4 p-1">
+                                                                    <button class="btn btn-danger m-btn m-btn--icon m-btn--icon-only text-white w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Remove Schedule">
+                                                                        <i class="la la-trash"></i>
+                                                                    </button>
+                                                                </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
                                 <div class="tab-pane" id="attachmentTab">
                                     <div class="row mb-3">
                                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
-                                            <button type="button" class="btn m-btn m-btn--sm btn-success m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#newAttachment">
-                                                <i class="la la-user-plus"></i>
+                                            <button type="button" class="btn m-btn m-btn--sm btn-success mb-2 btnNew" data-toggle="modal" data-target="#newAttachment">
                                                 ADD ATTACHMENT
                                             </button>
                                         </div>
                                     </div>
                                     <hr/>
+                                    <template v-if="attachments.length <= 0">
+                                        <div id="alert-no-attachment-yet">
+                                            <h6 class="mt-2 text-muted" style="padding-left: 48px;">No record(s) to show.</h6>
+                                        </div>
+                                    </template>
                                     <div class="accordion">
                                         <div class="m-widget2">
-                                            <div class="mb-4 d-flex flex-row align-items-center accordion-header">
-                                                <button class="btn btn-default m-btn--icon m-btn--icon-only m-btn--pill"
-                                                        data-toggle="collapse"
-                                                        data-target="#collapsibleDocuments"
-                                                        aria-expanded="true" aria-controls="collapsibleDocuments">
-                                                    <i class="more-less fa fa-chevron-right"></i>
-                                                </button>
-                                                <h5 class="ml-3 mb-0">Training Documents</h5>
-                                                <span class="pl-2 m-menu__link-badge">
-                                                    <span class="m-badge m-badge--success" id="documents-total-badge">0</span>
-                                                </span>
-                                            </div>
-                                            <div id="collapsibleDocuments" class="collapse show">
-                                                <div id="alert-no-document-yet">
-                                                    <h6 class="mt-2 text-muted" style="padding-left: 48px;">No record(s) to show.</h6>
+                                            <template v-for="(files, type, index) in attachments" :key="type">
+                                                <div class="mb-4 d-flex flex-row align-items-center accordion-header">
+                                                    <button class="btn btn-default m-btn--icon m-btn--icon-only m-btn--pill" data-toggle="collapse" :data-target="'#type-' + index + '-collapsibleDocuments'" aria-expanded="false" :aria-controls="'type-' + index + '-collapsibleDocuments'">
+                                                        <i class="more-less fa fa-chevron-right"></i>
+                                                    </button>
+                                                    <h5 class="ml-3 mb-0" v-text="formatTypeLabel(type)"></h5>
+                                                    <span class="pl-2 m-menu__link-badge">
+                                                        <span class="m-badge m-badge--success" id="documents-total-badge">{{files.length}}</span>
+                                                    </span>
                                                 </div>
-                                                <div class="row"></div>
-                                            </div>
+                                                <div :id="'type-' + index + '-collapsibleDocuments'" class="collapse">
+                                                    <template v-if="files.length <= 0">
+                                                        <div id="alert-no-document-yet">
+                                                            <h6 class="mt-2 text-muted" style="padding-left: 48px;">No record(s) to show.</h6>
+                                                        </div>
+                                                    </template>
+                                                    <template v-else>
+                                                        <template v-for="(item, fileIndex) in files" :key="fileIndex">
+                                                            <div v-bind:class="getClass(getAttachmentExtension(item.filename))">
+                                                                <div class="m-widget4__item m-0 p-0">
+                                                                    <div class="m-widget4__img m-widget4__img--icon">
+                                                                        <img v-bind:src="getExtension(getAttachmentExtension(item.filename))" alt="" height="50" width="50">
+                                                                    </div>
+                                                                    <div class="m-widget2__desc">
+                                                                        <span class="m-widget4__text" @click="openFile(item.filename,item.type)">{{item.filename}}</span>
+                                                                    </div>
+                                                                    <div class="m-widget2__actions">
+                                                                        <button type="button" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView" v-on:click="removeAttachment(item.id,item.type,item.filename)">
+                                                                            <i class="m-nav__link-icon flaticon-circle"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                                <hr v-if="index < Object.keys(attachments).length - 1"/>
+                                            </template>
                                         </div>
-                                        <hr/>
                                     </div>
                                 </div>
                             </div>
@@ -250,6 +428,7 @@
             </div>
         </div>
     </div>
+    <!-- MODALS -->
     <div class="modal fade show" id="addNewParticipant" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -418,49 +597,25 @@
         <div class="modal-dialog modal-md">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Generate Attendance Sheet</h5>
+                    <h5 class="modal-title">Assign Schedule</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form id='attendance_sheet_form' onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label class="form-control-label">Event</label>
-                                <input name="title" type="text" class="form-control m-input" placeholder="Event" v-model="eventsData.event_title" disabled>
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <label class="form-control-label">Description</label>
-                                <textarea name="description" class="form-control m-input" placeholder="Event description..."  v-model="eventsData.description" disabled style="resize:none"></textarea>
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <label class="form-control-label required">Date</label>
-                                <input id="attendanceDate" name="attendanceDate" type="text" class="form-control m-input" placeholder="Select Attendance Date" data-validation="required" readonly>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-control-label required">Start</label>
-                                <input id="startTime" name="startTime" type="text" class="form-control m-input" placeholder="Start" data-validation="required" readonly>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-control-label required">End</label>
-                                <input id="endTime" name="endTime" type="text" class="form-control m-input" placeholder="End" data-validation="required" readonly>
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <label class="form-control-label">Venue</label>
-                                <input name="venue" type="text" class="form-control m-input" placeholder="Venue" v-model="eventsData.event_venue" disabled>
-                            </div>
-                            <div class="col-md-12">
-                                <label class="form-control-label">Expected Attendees</label>
-                                <input name="attendees" type="text" class="form-control m-input" placeholder="Venue" v-model="participantsCount.confirmed" disabled>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="table-responsive">
+                                <table class="table display table-bordered table-striped dataTable no-footer" id="attendanceSheetTable">
+                                    <thead>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-success btnSave"><i class="la la-check mr-2"></i>GENERATE</button>
-                        <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
@@ -480,7 +635,7 @@
                         <div class="row">
                             <div class="col-md-12 mb-3">
                                 <label for="attachment_type" class="form-control-label required">Attachment Type</label>
-                                <select id="attachment_type" name="attachment_type" class="form-control m-input select2" data-validation="required"></select>
+                                <select id="attachment_type" name="attachment_type" class="form-control m-input" data-validation="required"></select>
                             </div>
                             <div class="form-group col-12">
                                 <div class=" mt-4">
@@ -535,4 +690,21 @@
             </div>
         </form>
     </div>
+
+    <div class="modal fade" id="pdfViewerModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">File Viewer</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <iframe id="pdfFrame" style="width: 100%; height: 800px;" frameborder="0"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>

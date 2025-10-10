@@ -11,6 +11,7 @@ class Events_model extends MX_Controller {
     protected $positionsTable = "gcchris.tblposition";
     protected $usersTable = "gccmaster.tblusers";
     protected $tbltrainings = "gcchris.tbltrainings";
+    protected $evetsSched = "gcchris.events_schedule";
     protected $user_data = null;
     protected $actions = null;
     public function __construct() {
@@ -761,24 +762,113 @@ class Events_model extends MX_Controller {
         }
         
         if (count($uploaded) > 0 && count($failed) == 0) {
-            $resultset["response"] = true;
+            $resultset["success"] = true;
             $resultset["toastr_msg"] = count($uploaded) . " file(s) uploaded successfully!";
             $resultset["uploaded_files"] = $uploaded;
-            $this->core_layout->setEventLog("filename uploaded","insert", "success", "gcchris", "user");
+            $resultset["attachments"] = $this->getEventAttachments($event);
+            $this->core_layout->setEventLog(implode(", ", $uploaded) . " uploaded successfully", "insert", "success", "gcchris", "user");
         } elseif (count($uploaded) > 0 && count($failed) > 0) {
-            $resultset["response"] = true;
+            $resultset["success"] = true;
             $resultset["toastr_msg"] = count($uploaded) . " uploaded, " . count($failed) . " failed";
             $resultset["uploaded_files"] = $uploaded;
             $resultset["failed_files"] = $failed;
-            $this->core_layout->setEventLog("filename uploaded","insert", "success", "gcchris", "user");
+            $this->core_layout->setEventLog(count($uploaded) . " files uploaded, " . count($failed) . " failed", "insert", "error", "gcchris", "system");
         } else {
-            $resultset["response"] = false;
+            $resultset["success"] = false;
             $resultset["toastr_msg"] = "All files failed to upload!";
             $resultset["failed_files"] = $failed;
-            $this->core_layout->setEventLog("filename uploaded","insert", "success", "gcchris", "user");
+            $this->core_layout->setEventLog("File upload failed: " . implode(", ", $failed), "insert", "failed", "gcchris", "system");
         }
         
         return $resultset;
     }
+
+    public function getEventAttachments($id){
+        $this->db->select("id, filename, type");
+        $this->db->where('events_id', $id);
+        $attachments = $this->db->get($this->eventsAttachmentsTable)->result();
+    
+        $grouped = [];
+    
+        foreach ($attachments as $attachment) {
+            $type = $attachment->type;
+            if (!isset($grouped[$type])) {
+                $grouped[$type] = [];
+            }
+    
+            $grouped[$type][] = [
+                'id' => $attachment->id,
+                'filename' => $attachment->filename,
+                'type' => $attachment->type
+            ];
+        }
+    
+        return $grouped;
+    }
+
+    public function removeFile(){
+        $post = $this->input->post();
+        $id = isset($post['id']) ? (int)$post['id'] : 0;
+        $filePath = isset($post['file_path']) ? $post['file_path'] : '';
+    
+        $response = ['success' => false, 'message' => 'Invalid request.'];
+    
+        if ($id && $filePath) {
+            $decodedPath = urldecode($filePath);
+    
+            if (file_exists($decodedPath)) {
+                if (!unlink($decodedPath)) {
+                    $response['message'] = 'Unable to delete file from server.';
+                    return $response;
+                    ;
+                }
+            }
+    
+            $this->db->where('id', $id);
+            if ($this->db->delete($this->eventsAttachmentsTable)) {
+                $response = [
+                    'success' => true,
+                    'message' => 'File deleted successfully.'
+                ];
+            } else {
+                $response['success'] = false;
+                $response['message'] = 'Failed to remove file record from database.';
+            }
+        }
+    
+       return $response;
+    }
+
+    public function getEventSchedule($id){
+        $this->db->select('id,start,end,title,description,event_date');
+        $this->db->where('events_id', $id);
+        $schedule = $this->db->get($this->evetsSched)->result_array();
+        return $schedule;
+    }
+
+    public function newEventSched(){
+        $resultset = array();
+        $post = $this->input->post();
+        $insert = $this->db->insert($this->evetsSched, $post);
+        if ($insert){
+            $resultset["response"] = true;
+            $resultset["schedule"] = $this->getEventSchedule($post['events_id']);
+            $resultset["toastr_msg"] = "Event schedule has been added.";
+        }
+        else{
+            $resultset["response"] = false;
+            $resultset["toastr_msg"] = "Failed to add event schedule.";
+        }
+        return $resultset;
+    }
+
+    public function assignEventSched(){
+        $post = $this->input->post();
+        $events_id = $post['events_id'];
+        $events = $this->getEventSchedule($events_id);
+        var_dump($events);
+        die();
+    }
+    
 
 }
