@@ -3239,7 +3239,6 @@ class Billing_m extends CI_Model {
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.bills c", "c.id = b.bill_id", "LEFT");
         $this->db->join("gccmaster.tblemployees d", "d.id = b.created_by", "LEFT");
-        $this->db->where("b.is_archive", 0);
 
         $has_valid_date = !empty($post['startDate']) && !empty($post['endDate']) && $post['startDate'] != 'Invalid date' && $post['endDate'] != 'Invalid date';
         $has_search = !empty($search);
