@@ -2513,7 +2513,9 @@ class Timesheet_model extends CI_Model{
     public function generateTimesheetOvertime($timesheet_exist, $generated_manually, $overtime, $date, $am_end, $pm_end, $am_shift_only, $attendance, $night_diff_cfg){
         $resultset = array();
         $hasOvertimeRequest = false;
-        
+        $overtime_start = null;
+        $overtime_end = null;
+
         $total_accredited_ot_hrs = 0;
         $total_accredited_ot_nightdiff_hrs = 0;
         $hasShiftSchedule = $timesheet_exist->has_shift == 1;
