@@ -34,6 +34,25 @@
                         </div>
                         <div class="row mt-2">
                             <div class="form-group m-form-group col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                                <label>PAYROLL OPTION</label>
+                                <div class="m-radio-inline">
+                                    <label class="m-radio">
+                                        <input type="radio" id="date_range_period" name="option" data-validation="required" class="valid" value="1" checked>
+                                        ALL<span></span>
+                                    </label>
+                                    <label class="m-radio">
+                                        <input type="radio" id="monthly_period" name="option" value="2" data-validation="required" class="valid">
+                                        EARNERS<span></span>
+                                    </label>
+                                    <label class="m-radio">
+                                        <input type="radio" id="monthly_period" name="option" value="3" data-validation="required" class="valid">
+                                        NO EARNERS<span></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="form-group m-form-group col-xl-12 col-lg-12 col-md-12 col-sm-12">
                                 <label>COMPANY</label>
                                 <select name="company" id="company" class="form-control">
                                     <option></option>
