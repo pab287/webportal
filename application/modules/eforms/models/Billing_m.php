@@ -6619,45 +6619,81 @@ class Billing_m extends CI_Model {
     $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
     $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
 
-    if(isset($post['date'])){
+    if (isset($post['date'])) {
       $date = explode("-", $post['date']);
-    }else{
+    } else {
       $date = date("Y-m-d");
     }
 
-    $this->db->select("*, bill.ref_no as bill_ref, payment.ref_no as payment_ref, CONCAT(emp.firstname, ' ', emp.lastname) as cashier, UPPER(CONCAT(acct.firstname, ' ', acct.lastname)) as account");
+    $this->db->select("
+        payment.acknowledgement_receipt,
+        payment.ref_no as payment_ref,
+        payment.payment_type,
+        payment.received_amount,
+        payment.balance_covered,
+        payment.payment_date,
+        payment.created_date as applied_payment_date,
+        payment.is_archive,
+
+        bill.ref_no as bill_ref,
+        
+        UPPER(CONCAT(acct.firstname, ' ', acct.lastname)) as account,
+        CONCAT(emp.firstname, ' ', emp.lastname) as cashier
+    ");
+
     $this->db->from("hydra_billing.payments payment");
     $this->db->join("hydra_billing.accounts acct", "acct.id=payment.account_id", "LEFT");
     $this->db->join("hydra_billing.bills bill", "bill.id=payment.bill_id", "LEFT");
     $this->db->join("gccmaster.tblemployees emp", "emp.id=payment.created_by", "LEFT");
     $this->db->where("payment.created_by",$post['id']);
-    if(date("Y-m-d", strtotime($date[0])) == date("Y-m-d", strtotime($date[1]))){
-      $this->db->where("DATE(payment.created_date)", date("Y-m-d", strtotime($date[0])));
-    }else{
-      $this->db->where("DATE(payment.created_date) >",date("Y-m-d", strtotime($date[0])));
-      $this->db->where("DATE(payment.created_date) <",date("Y-m-d", strtotime($date[1])));
+
+    if ($date[0] == $date[1]) {
+        // Single day filter
+        $this->db->where("DATE(payment.created_date)", date("Y-m-d", strtotime($date[0])));
+    } else {
+        // Range filter
+        $this->db->where("payment.created_date >=", date("Y-m-d 00:00:00", strtotime($date[0])));
+        $this->db->where("payment.created_date <=", date("Y-m-d 23:59:59", strtotime($date[1])));
     }
     
     $i = $sortOrder[0]['column'];
     $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
 
     $query = $this->db->get();
-    if($query->num_rows() > 0){
-        foreach($query->result_array() as $_query){
+    if ($query->num_rows() > 0) {
+        foreach($query->result_array() as $_query) {
             $data = array();
+
+            $is_archive = $_query["is_archive"];
+
+            if ($is_archive == 0) {
+                $rec_amount = $_query["received_amount"];
+                $balance_covered = $_query["balance_covered"];
+            } else {
+                $rec_amount = 0;
+                $balance_covered = 0;
+            }
+
             $data["account"] = $_query["account"];
             $data["bill_ref"] = $_query["bill_ref"];
             $data["acknowledgement_receipt"] = $_query["acknowledgement_receipt"];
             $data["payment_ref"] = $_query["payment_ref"];
             $data["type"] = strtoupper($_query["payment_type"]);
-            $data["amount"] = $_query["received_amount"] ? $_query['received_amount'] : $_query['balance_covered'];
-            $data["created_date"] = date("Y-m-d", strtotime($_query["created_date"]));
+            $data["received_amount"] = $rec_amount;
+            $data["balance_covered"] = $balance_covered;
+            $data["payment_date"] = date("Y-m-d", strtotime($_query["payment_date"]));
+            $data["applied_payment_date"] = date("Y-m-d", strtotime($_query["applied_payment_date"]));
             $data["cashier"] = $_query["cashier"];
+            $data["is_archived"] = $is_archive;
             $data["total_count"] = $query->num_rows();
             $resultarray[] = $data;
         }
+
+        return array("data" => $resultarray, "recordsTotal" => $query->num_rows(), "recordsFiltered" => $query->num_rows());
+    } else {
+        return array("data" => [], "recordsTotal" => 0, "recordsFiltered" => 0);
     }
-    return array("data"=>$resultarray, "recordsTotal"=>$query->num_rows(), "recordsFiltered"=>$query->num_rows());
+    
   }
 
   function getSalesReport(){
@@ -6728,29 +6764,4 @@ class Billing_m extends CI_Model {
 
     return array("results" => $resultarray);
 }
-
-//   function getEmployeeCollector(){
-//     $get = $this->input->get();
-//     $resultarray = array();
-//     if (isset($get['q'])) {
-//         $query = $this->db->query("SELECT id, firstname, lastname, middlename
-//         FROM gccmaster.tblemployees
-//         WHERE employee_status='Active' AND (firstname LIKE '%{$get['q']}%' OR lastname LIKE '%{$get['q']}%') ORDER BY id ASC");
-//     }else{
-//         $query = $this->db->query("SELECT id, firstname, lastname, middlename
-//         FROM gccmaster.tblemployees
-//         WHERE employee_status='Active' ORDER BY id ASC");
-//     }
-
-//     if ($query->num_rows() > 0) {
-//         foreach ($query->result_array() as $_query) {
-//             $data = array();
-//             $data["id"] = $_query["id"];
-//             $data["text"] = $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
-//             $resultarray[] = $data;
-//         }
-//     }
-
-//     return array("results" => $resultarray);
-// }
 }
