@@ -115,16 +115,17 @@
 									<th class="toggle-all notExport">
 										<input type="checkbox" id="cb-select-all"> <span></span>
 									</th>
-									<th>Reference No.</th>
-									<th>Account Name</th>
+									<th title="Reference No.">Ref No.</th>
+									<th title="Account Name">Acc. Name</th>
 									<th>Bill</th>
-									<th>Payment Type</th>
+									<th title="Payment Type">Pay Type</th>
 									<th>Due Date</th>
-									<th>Overdue Fee</th>
-									<th>Net Payment</th>
-									<th>Received Amount</th>
+									<th>Penalty</th>
+									<th title="Net Payment">Net Pay</th>
+									<th title="Received Amount">Rec. Amount</th>
 									<th>AR</th>
 									<th>Payment Date</th>
+									<th title="Applied Payment Date">AP. Date</th>
 									<th class="notExport">Action</th>
 								</tr>
 							</thead>
@@ -141,7 +142,7 @@
 </div>
 
 <div class="modal fade" id="m_viewPayment" tabindex="-1" role="dialog">
-	<div class="modal-dialog modal-dialog-centered" role="document" style="min-width: 80%">
+	<div class="modal-dialog modal-dialog-centered" role="document" style="min-width: 500px;">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="exampleModalLabel">View Payment</h5>
@@ -150,155 +151,117 @@
 				</button>
 			</div>
 
-			<div class="modal-body" style="pointer-events: none;">
-				<div class="m-form m-form--label-align-right m--margin-top-10 m--margin-bottom-10">
-					<div class="m-form__heading">
-						<h3 class="m-form__heading-title">Account Information</h3>
-					</div>
+			<div class="modal-body">
+				<div class="section-area">
+					<div class="bg-card mb-4">
+						<!-- <h4 class="info-label mb-4">Account Information</h4> -->
 
-					<div class="row m--margin-bottom-20">
-						<div class="col-md-4">
-							<div class="form-group m-form__group">   
-								<label>Account No.</label>
-								<input class="form-control m-input account_no" readonly type="text">
-							</div>             
-						</div>  
+						<div class="group">
+							<div class="info-group">
+								<p class="info-label">Cashier</p>
+								<p class="info-val mv_cashier"></p>
+							</div>
 
-						<div class="col-md-4">
-							<div class="form-group m-form__group">   
-								<label>Bill</label>
-								<input class="form-control m-input bill" readonly type="text">
-							</div>             
-						</div>       
+							<div class="info-group">
+								<p class="info-label">Applied Payment Date</p>
+								<p class="info-val mv_applied_payment_date"></p>
+							</div>
 
-						<div class="col-md-4">
-							<div class="form-group m-form__group">
-								<label>Payment Date</label>
-								<input class="form-control m-input payment_date" readonly type="text" data-validation="required">
-							</div>             
-						</div>        
-					</div>
+							<div class="info-group">
+								<p class="info-label">AR. #</p>
+								<p class="info-val mv_ar"></p>
+							</div>
 
-					<div class="row m--margin-bottom-20">
-						<div class="col-md-4">
-							<div class="form-group m-form__group">   
-								<label>Customer name</label>
-								<input class="form-control m-input customer_name" type="text" readonly>
-							</div>             
+							<div class="info-group">
+								<p class="info-label">REF. #</p>
+								<p class="info-val mv_ref_no"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">BILL REF. #</p>
+								<p class="info-val mv_bill_ref_no"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">READ. REF. #</p>
+								<p class="info-val mv_read_ref_no"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">PAYMENT DATE</p>
+								<p class="info-val mv_payment_date"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">PAYMENT TYPE</p>
+								<p class="info-val mv_payment_type"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">PAYMENT DETAILS</p>
+								<p class="info-val mv_payment_details"></p>
+							</div>
 						</div>
-
-						<div class="col-md-4">
-							<div class="form-group m-form__group">   
-								<label>Meter No.</label>
-								<input class="form-control m-input meter_no" type="text" readonly>
-							</div>             
-						</div>  
-
-						<div class="col-md-2">
-							<div class="form-group m-form__group">   
-								<label>Block No.</label>
-								<input class="form-control m-input block_no" type="text" readonly>
-							</div>             
-						</div>  
-
-						<div class="col-md-2">
-							<div class="form-group m-form__group">   
-								<label>Lot No.</label>
-								<input class="form-control m-input lot_no" type="text" readonly>
-							</div>             
-						</div>  
 					</div>
+					
+					<div class="bg-card mb-4">
+						<!-- <h4 class="info-label mb-4">Billing / Payment Info</h4> -->
 
-					<hr>
+						<div class="group">
+							<div class="info-group">
+								<p class="info-label">ACC. NO.</p>
+								<p class="info-val mv_account_no"></p>
+							</div>
 
-					<div class="m-form__heading">
-						<h3 class="m-form__heading-title">Payment Information</h3>
-					</div>
+							<div class="info-group">
+								<p class="info-label">NAME</p>
+								<p class="info-val mv_name"></p>
+							</div>
 
-					<div class="row m--margin-bottom-20">
-						<div class="col-md-3">
-							<div class="form-group m-form__group">   
-								<label>Payment Type</label>
-								<input class="form-control m-input payment_type" type="text" readonly>
-							</div>             
-						</div>  
-						<div class="col-md-6 payment_details_layout">
-							<div class="form-group m-form__group">
-								<label class="payment_details_title">Payment Details</label>
-								<input class="form-control m-input payment_details" type="text" readonly data-validation="required">
+							<div class="info-group">
+								<p class="info-label">METER NO.</p>
+								<p class="info-val mv_meter_no"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">ADDRESS</p>
+								<p class="info-val mv_address"></p>
 							</div>
 						</div>
 					</div>
 
-					<div class="row m--margin-bottom-20">
-						<div class="col-md-3">
-							<div class="form-group m-form__group">   
-								<label>Overdue Fee</label>
-								<input class="form-control m-input overdue_fee" type="text" readonly>
-							</div>             
-						</div>  
-						<div class="col-md-3">
-							<div class="form-group m-form__group">
-								<label>Reconnection Fee</label>
-								<input class="form-control m-input reconnection_fee" type="text" readonly data-validation="required">
-							</div>
-						</div>
-						<div class="col-md-3">
-							<div class="form-group m-form__group">
-								<label>Bill Amount</label>
-								<input class="form-control m-input bill_amount" type="text" readonly data-validation="required">
-							</div>
-						</div>
-					</div>
+					<div class="bg-card">
+						<!-- <h4 class="info-label mb-4">Billing / Payment Info</h4> -->
 
-					<div class="row m--margin-bottom-20">
-						<div class="col-md-3">
-							<div class="form-group m-form__group">   
-								<label>Sub Total</label>
-								<input class="form-control m-input sub_total" type="text" readonly>
-							</div>             
-						</div>  
-						<div class="col-md-3">
-							<div class="form-group m-form__group">
-								<label>Balance Covered</label>
-								<input class="form-control m-input balance_covered" type="text" readonly data-validation="required">
+						<div class="group">
+							<div class="info-group">
+								<p class="info-label">BILL AMOUNT</p>
+								<p class="info-val mv_bill_amount"></p>
 							</div>
-						</div>
-						<div class="col-md-3">
-							<div class="form-group m-form__group">   
-								<h6>Net Payment</h6>
-								<input class="form-control m-input net_payment" type="text" readonly data-validation="required">
-							</div>
-						</div>
-					</div>
 
-					<hr>
-
-					<div class="row m--margin-bottom-20">
-						<div class="col-md-3">
-							<div class="form-group m-form__group">   
-								<label>Created By</label>
-								<input class="form-control m-input created_by" type="text" readonly>
-							</div>             
-						</div>
-						<div class="col-md-3">
-							<div class="form-group m-form__group">   
-								<label>Created Date</label>
-								<input class="form-control m-input created_date" type="text" readonly>
-							</div>             
-						</div>
-						<div class="col-md-3">
-							<div class="form-group form__group">   
-								<label>Acknowledgement Receipt</label>
-								<input class="form-control m-input acknowledgement_receipt" readonly type="text">
+							<div class="info-group">
+								<p class="info-label">OVERDUE FEE</p>
+								<p class="info-val mv_overdue_fee"></p>
 							</div>
-						</div>
-						<div class="col-md-3">
-							<div class="form-group form__group">   
-								<h6 class="m-form__heading-title">
-									Received Amount
-								</h6>
-								<input class="form-control-lg m-input text-right received_amount" readonly type="text" style="font-weight: bold;" >
+
+							<div class="info-group">
+								<p class="info-label">RECONNECTION FEE:</p>
+								<p class="info-val mv_reconnection_fee"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label">BALANCE COVERED</p>
+								<p class="info-val mv_balance_covered"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label font-weight-bold">NET PAYMENT</p>
+								<p class="info-val mv_net_payment"></p>
+							</div>
+
+							<div class="info-group">
+								<p class="info-label font-weight-bold">RECEIVED AMOUNT</p>
+								<p class="info-val mv_received_amount"></p>
 							</div>
 						</div>
 					</div>
@@ -376,5 +339,51 @@
 
 	#table-payment tbody tr.selected td.select-checkbox:before {
 		border: 1px solid #ffffff !important;
+	}
+
+	#table-payment tbody > *{
+		font-size: 12px;
+	}
+
+	#m_viewPayment .section-area .bg-card {
+		border-radius: 5px;
+		padding: 20px;
+		/* background: #f2f3f8; */
+		transition: .2s ease-in-out;
+	}
+
+	#m_viewPayment h4.info-label {
+		font-size: 15px;
+	}
+
+	#m_viewPayment .info-label {
+		color: #71737b;
+	}
+	
+	#m_viewPayment .info-val {
+		color: #535353;
+		font-weight: 600;
+	}
+
+	#m_viewPayment .info-group {
+		display: flex;
+		justify-content: space-between;
+		align-items: start;
+	}
+
+	#m_viewPayment .info-group p {
+		margin: 0;
+	}
+
+	#m_viewPayment .info-group:not(:last-child) {
+		margin: 0 0 10px;
+	}
+
+	.table-archived .checkbox-col {
+		pointer-events: none; 
+	}
+
+	#table-payment tbody tr.selected a#viewPayment {
+		color: #575962;
 	}
 </style>

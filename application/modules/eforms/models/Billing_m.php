@@ -2848,10 +2848,10 @@ class Billing_m extends CI_Model {
         $net_payment = $isDisconnection ? ($total_amount + $reconnectionFee['amount']) : $total_amount;
     
         $penalty_overdue = $list['overdue'] ?? 0.00;
-
+        $disconnectionFee = $isDisconnection ? (float)$reconnectionFee['amount'] : 0.00;
         $bill_amount = 0;
         if ($previous_payments) {
-            $bill_amount = (float)number_format(($billing_amount + $penalty_overdue) - $totalBalanceCover - $previous_payments, 2, '.', '');
+            $bill_amount = (float)number_format(($billing_amount + $penalty_overdue + $disconnectionFee) - $totalBalanceCover - $previous_payments, 2, '.', '');
         } else {
             $bill_amount = (float)number_format($billing_amount, 2, '.', '');
         }
@@ -3092,12 +3092,12 @@ class Billing_m extends CI_Model {
             TRIM(a.lastname)
         ) AS name,
         a.middlename, b.reconnection_fee, b.payment_details, b.is_penalty, b.ref_no as payment_ref_no, b.penalties, b.id, a.firstname, a.lastname, b.payment_type, b.received_amount, b.payment_date, b.net_payment, b.created_by, b.created_date, c.ref_no, d.firstname as created_firstname, 
-        d.lastname as created_lastname, c.due_date, b.acknowledgement_receipt");
+        d.lastname as created_lastname, c.due_date, b.acknowledgement_receipt, b.is_archive");
         $this->db->from("hydra_billing.payments b");
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.bills c", "c.id = b.bill_id", "LEFT");
         $this->db->join("gccmaster.tblemployees d", "d.id = b.created_by", "LEFT");
-        $this->db->where("b.is_archive", 0);
+        // $this->db->where("b.is_archive", 0);
 
         $has_valid_date = !empty($post['startDate']) && !empty($post['endDate']) && $post['startDate'] != 'Invalid date' && $post['endDate'] != 'Invalid date';
         $has_search = !empty($search);
@@ -3105,10 +3105,11 @@ class Billing_m extends CI_Model {
         if ($has_valid_date) {
             $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
             $end_date = date('Y-m-d 23:59:59', strtotime($post['endDate']));
-            $this->db->where("b.payment_date >=", $start_date);
-            $this->db->where("b.payment_date <=", $end_date);
-        } elseif (!$has_search) {
-            $this->db->where("YEAR(b.payment_date)", $current_year); // Defaults to the current year
+            $this->db->where("b.created_date >=", $start_date);
+            $this->db->where("b.created_date <=", $end_date);
+        }
+        if (!$has_search && !$has_valid_date) {
+            $this->db->where("YEAR(b.created_date)", $current_year); // Defaults to the current year
         }
         
         if($has_search){
@@ -3125,7 +3126,7 @@ class Billing_m extends CI_Model {
             }
             $this->db->group_end();
         } else {
-            $this->db->where("YEAR(b.payment_date)", $current_year);
+            $this->db->where("YEAR(b.created_date)", $current_year);
         }
 
         // Sort Column
@@ -3142,10 +3143,18 @@ class Billing_m extends CI_Model {
             foreach($query->result_array() as $_query){
                 $data = array();
 
+                $is_archive = $_query["is_archive"];
+
+                if ($is_archive == 0) {
+                    $rec_amount = $_query["received_amount"];
+                } else {
+                    $rec_amount = 0;
+                }
+
                 $data["checkbox"] = '';
                 $data["penalties"] = unserialize($_query["penalties"]);
                 $data["payment_ref_no"] = $_query['payment_ref_no'];
-                $data["due_date"] = $_query['due_date'];
+                $data["due_date"] = date('M d, Y', strtotime($_query["due_date"]));
                 $data["name"] = $_query["name"];
                 $data["id"] = $_query["id"];
                 $data["ref_no"] = $_query["ref_no"];
@@ -3153,12 +3162,13 @@ class Billing_m extends CI_Model {
                 $data["is_penalty"] = $_query["is_penalty"];
                 $data["reconnection_fee"] = $_query["reconnection_fee"];
                 $data["payment_type"] = $_query["payment_type"];
-                $data["received_amount"] = '₱ '.number_format((float)$_query["received_amount"], 2, '.', '');
-                $data["payment_date"] = $_query["payment_date"];
+                $data["received_amount"] = '₱ '.number_format((float)$rec_amount, 2, '.', '');
+                $data["payment_date"] = date('M d, Y', strtotime($_query["payment_date"]));
                 $data["net_payment"] = '₱ '.number_format((float)$_query["net_payment"], 2, '.', ''); 
                 $data["created_by"] = $_query['created_firstname'].' '.$_query['created_lastname'];
-                $data["created_date"] = date('Y-m-d g:i A', strtotime($_query["created_date"]));
+                $data["created_date"] = date('M d, Y', strtotime($_query["created_date"]));
                 $data['acknowledgement_receipt'] = $_query["acknowledgement_receipt"];
+                $data['is_archive'] = $_query["is_archive"];
               
                 $data["isArchiveHide"] = false;
                 // if($this->authenticate->getRoleId() == "1"){
@@ -3229,7 +3239,6 @@ class Billing_m extends CI_Model {
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.bills c", "c.id = b.bill_id", "LEFT");
         $this->db->join("gccmaster.tblemployees d", "d.id = b.created_by", "LEFT");
-        $this->db->where("b.is_archive", 0);
 
         $has_valid_date = !empty($post['startDate']) && !empty($post['endDate']) && $post['startDate'] != 'Invalid date' && $post['endDate'] != 'Invalid date';
         $has_search = !empty($search);
@@ -3237,10 +3246,11 @@ class Billing_m extends CI_Model {
         if ($has_valid_date) {
             $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
             $end_date = date('Y-m-d 23:59:59', strtotime($post['endDate']));
-            $this->db->where("b.payment_date >=", $start_date);
-            $this->db->where("b.payment_date <=", $end_date);
-        } elseif (!$has_search) {
-            $this->db->where("YEAR(b.payment_date)", $current_year); // Defaults to the current year
+            $this->db->where("b.created_date >=", $start_date);
+            $this->db->where("b.created_date <=", $end_date);
+        }
+        if (!$has_search && !$has_valid_date) {
+            $this->db->where("YEAR(b.created_date)", $current_year); // Defaults to the current year
         }
         
         if($has_search){
@@ -3257,7 +3267,7 @@ class Billing_m extends CI_Model {
             }
             $this->db->group_end();
         } else {
-            $this->db->where("YEAR(b.payment_date)", $current_year);
+            $this->db->where("YEAR(b.created_date)", $current_year);
         }
 
         $query = $this->db->get();
@@ -4458,37 +4468,38 @@ class Billing_m extends CI_Model {
     function get_PaymentDetails(){
         $post = $this->input->post();
         $this->db->select("a.*, b.firstname, b.middlename, b.lastname, b.meterno, b.block, b.lot, b.accountno, c.total_charges, c.ref_no as bill_ref_no,
-                            CONCAT(d.firstname, ' ',d.lastname) as created_by, a.acknowledgement_receipt as acknowledgement_receipt");
+                            CONCAT(d.firstname, ' ',d.lastname) as cashier, a.acknowledgement_receipt as acknowledgement_receipt, e.ref_no as reading_ref_no, a.is_archive");
         $this->db->from("hydra_billing.payments a");
         $this->db->join("hydra_billing.accounts b","b.id = a.account_id", "LEFT");
         $this->db->join("hydra_billing.bills c","c.id = a.bill_id", "LEFT");
+        $this->db->join("hydra_billing.readings e","e.id = c.reading_id", "LEFT");
         $this->db->join("gccmaster.tblemployees d","d.id = a.created_by", "LEFT");
         $this->db->where("a.id",$post["payment_id"]);
         $query = $this->db->get()->row_array();
 
         $data = array();
         $data["id"] = $query["id"];
-        $data["ref_no"] = $query["ref_no"];
-        $data["payment_type"] = $query["payment_type"];
-        $data["payment_details"] = $query["payment_details"];
-        $data["received_amount"] = $query["received_amount"];
-        $data["payment_date"] = $query["payment_date"];
-        $data["net_payment"] = $query["net_payment"];
-        $data["sub_total"] = $query["sub_total"];
-        $data["penalties"] = unserialize($query["penalties"]);
-        $data["bill_ref_no"] = $query["bill_ref_no"];
-        $data["accountno"] = $query["accountno"];
-        $data["balance_covered"] = $query["balance_covered"];
-        $data["reconnection_fee"] = $query["reconnection_fee"];
-        $data["total_charges"] = $query["total_charges"];
-        $data["lot_no"] = $query["lot"];
-        $data["meter_no"] = $query["meterno"];
-        $data["block_no"] = $query["block"];
-        $data["is_penalty"] = $query["is_penalty"];
-        $data["created_by"] = $query["created_by"];
+        $data["cashier"] = $query["cashier"];
+        $data["applied_payment_date"] = date('M d, Y ● g:i A', strtotime($query["created_date"]));
         $data["acknowledgement_receipt"] = $query["acknowledgement_receipt"];
+        $data["ref_no"] = $query["ref_no"];
+        $data["bill_ref_no"] = $query["bill_ref_no"];
+        $data["reading_ref_no"] = $query["reading_ref_no"];
+        $data["payment_date"] = date('M d, Y', strtotime($query["payment_date"]));
+        $data["payment_type"] = $query["payment_type"];
+        $data["payment_details"] = $query["payment_details"] != '' ? $query["payment_details"]: 'N/A';
+        $data["accountno"] = $query["accountno"];
         $data["customer_name"] = $this->nameFormat($query["firstname"], $query["middlename"], $query["lastname"]);
-        $data["created_date"] = date('Y-m-d g:i A', strtotime($query["created_date"]));
+        $data["meter_no"] = $query["meterno"];
+        $data["address"] = "L".$query["lot"] . " - " . "B".$query["block"];
+        $data["bill_amount"] = "₱ " . number_format($query["total_charges"],2,'.','');
+        $data["penalties"] = unserialize($query["penalties"]);
+        $data["is_penalty"] = $query["is_penalty"];
+        $data["reconnection_fee"] = "₱ " . number_format($query["reconnection_fee"],2,'.','');
+        $data["balance_covered"] = "₱ " . number_format($query["balance_covered"],2,'.','');
+        $data["net_payment"] = "₱ " . number_format($query["net_payment"],2,'.','');
+        $data["received_amount"] = "₱ " . number_format($query["received_amount"],2,'.','');
+        $data["is_archive"] = $query["is_archive"];
 
         return $data;
     }
