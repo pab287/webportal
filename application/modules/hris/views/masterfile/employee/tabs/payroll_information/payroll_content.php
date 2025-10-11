@@ -1113,7 +1113,7 @@
             initComplete: function () {
                 $('#generalSearchLoans').donetyping(function(callback) {
                     loan_search_val = $(this).val();
-                    dtLoans.ajax.reload();
+                    dtLoan.ajax.reload();
                 });
             }, drawCallback: function(){
                 setTimeout(getCAReferences(), 750);
@@ -1169,8 +1169,8 @@
                     })
                     .val(deduct_type_value);
 
-                $("input[name='deduction_type'][value='" + response.deduction_type + "']", editEmployeeLoan).attr('checked', true);
-                $("input[name='active'][value='" + response.active + "']", editEmployeeLoan).attr('checked', true);
+                $("input[name='deduction_type'][value='" + response.deduction_type + "']", editEmployeeLoan).prop('checked', true);
+                $("input[name='active'][value='" + response.active + "']", editEmployeeLoan).prop('checked', true);
                 $("#for_remarks").text(response.remarks);
                 if(typeof response.debit_note != "undefined" && response.debit_note){
                     $("#debit_note", editEmployeeLoan).val(response.debit_note);
@@ -1201,7 +1201,7 @@
                         if (response.success) {
                             const toast = response.toast;
                             toastr[toast](response.message, response.title, {timeOut: 10000});
-                            dtLoans.ajax.reload();
+                            dtLoan.ajax.reload();
                         }
                     }
 
@@ -1540,7 +1540,7 @@
                     vmNewLoanRefs.hasrefs = false;
                     vmNewLoanRefs.reference = null;
                     
-                    dtLoans.ajax.reload();
+                    dtLoan.ajax.reload();
 
                     $("#mdl-newLoan").modal("hide");
                     $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
@@ -1629,7 +1629,7 @@
                             toastr.error(data.response, "Notice", 5000);
                         }
                         $("#mdl-removeLoan").modal("hide");
-                        dtLoans.ajax.reload();
+                        dtLoan.ajax.reload(); //bug here
                         $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
                     }
                 });
