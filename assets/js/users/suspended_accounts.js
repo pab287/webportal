@@ -1,4 +1,5 @@
 let search = "";
+let _filter = 0;
 const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
 let tblSuspendedUsers = $("#table-suspended-users")
@@ -15,6 +16,7 @@ let tblSuspendedUsers = $("#table-suspended-users")
             data: function (d) {
                 d.csrf_token = _csrf_hash;
                 d.search['value'] = search;
+                d.filter = _filter;
             }, error: function (xhr, error, code) {
                 if (error == "parsererror") { 
                     tblSuspendedUsers.ajax.reload(null, false); 
@@ -39,9 +41,9 @@ let tblSuspendedUsers = $("#table-suspended-users")
                     return row.employee_name != null ? row.employee_name : "No Account Name";
                 }
             },{
-                data: "suspended_by", width: "18%",
+                data: "suspended_by", width: "18%", orderable: false,
                 render: function (data) {
-                    return data != null ? data : "---";
+                    return data != null ? data : "<b>System-Generated Suspension</b>";
                 }
             },{
                 data: "username", render: function (data, _type, row) {
@@ -100,4 +102,9 @@ function process_unsuspend_account(el) {
             }
         }
     });
+}
+
+function filterTable(e) {
+    _filter = e.target.value;
+    tblSuspendedUsers.ajax.reload();
 }

@@ -157,7 +157,149 @@ class User_model extends CI_Model{
         return $resultSet;
     }
 
-    public function getSuspendedUsersList()
+    public function getSuspendedUsersList(){
+        $resultset = array();
+        $post = $this->input->post();
+        $order_val = array(array("column"=>"1", "dir"=>"desc"));
+        $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
+        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
+        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+        $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
+        $filter = (isset($post['filter']) && $post['filter']) ? $post['filter'] : 0;
+
+        $rowCount = 0;
+        $rowData = array();
+
+        $rowData = $this->get_suspended_list($limit, $offset, $sortBy, $sortOrder, $search, $filter);
+        $rowCount = $this->get_suspended_list_count($search, $filter);
+
+        $resultset["recordsTotal"] = $rowCount;
+        $resultset["recordsFiltered"] = $rowCount;
+        $resultset["data"] = $rowData;
+
+        return $resultset;
+    }
+
+    function get_suspended_list($limit, $offset, $sortBy, $sortOrder, $search = null, $filter = 0){
+        $filterFields = array("users.email", 'users.username', 'employees.firstname', 'employees.lastname', 'employees.middlename', 'employees2.firstname', 'employees2.lastname', 'employees2.middlename', "DATE_FORMAT(users.suspended_dt, '%M %e, %Y')");
+        $resultset = array();
+
+        $sql = "users.id, users.username, users.email, UPPER(CONCAT(employees.lastname,
+                CASE WHEN UPPER(TRIM(employees.suffix)) != 'N/A' AND
+                    UPPER(TRIM(employees.suffix !='NONE')) AND employees.suffix !='' AND
+                    employees.suffix IS NOT NULL THEN CONCAT(' ', employees.suffix) ELSE ''
+                END, ', ', employees.firstname, ' ',
+                CASE WHEN UPPER(TRIM(employees.middlename)) != 'N/A' AND UPPER(TRIM(employees.middlename)) != 'NONE' AND
+                        TRIM(employees.middlename) !='' AND employees.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(employees.middlename, 1, 1), '.') ELSE ''
+                END)) as employee_name,
+                UPPER(CONCAT(employees2.lastname,
+                CASE WHEN UPPER(TRIM(employees2.suffix)) != 'N/A' AND
+                    UPPER(TRIM(employees2.suffix !='NONE')) AND employees2.suffix !='' AND
+                    employees2.suffix IS NOT NULL THEN CONCAT(' ', employees2.suffix) ELSE ''
+                END, ', ', employees2.firstname, ' ',
+                CASE WHEN UPPER(TRIM(employees2.middlename)) != 'N/A' AND UPPER(TRIM(employees2.middlename)) != 'NONE' AND
+                        TRIM(employees2.middlename) !='' AND employees2.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(employees2.middlename, 1, 1), '.') ELSE ''
+                END)) as suspended_by, users.suspended_dt";
+        
+        $this->db->select($sql);
+        $this->db->join('gccmaster.tblemployees as employees', 'users.emp_id = employees.id', 'INNER');
+        $this->db->join('gccmaster.tblemployees as employees2', 'users.suspended_by = employees2.id', 'LEFT');
+        $this->db->from('gccmaster.tblusers as users');
+
+        $this->db->where('users.is_suspended', 1);
+
+        if ($filter == 1) { $this->db->where('users.suspended_by', 0); }
+        if ($filter == 2) { $this->db->where('users.suspended_by >', 0);}
+
+        $this->db->group_start();
+            $this->db->where('employees.employee_status', 'Active');
+            $this->db->or_where('employees.employee_status', 'Inactive');
+        $this->db->group_end();
+
+        if ($search) {
+            $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+            $this->db->group_end();
+        }
+
+        if($limit != -1){
+            $this->db->limit($limit, $offset);
+        }
+
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $resultset = $query->result();
+        }
+
+        return $resultset;
+    }
+
+    function get_suspended_list_count($search = null, $filter = 0){
+        $filterFields = array("users.email", 'users.username', 'employees.firstname', 'employees.lastname', 'employees.middlename', 'employees2.firstname', 'employees2.lastname', 'employees2.middlename', "DATE_FORMAT(users.suspended_dt, '%M %e, %Y')");
+
+        $sql = "users.id, users.username, users.email, UPPER(CONCAT(employees.lastname,
+                CASE WHEN UPPER(TRIM(employees.suffix)) != 'N/A' AND
+                    UPPER(TRIM(employees.suffix !='NONE')) AND employees.suffix !='' AND
+                    employees.suffix IS NOT NULL THEN CONCAT(' ', employees.suffix) ELSE ''
+                END, ', ', employees.firstname, ' ',
+                CASE WHEN UPPER(TRIM(employees.middlename)) != 'N/A' AND UPPER(TRIM(employees.middlename)) != 'NONE' AND
+                        TRIM(employees.middlename) !='' AND employees.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(employees.middlename, 1, 1), '.') ELSE ''
+                END)) as employee_name,
+                UPPER(CONCAT(employees2.lastname,
+                CASE WHEN UPPER(TRIM(employees2.suffix)) != 'N/A' AND
+                    UPPER(TRIM(employees2.suffix !='NONE')) AND employees2.suffix !='' AND
+                    employees2.suffix IS NOT NULL THEN CONCAT(' ', employees2.suffix) ELSE ''
+                END, ', ', employees2.firstname, ' ',
+                CASE WHEN UPPER(TRIM(employees2.middlename)) != 'N/A' AND UPPER(TRIM(employees2.middlename)) != 'NONE' AND
+                        TRIM(employees2.middlename) !='' AND employees2.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(employees2.middlename, 1, 1), '.') ELSE ''
+                END)) as suspended_by, users.suspended_dt";
+        
+        $this->db->select($sql);
+        $this->db->join('gccmaster.tblemployees as employees', 'users.emp_id = employees.id', 'INNER');
+        $this->db->join('gccmaster.tblemployees as employees2', 'users.suspended_by = employees2.id', 'LEFT');
+        $this->db->from('gccmaster.tblusers as users');
+
+        if ($filter == 1) { $this->db->where('users.suspended_by', 0); }
+        if ($filter == 2) { $this->db->where('users.suspended_by >', 0);}
+
+        $this->db->where('users.is_suspended', 1);
+        $this->db->group_start();
+            $this->db->where('employees.employee_status', 'Active');
+            $this->db->or_where('employees.employee_status', 'Inactive');
+        $this->db->group_end();
+
+        if ($search) {
+            $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+            $this->db->group_end();
+        }
+
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
+    public function getSuspendedUsersListv1()
     {
         $tableConfig = $this->input->post();
         $tableConfigStd = $this->utilities->parseFormDataToObject($tableConfig);
