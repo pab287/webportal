@@ -1824,6 +1824,7 @@ class Accountability_m extends CI_Model {
         $this->db->where('status2 !=', '');
         $this->db->where('status2 !=', 'junk');
         $this->db->where('status2 !=', 'sold');
+        $this->db->where('a.is_archived', 0);
         // $this->db->group_end();
         // $this->db->or_where('status2 IS NULL', NULL, FALSE);
         // $this->db->group_end();
@@ -1888,6 +1889,7 @@ class Accountability_m extends CI_Model {
         $this->db->where('status2 !=', '');
         $this->db->where('status2 !=', 'junk');
         $this->db->where('status2 !=', 'sold');
+        $this->db->where('a.is_archived', 0);
         $this->db->group_end();
         $this->db->or_where('status2 IS NULL', NULL, FALSE);
         $this->db->group_end();
@@ -2096,7 +2098,7 @@ class Accountability_m extends CI_Model {
         $this->db->where('status !=', 'junk');
         $this->db->where("a.is_borrowed", "0");
         $this->db->where("a.status !=", "archived");
-
+        $this->db->where('a.is_archived', 0);
         if (!empty($asset_ids)){
             $this->db->where_not_in("a.id", $asset_ids_array);
         }
@@ -2152,7 +2154,7 @@ class Accountability_m extends CI_Model {
         $this->db->where('status !=', 'junk');
         $this->db->where("a.is_borrowed", "0");
         $this->db->where("a.status !=", "archived");
-
+        $this->db->where('a.is_archived', 0);
         if (!empty($asset_ids)){
             $this->db->where_not_in("a.id", $asset_ids_array);
         }
