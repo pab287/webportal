@@ -1890,9 +1890,9 @@ class Accountability_m extends CI_Model {
         $this->db->where('status2 !=', 'junk');
         $this->db->where('status2 !=', 'sold');
         $this->db->where('a.is_archived', 0);
-        $this->db->group_end();
-        $this->db->or_where('status2 IS NULL', NULL, FALSE);
-        $this->db->group_end();
+        // $this->db->group_end();
+        // $this->db->or_where('status2 IS NULL', NULL, FALSE);
+        // $this->db->group_end();
 
         /* condition that does not allow showing of vehicle components,
             * reason why if you search a component nothing will show */
