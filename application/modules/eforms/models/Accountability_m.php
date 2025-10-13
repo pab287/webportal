@@ -1881,8 +1881,6 @@ class Accountability_m extends CI_Model {
         $this->db->select('a.*');
         $this->db->from('gccasset.vehicles a');
 
-        $this->db->group_start();
-        $this->db->group_start();
         $this->db->where('status2 !=', 'archived');
         $this->db->where('status2 !=', 'repair');
         $this->db->where('status2 !=', 'under repair');
