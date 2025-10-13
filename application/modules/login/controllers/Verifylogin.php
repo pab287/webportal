@@ -169,6 +169,7 @@ class Verifylogin extends MY_Controller{
                 $this->db->trans_complete();
             }else if(isset($attempts->lockout) && $attempts->lockout == 1){
                 $this->form_validation->set_message('check_database', 'This user account is lockedaa. Please contact IT Support');
+                setcookie('lockout_user', 'true', time() + 3600, "/");
             }else{
                 $this->form_validation->set_message('check_database', 'Invalid username or password');
             }

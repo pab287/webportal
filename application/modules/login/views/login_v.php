@@ -82,14 +82,17 @@
     </style>
     <!--end::Web font -->
     <!--begin::Base Styles -->
-    <link href="<?php echo base_url("assets/vendors/base/vendors.bundle.min.css"); ?>" rel="stylesheet" type="text/css"/>
-    <link href="<?php echo base_url("assets/demo/default/base/style.bundle.min.css"); ?>" rel="stylesheet" type="text/css"/>
+
 
     <!--end::Base Styles -->
     <link rel="shortcut icon" href="<?php echo base_url("assets/favicon.ico"); ?>"/>
 
     <!--begin::Base Scripts -->
     <script src="<?php echo base_url('assets/js/jquery-3.3.1.min.js'); ?>"></script>
+    <script src="<?php echo base_url(); ?>assets/vendors/base/vendors.bundle.js" type="text/javascript"></script>
+    <script src="<?php echo base_url(); ?>assets/demo/default/base/scripts.bundle.js" type="text/javascript"></script>
+    <link href="<?php echo base_url("assets/vendors/base/vendors.bundle.min.css"); ?>" rel="stylesheet" type="text/css"/>
+    <link href="<?php echo base_url("assets/demo/default/base/style.bundle.min.css"); ?>" rel="stylesheet" type="text/css"/>
     <!--end::Base Scripts -->
     <!--begin::Page Vendors -->
     <!--end::Page Vendors -->
@@ -193,6 +196,32 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="m_modal_unlock" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            ACCOUNT LOCKED OUT
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">
+                                    ×
+                                </span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        Your account has been locked out. Click on 'Unlock' to unlock your account. If you are having trouble please contact your IT Department instead.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-focus m-btn m-btn--pill m-btn--custom m-btn--air m-login__btn m-login__btn--primary">
+                            Sign In
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>  
 </body>
 <script type="text/javascript">
     const sessionData = <?= json_encode($session  ?? []) ?>;
@@ -216,11 +245,9 @@
         }
 
         const isLockedOut = getCookie('lockout_user');
+        console.log(isLockedOut);
         if (isLockedOut) {
-            const isSent = getCookie('lockout_sent');
-            if(isSent == 'true'){
-                $('#m_modal_unlock').modal('show');
-            }
+            $('#m_modal_unlock').modal('show');
             document.cookie = "lockout_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         } else {
             $('#m_login_unlock_account').hide();

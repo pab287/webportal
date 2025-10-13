@@ -10,6 +10,7 @@ Class Login_m extends CI_Model
         $tempDate = date("Ymd");
 
         $this->directAccess = sha1("direct_access-{$tempDate}");
+        $this->load->model('users/User_model', 'user');
         $this->load->model('core/Core_model', 'core');
         $this->load->model("sms/services/Gateway_model","sms_gateway");
     }
@@ -561,6 +562,9 @@ Class Login_m extends CI_Model
         return $query->row();
     }
 
-
+    public function unlock_account(){
+        $data = $this->user->unlockAccount();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
 
 }
