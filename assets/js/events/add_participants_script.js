@@ -424,7 +424,7 @@ function itemDatatableActions(id, status, emp_id = null, awarded) {
             <a href="javascript:void(0)" 
                 class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
                 onclick="assignSchedule(${id})" 
-                title="Assign Schedule">
+                title="Manage Schedule">
                 <i class="la 	la-calendar-plus-o"></i>
             </a>`;
         }

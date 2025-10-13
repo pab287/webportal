@@ -309,7 +309,7 @@
                                         </div>
                                         <template v-for="(item, index) in schedule">
                                             <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                                <div class="card p-3">
+                                                <div class="card bg-light rounded p-3">
                                                     <div class="card-body pb-0">
                                                         <div class="row mb-3">
                                                             <div class="col-12">
