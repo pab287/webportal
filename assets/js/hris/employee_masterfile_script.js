@@ -665,17 +665,38 @@ if (typeof _tempContentData !== "undefined") {
             if (vmData.is_multiple_position == 1) {
                 let isMultiple = $("#is_multiple_position").is(':checked');
                 const selectEl = $("#m--input-position_id");
-
-                const sortMap = new Map();
-                vmData.multiple_position.forEach(p => sortMap.set(parseInt(p.id), parseInt(p.sort)));
-
                 selectEl.prop("multiple", isMultiple);
                 selectEl.attr('name', isMultiple ? 'position[]' : 'position');
 
+                const sortMap = new Map();
+
+                vmData.multiple_position.forEach(p => {
+                    sortMap.set(parseInt(p.id), {
+                        sort: parseInt(p.sort),
+                        primary: parseInt(p.is_primary) // ensure boolean or numeric consistency
+                    });
+                });
+
                 // intersect 2 array and get the matched data by position id
-                intersection = tempDropdownData.dropdown_position.filter(a1 =>
-                    vmData.multiple_position.some(a2 => parseInt(a2.id) === parseInt(a1.id))
-                ).sort((a, b) => sortMap.get(parseInt(a.id)) - sortMap.get(parseInt(b.id)));
+                
+                let intersection = tempDropdownData.dropdown_position
+                    .filter(a1 =>
+                        vmData.multiple_position.some(a2 => parseInt(a2.id) === parseInt(a1.id))
+                    )
+                    .map(item => {
+                        const data = sortMap.get(parseInt(item.id));
+                        return {
+                            ...item,
+                            primary: data?.primary,
+                            sort: data?.sort
+                        };
+                    })
+                    .sort((a, b) => {
+                        if (b.primary !== a.primary) {
+                            return b.primary - a.primary;
+                        }
+                        return a.sort - b.sort;
+                    });
 
                 this.positionSelect2('#m--input-position_id', true, vmData.position, true, intersection);
                 this.multiple_position = [...intersection];
@@ -1146,11 +1167,32 @@ if (typeof _tempContentData !== "undefined") {
 
                 if (instance.vm_tab3.multiple_position.length > 0){
                     const sortMap = new Map();
-                    instance.vm_tab3.multiple_position.forEach(p => sortMap.set(parseInt(p.id), parseInt(p.sort)));
-
-                    intersection = tempDropdownData.dropdown_position.filter(a1 =>
-                        instance.multiple_position.some(a2 => parseInt(a2.id) === parseInt(a1.id))
-                    ).sort((a, b) => sortMap.get(parseInt(a.id)) - sortMap.get(parseInt(b.id)));
+                    
+                    instance.vm_tab3.multiple_position.forEach(p => {
+                        sortMap.set(parseInt(p.id), {
+                            sort: parseInt(p.sort),
+                            primary: parseInt(p.is_primary)
+                        });
+                    });
+                    
+                    intersection = tempDropdownData.dropdown_position
+                    .filter(a1 =>
+                        instance.vm_tab3.multiple_position.some(a2 => parseInt(a2.id) === parseInt(a1.id))
+                    )
+                    .map(item => {
+                        const data = sortMap.get(parseInt(item.id));
+                        return {
+                            ...item,
+                            primary: data?.primary,
+                            sort: data?.sort
+                        };
+                    })
+                    .sort((a, b) => {
+                        if (b.primary !== a.primary) {
+                            return b.primary - a.primary;
+                        }
+                        return a.sort - b.sort;
+                    });
                 }
 
                 this.positionSelect2('#m--input-position_id', true, instance.vm_tab3.position, isMultiple, isMultiple ? intersection : []);
@@ -1169,12 +1211,34 @@ if (typeof _tempContentData !== "undefined") {
                 vmPrimary.isSortOnly = true;
                 if (instance.vm_tab3.multiple_position.length > 0){
                     const sortMap = new Map();
-                    instance.multiple_position.forEach(p => sortMap.set(parseInt(p.id), parseInt(p.sort)));
+                    
+                    instance.vm_tab3.multiple_position.forEach(p => {
+                        sortMap.set(parseInt(p.id), {
+                            sort: parseInt(p.sort),
+                            primary: parseInt(p.is_primary) 
+                        });
+                    });
 
-                    intersection = tempDropdownData.dropdown_position.filter(a1 =>
-                        instance.multiple_position.some(a2 => parseInt(a2.id) == parseInt(a1.id))
-                    ).sort((a, b) => sortMap.get(parseInt(a.id)) - sortMap.get(parseInt(b.id)));
+                    intersection = tempDropdownData.dropdown_position
+                    .filter(a1 =>
+                        instance.vm_tab3.multiple_position.some(a2 => parseInt(a2.id) === parseInt(a1.id))
+                    )
+                    .map(item => {
+                        const data = sortMap.get(parseInt(item.id));
+                        return {
+                            ...item,
+                            primary: data?.primary,
+                            sort: data?.sort
+                        };
+                    })
+                    .sort((a, b) => {
+                        if (b.primary !== a.primary) {
+                            return b.primary - a.primary;
+                        }
+                        return a.sort - b.sort;
+                    });
                 }
+
 
                 vmPrimary.positions = [...intersection];
                 $("#set_primary_position").modal('show');
@@ -6815,12 +6879,34 @@ function saveEmploymentData(formUrl, formData, currentForm) {
                     vmTab3.vm_tab3 = Object.assign({}, vm_tab3, json.data);
 
                     if (json.data.is_multiple_position == 1) {
+                        let intersection = [];
                         const sortMap = new Map();
-                        vmTab3.vm_tab3.multiple_position.forEach(p => sortMap.set(parseInt(p.id), parseInt(p.sort)));
 
-                        intersection = tempDropdownData.dropdown_position.filter(a1 =>
+                        vmTab3.vm_tab3.multiple_position.forEach(p => {
+                            sortMap.set(parseInt(p.id), {
+                                sort: parseInt(p.sort),
+                                primary: parseInt(p.is_primary) // ensure boolean or numeric consistency
+                            });
+                        });
+                        
+                        intersection = tempDropdownData.dropdown_position
+                        .filter(a1 =>
                             vmTab3.vm_tab3.multiple_position.some(a2 => parseInt(a2.id) === parseInt(a1.id))
-                        ).sort((a, b) => sortMap.get(parseInt(a.id)) - sortMap.get(parseInt(b.id)));
+                        )
+                        .map(item => {
+                            const data = sortMap.get(parseInt(item.id));
+                            return {
+                                ...item,
+                                primary: data?.primary,
+                                sort: data?.sort
+                            };
+                        })
+                        .sort((a, b) => {
+                            if (b.primary !== a.primary) {
+                                return b.primary - a.primary;
+                            }
+                            return a.sort - b.sort;
+                        });
 
                         $("#m--input-position_id").prop("multiple", true);
                         $("#m--input-position_id").attr('name', 'position[]');
