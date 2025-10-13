@@ -79,6 +79,20 @@
             padding-top: 50px !important;
         }
 
+        /* .contact-details .contact-item label {
+            color: #495057;
+            font-size: 14px;
+        }
+
+        .contact-details .contact-item span {
+            font-size: 15px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .contact-details .alert {
+            font-size: 13px;
+        } */
+
     </style>
     <!--end::Web font -->
     <!--begin::Base Styles -->
@@ -161,12 +175,11 @@
                         action="<?php echo site_url("login/verifylogin/index"); ?>">
                     <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                     <div class="form-group m-form__group passwordgroup">
-                        <input class="form-control m-input" type="text" placeholder="Username" name="username"
-                                autocomplete="off">
+                        <input class="form-control m-input" type="text" placeholder="Username" name="username" autocomplete="off">
                     </div>
                     <br>
                     <div class="passwordgroup">
-                        <input id="password-field" type="password" name="password" placeholder="Password">
+                        <input id="password-field" type="password" name="password" placeholder="Password" autocomplete="off">
                         <text class="glyph-icon flaticon-visible" id="showpassword" onmousedown="showpass()"
                                 onclick="togglepass()"></text>
                     </div>
@@ -179,8 +192,8 @@
                                 <span></span>
                             </label>
                         </div>
-                        <div class="col m--align-right m-login__form-right">
-                            <a href="<?php echo base_url('login/forgotpassword'); ?>" id="m_login_forget_password"
+                        <div class="col m--align-right m-login__form-right" id="m_login_forget_password">
+                            <a href="<?php echo base_url('login/forgotpassword'); ?>" 
                                 class="m-link">
                                 Forgot Password ?
                             </a>
@@ -196,10 +209,10 @@
             </div>
         </div>
     </div>
-    <div class="modal fade" id="m_modal_unlock" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal fade" id="m_modal_unlock" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
-                <form onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
+                <form id="unlock-form" onsubmit="handleUnlockSubmit(event);" onkeydown="return event.key !== 'Enter';">
                     <div class="modal-header">
                         <h5 class="modal-title">
                             ACCOUNT LOCKED OUT
@@ -210,18 +223,49 @@
                                 </span>
                         </button>
                     </div>
-                    <div class="modal-body">
-                        Your account has been locked out. Click on 'Unlock' to unlock your account. If you are having trouble please contact your IT Department instead.
+                    <div class="modal-body" style="font-size: 16px;">
+                        <p>Your account has been locked out. Click 'UNLOCK' to unlock your account. If you are having trouble please contact IT Support instead.</p>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-focus m-btn m-btn--pill m-btn--custom m-btn--air m-login__btn m-login__btn--primary">
-                            Sign In
+                            UNLOCK
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-    </div>  
+    </div>
+
+    <div class="modal fade" id="m_modal_contact" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        ACCOUNT LOCKED OUT
+                    </h5>
+                    <a class="close" data-dismiss="modal" aria-label="Close" onclick="window.location.href='<?php echo site_url('/'); ?>'">
+                        <span aria-hidden="true"></span>
+                    </a>
+                </div>
+                <div class="modal-body">
+                    <div class="contact-details">
+                        <div class="contact-item mb-3">
+                            <label class="font-weight-bold d-block mb-1">Mobile Number:</label>
+                            <span class="text-muted" id="contact_mobile">Not available</span>
+                        </div>
+                        <div class="contact-item mb-3">
+                            <label class="font-weight-bold d-block mb-1">Email Address:</label>
+                            <span class="text-muted" id="contact_email">Not available</span>
+                        </div>
+                        <div class="alert alert-info mt-3 mb-0" style="font-size: 16px;">
+                            <i class="fa fa-info-circle"></i> 
+                            A temporary password has been sent to your registered contact information.<br/> If you don't receive it within a few minutes, please contact IT Support.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 <script type="text/javascript">
     const sessionData = <?= json_encode($session  ?? []) ?>;
@@ -248,11 +292,41 @@
         console.log(isLockedOut);
         if (isLockedOut) {
             $('#m_modal_unlock').modal('show');
+            $('#m_login_forget_password').hide();
             document.cookie = "lockout_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        } else {
-            $('#m_login_unlock_account').hide();
-            $('#m_login_forget_password').show();
         }
     });
+
+    function handleUnlockSubmit(event) {
+        event.preventDefault();
+        const username = $('input[name="username"]').val();
+        const $submitButton = $('#unlock-form button[type="submit"]');
+        $submitButton.prop('disabled', true).html('UNLOCKING');
+        var unlockUrl = "<?php echo base_url('login/verifylogin/unlock_account'); ?>";
+        $.ajax({
+            url: unlockUrl,
+            type: 'POST',
+            data: {
+                    csrf_token: '<?php echo $this->security->get_csrf_hash(); ?>',
+                    username: username
+                },
+            dataType: 'json', 
+            success: function(response) {
+                if (response.status) {
+                    $('#m_modal_unlock').modal('hide');
+                    toastr.success('Account unlocked successfully!');
+                    $('#contact_mobile').text(response.mobile || 'Not provided');
+                    $('#contact_email').text(response.email || 'Not provided');
+                    $('#m_modal_contact').modal('show');
+                } else {
+                    toastr.error('Failed to unlock account: ' + response.message);
+                }
+            },
+            complete: function() {
+                $submitButton.prop('disabled', false).html('Unlock');
+            }
+        });
+    }
+
 </script>
 </html>

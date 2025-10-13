@@ -10,7 +10,7 @@ Class Login_m extends CI_Model
         $tempDate = date("Ymd");
 
         $this->directAccess = sha1("direct_access-{$tempDate}");
-        $this->load->model('users/User_model', 'user');
+
         $this->load->model('core/Core_model', 'core');
         $this->load->model("sms/services/Gateway_model","sms_gateway");
     }
@@ -562,9 +562,139 @@ Class Login_m extends CI_Model
         return $query->row();
     }
 
-    public function unlock_account(){
-        $data = $this->user->unlockAccount();
-        $this->output->set_content_type('json')->set_output(json_encode($data));
+    public function unlockAccount() {
+        $resultset = [
+            'status'  => false,
+            'message' => '',
+            'success' => 'error',
+            'action'  => 'system',
+        ];
+        $post = $this->input->post();
+        $id = $this->getId($post['username']);
+        if(!$id){
+            return $resultset;
+        }
+        $this->db->trans_start();
+        $sendOtp = $this->sendOTPLocked($id);
+        if (!$sendOtp['sent_sms'] && !$sendOtp['sent_email']) {
+            $resultset['message'] = "OTP NOT SENT";
+            $this->db->trans_rollback();
+            $this->logEvent($resultset, $id);
+            return $resultset;
+        }
+        $update = $this->updateLockedPassword($id, $sendOtp['otp']);
+        if (!$update) {
+            $resultset['message'] = "Failed to update password.";
+            $this->db->trans_rollback();
+            $this->logEvent($resultset, $id);
+            return $resultset;
+        }
+        $resultset['mobile'] = $this->maskMobileNumber($sendOtp['mobile_no']);
+        $resultset['email'] = $this->maskEmail($sendOtp['email']);
+        $resultset['status'] = true;
+        $resultset['message'] = "Account unlocked successfully.";
+        $resultset['success'] = "success";
+        $resultset['action'] = 'user';
+        $this->db->trans_commit();
+        $this->logEvent($resultset, $id);
+    
+        return $resultset;
+    }
+
+    private function getId($username){
+        $this->db->select('id');
+        $this->db->from('gccmaster.tblusers');
+        $this->db->where('username', $username);
+        $query = $this->db->get();
+        return $query->row()->id;
+    }
+    
+    private function logEvent($resultset, $userId) {
+        $this->core_layout->setEventLog(
+            "{$resultset['message']} User Id: $userId",
+            "unlock",
+            $resultset['success'],
+            "gccmaster",
+            $resultset['action']
+        );
+    }
+
+    private function updateLockedPassword($id,$otp){
+        $this->db->where('id', $id);
+        $this->db->set('lockout', 0);
+        $this->db->set('auth', 0);
+        $this->db->set('lockout_dt', NULL);
+        $this->db->set('force_update',1);
+        $this->db->set('login_attempts', 0);
+        $this->db->set('reset_attempts', 0);
+        $this->db->set('password', md5($otp));
+        $update = $this->db->update('gccmaster.tblusers');
+        return $update;
+    }
+
+    private function sendOTPLocked($id)
+    {
+        $response = [
+            'sent_email' => false,
+            'sent_sms' => false,
+            'otp' => null,
+            'message' => ''
+        ];
+    
+        $this->db->select('emp.mobile_no, users.email, emp.firstname')
+            ->from('gccmaster.tblusers as users')
+            ->join('gccmaster.tblemployees as emp', 'users.emp_id = emp.id')
+            ->where('users.id', $id);
+    
+        $result = $this->db->get()->row();
+        $this->db->reset_query();
+        if (empty($result->mobile_no) && empty($result->email)) {
+            $response['message'] = "No communication method found. Update mobile number or email address.";
+            return $response;
+        }
+        $OTP = strtoupper(bin2hex(random_bytes(3)));
+        $response['otp'] = $OTP;
+        $send_email[] = $result->email;
+        $mailer['send_to'] = $send_email;
+        $data = ['first_name' => $result->firstname,'key_code' => $OTP];
+        $email_content = $this->load->view("users/recovery_password_email.php",["data" => $data],true);
+        if ($result->mobile_no) {
+            $message = "[GC&C] Your Conyxph temporary password is: $OTP. For security reasons, do not share this code with anyone. " .
+                       "If you did not request this, please ignore this message.";
+            $sms_result = $this->sms_gateway->sendPlaySMS($result->mobile_no, $message);
+            $response['sent_sms'] = $sms_result['status'] ? $sms_result['status'] : false;
+            $response['mobile_no'] = $result->mobile_no;
+        }
+        if($result->email){
+            $response['sent_email'] = @$this->core_layout->send_email('core','GC & C Conyx PH','Account Recovery',$email_content,$mailer);
+            $response['email'] = $result->email;
+        }
+        
+        return $response;
+    }
+
+    private function maskMobileNumber($mobile) {
+        if (empty($mobile) || is_null($mobile)) {
+            return "";
+        }
+        $mobile = preg_replace('/\D/', '', (string)$mobile);
+        return (strlen($mobile) > 3)
+            ? str_repeat('*', strlen($mobile) - 3) . substr($mobile, -3)
+            : $mobile;
+    }
+    
+    private function maskEmail($email) {
+        if (empty($email) || is_null($email)) {
+            return "";
+        }
+        $parts = explode('@', $email);
+        if (count($parts) !== 2) {
+            return $email; 
+        }
+        $localPart = $parts[0];
+        $domain = $parts[1];
+        $maskedLocalPart = substr($localPart, 0, 1) . str_repeat('*', max(0, strlen($localPart) - 2)) . substr($localPart, -1);
+        return $maskedLocalPart . '@' . $domain;
     }
 
 }

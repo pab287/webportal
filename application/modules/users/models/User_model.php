@@ -633,16 +633,15 @@ class User_model extends CI_Model{
         $data = ['first_name' => $result->firstname,'key_code' => $OTP];
         $email_content = $this->load->view("recovery_password_email.php",["data" => $data],true);
         if ($result->mobile_no) {
-            $message = "[GC&C] Your Conyxph account recovery code is: $OTP. For security reasons, do not share this code with anyone. " .
+            $message = "[GC&C] Your Conyxph temporary password is: $OTP. For security reasons, do not share this code with anyone. " .
                        "If you did not request this, please ignore this message.";
             $sms_result = $this->gateway->sendPlaySMS($result->mobile_no, $message);
             $response['sent_sms'] = $sms_result['status'] ? $sms_result['status'] : false;
             $response['mobile_no'] = $result->mobile_no;
         }
         if($result->email){
-            $response['sent_email'] = @$this->core_layout->send_email('core','GC & C Conyx PH','Account Recovery',$email_content,$mailer);
+            $response['sent_email'] = $this->core_layout->send_email('core','GC & C Conyx PH','Account Recovery',$email_content,$mailer);
         }
-        
         return $response;
     }
 
