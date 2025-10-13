@@ -122,7 +122,7 @@ class Verifylogin extends MY_Controller{
                     $this->core_layout->setEventLog("User account logged in is currently suspended.","login", "error", "gccmaster", "user", $row->emp_id);
                     return false;
                 }elseif ($row->lockout == 1){
-                    $this->form_validation->set_message('check_database', 'This user account is locked. Please contact IT Support');
+                    $this->form_validation->set_message('check_database', 'This user account is lockedww. Please contact IT Support');
                     $this->core_layout->setEventLog("User account logged in is currently locked out.","login", "error", "gccmaster", "user", $row->emp_id);
                     return false;
                 }
@@ -160,7 +160,7 @@ class Verifylogin extends MY_Controller{
                 if($resend_attempts <= 0){
                     $this->db->set('lockout', '1', false);
                     $this->db->set('lockout_dt', 'NOW()', false);
-                    $this->form_validation->set_message('check_database', 'This user account is locked. Please contact IT Support');
+                    $this->form_validation->set_message('check_database', 'This user account is lockedss. Please contact IT Support');
                 }else{
                     $this->db->set('login_attempts', 'login_attempts + 1', false);
                     $this->form_validation->set_message('check_database', 'Invalid username or password! You have (' . ($resend_attempts) . ') remaining tries left before your account is locked.');
@@ -168,7 +168,7 @@ class Verifylogin extends MY_Controller{
                 $this->db->update('gccmaster.tblusers');
                 $this->db->trans_complete();
             }else if(isset($attempts->lockout) && $attempts->lockout == 1){
-                $this->form_validation->set_message('check_database', 'This user account is locked. Please contact IT Support');
+                $this->form_validation->set_message('check_database', 'This user account is lockedaa. Please contact IT Support');
             }else{
                 $this->form_validation->set_message('check_database', 'Invalid username or password');
             }
