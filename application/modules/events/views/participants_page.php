@@ -604,7 +604,8 @@
                 </div>
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-12">
+                        <template v-for="(item, index) in schedule"></template>
+                        <!-- <div class="col-12">
                             <div class="table-responsive">
                                 <table class="table display table-bordered table-striped dataTable no-footer" id="attendanceSheetTable">
                                     <thead>
@@ -613,7 +614,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
             </div>

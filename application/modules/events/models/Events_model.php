@@ -12,6 +12,7 @@ class Events_model extends MX_Controller {
     protected $usersTable = "gccmaster.tblusers";
     protected $tbltrainings = "gcchris.tbltrainings";
     protected $evetsSched = "gcchris.events_schedule";
+    protected $events_attendance = "gcchris.events_attendance";
     protected $user_data = null;
     protected $actions = null;
     public function __construct() {
@@ -744,7 +745,7 @@ class Events_model extends MX_Controller {
             
             if ($this->upload->do_upload('file')) {
                 $data = array(
-                    'events_id'  => $event,
+                    'event_id'  => $event,
                     'type'      => $type,
                     'filename' => $name,
                     'created_by' => $this->user_data['emp_id'],
@@ -785,7 +786,7 @@ class Events_model extends MX_Controller {
 
     public function getEventAttachments($id){
         $this->db->select("id, filename, type");
-        $this->db->where('events_id', $id);
+        $this->db->where('event_id', $id);
         $attachments = $this->db->get($this->eventsAttachmentsTable)->result();
     
         $grouped = [];
@@ -841,7 +842,7 @@ class Events_model extends MX_Controller {
 
     public function getEventSchedule($id){
         $this->db->select('id,start,end,title,description,event_date');
-        $this->db->where('events_id', $id);
+        $this->db->where('event_id', $id);
         $schedule = $this->db->get($this->evetsSched)->result_array();
         return $schedule;
     }
@@ -862,12 +863,18 @@ class Events_model extends MX_Controller {
         return $resultset;
     }
 
-    public function assignEventSched(){
+    public function assignEventSched() {
         $post = $this->input->post();
         $events_id = $post['events_id'];
-        $events = $this->getEventSchedule($events_id);
-        var_dump($events);
-        die();
+        $id = $post['events_participants_id'];
+        $this->db->select("a.*,b.*,IFNULL(c.id, 0) AS is_assigned");
+        $this->db->where('a.event_id', $events_id);
+        $this->db->where('b.id', $id);
+        $this->db->from($this->evetsSched . ' a');
+        $this->db->join($this->eventsParticipantsTable . ' b', 'a.event_id = b.event_id', 'left');
+        $this->db->join($this->events_attendance . ' c', 'b.id = c.events_participants_id', 'left');
+        $result = $this->db->get()->result_array();
+        return $result;
     }
     
 

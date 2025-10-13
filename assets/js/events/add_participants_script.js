@@ -1056,19 +1056,28 @@ $.validate({
 
 function assignSchedule(participant){
     $('#attendanceSheet').modal('show');
-    // $.ajax({
-    //     url: baseUrl("events/assign_schedule"),
-    //     type: "POST",
-    //     data: {
-    //         csrf_token : _csrf_hash,
-    //         events_participants_id: participant,
-    //         events_id: eventsDetails.id,
-    //     },
-    //     dataType: "JSON",
-    //     success: function(res) {
+    $.ajax({
+        url: baseUrl("events/assign_schedule"),
+        type: "POST",
+        data: {
+            csrf_token : _csrf_hash,
+            events_participants_id: participant,
+            events_id: eventsDetails.id,
+        },
+        dataType: "JSON",
+        success: function(res) {
 
-    //     }    
-    // });
+        }    
+    });
 }
 
 // const attendanceTable = $
+
+// const attendanceTable = $('#attendanceSheetTable').DataTable({
+//     data: [],
+//     columns: [
+//         { data: 'schedule_date' },
+//         { data: 'schedule_start' },
+//         { data: 'schedule_end' },
+//     ]
+// });
