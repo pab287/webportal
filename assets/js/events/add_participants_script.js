@@ -290,6 +290,7 @@ let eventVue = new Vue({
             console.log(id);
         },
         assignParticipant(schedule_id, participant_id) {
+            self = this;
             Swal.fire({
                 title: "Assign this participant?",
                 text: "This will assign the participant to the schedule.",
@@ -299,7 +300,7 @@ let eventVue = new Vue({
                 cancelButtonText: "Cancel"
             }).then(result => {
                 if (result.isConfirmed) {
-                    this.$set(this.loadingAssign, schedule_id, true);
+                    self.$set(self.loadingAssign, schedule_id, true);
                     $.ajax({
                         url: baseUrl("events/assign_participant"),
                         type: "POST",
@@ -324,13 +325,14 @@ let eventVue = new Vue({
                             toastr.error("Request failed. Please try again.", "Error", 5000);
                         },
                         complete: function() {
-                            eventVue.$set(eventVue.loadingAssign, schedule_id, false);
+                            self.$set(self.loadingAssign, schedule_id, false);
                         }
                     });
                 }
             });
         },
         unassignParticipant(schedule_id, participant_id) {
+            self = this;
             Swal.fire({
                 title: "Unassign this participant?",
                 text: "This will remove the participant from the schedule.",
@@ -340,7 +342,7 @@ let eventVue = new Vue({
                 cancelButtonText: "Cancel"
             }).then(result => {
                 if (result.isConfirmed) {
-                    this.$set(this.loadingUnassign, schedule_id, true);
+                    self.$set(self.loadingUnassign, schedule_id, true);
                     $.ajax({
                         url: baseUrl("events/unassign_participant"),
                         type: "POST",
@@ -365,7 +367,7 @@ let eventVue = new Vue({
                             toastr.error("Request failed. Please try again.", "Error", 5000);
                         },
                         complete: function() {
-                            eventVue.$set(eventVue.loadingUnassign, schedule_id, false);
+                            self.$set(self.loadingUnassign, schedule_id, false);
                         }
                     });
                 }
@@ -1053,7 +1055,7 @@ $('#New_Add_File').on('submit', function(e) {
     e.preventDefault();
     const form = $('#New_Add_File');
     const formData = new FormData(form[0]);
-    formData.append('events_id', eventsDetails.id);
+    formData.append('event_id', eventsDetails.id);
     if (form.isValid()) {
         $.ajax({
             url: baseUrl('events/upload_documents'),
@@ -1119,7 +1121,7 @@ $.validate({
         let currentForm = form[0];
         let url = baseUrl("events/new_event_sched");
         let formData = $(currentForm).serialize();
-        formData += "&events_id=" + encodeURIComponent(eventsDetails.id);
+        formData += "&event_id=" + encodeURIComponent(eventsDetails.id);
         $.ajax({
             url: url,
             type: "POST",
@@ -1142,6 +1144,7 @@ function assignSchedule(participant){
     $.ajax({
         url: baseUrl("events/assign_schedule"),
         type: "POST",
+        global: false,
         data: {
             csrf_token : _csrf_hash,
             events_participants_id: participant,

@@ -325,10 +325,11 @@
                                                         </div>
                                                         <div class="row">
                                                             <div class="col-12 mb-3">
-                                                                <span class="col-12 badge badge-primary" v-text="formatTime(item.start,item.end)" style="font-size: 12px;"></span>
-                                                                <span class="text-muted text-uppercase mt-2" v-text="item.location"></span>
+                                                                <span class="badge badge-primary text-uppercase w-100" v-text="formatTime(item.start,item.end)" style="font-size: 12px;"></span>
                                                             </div>
-                                                            
+                                                            <div class="col-12 mb-3">
+                                                                <span class="badge badge-info text-uppercase w-100" v-text="item.location"  style="font-size: 12px;"></span>
+                                                            </div>
                                                         </div>
                                                         <div class="row mb-3">
                                                             <div class="col-12">
@@ -617,16 +618,16 @@
                                 <div class="card bg-light rounded p-3">
                                     <div class="card-body pb-0">
                                         <div class="row mb-3">
-                                            <div class="col-6">
+                                            <div class="col-8">
                                                 <h4 class="m--font-transform-u font-weight-bold"  v-text="item.title">
                                                 </h4>
                                             </div>
-                                            <div v-if="item.is_assigned == 1"  class="col-6 text-right">
+                                            <div v-if="item.is_assigned == 1"  class="col-4 text-right">
                                                 <span class="badge badge-success d-inline-flex align-items-center py-2">
                                                     Assigned
                                                 </span>
                                             </div>
-                                            <div v-else class="col-6 text-right">
+                                            <div v-else class="col-4 text-right">
                                                 <span  class="badge badge-warning d-inline-flex align-items-center py-2">
                                                     Unassigned
                                                 </span>
@@ -634,8 +635,10 @@
                                         </div>
                                         <div class="row">
                                             <div class="col-12 mb-3">
-                                                <span class="col-12 badge badge-primary" v-text="formatTime(item.start,item.end)" style="font-size: 12px;"></span>
-                                                <span class="text-muted text-uppercase mt-2" v-text="item.location"></span>
+                                                <span class="badge badge-primary text-uppercase w-100" v-text="formatTime(item.start,item.end)" style="font-size: 12px;"></span>
+                                            </div>
+                                            <div class="col-12 mb-3">
+                                                <span class="badge badge-info text-uppercase w-100" v-text="item.location"  style="font-size: 12px;"></span>
                                             </div>
                                         </div>
                                         <div class="row mb-3">
@@ -658,7 +661,7 @@
                                                 <div class="row text-center">
                                                     <span class="col-12 text-right p-1">
                                                         <button @click="assignParticipant(item.schedule_id, item.participant_id)" class="btn btn-success m-btn text-white w-100" :disabled="loadingAssign[item.schedule_id]">
-                                                            <span v-if="loadingAssign[item.schedule_id]">ASSIGN</span>
+                                                            <span v-if="!loadingAssign[item.schedule_id]">ASSIGN</span>
                                                             <span v-else>
                                                                 <i class="fa fa-spinner fa-spin"></i>
                                                             </span>
@@ -670,7 +673,7 @@
                                                 <div class="row text-center">
                                                     <span class="col-12 text-right p-1">
                                                         <button @click="unassignParticipant(item.schedule_id, item.participant_id)" class="btn btn-danger m-btn text-white w-100" :disabled="loadingUnassign[item.schedule_id]">
-                                                            <span v-if="loadingUnassign[item.schedule_id]" class="text-center">UNASSIGN</span>
+                                                            <span v-if="!loadingUnassign[item.schedule_id]" class="text-center">UNASSIGN</span>
                                                             <span v-else>
                                                                 <i class="fa fa-spinner fa-spin"></i>
                                                             </span>

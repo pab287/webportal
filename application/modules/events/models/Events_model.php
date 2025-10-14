@@ -853,7 +853,7 @@ class Events_model extends MX_Controller {
         $insert = $this->db->insert($this->evetsSched, $post);
         if ($insert){
             $resultset["response"] = true;
-            $resultset["schedule"] = $this->getEventSchedule($post['events_id']);
+            $resultset["schedule"] = $this->getEventSchedule($post['event_id']);
             $resultset["toastr_msg"] = "Event schedule has been added.";
         }
         else{
