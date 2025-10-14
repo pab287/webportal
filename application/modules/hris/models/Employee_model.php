@@ -11718,7 +11718,7 @@ class Employee_model extends CI_Model {
                 }
             }
 
-            if (isset($currentData['is_multiple_position']) || isset($newData['is_multiple_position'])) {
+            if (isset($currentData['is_multiple_position']) && isset($newData['is_multiple_position'])) {
                 if ($currentData['is_multiple_position'] == 1 && $newData['is_multiple_position'] == 1) {
                     $changesString .= " Field: position, from  <strong>".$currentData['multiple_position']."</strong>, to <strong>".$newData['multiple_position']."</strong>\n";
                 }
