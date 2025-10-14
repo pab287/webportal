@@ -88,14 +88,14 @@ function showConfirmationDisconnect(){
   $("#m_waterConnection").modal("show");
 }
 
-$("#btnWaterConnection").on("click",function(){
+$(".btnWaterConnection").on("click",function(){
   $("#m_waterConnection").modal("hide");
   var connected = document.getElementById('connected').checked;
   document.getElementById("lbl_connected").style.pointerEvents = connected ? "none" : "auto";
   document.getElementById("lbl_disconnected").style.pointerEvents = !connected ? "none" : "auto";
 });
 
-$("#btnWaterConnection_cancel").on("click",function(){
+$(".btnWaterConnection_cancel").on("click",function(){
   var connected = document.getElementById('connected').checked;
   if(connected){
     $("#disconnected").prop("checked",true);
