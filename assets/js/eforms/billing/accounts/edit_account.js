@@ -9,9 +9,6 @@ $.ajax({
   type: "GET",
   dataType: "JSON",
   success: function(data) {
-
-    console.log(data.current_usage);
-    
     if(data.data.status == 0){
       $("#inactive").prop("checked",true);
     }else{

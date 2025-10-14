@@ -358,7 +358,7 @@
                 <h5 class="modal-title">
                     Water Connection
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close btnWaterConnection_cancel" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">
                         ×
                     </span>
@@ -368,10 +368,10 @@
                 Are you sure to archive this account?
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary btnArchive" id="btnWaterConnection">
+                <button type="button" class="btn btn-primary btnArchive btnWaterConnection" id="btnWaterConnection">
                     Yes
                 </button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="btnWaterConnection_cancel">
+                <button type="button" class="btn btn-secondary btnWaterConnection_cancel" data-dismiss="modal" id="btnWaterConnection_cancel">
                     No
                 </button>
             </div>
