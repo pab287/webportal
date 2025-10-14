@@ -1,6 +1,7 @@
 let dropdownEl = null;
 let dateRange = "";
 let thisMonth = moment();
+let _filter = 0;
 let = tblCashAdvanceReport = $('#cash_advance_reports')
     .DataTable({
         dom: "<'row mb-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 exportDropdown'><'col-xl-6 col-lg-6 col-md-6 col-sm-12 p-0 daterange'f>>" +
@@ -135,6 +136,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
             data: function (d) {
                 d.csrf_token = _csrf_hash;
                 d.dateRange = dateRange;
+                d._filter = _filter;
             }
         },
         columns: [
@@ -245,13 +247,39 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
         dropdownEl = $(".m-dropdown__toggle.export-as");
 
         const dateRangePicker = `
-                        <div class="col-6 col-md-6 col-sm-12">
-                            <div id="filter-by-date-range" class="form-group">
-                                <div id="date-picker" class="input-group">
-                                    <input type="text" readonly="readonly" placeholder="SELECT DATE RANGE" id="date-range" name="date_range" data-validation="required" class="form-control m-input valid"> 
-                                        <span class="input-group-addon"><i class="la la-calendar-check-o"></i>
-                                        </span>
+                        <div class="row align-items-center">
+                            <div class="col-6 col-md-6 col-sm-12">
+                                <div class="m-form__group row">
+                                    <label class="col-3 col-form-label">Filter By: </label>
+                                    <div class="col-9">
+                                        <div class="m-radio-inline">
+                                            <label class="m-radio">
+                                                <input type="radio" name="filter" value="0" checked> All
+                                                <span></span>
+                                            </label>
+                                            <label class="m-radio">
+                                                <input type="radio" name="filter" value="1"> Active
+                                                <span></span>
+                                            </label>
+                                            <label class="m-radio">
+                                                <input type="radio" name="filter" value="2"> Inactive
+                                                <span></span>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
+                            <div class="col-4 col-md-4 col-sm-12">
+                                <div id="filter-by-date-range">
+                                    <div id="date-picker" class="input-group">
+                                        <input type="text" readonly="readonly" placeholder="SELECT DATE RANGE" id="date-range" name="date_range" data-validation="required" class="form-control m-input valid"> 
+                                            <span class="input-group-addon"><i class="la la-calendar-check-o"></i>
+                                            </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-2 col-md-2 col-sm-12">
+                                <button class="btn btn-success btnView" onclick="generateTable()">Submit</button>
                             </div>
                         </div>`;
         $(dateRangePicker).appendTo("#cash_advance_reports_wrapper .daterange");
@@ -267,11 +295,11 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
         }).on('apply.daterangepicker', function (ev, picker) {
             $("#date-range").val(picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY')).trigger('change');
             dateRange = picker.startDate.format('YYYY-MM-DD') + ' | ' + picker.endDate.format('YYYY-MM-DD');
-            tblCashAdvanceReport.ajax.reload();
+            // tblCashAdvanceReport.ajax.reload();
         }).on('cancel.daterangepicker', function(ev, picker) {
             $("#date-range").val('').trigger('change');
             dateRange = ''; 
-            tblCashAdvanceReport.ajax.reload();
+            // tblCashAdvanceReport.ajax.reload();
         });
 
         },
@@ -313,4 +341,10 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
             }
         });
         return result;
+    }
+
+    function generateTable(){
+        _filter = $("input[name='filter']:checked").val();
+        
+        tblCashAdvanceReport.ajax.reload();
     }
