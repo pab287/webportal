@@ -1275,12 +1275,16 @@ class Reports_model extends CI_Model{
         $resultarray = array();
         if(isset($get["company_id"]) && $get["company_id"]){
             $departmentId = (isset($get["department_id"]) && $get["department_id"])? $get["department_id"]: 0;
+            $emp_status = (isset($get["employee_status"]) && $get["employee_status"]) ? strtolower($get["employee_status"]) : null;
             $this->db->select("a.id, CONCAT(UPPER(TRIM(a.firstname)), ' ', CASE WHEN UPPER(TRIM(a.middlename)) != 'N/A' AND UPPER(TRIM(a.middlename)) != 'NONE' AND TRIM(a.middlename) !='' AND a.middlename IS NOT NULL
                 THEN CONCAT(UPPER(SUBSTR(a.middlename, 1, 1)), '.') ELSE '' END,' ', UPPER(TRIM(a.lastname)), CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
                 a.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(a.suffix))) ELSE '' END) as employee_name");
             $this->db->from("gccmaster.tblemployees a");
             $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
-            $this->db->where("a.employee_status", "Active");
+
+            if ($emp_status != 'all' && $emp_status) {
+                $this->db->where("LOWER(a.employee_status) =", $emp_status);
+            }
             $this->db->where("a.company_id", $get["company_id"]);
             if($departmentId){ $this->db->where("a.department_id", $departmentId); }
 
@@ -1293,7 +1297,6 @@ class Reports_model extends CI_Model{
             $this->db->limit(25);
             $this->db->order_by("trim(a.firstname)", "ASC");
             $query = $this->db->get();
-
             if ($query->num_rows() > 0) {
                 foreach ($query->result_array() as $_query) {
                     $data = array();
@@ -1357,7 +1360,7 @@ class Reports_model extends CI_Model{
             $this->db->select("emp.id, dept.code");
             $this->db->from($this->tblEmployees." as emp");
             $this->db->join($this->companyTable." as comp", "comp.id = emp.company_id");
-            $this->db->join($this->departmentTable." as dept", "dept.id = emp.company_id");
+            $this->db->join($this->departmentTable." as dept", "dept.id = emp.department_id", "LEFT");
             $this->db->where("emp.company_id", $post["company"]);
             if($hasDepartment){
                 $this->db->where("emp.department_id", $post["department"]);
@@ -1410,7 +1413,7 @@ class Reports_model extends CI_Model{
                     $endDate = Date("Y-m-d", strtotime($filterDates[1]));
                 }
                 $arrFilter["filter_by"] = "Date Range";
-                $filter .= "Date Range: {$post[$filterBy]} ";
+                // $filter .= "Date Range: {$post[$filterBy]} ";
 
             }else{
                 $tempDatex = $post["filter_year"]."-".$post["filter_month"]."-01";
@@ -1455,6 +1458,11 @@ class Reports_model extends CI_Model{
                 $this->db->where_in("ts.emp_id", $employeeIds);
                 $this->db->order_by("emp.lastname", "ASC");
                 $this->db->group_by("ts.emp_id");
+
+                if (isset($post['employee_status']) && !empty($post['employee_status']) && strtolower($post['employee_status']) != 'all') {
+                    $this->db->where('LOWER(emp.employee_status)', strtolower($post['employee_status']));
+                }
+
                 $qAttendance = $this->db->get();
                 $ctrCount = $qAttendance->num_rows();
                 if($filter == "Filters applied: "){
@@ -1471,7 +1479,8 @@ class Reports_model extends CI_Model{
                     $userType="user";
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `<strong>{$tempMaxDate}</trong>`. {$filter}" : "No late attendance record/s found!";
+                    $resultset["filters"] = $arrFilter;
+                    $resultset["toastr_msg"] = $tempMaxDate ? "<strong>No data available for the selected date range. Verified data is only up to `<strong>{$tempMaxDate}</strong>`. {$filter}" : "No late attendance record/s found!</strong>";
                     $logMessage = $resultset["toastr_msg"];
                     $logState="success";
                     $userType="user";
@@ -1517,6 +1526,7 @@ class Reports_model extends CI_Model{
         $arrData = array();
         $resultset = array();
         $companyId = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: 0;
+        $employeeStatus = (isset($get["employee_status"]) && $get["employee_status"])? strtolower($get["employee_status"]): false;
         if($companyId || $companyId == 0){
             $this->db->select("id, description as text, employee_id");
             $this->db->from("payroll.payroll_group");
@@ -1536,6 +1546,9 @@ class Reports_model extends CI_Model{
                     unset($vv->employee_id);
                     $this->db->from("gccmaster.tblemployees");
                     $this->db->where_in("id", $tempIds);
+                    if($employeeStatus && $employeeStatus != 'all'){
+                        $this->db->where("LOWER(employee_status)", strtolower($employeeStatus));
+                    }
                     $this->db->order_by("lastname","ASC");
                     $qTempEmp = $this->db->get();
                     if($qTempEmp->num_rows() > 0){
@@ -1559,7 +1572,7 @@ class Reports_model extends CI_Model{
         return $resultset;
     }
 
-    public function generateAbsenteeReport($post = array()){
+    public function generateAbsenteeReport($post = array()){ 
         $this->load->model("gcctime/timesheet_model", "ts_model");
         $resultset = array();
         $arrFilter = array();
@@ -1573,7 +1586,9 @@ class Reports_model extends CI_Model{
             $this->db->join($this->companyTable." as comp", "comp.id = emp.company_id");
             $this->db->join($this->departmentTable.' as c', 'c.id = emp.department_id', 'LEFT');
             $this->db->where("emp.company_id", $post["company"]);
-
+            if (isset($post['employee_status']) && !empty($post['employee_status']) && strtolower($post['employee_status']) != 'all') {
+                $this->db->where('LOWER(emp.employee_status)', strtolower($post['employee_status']));
+            }
             if($hasDepartment){
                 $this->db->where("emp.department_id", $post["department"]);
             }
@@ -1626,7 +1641,7 @@ class Reports_model extends CI_Model{
                 }
                 
                 $arrFilter["filter_by"] = "Date Range";
-                $filter .= "Date Range: {$post[$filterBy]} ";
+                // $filter .= "Date Range: {$post[$filterBy]} ";
             }else{
                 $tempDatex = $post["filter_year"]."-".$post["filter_month"]."-01";
                 $timeStamp = strtotime($tempDatex);
@@ -1948,7 +1963,8 @@ class Reports_model extends CI_Model{
                     $userType="user";
                 }else{
                     $resultset["response"] = false;
-                    $resultset["toastr_msg"] = $tempMaxDate ? "No data available for the selected date range. Verified data is only up to `<strong>{$tempMaxDate}</strong>`  {$filter}." : "No absentee attendance record/s found!";
+                    $resultset["filters"] = $arrFilter;
+                    $resultset["toastr_msg"] = $tempMaxDate ? "<strong>No data available for the selected date range. Verified data is only up to `<strong>{$tempMaxDate}</strong>`  {$filter}." : "No absentee attendance record/s found!</strong>";
                     $logMessage = $resultset["toastr_msg"];
                     $logState="success";
                     $userType="user";

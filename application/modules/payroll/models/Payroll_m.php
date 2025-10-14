@@ -2156,7 +2156,14 @@ class Payroll_m extends CI_Model{
                     }
                 }
 
-                $loans = $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
+                // suspends employee active loans when the gross pay is 0 when the generated payrollsheet is not posted
+                if (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0 && intval($payroll_sheet_row->posted) === 0) {
+                    $this->suspendNoEarnersLoans($employee->id);
+                }
+
+                $loans = (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0) 
+                    ? $this->getEmployeeActiveLoansNotPaid($employee->id, $gross_pay, 0, $_gross_pay, true) //get all active employee loans that is not still paid
+                    : $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
 
                 $postedPayrollSheetRecord = isset($payroll_sheet_row) && !empty($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1;
                 $updatedTotalLoans = $postedPayrollSheetRecord ? $payroll_sheet_row->total_loans : 0;
@@ -8099,5 +8106,85 @@ class Payroll_m extends CI_Model{
             $resultset["response"] = false;
         }
         return $resultset;
+    }
+
+    public function suspendNoEarnersLoans($id){
+        $this->db->where('emp_id', $id);
+        $this->db->where('active', 1);
+        $this->db->where('paid', 0);
+        $this->db->where("is_archived", 0);
+        $query = $this->db->update($this->tbl_hris_loans, array('active' => 0));
+
+        if ($query) {
+            $msg = "System Generated: Active loan(s) of employee `$id` is automatically suspended.";
+            $this->core_layout->setEventLog($msg, "update", "success", "payroll");
+        }
+
+        return $query;
+    }
+
+    public function getEmployeeActiveLoansNotPaid($id, $gross_pay, $status=0, $remainingGrossPay=0, $zeroNet=false) {
+        $this->db->select("a.*, pl.loan_type, pl.code, pl.loan_class");
+        $this->db->join("payroll.loans as pl", "pl.id = a.loan_id");
+        $this->db->where("a.emp_id", $id);
+        $this->db->where("a.paid", 0);
+        $this->db->where("a.is_archived", 0);
+        $this->db->order_by("pl.loan_type", "ASC");
+        $this->db->where("a.active", 1);
+        $loans = $this->db->get("gcchris.loans a")->result();
+
+        foreach ($loans as $loan) {
+            $total_amount_paid = $this->db
+                ->select_sum("psloanpayments.amount_due")
+                ->join("payroll.payroll_sheet ps", "ps.id = psloanpayments.payroll_sheet_id")
+                ->where("ps.posted", 1)
+                ->where("emp_id", $id)
+                ->where("loan_id", $loan->id)
+                ->get("payroll.payroll_sheet_loan_payments psloanpayments")
+                ->row("amount_due");
+
+            $loan->total_amount_paid = round($total_amount_paid, 2);
+            $balance = floatval(round($loan->amount,2)) - floatval(round($total_amount_paid, 2));
+            $loan->amount_due = $balance > 0 ? $balance : 0;
+            $loan->interest_amount = 0;
+            $loan->zero_netpay = 0;
+            $toDeduct = false;
+            
+            if($balance > 0 /*** && $remainingGrossPay >= $balance ***/){
+                if (intval($loan->deduction_type) === 0) {
+                    $percentage = $loan->percentage / 100;
+                    $amount_due = $gross_pay * $percentage;
+                    if(doubleval($balance) > doubleval($amount_due)){ $toDeduct = true; }
+
+                    $amount_due = doubleval($balance) > doubleval($amount_due) ? $amount_due : $balance;
+                    $loan->amount_due = $amount_due;
+
+                } else {
+                    if(doubleval($balance) > doubleval($loan->fixed_deduction_amt)){ $toDeduct = true; }
+                    $amount_due = doubleval($balance) > doubleval($loan->fixed_deduction_amt) ? $loan->fixed_deduction_amt : $balance;
+                    $loan->amount_due = floatval($amount_due);
+                }
+
+                if (floatval($loan->interest_percentage) > 0) {
+                    $intPercentage = $loan->interest_percentage / 100;
+                    $amountToDeduct = floatval($loan->amount) * $intPercentage;
+                    $loan->interest_amount = $amountToDeduct;
+                }
+
+                /*** $remainingGrossPay = $remainingGrossPay - $balance; ***/
+            }
+            /*** else if($zeroNet && $balance > 0 && $balance > $remainingGrossPay){
+                $loan->zero_netpay = 1;
+            } ***/
+
+            $nBalance = floatval($loan->amount_due);
+            if($nBalance > 0 && $remainingGrossPay >= $nBalance){
+                $remainingGrossPay = $remainingGrossPay - $nBalance;
+            }else if($zeroNet && $nBalance > 0 && $nBalance > $remainingGrossPay && $toDeduct == false){
+                $loan->zero_netpay = 1;
+            }
+        }
+
+        return $loans;
     }
 }

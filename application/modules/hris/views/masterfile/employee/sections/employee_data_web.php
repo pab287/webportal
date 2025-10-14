@@ -1001,66 +1001,98 @@
             <div class="card-body">
                 <table class="responsive" id="accountability_table">
                     <thead class="customsalary">
-                    <tr>
-                        <th scope="col" colspan="9">ACCOUNTABILITY</th>
-                    </tr>
+                        <tr>
+                            <th colspan="5">ACCOUNTABILITY</th>
+                        </tr>
                     </thead>
                     <thead>
                         <tr>
-                            <th class="" scope="col" width="12%">STATUS</th>
-                            <th class="" scope="col" width="12%">DATE RELEASED</th>
-                            <th class="" scope="col" width="12%">REF. NO</th>
-                            <th class="" scope="col" width="12%">ASSET CODE</th>
-                            <th class="" scope="col">ASSET NAME</th>
-                            <th class="text-right" scope="col" width="10%">AMOUNT</th>
-                            <th class="text-center" scope="col" width="10%">RETURNED</th>
-                            <th class="" scope="col" width="13%">DATE RETURNED</th>
-                            <th class="text-center" scope="col" width="13%">REMARKS</th>
-
+                            <th width="15%">REF & STATUS</th>
+                            <th width="20%">ASSET INFO</th>
+                            <th width="15%">AMOUNT</th>
+                            <th width="20%">RELEASE/RETURN DATES</th>
+                            <!-- <th width="15%">RETURNED</th> -->
+                            <th width="15%">REMARKS</th>
                         </tr>
                     </thead>
                     <tbody>
-                    <template v-if="accountability == false">
-                        <tr>
-                            <td data-label="STATUS">NONE</td>
-                            <td data-label="RELEASED_DT">NONE</td>
-                            <td data-label="REF. NO">NONE</td>
-                            <td data-label="ASSET CODE">NONE</td>
-                            <td data-label="ASSET NAME">NONE</td>
-                            <td data-label="AMOUNT">NONE</td>
-                            <td data-label="RETURNED">NONE</td>
-                            <td data-label="REMARKS">NONE</td>
-                            <td data-label="DATE">NONE</td>
-                        </tr>
-                    </template>
-                    <template v-else>
-                        <tr v-for="acct in accountability" :key="acct.id">
-                            <td data-label="STATUS" v-text="acct.status"></td>
-                            <td data-label="DATE RELEASED">
-                                {{ acct.status.toLowerCase() === 'released' ? formatDate(acct.released_dt) : 'N/A' }}
-                            </td>
-                            <td data-label="REF. NO" v-text="acct.reference_no"></td>
-                            <td data-label="ASSET CODE" v-text="acct.asset_code"></td>
-                            <td data-label="ASSET NAME" v-text="acct.aname"></td>
-                            <td class="text-right" data-label="AMOUNT">{{ formatAmount(acct.amount) }}</td>
-                            <td data-label="RETURNED" class="text-center" id="returned">
-                            <span class="m-badge m-badge--success px-2 m--font-bolder" v-if="isReturned(acct)">
-                                Yes
-                            </span>
-                            <span class="m-badge m-badge--danger px-2 m--font-bolder" v-else>
-                                No
-                            </span>
-                            </td>
-                            <td data-label="DATE" v-text="formatDate(acct.date_returned || 'N/A')"></td>
-                            <td class="text-center" data-label="REMARKS">
-                            <template v-if="hasRemarks(acct)">
-                                <a href="javascript:void(0)" @click="showRemarks(acct.remarks_returned)">View Remarks</a>
-                            </template>
-                            <template v-else>NO REMARKS</template>
-                            </td>
+                        <template v-if="accountability == false">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 20px; color: #666;">
+                                    No accountability records found
+                                </td>
+                            </tr>
+                        </template>
+                        <template v-else>
+                            <tr v-for="acct in accountability" :key="acct.id">
+                                <td data-label="REF & STATUS">
+                                    <div><strong v-text="acct.reference_no"></strong></div>
+                                    <span 
+                                        :class="[
+                                            'm-badge px-2 m--font-bolder',
+                                            acct.is_returned == 1 
+                                                ? 'm-badge--danger' 
+                                                : (acct.status?.toLowerCase() === 'released' 
+                                                    ? 'm-badge--success' 
+                                                    : 'm-badge--info')
+                                        ]"
+                                        v-text="acct.is_returned == 1 ? 'Returned' : acct.status">
+                                    </span>
+                                </td>
+                                <td data-label="ASSET INFO">
+                                    <div><strong v-text="acct.asset_code"></strong></div>
+                                    <div v-text="acct.aname"></div>
+                                    <div v-if="acct.date_received && acct.date_received !== '0000-00-00'">
+                                        ASSET AGE: {{ calculateAge(acct.date_received) }}
+                                    </div>
+                                </td>
+                                <td data-label="AMOUNT" class="amount">{{ formatAmount(acct.amount) }}</td>
+                                <td data-label="RELEASE/RETURN DATES">
+                                    <div>
+                                        <strong>Released:</strong>
+                                        <template v-if="acct.status.toLowerCase() === 'released'">
+                                            {{ formatDate(acct.released_dt) }}
+                                        </template>
+                                        <span v-else class="m-badge m-badge--danger px-2 m--font-bolder">N/A</span>
+                                    </div>
+                                    <div>
+                                        <strong>Returned:</strong>
+                                        <span v-if="formatDate(acct.date_returned) !== 'N/A'">
+                                            {{ formatDate(acct.date_returned) }}
+                                        </span>
+                                        <span v-else class="m-badge m-badge--danger px-2 m--font-bolder">
+                                            NO
+                                        </span>
+                                    </div>
+                                </td>
+                                <!-- <td data-label="RETURNED">
+                                    <span :class="parseInt(acct.is_returned) == 1 ? 'm-badge m-badge--success px-2 m--font-bolder' : 'm-badge m-badge--danger px-2 m--font-bolder'">
+                                        {{ parseInt(acct.is_returned) == 1 ? 'Yes' : 'No' }}
+                                    </span>
+                                </td> -->
+                                <td data-label="REMARKS">
+                                    <template v-if="acct.is_returned == '0' && acct.remarks && acct.remarks.trim() !== ''">
+                                        <a href="javascript:void(0)" 
+                                        @click="showRemarks(acct.remarks)" 
+                                        class="remarks-link">
+                                        View Remarks
+                                        </a>
+                                    </template>
 
-                        </tr>
-                    </template>
+                                    <template v-else-if="acct.is_returned == '1' && acct.remarks_returned && acct.remarks_returned.trim() !== ''">
+                                        <a href="javascript:void(0)" 
+                                        @click="showRemarks(acct.remarks_returned)" 
+                                        class="remarks-link">
+                                        View Remarks
+                                        </a>
+                                    </template>
+
+                                    <template v-else>
+                                        NO REMARKS
+                                    </template>
+                                </td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
 			</div>
@@ -1407,16 +1439,28 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="remarksModalLabel">Remarks</h5>
+                <!-- <h5 class="modal-title" id="remarksModalLabel">Remarks</h5> -->
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <p id="remarksText" class="text-center"></p>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="alert alert-light border-left border-primary mb-3" style="border-left-width: 4px !important;">
+                            <i class="la la-info-circle text-dark"></i>
+                            <strong class="text-dark">Remarks</strong>
+                        </div>
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <p id="remarksText" class="card-text mb-0 text-dark font-weight-normal" style="line-height: 1.6;"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

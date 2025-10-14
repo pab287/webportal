@@ -182,8 +182,10 @@ class Timesheet_model extends CI_Model{
                     return date("Y-m-d H:i", strtotime($_attendance->datetime));
                 }, $this->getAttendance($att_curr_day, $employee->id, $att_next_day, $nightShiftLastRecord));
                 $attendance = array_values(array_unique($attendance));
-                
-                if($ts_exist->num_rows() == 1){
+
+                /*** 
+                 * temporarily disabled
+                 * if($ts_exist->num_rows() == 1){
                     $timesheetRow = $ts_exist->row();
                     $attrAttendances = array();
                     $attDate = date("Y-m-d", strtotime($date));
@@ -204,6 +206,8 @@ class Timesheet_model extends CI_Model{
 
                     $attendance = array_values(array_unique(array_merge($attendance, $attrAttendances)));
                 }
+                 * temporarily disabled
+                ***/
 
                 $am_start = !empty($schedule) ? $schedule->am_start : null;
                 $am_end = !empty($schedule) ? $schedule->am_end : null;
@@ -778,7 +782,7 @@ class Timesheet_model extends CI_Model{
                                     if($_amEnd){ $attendance[] = $_amEnd; }
                                     if($_pmStart){ $attendance[] = $_pmStart; }
                                     if($_pmEnd){ $attendance[] = $_pmEnd; }
-
+                                    
                                     $timesheetUpdate = $this->generateTimesheetComputation($timesheet_exist, $employee_time_sheet, $updatedTimesheets, $attendance, $date,
                                     $no_shift_schedule, $am_start, $am_end, $pm_start, $pm_end, $am_shift_only, $pm_shift_only, $props, $flexibleEmployee, $payrollType);
                                     if(isset($timesheetUpdate["updated_timesheets"]) && $timesheetUpdate["updated_timesheets"]){
@@ -1365,8 +1369,10 @@ class Timesheet_model extends CI_Model{
         /*** approved Travel order tagging ***/
         if ($attendance_log_ctr === 4) {
             foreach ($attendance as $i => $time) {
-                $prop = $props[$i];
-                $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                if(isset($props[$i]) && $props[$i]){
+                    $prop = $props[$i];
+                    $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                }
             }
         } else {
             if ($flexible) { // fore employee with 1 in and out
@@ -1376,15 +1382,19 @@ class Timesheet_model extends CI_Model{
 
                     foreach ($attendance as $i => $time) {
                         if (($i + 1) > 4){ break; }
-                        $prop = $props[$i];
-                        $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                        if(isset($props[$i]) && $props[$i]){
+                            $prop = $props[$i];
+                            $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                        }
                     }
                 } elseif ($attendance_log_ctr < 2) {
                     $employee_time_sheet->scrub_status = 1;
                     $employee_time_sheet->comments = "[System Generated]: Lacking entry detected.";
                     foreach ($attendance as $i => $time) {
-                        $prop = $props[$i];
-                        $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                        if(isset($props[$i]) && $props[$i]){
+                            $prop = $props[$i];
+                            $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                        }
                     }
                 } else {
                     if ($no_shift_schedule === false) {
@@ -1457,8 +1467,10 @@ class Timesheet_model extends CI_Model{
                         }
                     } else {
                         foreach ($attendance as $i => $time) {
-                            $prop = $props[$i];
-                            $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                            if(isset($props[$i]) && $props[$i]){
+                                $prop = $props[$i];
+                                $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                            }
                         }
                     }
                 }
@@ -1471,9 +1483,10 @@ class Timesheet_model extends CI_Model{
 
                     foreach ($attendance as $i => $time) {
                         if (($i + 1) > 4){ break; }
-
-                        $prop = $props[$i];
-                        $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                        if(isset($props[$i]) && $props[$i]){
+                            $prop = $props[$i];
+                            $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                        }
                     }
                 } elseif ($attendance_log_ctr < 4) {
                     $employee_time_sheet->scrub_status = 1;
@@ -1553,8 +1566,10 @@ class Timesheet_model extends CI_Model{
                         }
                     } else {
                         foreach ($attendance as $i => $time) {
-                            $prop = $props[$i];
-                            $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                            if(isset($props[$i]) && $props[$i]){
+                                $prop = $props[$i];
+                                $employee_time_sheet->$prop = date('Y-m-d H:i', strtotime($time));
+                            }
                         }
                     }
                 }
@@ -2502,7 +2517,9 @@ class Timesheet_model extends CI_Model{
     public function generateTimesheetOvertime($timesheet_exist, $generated_manually, $overtime, $date, $am_end, $pm_end, $am_shift_only, $attendance, $night_diff_cfg){
         $resultset = array();
         $hasOvertimeRequest = false;
-        
+        $overtime_start = null;
+        $overtime_end = null;
+
         $total_accredited_ot_hrs = 0;
         $total_accredited_ot_nightdiff_hrs = 0;
         $hasShiftSchedule = $timesheet_exist->has_shift == 1;
@@ -2864,7 +2881,8 @@ class Timesheet_model extends CI_Model{
             $this->db->where_in("employees.id", $employees);
         }
         $this->db->order_by("employees.lastname, attendance.`datetime`", "ASC");
-        return $this->db->get($this->tbl_attendance . " attendance")->result();
+        $qTemp = $this->db->get($this->tbl_attendance . " attendance");
+        return $qTemp->result();
     }
 
     private function getEmployeesWithAttendance($date, $is_custom, $employees = array())

@@ -61,7 +61,7 @@
                             <div class="rating">
                                 <div id="performance-rating"></div>
                                 <div id="performance-rating-description" style="margin-top: 4px;"
-                                     class="text-muted m--font-boldest m--regular-font-size-sm2"></div>
+                                    class="text-muted m--font-boldest m--regular-font-size-sm2"></div>
                                 <div id="performance-rating-rehire" style="margin-top: 4px;"
                                 class="text-muted m--font-boldest m--regular-font-size-sm2"></div>
                                 <div id="performance-rating-remarks" style="margin-top: 4px;"
@@ -347,68 +347,198 @@
                 </div>
             </div>
 
-            <?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0)): ?>
-            <div class="m-portlet" id="payroll-sheet-payslip">
-                <div class="m-portlet__head pt-4 pb-4">
-                    <div class="m-portlet__head-caption">
-                        <div class="m-portlet__head-title">
-                            <span class="m-portlet__head-icon">
-                                <i class="flaticon-file-1"></i>
-                            </span>
-                            <h3 class="m-portlet__head-text">Payroll Data Sheet</h3>
+            <!-- payroll sheet and deductions -->
+            <?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0) || isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($deductions) && is_array($deductions) && count($deductions) > 0)): ?>
+
+                <div class="m-portlet m-portlet--tabs">
+                    <div class="m-portlet__head">
+                        <div class="m-portlet__head-tools" id="payroll-sheet-payslip">
+                            <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--left m-tabs-line--primary">
+                                <?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0)): ?>
+                                    <li class="nav-item m-tabs__item">
+                                        <div class="row align-items-center justify-content-between">
+                                            <span class="m-portlet__head-icon mr-2">
+                                                <i class="flaticon-file-1"></i>
+                                            </span>
+                                            <a class="nav-link m-tabs__link active" data-toggle="tab" href="#m_user_profile_tab_3" role="tab" aria-expanded="true">Payroll Data Sheet</a>
+                                        </div>
+                                    </li>
+                                <?php endif; ?>
+
+                                <?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($deductions) && is_array($deductions) && count($deductions) > 0)): ?>
+                                    <li class="nav-item m-tabs__item">
+                                        <a class="nav-link m-tabs__link" data-toggle="tab" href="#m_user_profile_tab_4" role="tab" aria-expanded="false">Deductions</a>
+                                    </li>
+                                <?php endif; ?>
+                            </ul>
                         </div>
                     </div>
-                </div>
-                <div class="m-portlet__body">
-                <div class="row">
-                        <div class="col-12 col-md-12 col-lg-12 col-xl-12">
-                            <div class="table-responsive-sm">
-                                <table class="table table-bordered" id="table-payroll_sheet-payslip" style="width: 100%">
-                                    <thead>
-                                        <tr>
-                                            <th>Pay Date</th>
-                                            <th>Coverage Date</th>
-                                            <th class="text-right">Gross Pay</th>
-                                            <th class="text-right">Net Pay</th>
-                                            <th class="text-center">&nbsp;</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if(isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0): ?>
-                                            <?php foreach ($payroll_sheet_data as $key => $value): ?>
-                                                <tr class="<?php echo $value->id == $payroll_sheet_max_id ? "highlight":"" ?>">
-                                                    <td>
-                                                        <p class="mb-0">
-                                                            <span><?php echo date("F d, Y", strtotime($value->pay_date)); ?></span>
-                                                            <?php if($value->bonus_code): ?>
-                                                                <span class="m-badge m-badge--danger m-badge--wide ml-2 m--regular-font-size-sm5"><?php echo $value->bonus_code; ?></span>
-                                                            <?php endif; ?>
-                                                            <?php if($value->id == $payroll_sheet_max_id): ?>
-                                                                <span class="m-badge m-badge--success m-badge--wide ml-2 m--regular-font-size-sm5">CURRENT</span>
+
+                    <div class="m-portlet__body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="tab-content">
+                                    <?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0)): ?>
+                                        <div class="tab-pane active" id="m_user_profile_tab_3">
+                                            <div class="row">
+                                                <div class="col-12 col-md-12 col-lg-12 col-xl-12">
+                                                    <div class="table-responsive-sm">
+                                                        <table class="table table-bordered" id="table-payroll_sheet-payslip" style="width: 100%">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Pay Date</th>
+                                                                    <th>Coverage Date</th>
+                                                                    <th class="text-right">Gross Pay</th>
+                                                                    <th class="text-right">Net Pay</th>
+                                                                    <th class="text-center">&nbsp;</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <?php if(isset($payroll_sheet_data) && is_array($payroll_sheet_data) && count($payroll_sheet_data) > 0): ?>
+                                                                    <?php foreach ($payroll_sheet_data as $key => $value): ?>
+                                                                        <tr class="<?php echo $value->id == $payroll_sheet_max_id ? "highlight":"" ?>">
+                                                                            <td>
+                                                                                <p class="mb-0">
+                                                                                    <span><?php echo date("F d, Y", strtotime($value->pay_date)); ?></span>
+                                                                                    <?php if($value->bonus_code): ?>
+                                                                                        <span class="m-badge m-badge--danger m-badge--wide ml-2 m--regular-font-size-sm5"><?php echo $value->bonus_code; ?></span>
+                                                                                    <?php endif; ?>
+                                                                                    <?php if($value->id == $payroll_sheet_max_id): ?>
+                                                                                        <span class="m-badge m-badge--success m-badge--wide ml-2 m--regular-font-size-sm5">CURRENT</span>
+                                                                                        <?php endif; ?>
+                                                                                </p>
+                                                                            </td>
+                                                                            <td><?php echo date("F d, Y", strtotime($value->date_start)) ." ~ ". date("F d, Y", strtotime($value->date_end)); ?></td>
+                                                                            <td class="text-right"><?php echo number_format($value->gross_pay, 2, ".", ","); ?></td>
+                                                                            <td class="text-right"><?php echo number_format($value->net_pay, 2, ".", ","); ?></td>
+                                                                            <td class="text-center">
+                                                                            <?php if($value->is_bonus == 0): ?>
+                                                                                <button type="button" class="btn btn-secondary btn-sm m-btn m-btn--icon m-btn--icon-only btnView_own_request" onClick="getPayrollSheetData(<?= $value->id; ?>)"><i class="la la-file-text"></i></button>
+                                                                            <?php else: ?>
+                                                                                <i class="la la-file-text"></i>
+                                                                            <?php endif; ?>
+                                                                            </td>
+                                                                        </tr>
+                                                                    <?php endforeach; ?>
                                                                 <?php endif; ?>
-                                                        </p>
-                                                    </td>
-                                                    <td><?php echo date("F d, Y", strtotime($value->date_start)) ." ~ ". date("F d, Y", strtotime($value->date_end)); ?></td>
-                                                    <td class="text-right"><?php echo number_format($value->gross_pay, 2, ".", ","); ?></td>
-                                                    <td class="text-right"><?php echo number_format($value->net_pay, 2, ".", ","); ?></td>
-                                                    <td class="text-center">
-                                                    <?php if($value->is_bonus == 0): ?>
-                                                        <button type="button" class="btn btn-secondary btn-sm m-btn m-btn--icon m-btn--icon-only btnView_own_request" onClick="getPayrollSheetData(<?= $value->id; ?>)"><i class="la la-file-text"></i></button>
-                                                    <?php else: ?>
-                                                        <i class="la la-file-text"></i>
-                                                    <?php endif; ?>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($deductions) && is_array($deductions) && count($deductions) > 0)): ?>
+                                        <div class="tab-pane" id="m_user_profile_tab_4">
+                                            <div class="row">
+                                                <div class="col-12 col-md-12 col-lg-12 col-xl-12">
+                                                    <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
+                                                        <table id="tbl-loans" class="table display table-bordered table-striped dataTable no-footer" width="100%">
+                                                            <thead>
+                                                                <th width="30%">Loan Name</th>
+                                                                <th>Loaned Amount</th>
+                                                                <th>Amt. Pd.</th>
+                                                                <th width="10%">Bal.</th>
+                                                                <th>
+                                                                    <span data-toggle="m-tooltip"
+                                                                        data-placement="top"
+                                                                        data-original-title="DEDUCTION TYPE"
+                                                                        data-skin="dark">
+                                                                        TYPE
+                                                                    </span>
+                                                                </th>
+                                                                <th>
+                                                                    <span data-toggle="m-tooltip"
+                                                                        data-placement="top"
+                                                                        data-original-title="PERCENTAGE VALUE OR FIXED AMOUNT VALUE"
+                                                                        data-skin="dark">
+                                                                        VALUE
+                                                                    </span>
+                                                                </th>
+                                                                <th>Status</th>
+                                                                <th>Action</th>
+                                                            </thead>
+                                                            <tbody>
+                                                                <?php if(isset($deductions) && is_array($deductions) && count($deductions) > 0): ?>
+                                                                    <?php foreach($deductions as $key=> $rs): ?>
+                                                                        <tr>
+                                                                            <td width="30%">
+                                                                                <?php 
+                                                                                    $ref = ($rs->reference === '' || $rs->reference === null) ? '' : `<p class='m-0'><small><span class="m--font-bolder">Reference:</span>`.$rs->reference.`</small></p>`; 
+                                                                                    $dnRefs = ($rs->debit_note === '' || $rs->debit_note === null) ? '' : "<span class='m--font-primary m--font-boldest m--margin-left-15 m--regular-font-size-lg1'>$rs->debit_note</span>";
+                                                                                ?>
+
+                                                                                <p class="mb-1 m--font-bolder"><?=$rs->loan_name ?> <?=$dnRefs ?></p><?=$ref ?>
+                                                                                <p class='m-0'><small><span class="m--font-bolder">Created By:</span> <?=$rs->created_by ?></small></p>
+                                                                                <p class='m-0'><small><span class="m--font-bolder">Created Date:</span><?=$rs->created_at ?></small></p>
+                                                                            </td>
+                                                                            <td class="text-right">
+                                                                                <span class="m--font-boldest"><?=number_format($rs->amount, 2) ?></span>
+                                                                            </td>
+                                                                            <td class="text-right m--padding-right-30">
+                                                                                <span class="m--font-boldest"><?=number_format($rs->total_amount_paid, 2) ?></span>
+                                                                            </td>
+                                                                            <td width="10%" class="text-right m--padding-right-30">
+                                                                                <?php $balance = floatval($rs->amount) - floatval($rs->total_amount_paid); ?>
+                                                                                <span class="m--font-boldest"><?=number_format($balance, 2) ?></span>
+                                                                            </td>
+                                                                            <td>
+                                                                                <?=intval($rs->deduction_type) === 0 ? "Percentage" : "Fix Amount" ?>
+                                                                            </td>
+                                                                            <td>
+                                                                                <?=(intval($rs->deduction_type) == 0) ? number_format($rs->percentage, 2).'%' : number_format($rs->fixed_deduction_amt, 2) ?>
+                                                                            </td>
+                                                                            <td  class="text-center">
+                                                                                <?php 
+                                                                                    $tempStatus = intval($rs->active);
+                                                                                    $badgeColor = "m-badge--warning";
+                                                                                    $badgeText = "Suspended";
+
+                                                                                    if($rs->paid == 1 && $tempStatus !== 2){ $tempStatus = 2; }
+                                                                                    $_balance = floatval($rs->amount) - floatval($rs->total_amount_paid);
+                                                                                    if($_balance <= 0){ $tempStatus = 2; }
+
+                                                                                    switch($tempStatus) {
+                                                                                        case 1:
+                                                                                            $badgeColor = "m-badge--info";
+                                                                                            $badgeText = "Active";
+                                                                                            break;
+                                                                                        case 2:
+                                                                                            $badgeColor = "m-badge--success";
+                                                                                            $badgeText = "Paid";
+                                                                                            break;
+                                                                                        default:
+                                                                                            $badgeColor = "m-badge--warning";
+                                                                                            $badgeText = "Suspended";
+                                                                                            break;
+                                                                                    }
+
+                                                                                    echo "<span class='m-badge m-badge--wide m--font-bolder $badgeColor'>$badgeText</span>";
+                                                                                ?>
+                                                                            </td>
+                                                                            <td class="text-center">
+                                                                                <?php 
+                                                                                    echo $this->profile->renderLoanActions($rs);
+                                                                                ?>
+                                                                            </td>
+                                                                        </tr>
+                                                                    <?php endforeach; ?>
+                                                                <?php endif; ?>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
             <?php endif; ?>
+            <!-- payroll sheet and deductions -->
         </div>
     </div>
 </div>
@@ -582,5 +712,165 @@
         function formatNumber(value, decimals = 2) {
             return parseFloat(value).toLocaleString("en-US", { maximumFractionDigits: decimals });
         }
+    </script>
+<?php endif; ?>
+<?php if(isset($profile_payroll_sheet, $show_payroll_payslip) && $show_payroll_payslip && $profile_payroll_sheet && (isset($deductions) && is_array($deductions) && count($deductions) > 0)): ?>
+    <?php $this->load->view("payroll/employee_profile/modals/loan_payment_history_modal"); ?>
+    <script>
+        const loanPaymentHistoryModal = $("#loan-payment-history-modal");
+        $(document).ready( function () {
+            $("#tbl-loans").DataTable({ ordering: false });
+            $("#tbl-loans input[type='search']").removeClass("form-control-sm");
+        });
+
+        function openLoanPaymentHistoryModal(id) {
+            loanPaymentHistoryModal.attr("data-id", id);
+            loanPaymentHistoryModal.modal("show");
+        }
+
+        loanPaymentHistoryModal.on("show.bs.modal", function () {
+            const id = $(this).attr("data-id");
+
+            /** nav tab issue fixes ***/
+            const cTab = $("#employee--loan_payment_history .nav-link.active").attr("href");
+            $("#employee--loan_payment_history .tab-pane").removeClass("active show");
+            $(cTab).addClass("active show");
+            
+            $("#employee--loan_payment_history .nav-link").on("click", function () {
+                const tab = $(this).attr("href");
+                $("#employee--loan_payment_history .tab-pane").removeClass("active show");
+                $(tab).addClass("active show");
+            });
+            /** nav tab issue fixes ***/
+
+            $("#tab_payments table", this).DataTable({
+                dom: "frtlp",
+                serverSide: false,
+                destroy: true,
+                ajax: {
+                    url: baseUrl(`core/profile/get_employee_loan_payment_history/${id}`),
+                    type: "GET",
+                    dataType: "JSON"
+                },
+                autoWidth: false,
+                columns: [
+                    {
+                        data: null,
+                        render: function (data, type, row) {
+                            return `<span class="m--font-boldest">${moment(data.date_start).format("MMM. DD, YYYY")}</span>`
+                                + " - " + `<span class="m--font-boldest">${moment(data.date_end).format("MMM. DD, YYYY")}</span>`;
+                        }
+                    },
+                    {
+                        width: "30%",
+                        data: null,
+                        render: function (data, type, row) {
+                            return `<div class="m--font-bolder">${row.firstname} ${row.lastname}</div>
+                                    <div class="m--regular-font-size-sm1 text-muted">${moment(row.posted_at).format("lll")}</div>`;
+                        }
+                    },
+                    {
+                        width: "25%",
+                        data: "amount_due",
+                        className: "text-right",
+                        render: function (data, type, row) {
+                            return `<span class="m--font-boldest">
+                                        ${parseFloat(data).toLocaleString("en-US", {maximumFractionDigits: 2})}
+                                    </span>`;
+                        }
+                    },
+                ],
+                footerCallback: function (row, data, start, end, display) {
+                    const api = this.api();
+                    const total = api
+                        .column(2)
+                        .data()
+                        .reduce(function (a, b) {
+                            return parseFloat(a) + parseFloat(b);
+                        }, 0);
+
+                    $(api.column(2).footer()).html(
+                        `<span class="m--font-boldest m--regular-font-size-lg1">
+                            ${parseFloat(total).toLocaleString("en-US", {maximumFractionDigits: 2})}
+                        </span>`
+                    );
+                }
+            });
+
+            $("#tab_interest_charges table", this).DataTable({
+                dom: "frtlp",
+                serverSide: false,
+                destroy: true,
+                ordering: false,
+                ajax: {
+                    url: baseUrl(`core/profile/get_employee_loan_iterest_charge_history/${id}`),
+                    type: "GET",
+                    dataType: "JSON"
+                },
+                autoWidth: false,
+                columns: [
+                    {
+                        data: "pay_date",
+                        render: function (data, type, row) {
+                            return `<span class="m--font-boldest">${moment(row.date_start).format("MMM. DD, YYYY")}</span>`
+                                + " - " + `<span class="m--font-boldest">${moment(row.date_end).format("MMM. DD, YYYY")}</span>`;
+                        }
+                    },
+                    {
+                        width: "30%",
+                        data: null,
+                        render: function (data, type, row) {
+                            return `<div class="m--font-bolder">${row.firstname} ${row.lastname}</div>
+                                    <div class="m--regular-font-size-sm1 text-muted">${moment(row.posted_at).format("lll")}</div>`;
+                        }
+                    },
+                    {
+                        width: "15%",
+                        data: "amount_due",
+                        className: "text-right",
+                        render: function (data, type, row) {
+                            return `<span class="m--font-boldest">
+                                        ${parseFloat(data).toLocaleString("en-US", {maximumFractionDigits: 2})}
+                                    </span>`;
+                        }
+                    },
+                    {
+                        width: "15%",
+                        data: "total_interest_amount",
+                        className: "text-right",
+                        render: function (data, type, row) {
+                            return `<span class="m--font-boldest">
+                                        ${parseFloat(data).toLocaleString("en-US", {maximumFractionDigits: 2})}
+                                    </span>`;
+                        }
+                    },
+                ],
+                footerCallback: function (row, data, start, end, display) {
+                    const api = this.api();
+                    const total = api
+                        .column(3)
+                        .data()
+                        .reduce(function (a, b) {
+                            return parseFloat(a) + parseFloat(b);
+                        }, 0);
+
+                    $(api.column(3).footer()).html(
+                        `<span class="m--font-boldest m--regular-font-size-lg1">
+                            ${parseFloat(total).toLocaleString("en-US", {maximumFractionDigits: 2})}
+                        </span>`
+                    );
+                }
+            });
+
+            $.ajax({
+                url : baseUrl(`core/profile/get_employee_loan_remarks/${id}`),
+                type: "GET",
+                dataType: "JSON",
+                success: function(response){
+                    $("#_for_remarks").text(response.remarks);
+                }
+            });
+        });
+
     </script>
 <?php endif; ?>

@@ -20,7 +20,7 @@ class Profile extends MY_Controller {
 		$session = $this->session->userdata();
 		$employee_id = $session["logged_in"]["emp_id"];
 		
-	   	if (empty($employee_id)) { redirect(base_url(), "refresh"); die(); }
+	  if (empty($employee_id)) { redirect(base_url(), "refresh"); die(); }
 		$this->core_layout->setPageTitle("Profile - Employee Data");
 		$this->core_layout->setBodyClass("profile view-employee_data");
 		$this->core_layout->setPrivilegeName("core_profile_employee_data");
@@ -164,6 +164,23 @@ class Profile extends MY_Controller {
 
 	public function allow_sms($id) {
 		$data = $this->profile->allow_sms($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	function get_employee_loan_payment_history($id) {
+		$this->load->model("payroll/employee_m");
+		echo json_encode($this->employee_m->getEmployeeLoanPaymentHistory($id)); 
+	}
+
+	public function get_employee_loan_iterest_charge_history($id){
+		$this->load->model("payroll/employee_m", "payroll_employee");
+		$data = $this->payroll_employee->getEmployeeLoanInterestChargeHistory($id);
+		$this->output->set_content_type('json')->set_output(json_encode($data));
+	}
+
+	public function get_employee_loan_remarks($id){
+		$this->load->model("payroll/employee_m", "payroll_employee");
+		$data = $this->payroll_employee->getLoanRemark($id);
 		$this->output->set_content_type('json')->set_output(json_encode($data));
 	}
 }

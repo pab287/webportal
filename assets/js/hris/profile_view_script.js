@@ -334,10 +334,12 @@ let employeeDataSheet = new Vue({
         },
         formatAmount(amount) {
             return new Intl.NumberFormat('en-PH', {
+              style: 'currency',
+              currency: 'PHP',
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             }).format(amount);
-        },
+          },
         isReturned(acct) {
             return parseInt(acct.is_returned) == 1;
         },
@@ -822,7 +824,6 @@ function getAccountability(){
                         { data: 'status' },
                         { data: null, 
                             render: function(data, type, row) {
-
                                 const formattedAmount = parseFloat(row.amount).toLocaleString('en-US', {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2
@@ -847,7 +848,7 @@ function getAccountability(){
                                         <p style="margin-bottom: 0.3rem"><b>Ref. No:</b> <span>${row.reference_no}</span></p>
                                         <p style="margin-bottom: 0.3rem"><b>Asset Code:</b> <span>${row.asset_code}</span></p>
                                         ${row.status.toLowerCase() == 'released' ? `
-                                            <p style="margin-bottom: 0.3rem"><b>Date Released:</b> <span>${new Date(row.date_returned).toLocaleDateString('en-US', {
+                                            <p style="margin-bottom: 0.3rem"><b>Date Released:</b> <span>${new Date(row.released_dt).toLocaleDateString('en-US', {
                                                 month: 'short',
                                                 day: 'numeric',
                                                 year: 'numeric'
@@ -1167,4 +1168,4 @@ $('#offense-tabs .nav-link').on('click', function(e) {
     $(this).addClass('active');
     var targetId = $(this).attr('href');
     $(targetId).addClass('active show');
- });
+});

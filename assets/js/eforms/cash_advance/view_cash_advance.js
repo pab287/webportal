@@ -377,10 +377,10 @@ $.ajax({
                     $("#buttons").append("<button type='button' data-toggle='modal' data-target='#released' class='btn btn-success btnUndo_approval m-btn m-btn--custom m-btn--air m-btn--box'>Released</buttons>");
                 }
 
-                if (jQuery.inArray("undo_approval", _currentActions) !== -1) {
+                if (jQuery.inArray("undo_approval", _currentActions) !== -1 && !data.has_payment) {
                     $("#buttons").append("<button type='button' data-toggle='modal' data-target='#undo_approval_modal' class='btn btn-danger btnUndo_approval m-btn m-btn--custom m-btn--air m-btn--box'>Undo Approval</button>");
                 }
-                if (jQuery.inArray("cancel", _currentActions) !== -1) {
+                if (jQuery.inArray("cancel", _currentActions) !== -1 && !data.has_payment) {
                     // $("#buttons").append("<a><button type='button' id='cancel' class='btn btn-danger btnCancel m-btn m-btn--custom m-btn--air m-btn--box' data-toggle='modal' data-target='#cancel_modal'><span><span>Cancel</span></span></button></a>");
                     $("#buttons").append("<a class='btn btn-danger btnCancel m-btn m-btn--custom m-btn--air m-btn--box text-white' data-toggle='modal' data-target='#cancel_modal'><span><span>CANCEL</span></span></a>");
                 }

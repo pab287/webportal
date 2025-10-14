@@ -155,6 +155,10 @@ class Billing extends MY_Controller {
     function payment_collection(){
       $this->core_layout->setPageTitle("Hydra - Payment Collection");
         $this->core_layout->setPrivilegeName("payment_collection");
+        
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
+
         $this->core_layout->addJs("js/eforms/billing/reports_soa/payment_collection.js", true);
         $this->load->view('core/templates/header');
         $this->load->view('eforms/billing/reports_soa/payment_collection');

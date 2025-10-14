@@ -131,14 +131,15 @@
 									<th class="toggle-all notExport">
 										<input type="checkbox" id="select_all_bills"> <span></span>
 									</th>
-									<th>Reference No.</th>
-									<th class="notExport">Reading Ref No.</th>
-									<th class="notExport">Account No.</th>
-									<th>Account Name</th>
+									<th title="Reference No.">Ref No.</th>
+									<th class="notExport" title="Reading Reference No.">Read No.</th>
+									<th class="notExport" title="Account No.">Acc No.</th>
+									<th>Name</th>
 									<th>Meter No.</th>
 									<th>Billing Date</th>
 									<th>Due Date</th>
-									<th>Total Charges</th>
+									<th title="Billing Amount">Amt.</th>
+									<th title="Total Pending Amount">Pen. Amt.</th>
 									<th>Status</th>
 									<th class="notExport">Print</th>
 									<th class="notExport">Action</th>
@@ -317,6 +318,14 @@
 							<hr>
 						</div>
 
+						<div class="reconnection-sec">
+							<div class="info-group row m-0 justify-content-between w-100">
+								<p class="info-label m-0">Reconnection Fee</p>
+								<p class="info-label m-0 f-600 reconnection_fee"></p>
+							</div>
+							<hr>
+						</div>
+
 						<div class="payment-section" style="display: none;">
 							<div class="info-group row m-0 justify-content-between w-100">
 								<p class="info-label m-0">Balance Cover</p>
@@ -347,173 +356,6 @@
 		</div>
 	</div>
 </div>
-
-<!-- <div class="modal fade" id="m_viewBill" tabindex="-1" role="dialog">
-	<div class="modal-dialog modal-dialog-centered" role="document" style="min-width: 80%">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title" id="exampleModalLabel">View Bill</h5>
-				<button type="button" class="close" data-dismiss="modal">
-					<span aria-hidden="true">×</span>
-				</button>
-			</div>
-
-			<form action="<?php echo site_url("eforms/billing/updatebill")?>" method="POST" id="frmUpdateBill">
-				<input type="hidden" name="id" id="bill_id">
-				<input type="hidden" name="ref_no" id="ref_no">
-				<input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-				<div class="modal-body">
-					<div class="m-form m-form--label-align-right m--margin-top-10 m--margin-bottom-10">
-						<div class="m-form__heading">
-							<h3 class="m-form__heading-title">
-								Account Information
-							</h3>
-						</div>
-
-						<div class="row m--margin-bottom-20">
-							<div class="col-md-4">
-								<div class="form-group m-form__group">
-									<label for="accound_id">Account</label>
-									<input class="form-control m-input account_id" readonly type="text" style="pointer-events: none;">
-								</div>
-							</div>
-
-							<div class="col-md-4">
-								<div class="form-group m-form__group">
-									<label for="reading_id">Reading</label>
-									<input class="form-control m-input reading_id" readonly type="text" style="pointer-events: none;">
-								</div>
-							</div>
-
-							<div class="col-md-4">
-								<div class="form-group m-form__group">
-									<label for="due_date">Due Date</label>
-									<input class="form-control m-input due_date" readonly type="text" name="due_date" data-validation="required">
-								</div>
-							</div>
-						</div>
-
-						<div class="row m--margin-bottom-20">
-							<div class="col-md-4">
-								<div class="form-group m-form__group">
-									<label for="customer_name">Customer name :</label>
-									<input class="form-control m-input customer_name" type="text" readonly style="pointer-events: none;">
-								</div>
-							</div>
-
-							<div class="col-md-4">
-								<div class="form-group m-form__group">
-									<label for="meter_no">Meter No :</label>
-									<input class="form-control m-input meter_no" type="text" readonly style="pointer-events: none;">
-								</div>
-							</div>
-
-							<div class="col-md-2">
-								<div class="form-group m-form__group">
-									<label for="block_no">Block No. :</label>
-									<input class="form-control m-input block_no" type="text" readonly style="pointer-events: none;">
-								</div>
-							</div>
-
-							<div class="col-md-2">
-								<div class="form-group m-form__group">
-									<label for="lot_no">Lot No. :</label>
-									<input class="form-control m-input lot_no" type="text" readonly style="pointer-events: none;">
-								</div>
-							</div>
-						</div>
-
-						<hr>
-
-						<div class="m-form__heading">
-							<h3 class="m-form__heading-title">Billing Information</h3>
-						</div>
-
-						<div class="row m--margin-bottom-20">
-							<div class="col-md-6">
-								<div class="form-group m-form__group">
-									<label for="billing_address">Billing Address :</label>
-									<input class="form-control m-input billing_address" type="text" readonly style="pointer-events: none;">
-								</div>
-							</div>
-
-							<div class="col-md-3">
-								<div class="form-group m-form__group">
-									<label for="billing_from">Billing From :</label>
-									<input class="form-control m-input billing_from" name="billing_from" type="text" readonly data-validation="required">
-								</div>
-							</div>
-
-							<div class="col-md-3">
-								<div class="form-group m-form__group">
-									<label for="billing_to">Billing To :</label>
-									<input class="form-control m-input billing_to" name="billing_to" type="text" readonly data-validation="required">
-								</div>
-							</div>
-						</div>
-
-						<div class="m-form__heading">
-							<h3 class="m-form__heading-title">Readings</h3>
-						</div>
-
-						<div class="row m--margin-bottom-20">
-							<div class="col-md-2">
-								<div class="form-group m-form__group">
-									<label for="previous">Previous :</label>
-									<input class="form-control m-input previous" readonly name="previous"  type="text" style="pointer-events: none;">
-								</div>
-							</div>
-
-							<div class="col-md-2">
-								<div class="form-group m-form__group">
-									<label for="current">Current :</label>
-									<input class="form-control m-input current" readonly name="current" type="text" style="pointer-events: none;">
-								</div>
-							</div>
-
-							<div class="col-md-2">
-								<div class="form-group m-form__group">
-									<label for="usage">Usage :</label>
-									<input class="form-control m-input usage" name="usage" readonly type="text" style="pointer-events: none;">
-								</div>
-							</div>
-
-							<div class="col-md-2">
-								<div class="form-group m-form__group">
-									<label for="rate">Rate :</label>
-									<input class="form-control m-input rate" readonly type="text" style="pointer-events: none;">
-								</div>
-							</div>
-						</div>
-
-						<hr>
-
-						<div class="row m--margin-bottom">
-							<div class="col-md-4" style="pointer-events: none;">
-								<div class="form-group form__group">
-									<h5 class="m-form__heading-title">
-										Total Charges
-									</h5>
-									<input class="form-control-lg m-input total_charges text-right" name="total_charges" readonly type="text" style="font-weight: bold;">
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div class="modal-footer">
-					<button type="button" class="btn btn-success btnPrint" id="singlePrint" data-id="">
-						<span class="la la-print"></span> Print
-					</button>
-
-					<button type="button" class="btn btn-danger" data-dismiss="modal">
-						<span class="la la-times"></span> Close
-					</button>
-				</div>
-			</form>
-		</div>
-	</div>
-</div> -->
 
 <div class="modal fade" id="m_archived" tabindex="-1">
 	<div class="modal-dialog modal-dialog-centered">
@@ -588,6 +430,10 @@
 
 	#table-billing tbody tr.selected td.select-checkbox:before {
 		border: 1px solid #ffffff !important;
+	}
+
+	#table-billing tbody > * {
+		font-size: 12px;
 	}
 
 	#m_viewBill label {

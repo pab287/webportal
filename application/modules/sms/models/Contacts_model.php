@@ -469,7 +469,7 @@
           return($response);
       }
 
-      function sendSMS($phone, $msg, $debug=false){
+      public function sendSMS($phone, $msg, $debug=false){
         $sms = $this->sms_settings();
         $response[] = array();
         if($sms && $phone){
@@ -510,35 +510,26 @@
         return($response);
     }
 
-        function sms_settings(){
-            $this->db->select("modem,sms_ip, sms_port, sms_user, sms_pass, department_id, exclude");
+        private function sms_settings(){
+            $this->db->select("modem, sms_ip, sms_port, sms_user, sms_pass, department_id, exclude");
             $this->db->from("gccsms.tblsms");
             $this->db->where("is_connected",'1');
-            $this->db->where("sms_user",'VOP');
             $query = $this->db->get();
-
             if($query->num_rows() > 0){
                 foreach($query->result_array() as $_query){
-                    if($this->is_serial($_query['department_id'])){
+                    if($_query['sms_user'] == 'VoP' && !isset($this->user_data) || $this->authenticate->getRoleId() == "1"){
+                        return $_query; // for cron job VOP
+                    }
+                    if($this->is_serial($_query['department_id']) && $_query['exclude'] == 0){
                         foreach(unserialize($_query['department_id']) as $id){
-                            if($this->authenticate->getRoleId() == "1" && $_query['exclude'] == "0"){ // Admin
+                            if($this->user_data['department'] == $id){
                                 return $_query;
-                            } else { 
-                                if(isset($this->user_data)){ // User
-                                    if($this->user_data['department'] == $id){
-                                        return $_query;
-                                    }
-                                } else { // Cron job
-                                    if($_query['exclude'] == "0"){
-                                        return $_query;
-                                    }
-                                }
                             }
                         }
                     }
                 }
             }
-            return array();
+            return  array();
         }
         
         public static function is_serial($string) {
