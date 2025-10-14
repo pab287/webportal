@@ -3455,21 +3455,22 @@ class Cash_advance_m extends CI_Model {
         $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
         $dateRange = (isset($post["dateRange"]) && $post["dateRange"]) ? $post["dateRange"] : null;
+        $filter = (isset($post['_filter']) && $post['_filter']) ? $post['_filter'] : 0;
         if($dateRange == null){
             $resultset["recordsTotal"] = 0;
             $resultset["recordsFiltered"] =  0;
             $resultset["data"] = [];
             return $resultset;
         }
-        $rowData = $this->getCashAdvanceReportData($search, $limit, $offset, $sortBy, $sortOrder,$dateRange);
-        $total = $this->getCashAdvanceReportDataCount($search,$dateRange);
+        $rowData = $this->getCashAdvanceReportData($search, $limit, $offset, $sortBy, $sortOrder,$dateRange, $filter);
+        $total = $this->getCashAdvanceReportDataCount($search,$dateRange, $filter);
         $resultset["recordsTotal"] = $total;
         $resultset["recordsFiltered"] =  $total;
         $resultset["data"] = isset($rowData) && $rowData ? $rowData: array();
         return $resultset;
     }
 
-    private function getCashAdvanceReportData($search, $limit, $offset, $sortBy, $sortOrder,$dateRange){
+    private function getCashAdvanceReportData($search, $limit, $offset, $sortBy, $sortOrder,$dateRange, $filter = 0){
         $filterFields = array("ca.id");
         $this->db->select("ca.id,ca.company, ca.purpose, ca.department, ca.position, ca.approved_by, ca.approved_dt, ca.acctg_sss_loan as sss_loan, ca.acctg_hdmf_loan as hdmf_loan, created_dt as date_created, ca.amt_approved, ca.acctg_outside_loan as med_loan,
             CASE 
@@ -3489,6 +3490,10 @@ class Cash_advance_m extends CI_Model {
             list($startDate, $endDate) = explode('|', $dateRange);
             $this->db->where("DATE(ca.approved_dt) BETWEEN '$startDate' AND '$endDate'");
         }
+
+        if ($filter == 1) { $this->db->where('e.employee_status', 'Active'); }
+        if ($filter == 2) { $this->db->where('e.employee_status', 'Inactive'); }
+
         $this->db->group_by('ca.id');
         if(isset($search)){
             $this->db->group_start();
@@ -3510,7 +3515,7 @@ class Cash_advance_m extends CI_Model {
         return $query->result_array();
     }
 
-    private function getCashAdvanceReportDataCount($search,$dateRange){
+    private function getCashAdvanceReportDataCount($search,$dateRange, $filter = 0){
         $filterFields = array("ca.id");
         $this->db->where('status', 'Approved');
         $this->db->from($this->cashAdvanceTable. ' as ca');
@@ -3519,6 +3524,10 @@ class Cash_advance_m extends CI_Model {
             list($startDate, $endDate) = explode('|', $dateRange);
             $this->db->where("DATE(ca.approved_dt) BETWEEN '$startDate' AND '$endDate'");
         }
+
+        if ($filter == 1) { $this->db->where('e.employee_status', 'Active'); }
+        if ($filter == 2) { $this->db->where('e.employee_status', 'Inactive'); }
+
         if(isset($search)){
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
