@@ -841,7 +841,7 @@ class Events_model extends MX_Controller {
     }
 
     public function getEventSchedule($id){
-        $this->db->select('id,start,end,title,description,event_date');
+        $this->db->select('id,start,end,title,description,event_date,location');
         $this->db->where('event_id', $id);
         $schedule = $this->db->get($this->evetsSched)->result_array();
         return $schedule;
@@ -867,14 +867,55 @@ class Events_model extends MX_Controller {
         $post = $this->input->post();
         $events_id = $post['events_id'];
         $id = $post['events_participants_id'];
-        $this->db->select("a.*,b.*,IFNULL(c.id, 0) AS is_assigned");
-        $this->db->where('a.event_id', $events_id);
-        $this->db->where('b.id', $id);
+        
+        $this->db->select("a.description, a.start, a.end, a.title, a.event_date, a.event_id, a.location, a.id as schedule_id, b.id as participant_id, IF(c.id IS NULL, 0, 1) AS is_assigned,  c.id as attendance_id");
         $this->db->from($this->evetsSched . ' a');
         $this->db->join($this->eventsParticipantsTable . ' b', 'a.event_id = b.event_id', 'left');
-        $this->db->join($this->events_attendance . ' c', 'b.id = c.events_participants_id', 'left');
+        $this->db->join($this->events_attendance . ' c', 'a.id = c.schedule_id AND b.id = c.participant_id', 'left');
+        $this->db->where('a.event_id', $events_id);
+        $this->db->where('b.id', $id);
+        
         $result = $this->db->get()->result_array();
         return $result;
+    }
+
+    public function assignParticipant(){
+        $post = $this->input->post();
+        $data = array(
+            'participant_id' => $post['participant_id'],
+            'schedule_id' => $post['schedule_id'],
+            'created_by' => $this->user_data['emp_id'],
+        );
+        $insert = $this->db->insert($this->events_attendance, $data);
+        if($insert){
+            $resultset["success"] = true;
+            $resultset["toastr_msg"] = "Participant has been assigned to schedule.";
+            $this->core_layout->setEventLog("Participant has been assigned to schedule","insert", "success", "gcchris", "user");
+        }
+        else{
+            $resultset["success"] = false;
+            $resultset["toastr_msg"] = "Failed to assign participant to schedule.";
+            $this->core_layout->setEventLog("Failed to assign participant to schedule","insert", "error", "gcchris", "system");
+        }
+        return $resultset;
+    }
+
+    public function unassignParticipant(){
+        $post = $this->input->post();
+        $this->db->where('schedule_id', $post['schedule_id']);
+        $this->db->where('participant_id', $post['participant_id']);
+        $delete = $this->db->delete($this->events_attendance);
+        if($delete){
+            $resultset["success"] = true;
+            $resultset["toastr_msg"] = "Participant has been unassigned from schedule.";
+            $this->core_layout->setEventLog("Participant has been unassigned from schedule","insert", "success", "gcchris", "user");
+        }
+        else{
+            $resultset["success"] = false;
+            $resultset["toastr_msg"] = "Failed to unassign participant from schedule.";
+            $this->core_layout->setEventLog("Failed to unassign participant from schedule","insert", "error", "gcchris", "system");
+        }
+        return $resultset;
     }
     
 

@@ -163,4 +163,14 @@ class Events extends MX_Controller {
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
+    public function assign_participant(){
+        $data = $this->em->assignParticipant();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function unassign_participant(){
+        $data = $this->em->unassignParticipant();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }

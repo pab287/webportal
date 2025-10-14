@@ -262,6 +262,12 @@
                                                                     <textarea type="text" id="description" name="description" class="form-control m-input" placeholder="Description" data-validation="required" ></textarea>
                                                                 </div>
                                                             </div>
+                                                            <div class="col-12">
+                                                                <div class="form-group m-form__group">
+                                                                    <label class="form-control-label required" for="description">LOCATION</label>
+                                                                    <textarea type="text" id="location" name="location" class="form-control m-input" placeholder="Location" data-validation="required" ></textarea>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                         <div class="row">
                                                             <div class="col-4">
@@ -320,7 +326,9 @@
                                                         <div class="row">
                                                             <div class="col-12 mb-3">
                                                                 <span class="col-12 badge badge-primary" v-text="formatTime(item.start,item.end)" style="font-size: 12px;"></span>
+                                                                <span class="text-muted text-uppercase mt-2" v-text="item.location"></span>
                                                             </div>
+                                                            
                                                         </div>
                                                         <div class="row mb-3">
                                                             <div class="col-12">
@@ -594,7 +602,7 @@
     </div>
 
     <div class="modal fade show" id="attendanceSheet" tabindex="-1">
-        <div class="modal-dialog modal-md">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Assign Schedule</h5>
@@ -604,17 +612,77 @@
                 </div>
                 <div class="modal-body">
                     <div class="row">
-                        <template v-for="(item, index) in schedule"></template>
-                        <!-- <div class="col-12">
-                            <div class="table-responsive">
-                                <table class="table display table-bordered table-striped dataTable no-footer" id="attendanceSheetTable">
-                                    <thead>
-                                    </thead>
-                                    <tbody>
-                                    </tbody>
-                                </table>
+                        <template v-for="(item, index) in participantSched">
+                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                <div class="card bg-light rounded p-3">
+                                    <div class="card-body pb-0">
+                                        <div class="row mb-3">
+                                            <div class="col-6">
+                                                <h4 class="m--font-transform-u font-weight-bold"  v-text="item.title">
+                                                </h4>
+                                            </div>
+                                            <div v-if="item.is_assigned == 1"  class="col-6 text-right">
+                                                <span class="badge badge-success d-inline-flex align-items-center py-2">
+                                                    Assigned
+                                                </span>
+                                            </div>
+                                            <div v-else class="col-6 text-right">
+                                                <span  class="badge badge-warning d-inline-flex align-items-center py-2">
+                                                    Unassigned
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12 mb-3">
+                                                <span class="col-12 badge badge-primary" v-text="formatTime(item.start,item.end)" style="font-size: 12px;"></span>
+                                                <span class="text-muted text-uppercase mt-2" v-text="item.location"></span>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <div class="row">
+                                                    <span class="col-12 m--font-transform-u font-weight-bold">description: </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <div class="row">
+                                                    <textarea class="form-control m-input col-12 text-uppercase" v-text="item.description" rows="3" style="resize: none; overflow-y: auto;" readonly></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="row">
+                                            <div v-if="item.is_assigned == 0" class="col-12">
+                                                <div class="row text-center">
+                                                    <span class="col-12 text-right p-1">
+                                                        <button @click="assignParticipant(item.schedule_id, item.participant_id)" class="btn btn-success m-btn text-white w-100" :disabled="loadingAssign[item.schedule_id]">
+                                                            <span v-if="loadingAssign[item.schedule_id]">ASSIGN</span>
+                                                            <span v-else>
+                                                                <i class="fa fa-spinner fa-spin"></i>
+                                                            </span>
+                                                        </button>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div v-else class="col-12">
+                                                <div class="row text-center">
+                                                    <span class="col-12 text-right p-1">
+                                                        <button @click="unassignParticipant(item.schedule_id, item.participant_id)" class="btn btn-danger m-btn text-white w-100" :disabled="loadingUnassign[item.schedule_id]">
+                                                            <span v-if="loadingUnassign[item.schedule_id]" class="text-center">UNASSIGN</span>
+                                                            <span v-else>
+                                                                <i class="fa fa-spinner fa-spin"></i>
+                                                            </span>
+                                                        </button>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div> -->
+                        </template>
                     </div>
                 </div>
             </div>

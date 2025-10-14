@@ -50,15 +50,14 @@ if (_tempContentData !== undefined && _tempContentData !== null && _tempContentD
     attachments = _tempContentData.attachments;
     schedule = _tempContentData.schedule;
     console.log(schedule);
+    console.log(eventsDetails);
 }
 
 
 let eventVue = new Vue({
     el: "#events-content",
     data: {
-        eventsData:{
-
-        },
+        eventsData:{},
         participants:participants,
         participantData:{
             company: '',
@@ -75,6 +74,9 @@ let eventVue = new Vue({
         attachments:attachments,
         schedule:schedule,
         selectedSched:[],
+        participantSched:[],
+        loadingAssign: {},
+        loadingUnassign: {},
     },
     mounted: function () {
         this.eventsData = JSON.parse(JSON.stringify(eventsDetails));
@@ -287,6 +289,88 @@ let eventVue = new Vue({
         removeSched(id){
             console.log(id);
         },
+        assignParticipant(schedule_id, participant_id) {
+            Swal.fire({
+                title: "Assign this participant?",
+                text: "This will assign the participant to the schedule.",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Yes, assign",
+                cancelButtonText: "Cancel"
+            }).then(result => {
+                if (result.isConfirmed) {
+                    this.$set(this.loadingAssign, schedule_id, true);
+                    $.ajax({
+                        url: baseUrl("events/assign_participant"),
+                        type: "POST",
+                        global: false,
+                        data: {
+                            csrf_token: _csrf_hash,
+                            schedule_id: schedule_id,
+                            participant_id: participant_id,
+                            event_id: eventsDetails.id
+                        },
+                        dataType: "JSON",
+                        success: function(res) {
+                            if (res.success) {
+                                const sched = self.participantSched.find(s => s.schedule_id == schedule_id);
+                                if (sched) sched.is_assigned = 1;
+                                toastr.success(res.toastr_msg, "Success", 5000);
+                            } else {
+                                toastr.error(res.toastr_msg, "Error", 5000);
+                            }
+                        },
+                        error: function() {
+                            toastr.error("Request failed. Please try again.", "Error", 5000);
+                        },
+                        complete: function() {
+                            eventVue.$set(eventVue.loadingAssign, schedule_id, false);
+                        }
+                    });
+                }
+            });
+        },
+        unassignParticipant(schedule_id, participant_id) {
+            Swal.fire({
+                title: "Unassign this participant?",
+                text: "This will remove the participant from the schedule.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, unassign",
+                cancelButtonText: "Cancel"
+            }).then(result => {
+                if (result.isConfirmed) {
+                    this.$set(this.loadingUnassign, schedule_id, true);
+                    $.ajax({
+                        url: baseUrl("events/unassign_participant"),
+                        type: "POST",
+                        global: false,
+                        data: {
+                            csrf_token: _csrf_hash,
+                            schedule_id: schedule_id,
+                            participant_id: participant_id,
+                            event_id: eventsDetails.id
+                        },
+                        dataType: "JSON",
+                        success: function(res) {
+                            if (res.success) {
+                                const sched = self.participantSched.find(s => s.schedule_id == schedule_id);
+                                if (sched) sched.is_assigned = 0;
+                                toastr.success(res.toastr_msg, "Success", 5000);
+                            } else {
+                                toastr.error(res.toastr_msg, "Error", 5000);
+                            }
+                        },
+                        error: function() {
+                            toastr.error("Request failed. Please try again.", "Error", 5000);
+                        },
+                        complete: function() {
+                            eventVue.$set(eventVue.loadingUnassign, schedule_id, false);
+                        }
+                    });
+                }
+            });
+        },
     },
 });
 
@@ -461,7 +545,6 @@ function itemDatatableActions(id, status, emp_id = null, awarded) {
 
 
 function awardCertificate(id,rowId) {
-        console.log(eventsDetails);
     $.ajax({
         url: baseUrl("events/get_modal_training/" + id),
         type: "post",
@@ -469,7 +552,6 @@ function awardCertificate(id,rowId) {
             csrf_token : _csrf_hash
         },
         dataType: "json",
-        
         cache: false,
         success: function (json) {
             console.log(json);
@@ -1002,6 +1084,8 @@ $('#schedule_date').datepicker({
     pickerPosition: 'bottom left',
     todayBtn: true,
     format: 'yyyy-mm-dd',
+    startDate: eventsDetails.event_from,
+    endDate: eventsDetails.event_to,
 });
 
 $('#schedule_start').timepicker({
@@ -1055,7 +1139,6 @@ $.validate({
 });
 
 function assignSchedule(participant){
-    $('#attendanceSheet').modal('show');
     $.ajax({
         url: baseUrl("events/assign_schedule"),
         type: "POST",
@@ -1066,7 +1149,8 @@ function assignSchedule(participant){
         },
         dataType: "JSON",
         success: function(res) {
-
+            eventVue.participantSched = res;
+            $('#attendanceSheet').modal('show');
         }    
     });
 }
