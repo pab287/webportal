@@ -77,6 +77,15 @@ let eventVue = new Vue({
         participantSched:[],
         loadingAssign: {},
         loadingUnassign: {},
+        editSched:{
+            id:'',
+            title: '',
+            location: '',
+            description: '',
+            day: '',
+            start: '',
+            end: '',
+        },
     },
     mounted: function () {
         this.eventsData = JSON.parse(JSON.stringify(eventsDetails));

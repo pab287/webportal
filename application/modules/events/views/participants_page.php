@@ -243,7 +243,12 @@
                                                     <form  id="new_event_sched" onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
                                                         <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                                                         <div class="row">
-                                                            <div class="col-4 align-self-end">
+                                                            <div class="col-2">
+                                                                <button type="submit" class="btn m-btn m-btn--sm btn-success mb-2 btnNew">
+                                                                    ADD SCHEDULE
+                                                                </button>
+                                                            </div>
+                                                            <div class="col-2">
                                                                 <button type="submit" class="btn m-btn m-btn--sm btn-success mb-2 btnNew">
                                                                     ADD SCHEDULE
                                                                 </button>
@@ -761,6 +766,83 @@
                 </div>
             </div>
         </form>
+    </div>
+
+    <div class="modal fade">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Schedule</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>                    
+                <form  id="edit_event_sched" onsubmit="return false;" onkeydown="return event.key !== 'Enter';"></form>
+                    <div class="modal-body">
+                        <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group m-form__group">
+                                    <label class="form-control-label required" for="title">TITLE</label>
+                                    <input type="text" id="title" name="title" class="form-control m-input" placeholder="Title" data-validation="required">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group m-form__group">
+                                    <label class="form-control-label required" for="description">DESCRIPTION</label>
+                                    <textarea type="text" id="description" name="description" class="form-control m-input" placeholder="Description" data-validation="required" ></textarea>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group m-form__group">
+                                    <label class="form-control-label required" for="description">LOCATION</label>
+                                    <textarea type="text" id="location" name="location" class="form-control m-input" placeholder="Location" data-validation="required" ></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="form-group m-form__group">
+                                <label for="schedule_start">Inclusive Date</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="la la-clock-o"></i></span>
+                                        </div>
+                                        <input id="schedule_date" name="start" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-group m-form__group">
+                                <label for="schedule_start">Start Time</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="la la-clock-o"></i></span>
+                                        </div>
+                                        <input id="schedule_start" name="start" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-group m-form__group">
+                                    <label for="schedule_end">End Time</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="la la-clock-o"></i></span>
+                                        </div>
+                                        <input id="schedule_end" name="end" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success btnSave"></i>UPDATE</button>
+                        <button type="button" class="btn btn-warning" data-dismiss="modal">CLOSE</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <div class="modal fade" id="pdfViewerModal" tabindex="-1" role="dialog" aria-hidden="true">
