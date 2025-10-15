@@ -12,7 +12,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                     extend: 'excelHtml5',
                     title: 'CASH ADVANCE REPORTS',
                     exportOptions: {
-                        columns: [2, 4, 5, 6, 7, 8,9,10,11,12,13,14,15],
+                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
@@ -31,7 +31,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                     extend: 'pdfHtml5',
                     title: 'CASH ADVANCE REPORTS',
                     exportOptions: {
-                        columns: [2, 4, 5, 6, 7, 8,9,10,11,12,13,14,15],
+                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
@@ -87,7 +87,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                     extend: 'print',
                     title: 'CASH ADVANCE REPORTS',
                     exportOptions: {
-                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
@@ -142,7 +142,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
         columns: [
             { data: 'id', visible: false },
             {
-                data: 'name', title: 'employee',
+                data: 'name', title: 'employee', width: '15%',
                 orderable: false,
                 render: function (data, type, row) {
                     let tempHtml = `<p class='mb-0 m--font-bolder'>${data}</p>`;
@@ -162,35 +162,64 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                     return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
                 }
             },
+            // {
+            //     data: 'total_charges', title: 'COMPANY LOAN',
+            //     orderable: false,
+            //     render: function(data) {
+            //         return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+            //     }
+            // },
+            { data: 'amt_to_b_deducted', title: 'DEDUCTION TYPE', 
+                render: function(data, type, row, meta) {
+                    return row.deduct_type == 'percentage' ? `${data}%` : Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+                }
+            },
             {
-                data: 'total_charges', title: 'COMPANY LOAN',
+                data: 'total_deduction', title: 'TOTAL DEDUCTION',
                 orderable: false,
-                render: function(data) {
+                render: function (data) {
                     return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
                 }
             },
-            { data: "med_loan", orderable: false,  title: 'MEDICAL LOAN',
-                render: function(data) {
+            {
+                data: 'rembalance', title: 'REMAINING BAL',
+                orderable: false,
+                render: function (data) {
                     return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
                 }
-             },
-            { data: 'sss_loan', orderable: false, title: 'SSS',
-                render: function(data) {
-                    return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+            },
+            // { data: "med_loan", orderable: false,  title: 'MEDICAL LOAN',
+            //     render: function(data) {
+            //         return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+            //     }
+            // },
+            // { data: 'sss_loan', orderable: false, title: 'SSS',
+            //     render: function(data) {
+            //         return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+            //     }
+            // },
+            // { data: 'hdmf_loan', orderable: false, title: 'HDMF LOAN',
+            //     render: function(data) {
+            //         return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+            //     }
+            // },
+            { data: 'purpose', orderable: false, title: 'PURPOSE', width: '15%' },
+            { data: 'approved_by', orderable: false, width: '15%', class:"text-left", title: 'APPROVED BY',
+                render: function (data, type, row, meta) {
+                    let html = ``;
+
+                    html += `<h6>${data}</h6>`;
+                    html += `<p class="m--font_bolder">${moment(row.approved_dt).format('MMM DD, YYYY')}</p>`;
+
+                    return html ;
                 }
-             },
-            { data: 'hdmf_loan', orderable: false, title: 'HDMF LOAN',
-                render: function(data) {
-                    return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
-                }
-             },
-            { data: 'purpose', orderable: false, title: 'PURPOSE', },
-            { data: 'approved_by', orderable: false, width: '*', class:"text-left", title: 'APPROVED BY', },
-            { data: 'approved_dt', orderable: false, width: '*', title: 'APPROVED DATE',
+            },
+            { data: 'approved_by', orderable: false, visible: false, width: '15%', class:"text-left", title: 'APPROVED BY' },
+            { data: 'approved_dt', visible: false, orderable: false, width: '*', title: 'APPROVED DATE',
                 render: function (data, type, row) {
                     return moment(data).format('MMM DD, YYYY')
                 }
-             },
+            },
             { data: 'date_created', orderable: false, width: '*', title: 'DATE CREATED',
                 render: function (data, type, row) {
                     return moment(data).format('MMM DD, YYYY')
