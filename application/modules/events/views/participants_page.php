@@ -248,11 +248,6 @@
                                                                     ADD SCHEDULE
                                                                 </button>
                                                             </div>
-                                                            <div class="col-2">
-                                                                <button type="submit" class="btn m-btn m-btn--sm btn-success mb-2 btnNew">
-                                                                    ADD SCHEDULE
-                                                                </button>
-                                                            </div>
                                                         </div>
                                                         <div class="row">
                                                             <div class="col-12">
@@ -293,7 +288,7 @@
                                                                         <div class="input-group-prepend">
                                                                             <span class="input-group-text"><i class="la la-clock-o"></i></span>
                                                                         </div>
-                                                                        <input id="schedule_start" name="start" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
+                                                                        <input id="schedule_start" name="start" type="text" class="form-control m-input" data-validation="required" readonly>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -304,7 +299,7 @@
                                                                         <div class="input-group-prepend">
                                                                             <span class="input-group-text"><i class="la la-clock-o"></i></span>
                                                                         </div>
-                                                                        <input id="schedule_end" name="end" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
+                                                                        <input id="schedule_end" name="end" type="text" class="form-control m-input" data-validation="required" readonly>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -315,66 +310,65 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-12 mb-3">
-                                            <h5>EVENT TIMELINE</h5>
-                                        </div>
-                                        <template v-for="(item, index) in schedule">
-                                            <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
-                                                <div class="card bg-light rounded p-3">
-                                                    <div class="card-body pb-0">
-                                                        <div class="row mb-3">
-                                                            <div class="col-12">
-                                                            <h4 class="m--font-transform-u font-weight-bold"  v-text="item.title">
-                                                            </h4>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row">
-                                                            <div class="col-12 mb-3">
-                                                                <span class="badge badge-primary text-uppercase w-100" v-text="formatTime(item.start,item.end)" style="font-size: 12px;"></span>
-                                                            </div>
-                                                            <div class="col-12 mb-3">
-                                                                <span class="badge badge-info text-uppercase w-100" v-text="item.location"  style="font-size: 12px;"></span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row mb-3">
-                                                            <div class="col-12">
-                                                                <div class="row">
-                                                                    <span class="col-12 m--font-transform-u font-weight-bold">description: </span>
+                                        <template v-for="(items, date) in schedule" :key="date">
+                                            <template v-for="(item, index) in items" :key="item.id">
+                                                <div class="col-lg-4 col-md-4 col-sm-12 mb-3">
+                                                    <div class="card bg-light rounded p-3">
+                                                        <div class="card-body pb-0">
+                                                            <div class="row mb-3">
+                                                                <div class="col-12">
+                                                                    <h5 class="m--font-transform-u font-weight-bold text-center"  v-text="formatDateLocale(date)"></h4>
+                                                                    <h4 class="m--font-transform-u font-weight-bold"  v-text="item.title"></h4>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                        <div class="row mb-3">
-                                                            <div class="col-12">
-                                                                <div class="row">
-                                                                    <textarea class="form-control m-input col-12 text-uppercase" v-text="item.description" rows="3" style="resize: none; overflow-y: auto;" readonly></textarea>
+                                                            <div class="row">
+                                                                <div class="col-12 mb-3">
+                                                                    <span class="badge badge-primary text-uppercase w-100" v-text="formatTime(item.start,item.end)" style="font-size: 12px;"></span>
+                                                                </div>
+                                                                <div class="col-12 mb-3">
+                                                                    <span class="badge badge-info text-uppercase w-100" v-text="item.location"  style="font-size: 12px;"></span>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                        <hr>
-                                                        <div class="row">
-                                                            <div class="col-12">
-                                                                <div class="row text-center">
-                                                                <span class="col-4 p-1">
-                                                                    <button class="btn btn-info m-btn m-btn--icon m-btn--icon-only text-white w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Take Attendance">
-                                                                        <i class="la la-calendar"></i>
-                                                                    </button>
-                                                                </span>
-                                                                <span class="col-4 p-1">
-                                                                    <button class="btn btn-warning m-btn m-btn--icon m-btn--icon-only text-white w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Schedule">
-                                                                        <i class="la la-pencil"></i>
-                                                                    </button>
-                                                                </span>
-                                                                <span class="col-4 p-1">
-                                                                    <button class="btn btn-danger m-btn m-btn--icon m-btn--icon-only text-white w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Remove Schedule">
-                                                                        <i class="la la-trash"></i>
-                                                                    </button>
-                                                                </span>
+                                                            <div class="row mb-3">
+                                                                <div class="col-12">
+                                                                    <div class="row">
+                                                                        <span class="col-12 m--font-transform-u font-weight-bold">description: </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row mb-3">
+                                                                <div class="col-12">
+                                                                    <div class="row">
+                                                                        <textarea class="form-control m-input col-12 text-uppercase" v-text="item.description" rows="3" style="resize: none; overflow-y: auto;" readonly></textarea>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <hr>
+                                                            <div class="row">
+                                                                <div class="col-12">
+                                                                    <div class="row text-center">
+                                                                    <span class="col-4 p-1">
+                                                                        <button class="btn btn-info m-btn m-btn--icon m-btn--icon-only text-white w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Take Attendance">
+                                                                            <i class="la la-calendar"></i>
+                                                                        </button>
+                                                                    </span>
+                                                                    <span class="col-4 p-1">
+                                                                        <button class="btn btn-warning m-btn m-btn--icon m-btn--icon-only text-white w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Schedule" @click="editSchedule(item)">
+                                                                            <i class="la la-pencil"></i>
+                                                                        </button>
+                                                                    </span>
+                                                                    <span class="col-4 p-1">
+                                                                        <button class="btn btn-danger m-btn m-btn--icon m-btn--icon-only text-white w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Remove Schedule">
+                                                                            <i class="la la-trash"></i>
+                                                                        </button>
+                                                                    </span>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </template>
                                         </template>
                                     </div>
                                 </div>
@@ -768,7 +762,7 @@
         </form>
     </div>
 
-    <div class="modal fade">
+    <div class="modal fade" id="edit_schedule" tabindex="-1">
         <div class="modal-dialog modal-md">
             <div class="modal-content">
                 <div class="modal-header">
@@ -776,61 +770,70 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
-                </div>                    
-                <form  id="edit_event_sched" onsubmit="return false;" onkeydown="return event.key !== 'Enter';"></form>
+                </div>
+                <form  id="edit_event_sched" onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
                     <div class="modal-body">
                         <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                        <input type="hidden" id="id" name="id" v-model="editSched.id">
                         <div class="row">
                             <div class="col-12">
                                 <div class="form-group m-form__group">
                                     <label class="form-control-label required" for="title">TITLE</label>
-                                    <input type="text" id="title" name="title" class="form-control m-input" placeholder="Title" data-validation="required">
+                                    <input type="text" id="title" name="title" class="form-control m-input" placeholder="Title" data-validation="required" v-model="editSched.title">
                                 </div>
                             </div>
                             <div class="col-12">
                                 <div class="form-group m-form__group">
                                     <label class="form-control-label required" for="description">DESCRIPTION</label>
-                                    <textarea type="text" id="description" name="description" class="form-control m-input" placeholder="Description" data-validation="required" ></textarea>
+                                    <textarea type="text" id="description" name="description" class="form-control m-input" placeholder="Description" data-validation="required" v-model="editSched.description"></textarea>
                                 </div>
                             </div>
                             <div class="col-12">
                                 <div class="form-group m-form__group">
                                     <label class="form-control-label required" for="description">LOCATION</label>
-                                    <textarea type="text" id="location" name="location" class="form-control m-input" placeholder="Location" data-validation="required" ></textarea>
+                                    <textarea type="text" id="location" name="location" class="form-control m-input" placeholder="Location" data-validation="required" v-model="editSched.location"></textarea>
                                 </div>
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-4">
-                                <div class="form-group m-form__group">
-                                <label for="schedule_start">Inclusive Date</label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="la la-clock-o"></i></span>
+                            <div class="col-12">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-group m-form__group">
+                                        <label for="schedule_start">Inclusive Date</label>
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text"><i class="la la-clock-o"></i></span>
+                                                </div>
+                                                <input id="edit_schedule_date" name="start" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
+                                            </div>
                                         </div>
-                                        <input id="schedule_date" name="start" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="form-group m-form__group">
-                                <label for="schedule_start">Start Time</label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="la la-clock-o"></i></span>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-group m-form__group">
+                                        <label for="schedule_start">Start Time</label>
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text"><i class="la la-clock-o"></i></span>
+                                                </div>
+                                                <input id="edit_schedule_start" name="start" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required"  data-provide="timepicker" data-minuteStep="10" data-showMeridian="true" readonly>
+                                            </div>
                                         </div>
-                                        <input id="schedule_start" name="start" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="form-group m-form__group">
-                                    <label for="schedule_end">End Time</label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="la la-clock-o"></i></span>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-group m-form__group">
+                                            <label for="schedule_end">End Time</label>
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text"><i class="la la-clock-o"></i></span>
+                                                </div>
+                                                <input id="edit_schedule_end" name="end" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required"  data-provide="timepicker" data-minuteStep="10" data-showMeridian="true" readonly>
+                                            </div>
                                         </div>
-                                        <input id="schedule_end" name="end" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
                                     </div>
                                 </div>
                             </div>
@@ -838,7 +841,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-success btnSave"></i>UPDATE</button>
-                        <button type="button" class="btn btn-warning" data-dismiss="modal">CLOSE</button>
+                        <button type="button" class="btn btn-warning text-white" data-dismiss="modal">CLOSE</button>
                     </div>
                 </form>
             </div>

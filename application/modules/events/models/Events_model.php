@@ -841,10 +841,18 @@ class Events_model extends MX_Controller {
     }
 
     public function getEventSchedule($id){
-        $this->db->select('id,start,end,title,description,event_date,location');
+        $this->db->select('id, start, end, title, description, event_date, location');
         $this->db->where('event_id', $id);
-        $schedule = $this->db->get($this->evetsSched)->result_array();
-        return $schedule;
+        $this->db->order_by('event_date', 'ASC');
+        $result = $this->db->get($this->evetsSched)->result_array();
+
+        $grouped = [];
+        foreach ($result as $row) {
+            $formatted_date = date('F d, Y', strtotime($row['event_date']));
+            $grouped[$formatted_date][] = $row;
+        }
+
+        return $grouped;
     }
 
     public function newEventSched(){
@@ -861,6 +869,10 @@ class Events_model extends MX_Controller {
             $resultset["toastr_msg"] = "Failed to add event schedule.";
         }
         return $resultset;
+    }
+
+    public function updateSchedule(){
+        $post = $this->input->post();
     }
 
     public function assignEventSched() {

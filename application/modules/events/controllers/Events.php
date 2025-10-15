@@ -158,6 +158,11 @@ class Events extends MX_Controller {
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
+    public function update_schedule(){
+        $data = $this->em->updateSchedule();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
     public function assign_schedule(){
         $data = $this->em->assignEventSched();
         $this->output->set_content_type('json')->set_output(json_encode($data));

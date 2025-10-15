@@ -49,8 +49,6 @@ if (_tempContentData !== undefined && _tempContentData !== null && _tempContentD
     employees =_tempContentData.employees;
     attachments = _tempContentData.attachments;
     schedule = _tempContentData.schedule;
-    console.log(schedule);
-    console.log(eventsDetails);
 }
 
 
@@ -73,7 +71,6 @@ let eventVue = new Vue({
         uploadedFiles:[],
         attachments:attachments,
         schedule:schedule,
-        selectedSched:[],
         participantSched:[],
         loadingAssign: {},
         loadingUnassign: {},
@@ -82,7 +79,7 @@ let eventVue = new Vue({
             title: '',
             location: '',
             description: '',
-            day: '',
+            event_date: '',
             start: '',
             end: '',
         },
@@ -93,6 +90,15 @@ let eventVue = new Vue({
         $('#new_event_form input[type="text"], #new_event_form input[type="email"]')
             .not('#employee-select') 
             .prop('disabled', true);
+        $('#edit_schedule_date').daterangepicker({ 
+            singleDatePicker: true,
+            showDropdowns: true,
+            minDate: moment(this.eventsData.event_from).format('MM-DD-YYYY'),
+            maxDate: moment(this.eventsData.event_to).format('MM-DD-YYYY'),
+            locale: {
+                format: "MM-DD-YYYY",
+            },
+        });
     },
     computed: {
         eventStatus() {
@@ -291,9 +297,12 @@ let eventVue = new Vue({
             };
             return `${format(start_time)} - ${format(end_time)}`;
         },
-        viewSched(item){
-             this.selectedSched = item;
-             $('#scheduleModal').modal('show');
+        editSchedule(event) {
+            this.editSched = event;
+            $('#edit_schedule_date').val(moment(event.event_date).format('MM-DD-YYYY'));
+            $('#edit_schedule_start').timepicker('setTime', event.start);
+            $('#edit_schedule_end').timepicker('setTime', event.end);
+            $('#edit_schedule').modal('show');
         },
         removeSched(id){
             console.log(id);
@@ -380,6 +389,15 @@ let eventVue = new Vue({
                         }
                     });
                 }
+            });
+        },
+        formatDateLocale(date) {
+            const d = new Date(date);
+            return d.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
             });
         },
     },
@@ -552,9 +570,6 @@ function itemDatatableActions(id, status, emp_id = null, awarded) {
     return _actionButton;
 }
 
-
-
-
 function awardCertificate(id,rowId) {
     $.ajax({
         url: baseUrl("events/get_modal_training/" + id),
@@ -565,7 +580,6 @@ function awardCertificate(id,rowId) {
         dataType: "json",
         cache: false,
         success: function (json) {
-            console.log(json);
             let modalTempContent = $("#modalTempContent"); // grab the whole modal
             let modalContent = modalTempContent.find("#modal-content");
             if (typeof modalContent !== "undefined" && typeof json.html !== "undefined") {
@@ -716,8 +730,6 @@ function awardCertificate(id,rowId) {
         }
     });
 }
-
-
 
 $("#employee-select").select2({
     dropdownParent: $('#addNewParticipant'),
@@ -1090,37 +1102,21 @@ $('#New_Add_File').on('submit', function(e) {
 });
 
 $('#schedule_date').datepicker({ 
-    todayHighlight: true,
     autoclose: true,
     pickerPosition: 'bottom left',
-    todayBtn: true,
-    format: 'yyyy-mm-dd',
-    startDate: eventsDetails.event_from,
-    endDate: eventsDetails.event_to,
+    format: 'MM dd, yyyy',
+    startDate: new Date(eventsDetails.event_from),
+    endDate: new Date(eventsDetails.event_to),
 });
 
 $('#schedule_start').timepicker({
-    timeFormat: 'HH:mm:ss',
-    interval: 30,
-    minTime: '00:00:00',
-    maxTime: '23:59:59',
-    defaultTime: '00:00:00',
-    startTime: '00:00:00',
-    dynamic: false,
-    dropdown: true,
-    scrollbar: true
+    defaultTime: '08:00 AM',
+    minuteStep: 10,
 });
 
 $('#schedule_end').timepicker({
-    timeFormat: 'HH:mm:ss',
-    interval: 30,
-    minTime: '00:00:00',
-    maxTime: '23:59:59',
-    defaultTime: '00:00:00',
-    startTime: '00:00:00',
-    dynamic: false,
-    dropdown: true,
-    scrollbar: true
+    defaultTime: '05:00 PM',
+    minuteStep: 10,
 });
 
 $.validate({
@@ -1167,13 +1163,31 @@ function assignSchedule(participant){
     });
 }
 
-// const attendanceTable = $
 
-// const attendanceTable = $('#attendanceSheetTable').DataTable({
-//     data: [],
-//     columns: [
-//         { data: 'schedule_date' },
-//         { data: 'schedule_start' },
-//         { data: 'schedule_end' },
-//     ]
-// });
+$.validate({
+    form: "#edit_event_sched",
+    lang: "en",
+    onSuccess: function (form) {
+        let currentForm = form[0];
+        let url = baseUrl("events/update_schedule");
+        let formData = $(currentForm).serialize();
+        console.log(formData);
+        // formData += "&event_id=" + encodeURIComponent(eventsDetails.id);
+        // $.ajax({
+        //     url: url,
+        //     type: "POST",
+        //     dataType: "JSON",
+        //     data: formData,
+        //     success: function (response) {
+        //         if (response.success) {
+        //             toastr.success(response.toastr_msg, 'Success', 5000);
+        //             eventVue.trainings = response.trainings;
+        //             $('#edit_schedule').modal('hide');
+        //         } else {
+        //             toastr.error(response.toastr_msg, 'Error', 5000);
+        //         }
+        //     }
+        // });
+    }
+
+});
