@@ -289,11 +289,12 @@
         }
 
         const isLockedOut = getCookie('lockout_user');
-        console.log(isLockedOut);
         if (isLockedOut) {
+            $('input[name="username"]').val(getCookie('username'));
             $('#m_modal_unlock').modal('show');
             $('#m_login_forget_password').hide();
             document.cookie = "lockout_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         }
     });
 
