@@ -12,7 +12,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                     extend: 'excelHtml5',
                     title: 'CASH ADVANCE REPORTS',
                     exportOptions: {
-                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15],
+                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
@@ -31,7 +31,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                     extend: 'pdfHtml5',
                     title: 'CASH ADVANCE REPORTS',
                     exportOptions: {
-                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15],
+                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
@@ -87,7 +87,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                     extend: 'print',
                     title: 'CASH ADVANCE REPORTS',
                     exportOptions: {
-                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15],
+                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
@@ -158,6 +158,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
             { data: 'department', visible: false, title: 'DEPARTMENT', },
             { data: 'position', visible: false, title: 'POSITION', },
             { data: 'company', visible: false, title: 'COMPANY', },
+            { data: 'reference_no', visible: false, title: 'REF NO' },
             { data: 'amt_approved', orderable: false, title: 'AMOUNT APPROVED' ,
                 render: function(data) {
                     return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
