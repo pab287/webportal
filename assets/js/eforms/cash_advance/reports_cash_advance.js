@@ -149,6 +149,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                     tempHtml += `<p class='mb-1'><small><span class="m--font-bolder"></span> ${row.position} </small></p>`;
                     tempHtml += `<p class='m-0'><small><span class="m--font-bolder">Company:</span> ${row.company} </small></p>`;
                     tempHtml += `<p class='m-0'><small><span class="m--font-bolder">Department:</span> ${row.department}</small></p>`;
+                    tempHtml += `<p class='m-0'><small><span class="m--font-bolder">Reference No:</span> ${row.reference_no}</small></p>`;
                     return tempHtml;
                 }
             },

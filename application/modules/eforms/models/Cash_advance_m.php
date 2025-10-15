@@ -3516,6 +3516,7 @@ class Cash_advance_m extends CI_Model {
                     $rs->activebal = floatval($total) > 0;
                     // $rs->rembalance = floatval($total) > 0 ? number_format($total, 2) : number_format(0, 2);
                     $rs->rembalance = floatval($total) > 0 ? $total : 0;
+                    $rs->loan_id = $ca_status->loan_id;
 
                     $paymentHistory = $this->getca_remaining_balance($ca_status->loan_id, $startDate, $endDate);
                     $total_deduction = array_sum(array_column($paymentHistory, 'amount_due'));
@@ -3529,7 +3530,7 @@ class Cash_advance_m extends CI_Model {
                     $rs->deduction = 0;
                 }
 
-                if (!$is_paid && $rs->active == 1) {
+                if (!$is_paid && (int)$ca_status->active == 1) {
                     $arrData[$key] = $rs;
                 }
             }
