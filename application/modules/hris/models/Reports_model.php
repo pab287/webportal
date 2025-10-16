@@ -553,7 +553,7 @@ class Reports_model extends CI_Model{
             
         $joinArr = array(
             array('table' => 'gcchris.tblcompanies comp',
-                'condition' => 'comp.code = emp.company_id OR comp.id = emp.company_id AND comp.is_archived = 0 AND comp.exclude = 0',
+                'condition' => 'comp.code = emp.company_id OR comp.id = emp.company_id',
                 'option' => 'LEFT'),
             array('table' => 'gcchris.tbldepartments dep',
                 'condition' => 'dep.id = emp.department_id',
@@ -568,6 +568,8 @@ class Reports_model extends CI_Model{
 
         $this->db->select($select);
         $this->db->where($where);
+        $this->db->where("comp.is_archived", 0);
+        $this->db->where("comp.exclude", 0);
         foreach ($joinArr as $join) {
             $this->db->join($join['table'], $join['condition'], $join['option']);
         }
@@ -2761,7 +2763,7 @@ class Reports_model extends CI_Model{
         $this->db->where('emp.employee_status', 'Active');
         $this->db->where('comp.is_archived', 0);
         $this->db->where('comp.exclude', 0);
-        
+
         if($company){
             $this->db->where('emp.company_id', $company);
         }
