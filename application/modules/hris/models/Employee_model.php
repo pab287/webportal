@@ -43,6 +43,9 @@ class Employee_model extends CI_Model {
     protected $defaultStationTable = "gcchris.default_station_location";
     protected $payrollSheetTable = "payroll.payroll_sheet";
     protected $payrollSheetAdjustmentTable = "payroll.payroll_sheet_created_adjustments";
+    protected $loggedinData;
+    protected $loggedInUsername;
+    protected $multiplePositionTable = 'gcchris.tbl_employee_multi_positions';
 
     protected $questions = array(
         array("q" => "HAVE YOU EVER BEEN EMPLOYED BY US BEFORE? IN WHAT BRANCH AND WHAT POSITION?", "a" => 1),
@@ -1835,22 +1838,82 @@ class Employee_model extends CI_Model {
     function getCurrentJobDescription($id = null) {
         $resultset = array();
         if ($id) {
-            $this->db->select("b.*");
-            $this->db->from("{$this->employeeTable} a");
-            $this->db->join("{$this->positionTable} b", "b.id = a.position", "LEFT");
-            $this->db->where("a.id", $id);
-            $this->db->where("b.job_desc !=", null);
+            $this->db->select('position, is_multiple_position');
+            $this->db->from($this->employeeTable);
+            $this->db->where('id', $id);
             $query = $this->db->get();
 
-            if ($query->num_rows() == 1) {
+            if ($query->num_rows() > 0) {
                 $row = $query->row();
-                $resultset["response"] = true;
-                $resultset["position_id"] = $row->id;
-                $resultset["position_description"] = $row->name;
-                $resultset["data"] = $row->job_desc;
+
+                if ($row->is_multiple_position) {
+                    $this->db->select("a.is_primary, a.sort, b.id as position_id, b.name as position_description, b.job_desc as data");
+                    $this->db->from($this->multiplePositionTable.' as a');
+                    $this->db->join($this->positionTable.' as b', 'b.id = a.position', 'LEFT');
+                    $this->db->where('a.emp_id', $id);
+                    $q = $this->db->get();
+
+                    if ($q->num_rows() > 0) {
+                        $data = array();
+                        foreach ($q->result() as $r) {
+                            if ($r->data) {
+                                $data[] = array(
+                                    "is_primary" => $r->is_primary,
+                                    "sort" => $r->sort,
+                                    "position_id" => $r->position_id,
+                                    "position_description" => $r->position_description,
+                                    "data" => $r->data
+                                );
+                            }
+                        }
+
+                        if ($data) {
+                            $resultset["response"] = true;
+                            $resultset["is_multiple_position"] = 1;
+                            $resultset["data"] = $data;
+                        } else {
+                            $resultset["response"] = false;
+                        }
+                    } else {
+                        $resultset["response"] = false;
+                    }
+                } else {
+                    $this->db->from($this->positionTable);
+                    $this->db->where('id', $row->position);
+                    $this->db->where("job_desc !=", null);
+                    $q = $this->db->get();
+
+                    if ($q->num_rows() > 0) {
+                        $r = $q->row();
+                        $resultset["response"] = true;
+                        $resultset["is_multiple_position"] = 0;
+                        $resultset["position_id"] = $r->id;
+                        $resultset["position_description"] = $r->name;
+                        $resultset["data"] = $r->job_desc;
+                    } else {
+                        $resultset["response"] = false;
+                    }
+                }
             } else {
                 $resultset["response"] = false;
             }
+
+            // $this->db->select("b.*");
+            // $this->db->from("{$this->employeeTable} a");
+            // $this->db->join("{$this->positionTable} b", "b.id = a.position", "LEFT");
+            // $this->db->where("a.id", $id);
+            // $this->db->where("b.job_desc !=", null);
+            // $query = $this->db->get();
+
+            // if ($query->num_rows() == 1) {
+            //     $row = $query->row();
+            //     $resultset["response"] = true;
+            //     $resultset["position_id"] = $row->id;
+            //     $resultset["position_description"] = $row->name;
+            //     $resultset["data"] = $row->job_desc;
+            // } else {
+            //     $resultset["response"] = false;
+            // }
         }
 
         return $resultset;
@@ -2050,6 +2113,7 @@ class Employee_model extends CI_Model {
                 /*** modified to array data ***/
 
                 $data->added_by =  (is_numeric($data->add_by)) ? $this->core_layout->getEmployeeData($data->add_by)['display_name_1'] : $data->add_by;
+                $data->multiple_position = $data->is_multiple_position == 1 ? $this->db->select('position as id, is_primary, sort')->get_where($this->multiplePositionTable, array('emp_id' => $id))->result() : array();
             }
         }
         return $data;
@@ -3265,6 +3329,7 @@ class Employee_model extends CI_Model {
         $current_supervisor = isset($post["current_supervisor"]) && $post['current_supervisor'] ? $post['current_supervisor'] : 0; //fixed in payroll employee employment data
         $getClassification = $this->getClassification($post['id']);
         $getDateHired = $this->getHiredDate($post['id']);
+        $multiPosition = array();
 
         $default_station = isset($post["default_station"]) && $post["default_station"] ? $post["default_station"]: null;
         $workSchedule = isset($post["work_schedule"]) && $post["work_schedule"] ? $post["work_schedule"]: 0;
@@ -3274,9 +3339,31 @@ class Employee_model extends CI_Model {
             $employeeId = $post["id"];
             $currentEmployeeData = $this->getEmployeeData($employeeId);
             $_tempData = $this->core_layout->getEmployeeData($employeeId);
+
             if ($employeeId) {
                 unset($post["id"]);
                 $where = array("id" => $employeeId);
+
+                if (isset($post['is_multiple_position']) && $post['is_multiple_position']) {
+                    $multiple_position = $post['position'];
+                    foreach ($multiple_position as $key => $value) {
+                        if ($key == 0) {
+                            $post['position'] = $value;
+                        }
+
+                        $multiPosition[] = array(
+                            'emp_id' => $employeeId,
+                            'position' => $value,
+                            'is_primary' => ($key == 0) ? 1 : 0,
+                            'sort' => $key,
+                            'added_by' => $user_emp_id,
+                            'added_dt' => date('Y-m-d H:i:s')
+                        );
+                    }
+                } else {
+                    $post['is_multiple_position'] = 0;
+                    $post['position'] = isset($post['position']) && $post['position'] ? $post['position'] : $_tempData->position;
+                }
 
                 if($post['employee_status'] == 'Active' && $getClassification == 'Inactive'){
                     $post['date_end_prob'] = date('Y-m-d', strtotime("+6 months", strtotime($post['date_start'])));
@@ -3298,7 +3385,6 @@ class Employee_model extends CI_Model {
                     }
 
                     $post['supervisor_meta'] = serialize($tempSupervisory);
-                    // unset($post['supervisor'], $post['manager']);
                 }
 
                 if (isset($post['supervisor'])){
@@ -3331,6 +3417,25 @@ class Employee_model extends CI_Model {
                         $personelId = $this->getPersonelID($biono);
                         $post['work_station'] = $work_station;
                         $currentEmployeeData->work_station =  $this->getStationById($personelId);
+
+                        if (isset($currentEmployeeData->is_multiple_position) && $currentEmployeeData->is_multiple_position) {
+                            $currentEmployeeData->multiple_position = $this->getMultiplePosition($employeeId);
+                        }
+
+                        if (isset($multiPosition) && !empty($multiPosition)) {
+                            $this->db->where('emp_id', $employeeId);
+                            $this->db->delete($this->multiplePositionTable);
+                            $this->db->reset_query();
+                            $this->db->insert_batch($this->multiplePositionTable, $multiPosition);
+                        } else {
+                            $this->db->where('emp_id', $employeeId);
+                            $this->db->delete($this->multiplePositionTable);
+                        }
+
+                        if (isset($post['is_multiple_position']) && $post['is_multiple_position'] == 1) {
+                            $post['multiple_position'] = $this->getMultiplePosition($employeeId);
+                        }
+
                         $changes = $this->logChanges($currentEmployeeData, $post);
                         if ($current_status !== $post["work_status"]) {
                             $status_data = array("emp_id" => $employeeId, "work_status" => $post["work_status"], "created_by" => $user_emp_id);
@@ -4373,6 +4478,18 @@ class Employee_model extends CI_Model {
                 END AS name
             ")->from($this->employeeTable)->where("id", $managerId)->get()->result();
             $managerName = empty($_result)? false : $_result[0]->name;
+        }
+
+        if ($main->is_multiple_position) {
+            $this->db->select('b.name as position');
+            $this->db->join($this->positionTable.' as b', 'b.id = a.position', 'left');
+            $this->db->where('a.emp_id', $employee_id);
+            $this->db->from($this->multiplePositionTable.' as a');
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                $main->position = $query->result();
+            }
         }
 
         return
@@ -11574,14 +11691,15 @@ class Employee_model extends CI_Model {
                     );
                 }
             }
+
             if(!empty($changes)){
                 foreach ($changes as $field => $change) {
                     if (strtolower($field) == 'department_id'){
                         $changesString.= " Field: $field, from: <strong>". $this->getDepartmentById($change['old']). "</strong>, to: <strong>". $this->getDepartmentById($change['new']). "</strong>\n";
-                        }
-                    else if (strtolower($field) == 'position'){
-                        $changesString.= " Field: $field, from: <strong>". $this->getPositionById($change['old']). "</strong>, to: <strong>". $this->getPositionById($change['new']). "</strong>\n";
                     }
+                    // else if (strtolower($field) == 'position'){
+                    //     $changesString.= " Field: $field, from: <strong>". $this->getPositionById($change['old']). "</strong>, to: <strong>". $this->getPositionById($change['new']). "</strong>\n";
+                    // }
                     else if (strtolower($field) == 'company_id'){
                         $changesString.= " Field: $field, from: <strong>". $this->getCompanyById($change['old'])->description. "</strong>, to: <strong>". $this->getCompanyById($change['new'])->description. "</strong>\n";
                     }
@@ -11591,9 +11709,30 @@ class Employee_model extends CI_Model {
                     else if (strtolower($field) == 'tl_supervisory') {
                         $changesString .= " Field: TWO LEVEL SUPERVISORY from: <strong>" . ($change['old'] == 1 ? 'YES' : 'NO') . "</strong>, to: <strong>" . ($change['new'] == 1 ? 'YES' : 'NO') . "</strong>\n";
                     }
-                    else if ($field != 'work_station' && $field != 'supervisor_meta' && $field != 'more_questions'){
+                    else if (strtolower($field) == 'is_multiple_position') {
+                        $changesString .= "Field: Multiple Position from: <strong>" . $change['old'] . "</strong>, to: ". $change['new']. "</strong>\n";
+                    }
+                    else if ($field != 'work_station' && $field != 'supervisor_meta' && $field != 'more_questions' && $field != 'position' && $field != 'multiple_position'){
                         $changesString.= " Field: $field, from: <strong>". $change['old']. "</strong>, to: <strong>". $change['new']. "</strong>\n";
                     }
+                }
+            }
+
+            if (isset($currentData['is_multiple_position']) && isset($newData['is_multiple_position'])) {
+                if ($currentData['is_multiple_position'] == 1 && $newData['is_multiple_position'] == 1) {
+                    $changesString .= " Field: position, from  <strong>".$currentData['multiple_position']."</strong>, to <strong>".$newData['multiple_position']."</strong>\n";
+                }
+
+                if ($currentData['is_multiple_position'] == 1 && $newData['is_multiple_position'] == 0) {
+                    $changesString .= " Field: position, from <strong>".$currentData['multiple_position']."</strong>, to <strong> ".$this->getPositionById($newData['position'])."</strong>\n";
+                }
+
+                if ($currentData['is_multiple_position'] == 0 && $newData['is_multiple_position'] == 1) {
+                    $changesString .= " Field: position, <strong> ".$this->getPositionById($currentData['position'])."</strong>, to <strong>".$newData['multiple_position']."</strong>\n";
+                }
+
+                if ($currentData['is_multiple_position'] == 0 && $newData['is_multiple_position'] == 0) {
+                    $changesString .= " Field: position, <strong> ".$this->getPositionById($currentData['position'])."</strong>, to  to <strong> ".$this->getPositionById($newData['position'])."</strong>\n";
                 }
             }
 
@@ -12076,7 +12215,7 @@ class Employee_model extends CI_Model {
         emp.pic_filename, emp.idno, emp.biometricno, pos.name as position ,pos.id as position_id, emp.work_status, emp.employee_status, emp.date_start, emp.date_end, com.code as company_id, emp.level, emp.date_regular, emp.date_end_prob, emp.resign_reason, pos.job_desc, emp.tl_supervisory, emp.supervisor_meta, emp.ques1, emp.ques2, emp.ques3, emp.ques4, emp.ques5, emp.ques6, emp.ques7, emp.ques8, emp.ques9,
         emp.email, emp.tax_status, emp.tin_no, emp.phealth_no, emp.pagibig_no, emp.sss_no,
         emp.fat_name, emp.mot_name, emp.partner_type, emp.spo_deceased, emp.partners_deceased, emp.spo_name, emp.partners_name, emp.fat_addr, emp.mot_addr, emp.spo_addr, emp.partners_addr, emp.fat_company, emp.mot_company, emp.spo_company, emp.partners_company, emp.fat_occupation, emp.mot_occupation, emp.spo_occupation, emp.partners_occupation, emp.fat_contact, emp.mot_contact, emp.spo_contact, emp.partners_contact, emp.emer_addr, emp.emer_contact, emp.emer_name, 
-        dept.description as department_description, emp.work_mode, emp.payroll_type, emp.allow_sms_notification
+        dept.description as department_description, emp.work_mode, emp.payroll_type, emp.allow_sms_notification, emp.is_multiple_position
         ");
         $this->db->from($this->employeeTable." as emp");
         $this->db->join($this->positionTable." as pos", "pos.id = emp.position", "LEFT");
@@ -12105,8 +12244,46 @@ class Employee_model extends CI_Model {
         return $data;
     }
 
-    public function getEmpJobDescription($id){
-        $data = $this->db->select('job_desc')->get_where($this->positionTable, array("id" => $id))->row();
+    public function getEmpJobDescription(){
+        // $data = $this->db->select('job_desc')->get_where($this->positionTable, array("id" => $id))->row();
+        // return $data;
+        $get = $this->input->get();
+        $position = isset($get['position_id']) && $get['position_id'] ? $get['position_id'] : 0;
+        $emp_id = isset($get['emp_id']) && $get['emp_id'] ? $get['emp_id'] : 0;
+        $is_multiple_position = isset($get['is_multiple']) && $get['is_multiple'] ? $get['is_multiple'] : 0;
+        $data = array();
+
+        if ($is_multiple_position) {
+            $this->db->select("a.is_primary, a.sort, b.id as position_id, b.name as position_description, b.job_desc as data");
+            $this->db->from($this->multiplePositionTable.' as a');
+            $this->db->join($this->positionTable.' as b', 'b.id = a.position', 'LEFT');
+            $this->db->where('a.emp_id', $emp_id);
+            $q = $this->db->get();
+
+            if ($q->num_rows() > 0) {
+                $_temp = array();
+                foreach ($q->result() as $r) {
+                    if ($r->data) {
+                        $_temp[] = array(
+                            "is_primary" => $r->is_primary,
+                            "sort" => $r->sort,
+                            "position_id" => $r->position_id,
+                            "position_description" => $r->position_description,
+                            "data" => $r->data
+                        );
+                    }
+                }
+
+                if ($_temp) {
+                    $data['data'] = $_temp;
+                }
+            }
+        } else {
+            $data['data'] = $this->db->select('job_desc')->get_where($this->positionTable, array("id" => $position))->row();
+        }
+
+        $data['is_multiple'] = $is_multiple_position;
+
         return $data;
     }
 
@@ -12785,5 +12962,28 @@ class Employee_model extends CI_Model {
         }
 
         return $result;
+    }
+
+    function getMultiplePosition($id) {
+        $data = array();
+
+        $this->db->select("a.is_primary, b.id as position_id, b.name as position_description");
+        $this->db->from($this->multiplePositionTable.' as a');
+        $this->db->join($this->positionTable.' as b', 'b.id = a.position', 'LEFT');
+        $this->db->where('a.emp_id', $id);
+        $q = $this->db->get();
+
+        if ($q->num_rows() > 0) {
+            
+            foreach ($q->result() as $r) {
+                // $data[] = array(
+                //     "is_primary" => $r->is_primary,
+                //     "position_description" => $r->position_description
+                // );
+                array_push($data, $r->position_description);
+            }
+        }
+
+        return implode(', ', $data);
     }
 }

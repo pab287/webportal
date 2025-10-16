@@ -260,6 +260,7 @@
                 $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
                 $this->core_layout->addJs("js/buttons.print.min.js", true);
 
+                $this->core_layout->addJs("vendors/custom/jquery-ui/jquery-ui.bundle.js");
                 $this->core_layout->addJs("js/ams/jquery.maskMoney.min.js", true);
                 $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
                 $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
@@ -1973,8 +1974,8 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
-        public function get_job_description($id){
-            $data = $this->employee_model->getEmpJobDescription($id);
+        public function get_job_description(){
+            $data = $this->employee_model->getEmpJobDescription();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 

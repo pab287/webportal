@@ -77,11 +77,27 @@
         </div>
         <div class="row m--margin-bottom-10">
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+                <div class="form-group m-form__group row align-items-center pb-0">
+                    <label class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Multiple Position: </label>
+                    <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7 row align-items-center">
+                        <span class="m-switch m-switch--sm m-switch--icon ml-3 mr-1">
+                            <label class="m-0">
+                                <input type="checkbox" @change="changeTOMultiple" :checked="vm_tab3.is_multiple_position == 1" name="is_multiple_position" value="1" id="is_multiple_position">
+                                <span></span>
+                            </label>
+                        </span>
+                        <i class="flaticon-questions-circular-button" data-toggle="m-tooltip" data-skin="dark" data-original-title="Toggle switch to change it to multiple position(s)"></i>
+                        <template v-if="vm_tab3.is_multiple_position == 1 && multiple_position.length > 1">
+                            <button type="button" @click="sortPosition" id="sort_position" class="btn m-btn--pill btn-secondary btn-sm btnSave ml-2" data-toggle="m-tooltip" data-skin="dark" data-original-title="Toggle to sort position(s)">
+                                <i class="flaticon-refresh"></i>
+                            </button>
+                        </template>
+                    </div>
+                </div>
                 <div class="form-group m-form__group row">
                     <label for="position" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label required">Position:</label>
                     <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
-                        <select id="m--input-position_id" class="form-control m-input select2" name="position" placeholder="Select an option"  data-validation="required"
-                        v-model="vm_tab3.position"></select>
+                        <select id="m--input-position_id" class="form-control m-input select2" name="position" :multiple="vm_tab3.is_multiple_position === 1" placeholder="Select an option"  data-validation="required"></select>
                     </div>
                 </div>
             </div>
@@ -92,9 +108,7 @@
 					<div class="m-alert__icon">
 						<i class="la la-warning"></i>
 					</div>
-					<div class="m-alert__text">
-					  	<strong>REHIRE OPTION IS AVAILABLE!</strong>
-					</div>
+					<div class="m-alert__text"><strong>REHIRE OPTION IS AVAILABLE!</strong></div>
                 </a>
             </div>
         </div>
@@ -206,8 +220,8 @@
                 <div class="form-group m-form__group row">
                     <label for="payroll_type" class="col-sm-12 col-md-6 col-lg-6 col-xl-6 col-form-label required">Work Schedule:</label>
                     <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
-                        <select class="form-control m-input select2" name="work_schedule"
-                            placeholder="Select an option" data-validation="required" v-model="vm_tab3.work_schedule">
+                        <select class="form-control m-input select2" id="work_schedule" name="work_schedule"
+                            placeholder="Select an option" data-validation="required" v-model.lazy="vm_tab3.work_schedule">
                             <option value="4">Default - NO TIME IN OR OUT</option>
                             <option value="3">Super Flexi - 1 IN OR 1 OUT</option>
                             <option value="2">Drivers - 1 IN AND 1 OUT</option>
@@ -230,7 +244,7 @@
                                 <i class="la la-calendar"></i>
                             </span>
                             <input type="text" id="m_datepicker-date_hired" name="date_start" class="form-control m-input" maxlength="12" size="12"
-                                   autocomplete="off" data-validation="required" v-model="vm_tab3.date_start" readOnly={true}/>
+                                   autocomplete="off" data-validation="required" v-model.lazy="vm_tab3.date_start" readOnly={true}/>
                         </div>
                         <span class="m-form__help pull-right">Date Format: YYYY-MM-DD</span>
                     </div>
@@ -245,7 +259,7 @@
                                 <i class="la la-calendar"></i>
                             </span>
                             <input type="text" id="m_datepicker-date_end_prob" name="date_end_prob" class="form-control m-input" maxlength="12"
-                                   size="12" autocomplete="off" v-model="vm_tab3.date_end_prob"/>
+                                   size="12" autocomplete="off" v-model.lazy="vm_tab3.date_end_prob"/>
                                    
                         </div>
                         <span class="m-form__help pull-right">Date Format: YYYY-MM-DD</span>
@@ -263,7 +277,7 @@
                                 <i class="la la-calendar"></i>
                             </span>
                             <input type="text" id="m_datepicker-date_regular" name="date_regular" class="form-control m-input" maxlength="12"
-                                   size="12" autocomplete="off" v-model="vm_tab3.date_regular" disabled/>
+                                   size="12" autocomplete="off" v-model.lazy="vm_tab3.date_regular" disabled/>
                         </div>
                         <span class="m-form__help pull-right">Date Format: YYYY-MM-DD</span>
                     </div>
@@ -377,51 +391,107 @@
     <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-0x"></div>
 </form>
 <div class="modal fade" tabindex="-1" role="dialog" id="update_salary_history">
-    
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="la la-edit mr-2"></i>Update Salary History</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="la la-edit mr-2"></i>Update Salary History</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="updateSalaryModalForm">
+            <div class="modal-body">
+            
+            <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <input type="hidden" name="salary_employee_id" id="salary_employee_id">
+            <input type="hidden" name="salary_employee_position" id="salary_employee_position">
+            <!-- <input type="text" id="salary_current_position"> -->
+                <div class="form-group mt-3">
+                    <label for="purpose">Effective Date</label>
+                    <div class="input-group">
+                        <span class="input-group-addon">
+                            <i class="la la-calendar"></i>
+                        </span>
+                        <input type="text" id="m_datepicker-salary_effective_date" name="salary_effective_date" class="form-control m-input" maxlength="12" size="12"
+                        autocomplete="off" data-validation="required" placeholder="Select Date" />
+                    </div>
                 </div>
-                <form id="updateSalaryModalForm">
-                <div class="modal-body">
-                
-                <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-                <input type="hidden" name="salary_employee_id" id="salary_employee_id">
-                <input type="hidden" name="salary_employee_position" id="salary_employee_position">
-                <!-- <input type="text" id="salary_current_position"> -->
-                    <div class="form-group mt-3">
-                        <label for="purpose">Effective Date</label>
-                        <div class="input-group">
-                            <span class="input-group-addon">
-                                <i class="la la-calendar"></i>
-                            </span>
-                            <input type="text" id="m_datepicker-salary_effective_date" name="salary_effective_date" class="form-control m-input" maxlength="12" size="12"
-                            autocomplete="off" data-validation="required" placeholder="Select Date" />
-                        </div>
-                    </div>
-                    <div class="form-group mt-3">
-                        <label for="purpose">Salary Rate</label>
-                        <input type="text" class="form-control money text-left" id="salary_rate" name="salary_rate">
-                    </div>
+                <div class="form-group mt-3">
+                    <label for="purpose">Salary Rate</label>
+                    <input type="text" class="form-control money text-left" id="salary_rate" name="salary_rate">
+                </div>
 
-                    <div class="form-group mt-4">
-                        <label for="remarks">Remarks</label>
-                        <textarea class="form-control" id="salary_remarks" name="salary_remarks" autocomplete="off"></textarea>
+                <div class="form-group mt-4">
+                    <label for="remarks">Remarks</label>
+                    <textarea class="form-control" id="salary_remarks" name="salary_remarks" autocomplete="off"></textarea>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary btnAdd_performance_rating" id="save_salary_rating">Save</button>
+                <button type="button" class="btn btn-danger btnAdd_performance_rating" data-dismiss="modal">Close</button>
+            </div>
+            </form>
+            
+        </div>
+    </div>
+</div>
+
+<?php $this->load->view("masterfile/employee/modals/change_employee_company"); ?>
+<input type="hidden" id="change_employment_info">
+
+<div class="modal fade" tabindex="-1" role="dialog" id="set_primary_position">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="la la-edit mr-2"></i>Set Primary Position</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <p><i class="m--font-danger m--font-boldest">Note:</i> Drag the position to the top to set it as the primary position.</p>
                     </div>
                 </div>
-                
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary btnAdd_performance_rating" id="save_salary_rating">Save</button>
-                    <button type="button" class="btn btn-danger btnAdd_performance_rating" data-dismiss="modal">Close</button>
+                <div id="m_sortable_portlets">
+                    <template v-if="!isEmpty(positions)">
+                        <template v-for="(item, index) in positions">
+                            <div class="m-portlet m-portlet--bordered m-portlet--head-sm m-portlet--mobile m-portlet--sortable mb-1" :key="item.id" data-portlet="true" :data-id="item.id">
+                                <div class="m-portlet__head ui-sortable-handle">
+                                    <div class="m-portlet__head-caption">
+                                        <div class="m-portlet__head-title">
+                                            <h3 class="m-portlet__head-text m--font-success">
+                                                Position <small v-if="item.primary == 1" class="ml-3 text-white m-badge m-badge--success m-badge--wide">Primary</small>
+                                            </h3>
+                                        </div>
+                                    </div>
+                                    <div class="m-portlet__head-tools">
+                                        <span class="fa fa-ellipsis-v"></span>
+                                    </div>
+                                </div>
+                                <div class="m-portlet__body">
+                                    <div class="row">
+                                        <div class="col-9">
+                                            <div class="form-group m-form__group">
+                                                <label class="m-0 position-text">{{ item.text }}</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-3">
+                                            <div class="form-group m-form__group">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </template>
                 </div>
-                </form>
-                
+            </div>
+            <div class="modal-footer">
+                <button @click="savePrimaryPosition" type="button" class="btn btn-primary btnSave" id="save_primary_position">Save</button>
             </div>
         </div>
     </div>
-<?php $this->load->view("masterfile/employee/modals/change_employee_company"); ?>
-<input type="hidden" id="change_employment_info">
+</div>

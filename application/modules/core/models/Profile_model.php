@@ -22,6 +22,7 @@ class Profile_model extends CI_Model
     protected $employeeSalaryTable = "gcchris.tblsalaries";
     protected $tblPersonnelLocation = "gcctimeutility.personnel_locations";
     protected $tblPersonnel = "gcctimeutility.personnel";
+    protected $multiplePositionTable = 'gcchris.tbl_employee_multi_positions';
     protected $loggedinData;
     protected $loggedInUsername;
     protected $user_data;
@@ -251,8 +252,44 @@ class Profile_model extends CI_Model
         return $data;
     }
 
-    public function getEmpJobDescription($id){
-        $data = $this->db->select('job_desc')->get_where($this->positionTable, array("id" => $id))->row();
+    public function getEmpJobDescription(){
+        $get = $this->input->get();
+        $position = isset($get['position_id']) && $get['position_id'] ? $get['position_id'] : 0;
+        $emp_id = isset($get['emp_id']) && $get['emp_id'] ? $get['emp_id'] : 0;
+        $is_multiple_position = isset($get['is_multiple']) && $get['is_multiple'] ? $get['is_multiple'] : 0;
+        $data = array();
+
+        if ($is_multiple_position) {
+            $this->db->select("a.is_primary, a.sort, b.id as position_id, b.name as position_description, b.job_desc as data");
+            $this->db->from($this->multiplePositionTable.' as a');
+            $this->db->join($this->positionTable.' as b', 'b.id = a.position', 'LEFT');
+            $this->db->where('a.emp_id', $emp_id);
+            $q = $this->db->get();
+
+            if ($q->num_rows() > 0) {
+                $_temp = array();
+                foreach ($q->result() as $r) {
+                    if ($r->data) {
+                        $_temp[] = array(
+                            "is_primary" => $r->is_primary,
+                            "sort" => $r->sort,
+                            "position_id" => $r->position_id,
+                            "position_description" => $r->position_description,
+                            "data" => $r->data
+                        );
+                    }
+                }
+
+                if ($_temp) {
+                    $data['data'] = $_temp;
+                }
+            }
+        } else {
+            $data['data'] = $this->db->select('job_desc')->get_where($this->positionTable, array("id" => $position))->row();
+        }
+
+        $data['is_multiple'] = $is_multiple_position;
+
         return $data;
     }
 

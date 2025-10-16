@@ -513,7 +513,7 @@ if (typeof _tempContentData !== "undefined") {
             const radioPtSingle = _formAdditionalInformation.find("#pt_single");
             const radioPtMarried = _formAdditionalInformation.find("#pt_married");
             const radioPtPartner = _formAdditionalInformation.find("#pt_partner");
-          
+        
         }, methods: {
             dateFormat(str){
                 return (str) ? moment(str).format('LLL') : "No added Date";
@@ -524,13 +524,12 @@ if (typeof _tempContentData !== "undefined") {
     });
     var vmTab3 = new Vue({
         el: "#frmEditEmploymentData",
-        data: { vm_tab3: tempData },
+        data: { vm_tab3: tempData, multiple_position: [] },
         mounted: function () {
             var vmData = this.vm_tab3;
 
             const employee_status = vmData.employee_status ? vmData.employee_status.toLowerCase() : "";
             const work_status = vmData.work_status ? vmData.work_status.toLowerCase() : "";
-            // const idno = vmData.idno="asdasdas";
             const activateRehireStatuses = ["inactive", "resign",
                 "terminated", "awol", "blacklisted",
                 "black listed", "end of contract", "retired"];
@@ -641,7 +640,6 @@ if (typeof _tempContentData !== "undefined") {
                 .trigger("change")
                 .on("select2:select", function (e) {
                     const data = e.params.data;
-                    // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { department_id: data.id });
                     vmData = Object.assign({}, vmData, { department_id: data.id });
                 });
 
@@ -658,111 +656,95 @@ if (typeof _tempContentData !== "undefined") {
                 .val(-1)
                 .trigger("change");
 
-            // $("#m--input-supervisor_id").select2({
-            //     data: tempDropdownData.dropdown_supervisory,
-            //     allowClear: true,
-            //     placeholder: {
-            //         id: "-1",
-            //         text: "Select an option"
-            //     },
-            //     width: '100%'
-            // })
-            // .val(vmData.supervisor)
-            // .trigger("change")
-            // .on('select2:select', function (e) {
-            //     var data = e.params.data;
-            //     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { supervisor: data.id });
-            //     _data = vmTab3.excludeEmployee(tempDropdownData.dropdown_supervisory, data.id);
-            // });
-
             this.supervisorySelect2('#m--input-supervisor_id', true, _supData, vmData.supervisor);
 
             if (vmData.current_tl_supervisory == 1) {
                 this.managerialSelect2('#m--input-manager_id', true, _data, vmData.manager);
             }
 
-            $("#m--input-position_id")
-                .select2({
-                    data: tempDropdownData.dropdown_position,
-                    placeholder: {
-                        id: "-1",
-                        text: "Select an option"
-                    },
-                    width: '100%'
-                })
-                .val(vmData.position)
-                .trigger("change")
-                .on("select2:select", function (e) {
-                    const data = e.params.data;
-                    // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { position: data.id });
-                    vmData = Object.assign({}, vmData, { position: data.id });
-                });
-                //--------add update salary in updating employee position---//
-                $("#m--input-position_id").change(function(){
-                    var dis = $("#m--input-position_id").select2('data');
-                    
-                    $("#salary_employee_id").val($(".employee_id").val());
-                    $("#salary_employee_position").val(dis[0].id);
-                    $("#salary_current_position").val($(".current_position").val());
-                    // $("#update_salary_history").modal();
-                    getLatestSalaryRate();
-                });
-                //--------add update salary in updating employee position---//
-                //-------- enable date regularized, separation date----//
-                $("#status").change(function(){
-                    const status = $("#status").val();
-                    const classification = $("#classification").val();
+            if (vmData.is_multiple_position == 1) {
+                let isMultiple = $("#is_multiple_position").is(':checked');
+                const selectEl = $("#m--input-position_id");
+                selectEl.prop("multiple", isMultiple);
+                selectEl.attr('name', isMultiple ? 'position[]' : 'position');
 
-                    if(classification.toLowerCase() == 'active'){
-                        if(status == 'REGULAR'){
-                            const tempState = shouldEnableProbationEndDate(vmData) === false;
-                            $("#m_datepicker-date_regular").attr("disabled", false);
-                            $("#m_datepicker-date_end").attr("disabled", true);
-                            $("#m_datepicker-date_end_prob").prop('disabled', tempState);
+                const sortMap = new Map();
 
-                            const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
-                            setTimeout(function () { $("#m_datepicker-date_regular").datepicker("setStartDate", startDateMin); }, 250);
-                            if(tempState === false){
-                                const endDateMax = moment(new Date(vmData.date_start), "YYYY-MM-DD").add(180, 'days').format("YYYY-MM-DD");
-                                setTimeout(function () {
-                                    $("#m_datepicker-date_end_prob").datepicker("setStartDate", startDateMin);
-                                    $("#m_datepicker-date_end_prob").datepicker("setEndDate", endDateMax);
-                                }, 250);
-                            }
-                        }else{
-                            $("#m_datepicker-date_regular").attr("disabled", true);
-                            $("#m_datepicker-date_end").attr("disabled", true);
-                            $("#m_datepicker-date_end_prob").prop('disabled', false);
+                vmData.multiple_position.forEach(p => {
+                    sortMap.set(parseInt(p.id), {
+                        sort: parseInt(p.sort),
+                        primary: parseInt(p.is_primary) // ensure boolean or numeric consistency
+                    });
+                });
+
+                // intersect 2 array and get the matched data by position id
+                
+                let intersection = tempDropdownData.dropdown_position
+                    .filter(a1 =>
+                        vmData.multiple_position.some(a2 => parseInt(a2.id) === parseInt(a1.id))
+                    )
+                    .map(item => {
+                        const data = sortMap.get(parseInt(item.id));
+                        return {
+                            ...item,
+                            primary: data?.primary,
+                            sort: data?.sort
+                        };
+                    })
+                    .sort((a, b) => {
+                        if (b.primary !== a.primary) {
+                            return b.primary - a.primary;
+                        }
+                        return a.sort - b.sort;
+                    });
+
+                this.positionSelect2('#m--input-position_id', true, vmData.position, true, intersection);
+                this.multiple_position = [...intersection];
+            } else {
+                this.positionSelect2('#m--input-position_id', true, vmData.position, false);
+                this.multiple_position = [];
+            }
+
+            //-------- enable date regularized, separation date----//
+            $("#status").change(function(){
+                const status = $("#status").val();
+                const classification = $("#classification").val();
+
+                if(classification.toLowerCase() == 'active'){
+                    if(status == 'REGULAR'){
+                        const tempState = shouldEnableProbationEndDate(vmData) === false;
+                        $("#m_datepicker-date_regular").attr("disabled", false);
+                        $("#m_datepicker-date_end").attr("disabled", true);
+                        $("#m_datepicker-date_end_prob").prop('disabled', tempState);
+
+                        const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
+                        setTimeout(function () { $("#m_datepicker-date_regular").datepicker("setStartDate", startDateMin); }, 250);
+                        if(tempState === false){
+                            const endDateMax = moment(new Date(vmData.date_start), "YYYY-MM-DD").add(180, 'days').format("YYYY-MM-DD");
+                            setTimeout(function () {
+                                $("#m_datepicker-date_end_prob").datepicker("setStartDate", startDateMin);
+                                $("#m_datepicker-date_end_prob").datepicker("setEndDate", endDateMax);
+                            }, 250);
                         }
                     }else{
-                        $("#m_datepicker-date_end").attr("disabled", false);
-                        $("#m_datepicker-date_end_prob").prop('disabled', true);
-
-                        if(vmData.date_end == "0000-00-00" || vmData.date_end == ""){ 
-                            const currentDateEnd = moment().format("YYYY-MM-DD");
-                            const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
-                            setTimeout(function(){ 
-                                $("#m_datepicker-date_end").datepicker('setStartDate', startDateMin); 
-                                $("#m_datepicker-date_end").datepicker('setDate', currentDateEnd); 
-                            }, 250); 
-                        }
+                        $("#m_datepicker-date_regular").attr("disabled", true);
+                        $("#m_datepicker-date_end").attr("disabled", true);
+                        $("#m_datepicker-date_end_prob").prop('disabled', false);
                     }
+                }else{
+                    $("#m_datepicker-date_end").attr("disabled", false);
+                    $("#m_datepicker-date_end_prob").prop('disabled', true);
 
-                    /** original source code to disable regularized probee end end and seperated */
-                    // if(status == "REGULAR"){
-                    //     $("#m_datepicker-date_regular").attr("disabled", false);
-                    //     $("#m_datepicker-date_end").attr("disabled", true);
-                    //     $("#m_datepicker-date_end_prob").prop('disabled', true);
-                    // }else if(status == "RESIGNED" || status == "TERMINATED" || status == "BLACKLISTED"){
-                    //     $("#m_datepicker-date_end").attr("disabled", false);
-                    //     $("#m_datepicker-date_end_prob").prop('disabled', true);
-                    // }else{
-                    //     $("#m_datepicker-date_regular").attr("disabled", true);
-                    //     $("#m_datepicker-date_end").attr("disabled", true);
-                    //     $("#m_datepicker-date_end_prob").prop('disabled', false);
-                    // }
-                    /** original source code to disable regularized probee end end and seperated */
-                });
+                    if(vmData.date_end == "0000-00-00" || vmData.date_end == ""){ 
+                        const currentDateEnd = moment().format("YYYY-MM-DD");
+                        const startDateMin = moment(new Date(vmData.date_start), "YYYY-MM-DD").format("YYYY-MM-DD");
+                        setTimeout(function(){ 
+                            $("#m_datepicker-date_end").datepicker('setStartDate', startDateMin); 
+                            $("#m_datepicker-date_end").datepicker('setDate', currentDateEnd); 
+                        }, 250); 
+                    }
+                }
+            });
 
             $('#change-company-position')
                 .select2({
@@ -790,8 +772,8 @@ if (typeof _tempContentData !== "undefined") {
             .trigger("change")
             .on("select2:select", function (e) {
                 const data = e.params.data;
-                // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { work_mode: data.id });
-                vmData = Object.assign({}, vmData, { work_mode: data.id });
+                // vmData = Object.assign({}, vmData, { work_mode: data.id });
+                vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { work_mode: data.id });
             });
 
             $("#m--input-payroll_type_id")
@@ -807,8 +789,9 @@ if (typeof _tempContentData !== "undefined") {
                 .trigger("change")
                 .on("select2:select", function (e) {
                     const data = e.params.data;
-                    // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { payroll_type: data.id });
-                    vmData = Object.assign({}, vmData, { payroll_type: data.id });
+                    //vmData = Object.assign({}, vmData, { payroll_type: data.id });
+
+                    vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { payroll_type: data.id });
                 });
 
                 //--------for reason for separation input to show---///
@@ -852,21 +835,20 @@ if (typeof _tempContentData !== "undefined") {
                         status.attr('readonly');
                     }
 
-                    vmTab3.vm_tab3 = Object.assign({}, vmData, { employee_status: data.id });
+                    vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { employee_status: data.id });
                     if(typeof this.vm_tab3 != 'undefined' && Object.keys(this.vm_tab3).length > 0){
                         let { vm_tab3 } = this;
-                        vmData = Object.assign({}, vmData, { employee_status: data.id });
+                        vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { employee_status: data.id });
                         // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { employee_status: data.id });
     
                         if (data.id === 'Contractor') {
-                            vmData = Object.assign({}, vmData, { work_status: 'N/A' });
+                            vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { work_status: 'N/A' });
                             // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { work_status: 'N/A' });
                         }
                         // vmData = Object.assign({}, vmData);
                     }
                 });
                 
-            // const site = vmData.location_name;
             if(typeof vmData.location_name != 'undefined' && vmData.location_name.length > 0){
                 setTimeout(function(){ $('#station').val(vmData.location_name).trigger('change'); }, 750);
             }
@@ -876,13 +858,6 @@ if (typeof _tempContentData !== "undefined") {
                     placeholder: "Select Option",
                     width: "100%",
                     data: tempDropdownData.dropdown_station,
-                    // ajax: {
-                    // dataType: 'json',
-                    // url: baseUrl("hris/masterfile/get_all_site_points"),
-                    // processResults: function (data) {
-                    //         return data;
-                    //     }
-                    // }
                 });
                 
                 $("#station").on("select2:select", function (evt) {
@@ -893,16 +868,6 @@ if (typeof _tempContentData !== "undefined") {
                     $(this).append($element);
                     $(this).trigger("change");
                 });
-
-                // $("#station").empty();
-            
-                // if(site != null){
-                //     $.each(site.split(","), function(i, v){
-                //         var tempOption = new Option(v, v, true, true);
-                //         $("#station").append(tempOption);
-                //         console.log(tempOption);
-                //     });
-                // }
                 
                 if(typeof vmData.default_station != 'undefined' && parseInt(vmData.default_station) > 0){
                     setTimeout(function(){ 
@@ -942,7 +907,6 @@ if (typeof _tempContentData !== "undefined") {
             .on("select2:select", function (e) {
                 const data = e.params.data;
                 vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { level: data.id });
-                // vmData = Object.assign({}, vmData, { level: data.id });
 
                 if (data.id === "MANAGERIAL" || data.id === "EXECUTIVE") {
                     $('#is_two_level').trigger('change', function() {
@@ -1027,6 +991,17 @@ if (typeof _tempContentData !== "undefined") {
                     $("#m--input-manager_id").val('').trigger('change');
                 }
             });
+
+            $("#work_schedule").select2({
+                placeholder: 'Select an option',
+                width: '100%',
+            })
+            .val(vmData.work_schedule)
+            .trigger('change')
+            .on('select2:select', function(e) {
+                const data = e.params.data;
+                vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { work_schedule: data.id });
+            });
         },
         methods: {
             supervisorySelect2(target, destroy = false, data = {}, id = 0){
@@ -1072,8 +1047,7 @@ if (typeof _tempContentData !== "undefined") {
                         }
                     }
                 });
-            },
-            managerialSelect2(target, destroy = false, data = {}, id = 0){
+            }, managerialSelect2(target, destroy = false, data = {}, id = 0){
                 var currentTarget = $(target);
 
                 if (destroy) {
@@ -1100,6 +1074,176 @@ if (typeof _tempContentData !== "undefined") {
                 });
 
                 return _data;
+            }, positionSelect2 (target, destroy = false, id = 0, isMultiple = false, multiPosition = []) {
+                let vmData = this.vm_tab3;
+                const currentTarget = $(target);
+                let _temp = [];
+
+                if (destroy) {
+                    currentTarget.empty();
+                    currentTarget.off('select2:select');
+
+                    if (currentTarget.hasClass('select2-hidden-accessible')) {
+                        currentTarget.select2('destroy');
+                    }
+                }
+
+                setTimeout(() => {
+                    if (multiPosition.length > 0) {
+                        multiPosition.forEach(pos => {
+                            var option = new Option(pos.text, pos.id, true, true);
+                            currentTarget.append(option).trigger('change');
+
+                            _temp.push(pos.id);
+                        });
+                    }
+
+                    currentTarget.select2({
+                        data: tempDropdownData.dropdown_position,
+                        placeholder: {
+                            id: "-1",
+                            text: "Select an option"
+                        },
+                        width: '100%',
+                        multiple: isMultiple
+                    }).on('select2:select', function (e) {
+                        const data = e.params.data;
+
+                        if(isMultiple){
+                            var element = e.params.data.element;
+                            var $element = $(element);
+                        
+                            $element.detach();
+                            $(this).append($element);
+                            $(this).trigger("change");
+
+                            let newData = [];
+                            const tempData = $(this).select2("data");
+                            tempData.forEach((value, index) => { 
+                                newData.push({ id: value.id, text: value.text, primary: index === 0 ? 1 : 0, sort: index }); 
+                            });
+
+                            vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { multiple_position: newData });
+
+                            multiPosition = newData;
+                            vmPrimary.positions = [...newData];
+                        } else {
+                            vmData.position = data.id;
+                        }
+                    }).on('select2:unselect', function (e) {
+                        if(isMultiple){
+                            let newData = [];
+                            const tempData = $(this).select2("data");
+                            tempData.forEach((value, index) => { 
+                                newData.push({ id: value.id, text: value.text, primary: index === 0 ? 1 : 0, sort: index }); 
+                            });
+
+                            vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { multiple_position: newData });
+                            multiPosition = newData;
+                            vmPrimary.positions = [...newData];
+                        }
+                    });
+
+                    if (!isMultiple) {
+                        currentTarget.val(id).trigger("change");
+                    } else {
+                        if (multiPosition.length == 0) {
+                            currentTarget.val(id).trigger("change");
+                        } else {
+                            currentTarget.val(_temp).trigger("change");
+                        }
+                    }
+                }, 250);
+
+            }, changeTOMultiple(e) {
+                const instance = this;
+                let vmData = instance.vm_tab3;
+                let isMultiple = $(e.target).is(':checked');
+                const selectEl = $("#m--input-position_id");
+                let intersection = [];
+
+                selectEl.prop("multiple", isMultiple);
+                selectEl.attr('name', isMultiple ? 'position[]' : 'position');
+
+                if (instance.vm_tab3.multiple_position.length > 0){
+                    const sortMap = new Map();
+                    
+                    instance.vm_tab3.multiple_position.forEach(p => {
+                        sortMap.set(parseInt(p.id), {
+                            sort: parseInt(p.sort),
+                            primary: parseInt(p.is_primary)
+                        });
+                    });
+                    
+                    intersection = tempDropdownData.dropdown_position
+                    .filter(a1 =>
+                        instance.vm_tab3.multiple_position.some(a2 => parseInt(a2.id) === parseInt(a1.id))
+                    )
+                    .map(item => {
+                        const data = sortMap.get(parseInt(item.id));
+                        return {
+                            ...item,
+                            primary: data?.primary,
+                            sort: data?.sort
+                        };
+                    })
+                    .sort((a, b) => {
+                        if (b.primary !== a.primary) {
+                            return b.primary - a.primary;
+                        }
+                        return a.sort - b.sort;
+                    });
+                }
+
+                this.positionSelect2('#m--input-position_id', true, instance.vm_tab3.position, isMultiple, isMultiple ? intersection : []);
+                vmPrimary.positions = [...intersection];
+                vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { is_multiple_position: isMultiple ? 1 : 0 });
+
+                if (isMultiple) {
+                    $("#sort_position").show();
+                } else {
+                    $("#sort_position").hide();
+                }
+            }, sortPosition(e) {
+                const instance = this;
+                let intersection = [];
+
+                vmPrimary.isSortOnly = true;
+                if (instance.vm_tab3.multiple_position.length > 0){
+                    const sortMap = new Map();
+                    
+                    instance.vm_tab3.multiple_position.forEach(p => {
+                        sortMap.set(parseInt(p.id), {
+                            sort: parseInt(p.sort),
+                            primary: parseInt(p.is_primary) 
+                        });
+                    });
+
+                    intersection = tempDropdownData.dropdown_position
+                    .filter(a1 =>
+                        instance.vm_tab3.multiple_position.some(a2 => parseInt(a2.id) === parseInt(a1.id))
+                    )
+                    .map(item => {
+                        const data = sortMap.get(parseInt(item.id));
+                        return {
+                            ...item,
+                            primary: data?.primary,
+                            sort: data?.sort
+                        };
+                    })
+                    .sort((a, b) => {
+                        if (b.primary !== a.primary) {
+                            return b.primary - a.primary;
+                        }
+                        return a.sort - b.sort;
+                    });
+                }
+
+
+                vmPrimary.positions = [...intersection];
+                $("#set_primary_position").modal('show');
+                PortletDraggable.init();
+
             }
         }
     });
@@ -1204,11 +1348,6 @@ if (typeof _tempContentData !== "undefined") {
         function dependentsDataTableActions($id) {
             if ($id) {
                 var _actionButton = "";
-                // _actionButton += " <button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit btnEditDependents' data-id='" + $id + "'><i class='la la-edit'></i></button>";
-                // _actionButton +=
-                // " <button type='button' class='btn btn-default m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill btnArchive btnRemoveDependents' data-id='" +
-                // $id +
-                // "'><i class='la la-file-archive-o'></i></button>";
 
                 if (jQuery.inArray("edit", _currentActions) !== -1) {
                     _actionButton +=
@@ -1527,22 +1666,22 @@ if (typeof _tempContentData !== "undefined") {
                 { data: "expiration_date", title: "Expiry Date", className: "text-center" },
                 { data: "remarks", title: "Remarks", className: "text-center",
                     render: function(data, type, row) {
-                      return data && data.trim() !== '' ? data : 'none';
+                        return data && data.trim() !== '' ? data : 'none';
                     }
-                  },
-                  {
+                },
+                {
                     data: "liscert_attachment", 
                     title: "Attachment", 
                     className: "text-center",
                     render: function(data, type, row) {
-                      if (!data || data.trim() === '') {
-                        return 'none';
-                      }
-                      
-                      const truncated = data.length > 15 ? data.substring(0, 15) + '...' : data;
-                      return `<span style="cursor: pointer; color: #007bff; text-decoration: underline;" onclick="openCert('${data}')">${truncated}</span>`;
+                        if (!data || data.trim() === '') {
+                            return 'none';
+                        }
+                    
+                        const truncated = data.length > 15 ? data.substring(0, 15) + '...' : data;
+                        return `<span style="cursor: pointer; color: #007bff; text-decoration: underline;" onclick="openCert('${data}')">${truncated}</span>`;
                     }
-                  },
+                },
                 { data: null, title: "Action", width: "8%", className: "text-center" }
             ],
             columnDefs: [
@@ -1639,18 +1778,6 @@ if (typeof _tempContentData !== "undefined") {
                                 url: baseUrl('hris/masterfile/get_license_type'),
                                 method: "GET",
                                 delay: 250,
-                                // processResults: function(data, params) {
-                                //     const cert = {
-                                //         id: 'Certificate',
-                                //         text: 'Certificate'
-                                //     }
-                            
-                                //     var newOption = new Option(cert.text, cert.id, false, false);
-                                //     // console.log($(''));
-                                //     $('#form-licensure #license_type').append(newOption).trigger('change');
-
-                                //     return data;
-                                // }
                             }
                         }).on('select2:select', function (e) {
                             var data = e.params.data;
@@ -1714,21 +1841,6 @@ if (typeof _tempContentData !== "undefined") {
                             var self = $(e.target);
                             self.validate();
                         });
-
-                        // var dtSelectLicenseType = modalContent.find('#license_type').select2({
-                        //     placeholder: { id: '-1', text: 'Select an option' },
-                        //     // minimumResultsForSearch: Infinity,
-                        //     width: '100%',
-                        //     dropdownParent: "#modalTempContent",
-                        //     ajax:{
-                        //         url: baseUrl('hris/masterfile/get_license_type'),
-                        //         method: "GET",
-                        //         delay: 250,
-                        //         processResults: function (data) {
-                        //             return { results: data };
-                        //         }
-                        //     }
-                        // });
 
                         modalContent.find("#expiry-switch input").on('click', function(){
                             if(typeof $("#expiry-switch input:checked").val() != 'undefined'){
@@ -2957,9 +3069,7 @@ if (typeof _tempContentData !== "undefined") {
         });
     }
 
-    // function openFile($employeeId, $name) {
-    //     
-    // }
+    // Function to open file based on its type
     function openFile(employeeId, name) {
         // Construct the full URL of the file
         var fileUrl = baseUrl("uploads/files/documents/employee_files/empcode_" + employeeId + "/offenses_commendation/" + encodeURIComponent(name));
@@ -3966,6 +4076,24 @@ if (typeof _tempContentData !== "undefined") {
 
     function getJobDescription() {
         if (typeof currentJobDescription !== "undefined") {
+            $.ajax({
+                url: baseUrl("hris/masterfile/get_current_job_description/" + tempDataId),
+                dataType: "json",
+                success: function (json) {
+                    vmJobDesc.row = {};
+                    vmJobDesc.is_multiple_position = false;
+
+                    if (json.response) {
+                        vmJobDesc.row = json.is_multiple_position == 1 ? {...json.data} : json;
+                        vmJobDesc.is_multiple_position = json.is_multiple_position == 1 ? true : false;
+                    }
+                }
+            });
+        }
+    }
+
+    function getJobDescriptionv1() {
+        if (typeof currentJobDescription !== "undefined") {
             var cJobDescription = currentJobDescription.find("#current-job_description");
             if (typeof cJobDescription !== "undefined" && cJobDescription.length == 1) {
                 var tempJobDescription = function () {
@@ -4708,64 +4836,24 @@ var validatePersonalEmployeeData = function () {
             var formUrl = currentForm.action;
             var formData = $(currentForm).serialize();
 
-            $.ajax({
-                url: formUrl,
-                type: "post",
-                dataType: "json",
-                data: formData,
-                beforeSend: function () {
-                    $(currentForm)
-                        .find(".btn-submit")
-                        .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                },
-                success: function (json) {
-                    if (json.response) {
-                        toastr.success(
-                            json.toastr_msg,
-                            "Employee data has been updated.",
-                            5000
-                        );
-                        var _respData = json.data;
-                        var _newData = Object.assign(
-                            {},
-                            {
-                                display_name: _respData.display_name,
-                                display_email: _respData.display_email,
-                                display_avatar: _respData.pic_filename
-                            }
-                        );
-                        leftPanel.left_pane = _newData;
-                        _tempContentData.data = Object.assign({}, json.data);
+            const isMultiple = $("#is_multiple_position").is(":checked");
 
-                        if(typeof vmTab3.vm_tab3 != 'undefined' && Object.keys(vmTab3.vm_tab3).length > 0){
-                            let { vm_tab3 } = vmTab3;
-                            vm_tab3 = Object.assign({}, vm_tab3, json.data);
-                        }
-                        // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, json.data);
-                        getJobDescription();
-                        getEmployeePerformanceRating();
-                        $("#change_employment_info").val(0);
-                        $("#employment_information i").remove();
-                    } else {
-                        toastr.error(
-                            json.toastr_msg,
-                            "Error updating employee data!",
-                            5000
-                        );
-                    }
+            if (isMultiple && vmPrimary.positions.length > 0 && !vmPrimary.isSortOnly) {
+                $("#set_primary_position").modal('show');
+                PortletDraggable.init();
 
-                    $(currentForm)
-                        .find(".btn-submit")
-                        .removeClass(
-                            "m-btn--custom m-loader m-loader--light m-loader--right"
-                        );
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    console.error("AJAX Error:", textStatus, errorThrown);
-                    toastr.error(errorThrown);
-                }
-            });
-            return false;
+                $('#set_primary_position').data('formUrl', formUrl);
+                $('#set_primary_position').data('formData', formData);
+                $('#set_primary_position').data('formElement', currentForm);
+
+                return false;
+            } else {
+                saveEmploymentData(formUrl, formData, currentForm);
+
+                vmPrimary.isSortOnly = false;
+                return false;
+            }
+
         }
     });
 };
@@ -4804,6 +4892,9 @@ $("#m_datepicker-date_hired")
     }).on("changeDate", function (e) {
         const probeeEndDate = moment(e.date).add(180, 'days').format('YYYY-MM-DD');
         $("#m_datepicker-date_end_prob").val(probeeEndDate).datepicker('update');
+        $("#m_datepicker-date_hired").val(e.date).datepicker('update');
+
+        vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { date_start: moment(e.date).format('YYYY-MM-DD'), date_end_prob: probeeEndDate });
         setTimeout(() => { $(e.target).validate(); }, 250);
     });
 
@@ -6380,7 +6471,7 @@ var employee_document_upload = function(){
     var val = [];
     var files = [];
     $("#documentupload")
-      .fileupload({
+    .fileupload({
         url: url,
         dataType: "json",
         formData: { csrf_token: _csrf_hash, emp_id : emp_id },
@@ -6395,18 +6486,18 @@ var employee_document_upload = function(){
                 if(result.extension=="jpg" || result.extension=="png" || result.extension=="JPG" || result.extension=="PNG" || result.extension=="jpeg"){
                     
                 }else{
-                  $("#picture").attr("src", "");
+                    $("#picture").attr("src", "");
                 }
                 val.push(renderFile);
                 $("#document_names").val(val);
                 $("#picture").html($("#document_names").val());
             } else {
-              toastr.error(result.toastr_msg, "File error", 5000);
+                toastr.error(result.toastr_msg, "File error", 5000);
             }
         }
         
     });
-  }
+}
 
 
 function displayDriversLicense(){
@@ -6537,7 +6628,7 @@ $("#view-btn button").on('click', function(){
         }else{
             $('#list').removeClass('active').removeClass('btn-accent').addClass('btn-default');
             $('#grid').addClass('active');
- 
+
             $("#table-employee").addClass('grid').removeClass('list');
             $("#table-employee tbody").addClass('grid').removeClass('list');
             $("#table-employee tbody td #details #grid").css('display', 'flex');
@@ -6594,9 +6685,9 @@ $('#offense-tabs .nav-link').on('click', function(e) {
     $(this).addClass('active');
     var targetId = $(this).attr('href');
     $(targetId).addClass('active show');
- });
+});
 
- $('#collapseOffenses').on('shown.bs.collapse', function() {
+$('#collapseOffenses').on('shown.bs.collapse', function() {
     $('#offense-tabs .nav-link').removeClass('active');
     $('#offense-content .tab-pane').removeClass('active show');
     $('#collapseOffenses .nav-tabs .nav-link:first').tab('show');
@@ -6647,3 +6738,220 @@ function openCert(name) {
         }
     });
 }
+
+const vmPrimary = new Vue({
+    el: "#set_primary_position",
+    data: { positions: {}, isSortOnly: false },
+    methods: {
+        savePrimaryPosition(){
+            const formUrl = $('#set_primary_position').data('formUrl');
+            const formData = $('#frmEditEmploymentData').serialize(); // retrieve the latest changes in multiple position
+            const currentForm = $('#set_primary_position').data('formElement');
+
+            if (!this.isSortOnly && this.positions.length > 0) {
+                if ( typeof vmTab3.vm_tab3.multiple_position !== 'undefined' && vmTab3.vm_tab3.multiple_position.length > 0 && this.positions.length == 0) {
+                    saveEmploymentData(formUrl, formData, currentForm);
+                } else {
+                    Swal.fire({
+                        title: "Save Changes?",
+                        text: "Are you sure you want to save changes?",
+                        icon: "question",
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        showCancelButton: false,
+                        confirmButtonText: "Submit"
+                    }).then(response => {
+                        if (response.isConfirmed) {
+                            $("#set_primary_position").modal('hide');
+    
+                            setTimeout( function () {
+                                saveEmploymentData(formUrl, formData, currentForm);
+                            }, 750)
+                        }
+                    });
+                }
+            } else {
+                Swal.fire({
+                    title: "Save Changes?",
+                    text: "Are you sure you want to save changes?",
+                    icon: "question",
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    showCancelButton: false,
+                    confirmButtonText: "Submit"
+                }).then(response => {
+                    if (response.isConfirmed) {
+                        $("#set_primary_position").modal('hide');
+                    }
+                });
+            }
+
+        },
+        isEmpty(arr) {
+            return $.isEmptyObject(arr)
+        }
+    },
+});
+
+var PortletDraggable = function () {
+    return {
+        init: function () {
+            $("#m_sortable_portlets").sortable({
+                connectWith: ".m-portlet__head",
+                items: ".m-portlet",
+                opacity: 0.8,
+                handle: '.m-portlet__head',
+                coneHelperSize: true,
+                placeholder: 'm-portlet--sortable-placeholder',
+                forcePlaceholderSize: true,
+                tolerance: "pointer",
+                helper: "clone",
+                tolerance: "pointer",
+                forcePlaceholderSize: !0,
+                helper: "clone",
+                cancel: ".m-portlet--sortable-empty",
+                revert: 250,
+                start: function (event, ui) {
+                    originalIndex = ui.item.index();
+                },
+                update: function (b, c) {
+                    const newData = [];
+                    const _temp = [];
+                    $('#m_sortable_portlets .m-portlet').each(function (index) {
+                        const id = $(this).data('id');
+                        const text = $(this).find('.position-text').text().trim();
+
+                        newData.push({
+                            id: id,
+                            text: text,
+                            primary: index === 0 ? 1 : 0,
+                            sort: index
+                        });
+                    });
+
+                    vmPrimary.positions = [...newData];
+                    vmTab3.multiple_position = [...newData];
+                    vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { multiple_position: newData });
+                    vmTab3.positionSelect2('#m--input-position_id', true, vmTab3.vm_tab3.position, true, newData);
+                }
+            });
+        }
+    };
+}();
+
+function saveEmploymentData(formUrl, formData, currentForm) {
+    $.ajax({
+        url: formUrl,
+        type: "post",
+        dataType: "json",
+        data: formData,
+        beforeSend: function () {
+            $(currentForm)
+                .find(".btn-submit")
+                .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+        },
+        success: function (json) {
+            if (json.response) {
+                toastr.success(
+                    json.toastr_msg,
+                    "Employee data has been updated.",
+                    5000
+                );
+                var _respData = json.data;
+                var _newData = Object.assign(
+                    {},
+                    {
+                        display_name: _respData.display_name,
+                        display_email: _respData.display_email,
+                        display_avatar: _respData.pic_filename
+                    }
+                );
+                leftPanel.left_pane = _newData;
+                _tempContentData.data = Object.assign({}, json.data);
+
+                if(typeof vmTab3.vm_tab3 != 'undefined' && Object.keys(vmTab3.vm_tab3).length > 0){
+                    let { vm_tab3 } = vmTab3;
+                    // vm_tab3 = Object.assign({}, vm_tab3, json.data); -> commented as it doesnt overwrite the old the after updating the record
+                    vmTab3.vm_tab3 = Object.assign({}, vm_tab3, json.data);
+
+                    if (json.data.is_multiple_position == 1) {
+                        let intersection = [];
+                        const sortMap = new Map();
+
+                        vmTab3.vm_tab3.multiple_position.forEach(p => {
+                            sortMap.set(parseInt(p.id), {
+                                sort: parseInt(p.sort),
+                                primary: parseInt(p.is_primary) // ensure boolean or numeric consistency
+                            });
+                        });
+                        
+                        intersection = tempDropdownData.dropdown_position
+                        .filter(a1 =>
+                            vmTab3.vm_tab3.multiple_position.some(a2 => parseInt(a2.id) === parseInt(a1.id))
+                        )
+                        .map(item => {
+                            const data = sortMap.get(parseInt(item.id));
+                            return {
+                                ...item,
+                                primary: data?.primary,
+                                sort: data?.sort
+                            };
+                        })
+                        .sort((a, b) => {
+                            if (b.primary !== a.primary) {
+                                return b.primary - a.primary;
+                            }
+                            return a.sort - b.sort;
+                        });
+
+                        $("#m--input-position_id").prop("multiple", true);
+                        $("#m--input-position_id").attr('name', 'position[]');
+                        vmTab3.multiple_position = [...intersection];
+                        vmTab3.positionSelect2('#m--input-position_id', true, vmTab3.vm_tab3.position, true, intersection);
+                    } else {
+                        vmTab3.multiple_position = [];
+                    }
+                }
+                // vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, json.data);
+                getJobDescription();
+                getEmployeePerformanceRating();
+                $("#change_employment_info").val(0);
+                $("#employment_information i").remove();
+            } else {
+                toastr.error(
+                    json.toastr_msg,
+                    "Error updating employee data!",
+                    5000
+                );
+            }
+
+            $(currentForm)
+                .find(".btn-submit")
+                .removeClass(
+                    "m-btn--custom m-loader m-loader--light m-loader--right"
+                );
+
+            if (vmPrimary.positions.length > 0) {
+                vmPrimary.positions = [];
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            console.error("AJAX Error:", textStatus, errorThrown);
+            toastr.error(errorThrown);
+        }
+    });
+}
+
+const vmJobDesc = new Vue({
+    el: "#job_description-content",
+    data: { row: {}, is_multiple_position: false },
+    methods: {
+        isEmpty(arr) {
+            return $.isEmptyObject(arr)
+        }
+    }
+});
