@@ -11,6 +11,7 @@ class Cronjob_reports extends MY_Controller {
         $this->load->model("eforms/accountability_m", "accountability");
         $this->load->model("sms/Contacts_model", "contacts");
         $this->load->model("hris/employee_model", "employee");
+        $this->load->model('gcctime/timesheet_model', 'timesheet');
     }
 
     function generate_daily_loa_summary($email=false){
@@ -782,6 +783,13 @@ class Cronjob_reports extends MY_Controller {
 
     public function scheduled_resigned_inactive($date = null){
         $data = $this->employee->setScheduledEmployeeInactive($date);
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function automated_approve_ot($date = null){
+        $data = $this->timesheet->automated_approve_ot($date);
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));

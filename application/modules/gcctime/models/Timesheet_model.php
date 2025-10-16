@@ -35,6 +35,7 @@ class Timesheet_model extends CI_Model{
     protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
     protected $tbl_payroll_sheet = "payroll.payroll_sheet";
     protected $tbl_ps_employee_regular_ndiff = "payroll.employee_regular_ndiff";
+    protected $tbl_auto_overtime = 'payroll.employee_auto_overtime';
 
     private $db_debug;
     private $logged_in_user;
@@ -9838,5 +9839,24 @@ class Timesheet_model extends CI_Model{
         }
 
         return $ot_night_diff;
+    }
+
+    public function automated_approve_ot($date) {
+        $result = array();
+
+        $this->db->select('employee_id');
+        $this->db->where('allow_auto_overtime', 1);
+        $this->db->from($this->tbl_auto_overtime);
+        $query = $this->db->get();
+
+        $this->db->reset_query();
+
+        if ($query->num_rows() > 0) {
+            $ids = array_column($query->result(), 'employee_id');
+            
+            // $this->db->
+        }
+
+        return $result;
     }
 }
