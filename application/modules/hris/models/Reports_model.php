@@ -112,7 +112,7 @@ class Reports_model extends CI_Model{
         $joinArr = array(
             array(
                 "table" => "gcchris.tblcompanies company",
-                "condition" => "company.id = emp.company_id",
+                "condition" => "company.id = emp.company_id AND company.is_archived = 0 AND company.exclude = 0",
                 "option" => "LEFT"),
             array(
                 "table" => "gcchris.tbldepartments department",
@@ -282,6 +282,8 @@ class Reports_model extends CI_Model{
         $where = array(
             "emp.work_status" => $work_status,
             "emp.employee_status" => "Active",
+            "company.is_archived" => 0,
+            "company.exclude" => 0
         );
 
         $this->db->select($select);
@@ -551,7 +553,7 @@ class Reports_model extends CI_Model{
             
         $joinArr = array(
             array('table' => 'gcchris.tblcompanies comp',
-                'condition' => 'comp.code = emp.company_id OR comp.id = emp.company_id',
+                'condition' => 'comp.code = emp.company_id OR comp.id = emp.company_id AND comp.is_archived = 0 AND comp.exclude = 0',
                 'option' => 'LEFT'),
             array('table' => 'gcchris.tbldepartments dep',
                 'condition' => 'dep.id = emp.department_id',
@@ -2061,6 +2063,8 @@ class Reports_model extends CI_Model{
             }
 
             $this->db->where('a.is_archived', 0);
+            $this->db->where('b.is_archived', 0);
+            $this->db->where('b.exclude', 0);
             $this->db->where('DATE(a.date_start) >= ', $firstDay);
             $this->db->where('DATE(a.date_start) <= ', $lastDay);
 
@@ -2260,6 +2264,8 @@ class Reports_model extends CI_Model{
         if ($company){ $this->db->where('a.company_id', $company); }
 
         $this->db->where('a.is_archived', 0);
+        $this->db->where('b.is_archived', 0);
+        $this->db->where('b.exclude', 0);
         $groupedGenerated = $hasDepartment ? ', c.code' : 'b.code';
         $this->db->group_by("MONTH(a.date_start), $groupedGenerated");
         $query = $this->db->get();
@@ -2289,6 +2295,8 @@ class Reports_model extends CI_Model{
         if ($company){ $this->db->where('a.company_id', $company); }
 
         $this->db->where('a.is_archived', 0);
+        $this->db->where('b.is_archived', 0);
+        $this->db->where('b.exclude', 0);
 
         $groupedGenerated = $hasDepartment ? ', c.code' : 'b.code';
         $this->db->group_by("MONTH(a.date_end), $groupedGenerated");
@@ -2700,6 +2708,8 @@ class Reports_model extends CI_Model{
         $this->db->join($this->positionTable." as pos", "emp.position = pos.id", "LEFT");
         $this->db->join($this->defaultStationTable." as dsl", "emp.id = dsl.employee_id", "LEFT");
         $this->db->where('emp.employee_status', 'Active');
+        $this->db->where('comp.is_archived', 0);
+        $this->db->where('comp.exclude', 0);
         if($company){
             $this->db->where('emp.company_id', $company);
         }
@@ -2749,6 +2759,9 @@ class Reports_model extends CI_Model{
         $this->db->join($this->positionTable." as pos", "emp.position = pos.id", "LEFT");
         $this->db->join($this->defaultStationTable." as dsl", "emp.id = dsl.employee_id", "LEFT");
         $this->db->where('emp.employee_status', 'Active');
+        $this->db->where('comp.is_archived', 0);
+        $this->db->where('comp.exclude', 0);
+        
         if($company){
             $this->db->where('emp.company_id', $company);
         }
