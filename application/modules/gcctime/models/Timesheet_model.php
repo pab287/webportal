@@ -2373,12 +2373,19 @@ class Timesheet_model extends CI_Model{
                     
                     $_amNdiffStart = strtotime($amNdiffStart);
                     $_amNdiffEnd = strtotime($amNdiffStart) <= $_am_end && strtotime($amNdiffEnd) >= $_am_end ? $_am_end : strtotime($amNdiffEnd);
-    
+                    
                     $tempAmNdiffStart = $tempAmInx >= $_amNdiffStart && $tempAmInx <= $_amNdiffEnd ? $tempAmInx : $_amNdiffStart;
                     $tempAmNdiffEnd = $tempAmOutx >= $_amNdiffStart && $tempAmOutx <= $_amNdiffEnd ? $tempAmOutx : $_amNdiffEnd;
-    
-                    $am_ndiff_rendered = $tempAmNdiffEnd - $tempAmNdiffStart;
-                    $employee_time_sheet->am_ndiff_rendered = round(($am_ndiff_rendered) / 60, 2);
+
+                    /** allow nightdiff checker and computation ***/
+                    $allowNightDiff = $tempAmInx >= $_amNdiffStart && $tempAmInx <= $_amNdiffEnd ? true : false;
+                    $allowNightDiff = $allowNightDiff && $tempAmOutx >= $_amNdiffStart && $tempAmOutx <= $_amNdiffEnd ? true : $allowNightDiff;
+
+                    if($allowNightDiff){
+                        $am_ndiff_rendered = $tempAmNdiffEnd - $tempAmNdiffStart;
+                        $employee_time_sheet->am_ndiff_rendered = round(($am_ndiff_rendered) / 60, 2);
+                    }
+                    /** allow nightdiff checker and computation ***/
                 }
                 /*** regular ndiff am rendered computation ***/
             }
@@ -2463,8 +2470,16 @@ class Timesheet_model extends CI_Model{
     
                     $tempPmNdiffStart = $tempPmInx >= $_pmNdiffStart && $tempPmInx <= $_pmNdiffEnd ? $tempPmInx : $_pmNdiffStart;
                     $tempPmNdiffEnd = $tempPmOutx >= $_pmNdiffStart && $tempPmOutx <= $_pmNdiffEnd ? $tempPmOutx : $_pmNdiffEnd;
-                    $pm_ndiff_rendered = $tempPmNdiffEnd - $tempPmNdiffStart;
-                    $employee_time_sheet->pm_ndiff_rendered = round(($pm_ndiff_rendered) / 60, 2);
+
+                    /** allow nightdiff checker and computation ***/
+                    $allowNextNightDiff = $tempPmInx >= $_pmNdiffStart && $tempPmInx <= $_pmNdiffEnd ? true : false;
+                    $allowNextNightDiff = $allowNextNightDiff && $tempPmOutx >= $_pmNdiffStart && $tempPmOutx <= $_pmNdiffEnd ? true : $allowNextNightDiff;
+                    
+                    if($allowNextNightDiff){
+                        $pm_ndiff_rendered = $tempPmNdiffEnd - $tempPmNdiffStart;
+                        $employee_time_sheet->pm_ndiff_rendered = round(($pm_ndiff_rendered) / 60, 2);
+                    }
+                    /** allow nightdiff checker and computation ***/
                 }
                 /*** regular ndiff pm rendered computation ***/
             }
