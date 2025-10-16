@@ -123,6 +123,8 @@ class Verifylogin extends MY_Controller{
                     return false;
                 }elseif ($row->lockout == 1){
                     $this->form_validation->set_message('check_database', 'This user account is locked. Please contact IT Support');
+                    setcookie('lockout_user', 'true', time() + 3600, "/");
+                    setcookie('username', $username, time() + 3600, "/");
                     $this->core_layout->setEventLog("User account logged in is currently locked out.","login", "error", "gccmaster", "user", $row->emp_id);
                     return false;
                 }
@@ -161,6 +163,8 @@ class Verifylogin extends MY_Controller{
                     $this->db->set('lockout', '1', false);
                     $this->db->set('lockout_dt', 'NOW()', false);
                     $this->form_validation->set_message('check_database', 'This user account is locked. Please contact IT Support');
+                    setcookie('lockout_user', 'true', time() + 3600, "/");
+                    setcookie('username', $username, time() + 3600, "/");
                 }else{
                     $this->db->set('login_attempts', 'login_attempts + 1', false);
                     $this->form_validation->set_message('check_database', 'Invalid username or password! You have (' . ($resend_attempts) . ') remaining tries left before your account is locked.');
@@ -169,6 +173,8 @@ class Verifylogin extends MY_Controller{
                 $this->db->trans_complete();
             }else if(isset($attempts->lockout) && $attempts->lockout == 1){
                 $this->form_validation->set_message('check_database', 'This user account is locked. Please contact IT Support');
+                setcookie('lockout_user', 'true', time() + 3600, "/");
+                setcookie('username', $username, time() + 3600, "/");
             }else{
                 $this->form_validation->set_message('check_database', 'Invalid username or password');
             }
@@ -375,4 +381,11 @@ class Verifylogin extends MY_Controller{
         $post["data"] = $data;
         return $post;
     }
+
+    public function unlock_account(){
+        $data = $this->Login_m->unlockAccount();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+
 }
