@@ -92,6 +92,22 @@
             $this->load->view('core/templates/footer');
         }
 
+        public function auto_overtime(){
+            $this->load->model("Payroll_m", "payroll");
+            $this->core_layout->setPageTitle("Payroll - Employee Auto Overtime");
+            $this->core_layout->setPrivilegeName("auto_overtime");
+            
+            $tempData = array();
+            $tempData["company"] = $this->payroll->select2CompanyData();
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+            $this->core_layout->addJs("js/payroll/employee/auto_overtime.js", true, $tempData);
+
+            $this->load->view('core/templates/header');
+            $this->load->view('payroll/payroll/auto_overtime');
+            $this->load->view('core/templates/footer');
+        }
+
         function employee_masterfile($employee_status = "Active") {
             $employee_status = str_replace("%20", " ", $employee_status);
             $data = $this->employee->employeeMasterfile($employee_status);
@@ -508,4 +524,15 @@
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
         }
+
+        public function get_employee_auto_overtime_list(){
+            $data = $this->employee->getEmployeeAutoOvertimeList();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function update_auto_overtime_status(){
+            $data = $this->employee->updateAutoOvertimeStatus();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
     }

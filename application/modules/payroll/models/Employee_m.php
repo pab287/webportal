@@ -13,6 +13,7 @@
         protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
         protected $tbl_payroll_fixed_taxable = "payroll.fixed_taxable_deduction";
         protected $tbl_ps_regular_ndiff = "payroll.employee_regular_ndiff";
+        protected $tbl_ps_auto_overtime = "payroll.employee_auto_overtime";
 
         private $db_debug;
 
@@ -198,7 +199,9 @@
                     $data->department = empty($department) ? $data->department_id : $department;
 
                     $data->_status = $data->work_status;
-
+                    $row = $this->db->where('employee_id', $id)->get('payroll.employee_auto_overtime')->row();
+                    $data->auto_overtime = ['allow_auto_overtime' => $row->allow_auto_overtime ?? 0,'id' => $row->id ?? 0,];
+                
                     $data->current_company_id = $data->company_id;
                     $data->current_department_id = $data->department_id;
                     $data->current_position_id = $data->position;
@@ -2318,4 +2321,144 @@ public function getEmployeeNightDiffList(){
             return array("response" => false, "toastr_msg" => "Failed to ".($type == "insert" ? "add" : "update")." Regular Night Differential Status.");
         }
     }
+
+    public function getEmployeeAutoOvertimeList(){
+        $rowCount = 0;
+        $rowData = array();
+        $resultset = array();
+        $post = $this->input->post();
+
+        $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+        $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
+        $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+        $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+        $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
+        $params = isset($post['params']) ? $post['params'] : array();
+        $filters = isset($params) && $params ? $params : array();
+
+        $rowData = $this->employeeAutoOvertime($search, $limit, $offset, $sortBy, $sortOrder, $filters);
+        $rowCount = $this->employeeAutoOvertimeCount($search, $filters);
+
+        $resultset["recordsTotal"] = $rowCount;
+        $resultset["recordsFiltered"] = $rowCount;
+        $resultset["data"] = $rowData;
+
+        return $resultset;
+    }
+
+    private function tableAutoOvertime($search=null, $filterFields = [], $filters = []){
+        $this->db->select("emp.id as employee_id, emp.idno, UPPER(CONCAT(emp.lastname,
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
+            END, ', ', emp.firstname,
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(' ', SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+            END)) as employee_name, UPPER(cmp.code) as company_code, UPPER(IFNULL(pos.name, emp.position)) as position,
+            auto.allow_auto_overtime, auto.id, IFNULL(auto.allow_auto_overtime, '0') as allow_auto_overtime,
+            IFNULL(auto.last_updated_at, auto.created_at) as last_updated_at,
+            IF(auto.last_updated_by = 0,
+                CONCAT(UPPER(TRIM(cemp.firstname)),
+                CASE WHEN UPPER(TRIM(cemp.middlename)) != 'N/A' AND UPPER(TRIM(cemp.middlename)) != 'NONE' AND
+                        TRIM(cemp.middlename) !='' AND cemp.middlename IS NOT NULL
+                    THEN CONCAT(' ', UPPER(SUBSTR(cemp.middlename, 1, 1)), '. ') ELSE ''
+                END,' ', UPPER(TRIM(cemp.lastname)),
+                CASE WHEN UPPER(TRIM(cemp.suffix)) != 'N/A' AND
+                    UPPER(TRIM(cemp.suffix !='NONE')) AND cemp.suffix !='' AND
+                    cemp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(cemp.suffix))) ELSE ''
+                END),
+                CONCAT(UPPER(TRIM(uemp.firstname)),
+                CASE WHEN UPPER(TRIM(uemp.middlename)) != 'N/A' AND UPPER(TRIM(uemp.middlename)) != 'NONE' AND
+                        TRIM(uemp.middlename) !='' AND uemp.middlename IS NOT NULL
+                    THEN CONCAT(' ', UPPER(SUBSTR(uemp.middlename, 1, 1)), '.') ELSE ''
+                END,' ', UPPER(TRIM(uemp.lastname)),
+                CASE WHEN UPPER(TRIM(uemp.suffix)) != 'N/A' AND
+                    UPPER(TRIM(uemp.suffix !='NONE')) AND uemp.suffix !='' AND
+                    uemp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(uemp.suffix))) ELSE ''
+                END)
+            ) as updated_by");
+        $this->db->from($this->employeeTable . " emp");
+        $this->db->join($this->companyTable . " cmp", "cmp.id = emp.company_id", "left");
+        $this->db->join($this->positionTable . " pos", "pos.id = emp.position OR pos.name = emp.position", "left");
+        $this->db->join($this->tbl_ps_auto_overtime . " auto", "auto.employee_id = emp.id", "left");
+        $this->db->join($this->employeeTable." as cemp", "cemp.id = auto.created_by", "left");
+        $this->db->join($this->employeeTable." as uemp", "uemp.id = auto.last_updated_by", "left");
+        $this->db->where("emp.employee_status", "Active");
+        if(isset($filters["company"]) && intval($filters["company"]) > 0) { $this->db->where("cmp.id", $filters["company"]); }
+        if(isset($filters["serialized_employees"]) && $filters["serialized_employees"]) {
+            $arrIds = explode(",", $filters["serialized_employees"]);
+            $this->db->where_in("emp.id", $arrIds);
+        } elseif (isset($filters["employees"]) && is_array($filters["employees"]) && !empty($filters["employees"])) {
+            $this->db->where_in("emp.id", $filters["employees"]);
+        }
+        if (isset($search) && $search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                ($key == 0) ? $this->db->like($field, $search, "both") : $this->db->or_like($field, $search, "both");
+            }
+            $this->db->group_end();
+        }
+
+        return $this->db;
+    }
+
+    private function employeeAutoOvertime($search = null, $limit = 10, $offset = 0, $sortBy=[], $sortOrder=[], $filters=[]){
+        $filterFields = array("emp.firstname", "emp.lastname", "emp.idno");
+        $queryDb = $this->tableAutoOvertime($search, $filterFields, $filters);
+        if($limit != -1){ $queryDb->limit($limit, $offset); }
+        if (isset($sortOrder)) {
+            $i = $sortOrder[0]['column'];
+            $queryDb->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        } else { $queryDb->order_by('emp.lastname, emp.firstname', 'asc'); }
+        $query = $queryDb->get();
+        if ($query->num_rows() > 0) { return $query->result(); }
+        else { return array(); }
+    }
+
+    private function employeeAutoOvertimeCount($search, $filters){
+        $filterFields = array("emp.firstname", "emp.lastname", "emp.idno");
+        $queryDb = $this->tableAutoOvertime($search, $filterFields, $filters);
+        $query = $queryDb->get();
+        return $query->num_rows();
+    }
+
+    
+    public function updateAutoOvertimeStatus(){
+        $post = $this->input->post();
+        $resultset = array();
+        if(isset($post) && $post){
+            $resultset = $this->insertUpdateAutoOvertime($post);
+        }else{
+            $resultset["response"] = false;
+            $resultset["toastr_msg"] = "Failed to update Auto Overtime Status, no post data found.";
+        }
+        return $resultset;
+    }
+
+    protected function insertUpdateAutoOvertime($data = []){
+        $response = false;
+        $type = isset($data["id"]) && $data["id"] ? "update" : "insert";
+        $data["allow_auto_overtime"] = isset($data["allow_auto_overtime"]) && intval($data["allow_auto_overtime"]) === 1 ? 0 : 1;
+        if(isset($data["id"]) && $data["id"]){
+            $where = array("id"=>$data["id"]);
+            unset($data["id"], $data["employee_id"]);
+            
+            $data["last_updated_at"] = date("Y-m-d H:i:s");
+            $data["last_updated_by"] = $this->core_layout->getCurrentEmployeeId();
+            $response = $this->db->update($this->tbl_ps_auto_overtime, $data, $where);
+        }else{
+            unset($data["id"]);
+            $data["created_at"] = date("Y-m-d H:i:s");
+            $data["created_by"] = $this->core_layout->getCurrentEmployeeId();
+            $response = $this->db->insert($this->tbl_ps_auto_overtime, $data);
+        }
+
+        if($response && $this->db->affected_rows() > 0){
+            return array("response" => true, "toastr_msg" => "Auto Overtime has been ".($type == "insert" ? "added" : "updated")." successfully.");
+        }else{
+            return array("response" => false, "toastr_msg" => "Failed to ".($type == "insert" ? "add" : "update")." Auto Overtime.");
+        }
+    }
+
 }

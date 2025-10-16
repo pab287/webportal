@@ -46,6 +46,7 @@ class Employee_model extends CI_Model {
     protected $loggedinData;
     protected $loggedInUsername;
     protected $multiplePositionTable = 'gcchris.tbl_employee_multi_positions';
+    protected $tbl_ps_auto_overtime = "payroll.employee_auto_overtime";
 
     protected $questions = array(
         array("q" => "HAVE YOU EVER BEEN EMPLOYED BY US BEFORE? IN WHAT BRANCH AND WHAT POSITION?", "a" => 1),
@@ -3334,8 +3335,12 @@ class Employee_model extends CI_Model {
         $default_station = isset($post["default_station"]) && $post["default_station"] ? $post["default_station"]: null;
         $workSchedule = isset($post["work_schedule"]) && $post["work_schedule"] ? $post["work_schedule"]: 0;
         $work_station = isset($post["work_station"]) && $post["work_station"] ? $post["work_station"]: array();
+
+        $allow_ot['id'] = isset($post["auto_overtime_id"]) && $post["auto_overtime_id"] ? $post["auto_overtime_id"]: 0;
+        $allow_ot['allow_auto_overtime'] = isset($post["allow_auto_overtime"]) && $post["allow_auto_overtime"] ? $post["allow_auto_overtime"]: 0;
+        $allow_ot['employee_id'] = $post["id"];
         if (isset($post) && $post) {
-            unset($post["csrf_token"], $post["current_status"], $post["current_company_id"], $post["current_department_id"], $post["current_position_id"], $post["work_station"],$post["current_supervisor"], $post["default_station"], $post["work_schedule"]);
+            unset($post["csrf_token"], $post["current_status"], $post["current_company_id"], $post["current_department_id"], $post["current_position_id"], $post["work_station"],$post["current_supervisor"], $post["default_station"], $post["work_schedule"], $post["allow_auto_overtime"], $post["auto_overtime_id"]);
             $employeeId = $post["id"];
             $currentEmployeeData = $this->getEmployeeData($employeeId);
             $_tempData = $this->core_layout->getEmployeeData($employeeId);
@@ -3546,6 +3551,8 @@ class Employee_model extends CI_Model {
                                 }
                             }
                         }
+
+                        $allow_overtime = $this->insertUpdateAutoOvertime($allow_ot);
                         
                         $resultset["response"] = true;
                         $resultset["data"] = $this->getEmployeeData($employeeId);
@@ -12986,4 +12993,42 @@ class Employee_model extends CI_Model {
 
         return implode(', ', $data);
     }
+
+    private function insertUpdateAutoOvertime($data = []){
+        $response = false;
+        $data["allow_auto_overtime"] = isset($data["allow_auto_overtime"]) ? (int)$data["allow_auto_overtime"] : 0;
+        $employee_id = $data["employee_id"];
+    
+        $current = $this->db->select("id, allow_auto_overtime")->where("employee_id", $employee_id)->get($this->tbl_ps_auto_overtime)->row();
+    
+        if ($current) {
+            if ((int)$current->allow_auto_overtime === $data["allow_auto_overtime"]) {
+                return ["response" => false, "toastr_msg" => "No changes detected in Auto Overtime."];
+            }
+            $updateData = [
+                "allow_auto_overtime" => $data["allow_auto_overtime"],
+                "last_updated_at" => date("Y-m-d H:i:s"),
+                "last_updated_by" => $this->core_layout->getCurrentEmployeeId(),
+            ];
+            $response = $this->db->update($this->tbl_ps_auto_overtime,$updateData,["employee_id" => $employee_id]);
+            $type = "update";
+        } else {
+            $insertData = [
+                "employee_id" => $employee_id,
+                "allow_auto_overtime" => $data["allow_auto_overtime"],
+                "created_at" => date("Y-m-d H:i:s"),
+                "created_by" => $this->core_layout->getCurrentEmployeeId(),
+            ];
+            $response = $this->db->insert($this->tbl_ps_auto_overtime, $insertData);
+            $type = "insert";
+        }
+    
+        if ($response && $this->db->affected_rows() > 0) {
+            return ["response" => true, "toastr_msg" => "Auto Overtime has been " . ($type === "insert" ? "added" : "updated") . " successfully."];
+        }
+    
+        return ["response" => false,"toastr_msg" => "Failed to " . ($type === "insert" ? "add" : "update") . " Auto Overtime."];
+    }
+    
+
 }
