@@ -3505,8 +3505,8 @@ class Cash_advance_m extends CI_Model {
         if ($query->num_rows() > 0) {
             $arrData = array();
             foreach ($query->result() as $key => $rs) {
-                $ca_status = $this->get_ca_status_details($rs->reference_no);
-                $get_active = $this->getca_ActiveBalance($rs->reference_no);
+                $ca_status = $this->get_ca_status_report_details($rs->reference_no);
+                $get_active = $this->getca_ActiveBalance_report($rs->reference_no);
 
                 if($ca_status->reference != ''){
                     $rs->active = $ca_status->active;
@@ -3518,7 +3518,7 @@ class Cash_advance_m extends CI_Model {
                     $rs->rembalance = floatval($total) > 0 ? $total : 0;
                     $rs->loan_id = $ca_status->loan_id;
 
-                    $paymentHistory = $this->getca_remaining_balance($ca_status->loan_id, $startDate, $endDate);
+                    $paymentHistory = $this->getca_remaining_balance($ca_status->loan_id);
                     $total_deduction = array_sum(array_column($paymentHistory, 'amount_due'));
                     $rs->total_deduction = $total_deduction;
                     $rs->deduction = $paymentHistory;
@@ -3725,7 +3725,7 @@ class Cash_advance_m extends CI_Model {
     }
     /** get employee name function **/
 
-    function getca_remaining_balance($id, $from, $to){
+    function getca_remaining_balance($id){
         $resultSet = array();
 
         //retained other columns in select for future reference or feature to add to show all payment history based on the generated date
@@ -3737,6 +3737,30 @@ class Cash_advance_m extends CI_Model {
         $this->db->order_by("ps.pay_date", "DESC");
         $resultSet = $this->db->get("payroll.payroll_sheet_loan_payments psloanpayments")->result();
         return $resultSet;
+    }
+
+    function get_ca_status_report_details($data){
+        $this->db->select('a.active, a.paid, IF(SUM(b.amount_due) >= a.amount, 1, 0) as loan_amount, a.reference, a.id as loan_id');
+        $this->db->from('gcchris.loans a');
+        $this->db->join('payroll.payroll_sheet_loan_payments b', 'b.loan_id = a.id', 'left');
+        $this->db->join("payroll.payroll_sheet c", "c.id = b.payroll_sheet_id", "INNER");
+        $this->db->where("c.posted", 1);
+        $this->db->order_by("c.pay_date", "DESC");
+        $this->db->where('reference', $data);
+        $query = $this->db->get();
+        return $query->row();
+    }
+
+    function getca_ActiveBalance_report($data){
+        $this->db->select('SUM(b.amount_due) as amount_due, GROUP_CONCAT(b.amount_due) as temp_amt, a.amount as loan_amount, a.id as loan_id');
+        $this->db->from('gcchris.loans a');
+        $this->db->join('payroll.payroll_sheet_loan_payments b', 'b.loan_id = a.id', 'left');
+        $this->db->join("payroll.payroll_sheet c", "c.id = b.payroll_sheet_id", "INNER");
+        $this->db->where("c.posted", 1);
+        $this->db->order_by("c.pay_date", "DESC");
+        $this->db->where('reference', $data);
+        $query = $this->db->get();
+        return $query->row();
 
     }
 }
