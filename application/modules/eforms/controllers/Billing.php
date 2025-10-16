@@ -1073,6 +1073,27 @@ class Billing extends MY_Controller {
       ->set_content_type('json')
       ->set_output(json_encode($data));
     }
-    
+
+    // =================================== Remittance ===================================
+    public function remittance() {
+        $this->core_layout->setPageTitle("Hydra - Remittance");
+        $this->core_layout->setPrivilegeName("billing_remittance");
+
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
+
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+
+        $this->core_layout->addJs("js/eforms/billing/reports_soa/remittance.js", true);
+        $this->load->view('core/templates/header');
+        $this->load->view('eforms/billing/reports_soa/remittance');
+        $this->load->view('core/templates/footer');
+    }
+
+    public function remittance_date_payments_selected() {
+        $data = $this->billing->remittance_date_payments_selected();
+        $this->output->set_content_type('json')->set_output(json_encode($data));  
+    }
 }
 

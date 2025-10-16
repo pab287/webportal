@@ -6527,252 +6527,329 @@ class Billing_m extends CI_Model {
     }
 
     function disconnectSelected(){
-      $current_date = date('Y-m-d');
-      $post = $this->input->post();
-      $accounts = array();
+        $current_date = date('Y-m-d');
+        $post = $this->input->post();
+        $accounts = array();
 
-      if(isset($post['all']) && $post['all'] == 'all'){
-        $this->db->select("b.accountno, a.total_charges, b.firstname, b.lastname, b.middlename, b.id");
-        $this->db->from("hydra_billing.bills a");
-        $this->db->join("hydra_billing.accounts b", "b.id = a.account_id", "LEFT");
-        $this->db->where("a.is_paid",'0');
-        $this->db->where("b.is_disconnected", 0);
-        $this->db->where("a.due_date <",$current_date);
-        
-        $this->db->group_by("b.id");
-        $this->db->order_by("a.due_date","DESC");
-        
-        $query = $this->db->get();
+        if(isset($post['all']) && $post['all'] == 'all'){
+            $this->db->select("b.accountno, a.total_charges, b.firstname, b.lastname, b.middlename, b.id");
+            $this->db->from("hydra_billing.bills a");
+            $this->db->join("hydra_billing.accounts b", "b.id = a.account_id", "LEFT");
+            $this->db->where("a.is_paid",'0');
+            $this->db->where("b.is_disconnected", 0);
+            $this->db->where("a.due_date <",$current_date);
+            
+            $this->db->group_by("b.id");
+            $this->db->order_by("a.due_date","DESC");
+            
+            $query = $this->db->get();
 
-        if($query->num_rows() > 0){
-            foreach($query->result_array() as $_query){
-              $update = $this->db->update("hydra_billing.accounts", array("is_disconnected"=>1, "disconnect_date"=>date("Y-m-d h:i:s")), array("id"=>$_query['id']));
-              if($update){
-                $accounts[] = $_query['firstname']." ".$_query['lastname'];
-                $customer_name = $_query['firstname']." ".$_query['lastname'];
+            if($query->num_rows() > 0){
+                foreach($query->result_array() as $_query){
+                $update = $this->db->update("hydra_billing.accounts", array("is_disconnected"=>1, "disconnect_date"=>date("Y-m-d h:i:s")), array("id"=>$_query['id']));
+                if($update){
+                    $accounts[] = $_query['firstname']." ".$_query['lastname'];
+                    $customer_name = $_query['firstname']." ".$_query['lastname'];
+                    $this->core_layout->setEventLog("Accounts - ".'Water disconnected '.$customer_name,"update", "success", "hydra_billing", "user");
+                }
+                }
+            }
+        }else{
+            foreach($post['overdue_accounts'] as $temp_accounts){
+            $update = $this->db->update("hydra_billing.accounts", array("is_disconnected"=>1, "disconnect_date"=>date("Y-m-d h:i:s")), array("id"=>$temp_accounts));
+            if($update){
+                $accounts_query = $this->db->get_where("hydra_billing.accounts", array('id'=>$temp_accounts))->row();
+                $accounts[] = $accounts_query->firstname." ".$accounts_query->lastname;
+                $customer_name = $accounts_query->firstname." ".$accounts_query->lastname;
                 $this->core_layout->setEventLog("Accounts - ".'Water disconnected '.$customer_name,"update", "success", "hydra_billing", "user");
-              }
+            }
             }
         }
-      }else{
+
+        return $accounts;
+    }
+
+    function reconnectSelected(){
+        $post = $this->input->post();
+        $accounts = array();
         foreach($post['overdue_accounts'] as $temp_accounts){
-          $update = $this->db->update("hydra_billing.accounts", array("is_disconnected"=>1, "disconnect_date"=>date("Y-m-d h:i:s")), array("id"=>$temp_accounts));
-          if($update){
+            $update = $this->db->update("hydra_billing.accounts", array("is_disconnected"=>0), array("id"=>$temp_accounts));
+            if($update){
             $accounts_query = $this->db->get_where("hydra_billing.accounts", array('id'=>$temp_accounts))->row();
             $accounts[] = $accounts_query->firstname." ".$accounts_query->lastname;
             $customer_name = $accounts_query->firstname." ".$accounts_query->lastname;
             $this->core_layout->setEventLog("Accounts - ".'Water disconnected '.$customer_name,"update", "success", "hydra_billing", "user");
-          }
+            }
         }
-      }
 
-      return $accounts;
-    }
-
-    function reconnectSelected(){
-      $post = $this->input->post();
-      $accounts = array();
-      foreach($post['overdue_accounts'] as $temp_accounts){
-        $update = $this->db->update("hydra_billing.accounts", array("is_disconnected"=>0), array("id"=>$temp_accounts));
-        if($update){
-          $accounts_query = $this->db->get_where("hydra_billing.accounts", array('id'=>$temp_accounts))->row();
-          $accounts[] = $accounts_query->firstname." ".$accounts_query->lastname;
-          $customer_name = $accounts_query->firstname." ".$accounts_query->lastname;
-          $this->core_layout->setEventLog("Accounts - ".'Water disconnected '.$customer_name,"update", "success", "hydra_billing", "user");
-        }
-      }
-
-      return $accounts;
+        return $accounts;
     }
 
     function disconnectedAccounts(){
-      $accounts = array();
-      $resultarray = array();
-      $post = $this->input->post();
-      $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
-      $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
-      
-      $this->db->select("firstname, middlename, lastname, disconnect_date, accountno");
-      $this->db->from("hydra_billing.accounts");
-      $this->db->where("is_disconnected",'1');
-      $this->db->order_by("disconnect_date", 'DESC');
-      if($limit != -1){
-        $this->db->limit($limit, $offset);
-      }
-      $query = $this->db->get();
+        $accounts = array();
+        $resultarray = array();
+        $post = $this->input->post();
+        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
+        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+        
+        $this->db->select("firstname, middlename, lastname, disconnect_date, accountno");
+        $this->db->from("hydra_billing.accounts");
+        $this->db->where("is_disconnected",'1');
+        $this->db->order_by("disconnect_date", 'DESC');
+        if($limit != -1){
+            $this->db->limit($limit, $offset);
+        }
+        $query = $this->db->get();
 
-      if($query->num_rows() > 0){
-          foreach($query->result_array() as $_query){
-              $data = array();
+        if($query->num_rows() > 0){
+            foreach($query->result_array() as $_query){
+                $data = array();
 
-              $data["customer_name"] = $_query['firstname'].' '.$_query['middlename'][0].' '.$_query['lastname'];
-              $data["disconnect_date"] = date('M d, Y', strtotime($_query['disconnect_date']));
-              $data["accountno"] = $_query['accountno'];
-              $resultarray[] = $data;
-          }
-      }
-      return array("data"=>$resultarray, "recordsTotal"=>$this->getDisconnectedAccountCount(), "recordsFiltered"=>$this->getDisconnectedAccountCount());
+                $data["customer_name"] = $_query['firstname'].' '.$_query['middlename'][0].' '.$_query['lastname'];
+                $data["disconnect_date"] = date('M d, Y', strtotime($_query['disconnect_date']));
+                $data["accountno"] = $_query['accountno'];
+                $resultarray[] = $data;
+            }
+        }
+        return array("data"=>$resultarray, "recordsTotal"=>$this->getDisconnectedAccountCount(), "recordsFiltered"=>$this->getDisconnectedAccountCount());
     }
 
     function getDisconnectedAccountCount(){
-      $this->db->select("firstname, middlename, lastname, disconnect_date");
-      $this->db->from("hydra_billing.accounts");
-      $this->db->where("is_disconnected",'1');
-      $query = $this->db->get();
-      return $query->num_rows();
-  }
-
-  function getPaymentCollectionReport(){
-    $resultarray = array();
-    $post = $this->input->post();
-
-    $order_val = array(array("column"=>"6", "dir"=>"desc"));
-    $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
-    $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
-
-    if (isset($post['date'])) {
-      $date = explode("-", $post['date']);
-    } else {
-      $date = date("Y-m-d");
+        $this->db->select("firstname, middlename, lastname, disconnect_date");
+        $this->db->from("hydra_billing.accounts");
+        $this->db->where("is_disconnected",'1');
+        $query = $this->db->get();
+        return $query->num_rows();
     }
 
-    $this->db->select("
-        payment.acknowledgement_receipt,
-        payment.ref_no as payment_ref,
-        payment.payment_type,
-        payment.received_amount,
-        payment.balance_covered,
-        payment.payment_date,
-        payment.created_date as applied_payment_date,
-        payment.is_archive,
+    function getPaymentCollectionReport(){
+        $resultarray = array();
+        $post = $this->input->post();
 
-        bill.ref_no as bill_ref,
-        
-        UPPER(CONCAT(acct.firstname, ' ', acct.lastname)) as account,
-        CONCAT(emp.firstname, ' ', emp.lastname) as cashier
-    ");
+        $order_val = array(array("column"=>"6", "dir"=>"desc"));
+        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+        $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
 
-    $this->db->from("hydra_billing.payments payment");
-    $this->db->join("hydra_billing.accounts acct", "acct.id=payment.account_id", "LEFT");
-    $this->db->join("hydra_billing.bills bill", "bill.id=payment.bill_id", "LEFT");
-    $this->db->join("gccmaster.tblemployees emp", "emp.id=payment.created_by", "LEFT");
-    $this->db->where("payment.created_by",$post['id']);
-
-    if ($date[0] == $date[1]) {
-        // Single day filter
-        $this->db->where("DATE(payment.created_date)", date("Y-m-d", strtotime($date[0])));
-    } else {
-        // Range filter
-        $this->db->where("payment.created_date >=", date("Y-m-d 00:00:00", strtotime($date[0])));
-        $this->db->where("payment.created_date <=", date("Y-m-d 23:59:59", strtotime($date[1])));
-    }
-    
-    $i = $sortOrder[0]['column'];
-    $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
-
-    $query = $this->db->get();
-    if ($query->num_rows() > 0) {
-        foreach($query->result_array() as $_query) {
-            $data = array();
-
-            $is_archive = $_query["is_archive"];
-
-            if ($is_archive == 0) {
-                $rec_amount = $_query["received_amount"];
-                $balance_covered = $_query["balance_covered"];
-            } else {
-                $rec_amount = 0;
-                $balance_covered = 0;
-            }
-
-            $data["account"] = $_query["account"];
-            $data["bill_ref"] = $_query["bill_ref"];
-            $data["acknowledgement_receipt"] = $_query["acknowledgement_receipt"];
-            $data["payment_ref"] = $_query["payment_ref"];
-            $data["type"] = strtoupper($_query["payment_type"]);
-            $data["received_amount"] = $rec_amount;
-            $data["balance_covered"] = $balance_covered;
-            $data["payment_date"] = date("Y-m-d", strtotime($_query["payment_date"]));
-            $data["applied_payment_date"] = date("Y-m-d", strtotime($_query["applied_payment_date"]));
-            $data["cashier"] = $_query["cashier"];
-            $data["is_archived"] = $is_archive;
-            $data["total_count"] = $query->num_rows();
-            $resultarray[] = $data;
+        if (isset($post['date'])) {
+            $date = explode("-", $post['date']);
+        } else {
+            $date = date("Y-m-d");
         }
 
-        return array("data" => $resultarray, "recordsTotal" => $query->num_rows(), "recordsFiltered" => $query->num_rows());
-    } else {
-        return array("data" => [], "recordsTotal" => 0, "recordsFiltered" => 0);
-    }
-    
-  }
+        $this->db->select("
+            payment.acknowledgement_receipt,
+            payment.ref_no as payment_ref,
+            payment.payment_type,
+            payment.received_amount,
+            payment.balance_covered,
+            payment.payment_date,
+            payment.created_date as applied_payment_date,
+            payment.is_archive,
 
-  function getSalesReport(){
-    $resultarray = array();
-    $post = $this->input->post();
-    if(isset($post['date'])){
-      $date = explode("-", $post['date']);
-    }else{
-      $date = date("Y-m-d");
-    }
-
-    $this->db->select("*");
-    $this->db->from("hydra_billing.payments");
-    if(date("Y-m-d", strtotime($date[0])) == date("Y-m-d", strtotime($date[1]))){
-      $this->db->where("DATE(created_date)", date("Y-m-d", strtotime($date[0])));
-    }else{
-      $this->db->where("DATE(created_date) >",date("Y-m-d", strtotime($date[0])));
-      $this->db->where("DATE(created_date) <",date("Y-m-d", strtotime($date[1])));
-    }
-    $this->db->group_start();
-    $this->db->where("reconnection_fee !=", 0);
-    $this->db->or_where("penalties !=", 'a:0:{}');
-    $this->db->group_end();
-    $query = $this->db->get();
-    
-    if($query->num_rows() > 0){
-        foreach($query->result_array() as $_query){
-            $data = array();
+            bill.ref_no as bill_ref,
             
-            $sumPenalty = 0;
-            $data["payment_ref"] = $_query["ref_no"];
-            $data["payment_date"] = $_query["payment_date"];
-            $data["reconnection_fee"] = number_format($_query["reconnection_fee"],2);
-            $data["type"] = $_query["payment_type"];
-            $data["total_count"] = $query->num_rows();
-            $penalties = unserialize($_query['penalties']);
-            foreach($penalties as $tempPenalty){
-              $sumPenalty += $tempPenalty['overdue'];
+            UPPER(CONCAT(acct.firstname, ' ', acct.lastname)) as account,
+            CONCAT(emp.firstname, ' ', emp.lastname) as cashier
+        ");
+
+        $this->db->from("hydra_billing.payments payment");
+        $this->db->join("hydra_billing.accounts acct", "acct.id=payment.account_id", "LEFT");
+        $this->db->join("hydra_billing.bills bill", "bill.id=payment.bill_id", "LEFT");
+        $this->db->join("gccmaster.tblemployees emp", "emp.id=payment.created_by", "LEFT");
+        $this->db->where("payment.created_by",$post['id']);
+
+        if ($date[0] == $date[1]) {
+            // Single day filter
+            $this->db->where("DATE(payment.created_date)", date("Y-m-d", strtotime($date[0])));
+        } else {
+            // Range filter
+            $this->db->where("payment.created_date >=", date("Y-m-d 00:00:00", strtotime($date[0])));
+            $this->db->where("payment.created_date <=", date("Y-m-d 23:59:59", strtotime($date[1])));
+        }
+        
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+
+        $query = $this->db->get();
+        if ($query->num_rows() > 0) {
+            foreach($query->result_array() as $_query) {
+                $data = array();
+
+                $is_archive = $_query["is_archive"];
+
+                if ($is_archive == 0) {
+                    $rec_amount = $_query["received_amount"];
+                    $balance_covered = $_query["balance_covered"];
+                } else {
+                    $rec_amount = 0;
+                    $balance_covered = 0;
+                }
+
+                $data["account"] = $_query["account"];
+                $data["bill_ref"] = $_query["bill_ref"];
+                $data["acknowledgement_receipt"] = $_query["acknowledgement_receipt"];
+                $data["payment_ref"] = $_query["payment_ref"];
+                $data["type"] = strtoupper($_query["payment_type"]);
+                $data["received_amount"] = $rec_amount;
+                $data["balance_covered"] = $balance_covered;
+                $data["payment_date"] = date("Y-m-d", strtotime($_query["payment_date"]));
+                $data["applied_payment_date"] = date("Y-m-d", strtotime($_query["applied_payment_date"]));
+                $data["cashier"] = $_query["cashier"];
+                $data["is_archived"] = $is_archive;
+                $data["total_count"] = $query->num_rows();
+                $resultarray[] = $data;
             }
-            $data["penalty"] = number_format($sumPenalty,2);
-            $resultarray[] = $data;
+
+            return array("data" => $resultarray, "recordsTotal" => $query->num_rows(), "recordsFiltered" => $query->num_rows());
+        } else {
+            return array("data" => [], "recordsTotal" => 0, "recordsFiltered" => 0);
         }
-    }
-    return array("data"=>$resultarray);
-  }
-
-  function getEmployeeCollector(){
-    $get = $this->input->get();
-    $resultarray = array();
-    if (isset($get['q'])) {
-        $query = $this->db->query("SELECT id, firstname, lastname, middlename
-        FROM gccmaster.tblemployees
-        WHERE (firstname LIKE '%{$get['q']}%' OR lastname LIKE '%{$get['q']}%') ORDER BY id ASC");
-    }else{
-        $query = $this->db->query("SELECT id, firstname, lastname, middlename
-        FROM gccmaster.tblemployees
-        ORDER BY id ASC");
+        
     }
 
-    if ($query->num_rows() > 0) {
-        foreach ($query->result_array() as $_query) {
-            $data = array();
-            $data["id"] = $_query["id"];
-            $data["text"] = $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
-            $resultarray[] = $data;
+    function getSalesReport(){
+        $resultarray = array();
+        $post = $this->input->post();
+        if(isset($post['date'])){
+            $date = explode("-", $post['date']);
+        }else{
+            $date = date("Y-m-d");
         }
+
+        $this->db->select("*");
+        $this->db->from("hydra_billing.payments");
+
+        if(date("Y-m-d", strtotime($date[0])) == date("Y-m-d", strtotime($date[1]))){
+            $this->db->where("DATE(created_date)", date("Y-m-d", strtotime($date[0])));
+        }else{
+            $this->db->where("DATE(created_date) >",date("Y-m-d", strtotime($date[0])));
+            $this->db->where("DATE(created_date) <",date("Y-m-d", strtotime($date[1])));
+        }
+        $this->db->group_start();
+        $this->db->where("reconnection_fee !=", 0);
+        $this->db->or_where("penalties !=", 'a:0:{}');
+        $this->db->group_end();
+        $query = $this->db->get();
+        
+        if($query->num_rows() > 0){
+            foreach($query->result_array() as $_query){
+                $data = array();
+                
+                $sumPenalty = 0;
+                $data["payment_ref"] = $_query["ref_no"];
+                $data["payment_date"] = $_query["payment_date"];
+                $data["reconnection_fee"] = number_format($_query["reconnection_fee"],2);
+                $data["type"] = $_query["payment_type"];
+                $data["total_count"] = $query->num_rows();
+                $penalties = unserialize($_query['penalties']);
+                foreach($penalties as $tempPenalty){
+                $sumPenalty += $tempPenalty['overdue'];
+                }
+                $data["penalty"] = number_format($sumPenalty,2);
+                $resultarray[] = $data;
+            }
+        }
+        return array("data"=>$resultarray);
     }
 
-    return array("results" => $resultarray);
-}
+    function getEmployeeCollector(){
+        $get = $this->input->get();
+        $resultarray = array();
+        if (isset($get['q'])) {
+            $query = $this->db->query("SELECT id, firstname, lastname, middlename
+            FROM gccmaster.tblemployees
+            WHERE (firstname LIKE '%{$get['q']}%' OR lastname LIKE '%{$get['q']}%') ORDER BY id ASC");
+        }else{
+            $query = $this->db->query("SELECT id, firstname, lastname, middlename
+            FROM gccmaster.tblemployees
+            ORDER BY id ASC");
+        }
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $data["id"] = $_query["id"];
+                $data["text"] = $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
+                $resultarray[] = $data;
+            }
+        }
+
+        return array("results" => $resultarray);
+    }
+
+    // =================================== Remittance ===================================
+
+    public function remittance_date_payments_selected() {
+        $resultarray = array();
+        $post = $this->input->post();
+
+        if (isset($post['date'])) {
+            $date = explode("-", $post['date']);
+        } else {
+            $date = date("Y-m-d");
+        }
+
+        $this->db->select("
+            p.id as payment_id,
+            UPPER(CONCAT(a.firstname, ' ', a.lastname)) as account, 
+            b.ref_no as bill_ref, 
+            p.acknowledgement_receipt, 
+            p.ref_no as payment_ref, 
+            p.payment_type as type, 
+            p.received_amount, 
+            p.balance_covered, 
+            CONCAT(e.firstname, ' ', e.lastname) as cashier, 
+            p.payment_date
+        ");
+        $this->db->from("hydra_billing.payments p");
+        $this->db->join("hydra_billing.accounts a", "a.id = p.account_id", "LEFT");
+        $this->db->join("hydra_billing.bills b", "b.id = p.bill_id", "LEFT");
+        $this->db->join("gccmaster.tblemployees e", "e.id = p.created_by", "LEFT");
+        // $this->db->join("hydra_billing.deposited_payment dp", "dp.payment_id = p.id AND dp.is_archive = 0", "LEFT");
+        $this->db->where("p.created_by", $post['id']);
+        // $this->db->where("dp.payment_id IS NULL");
+        
+        if ($date[0] == $date[1]) {
+            // Single day filter
+            $this->db->where("DATE(p.created_date)", date("Y-m-d", strtotime($date[0])));
+        } else {
+            // Range filter
+            $this->db->where("p.created_date >=", date("Y-m-d 00:00:00", strtotime($date[0])));
+            $this->db->where("p.created_date <=", date("Y-m-d 23:59:59", strtotime($date[1])));
+        }
+
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $row) {
+
+                // =====================================================================================
+                // Check if payment_id exists in deposit table and get deposit_date if exists
+                // $deposit_row = $this->db->select('r.deposit_date')
+                //     ->from('hydra_billing.remittance r')
+                //     ->join('hydra_billing.deposited_payment dp', 'dp.remittance_id = r.id')
+                //     ->where('dp.payment_id', $row["payment_id"])
+                //     ->where('dp.is_archive', 0)
+                //     ->get()
+                //     ->row_array();
+
+                // $deposit_exists = !empty($deposit_row);
+                // $deposit_date = $deposit_exists ? date("Y-m-d", strtotime($deposit_row['deposit_date'])) : null;
+
+                // $row["deposit_exists"] = $deposit_exists;
+                // $row["deposit_date"] = $deposit_date;
+                // =====================================================================================
+
+                $row["received_amount"] = $row["received_amount"];
+                $row["payment_date"] = date("Y-m-d", strtotime($row["payment_date"]));
+                $resultarray[] = $row;
+            }
+        }
+
+        return array(
+            "data" => $resultarray, 
+            "recordsTotal" => $query->num_rows(), 
+            "recordsFiltered" => $query->num_rows()
+        );
+    }
 }
