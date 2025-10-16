@@ -872,7 +872,50 @@ class Events_model extends MX_Controller {
     }
 
     public function updateSchedule(){
+        $resultset = array();
         $post = $this->input->post();
+        $id = $post['id'];
+        $start_24 = date("H:i", strtotime($post['start']));
+        $end_24 = date("H:i", strtotime($post['end']));
+        $event_date = date("Y-m-d", strtotime($post['event_date']));
+        $data = array(
+            'start' =>    $start_24,
+            'end' =>  $end_24,
+            'title' => $post['title'],
+            'description' => $post['description'],
+            'event_date' =>  $event_date,
+            'location' => $post['location'],
+        );
+        $this->db->where('id', $id);
+        $update = $this->db->update($this->evetsSched, $data);
+        if ($update){
+            $resultset["success"] = true;
+            $resultset["schedule"] = $this->getEventSchedule($post['event_id']);
+            $resultset["toastr_msg"] = "Event schedule has been updated.";
+        }
+        else{
+            $resultset["success"] = false;
+            $resultset["toastr_msg"] = "Failed to update event schedule.";
+        }
+        return $resultset;
+    }
+
+    public function deleteSchedule(){
+        $resultset = array();
+        $post = $this->input->post();
+        $id = $post['id'];
+        $this->db->where('id', $id);
+        $delete = $this->db->delete($this->evetsSched);
+        if ($delete){
+            $resultset["success"] = true;
+            $resultset["schedule"] = $this->getEventSchedule($post['event_id']);
+            $resultset["toastr_msg"] = "Event schedule has been deleted.";
+        }
+        else{
+            $resultset["success"] = false;
+            $resultset["toastr_msg"] = "Failed to delete event schedule.";
+        }
+        return $resultset;
     }
 
     public function assignEventSched() {

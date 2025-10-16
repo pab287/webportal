@@ -358,7 +358,7 @@
                                                                         </button>
                                                                     </span>
                                                                     <span class="col-4 p-1">
-                                                                        <button class="btn btn-danger m-btn m-btn--icon m-btn--icon-only text-white w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Remove Schedule">
+                                                                        <button class="btn btn-danger m-btn m-btn--icon m-btn--icon-only text-white w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Remove Schedule" @click="deleteSchedule(item.id)">
                                                                             <i class="la la-trash"></i>
                                                                         </button>
                                                                     </span>

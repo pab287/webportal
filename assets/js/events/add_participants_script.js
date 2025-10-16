@@ -4,6 +4,7 @@ let employees = null;
 let empId = null;
 let attachments = null;
 let schedule = null;
+let selectedSchedule = null;
 const maxFileSize = 50 * 1024 * 1024; // 50MB
 const allowedTypes = [
     'application/pdf',
@@ -49,6 +50,7 @@ if (_tempContentData !== undefined && _tempContentData !== null && _tempContentD
     employees =_tempContentData.employees;
     attachments = _tempContentData.attachments;
     schedule = _tempContentData.schedule;
+    console.log(schedule);
 }
 
 
@@ -290,22 +292,37 @@ let eventVue = new Vue({
         },
         formatTime(start_time, end_time) {
             const format = (time) => {
-                const [hour, minute] = time.split(":");
-                const date = new Date();
-                date.setHours(hour, minute);
-                return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
+                return moment(time, 'HH:mm').format('hh:mm A');
             };
             return `${format(start_time)} - ${format(end_time)}`;
         },
         editSchedule(event) {
+            selectedSchedule = JSON.parse(JSON.stringify(event));
             this.editSched = event;
             $('#edit_schedule_date').val(moment(event.event_date).format('MM-DD-YYYY'));
-            $('#edit_schedule_start').timepicker('setTime', event.start);
-            $('#edit_schedule_end').timepicker('setTime', event.end);
+            console.log(event.start, event.end);
+            $('#edit_schedule_start').timepicker('setTime', moment(event.start, 'HH:mm:ss').format('hh:mm A'));
+            $('#edit_schedule_end').timepicker('setTime', moment(event.end, 'HH:mm:ss').format('hh:mm A'));
             $('#edit_schedule').modal('show');
         },
-        removeSched(id){
-            console.log(id);
+        deleteSchedule(id){
+            $.ajax({
+                url: baseUrl("events/delete_schedule"),
+                type: "POST",
+                global: false,
+                data: {
+                    csrf_token: _csrf_hash,
+                    id: id,
+                },
+                dataType: "JSON",
+                success: function(res) {
+                    if (res.success) {
+                        toastr.success(res.toastr_msg, "Success", 5000);
+                    } else {
+                        toastr.error(res.toastr_msg, "Error", 5000);
+                    }
+                }
+            });
         },
         assignParticipant(schedule_id, participant_id) {
             self = this;
@@ -1169,25 +1186,46 @@ $.validate({
     lang: "en",
     onSuccess: function (form) {
         let currentForm = form[0];
+        let edited = JSON.parse(JSON.stringify(eventVue.editSched));
+        console.log(selectedSchedule, edited);
+        if(!checkChanges(selectedSchedule, edited)){
+            toastr.error("NO CHANGES DETECTED", 'Error', 5000);
+            return false;
+        }
         let url = baseUrl("events/update_schedule");
         let formData = $(currentForm).serialize();
-        console.log(formData);
-        // formData += "&event_id=" + encodeURIComponent(eventsDetails.id);
-        // $.ajax({
-        //     url: url,
-        //     type: "POST",
-        //     dataType: "JSON",
-        //     data: formData,
-        //     success: function (response) {
-        //         if (response.success) {
-        //             toastr.success(response.toastr_msg, 'Success', 5000);
-        //             eventVue.trainings = response.trainings;
-        //             $('#edit_schedule').modal('hide');
-        //         } else {
-        //             toastr.error(response.toastr_msg, 'Error', 5000);
-        //         }
-        //     }
-        // });
+        formData += "&event_id=" + encodeURIComponent(eventsDetails.id);
+        $.ajax({
+            url: url,
+            type: "POST",
+            dataType: "JSON",
+            data: formData,
+            success: function (response) {
+                console.log(response);
+                if (response.success) {
+                    toastr.success(response.toastr_msg, 'Success', 5000);
+                    eventVue.trainings = response.trainings;
+                    $('#edit_schedule').modal('hide');
+                } else {
+                    toastr.error(response.toastr_msg, 'Error', 5000);
+                }
+            }
+        });
+        return false;
     }
 
+});
+
+$('#edit_schedule_start').on('changeTime.timepicker', function(e) {
+    const time24 = moment(e.time.value, ["h:mm A"]).format("HH:mm:ss");
+    eventVue.editSched.start = time24;
+});
+
+$('#edit_schedule_end').on('changeTime.timepicker', function(e) {
+    const time24 = moment(e.time.value, ["h:mm A"]).format("HH:mm:ss");
+    eventVue.editSched.end = time24;
+});
+
+$('#edit_schedule_date').on('apply.daterangepicker', function(e, picker) {
+    eventVue.editSched.event_date = picker.startDate.format('YYYY-MM-DD');
 });
