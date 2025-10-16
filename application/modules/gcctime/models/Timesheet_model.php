@@ -2371,8 +2371,6 @@ class Timesheet_model extends CI_Model{
                         $amNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentAmDate." ".$night_diff_cfg->end_time)));
                     }
                     
-                    //var_dump($amNdiffStart, $amNdiffEnd, date("Y-m-d H:i", $tempAmInx), date("Y-m-d H:i", $tempAmOutx));
-
                     $_amNdiffStart = strtotime($amNdiffStart);
                     $_amNdiffEnd = strtotime($amNdiffStart) <= $_am_end && strtotime($amNdiffEnd) >= $_am_end ? $_am_end : strtotime($amNdiffEnd);
                     
