@@ -12,7 +12,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                     extend: 'excelHtml5',
                     title: 'CASH ADVANCE REPORTS',
                     exportOptions: {
-                        columns: [2, 4, 5, 6, 7, 8,9,10,11,12,13,14,15],
+                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
@@ -31,7 +31,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                     extend: 'pdfHtml5',
                     title: 'CASH ADVANCE REPORTS',
                     exportOptions: {
-                        columns: [2, 4, 5, 6, 7, 8,9,10,11,12,13,14,15],
+                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
@@ -87,7 +87,7 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                     extend: 'print',
                     title: 'CASH ADVANCE REPORTS',
                     exportOptions: {
-                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                        columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
@@ -142,13 +142,14 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
         columns: [
             { data: 'id', visible: false },
             {
-                data: 'name', title: 'employee',
+                data: 'name', title: 'employee', width: '15%',
                 orderable: false,
                 render: function (data, type, row) {
                     let tempHtml = `<p class='mb-0 m--font-bolder'>${data}</p>`;
                     tempHtml += `<p class='mb-1'><small><span class="m--font-bolder"></span> ${row.position} </small></p>`;
                     tempHtml += `<p class='m-0'><small><span class="m--font-bolder">Company:</span> ${row.company} </small></p>`;
                     tempHtml += `<p class='m-0'><small><span class="m--font-bolder">Department:</span> ${row.department}</small></p>`;
+                    tempHtml += `<p class='m-0'><small><span class="m--font-bolder">Reference No:</span> ${row.reference_no}</small></p>`;
                     return tempHtml;
                 }
             },
@@ -157,14 +158,8 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
             { data: 'department', visible: false, title: 'DEPARTMENT', },
             { data: 'position', visible: false, title: 'POSITION', },
             { data: 'company', visible: false, title: 'COMPANY', },
+            { data: 'reference_no', visible: false, title: 'REF NO' },
             { data: 'amt_approved', orderable: false, title: 'AMOUNT APPROVED' ,
-                render: function(data) {
-                    return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
-                }
-            },
-            {
-                data: 'total_charges', title: 'COMPANY LOAN',
-                orderable: false,
                 render: function(data) {
                     return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
                 }
@@ -173,24 +168,65 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                 render: function(data) {
                     return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
                 }
-             },
-            { data: 'sss_loan', orderable: false, title: 'SSS',
-                render: function(data) {
+            },
+            // {
+            //     data: 'total_charges', title: 'COMPANY LOAN',
+            //     orderable: false,
+            //     render: function(data) {
+            //         return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+            //     }
+            // },
+            { data: 'amt_to_b_deducted', title: 'DEDUCTION TYPE', 
+                render: function(data, type, row, meta) {
+                    return row.deduct_type == 'percentage' ? `${data}%` : Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+                }
+            },
+            {
+                data: 'total_deduction', title: 'TOTAL DEDUCTION',
+                orderable: false,
+                render: function (data) {
                     return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
                 }
-             },
-            { data: 'hdmf_loan', orderable: false, title: 'HDMF LOAN',
-                render: function(data) {
+            },
+            {
+                data: 'rembalance', title: 'REMAINING BAL',
+                orderable: false,
+                render: function (data) {
                     return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
                 }
-             },
-            { data: 'purpose', orderable: false, title: 'PURPOSE', },
-            { data: 'approved_by', orderable: false, width: '*', class:"text-left", title: 'APPROVED BY', },
-            { data: 'approved_dt', orderable: false, width: '*', title: 'APPROVED DATE',
+            },
+            // { data: "med_loan", orderable: false,  title: 'MEDICAL LOAN',
+            //     render: function(data) {
+            //         return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+            //     }
+            // },
+            // { data: 'sss_loan', orderable: false, title: 'SSS',
+            //     render: function(data) {
+            //         return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+            //     }
+            // },
+            // { data: 'hdmf_loan', orderable: false, title: 'HDMF LOAN',
+            //     render: function(data) {
+            //         return Number(data).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+            //     }
+            // },
+            { data: 'purpose', orderable: false, title: 'PURPOSE', width: '15%' },
+            { data: 'approved_by', orderable: false, width: '15%', class:"text-left", title: 'APPROVED BY',
+                render: function (data, type, row, meta) {
+                    let html = ``;
+
+                    html += `<h6>${data}</h6>`;
+                    html += `<p class="m--font_bolder">${moment(row.approved_dt).format('MMM DD, YYYY')}</p>`;
+
+                    return html ;
+                }
+            },
+            { data: 'approved_by', orderable: false, visible: false, width: '15%', class:"text-left", title: 'APPROVED BY' },
+            { data: 'approved_dt', visible: false, orderable: false, width: '*', title: 'APPROVED DATE',
                 render: function (data, type, row) {
                     return moment(data).format('MMM DD, YYYY')
                 }
-             },
+            },
             { data: 'date_created', orderable: false, width: '*', title: 'DATE CREATED',
                 render: function (data, type, row) {
                     return moment(data).format('MMM DD, YYYY')
@@ -243,65 +279,80 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
             '            </div>' +
             '        </div>';
 
-        $(dropdown).appendTo("#cash_advance_reports_wrapper .exportDropdown");
-        dropdownEl = $(".m-dropdown__toggle.export-as");
+            $(dropdown).appendTo("#cash_advance_reports_wrapper .exportDropdown");
+            dropdownEl = $(".m-dropdown__toggle.export-as");
 
-        const dateRangePicker = `
-                        <div class="row align-items-center">
-                            <div class="col-6 col-md-6 col-sm-12">
-                                <div class="m-form__group row">
-                                    <label class="col-3 col-form-label">Filter By: </label>
-                                    <div class="col-9">
-                                        <div class="m-radio-inline">
-                                            <label class="m-radio">
-                                                <input type="radio" name="filter" value="0" checked> All
-                                                <span></span>
-                                            </label>
-                                            <label class="m-radio">
-                                                <input type="radio" name="filter" value="1"> Active
-                                                <span></span>
-                                            </label>
-                                            <label class="m-radio">
-                                                <input type="radio" name="filter" value="2"> Inactive
-                                                <span></span>
-                                            </label>
+            const dateRangePicker = `
+                            <form id="filter-form">
+                                <div class="row align-item-start">
+                                    <div class="col-6 col-md-6 col-sm-12">
+                                        <div class="m-form__group row">
+                                            <label class="col-3 col-form-label">Filter By: </label>
+                                            <div class="col-9">
+                                                <div class="m-radio-inline">
+                                                    <label class="m-radio">
+                                                        <input type="radio" name="filter" value="0" checked> All
+                                                        <span></span>
+                                                    </label>
+                                                    <label class="m-radio">
+                                                        <input type="radio" name="filter" value="1"> Active
+                                                        <span></span>
+                                                    </label>
+                                                    <label class="m-radio">
+                                                        <input type="radio" name="filter" value="2"> Inactive
+                                                        <span></span>
+                                                    </label>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="col-4 col-md-4 col-sm-12">
-                                <div id="filter-by-date-range">
-                                    <div id="date-picker" class="input-group">
-                                        <input type="text" readonly="readonly" placeholder="SELECT DATE RANGE" id="date-range" name="date_range" data-validation="required" class="form-control m-input valid"> 
-                                            <span class="input-group-addon"><i class="la la-calendar-check-o"></i>
-                                            </span>
+                                    <div class="col-4 col-md-4 col-sm-12 p-0">
+                                        <div id="filter-by-date-range" class="form-group m-0">
+                                            <div id="date-picker" class="input-group">
+                                                <input type="text" readonly="readonly" placeholder="SELECT DATE RANGE" id="date-range" name="date_range" data-validation="required" class="form-control m-input"> 
+                                                <span class="input-group-addon">
+                                                    <i class="la la-calendar-check-o"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-2 col-md-2 col-sm-12">
+                                        <button type="submit" class="btn btn-success btnView">Submit</button>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-2 col-md-2 col-sm-12">
-                                <button class="btn btn-success btnView" onclick="generateTable()">Submit</button>
-                            </div>
-                        </div>`;
-        $(dateRangePicker).appendTo("#cash_advance_reports_wrapper .daterange");
+                            </form>`;
+            $(dateRangePicker).appendTo("#cash_advance_reports_wrapper .daterange");
 
-        $("#date-picker").daterangepicker({
-            startDate: thisMonth.clone().startOf('month'),
-            endDate: thisMonth,
-            maxDate: moment().format("MM/DD/YYYY"),
-            buttonClasses: 'm-btn btn',
-            applyClass: 'btn-primary',
-            cancelClass: 'btn-secondary',
-            locale: { format: 'MM/DD/YYYY' },
-        }).on('apply.daterangepicker', function (ev, picker) {
-            $("#date-range").val(picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY')).trigger('change');
-            dateRange = picker.startDate.format('YYYY-MM-DD') + ' | ' + picker.endDate.format('YYYY-MM-DD');
-            // tblCashAdvanceReport.ajax.reload();
-        }).on('cancel.daterangepicker', function(ev, picker) {
-            $("#date-range").val('').trigger('change');
-            dateRange = ''; 
-            // tblCashAdvanceReport.ajax.reload();
-        });
+            $("#date-picker").daterangepicker({
+                startDate: thisMonth.clone().startOf('month'),
+                endDate: thisMonth,
+                maxDate: moment().format("MM/DD/YYYY"),
+                buttonClasses: 'm-btn btn',
+                applyClass: 'btn-primary',
+                cancelClass: 'btn-secondary',
+                locale: { format: 'MM/DD/YYYY' },
+            }).on('apply.daterangepicker', function (ev, picker) {
+                $("#date-range").val(picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY')).trigger('change');
+                dateRange = picker.startDate.format('YYYY-MM-DD') + ' | ' + picker.endDate.format('YYYY-MM-DD');
 
+                var self = $('#date-range');
+                self.validate();
+
+            }).on('cancel.daterangepicker', function(ev, picker) {
+                $("#date-range").val('').trigger('change');
+                dateRange = ''; 
+            });
+
+            $.validate({
+                form: '#filter-form',
+                el: 'en',
+                onSuccess: function() {
+                    _filter = $("input[name='filter']:checked").val();
+                    tblCashAdvanceReport.ajax.reload();
+
+                    return false;
+                }
+            })
         },
     });
 
