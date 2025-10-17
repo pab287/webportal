@@ -49,6 +49,7 @@ class Events extends MX_Controller {
         $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.min.js', true);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+        $this->core_layout->addJs("global/js/xlsx.full.min.js", true);
         $this->core_layout->addJs("js/events/add_participants_script.js", true, $data);
         $this->core_layout->addCss("css/hris/calendar.css", true);
         $this->load->view("core/templates/header");
@@ -185,6 +186,11 @@ class Events extends MX_Controller {
 
     public function take_attendance(){
         $data = $this->em->takeAttendance();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function update_attendance(){
+        $data = $this->em->updateAttendance();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 

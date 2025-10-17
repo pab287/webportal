@@ -876,7 +876,7 @@
                         </div>
                         <div class="col-12">
                             <div class="table-responsive">
-                                <table class="table display table-bordered table-striped dataTable no-footer" id="attendanceTable">
+                                <table class="table table-bordered table-striped" id="attendanceTable">
                                     <thead>
                                         <tr>
                                             <th hidden>ID</th>
@@ -887,7 +887,7 @@
                                             <th>Attendance</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="attendanceBody">
                                         <tr v-for="(item, index) in attendance" :key="item.id">
                                             <td hidden>{{ item.id }}</td>
                                             <td>{{ index + 1 }}</td>
@@ -904,9 +904,9 @@
                                                 {{ item.mobile_no }}
                                             </td>
                                             <td class="text-center">
-                                                <label class="m-checkbox m-checkbox--bold m-checkbox--state-success ">
-                                                <input type="checkbox" class="form-check-input h-10px w-10px" :value="item.is_present" @change="togglePresence(item.id)" true-value="1" false-value="0"/>
-                                                <span></span>
+                                                <label class="m-checkbox m-checkbox--bold m-checkbox--state-success">
+                                                    <input type="checkbox" class="form-check-input h-10px w-10px" :value="item.is_present" @change="togglePresence(item.id,$event.target.checked ? 1 : 0)" true-value="1" false-value="0" :checked="item.is_present == 1"/>
+                                                    <span></span>
                                                 </label>
                                             </td>
                                         </tr>
@@ -917,7 +917,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-success btnSave" @click="exportAttendance">EXPORT</button>
+                    <button type="button" class="btn btn-success btnSave" @click="exportAttendance(attendance)">EXPORT</button>
                     <button type="button" class="btn btn-warning text-white" data-dismiss="modal">CLOSE</button>
                 </div>
             </div>

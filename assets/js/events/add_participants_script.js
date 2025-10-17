@@ -436,8 +436,58 @@ let eventVue = new Vue({
             });
           
         },
+        togglePresence(attendance_id,value){
+            $.ajax({
+                url: baseUrl("events/update_attendance"),
+                type: "POST",
+                global: false,
+                data: {
+                    csrf_token: _csrf_hash,
+                    id: attendance_id,
+                    is_present: value,
+                },
+                success: function(res) {
+                    if(res.success){
+                        toastr.success(res.toastr_msg, 'Success', 5000);
+                    }else{
+                        toastr.error(res.toastr_msg, 'Error', 5000);
+                    }
+                }
+            });
+        },
         exportAttendance(item){
-
+            console.log(item);
+            const headers = [
+              "First Name", "Middle Name", "Last Name", 
+                "Employee ID", "Email", "Mobile No", "Position", "Company", "Department",  ""
+            ];
+            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+            const dataRows = item.map(participant => [
+                participant.firstname,
+                participant.middlename,
+                participant.lastname,
+                participant.emp_id,
+                participant.email,
+                participant.mobile_no,
+                participant.position,
+                participant.company,
+                participant.department,
+                participant.is_present,
+            ]);
+            XLSX.utils.sheet_add_aoa(worksheet, dataRows, { origin: 'A2' });
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+            const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `attendance_${new Date().toISOString().split('T')[0]}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        
         }
     },
 });

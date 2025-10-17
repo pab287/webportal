@@ -984,6 +984,26 @@ class Events_model extends MX_Controller {
         $result = $this->db->get()->result_array();
         return $result;
     }
-    
+
+    public function updateAttendance(){
+        $post = $this->input->post();
+        $data = array(
+            'is_present' => $post['is_present'],
+            'updated_by' => $this->user_data['emp_id'],
+        );
+        $this->db->where('id', $post['id']);
+        $update = $this->db->update($this->events_attendance, $data);
+        if($update){
+            $resultset["success"] = true;
+            $resultset["toastr_msg"] = "Successfully updated attendance.";
+            $this->core_layout->setEventLog("Successfully updated attendance","update", "success", "gcchris", "user");
+        }
+        else{
+            $resultset["success"] = false;
+            $resultset["toastr_msg"] = "Failed to update attendance.";
+            $this->core_layout->setEventLog("Failed to update attendance","update", "error", "gcchris", "system");
+        }
+        return $resultset;
+    }
 
 }
