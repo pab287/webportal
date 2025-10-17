@@ -279,65 +279,80 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
             '            </div>' +
             '        </div>';
 
-        $(dropdown).appendTo("#cash_advance_reports_wrapper .exportDropdown");
-        dropdownEl = $(".m-dropdown__toggle.export-as");
+            $(dropdown).appendTo("#cash_advance_reports_wrapper .exportDropdown");
+            dropdownEl = $(".m-dropdown__toggle.export-as");
 
-        const dateRangePicker = `
-                        <div class="row align-items-center">
-                            <div class="col-6 col-md-6 col-sm-12">
-                                <div class="m-form__group row">
-                                    <label class="col-3 col-form-label">Filter By: </label>
-                                    <div class="col-9">
-                                        <div class="m-radio-inline">
-                                            <label class="m-radio">
-                                                <input type="radio" name="filter" value="0" checked> All
-                                                <span></span>
-                                            </label>
-                                            <label class="m-radio">
-                                                <input type="radio" name="filter" value="1"> Active
-                                                <span></span>
-                                            </label>
-                                            <label class="m-radio">
-                                                <input type="radio" name="filter" value="2"> Inactive
-                                                <span></span>
-                                            </label>
+            const dateRangePicker = `
+                            <form id="filter-form">
+                                <div class="row align-item-start">
+                                    <div class="col-6 col-md-6 col-sm-12">
+                                        <div class="m-form__group row">
+                                            <label class="col-3 col-form-label">Filter By: </label>
+                                            <div class="col-9">
+                                                <div class="m-radio-inline">
+                                                    <label class="m-radio">
+                                                        <input type="radio" name="filter" value="0" checked> All
+                                                        <span></span>
+                                                    </label>
+                                                    <label class="m-radio">
+                                                        <input type="radio" name="filter" value="1"> Active
+                                                        <span></span>
+                                                    </label>
+                                                    <label class="m-radio">
+                                                        <input type="radio" name="filter" value="2"> Inactive
+                                                        <span></span>
+                                                    </label>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="col-4 col-md-4 col-sm-12">
-                                <div id="filter-by-date-range">
-                                    <div id="date-picker" class="input-group">
-                                        <input type="text" readonly="readonly" placeholder="SELECT DATE RANGE" id="date-range" name="date_range" data-validation="required" class="form-control m-input valid"> 
-                                            <span class="input-group-addon"><i class="la la-calendar-check-o"></i>
-                                            </span>
+                                    <div class="col-4 col-md-4 col-sm-12 p-0">
+                                        <div id="filter-by-date-range" class="form-group m-0">
+                                            <div id="date-picker" class="input-group">
+                                                <input type="text" readonly="readonly" placeholder="SELECT DATE RANGE" id="date-range" name="date_range" data-validation="required" class="form-control m-input"> 
+                                                <span class="input-group-addon">
+                                                    <i class="la la-calendar-check-o"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-2 col-md-2 col-sm-12">
+                                        <button type="submit" class="btn btn-success btnView">Submit</button>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-2 col-md-2 col-sm-12">
-                                <button class="btn btn-success btnView" onclick="generateTable()">Submit</button>
-                            </div>
-                        </div>`;
-        $(dateRangePicker).appendTo("#cash_advance_reports_wrapper .daterange");
+                            </form>`;
+            $(dateRangePicker).appendTo("#cash_advance_reports_wrapper .daterange");
 
-        $("#date-picker").daterangepicker({
-            startDate: thisMonth.clone().startOf('month'),
-            endDate: thisMonth,
-            maxDate: moment().format("MM/DD/YYYY"),
-            buttonClasses: 'm-btn btn',
-            applyClass: 'btn-primary',
-            cancelClass: 'btn-secondary',
-            locale: { format: 'MM/DD/YYYY' },
-        }).on('apply.daterangepicker', function (ev, picker) {
-            $("#date-range").val(picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY')).trigger('change');
-            dateRange = picker.startDate.format('YYYY-MM-DD') + ' | ' + picker.endDate.format('YYYY-MM-DD');
-            // tblCashAdvanceReport.ajax.reload();
-        }).on('cancel.daterangepicker', function(ev, picker) {
-            $("#date-range").val('').trigger('change');
-            dateRange = ''; 
-            // tblCashAdvanceReport.ajax.reload();
-        });
+            $("#date-picker").daterangepicker({
+                startDate: thisMonth.clone().startOf('month'),
+                endDate: thisMonth,
+                maxDate: moment().format("MM/DD/YYYY"),
+                buttonClasses: 'm-btn btn',
+                applyClass: 'btn-primary',
+                cancelClass: 'btn-secondary',
+                locale: { format: 'MM/DD/YYYY' },
+            }).on('apply.daterangepicker', function (ev, picker) {
+                $("#date-range").val(picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY')).trigger('change');
+                dateRange = picker.startDate.format('YYYY-MM-DD') + ' | ' + picker.endDate.format('YYYY-MM-DD');
 
+                var self = $('#date-range');
+                self.validate();
+
+            }).on('cancel.daterangepicker', function(ev, picker) {
+                $("#date-range").val('').trigger('change');
+                dateRange = ''; 
+            });
+
+            $.validate({
+                form: '#filter-form',
+                el: 'en',
+                onSuccess: function() {
+                    _filter = $("input[name='filter']:checked").val();
+                    tblCashAdvanceReport.ajax.reload();
+
+                    return false;
+                }
+            })
         },
     });
 
